@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,10 +21,22 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/os_interface/linux/drm_engine_mapper.h"
-#include "runtime/os_interface/linux/drm_engine_mapper.inl"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
 
 namespace OCLRT {
 
-template class DrmEngineMapper<BDWFamily>;
+template <typename Family>
+bool WddmEngineMapper<Family>::engineNodeMap(EngineType engineType, GPUNODE_ORDINAL &gpuNode) {
+    bool ret = false;
+    switch (engineType) {
+    case EngineType::ENGINE_RCS:
+        gpuNode = GPUNODE_3D;
+        ret = true;
+        break;
+    default:
+        break;
+    }
+    return ret;
+}
+
 } // namespace OCLRT

@@ -68,7 +68,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     false,                 // EnableKmdNotify
     30,                    // delayKmdNotifyMs
     false,                 // ftr64KBpages
-    EngineType::ENGINE_RCS // nodeOrdinal
+    EngineType::ENGINE_RCS // defaultEngineType
 };
 
 const HardwareInfo BXT_1x2x6::hwInfo = {

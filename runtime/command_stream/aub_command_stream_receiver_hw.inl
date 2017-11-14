@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 -2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,8 +69,8 @@ AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
 }
 
 template <typename GfxFamily>
-const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineType engineOrdinal) {
-    return *AUBFamilyMapper<GfxFamily>::csTraits[engineOrdinal];
+const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits(EngineType engineType) {
+    return *AUBFamilyMapper<GfxFamily>::csTraits[engineType];
 }
 
 template <typename GfxFamily>
@@ -81,8 +81,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initGlobalMMIO() {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineOrdinal) {
-    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineOrdinal];
+void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType) {
+    auto mmioList = AUBFamilyMapper<GfxFamily>::perEngineMMIO[engineType];
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {
@@ -91,12 +91,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineOrdi
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineOrdinal) {
-    auto mmioBase = getCsTraits(engineOrdinal).mmioBase;
-    auto &engineInfo = engineInfoTable[engineOrdinal];
+void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineType) {
+    auto mmioBase = getCsTraits(engineType).mmioBase;
+    auto &engineInfo = engineInfoTable[engineType];
 
     initGlobalMMIO();
-    initEngineMMIO(engineOrdinal);
+    initEngineMMIO(engineType);
 
     // Global HW Status Page
     {
@@ -118,7 +118,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineOr
     }
 
     // Allocate the LRCA
-    auto csTraits = getCsTraits(engineOrdinal);
+    auto csTraits = getCsTraits(engineType);
     const size_t sizeLRCA = csTraits.sizeLRCA;
     const size_t alignLRCA = csTraits.alignLRCA;
     auto pLRCABase = alignedMalloc(sizeLRCA, alignLRCA);
@@ -201,12 +201,12 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 
 template <typename GfxFamily>
 FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                        EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) {
-    uint32_t mmioBase = getCsTraits(engineOrdinal).mmioBase;
-    auto &engineInfo = engineInfoTable[engineOrdinal];
+                                                        EngineType engineType, ResidencyContainer *allocationsForResidency) {
+    uint32_t mmioBase = getCsTraits(engineType).mmioBase;
+    auto &engineInfo = engineInfoTable[engineType];
 
     if (!engineInfo.pLRCA) {
-        initializeEngine(engineOrdinal);
+        initializeEngine(engineType);
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
@@ -358,17 +358,16 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         contextDescriptor.sData.LogicalRingCtxAddress = ggttLRCA / 4096;
         contextDescriptor.sData.ContextID = 0;
 
-        submitLRCA(engineOrdinal, contextDescriptor);
+        submitLRCA(engineType, contextDescriptor);
     }
 
-    pollForCompletion(engineOrdinal);
-
+    pollForCompletion(engineType);
     return 0;
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineOrdinal, const typename AUBCommandStreamReceiverHw<GfxFamily>::MiContextDescriptorReg &contextDescriptor) {
-    auto mmioBase = getCsTraits(engineOrdinal).mmioBase;
+void AUBCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, const typename AUBCommandStreamReceiverHw<GfxFamily>::MiContextDescriptorReg &contextDescriptor) {
+    auto mmioBase = getCsTraits(engineType).mmioBase;
     stream.writeMMIO(mmioBase + 0x2230, 0);
     stream.writeMMIO(mmioBase + 0x2230, 0);
     stream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
@@ -376,10 +375,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineOrdinal,
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineOrdinal) {
+void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineType) {
     typedef typename AubMemDump::CmdServicesMemTraceRegisterPoll CmdServicesMemTraceRegisterPoll;
 
-    auto mmioBase = getCsTraits(engineOrdinal).mmioBase;
+    auto mmioBase = getCsTraits(engineType).mmioBase;
     bool pollNotEqual = false;
     this->stream.registerPoll(
         mmioBase + 0x2234, //EXECLIST_STATUS

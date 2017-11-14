@@ -25,6 +25,7 @@
 #include "runtime/device/device_info_map.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/engine_node.h"
 #include "runtime/os_interface/performance_counters.h"
 #include <vector>
 
@@ -80,6 +81,7 @@ class Device : public BaseObject<_cl_device_id> {
     const DeviceInfo &getDeviceInfo() const;
     DeviceInfo *getMutableDeviceInfo();
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
+    EngineType getEngineType() const;
 
     void *getSLMWindowStartAddress();
     void prepareSLMWindow();

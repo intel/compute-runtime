@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -102,4 +103,13 @@ TEST_F(DeviceTest, retainAndRelease) {
 TEST_F(DeviceTest, givenMemoryManagerWhenDeviceIsCreatedThenItHasAccessToDevice) {
     auto memoryManager = pDevice->getMemoryManager();
     EXPECT_EQ(memoryManager->device, pDevice);
+}
+
+TEST_F(DeviceTest, getEngineTypeDefault) {
+    auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
+
+    EngineType actualEngineType = pDevice->getEngineType();
+    EngineType defaultEngineType = hwInfoHelper.capabilityTable.defaultEngineType;
+
+    EXPECT_EQ(defaultEngineType, actualEngineType);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 
     template <typename FamilyType>
-    void testNoopIdXcs(EngineType engineOrdinal) {
+    void testNoopIdXcs(EngineType engineType) {
         typedef typename FamilyType::MI_NOOP MI_NOOP;
 
         auto pCmd = (MI_NOOP *)pCS->getSpace(sizeof(MI_NOOP) * 4);
@@ -70,9 +70,9 @@ struct AUBFixture : public AUBCommandStreamFixture,
         CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
         BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, false, false, pCS->getUsed(), pCS};
         ResidencyContainer allocationsForResidency;
-        pCommandStreamReceiver->flush(batchBuffer, engineOrdinal, &allocationsForResidency);
+        pCommandStreamReceiver->flush(batchBuffer, engineType, &allocationsForResidency);
 
-        auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineOrdinal).mmioBase;
+        auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType).mmioBase;
         AUBCommandStreamFixture::expectMMIO<FamilyType>(mmioBase + 0x2094, noopId);
     }
 };

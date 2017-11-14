@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,16 +22,9 @@
 
 #include "hw_cmds.h"
 #include "runtime/os_interface/linux/drm_engine_mapper.h"
+#include "runtime/os_interface/linux/drm_engine_mapper.inl"
 
 namespace OCLRT {
 
-template <>
-bool DrmEngineMapper<SKLFamily>::engineNodeMap(EngineType engineType, unsigned int &flag) {
-    if (engineType == EngineType::ENGINE_RCS) {
-        flag = I915_EXEC_RENDER;
-        return true;
-    }
-    return false;
-}
-
+template class DrmEngineMapper<SKLFamily>;
 } // namespace OCLRT

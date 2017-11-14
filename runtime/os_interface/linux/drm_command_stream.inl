@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
+#include "runtime/os_interface/linux/drm_engine_mapper.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
@@ -47,8 +48,11 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 }
 
 template <typename GfxFamily>
-FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) {
-    DEBUG_BREAK_IF(engineOrdinal != EngineType::ENGINE_RCS);
+FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
+    DEBUG_BREAK_IF(engineType != EngineType::ENGINE_RCS);
+    unsigned int engineFlag = 0xFF;
+    bool ret = DrmEngineMapper<GfxFamily>::engineNodeMap(engineType, engineFlag);
+    UNRECOVERABLE_IF(!(ret));
 
     DrmAllocation *alloc = static_cast<DrmAllocation *>(batchBuffer.commandBufferAllocation);
     DEBUG_BREAK_IF(!alloc);
@@ -71,7 +75,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
         this->residency.reserve(512);
 
         bb->exec(static_cast<uint32_t>(alignUp(batchBuffer.usedSize - batchBuffer.startOffset, 8)),
-                 alignedStart, I915_EXEC_RENDER | I915_EXEC_NO_RELOC,
+                 alignedStart, engineFlag | I915_EXEC_NO_RELOC,
                  batchBuffer.requiresCoherency,
                  batchBuffer.low_priority);
 

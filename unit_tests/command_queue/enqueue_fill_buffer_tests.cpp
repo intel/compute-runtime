@@ -56,11 +56,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, bumpsTaskLevel) {
 
 HWTEST_F(EnqueueFillBufferCmdTests, setsBufferCompletionStamp) {
     enqueueFillBuffer<FamilyType>();
-
+    auto deviceEngineType = pDevice->getEngineType();
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
     EXPECT_EQ(commandStreamReceiver.peekTaskCount(), buffer->getCompletionStamp().taskCount);
     EXPECT_EQ(0u, buffer->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(EngineType::ENGINE_RCS, buffer->getCompletionStamp().engineOrdinal);
+    EXPECT_EQ(deviceEngineType, buffer->getCompletionStamp().engineType);
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, addsCommands) {

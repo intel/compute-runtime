@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     false,                 // EnableKmdNotify
     30,                    // delayKmdNotifyMs
     false,                 // ftr64KBpages
-    EngineType::ENGINE_RCS // nodeOrdinal
+    EngineType::ENGINE_RCS // defaultEngineType
 };
 
 const HardwareInfo BDW_1x2x6::hwInfo = {

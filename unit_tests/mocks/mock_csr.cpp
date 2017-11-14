@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "runtime/os_interface/os_interface.h"
 
-FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) {
+FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
     FlushStamp stamp = 0;
     return stamp;
 }
@@ -38,7 +38,7 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     uint32_t taskLevel,
     DispatchFlags &dispatchFlags) {
     ++taskCount;
-    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp(), 0, 0};
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp(), 0, EngineType::ENGINE_RCS};
     return stamp;
 }
 

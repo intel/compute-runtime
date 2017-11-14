@@ -176,6 +176,10 @@ const HardwareInfo *Device::getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn) {
 
 const HardwareInfo &Device::getHardwareInfo() const { return hwInfo; }
 
+EngineType Device::getEngineType() const {
+    return hwInfo.capabilityTable.defaultEngineType;
+}
+
 const WorkaroundTable *Device::getWaTable() const { return hwInfo.pWaTable; }
 
 const DeviceInfo &Device::getDeviceInfo() const {

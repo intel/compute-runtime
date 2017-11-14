@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -180,6 +180,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     KernelOperation *blockedCommandsData = nullptr;
     std::unique_ptr<PrintfHandler> printfHandler;
     bool slmUsed = false;
+    EngineType engineType = device->getEngineType();
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
     auto blockQueue = false;
@@ -360,7 +361,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             Event::eventNotReady,
             taskLevel,
             0,
-            EngineType::ENGINE_RCS};
+            engineType};
         completionStamp = cmplStamp;
     }
     updateFromCompletionStamp(completionStamp);
@@ -371,7 +372,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     if (blockQueue) {
-
         if (executionModelKernel) {
             size_t minSizeISHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
             size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));

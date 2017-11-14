@@ -51,8 +51,8 @@ GEN8TEST_F(HwHelperTestBdw, setupPreemptionRegisters) {
 }
 
 GEN8TEST_F(HwHelperTestBdw, adjustDefaultEngineType) {
-    auto engineType = hwInfo.capabilityTable.nodeOrdinal;
+    auto engineType = hwInfo.capabilityTable.defaultEngineType;
     auto &helper = HwHelper::get(renderCoreFamily);
     helper.adjustDefaultEngineType(&hwInfo);
-    EXPECT_EQ(engineType, hwInfo.capabilityTable.nodeOrdinal);
+    EXPECT_EQ(engineType, hwInfo.capabilityTable.defaultEngineType);
 }

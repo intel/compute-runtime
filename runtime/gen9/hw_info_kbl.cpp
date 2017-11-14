@@ -63,7 +63,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     false,                 // EnableKmdNotify
     30,                    // delayKmdNotifyMs
     true,                  // ftr64KBpages
-    EngineType::ENGINE_RCS // nodeOrdinal
+    EngineType::ENGINE_RCS // defaultEngineType
 };
 
 const HardwareInfo KBL_1x2x6::hwInfo = {

@@ -371,13 +371,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStampValid) {
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStamp) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto deviceEngineType = pDevice->getEngineType();
     auto completionStamp = flushTask(commandStreamReceiver);
 
     EXPECT_EQ(1u, completionStamp.taskCount);
     EXPECT_EQ(taskLevel, completionStamp.taskLevel);
     EXPECT_EQ(commandStreamReceiver.flushStamp->peekStamp(), completionStamp.flushStamp);
     EXPECT_EQ(0u, completionStamp.deviceOrdinal);
-    EXPECT_EQ(EngineType::ENGINE_RCS, completionStamp.engineOrdinal);
+    EXPECT_EQ(deviceEngineType, completionStamp.engineType);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressTracking) {
@@ -659,7 +660,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
                                                                flushCount(0) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
         ++flushCount;
         return 0;
     }
@@ -940,6 +941,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
     commandStreamReceiver.setMemoryManager(pDevice->getMemoryManager());
 
     auto &commandStreamTask = commandQueue.getCS();
+    auto deviceEngineType = pDevice->getEngineType();
 
     DispatchFlags dispatchFlags;
 
@@ -958,7 +960,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
     EXPECT_EQ(commandStreamReceiver.peekTaskCount(), cs.taskCount);
     EXPECT_EQ(commandStreamReceiver.peekTaskLevel(), cs.taskLevel);
     EXPECT_EQ(0u, cs.deviceOrdinal);
-    EXPECT_EQ(EngineType::ENGINE_RCS, cs.engineOrdinal);
+    EXPECT_EQ(deviceEngineType, cs.engineType);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEmptyQueue) {

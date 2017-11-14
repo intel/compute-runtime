@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -510,7 +510,7 @@ struct DrmCsrVfeTests : ::testing::Test {
         using CommandStreamReceiver::commandStream;
 
         MyCsr() : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], nullptr, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {}
-        FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override {
+        FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
             return (FlushStamp)0;
         }
         bool peekDefaultMediaVfeStateDirty() {

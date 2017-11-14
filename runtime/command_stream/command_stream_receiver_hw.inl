@@ -106,6 +106,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto levelClosed = false;
     void *currentPipeControlForNooping = nullptr;
+    Device *device = this->getMemoryManager()->device;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == ImmediateDispatch) {
@@ -331,10 +332,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, dispatchFlags.requiresCoherency, dispatchFlags.low_priority, streamToSubmit.getUsed(), &streamToSubmit};
+    EngineType engineType = device->getEngineType();
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr));
+            flushStamp->setStamp(this->flush(batchBuffer, engineType, nullptr));
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(nullptr);
         } else {
@@ -353,7 +355,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     //check if we are not over the budget, if we are do implicit flush
     if (getMemoryManager()->isMemoryBudgetExhausted()) {
-        if (this->totalMemoryUsed >= this->getMemoryManager()->device->getDeviceInfo().globalMemSize / 4) {
+        if (this->totalMemoryUsed >= device->getDeviceInfo().globalMemSize / 4) {
             dispatchFlags.implicitFlush = true;
         }
     }
@@ -371,7 +373,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->taskLevel,
         flushStamp->peekStamp(),
         0,
-        EngineType::ENGINE_RCS};
+        engineType};
 
     this->taskLevel += levelClosed ? 1 : 0;
     return completionStamp;
@@ -383,7 +385,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         return;
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    TakeOwnershipWrapper<Device> deviceOwnership(*this->getMemoryManager()->device);
+    Device *device = this->getMemoryManager()->device;
+    TakeOwnershipWrapper<Device> deviceOwnership(*device);
+    EngineType engineType = device->getEngineType();
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
     if (!commandBufferList.peekIsEmpty()) {
@@ -394,7 +398,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
-            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, (size_t)this->getMemoryManager()->device->getDeviceInfo().globalMemSize * 5 / 10);
+            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, (size_t)device->getDeviceInfo().globalMemSize * 5 / 10);
             auto primaryCmdBuffer = commandBufferList.removeFrontOne();
             auto nextCommandBuffer = commandBufferList.peekHead();
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;
@@ -427,7 +431,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 surfacesForSubmit.push_back(surface);
             }
 
-            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, EngineType::ENGINE_RCS, &surfacesForSubmit);
+            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit);
 
             //after flush task level is closed
             this->taskLevel++;

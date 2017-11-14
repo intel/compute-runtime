@@ -25,6 +25,8 @@
 #include "gtsysinfo.h"
 #include "sku_info.h"
 
+#include "runtime/helpers/engine_node.h"
+
 namespace OCLRT {
 
 enum class PreemptionMode : uint32_t {
@@ -64,7 +66,7 @@ struct RuntimeCapabilityTable {
     int64_t delayKmdNotifyMs;
     bool ftr64KBpages;
 
-    int32_t nodeOrdinal;
+    EngineType defaultEngineType;
 };
 
 struct HardwareInfo {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ class CommandStreamReceiverDrmMock : public UltCommandStreamReceiver<FamilyType>
 
     std::vector<GraphicsAllocation *> toFree; // pointers to be freed on destruction
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
         toFree.push_back(batchBuffer.commandBufferAllocation);

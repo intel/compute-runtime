@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,12 +53,8 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     if (this->wddm == nullptr) {
         this->wddm = Wddm::createWddm();
     }
-    int32_t node = DebugManager.flags.NodeOrdinal.get();
-    if (node == -1) {
-        node = hwInfoIn.capabilityTable.nodeOrdinal;
-    }
     GPUNODE_ORDINAL nodeOrdinal = GPUNODE_3D;
-    UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(static_cast<EngineType>(node), nodeOrdinal));
+    UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(hwInfoIn.capabilityTable.defaultEngineType, nodeOrdinal));
     this->wddm->setNode(nodeOrdinal);
     this->osInterface = std::unique_ptr<OSInterface>(new OSInterface());
     this->osInterface.get()->get()->setWddm(this->wddm);
@@ -88,9 +84,7 @@ WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
 
 template <typename GfxFamily>
 FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                       EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) {
-    DEBUG_BREAK_IF(engineOrdinal != EngineType::ENGINE_RCS);
-
+                                                       EngineType engineType, ResidencyContainer *allocationsForResidency) {
     void *commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
     bool success = true;
 

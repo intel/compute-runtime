@@ -69,15 +69,22 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         tempHwInfos[devNum].capabilityTable.ftrSvm = adapterInfo->SkuTable.FtrSVM;
 
         HwHelper &hwHelper = HwHelper::get(adapterInfo->GfxPlatform.eRenderCoreFamily);
+
         hwHelper.adjustDefaultEngineType(&tempHwInfos[devNum]);
+        tempHwInfos[devNum].capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
+                                                                    ? tempHwInfos[devNum].capabilityTable.defaultEngineType
+                                                                    : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+
         hwHelper.setCapabilityCoherencyFlag(&tempHwInfos[devNum], tempHwInfos[devNum].capabilityTable.ftrSupportsCoherency);
+
         hwHelper.setupPreemptionRegisters(&tempHwInfos[devNum], !!adapterInfo->WaTable.WaEnablePreemptionGranularityControlByUMD);
-        // Instrumentation
-        tempHwInfos[devNum].capabilityTable.instrumentationEnabled = false; // Intentionally disable, after enabling use adapterInfo->Caps.InstrumentationIsEnabled
         PreemptionHelper::adjustDefaultPreemptionMode(tempHwInfos[devNum].capabilityTable,
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidThreadLevelPreempt),
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuThreadGroupLevelPreempt),
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidBatchPreempt));
+
+        // Instrumentation
+        tempHwInfos[devNum].capabilityTable.instrumentationEnabled = false; // Intentionally disable, after enabling use adapterInfo->Caps.InstrumentationIsEnabled
 
         tempHwInfos[devNum].capabilityTable.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
                                                                   ? !!DebugManager.flags.OverrideEnableKmdNotify.get()

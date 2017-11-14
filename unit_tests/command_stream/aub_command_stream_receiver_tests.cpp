@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -125,20 +125,20 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment)
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    auto engineOrdinal = OCLRT::ENGINE_RCS;
+    auto engineType = OCLRT::ENGINE_RCS;
     auto ringTailAlignment = sizeof(uint64_t);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
 
     // First flush typically includes a preamble and chain to command buffer
     csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
-    csr->flush(batchBuffer, engineOrdinal, nullptr);
-    EXPECT_EQ(0ull, csr->engineInfoTable[engineOrdinal].tailRingBuffer % ringTailAlignment);
+    csr->flush(batchBuffer, engineType, nullptr);
+    EXPECT_EQ(0ull, csr->engineInfoTable[engineType].tailRingBuffer % ringTailAlignment);
 
     // Second flush should just submit command buffer
     cs.getSpace(sizeof(uint64_t));
-    csr->flush(batchBuffer, engineOrdinal, nullptr);
-    EXPECT_EQ(0ull, csr->engineInfoTable[engineOrdinal].tailRingBuffer % ringTailAlignment);
+    csr->flush(batchBuffer, engineType, nullptr);
+    EXPECT_EQ(0ull, csr->engineInfoTable[engineType].tailRingBuffer % ringTailAlignment);
 
     mm->freeGraphicsMemory(commandBuffer);
     delete csr;
@@ -154,12 +154,12 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBuff
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
-    auto engineOrdinal = OCLRT::ENGINE_RCS;
+    auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
 
     csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
-    csr->flush(batchBuffer, engineOrdinal, nullptr);
+    csr->flush(batchBuffer, engineType, nullptr);
 
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
     EXPECT_EQ((int)csr->peekTaskCount(), commandBuffer->residencyTaskCount);
@@ -182,14 +182,14 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAl
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
-    auto engineOrdinal = OCLRT::ENGINE_RCS;
+    auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
     EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
 
     csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
-    csr->flush(batchBuffer, engineOrdinal, &allocationsForResidency);
+    csr->flush(batchBuffer, engineType, &allocationsForResidency);
 
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ((int)csr->peekTaskCount(), gfxAllocation->residencyTaskCount);

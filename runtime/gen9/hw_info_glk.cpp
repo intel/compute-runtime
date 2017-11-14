@@ -63,7 +63,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     true,                  // EnableKmdNotify
     30,                    // delayKmdNotifyMs
     false,                 // ftr64KBpages
-    EngineType::ENGINE_RCS // nodeOrdinal
+    EngineType::ENGINE_RCS // defaultEngineType
 };
 
 const HardwareInfo GLK_1x3x6::hwInfo = {

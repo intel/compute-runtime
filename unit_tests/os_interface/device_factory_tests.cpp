@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -113,6 +113,22 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     EXPECT_EQ(!refEnableKmdNotify, hwInfoOverriden->capabilityTable.enableKmdNotify);
     EXPECT_EQ(refDelayKmdNotifyMs + 10, hwInfoOverriden->capabilityTable.delayKmdNotifyMs);
+
+    DeviceFactory::releaseDevices();
+}
+
+TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
+    DebugManagerStateRestore dbgRestorer;
+    int32_t debugEngineType = 2;
+    DebugManager.flags.NodeOrdinal.set(debugEngineType);
+    HardwareInfo *hwInfoOverriden = nullptr;
+    size_t numDevices = 0;
+
+    bool success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices);
+    ASSERT_TRUE(success);
+    ASSERT_NE(nullptr, hwInfoOverriden);
+    int32_t actualEngineType = static_cast<int32_t>(hwInfoOverriden->capabilityTable.defaultEngineType);
+    EXPECT_EQ(debugEngineType, actualEngineType);
 
     DeviceFactory::releaseDevices();
 }

@@ -557,6 +557,7 @@ if (WIN32)
     os_interface/windows/wddm_device_command_stream.inl
     os_interface/windows/wddm_device_command_stream.h
     os_interface/windows/wddm_engine_mapper.h
+    os_interface/windows/wddm_engine_mapper.inl
     os_interface/windows/wddm_memory_manager.cpp
     os_interface/windows/wddm_memory_manager.h
     os_interface/windows/windows_inc.cpp
@@ -587,6 +588,7 @@ if (UNIX)
     os_interface/linux/drm_command_stream.inl
     os_interface/linux/drm_command_stream.h
     os_interface/linux/drm_engine_mapper.h
+    os_interface/linux/drm_engine_mapper.inl
     os_interface/linux/drm_null_device.h
     os_interface/linux/drm_gem_close_worker.cpp
     os_interface/linux/drm_gem_close_worker.h

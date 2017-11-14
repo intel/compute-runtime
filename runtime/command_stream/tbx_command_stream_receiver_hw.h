@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,24 +45,24 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
     void makeCoherent(void *address, size_t length) override;
 
     // Family specific version
-    void submitLRCA(EngineType engineOrdinal, const MiContextDescriptorReg &contextDescriptor);
-    void pollForCompletion(EngineType engineOrdinal);
+    void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
+    void pollForCompletion(EngineType engineType);
     void initGlobalMMIO();
-    void initEngineMMIO(EngineType engineOrdinal);
+    void initEngineMMIO(EngineType engineType);
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn);
 
     TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
     ~TbxCommandStreamReceiverHw() override;
 
-    void initializeEngine(EngineType engineOrdinal);
+    void initializeEngine(EngineType engineType);
 
-    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineOrdinal);
+    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
 
     struct EngineInfo {
         void *pLRCA;

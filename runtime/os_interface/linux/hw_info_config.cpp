@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/hw_info_config.h"
 #include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/cpu_info.h"
 
 #include <cstring>
@@ -165,6 +166,10 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     HwHelper &hwHelper = HwHelper::get(pPlatform->eRenderCoreFamily);
     hwHelper.setCapabilityCoherencyFlag(const_cast<const HardwareInfo *>(outHwInfo), platformCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency = (platformCoherency && drm->peekCoherencyDisablePatchActive());
+
+    outHwInfo->capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
+                                                       ? outHwInfo->capabilityTable.defaultEngineType
+                                                       : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 
     outHwInfo->capabilityTable.instrumentationEnabled = false;
 

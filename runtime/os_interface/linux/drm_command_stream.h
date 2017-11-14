@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,7 +50,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     // When drm is passed, DCSR will not free it at destruction
     DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Drm *drm, gemCloseWorkerMode mode);
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
     void processResidency(ResidencyContainer *allocationsForResidency) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;

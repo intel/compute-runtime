@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
@@ -44,10 +44,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
-    void submitLRCA(EngineType engineOrdinal, const MiContextDescriptorReg &contextDescriptor);
-    void pollForCompletion(EngineType engineOrdinal);
+    void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
+    void pollForCompletion(EngineType engineType);
     void initGlobalMMIO();
-    void initEngineMMIO(EngineType engineOrdinal);
+    void initEngineMMIO(EngineType engineType);
 
     void addContextToken();
 
@@ -56,14 +56,14 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
     ~AUBCommandStreamReceiverHw() override;
 
-    void initializeEngine(EngineType engineOrdinal);
+    void initializeEngine(EngineType engineType);
 
     MemoryManager *createMemoryManager(bool enable64kbPages) override {
         this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages);
         return this->memoryManager;
     }
 
-    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineOrdinal);
+    static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
 
     struct EngineInfo {
         void *pLRCA;

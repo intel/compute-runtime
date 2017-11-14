@@ -71,7 +71,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     false,                 // EnableKmdNotify
     30,                    // delayKmdNotifyMs
     true,                  // ftr64KBpages
-    EngineType::ENGINE_RCS // nodeOrdinal
+    EngineType::ENGINE_RCS // defaultEngineType
 };
 
 const HardwareInfo SKL_1x2x6::hwInfo = {

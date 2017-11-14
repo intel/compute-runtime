@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -135,18 +135,18 @@ TEST_P(NoHostPtr, completionStamp) {
     EXPECT_EQ(0u, buffer->getCompletionStamp().taskCount);
     EXPECT_EQ(expectedFlushstamp, buffer->getCompletionStamp().flushStamp);
     EXPECT_EQ(0u, buffer->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(0u, buffer->getCompletionStamp().engineOrdinal);
+    EXPECT_EQ(0u, buffer->getCompletionStamp().engineType);
 
     CompletionStamp completionStamp;
     completionStamp.taskCount = 42;
     completionStamp.deviceOrdinal = 43;
-    completionStamp.engineOrdinal = 44;
+    completionStamp.engineType = EngineType::ENGINE_RCS;
     completionStamp.flushStamp = 5;
     buffer->setCompletionStamp(completionStamp, nullptr, nullptr);
     EXPECT_EQ(completionStamp.taskCount, buffer->getCompletionStamp().taskCount);
     EXPECT_EQ(completionStamp.flushStamp, buffer->getCompletionStamp().flushStamp);
     EXPECT_EQ(completionStamp.deviceOrdinal, buffer->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(completionStamp.engineOrdinal, buffer->getCompletionStamp().engineOrdinal);
+    EXPECT_EQ(completionStamp.engineType, buffer->getCompletionStamp().engineType);
 
     delete buffer;
 }

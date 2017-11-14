@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -42,9 +42,9 @@ static std::string getAubFileName(const OCLRT::Device *pDevice, const std::strin
 }
 
 template <typename FamilyType>
-void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineOrdinal) {
+void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     typedef typename OCLRT::AUBFamilyMapper<FamilyType>::AUB AUB;
-    const auto &csTraits = OCLRT::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineOrdinal);
+    const auto &csTraits = OCLRT::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;
     uint64_t physAddress = 0x10000;
 

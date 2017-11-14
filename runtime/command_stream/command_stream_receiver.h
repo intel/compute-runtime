@@ -52,7 +52,7 @@ class CommandStreamReceiver {
     CommandStreamReceiver();
     virtual ~CommandStreamReceiver();
 
-    virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) = 0;
+    virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const LinearStream &dsh, const LinearStream &ih,

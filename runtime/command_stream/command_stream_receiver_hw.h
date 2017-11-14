@@ -43,7 +43,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {}
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
         return flushStamp->peekStamp();
     }
 
