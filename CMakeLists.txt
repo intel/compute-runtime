@@ -22,6 +22,11 @@
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 include(ExternalProject)
 
+# Set the configuration type
+set(CMAKE_CONFIGURATION_TYPES
+	${CMAKE_BUILD_TYPE}
+)
+
 project(igdrcl)
 
 if(TR_DEPRECATED)
@@ -63,6 +68,14 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# We want to build with the static, multithreaded runtime libraries (as opposed
+# to the multithreaded runtime DLLs)
+if(MSVC)
+	string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE-INTERNAL "${CMAKE_CXX_FLAGS_RELEASE-INTERNAL}")
+endif(MSVC)
+
 if(NOT GTEST_SRC_DIR)
 	set(GTEST_SRC_DIR_tmp "${CMAKE_SOURCE_DIR}/../gtest")
 	get_filename_component(GTEST_SRC_DIR ${GTEST_SRC_DIR_tmp} ABSOLUTE)
@@ -80,14 +93,6 @@ message(STATUS "Google Mock source dir: ${GMOCK_SRC_DIR}")
 add_subdirectory(${GMOCK_SRC_DIR} ${IGDRCL_BINARY_DIR}/gmock)
 set_target_properties(gtest PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 set_target_properties(gmock PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
-
-set(gtest_lib gtest)
-set(gmock_lib gmock)
-
-if("${BUILD_TYPE_lower}" STREQUAL "release-internal")
-	set(gtest_lib ${IGDRCL_BINARY_DIR}/gmock/gtest/Release/gtest${CMAKE_STATIC_LIBRARY_SUFFIX})
-	set(gmock_lib ${IGDRCL_BINARY_DIR}/gmock/Release/gmock${CMAKE_STATIC_LIBRARY_SUFFIX})
-endif("${BUILD_TYPE_lower}" STREQUAL "release-internal")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(NEO_BITS "64")
@@ -273,11 +278,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/lib)
 # do not add rpath
 set(CMAKE_SKIP_RPATH YES CACHE BOOL "" FORCE )
 
-# Set the configuration type
-set(CMAKE_CONFIGURATION_TYPES
-	${CMAKE_BUILD_TYPE}
-)
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 
 option(APPVERIFIER_ALLOWED "allow use of AppVerifier" TRUE)
@@ -335,8 +335,6 @@ if(OCL_RUNTIME_PROFILING)
 	add_definitions(-DOCL_RUNTIME_PROFILING=${OCL_RUNTIME_PROFILING})
 endif()
 
-# We want to build with the static, multithreaded runtime libraries (as opposed
-# to the multithreaded runtime DLLs)
 if(MSVC)
 	# Get WDK version from ${WDK_DIR}/Win15/WDKVersion.txt
 	file(READ "${WDK_DIR}/Win15/WDKVersion.txt" WindowsTargetPlatformVersion)
@@ -359,10 +357,6 @@ if(MSVC)
 		 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 	endif()
 	MESSAGE(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
-
-	string(REPLACE "/MDd" "/MTd" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-	string(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE-INTERNAL "${CMAKE_CXX_FLAGS_RELEASE-INTERNAL}")
 else()
 	if(IGDRCL_GCOV)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage --coverage")

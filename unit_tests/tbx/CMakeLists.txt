@@ -31,8 +31,8 @@ add_executable(igdrcl_tbx_tests
     "${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp"
     $<TARGET_OBJECTS:igdrcl_libult>
 )
-add_dependencies(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_libult ${gtest_lib} ${gmock_lib})
-target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} ${gtest_lib} ${gmock_lib})
+add_dependencies(igdrcl_tbx_tests gtest gmock)
+target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} gtest gmock)
 target_compile_definitions(igdrcl_tbx_tests PRIVATE MOCKABLE_VIRTUAL=virtual)
 if(UNIX)
   target_link_libraries(igdrcl_tbx_tests dl pthread)

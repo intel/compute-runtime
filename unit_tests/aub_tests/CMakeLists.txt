@@ -95,7 +95,7 @@ endif(MSVC)
 add_subdirectory(gen9)
 
 target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
-target_link_libraries(igdrcl_aub_tests ${gtest_lib} ${gmock_lib})
+target_link_libraries(igdrcl_aub_tests gtest gmock)
 
 link_directories(${GMM_LIB_PATHS})
 
