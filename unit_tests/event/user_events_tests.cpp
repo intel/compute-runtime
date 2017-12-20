@@ -373,6 +373,22 @@ TEST_F(EventTests, twoUserEventInjectsCountOnNDR1whichIsPropagatedToNDR2viaVirtu
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(EventTests, givenQueueThatIsBlockedByUserEventWhenIsQueueBlockedIsCalledThenVirtualEventOnlyQueriesForExecutionStatus) {
+    struct mockEvent : public Event {
+        using Event::Event;
+        void updateExecutionStatus() override {
+            updateExecutionStatusCalled = true;
+        }
+        bool updateExecutionStatusCalled = false;
+    };
+    mockEvent mockedVirtualEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 0);
+    pCmdQ->virtualEvent = &mockedVirtualEvent;
+
+    EXPECT_TRUE(pCmdQ->isQueueBlocked());
+    EXPECT_FALSE(mockedVirtualEvent.updateExecutionStatusCalled);
+    pCmdQ->virtualEvent = nullptr;
+}
+
 TEST_F(EventTests, finishDoesntBlockAfterUserEventSignaling) {
     UserEvent uEvent(context);
     UserEvent uEvent2(context);

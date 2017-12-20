@@ -534,7 +534,11 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     }
     DBG_LOG(EventsDebugEnable, "Event", this, "is unblocked by", &event);
 
-    this->taskLevel = taskLevel;
+    if (this->taskLevel == Event::eventNotReady) {
+        this->taskLevel = taskLevel;
+    } else {
+        this->taskLevel = std::max(this->taskLevel.load(), taskLevel);
+    }
 
     int32_t statusToPropagate = CL_SUBMITTED;
     if (peekIsCompletedByTermination(&blockerStatus)) {

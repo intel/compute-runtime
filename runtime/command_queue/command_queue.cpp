@@ -164,7 +164,7 @@ bool CommandQueue::isQueueBlocked() {
     TakeOwnershipWrapper<CommandQueue> takeOwnershipWrapper(*this);
     //check if we have user event and if so, if it is in blocked state.
     if (this->virtualEvent) {
-        if (this->virtualEvent->peekIsCompleted()) {
+        if (this->virtualEvent->peekExecutionStatus() <= CL_COMPLETE) {
             UNRECOVERABLE_IF(this->virtualEvent == nullptr);
 
             if (this->virtualEvent->peekIsCompletedByTermination() == false) {

@@ -723,7 +723,6 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     };
 
     Event event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
-    event.setStatus(CL_SUBMITTED);
 
     uint32_t virtualEventTaskLevel = 77;
     uint32_t virtualEventTaskCount = 80;
@@ -734,16 +733,24 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
 
     // Put Queue in blocked state by assigning virtualEvent
     virtualEvent.incRefInternal();
+    event.addChild(virtualEvent);
     cmdQHw->virtualEvent = &virtualEvent;
     cmdQHw->incRefInternal();
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    //new virtual event is created on enqueue, bind it to the created virtual event
+    EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
 
+    event.setStatus(CL_SUBMITTED);
+
+    virtualEvent.Event::updateExecutionStatus();
+    EXPECT_FALSE(cmdQHw->isQueueBlocked());
     // +1 for next level after virtualEvent is unblocked
-    // +1 for dependence on eventWaitlist
+    // +1 as virtualEvent was a parent for event with actual command that is being submitted
     EXPECT_EQ(virtualEventTaskLevel + 2, cmdQHw->taskLevel);
-    EXPECT_EQ(virtualEventTaskLevel + 2, mockCSR->lastTaskLevelToFlushTask);
+    //command being submitted was dependant only on virtual event hence only +1
+    EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
 }
 
 HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
@@ -769,7 +776,6 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     };
 
     Event event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
-    event.setStatus(CL_SUBMITTED);
 
     uint32_t virtualEventTaskLevel = 77;
     uint32_t virtualEventTaskCount = 80;
@@ -780,12 +786,22 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
 
     // Put Queue in blocked state by assigning virtualEvent
     virtualEvent.incRefInternal();
+    event.addChild(virtualEvent);
     cmdQHw->virtualEvent = &virtualEvent;
     cmdQHw->incRefInternal();
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    //new virtual event is created on enqueue, bind it to the created virtual event
+    EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
 
-    EXPECT_EQ(virtualEventTaskLevel, cmdQHw->taskLevel);
-    EXPECT_EQ(virtualEventTaskLevel, mockCSR->lastTaskLevelToFlushTask);
+    event.setStatus(CL_SUBMITTED);
+
+    virtualEvent.Event::updateExecutionStatus();
+    EXPECT_FALSE(cmdQHw->isQueueBlocked());
+
+    //+1 due to dependency between virtual event & new virtual event
+    //new virtual event is actually responsible for command delivery
+    EXPECT_EQ(virtualEventTaskLevel + 1, cmdQHw->taskLevel);
+    EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
 }
