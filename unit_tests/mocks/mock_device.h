@@ -1,0 +1,185 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/device/device.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
+
+namespace OCLRT {
+class OSTime;
+class MemoryManager;
+class MockMemoryManager;
+
+namespace MockGmmStatus {
+//avoid multiple gmm context initializations - it slows down global ULTs execution
+extern bool initialized;
+}; // namespace MockGmmStatus
+
+class MockDevice : public Device {
+  public:
+    using Device::initializeCaps;
+
+    void setOSTime(OSTime *osTime);
+    void setDriverInfo(DriverInfo *driverInfo);
+    bool hasDriverInfo();
+
+    bool getCpuTime(uint64_t *timeStamp) { return true; };
+    void *peekSlmWindowStartAddress() const {
+        return this->slmWindowStartAddress;
+    }
+    MockDevice(const HardwareInfo &hwInfo, bool isRootDevice = true);
+
+    DeviceInfo *getDeviceInfoToModify() {
+        return &this->deviceInfo;
+    }
+
+    void initializeCaps() {
+        Device::initializeCaps();
+    }
+
+    void setPreemptionMode(PreemptionMode mode) {
+        preemptionMode = mode;
+    }
+
+    const WhitelistedRegisters &getWhitelistedRegisters() override {
+        if (forceWhitelistedRegs) {
+            return mockWhitelistedRegs;
+        }
+        return Device::getWhitelistedRegisters();
+    }
+
+    const WorkaroundTable *getWaTable() const override { return &mockWaTable; }
+
+    void setForceWhitelistedRegs(bool force, WhitelistedRegisters *mockRegs = nullptr) {
+        forceWhitelistedRegs = force;
+        if (mockRegs) {
+            mockWhitelistedRegs = *mockRegs;
+        }
+    }
+
+    void injectMemoryManager(MockMemoryManager *);
+
+    void setPerfCounters(PerformanceCounters *perfCounters) {
+        performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
+    }
+    void setMemoryManager(MemoryManager *memoryManager);
+
+    template <typename T>
+    UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() {
+        return reinterpret_cast<UltCommandStreamReceiver<T> &>(getCommandStreamReceiver());
+    }
+
+    void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
+
+    GraphicsAllocation *getTagAllocation() { return tagAllocation; }
+
+  private:
+    bool forceWhitelistedRegs = false;
+    WhitelistedRegisters mockWhitelistedRegs = {0};
+    WorkaroundTable mockWaTable = {};
+};
+
+class FailMemoryManager : public MemoryManager {
+  public:
+    FailMemoryManager();
+    FailMemoryManager(int32_t fail);
+    virtual ~FailMemoryManager() override {
+        if (agnostic) {
+            for (auto alloc : allocations) {
+                agnostic->freeGraphicsMemory(alloc);
+            }
+            delete agnostic;
+        }
+        applyCommonCleanup();
+    };
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override {
+        if (fail <= 0) {
+            return nullptr;
+        }
+        fail--;
+        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemory(size, alignment, forcePin);
+        allocations.push_back(alloc);
+        return alloc;
+    };
+    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override {
+        return nullptr;
+    };
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
+        return nullptr;
+    };
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr) override {
+        return nullptr;
+    };
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override {
+        return nullptr;
+    };
+    GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
+        return nullptr;
+    };
+    void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override{};
+    void *lockResource(GraphicsAllocation *gfxAllocation) override { return nullptr; };
+    void unlockResource(GraphicsAllocation *gfxAllocation) override{};
+
+    bool populateOsHandles(OsHandleStorage &handleStorage) override {
+        return false;
+    };
+    void cleanOsHandles(OsHandleStorage &handleStorage) override{};
+
+    uint64_t getSystemSharedMemory() override {
+        return 0;
+    };
+
+    uint64_t getMaxApplicationAddress() override {
+        return MemoryConstants::max32BitAppAddress;
+    };
+
+    GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override {
+        return nullptr;
+    };
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
+        return nullptr;
+    }
+    int32_t fail;
+    OsAgnosticMemoryManager *agnostic;
+    std::vector<GraphicsAllocation *> allocations;
+};
+
+class FailDevice : public Device {
+  public:
+    FailDevice(const HardwareInfo &hwInfo, bool isRootDevice = true)
+        : Device(hwInfo, isRootDevice) {
+        memoryManager = new FailMemoryManager;
+    }
+};
+
+class FailDeviceAfterOne : public Device {
+  public:
+    FailDeviceAfterOne(const HardwareInfo &hwInfo, bool isRootDevice = true)
+        : Device(hwInfo, isRootDevice) {
+        memoryManager = new FailMemoryManager(1);
+    }
+};
+
+} // namespace OCLRT

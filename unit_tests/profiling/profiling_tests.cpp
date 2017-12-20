@@ -1,0 +1,783 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/command_queue/enqueue_common.h"
+#include "runtime/command_queue/enqueue_migrate_mem_objects.h"
+#include "runtime/command_queue/enqueue_kernel.h"
+#include "runtime/command_queue/enqueue_marker.h"
+#include "runtime/memory_manager/surface.h"
+#include "runtime/helpers/dispatch_info.h"
+#include "runtime/os_interface/os_interface.h"
+#include "runtime/utilities/tag_allocator.h"
+
+#include "unit_tests/command_queue/command_enqueue_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/os_interface/mock_performance_counters.h"
+#include "runtime/gen9/gen9_cmd_def.h"
+#include "runtime/gen9/hw_cmds_generated.h"
+#include "gen_cmd_parse.h"
+#include "test.h"
+
+namespace OCLRT {
+
+struct ProfilingTests : public CommandEnqueueFixture,
+                        public ::testing::Test {
+    void SetUp() override {
+        CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
+
+        memset(&kernelHeader, 0, sizeof(kernelHeader));
+        kernelHeader.KernelHeapSize = sizeof(kernelIsa);
+
+        memset(&dataParameterStream, 0, sizeof(dataParameterStream));
+        dataParameterStream.DataParameterStreamSize = sizeof(crossThreadData);
+
+        executionEnvironment = {};
+        memset(&executionEnvironment, 0, sizeof(executionEnvironment));
+        executionEnvironment.CompiledSIMD32 = 1;
+        executionEnvironment.LargestCompiledSIMDSize = 32;
+
+        memset(&threadPayload, 0, sizeof(threadPayload));
+        threadPayload.LocalIDXPresent = 1;
+        threadPayload.LocalIDYPresent = 1;
+        threadPayload.LocalIDZPresent = 1;
+
+        kernelInfo.heapInfo.pKernelHeap = kernelIsa;
+        kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+        kernelInfo.patchInfo.dataParameterStream = &dataParameterStream;
+        kernelInfo.patchInfo.executionEnvironment = &executionEnvironment;
+        kernelInfo.patchInfo.threadPayload = &threadPayload;
+    }
+
+    void TearDown() override {
+        CommandEnqueueFixture::TearDown();
+    }
+
+    MockProgram program;
+
+    SKernelBinaryHeaderCommon kernelHeader;
+    SPatchDataParameterStream dataParameterStream;
+    SPatchExecutionEnvironment executionEnvironment;
+    SPatchThreadPayload threadPayload;
+    KernelInfo kernelInfo;
+
+    uint32_t kernelIsa[32];
+    uint32_t crossThreadData[32];
+};
+
+HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfilingAndForWorkloadWithKernelWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+
+    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, false, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(true, false, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamNDRangeKernel.getAvailableSpace(), requiredSize);
+
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
+    expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_TASK>::getSizeRequiredCS(true, false, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
+}
+
+HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfilingAndForWorkloadWithNoKernelWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM);
+
+    auto &commandStreamMigrateMemObjects = getCommandStream<FamilyType, CL_COMMAND_MIGRATE_MEM_OBJECTS>(*pCmdQ, true, false, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_MIGRATE_MEM_OBJECTS>::getSizeRequiredCS(true, false, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamMigrateMemObjects.getAvailableSpace(), requiredSize);
+
+    auto &commandStreamMarker = getCommandStream<FamilyType, CL_COMMAND_MARKER>(*pCmdQ, true, false, nullptr);
+    expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_MARKER>::getSizeRequiredCS(true, false, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamMarker.getAvailableSpace(), requiredSize);
+}
+
+HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfilingAndForWorkloadWithTwoKernelsInMdiWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    requiredSize += 2 * sizeof(GPGPU_WALKER);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setKernel(&kernel);
+    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    multiDispatchInfo.push(dispatchInfo);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_TASK>::getTotalSizeRequiredCS(true, false, *pCmdQ, multiDispatchInfo);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
+}
+
+/*
+#   Two additional PIPE_CONTROLs are expected before first MI_STORE_REGISTER_MEM (which is before GPGPU_WALKER)
+#   and after second MI_STORE_REGISTER_MEM (which is after GPGPU_WALKER).
+*/
+HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfolingWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+    EXPECT_EQ(1u, pBeforePC->getCommandStreamerStallEnable());
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+    EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+
+    clReleaseEvent(event);
+}
+
+/*
+#   Two additional MI_STORE_REGISTER_MEM are expected before and after GPGPU_WALKER.
+*/
+
+HWTEST_F(ProfilingTests, GIVENCommandQueueWithProflingWHENWalkerIsDispatchedTHENMiStoreRegisterMemIsPresentInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        &kernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check MI_STORE_REGISTER_MEMs
+    auto itorBeforeMI = reverse_find<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
+    auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
+    ASSERT_NE(nullptr, pBeforeMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pBeforeMI->getRegisterAddress());
+    ++itorBeforeMI;
+    pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
+    ASSERT_NE(nullptr, pBeforeMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
+
+    auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterMI);
+    auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
+    ASSERT_NE(nullptr, pAfterMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
+    ++itorAfterMI;
+    pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
+    ASSERT_NE(nullptr, pAfterMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pAfterMI->getRegisterAddress());
+
+    clReleaseEvent(event);
+}
+
+/*
+#   Two additional PIPE_CONTROLs are expected before first MI_STORE_REGISTER_MEM (which is before GPGPU_WALKER)
+#   and after second MI_STORE_REGISTER_MEM (which is after GPGPU_WALKER).
+#   If queue is blocked commands should be added to event
+*/
+HWTEST_F(ProfilingTests, GIVENCommandQueueBlockedWithProfilingWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_event ue = new UserEvent();
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        &kernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        1,   // one user event to block queue
+        &ue, // user event not signaled
+        &event);
+
+    //rseCommands<FamilyType>(*pCmdQ);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
+    OCLRT::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
+    ASSERT_NE(nullptr, eventCommandStream);
+    parseCommands<FamilyType>(*eventCommandStream);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    clReleaseEvent(event);
+    ((UserEvent *)ue)->release();
+}
+
+/*
+#   Two additional MI_STORE_REGISTER_MEM are expected before and after GPGPU_WALKER.
+#   If queue is blocked commands should be added to event
+*/
+
+HWTEST_F(ProfilingTests, GIVENCommandQueueBlockedWithProfilingWHENWalkerIsDispatchedTHENMiStoreRegisterMemIsPresentInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_event ue = new UserEvent();
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        &kernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        1,   // one user event to block queue
+        &ue, // user event not signaled
+        &event);
+
+    // parseCommands<FamilyType>(*pCmdQ);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
+    OCLRT::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
+    ASSERT_NE(nullptr, eventCommandStream);
+    parseCommands<FamilyType>(*eventCommandStream);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check MI_STORE_REGISTER_MEMs
+    auto itorBeforeMI = reverse_find<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
+    auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
+    ASSERT_NE(nullptr, pBeforeMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pBeforeMI->getRegisterAddress());
+    ++itorBeforeMI;
+    pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
+    ASSERT_NE(nullptr, pBeforeMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
+
+    auto itorAfterMI = find<MI_STORE_REGISTER_MEM *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterMI);
+    auto pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
+    ASSERT_NE(nullptr, pAfterMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
+    ++itorAfterMI;
+    pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
+    ASSERT_NE(nullptr, pAfterMI);
+    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pAfterMI->getRegisterAddress());
+
+    clReleaseEvent(event);
+    ((UserEvent *)ue)->release();
+}
+
+HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPath) {
+    cl_event event;
+    pCmdQ->enqueueMarkerWithWaitList(0, nullptr, &event);
+    auto eventObj = static_cast<Event *>(event);
+    EXPECT_TRUE(eventObj->isCPUProfilingPath() == CL_TRUE);
+    pCmdQ->finish(false);
+
+    uint64_t queued, submit, start, end;
+    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
+    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
+    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+
+    EXPECT_LT(0u, queued);
+    EXPECT_LT(queued, submit);
+    EXPECT_LT(submit, start);
+    EXPECT_LT(start, end);
+    eventObj->release();
+}
+
+template <typename TagType>
+struct MockTagNode : public TagNode<TagType> {
+  public:
+    using TagNode<TagType>::tag;
+    using TagNode<TagType>::gfxAllocation;
+    MockTagNode() {
+        gfxAllocation = nullptr;
+        tag = nullptr;
+    }
+};
+
+TEST(EventProfilingTest, calcProfilingDataSetsEndTimestampInCompleteTimestampWhenCompleteIsZero) {
+    MockDevice *device = DeviceHelper<>::create();
+    MockContext context;
+    cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
+    MockCommandQueue cmdQ(&context, device, props);
+    cmdQ.setProfilingEnabled();
+    cmdQ.device = device;
+
+    HwTimeStamps timestamp;
+    timestamp.GlobalStartTS = 10;
+    timestamp.ContextStartTS = 20;
+    timestamp.GlobalEndTS = 80;
+    timestamp.ContextEndTS = 56;
+    timestamp.GlobalCompleteTS = 0;
+    timestamp.ContextCompleteTS = 0;
+
+    MockTagNode<HwTimeStamps> timestampNode;
+    timestampNode.tag = &timestamp;
+
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+
+    event.setCPUProfilingPath(false);
+    event.timeStampNode = &timestampNode;
+    event.calcProfilingData();
+
+    EXPECT_EQ(timestamp.ContextEndTS, timestamp.ContextCompleteTS);
+    cmdQ.device = nullptr;
+    delete device;
+}
+
+struct ProfilingWithPerfCountersTests : public ProfilingTests,
+                                        public PerformanceCountersFixture {
+    void SetUp() override {
+        PerformanceCountersFixture::SetUp();
+        ProfilingTests::SetUp();
+        createPerfCounters();
+        performanceCountersBase->initialize(platformDevices[0]);
+        pDevice->setPerfCounters(performanceCountersBase.release());
+    }
+
+    void TearDown() override {
+        ProfilingTests::TearDown();
+        PerformanceCountersFixture::TearDown();
+    }
+};
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCounterAndForWorkloadWithKernelWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    //begin perf cmds
+    requiredSize += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
+    //end perf cmds
+    requiredSize += 2 * sizeof(PIPE_CONTROL) + 3 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
+
+    auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, true, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(true, true, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamNDRangeKernel.getAvailableSpace(), requiredSize);
+
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
+    expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_TASK>::getSizeRequiredCS(true, true, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
+    bool retVal = false;
+    retVal = pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+    EXPECT_TRUE(retVal);
+    retVal = pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+    EXPECT_TRUE(retVal);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCounterAndForWorkloadWithNoKernelWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM);
+
+    auto &commandStreamMigrateMemObjects = getCommandStream<FamilyType, CL_COMMAND_MIGRATE_MEM_OBJECTS>(*pCmdQ, true, true, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_MIGRATE_MEM_OBJECTS>::getSizeRequiredCS(true, true, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamMigrateMemObjects.getAvailableSpace(), requiredSize);
+
+    auto &commandStreamMarker = getCommandStream<FamilyType, CL_COMMAND_MARKER>(*pCmdQ, true, true, nullptr);
+    expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_MARKER>::getSizeRequiredCS(true, true, *pCmdQ, nullptr);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamMarker.getAvailableSpace(), requiredSize);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersAndForWorkloadWithTwoKernelsInMdiWHENGetCSFromCmdQueueTHENEnoughSpaceInCS) {
+    typedef typename FamilyType::MI_STORE_REGISTER_MEM MI_STORE_REGISTER_MEM;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    requiredSize += 2 * sizeof(GPGPU_WALKER);
+
+    //begin perf cmds
+    requiredSize += 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
+    //end perf cmds
+    requiredSize += 2 * sizeof(PIPE_CONTROL) + 3 * sizeof(MI_STORE_REGISTER_MEM) + OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_REPORT_PERF_COUNT) + pCmdQ->getPerfCountersUserRegistersNumber() * sizeof(MI_STORE_REGISTER_MEM);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setKernel(&kernel);
+    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    multiDispatchInfo.push(dispatchInfo);
+    auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_TASK>::getTotalSizeRequiredCS(true, true, *pCmdQ, multiDispatchInfo);
+    EXPECT_GE(expectedSizeCS, requiredSize);
+    EXPECT_GE(commandStreamTask.getAvailableSpace(), requiredSize);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // expect MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBeforeReportPerf);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(itorBeforeReportPerf, cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+    EXPECT_EQ(1u, pBeforePC->getCommandStreamerStallEnable());
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+    EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterReportPerf);
+
+    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+
+    clReleaseEvent(event);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersNoUserRegistersWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 2);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        &event);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // expect MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBeforeReportPerf);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(itorBeforeReportPerf, cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+    EXPECT_EQ(1u, pBeforePC->getCommandStreamerStallEnable());
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+    EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterReportPerf);
+
+    EXPECT_TRUE(static_cast<Event *>(event)->calcProfilingData());
+
+    clReleaseEvent(event);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueBlockedWithProflingPerfCounterWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_event event;
+    cl_event ue = new UserEvent();
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        &kernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        1,   // one user event to block queue
+        &ue, // user event not signaled
+        &event);
+
+    //rseCommands<FamilyType>(*pCmdQ);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent);
+    ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
+    OCLRT::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
+    ASSERT_NE(nullptr, eventCommandStream);
+    parseCommands<FamilyType>(*eventCommandStream);
+
+    // expect MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), itorBeforeReportPerf);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(itorBeforeReportPerf, cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterReportPerf);
+
+    clReleaseEvent(event);
+    ((UserEvent *)ue)->release();
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersNoEventWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
+
+    pCmdQ->setPerfCountersEnabled(true, 1);
+
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    uint32_t dimensions = 1;
+    cl_kernel clKernel = &kernel;
+
+    static_cast<CommandQueueHw<FamilyType> *>(pCmdQ)->enqueueKernel(
+        clKernel,
+        dimensions,
+        globalOffsets,
+        workItems,
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+
+    parseCommands<FamilyType>(*pCmdQ);
+
+    // expect no MI_REPORT_PERF_COUNT before WALKER
+    auto itorBeforeReportPerf = find<MI_REPORT_PERF_COUNT *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(cmdList.end(), itorBeforeReportPerf);
+
+    // Find GPGPU_WALKER
+    auto itorGPGPUWalkerCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+    GenCmdList::reverse_iterator rItorGPGPUWalkerCmd(itorGPGPUWalkerCmd);
+    ASSERT_NE(cmdList.end(), itorGPGPUWalkerCmd);
+
+    // Check PIPE_CONTROLs
+    auto itorBeforePC = reverse_find<PIPE_CONTROL *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
+    ASSERT_NE(cmdList.rbegin(), itorBeforePC);
+    auto pBeforePC = genCmdCast<PIPE_CONTROL *>(*itorBeforePC);
+    ASSERT_NE(nullptr, pBeforePC);
+    EXPECT_EQ(1u, pBeforePC->getCommandStreamerStallEnable());
+
+    auto itorAfterPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_NE(cmdList.end(), itorAfterPC);
+    auto pAfterPC = genCmdCast<PIPE_CONTROL *>(*itorAfterPC);
+    ASSERT_NE(nullptr, pAfterPC);
+    EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
+
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pBeforePC->getPostSyncOperation());
+
+    // expect MI_REPORT_PERF_COUNT after WALKER
+    auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());
+    ASSERT_EQ(cmdList.end(), itorAfterReportPerf);
+
+    pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
+}
+
+} // namespace OCLRT

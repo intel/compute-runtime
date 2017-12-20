@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "unit_tests/helpers/hw_helper_tests.h"
+
+HWTEST_F(HwHelperTest, getReturnsValidHwHelper) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_NE(nullptr, &helper);
+}
+
+HWTEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_NE(nullptr, &helper);
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerOnHwHelperReturnsZero) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getBindingTableStateSurfaceStatePointer(nullptr, 0));
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsZero) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getBindingTableStateSize());
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateAlignement) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getBindingTableStateAlignement());
+}
+
+HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsZero) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getInterfaceDescriptorDataSize());
+}
+
+HWTEST_F(HwHelperTest, getMaxBarriersPerSliceReturnsZero) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getMaxBarrierRegisterPerSlice());
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerReturnsCorrectPointer) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+    BINDING_TABLE_STATE bindingTableState[4];
+
+    bindingTableState[2].getRawData(0) = 0x00123456;
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    auto pointer = helper.getBindingTableStateSurfaceStatePointer(bindingTableState, 2);
+    EXPECT_EQ(0x00123456u, pointer);
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsCorrectSize) {
+    using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;
+
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    auto pointer = helper.getBindingTableStateSize();
+    EXPECT_EQ(sizeof(BINDING_TABLE_STATE), pointer);
+}
+
+HWTEST_F(HwHelperTest, getBindingTableStateAlignementReturnsCorrectSize) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_NE(0u, helper.getBindingTableStateAlignement());
+}
+
+HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsCorrectSize) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), helper.getInterfaceDescriptorDataSize());
+}
+
+HWTEST_F(HwHelperTest, setCapabilityCoherencyFlagDummy) {
+    bool coherency = false;
+
+    auto helper = HwHelper::get(renderCoreFamily);
+    helper.setCapabilityCoherencyFlag(pHwInfo, coherency);
+}
+
+HWTEST_F(HwHelperTest, setupPreemptionRegistersDummy) {
+    bool preemption = false;
+    auto helper = HwHelper::get(renderCoreFamily);
+    helper.setupPreemptionRegisters(pHwInfo, preemption);
+}
+
+TEST(DwordBuilderTest, setNonMaskedBits) {
+    uint32_t dword = 0;
+
+    // expect non-masked bit 2
+    uint32_t expectedDword = (1 << 2);
+    dword = DwordBuilder::build(2, false, true, 0); // set 2nd bit
+    EXPECT_EQ(expectedDword, dword);
+
+    // expect non-masked bits 2 and 3
+    expectedDword |= (1 << 3);
+    dword = DwordBuilder::build(3, false, true, dword); // set 3rd bit with init value
+    EXPECT_EQ(expectedDword, dword);
+}
+
+TEST(DwordBuilderTest, setMaskedBits) {
+    uint32_t dword = 0;
+
+    // expect masked bit 2
+    uint32_t expectedDword = (1 << 2);
+    expectedDword |= (1 << (2 + 16));
+    dword = DwordBuilder::build(2, true, true, 0); // set 2nd bit (masked)
+    EXPECT_EQ(expectedDword, dword);
+
+    // expect masked bits 2 and 3
+    expectedDword |= (1 << 3);
+    expectedDword |= (1 << (3 + 16));
+    dword = DwordBuilder::build(3, true, true, dword); // set 3rd bit (masked) with init value
+    EXPECT_EQ(expectedDword, dword);
+}
+
+TEST(DwordBuilderTest, setMaskedBitsWithDifferentBitValue) {
+    // expect only mask bit
+    uint32_t expectedDword = 1 << (2 + 16);
+    auto dword = DwordBuilder::build(2, true, false, 0);
+    EXPECT_EQ(expectedDword, dword);
+
+    // expect masked bits 3
+    expectedDword = (1 << 3);
+    expectedDword |= (1 << (3 + 16));
+    dword = DwordBuilder::build(3, true, true, 0);
+    EXPECT_EQ(expectedDword, dword);
+}

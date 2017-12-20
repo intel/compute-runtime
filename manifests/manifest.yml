@@ -1,0 +1,61 @@
+components:
+  gmmlib:
+    branch: gmmlib
+    clean_on_sync: true
+    dest_dir: gmmlib
+    repository: https://github.com/intel/gmmlib.git
+    revision: 9a261a60bd990b237fe14138b7aaf5eaee342ff8
+    type: git
+  gmock:
+    branch: master
+    clean_on_sync: true
+    dest_dir: gmock
+    repository: https://github.com/google/googlemock.git
+    revision: c440c8fafc6f60301197720617ce64028e09c79d
+    type: git
+  gtest:
+    branch: master
+    clean_on_sync: true
+    dest_dir: gtest
+    repository: https://github.com/google/googletest.git
+    revision: c99458533a9b4c743ed51537e25989ea55944908
+    type: git
+  igc:
+    branch: igc
+    clean_on_sync: true
+    dest_dir: igc
+    repository: https://github.com/intel/intelgraphicscompiler
+    revision: d6379492df107094d0642f0ecf75a6f20ae573b2-2
+    type: git
+  infra:
+    branch: infra
+    clean_on_sync: true
+    dest_dir: infra
+    revision: c81cf66d7995e55cb8f11b24d3776e3fc013a809
+    type: git
+  internal:
+    branch: master
+    dest_dir: internal
+    revision: 93d1c17c98d8c051bcd4368686bc9cf2eddd8f8e
+    type: git
+  khronos:
+    branch: master
+    clean_on_sync: true
+    dest_dir: khronos
+    repository: https://github.com/KhronosGroup/OpenCL-Headers.git
+    revision: f039db6764d52388658ef15c30b2237bbda49803
+    type: git
+  libdrm:
+    branch: libdrm-2.4.84
+    clean_on_sync: true
+    dest_dir: libdrm
+    repository: https://anongit.freedesktop.org/git/mesa/drm.git
+    revision: 290d29d9794813a2fe0578dbb905ad09bc810516
+    type: git
+  wdk:
+    branch: wdk
+    clean_on_sync: true
+    dest_dir: wdk
+    revision: c67a2fa209d3ad3c3ab05f6f10e2234fd81fcebc
+    type: git
+version: '1'

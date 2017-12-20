@@ -1,0 +1,446 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include <runtime/helpers/hash.h>
+#include <runtime/helpers/hw_info.h>
+#include <runtime/compiler_interface/binary_cache.h>
+#include "runtime/compiler_interface/compiler_interface.h"
+#include <runtime/helpers/string.h>
+#include <runtime/helpers/aligned_memory.h>
+#include <unit_tests/global_environment.h>
+#include <unit_tests/fixtures/device_fixture.h>
+#include <unit_tests/fixtures/memory_management_fixture.h>
+#include <unit_tests/mocks/mock_context.h>
+#include <unit_tests/mocks/mock_program.h>
+
+#include <memory>
+#include <array>
+#include <list>
+
+#include "test.h"
+
+using namespace OCLRT;
+using namespace std;
+
+class BinaryCacheFixture : public MemoryManagementFixture
+
+{
+  public:
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
+        cache = new BinaryCache;
+    }
+
+    void TearDown() override {
+        delete cache;
+        MemoryManagementFixture::TearDown();
+    }
+    BinaryCache *cache;
+};
+
+class TestedCompilerInterface : public CompilerInterface {
+  public:
+    static TestedCompilerInterface *getInstance() {
+        if (pInstance == nullptr) {
+            auto instance = new TestedCompilerInterface();
+
+            if (!instance->initialize()) {
+                delete instance;
+                instance = nullptr;
+            }
+
+            pInstance = instance;
+        }
+        return pInstance;
+    }
+    static void shutdown() {
+        if (pInstance) {
+            delete pInstance;
+            pInstance = nullptr;
+        }
+    }
+
+    static TestedCompilerInterface *pInstance;
+};
+TestedCompilerInterface *TestedCompilerInterface::pInstance = nullptr;
+
+class BinaryCacheMock : public BinaryCache {
+  public:
+    BinaryCacheMock() {
+    }
+
+    bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) override {
+        cacheInvoked++;
+        return cacheResult;
+    }
+
+    bool loadCachedBinary(const std::string kernelFileHash, Program &program) override {
+        return loadResult;
+    }
+
+    bool cacheResult = false;
+    uint32_t cacheInvoked = 0u;
+    bool loadResult = false;
+};
+
+class CompilerInterfaceCachedFixture : public MemoryManagementFixture,
+                                       public DeviceFixture {
+  public:
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
+        DeviceFixture::SetUp();
+        pCompilerInterface = TestedCompilerInterface::getInstance();
+        ASSERT_NE(pCompilerInterface, nullptr);
+    }
+
+    void TearDown() override {
+        TestedCompilerInterface::shutdown();
+        DeviceFixture::TearDown();
+        MemoryManagementFixture::TearDown();
+    }
+
+    CompilerInterface *pCompilerInterface;
+};
+
+typedef Test<BinaryCacheFixture> BinaryCacheHashTests;
+typedef Test<BinaryCacheFixture> BinaryCacheTests;
+typedef Test<CompilerInterfaceCachedFixture> CompilerInterfaceCachedTests;
+
+TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
+    Hash hash;
+    auto originalPtr = alignedMalloc(1024, MemoryConstants::pageSize);
+
+    memset(originalPtr, 0xFF, 1024);
+    char *misalignedPtr = (char *)originalPtr;
+    misalignedPtr++;
+
+    //values really used
+    misalignedPtr[0] = 1;
+    misalignedPtr[1] = 2;
+    misalignedPtr[2] = 3;
+    misalignedPtr[3] = 4;
+    misalignedPtr[4] = 5;
+    //values not used should be ommitted
+    misalignedPtr[5] = 6;
+    misalignedPtr[6] = 7;
+
+    hash.update(misalignedPtr, 3);
+    auto hash1 = hash.finish();
+
+    hash.reset();
+    hash.update(misalignedPtr, 4);
+    auto hash2 = hash.finish();
+
+    hash.reset();
+    hash.update(misalignedPtr, 5);
+    auto hash3 = hash.finish();
+
+    hash.reset();
+    hash.update(misalignedPtr, 6);
+    auto hash4 = hash.finish();
+
+    EXPECT_NE(hash1, hash2);
+    EXPECT_NE(hash1, hash3);
+    EXPECT_NE(hash1, hash4);
+    EXPECT_NE(hash2, hash3);
+    EXPECT_NE(hash2, hash4);
+    EXPECT_NE(hash3, hash4);
+
+    auto value2 = hash.getValue(misalignedPtr, 0);
+    EXPECT_EQ(0u, value2);
+
+    alignedFree(originalPtr);
+}
+
+TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
+    Hash hash;
+    auto originalPtr = alignedMalloc(1024, MemoryConstants::pageSize);
+
+    memset(originalPtr, 0xFF, 1024);
+    char *misalignedPtr = (char *)originalPtr;
+    misalignedPtr++;
+
+    //values really used
+    misalignedPtr[0] = 1;
+    //values not used should be ommitted
+    misalignedPtr[1] = 2;
+    misalignedPtr[2] = 3;
+    misalignedPtr[3] = 4;
+    misalignedPtr[4] = 5;
+    misalignedPtr[5] = 6;
+    misalignedPtr[6] = 7;
+
+    hash.update(misalignedPtr, 1);
+
+    auto value = hash.finish();
+    EXPECT_EQ(0x088350e6600f29c2u, value);
+
+    alignedFree(originalPtr);
+}
+
+TEST_F(BinaryCacheHashTests, hashShortBuffers) {
+    Hash hash;
+
+    std::list<uint64_t> hashes;
+    char data[4] = "aBc";
+
+    for (size_t i = 0; i <= strlen(data); i++) {
+        hash.reset();
+        hash.update(data, i);
+        auto res = hash.finish();
+
+        for (auto &in : hashes) {
+            EXPECT_NE(in, res) << "failed: " << i << " bytes";
+        }
+        hashes.push_back(res);
+
+        // hash once again to make sure results are the same
+        hash.reset();
+        hash.update(data, i);
+        auto res2 = hash.finish();
+        EXPECT_EQ(res, res2);
+    }
+}
+
+TEST_F(BinaryCacheHashTests, testUnique) {
+    static const size_t bufSize = 64;
+    TranslationArgs args;
+    HardwareInfo hwInfo;
+
+    std::list<std::string> hashes;
+
+    PLATFORM p1 = {(PRODUCT_FAMILY)1};
+    PLATFORM p2 = {(PRODUCT_FAMILY)2};
+    const PLATFORM *platforms[] = {nullptr, &p1, &p2};
+    FeatureTable s1;
+    FeatureTable s2;
+    s1.ftrSVM = true;
+    s2.ftrSVM = false;
+    const FeatureTable *skus[] = {nullptr, &s1, &s2};
+    WorkaroundTable w1;
+    WorkaroundTable w2;
+    w1.waDoNotUseMIReportPerfCount = true;
+    w2.waDoNotUseMIReportPerfCount = false;
+    const WorkaroundTable *was[] = {nullptr, &w1, &w2};
+    // GT_SYSTEM_INFO s1 = {};
+
+    std::array<std::string, 4> input = {{std::string(""),
+                                         std::string("12345678901234567890123456789012"),
+                                         std::string("12345678910234567890123456789012"),
+                                         std::string("12345678901234567891023456789012")}};
+
+    std::array<std::string, 3> options = {{std::string(""),
+                                           std::string("--some --options"),
+                                           std::string("--some --different --options")}};
+
+    std::array<std::string, 3> internalOptions = {{std::string(""),
+                                                   std::string("--some --options"),
+                                                   std::string("--some --different --options")}};
+
+    std::array<std::string, 1> tracingOptions = {{
+        std::string(""),
+        //        std::string("--some --options"),
+        //        std::string("--some --different --options")
+    }};
+
+    for (auto platform : platforms) {
+        hwInfo.pPlatform = platform;
+
+        for (auto sku : skus) {
+            hwInfo.pSkuTable = sku;
+
+            for (auto wa : was) {
+                hwInfo.pWaTable = wa;
+
+                for (size_t i1 = 0; i1 < input.size(); i1++) {
+                    std::unique_ptr<char> buf1(new char[bufSize]);
+                    strcpy_s(buf1.get(), bufSize, input[i1].c_str());
+                    args.pInput = buf1.get();
+                    args.InputSize = static_cast<uint32_t>(strlen(buf1.get()));
+
+                    for (size_t i2 = 0; i2 < options.size(); i2++) {
+                        std::unique_ptr<char> buf2(new char[bufSize]);
+                        strcpy_s(buf2.get(), bufSize, options[i2].c_str());
+                        args.pOptions = buf2.get();
+                        args.OptionsSize = static_cast<uint32_t>(strlen(buf2.get()));
+
+                        for (size_t i3 = 0; i3 < internalOptions.size(); i3++) {
+                            std::unique_ptr<char> buf3(new char[bufSize]);
+                            strcpy_s(buf3.get(), bufSize, internalOptions[i3].c_str());
+                            args.pInternalOptions = buf3.get();
+                            args.InternalOptionsSize = static_cast<uint32_t>(strlen(buf3.get()));
+
+                            for (size_t i4 = 0; i4 < tracingOptions.size(); i4++) {
+                                std::unique_ptr<char> buf4(new char[bufSize]);
+                                strcpy_s(buf4.get(), bufSize, tracingOptions[i4].c_str());
+                                args.pTracingOptions = buf4.get();
+                                args.TracingOptionsCount = static_cast<uint32_t>(strlen(buf4.get()));
+
+                                string hash = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
+                                                                       ArrayRef<const char>(args.pOptions, args.OptionsSize),
+                                                                       ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+                                for (auto &in : hashes) {
+                                    EXPECT_STRNE(in.c_str(), hash.c_str()) << "failed: " << i1 << ":" << i2 << ":" << i3 << ":" << i4;
+                                }
+                                hashes.push_back(hash);
+
+                                string hash2 = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
+                                                                        ArrayRef<const char>(args.pOptions, args.OptionsSize),
+                                                                        ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+                                EXPECT_STREQ(hash.c_str(), hash2.c_str());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST_F(BinaryCacheTests, doNotCacheEmpty) {
+    bool ret = cache->cacheBinary("some_hash", nullptr, 12u);
+    EXPECT_FALSE(ret);
+
+    const char *tmp1 = "Data";
+    ret = cache->cacheBinary("some_hash", tmp1, 0u);
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(BinaryCacheTests, loadNotFound) {
+    MockProgram program;
+    bool ret = cache->loadCachedBinary("----do-not-exists----", program);
+    EXPECT_FALSE(ret);
+}
+
+TEST_F(BinaryCacheTests, cacheThenLoad) {
+    MockProgram program;
+    static const char *hash = "SOME_HASH";
+    std::unique_ptr<char> data(new char[32]);
+    for (size_t i = 0; i < 32; i++)
+        data.get()[i] = static_cast<char>(i);
+
+    bool ret = cache->cacheBinary(hash, static_cast<const char *>(data.get()), 32);
+    EXPECT_TRUE(ret);
+
+    ret = cache->loadCachedBinary(hash, program);
+    EXPECT_TRUE(ret);
+}
+
+TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
+    std::unique_ptr<BinaryCache> cache(new BinaryCache());
+    auto res1 = pCompilerInterface->replaceBinaryCache(cache.get());
+    auto res2 = pCompilerInterface->replaceBinaryCache(res1);
+
+    EXPECT_NE(res1, res2);
+    EXPECT_EQ(res2, cache.get());
+}
+TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
+    MockContext context(pDevice, true);
+    MockProgram program(&context);
+    BinaryCacheMock cache;
+    TranslationArgs inputArgs;
+
+    inputArgs.pInput = new char[128];
+    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
+    igcDebugVars.forceBuildFailure = true;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
+
+    auto retVal = pCompilerInterface->build(program, inputArgs, true);
+    EXPECT_NE(CL_SUCCESS, retVal);
+
+    pCompilerInterface->replaceBinaryCache(res1);
+    delete[] inputArgs.pInput;
+
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceCachedTests, wasCached) {
+    MockContext context(pDevice, true);
+    MockProgram program(&context);
+    BinaryCacheMock cache;
+    TranslationArgs inputArgs;
+
+    inputArgs.pInput = new char[128];
+    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
+    igcDebugVars.forceBuildFailure = true;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
+    cache.loadResult = true;
+    auto retVal = pCompilerInterface->build(program, inputArgs, true);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pCompilerInterface->replaceBinaryCache(res1);
+    delete[] inputArgs.pInput;
+
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
+    MockContext context(pDevice, true);
+    MockProgram program(&context);
+    BinaryCacheMock cache;
+    TranslationArgs inputArgs;
+
+    inputArgs.pInput = new char[128];
+    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto res1 = pCompilerInterface->replaceBinaryCache(&cache);
+    auto retVal = pCompilerInterface->build(program, inputArgs, true);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, cache.cacheInvoked);
+
+    pCompilerInterface->replaceBinaryCache(res1);
+    delete[] inputArgs.pInput;
+
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+}

@@ -1,0 +1,185 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/event/event.h"
+#include "runtime/memory_manager/memory_manager.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
+#include "unit_tests/command_queue/enqueue_fixture.h"
+#include "unit_tests/fixtures/built_in_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/memory_management_fixture.h"
+#include "test.h"
+
+using namespace OCLRT;
+
+struct OOMSetting {
+    bool oomCS;
+    bool oomISH;
+};
+
+static OOMSetting oomSettings[] = {
+    {true, false},
+    {false, true},
+    {true, true}};
+
+struct OOMCommandQueueImageTest : public MemoryManagementFixture,
+                                  public DeviceFixture,
+                                  public CommandQueueFixture,
+                                  public BuiltInFixture,
+                                  public ::testing::TestWithParam<OOMSetting> {
+
+    using BuiltInFixture::SetUp;
+    using CommandQueueFixture::SetUp;
+
+    OOMCommandQueueImageTest() {
+    }
+
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
+        DeviceFixture::SetUp();
+        context = new MockContext(pDevice);
+        CommandQueueFixture::SetUp(context, pDevice, 0);
+        BuiltInFixture::SetUp(pDevice);
+
+        srcImage = Image2dHelper<>::create(context);
+        dstImage = Image2dHelper<>::create(context);
+
+        const auto &oomSetting = GetParam();
+        auto oomSize = 10u;
+        if (oomSetting.oomCS) {
+            auto &cs = pCmdQ->getCS(oomSize);
+
+            // CommandStream may be larger than requested so grab what wasnt requested
+            cs.getSpace(cs.getAvailableSpace() - oomSize);
+            ASSERT_EQ(oomSize, cs.getAvailableSpace());
+        }
+
+        if (oomSetting.oomISH) {
+            auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, oomSize);
+
+            // IndirectHeap may be larger than requested so grab what wasnt requested
+            ish.getSpace(ish.getAvailableSpace() - oomSize);
+            ASSERT_EQ(oomSize, ish.getAvailableSpace());
+        }
+    }
+
+    void TearDown() override {
+        delete dstImage;
+        delete srcImage;
+        context->release();
+
+        BuiltInFixture::TearDown();
+        CommandQueueFixture::TearDown();
+        DeviceFixture::TearDown();
+        MemoryManagementFixture::TearDown();
+    }
+
+    MockContext *context;
+    Image *srcImage = nullptr;
+    Image *dstImage = nullptr;
+};
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueCopyImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueCopyImageHelper<>::enqueue(&cmdQ);
+
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueFillImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueFillImageHelper<>::enqueue(&cmdQ);
+
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueReadImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueReadImageHelper<>::enqueue(&cmdQ);
+
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueWriteImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueWriteImageHelper<>::enqueue(&cmdQ);
+
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+INSTANTIATE_TEST_CASE_P(
+    OOM,
+    OOMCommandQueueImageTest,
+    testing::ValuesIn(oomSettings));

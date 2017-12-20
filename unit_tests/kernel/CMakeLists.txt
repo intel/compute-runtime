@@ -1,0 +1,42 @@
+# Copyright (c) 2017, Intel Corporation
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+#We are setting all of the source / OpenCL / tests / kernel files here and
+#sending the variable up to the parent scope
+set(IGDRCL_SRCS_tests_kernel
+    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+    "${CMAKE_CURRENT_SOURCE_DIR}/clone_kernel_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_accelerator_arg_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_buffer_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_buffer_fixture.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_buffer_fixture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_info_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_pipe_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_svm_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_image_arg_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_immediate_arg_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_is_patched_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_dev_queue_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_reflection_surface_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_slm_arg_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_slm_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/parent_kernel_tests.cpp"
+    PARENT_SCOPE)

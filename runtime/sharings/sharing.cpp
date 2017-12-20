@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "config.h"
+#include "CL/cl.h"
+#include "runtime/mem_obj/mem_obj.h"
+#include "sharing.h"
+#include <memory>
+
+namespace OCLRT {
+void SharingHandler::acquire(MemObj *memObj) {
+    if (acquireCount == 0) {
+        UpdateData updateData;
+        auto currentSharedHandle = memObj->getGraphicsAllocation()->peekSharedHandle();
+        updateData.sharedHandle = currentSharedHandle;
+        updateData.memObject = memObj;
+        synchronizeHandler(&updateData);
+        DEBUG_BREAK_IF(updateData.synchronizationStatus != SynchronizeStatus::ACQUIRE_SUCCESFUL);
+        DEBUG_BREAK_IF(currentSharedHandle != updateData.sharedHandle);
+    }
+    acquireCount++;
+}
+
+void SharingHandler::synchronizeHandler(UpdateData *updateData) {
+    synchronizeObject(updateData);
+}
+
+void SharingHandler::release(MemObj *memObject) {
+    DEBUG_BREAK_IF(acquireCount <= 0);
+    acquireCount--;
+    if (acquireCount == 0) {
+        releaseResource(memObject);
+    }
+}
+}

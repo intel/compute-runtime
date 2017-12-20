@@ -1,0 +1,98 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#include <utility>
+#include "runtime/helpers/basic_math.h"
+#include "CL/cl.h"
+
+namespace OCLRT {
+
+inline void convertFillColor(const void *fillColor,
+                             int32_t *iFillColor,
+                             const cl_image_format &oldImageFormat,
+                             const cl_image_format &newImageFormat) {
+    float fFillColor[4] = {0.0f};
+
+    for (auto i = 0; i < 4; i++) {
+        iFillColor[i] = *((int32_t *)fillColor + i);
+        fFillColor[i] = *((float *)fillColor + i);
+    }
+
+    if (oldImageFormat.image_channel_order == CL_A) {
+        std::swap(iFillColor[0], iFillColor[3]);
+        std::swap(fFillColor[0], fFillColor[3]);
+    } else if (oldImageFormat.image_channel_order == CL_BGRA || oldImageFormat.image_channel_order == CL_sBGRA) {
+        std::swap(iFillColor[0], iFillColor[2]);
+        std::swap(fFillColor[0], fFillColor[2]);
+    }
+
+    if (oldImageFormat.image_channel_order == CL_sRGBA || oldImageFormat.image_channel_order == CL_sBGRA) {
+        for (auto i = 0; i < 3; i++) {
+            if (fFillColor[i] != fFillColor[i]) {
+                fFillColor[i] = 0.0f;
+            }
+            if (fFillColor[i] > 1.0f) {
+                fFillColor[i] = 1.0f;
+            } else if (fFillColor[i] < 0.0f) {
+                fFillColor[i] = 0.0f;
+            } else if (fFillColor[i] < 0.0031308f) {
+                fFillColor[i] = 12.92f * fFillColor[i];
+            } else {
+                fFillColor[i] = 1.055f * pow(fFillColor[i], 1.0f / 2.4f) - 0.055f;
+            }
+        }
+    }
+
+    if (newImageFormat.image_channel_data_type == CL_UNSIGNED_INT8) {
+        if (oldImageFormat.image_channel_data_type == CL_UNORM_INT8) {
+            for (auto i = 0; i < 4; i++) {
+                if ((oldImageFormat.image_channel_order == CL_sRGBA || oldImageFormat.image_channel_order == CL_sBGRA) && i < 3) {
+                    iFillColor[i] = static_cast<int32_t>(0xFF * fFillColor[i] + 0.5f);
+                } else {
+                    iFillColor[i] = static_cast<int32_t>(0xFF * fFillColor[i]);
+                }
+            }
+        }
+
+        for (auto i = 0; i < 4; i++) {
+            iFillColor[i] = iFillColor[i] & 0xFF;
+        }
+    } else if (newImageFormat.image_channel_data_type == CL_UNSIGNED_INT16) {
+        if (oldImageFormat.image_channel_data_type == CL_UNORM_INT16) {
+            for (auto i = 0; i < 4; i++) {
+                iFillColor[i] = static_cast<int32_t>(0xFFFF * fFillColor[i]);
+            }
+        } else if (oldImageFormat.image_channel_data_type == CL_HALF_FLOAT) {
+            //float to half convert.
+            for (auto i = 0; i < 4; i++) {
+                uint16_t temp = Math::float2Half(fFillColor[i]);
+                iFillColor[i] = temp;
+            }
+        }
+
+        for (auto i = 0; i < 4; i++) {
+            iFillColor[i] = iFillColor[i] & 0xFFFF;
+        }
+    }
+}
+}

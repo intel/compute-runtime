@@ -1,0 +1,69 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#include "hw_cmds.h"
+#include "runtime/command_queue/command_queue_hw.h"
+#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/device/device.h"
+#include "runtime/event/event.h"
+#include "runtime/memory_manager/surface.h"
+
+namespace OCLRT {
+
+template <typename GfxFamily>
+struct EnqueueOperation<GfxFamily, CL_COMMAND_MIGRATE_MEM_OBJECTS> {
+    static size_t getSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
+        size_t size = 0;
+        if (reserveProfilingCmdsSpace) {
+            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        }
+
+        return size;
+    }
+};
+
+template <typename GfxFamily>
+cl_int CommandQueueHw<GfxFamily>::enqueueMigrateMemObjects(cl_uint numMemObjects,
+                                                           const cl_mem *memObjects,
+                                                           cl_mem_migration_flags flags,
+                                                           cl_uint numEventsInWaitList,
+                                                           const cl_event *eventWaitList,
+                                                           cl_event *event) {
+    NullSurface s;
+    Surface *surfaces[] = {&s};
+    cl_uint dimensions = 1;
+
+    enqueueHandler<CL_COMMAND_MIGRATE_MEM_OBJECTS>(surfaces,
+                                                   false,
+                                                   nullptr,
+                                                   dimensions,
+                                                   nullptr,
+                                                   nullptr,
+                                                   nullptr,
+                                                   numEventsInWaitList,
+                                                   eventWaitList,
+                                                   event);
+    return CL_SUCCESS;
+}
+} // namespace OCLRT

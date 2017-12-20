@@ -1,0 +1,492 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "config.h"
+#include "environment.h"
+#include "mock/mock_offline_compiler.h"
+#include "offline_compiler_tests.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/file_io.h"
+#include "runtime/helpers/options.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+
+#define ARRAY_COUNT(x) (sizeof(x) / sizeof(x[0]))
+
+extern Environment *gEnvironment;
+
+namespace OCLRT {
+
+bool compilerOutputExists(const std::string &fileName, const std::string &type) {
+    std::string fName(fileName);
+    fName.append("_");
+    fName.append(gEnvironment->devicePrefix);
+    fName.append(".");
+    fName.append(type);
+
+    return fileExists(fName);
+}
+
+TEST_F(OfflineCompilerTests, GoodArgTest) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GoodBuildTest) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    testing::internal::CaptureStdout();
+    retVal = pOfflineCompiler->build();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bc"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+
+    std::string buildLog = pOfflineCompiler->getBuildLog();
+    EXPECT_STREQ(buildLog.c_str(), "");
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-llvm_text"};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "ll"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    uint8_t binary[] = {
+        0x02, 0x23, 0x3, 0x40, 0x56, 0x7, 0x80, 0x90, 0x1, 0x03,
+        0x34, 0x5, 0x60, 0x78, 0x9, 0x66, 0xff, 0x10, 0x10, 0x10,
+        0x02, 0x23, 0x3, 0x40, 0x56, 0x7, 0x80, 0x90, 0x1, 0x03,
+        0x34, 0x5, 0x60, 0x78, 0x9, 0x66, 0xff,
+    };
+
+    std::string deviceName = gEnvironment->devicePrefix;
+    std::string fileName = "scheduler";
+    std::string retArray = pOfflineCompiler->parseBinAsCharArray(binary, sizeof(binary), deviceName, fileName);
+    std::string target = "#include <cstddef>\n"
+                         "#include <cstdint>\n\n"
+                         "size_t SchedulerBinarySize_" +
+                         deviceName + " = 37;\n"
+                                      "uint32_t SchedulerBinary_" +
+                         deviceName + "[10] = {\n"
+                                      "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
+                                      "    0x66097860, 0xff000000};\n\n"
+                                      "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n\n"
+                                      "namespace OCLRT {\n"
+                                      "static RegisterEmbeddedResource registerSchedulerBin(\n"
+                                      "    createBuiltinResourceName(\n"
+                                      "        EBuiltInOps::Scheduler,\n"
+                                      "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" +
+                         deviceName + "\", 0)\n"
+                                      "        .c_str(),\n"
+                                      "    (const char *)SchedulerBinary_" +
+                         deviceName + ",\n"
+                                      "    SchedulerBinarySize_" +
+                         deviceName + ");\n"
+                                      "}\n";
+    EXPECT_EQ(retArray, target);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-cpp_file"};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "cpp"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bc"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
+    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str(),
+        "-out_dir",
+        "offline_compiler_test"};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "bc"));
+    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "gen"));
+    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "bin"));
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, PrintUsage) {
+    const char *argv[] = {
+        "cloc",
+        "-?"};
+
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STRNE("", output.c_str());
+    EXPECT_EQ(PRINT_USAGE, retVal);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
+    DebugManager.flags.PrintDebugMessages.set(true);
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/ImANaughtyFile.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_EQ(INVALID_FILE, retVal);
+    DebugManager.flags.PrintDebugMessages.set(false);
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
+    const char *argv[] = {
+        "cloc",
+        "-n",
+        "test_files/ImANaughtyFile.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
+    const char *argv_a[] = {
+        "cloc",
+        "-file",
+    };
+
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv_a), argv_a, retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+
+    delete pOfflineCompiler;
+
+    const char *argv_b[] = {
+        "cloc",
+        "-file",
+        "test_files/ImANaughtyFile.cl",
+        "-device"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv_b), argv_b, retVal);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_STRNE(output.c_str(), "");
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_EQ(INVALID_COMMAND_LINE, retVal);
+
+    delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/shouldfail.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    gEnvironment->SetInputFileName("invalid_file_name");
+    testing::internal::CaptureStdout();
+
+    retVal = pOfflineCompiler->build();
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "");
+
+    std::string buildLog = pOfflineCompiler->getBuildLog();
+    EXPECT_STRNE(buildLog.c_str(), "");
+
+    gEnvironment->SetInputFileName("copybuffer");
+
+    delete pOfflineCompiler;
+}
+
+TEST(OfflineCompilerTest, parseCmdLine) {
+    const char *argv[] = {
+        "cloc",
+        "-cl-intel-greater-than-4GB-buffer-required"};
+
+    MockOfflineCompiler *mockOfflineCompiler = new MockOfflineCompiler();
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    size_t found = internalOptions.find(argv[1]);
+    EXPECT_NE(std::string::npos, found);
+
+    delete mockOfflineCompiler;
+}
+
+TEST(OfflineCompilerTest, parseDebugSettings) {
+    MockOfflineCompiler *mockOfflineCompiler = new MockOfflineCompiler();
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    bool isBufferOffsetOpt = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get();
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(true);
+
+    mockOfflineCompiler->parseDebugSettings();
+
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(isBufferOffsetOpt);
+
+    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
+    EXPECT_NE(std::string::npos, found);
+
+    delete mockOfflineCompiler;
+}
+
+TEST(OfflineCompilerTest, getStringWithinDelimiters) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    void *ptrSrc = nullptr;
+    size_t srcSize = loadDataFromFile("test_files/copy_buffer_to_buffer.igdrcl_built_in", ptrSrc);
+
+    const std::string src = (const char *)ptrSrc;
+    ASSERT_EQ(srcSize, src.size());
+
+    // assert that pattern was found
+    ASSERT_NE(std::string::npos, src.find("R\"===("));
+    ASSERT_NE(std::string::npos, src.find(")===\""));
+
+    auto dst = mockOfflineCompiler->getStringWithinDelimiters(src);
+
+    // expect that pattern was not found
+    EXPECT_EQ(std::string::npos, dst.find("R\"===("));
+    EXPECT_EQ(std::string::npos, dst.find(")===\""));
+
+    delete[] reinterpret_cast<char *>(ptrSrc);
+}
+
+TEST(OfflineCompilerTest, convertToPascalCase) {
+    EXPECT_EQ(0, strcmp("CopyBufferToBuffer", convertToPascalCase("copy_buffer_to_buffer").c_str()));
+    EXPECT_EQ(0, strcmp("CopyBufferRect", convertToPascalCase("copy_buffer_rect").c_str()));
+    EXPECT_EQ(0, strcmp("FillBuffer", convertToPascalCase("fill_buffer").c_str()));
+    EXPECT_EQ(0, strcmp("CopyBufferToImage3d", convertToPascalCase("copy_buffer_to_image3d").c_str()));
+    EXPECT_EQ(0, strcmp("CopyImage3dToBuffer", convertToPascalCase("copy_image3d_to_buffer").c_str()));
+    EXPECT_EQ(0, strcmp("CopyImageToImage1d", convertToPascalCase("copy_image_to_image1d").c_str()));
+    EXPECT_EQ(0, strcmp("CopyImageToImage2d", convertToPascalCase("copy_image_to_image2d").c_str()));
+    EXPECT_EQ(0, strcmp("CopyImageToImage3d", convertToPascalCase("copy_image_to_image3d").c_str()));
+    EXPECT_EQ(0, strcmp("FillImage1d", convertToPascalCase("fill_image1d").c_str()));
+    EXPECT_EQ(0, strcmp("FillImage2d", convertToPascalCase("fill_image2d").c_str()));
+    EXPECT_EQ(0, strcmp("FillImage3d", convertToPascalCase("fill_image3d").c_str()));
+    EXPECT_EQ(0, strcmp("VmeBlockMotionEstimateIntel", convertToPascalCase("vme_block_motion_estimate_intel").c_str()));
+    EXPECT_EQ(0, strcmp("VmeBlockAdvancedMotionEstimateCheckIntel", convertToPascalCase("vme_block_advanced_motion_estimate_check_intel").c_str()));
+    EXPECT_EQ(0, strcmp("VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel", convertToPascalCase("vme_block_advanced_motion_estimate_bidirectional_check_intel").c_str()));
+    EXPECT_EQ(0, strcmp("Scheduler", convertToPascalCase("scheduler").c_str()));
+    EXPECT_EQ(0, strcmp("", convertToPascalCase("").c_str()));
+}
+
+TEST(OfflineCompilerTest, getHardwareInfo) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    EXPECT_EQ(CL_INVALID_DEVICE, mockOfflineCompiler->getHardwareInfo("invalid"));
+    EXPECT_EQ(CL_SUCCESS, mockOfflineCompiler->getHardwareInfo(gEnvironment->devicePrefix.c_str()));
+}
+
+TEST(OfflineCompilerTest, storeBinary) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    const char pSrcBinary[] = {0x01, 0x02, 0x03, 0x04, 0x05};
+    const size_t srcBinarySize = sizeof(pSrcBinary);
+    char *pDstBinary = new char[srcBinarySize];
+    size_t dstBinarySize = srcBinarySize;
+
+    mockOfflineCompiler->storeBinary(pDstBinary, dstBinarySize, pSrcBinary, srcBinarySize);
+    EXPECT_EQ(0, memcmp(pDstBinary, pSrcBinary, srcBinarySize));
+
+    delete[] pDstBinary;
+}
+
+TEST(OfflineCompilerTest, updateBuildLog) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    std::string ErrorString = "Error: undefined variable";
+    mockOfflineCompiler->updateBuildLog(ErrorString.c_str(), ErrorString.length());
+    EXPECT_EQ(0, ErrorString.compare(mockOfflineCompiler->getBuildLog()));
+
+    std::string FinalString = "Build failure";
+    mockOfflineCompiler->updateBuildLog(FinalString.c_str(), FinalString.length());
+    EXPECT_EQ(0, (ErrorString + "\n" + FinalString).compare(mockOfflineCompiler->getBuildLog().c_str()));
+}
+
+TEST(OfflineCompilerTest, buildSourceCode) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
+
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, mockOfflineCompiler->getGenBinary());
+    EXPECT_EQ(0u, mockOfflineCompiler->getGenBinarySize());
+
+    retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(nullptr, mockOfflineCompiler->getGenBinary());
+    EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
+}
+
+TEST(OfflineCompilerTest, generateElfBinary) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto retVal = mockOfflineCompiler->generateElfBinary();
+    EXPECT_FALSE(retVal);
+
+    iOpenCL::SProgramBinaryHeader binHeader;
+    memset(&binHeader, 0, sizeof(binHeader));
+    binHeader.Magic = iOpenCL::MAGIC_CL;
+    binHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3;
+    binHeader.Device = platformDevices[0]->pPlatform->eRenderCoreFamily;
+    binHeader.GPUPointerSizeInBytes = 8;
+    binHeader.NumberOfKernels = 0;
+    binHeader.SteppingId = 0;
+    binHeader.PatchListSize = 0;
+    size_t binSize = sizeof(iOpenCL::SProgramBinaryHeader);
+
+    mockOfflineCompiler->storeGenBinary(&binHeader, binSize);
+
+    EXPECT_EQ(nullptr, mockOfflineCompiler->getElfBinary());
+    EXPECT_EQ(0u, mockOfflineCompiler->getElfBinarySize());
+
+    retVal = mockOfflineCompiler->generateElfBinary();
+    EXPECT_TRUE(retVal);
+
+    EXPECT_NE(nullptr, mockOfflineCompiler->getElfBinary());
+    EXPECT_NE(0u, mockOfflineCompiler->getElfBinarySize());
+}
+
+} // namespace OCLRT

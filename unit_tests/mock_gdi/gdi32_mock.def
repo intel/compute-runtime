@@ -1,0 +1,73 @@
+; Copyright (c) 2017, Intel Corporation
+;
+; Permission is hereby granted, free of charge, to any person obtaining a
+; copy of this software and associated documentation files (the "Software"),
+; to deal in the Software without restriction, including without limitation
+; the rights to use, copy, modify, merge, publish, distribute, sublicense,
+; and/or sell copies of the Software, and to permit persons to whom the
+; Software is furnished to do so, subject to the following conditions:
+;
+; The above copyright notice and this permission notice shall be included
+; in all copies or substantial portions of the Software.
+;
+; THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+; OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+; FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+; THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+; OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+; ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+; OTHER DEALINGS IN THE SOFTWARE.
+
+LIBRARY    "gdi32_mock"
+EXPORTS
+D3DKMTOpenAdapterFromHdc
+D3DKMTOpenAdapterFromLuid
+D3DKMTCreateAllocation
+D3DKMTDestroyAllocation
+D3DKMTDestroyAllocation2
+D3DKMTQueryAdapterInfo
+D3DKMTCloseAdapter
+D3DKMTCreateDevice
+D3DKMTDestroyDevice
+D3DKMTEscape
+D3DKMTCreateContextVirtual
+D3DKMTDestroyContext
+D3DKMTOpenResource
+D3DKMTOpenResourceFromNtHandle
+D3DKMTQueryResourceInfo
+D3DKMTQueryResourceInfoFromNtHandle
+D3DKMTLock
+D3DKMTUnlock
+D3DKMTRender
+D3DKMTCreateSynchronizationObject
+D3DKMTCreateSynchronizationObject2
+D3DKMTDestroySynchronizationObject
+D3DKMTSignalSynchronizationObject
+D3DKMTWaitForSynchronizationObject
+D3DKMTWaitForSynchronizationObjectFromCpu
+D3DKMTSignalSynchronizationObjectFromCpu
+D3DKMTWaitForSynchronizationObjectFromGpu
+D3DKMTSignalSynchronizationObjectFromGpu
+D3DKMTCreatePagingQueue
+D3DKMTDestroyPagingQueue
+D3DKMTLock2
+D3DKMTUnlock2
+D3DKMTMapGpuVirtualAddress
+D3DKMTReserveGpuVirtualAddress
+D3DKMTFreeGpuVirtualAddress
+D3DKMTUpdateGpuVirtualAddress
+D3DKMTSubmitCommand
+D3DKMTMakeResident
+D3DKMTEvict
+D3DKMTGetDeviceState
+D3DKMTRegisterTrimNotification
+D3DKMTUnregisterTrimNotification
+MockSetAdapterInfo
+MockSetSizes
+GetMockSizes
+GetMockLastDestroyedResHandle
+SetMockLastDestroyedResHandle
+GetMockCreateDeviceParams
+SetMockCreateDeviceParams
+getMockAllocation
+getAdapterInfoAddress

@@ -1,0 +1,37 @@
+# Copyright (c) 2017, Intel Corporation
+#
+# Permission is hereby granted, free of charge, to any person obtaining a
+# copy of this software and associated documentation files (the "Software"),
+# to deal in the Software without restriction, including without limitation
+# the rights to use, copy, modify, merge, publish, distribute, sublicense,
+# and/or sell copies of the Software, and to permit persons to whom the
+# Software is furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included
+# in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+# OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+# THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+# OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+# ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+# OTHER DEALINGS IN THE SOFTWARE.
+
+if(LIBVA_FOUND)
+    list(APPEND IGDRCL_SRCS_tests_sharings
+      "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
+      "${CMAKE_CURRENT_SOURCE_DIR}/cl_create_from_va_media_surface_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_acquire_va_media_surfaces_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_release_va_media_surfaces_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/cl_get_extension_function_address_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/context_va_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/kernel_va_image_arg_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/mock_va_sharing.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/va_base_object_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_enable_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_linux_tests.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/va_sharing_tests.cpp"
+    )
+    set(IGDRCL_SRCS_tests_sharings "${IGDRCL_SRCS_tests_sharings}" PARENT_SCOPE)
+endif(LIBVA_FOUND)

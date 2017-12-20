@@ -1,0 +1,99 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "unit_tests/fixtures/device_fixture.h"
+#include "test.h"
+
+using namespace OCLRT;
+
+typedef Test<DeviceFixture> Gen8DeviceCaps;
+
+GEN8TEST_F(Gen8DeviceCaps, reportsOcl20) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_STREQ("OpenCL 2.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, skuSpecificCaps) {
+    const auto &caps = pDevice->getDeviceInfo();
+    std::string extensionString = caps.deviceExtensions;
+
+    EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+    EXPECT_NE(0u, caps.doubleFpConfig);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
+    EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, whitelistedRegister) {
+    EXPECT_FALSE(pDevice->getWhitelistedRegisters().csChicken1_0x2580);
+    EXPECT_FALSE(pDevice->getWhitelistedRegisters().chicken0hdc_0xE5F0);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
+    EXPECT_EQ(30, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMs);
+}
+
+GEN8TEST_F(Gen8DeviceCaps, compression) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
+}
+
+BDWTEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_EQ(83u, caps.profilingTimerResolution);
+}
+
+typedef Test<DeviceFixture> BdwUsDeviceIdTest;
+
+BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {
+    unsigned short bdwSimulationIds[6] = {
+        IBDW_GT0_DESK_DEVICE_F0_ID,
+        IBDW_GT1_DESK_DEVICE_F0_ID,
+        IBDW_GT2_DESK_DEVICE_F0_ID,
+        IBDW_GT3_DESK_DEVICE_F0_ID,
+        IBDW_GT4_DESK_DEVICE_F0_ID,
+        0, // default, non-simulation
+    };
+    OCLRT::MockDevice *mockDevice = nullptr;
+
+    for (auto id : bdwSimulationIds) {
+        mockDevice = createWithUsDeviceId(id);
+        ASSERT_NE(mockDevice, nullptr);
+
+        if (id == 0)
+            EXPECT_FALSE(mockDevice->isSimulation());
+        else
+            EXPECT_TRUE(mockDevice->isSimulation());
+        delete mockDevice;
+    }
+}
+
+BDWTEST_F(BdwUsDeviceIdTest, GivenBDWWhenCheckftr64KBpagesThenFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
+}

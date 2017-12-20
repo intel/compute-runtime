@@ -1,0 +1,3 @@
+-R
+-h .inl.h
+--langmap=c++:.inl.cpp.h

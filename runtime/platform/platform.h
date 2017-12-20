@@ -1,0 +1,88 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#include "config.h"
+#include "platform_info.h"
+#include "runtime/api/cl_types.h"
+#include "runtime/device/device_vector.h"
+#include "runtime/helpers/base_object.h"
+#include <condition_variable>
+#include <vector>
+
+namespace OCLRT {
+
+class CompilerInterface;
+class Device;
+class AsyncEventsHandler;
+struct HardwareInfo;
+
+template <>
+struct OpenCLObjectMapper<_cl_platform_id> {
+    typedef class Platform DerivedType;
+};
+
+class Platform : public BaseObject<_cl_platform_id> {
+  public:
+    static const cl_ulong objectMagic = 0x8873ACDEF2342133LL;
+
+    Platform();
+    ~Platform() override;
+
+    cl_int getInfo(cl_platform_info paramName,
+                   size_t paramValueSize,
+                   void *paramValue,
+                   size_t *paramValueSizeRet);
+
+    std::string getCompilerExtensions();
+
+    bool initialize(size_t numDevices,
+                    const HardwareInfo **devices);
+    bool isInitialized();
+    void shutdown();
+
+    size_t getNumDevices() const;
+    Device **getDevices();
+    Device *getDevice(size_t deviceOrdinal);
+
+    const PlatformInfo &getPlatformInfo() const;
+    AsyncEventsHandler *getAsyncEventsHandler();
+    void createAsyncEventsHandler(AsyncEventsHandler *handler);
+
+  protected:
+    enum {
+        StateNone,
+        StateIniting,
+        StateInited,
+    };
+    cl_uint state = StateNone;
+    std::string getCompilerExtensions(const char *deviceExtensions);
+    void fillGlobalDispatchTable();
+
+    PlatformInfo *platformInfo = nullptr;
+    DeviceVector devices;
+    std::string compilerExtensions;
+    std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
+};
+
+Platform *platform();
+}
