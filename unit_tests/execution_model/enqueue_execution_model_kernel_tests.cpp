@@ -506,3 +506,19 @@ HWTEST_F(ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKer
         EXPECT_EQ(1, mockCsr->flushCalledCount);
     }
 }
+
+HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueueMarksCSRMediaVFEStateDirty) {
+
+    if (pDevice->getSupportedClVersion() >= 20) {
+        size_t offset[3] = {0, 0, 0};
+        size_t gws[3] = {1, 1, 1};
+        int32_t execStamp;
+        auto mockCsr = new MockCsr<FamilyType>(execStamp);
+        pDevice->resetCommandStreamReceiver(mockCsr);
+
+        mockCsr->overrideMediaVFEStateDirty(false);
+        pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
+
+        EXPECT_TRUE(mockCsr->peekMediaVfeStateDirty());
+    }
+}

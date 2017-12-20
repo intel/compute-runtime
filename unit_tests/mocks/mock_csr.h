@@ -96,6 +96,7 @@ template <typename GfxFamily>
 class MockCsr : public MockCsrBase<GfxFamily> {
   public:
     using BaseClass = MockCsrBase<GfxFamily>;
+    using CommandStreamReceiver::mediaVfeStateDirty;
 
     MockCsr() = delete;
     MockCsr(const HardwareInfo &hwInfoIn) = delete;
@@ -131,6 +132,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
             taskLevel,
             dispatchFlags);
     }
+
+    bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     bool slmUsedInLastFlushTask = false;
     uint32_t lastTaskLevelToFlushTask = 0;

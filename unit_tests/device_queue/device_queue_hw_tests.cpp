@@ -34,6 +34,8 @@
 #include "runtime/command_queue/dispatch_walker_helper.h"
 #include "runtime/helpers/kernel_commands.h"
 
+#include <memory>
+
 using namespace OCLRT;
 using namespace DeviceHostQueue;
 
@@ -162,6 +164,20 @@ class DeviceQueueSlb : public DeviceQueueHwTest {
         return ptrOffset(position, size);
     }
 };
+
+HWTEST_F(DeviceQueueSlb, allocateSlbBufferAllocatesCorrectSize) {
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]));
+
+    LinearStream *slbCS = mockDeviceQueueHw->getSlbCS();
+    size_t expectedSize = (mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize()) * 128;
+    expectedSize += sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
+    expectedSize = alignUp(expectedSize, MemoryConstants::pageSize);
+
+    expectedSize += MockDeviceQueueHw<FamilyType>::getExecutionModelCleanupSectionSize();
+    expectedSize += (4 * MemoryConstants::pageSize);
+
+    EXPECT_LE(expectedSize, slbCS->getAvailableSpace());
+}
 
 HWTEST_F(DeviceQueueSlb, buildSlbAfterReset) {
     auto mockDeviceQueueHw =
@@ -304,6 +320,13 @@ HWTEST_F(DeviceQueueSlb, cleanupSection) {
     auto *slbCS = mockDeviceQueueHw->getSlbCS();
     size_t cleanupSectionOffset = alignUp(mockDeviceQueueHw->numberOfDeviceEnqueues * commandsSize + sizeof(MI_BATCH_BUFFER_START), MemoryConstants::pageSize);
     size_t cleanupSectionOffsetToParse = cleanupSectionOffset;
+
+    size_t slbUsed = slbCS->getUsed();
+    slbUsed = alignUp(slbUsed, MemoryConstants::pageSize);
+    size_t slbMax = slbCS->getMaxAvailableSpace();
+
+    // 4 pages padding expected after cleanup section
+    EXPECT_LE(4 * MemoryConstants::pageSize, slbMax - slbUsed);
 
     if (mockParentKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
 
@@ -618,15 +641,127 @@ HWTEST_F(TheSimplestDeviceQueueFixture, resetDeviceQueueSetEarlyReturnValues) {
 
     DebugManager.flags.SchedulerSimulationReturnInstance.set(3);
 
-    MockDevice *device = Device::create<MockDevice>(platformDevices[0]);
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
     MockContext context;
-    MockDeviceQueueHw<FamilyType> *mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(&context, device, deviceQueueProperties::minimumProperties[0]);
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
     mockDeviceQueueHw->resetDeviceQueue();
 
     EXPECT_EQ(3u, mockDeviceQueueHw->getIgilQueue()->m_controls.m_SchedulerEarlyReturn);
     EXPECT_EQ(0u, mockDeviceQueueHw->getIgilQueue()->m_controls.m_SchedulerEarlyReturnCounter);
+}
 
-    delete mockDeviceQueueHw;
-    delete device;
+HWTEST_F(TheSimplestDeviceQueueFixture, addMediaStateClearCmds) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    MockContext context;
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
+
+    HardwareParse hwParser;
+    auto *slbCS = mockDeviceQueueHw->getSlbCS();
+
+    mockDeviceQueueHw->addMediaStateClearCmds();
+
+    hwParser.parseCommands<FamilyType>(*slbCS, 0);
+    hwParser.findHardwareCommands<FamilyType>();
+
+    auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    EXPECT_NE(hwParser.cmdList.end(), pipeControlItor);
+
+    if (mockDeviceQueueHw->pipeControlWa) {
+        pipeControlItor++;
+        EXPECT_NE(hwParser.cmdList.end(), pipeControlItor);
+    }
+
+    PIPE_CONTROL *pipeControl = (PIPE_CONTROL *)*pipeControlItor;
+    EXPECT_TRUE(pipeControl->getGenericMediaStateClear());
+
+    auto mediaVfeStateItor = find<MEDIA_VFE_STATE *>(pipeControlItor, hwParser.cmdList.end());
+
+    EXPECT_NE(hwParser.cmdList.end(), mediaVfeStateItor);
+}
+
+HWTEST_F(TheSimplestDeviceQueueFixture, addExecutionModelCleanupSectionClearsMediaState) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    class MockDeviceQueueWithMediaStateClearRegistering : public MockDeviceQueueHw<FamilyType> {
+      public:
+        MockDeviceQueueWithMediaStateClearRegistering(Context *context,
+                                                      Device *device,
+                                                      cl_queue_properties &properties) : MockDeviceQueueHw<FamilyType>(context, device, properties) {
+        }
+
+        bool addMediaStateClearCmdsCalled = false;
+        void addMediaStateClearCmds() override {
+            addMediaStateClearCmdsCalled = true;
+        }
+    };
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    MockContext context;
+    std::unique_ptr<MockDeviceQueueWithMediaStateClearRegistering> mockDeviceQueueHw(new MockDeviceQueueWithMediaStateClearRegistering(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
+
+    std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*device));
+    uint32_t taskCount = 7;
+    mockDeviceQueueHw->buildSlbDummyCommands();
+
+    EXPECT_FALSE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);
+    mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel.get(), nullptr, taskCount);
+    EXPECT_TRUE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);
+}
+
+HWTEST_F(TheSimplestDeviceQueueFixture, getMediaStateClearCmdsSize) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
+
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    MockContext context;
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
+
+    size_t expectedSize = 2 * sizeof(PIPE_CONTROL) + sizeof(PIPE_CONTROL) + sizeof(MEDIA_VFE_STATE);
+    EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getMediaStateClearCmdsSize());
+}
+
+HWTEST_F(TheSimplestDeviceQueueFixture, getExecutionModelCleanupSectionSize) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename FamilyType::MI_MATH;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    MockContext context;
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
+
+    size_t expectedSize = sizeof(PIPE_CONTROL) +
+                          2 * sizeof(MI_LOAD_REGISTER_REG) +
+                          sizeof(MI_LOAD_REGISTER_IMM) +
+                          sizeof(PIPE_CONTROL) +
+                          sizeof(MI_MATH) +
+                          NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE);
+
+    expectedSize += MockDeviceQueueHw<FamilyType>::getProfilingEndCmdsSize();
+    expectedSize += MockDeviceQueueHw<FamilyType>::getMediaStateClearCmdsSize();
+
+    expectedSize += 4 * sizeof(PIPE_CONTROL);
+    expectedSize += sizeof(MI_BATCH_BUFFER_END);
+
+    EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getExecutionModelCleanupSectionSize());
+}
+
+HWTEST_F(TheSimplestDeviceQueueFixture, getProfilingEndCmdsSize) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    MockContext context;
+    std::unique_ptr<MockDeviceQueueHw<FamilyType>> mockDeviceQueueHw(new MockDeviceQueueHw<FamilyType>(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
+
+    size_t expectedSize = sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(MI_LOAD_REGISTER_IMM);
+
+    EXPECT_EQ(expectedSize, MockDeviceQueueHw<FamilyType>::getProfilingEndCmdsSize());
 }

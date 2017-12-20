@@ -51,6 +51,10 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     using BaseClass::getSlbCS;
     using BaseClass::getWaCommandsSize;
     using BaseClass::offsetDsh;
+    using BaseClass::addMediaStateClearCmds;
+    using BaseClass::getMediaStateClearCmdsSize;
+    using BaseClass::getProfilingEndCmdsSize;
+    using BaseClass::getExecutionModelCleanupSectionSize;
 
     bool arbCheckWa;
     bool miAtomicWa;

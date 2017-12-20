@@ -24,6 +24,8 @@
 
 namespace OCLRT {
 
+#define NUM_ALU_INST_FOR_READ_MODIFY_WRITE 4
+
 #define L3SQC_BIT_LQSC_RO_PERF_DIS 0x08000000
 #define L3SQC_REG4 0xB118
 
@@ -32,4 +34,4 @@ void applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const K
 
 template <typename GfxFamily>
 size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
-}
+} // namespace OCLRT

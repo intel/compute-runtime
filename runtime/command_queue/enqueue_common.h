@@ -324,19 +324,23 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder.getEvent()->flushStamp->replaceStampObject(this->flushStamp->getStampReference());
             }
 
-            if (executionModelKernel && devQueueHw->getSchedulerReturnInstance() > 0) {
-                waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+            if (executionModelKernel) {
+                commandStreamReceiver.overrideMediaVFEStateDirty(true);
 
-                BuiltinKernelsSimulation::SchedulerSimulation<GfxFamily> simulation;
-                simulation.runSchedulerSimulation(devQueueHw->getQueueBuffer(),
-                                                  devQueueHw->getStackBuffer(),
-                                                  devQueueHw->getEventPoolBuffer(),
-                                                  devQueueHw->getSlbBuffer(),
-                                                  devQueueHw->getDshBuffer(),
-                                                  multiDispatchInfo.begin()->getKernel()->getKernelReflectionSurface(),
-                                                  devQueueHw->getQueueStorageBuffer(),
-                                                  this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation(),
-                                                  devQueueHw->getDebugQueue());
+                if (devQueueHw->getSchedulerReturnInstance() > 0) {
+                    waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+
+                    BuiltinKernelsSimulation::SchedulerSimulation<GfxFamily> simulation;
+                    simulation.runSchedulerSimulation(devQueueHw->getQueueBuffer(),
+                                                      devQueueHw->getStackBuffer(),
+                                                      devQueueHw->getEventPoolBuffer(),
+                                                      devQueueHw->getSlbBuffer(),
+                                                      devQueueHw->getDshBuffer(),
+                                                      multiDispatchInfo.begin()->getKernel()->getKernelReflectionSurface(),
+                                                      devQueueHw->getQueueStorageBuffer(),
+                                                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation(),
+                                                      devQueueHw->getDebugQueue());
+                }
             }
         } else {
             auto maxTaskCount = this->taskCount;

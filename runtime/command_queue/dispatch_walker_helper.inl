@@ -25,7 +25,6 @@ namespace OCLRT {
 #define CS_GPR_R0 0x2600
 #define CS_GPR_R1 0x2608
 
-#define NUM_ALU_INST_FOR_READ_MODIFY_WRITE 4
 #define ALU_OPCODE_LOAD 0x080
 #define ALU_OPCODE_STORE 0x180
 #define ALU_OPCODE_OR 0x103

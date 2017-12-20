@@ -25,6 +25,7 @@
 #include "runtime/command_queue/dispatch_walker.h"
 #include "runtime/command_queue/dispatch_walker_helper.h"
 #include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/preamble.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
 
@@ -33,8 +34,10 @@ template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::allocateSlbBuffer() {
     auto slbSize = getMinimumSlbSize() + getWaCommandsSize();
     slbSize *= 128; //num of enqueues
-    slbSize += sizeof(MI_BATCH_BUFFER_START) +
-               (4 * MemoryConstants::pageSize); // +4 pages spec restriction
+    slbSize += sizeof(MI_BATCH_BUFFER_START);
+    slbSize = alignUp(slbSize, MemoryConstants::pageSize);
+    slbSize += DeviceQueueHw<GfxFamily>::getExecutionModelCleanupSectionSize();
+    slbSize += (4 * MemoryConstants::pageSize); // +4 pages spec restriction
     slbSize = alignUp(slbSize, MemoryConstants::pageSize);
 
     slbBuffer = device->getMemoryManager()->allocateGraphicsMemory(slbSize);
@@ -253,6 +256,8 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     pipeControl2->setAddress(tagAddress & (0xffffffff));
     pipeControl2->setImmediateData(taskCount);
 
+    addMediaStateClearCmds();
+
     auto pBBE = slbCS.getSpaceForCmd<MI_BATCH_BUFFER_END>();
     *pBBE = MI_BATCH_BUFFER_END::sInit();
 
@@ -402,6 +407,57 @@ void DeviceQueueHw<GfxFamily>::addLriCmd(bool setArbCheck) {
         lri->setDataDword(0x00000100); // set only bit 8 (Preempt On MI_ARB_CHK Only)
     else
         lri->setDataDword(0x0);
+}
+
+template <typename GfxFamily>
+void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
+    typedef typename GfxFamily::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+
+    addPipeControlCmdWa();
+
+    auto pipeControl = slbCS.getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = PIPE_CONTROL::sInit();
+    pipeControl->setGenericMediaStateClear(true);
+    pipeControl->setCommandStreamerStallEnable(true);
+
+    PreambleHelper<GfxFamily>::programVFEState(&slbCS, device->getHardwareInfo(), 0, 0);
+}
+
+template <typename GfxFamily>
+size_t DeviceQueueHw<GfxFamily>::getMediaStateClearCmdsSize() {
+    // PC with GenreicMediaStateClear + WA PC
+    size_t size = 2 * sizeof(PIPE_CONTROL);
+
+    // VFE state cmds
+    size += sizeof(PIPE_CONTROL);
+    size += sizeof(MEDIA_VFE_STATE);
+    return size;
+}
+
+template <typename GfxFamily>
+size_t DeviceQueueHw<GfxFamily>::getExecutionModelCleanupSectionSize() {
+    size_t totalSize = 0;
+    totalSize += sizeof(PIPE_CONTROL) +
+                 2 * sizeof(MI_LOAD_REGISTER_REG) +
+                 sizeof(MI_LOAD_REGISTER_IMM) +
+                 sizeof(PIPE_CONTROL) +
+                 sizeof(MI_MATH) +
+                 NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE);
+
+    totalSize += getProfilingEndCmdsSize();
+    totalSize += getMediaStateClearCmdsSize();
+
+    totalSize += 4 * sizeof(PIPE_CONTROL);
+    totalSize += sizeof(MI_BATCH_BUFFER_END);
+    return totalSize;
+}
+
+template <typename GfxFamily>
+size_t DeviceQueueHw<GfxFamily>::getProfilingEndCmdsSize() {
+    size_t size = 0;
+    size += sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM);
+    size += sizeof(MI_LOAD_REGISTER_IMM);
+    return size;
 }
 
 } // namespace OCLRT

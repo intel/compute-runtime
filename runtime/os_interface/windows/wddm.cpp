@@ -858,8 +858,9 @@ bool Wddm::submit(void *commandBuffer, size_t size, void *commandHeader) {
             monitoredFence.currentFenceValue++;
         }
     }
-    UNRECOVERABLE_IF(!success);
+
     getDeviceState();
+    UNRECOVERABLE_IF(!success);
 
     return success;
 }

@@ -42,7 +42,10 @@ GEN9TEST_F(Gen9DeviceQueueSlb, expectedAllocationSize) {
                         sizeof(typename FamilyType::PIPE_CONTROL) +
                         sizeof(typename FamilyType::PIPE_CONTROL);
     expectedSize *= 128; //num of enqueues
-    expectedSize += sizeof(typename FamilyType::MI_BATCH_BUFFER_START) + (4 * MemoryConstants::pageSize);
+    expectedSize += sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
+    expectedSize = alignUp(expectedSize, MemoryConstants::pageSize);
+    expectedSize += MockDeviceQueueHw<FamilyType>::getExecutionModelCleanupSectionSize();
+    expectedSize += (4 * MemoryConstants::pageSize);
     expectedSize = alignUp(expectedSize, MemoryConstants::pageSize);
 
     ASSERT_NE(deviceQueue->getSlbBuffer(), nullptr);

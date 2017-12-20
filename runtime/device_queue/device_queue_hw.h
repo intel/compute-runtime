@@ -44,6 +44,11 @@ class DeviceQueueHw : public DeviceQueue {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    using MI_MATH = typename GfxFamily::MI_MATH;
+    using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
+    using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
   public:
     DeviceQueueHw(Context *context,
@@ -92,6 +97,12 @@ class DeviceQueueHw : public DeviceQueue {
     void buildSlbDummyCommands();
 
     void addProfilingEndCmds(uint64_t timestampAddress);
+    static size_t getProfilingEndCmdsSize();
+
+    MOCKABLE_VIRTUAL void addMediaStateClearCmds();
+    static size_t getMediaStateClearCmdsSize();
+
+    static size_t getExecutionModelCleanupSectionSize();
 
     LinearStream slbCS;
     IGIL_CommandQueue *igilQueue = nullptr;
