@@ -492,8 +492,7 @@ TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, true);
     ASSERT_NE(nullptr, bo);
     mock->ioctl_res = -EIO;
-    auto ret = bo->wait(-1);
-    EXPECT_EQ(-EIO, ret);
+    EXPECT_THROW(bo->wait(-1), std::exception);
     mock->ioctl_res = 1;
 
     memoryManager->unreference(bo);

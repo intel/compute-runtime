@@ -151,7 +151,7 @@ OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t si
 
     auto res = new (std::nothrow) BufferObject(this->drm, userptr.handle, false);
     if (!res) {
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return nullptr;
     }
     res->size = size;

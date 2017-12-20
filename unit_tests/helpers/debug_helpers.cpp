@@ -20,11 +20,13 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include <exception>
 #include "runtime/helpers/debug_helpers.h"
 
 namespace OCLRT {
 void debugBreak(int line, const char *file) {
 }
 void abortUnrecoverable(int line, const char *file) {
+    throw std::exception();
 }
 } // namespace OCLRT

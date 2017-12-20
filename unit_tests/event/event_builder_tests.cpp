@@ -222,10 +222,13 @@ TEST(EventBuilder, whenAddingNullptrAsNewParentEventThenItIsIgnored) {
 TEST(EventBuilder, whenAddingValidEventAsNewParentEventThenItIsProperlyAddedToParentsList) {
     auto event = new SmallEventBuilderEventMock;
     SmallEventBuilderMock eventBuilder;
+    eventBuilder.create<MockEvent<Event>>(nullptr, CL_COMMAND_MARKER, 0, 0);
     EXPECT_EQ(0U, eventBuilder.getParentEvents().size());
     eventBuilder.addParentEvent(event);
     EXPECT_EQ(1U, eventBuilder.getParentEvents().size());
     event->release();
+    eventBuilder.finalize();
+    eventBuilder.getEvent()->release();
 }
 
 TEST(EventBuilder, whenAddingMultipleEventsAsNewParentsThenOnlyValidOnesAreInsertedIntoParentsList) {
@@ -234,12 +237,15 @@ TEST(EventBuilder, whenAddingMultipleEventsAsNewParentsThenOnlyValidOnesAreInser
     invalidEvent->overrideMagic(0);
     cl_event eventsList[] = {nullptr, event, invalidEvent};
     SmallEventBuilderMock eventBuilder;
+    eventBuilder.create<MockEvent<Event>>(nullptr, CL_COMMAND_MARKER, 0, 0);
     EXPECT_EQ(0U, eventBuilder.getParentEvents().size());
     eventBuilder.addParentEvents(ArrayRef<cl_event>(eventsList));
     ASSERT_EQ(1U, eventBuilder.getParentEvents().size());
     EXPECT_EQ(event, *eventBuilder.getParentEvents().begin());
     invalidEvent->release();
     event->release();
+    eventBuilder.finalize();
+    eventBuilder.getEvent()->release();
 }
 
 TEST(EventBuilder, parentListDoesNotHaveDuplicates) {

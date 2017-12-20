@@ -59,7 +59,7 @@ void Kernel::patchReflectionSurface(DeviceQueue *devQueue, PrintfHandler *printf
 
         auto privateSurface = blockManager->getPrivateSurface(i);
 
-        UNRECOVERABLE_IF(pBlockInfo->patchInfo.pAllocateStatelessPrintfSurface != nullptr && privateSurface == nullptr);
+        UNRECOVERABLE_IF(pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface != nullptr && pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize && privateSurface == nullptr);
 
         if (privateSurface) {
             privateSurfaceOffset = pBlockInfo->patchInfo.pAllocateStatelessPrivateSurface->DataParamOffset;

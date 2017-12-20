@@ -686,7 +686,8 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     EXPECT_CALL(*csr, waitForFlushStamp(flushStampToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 1, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait);
+    //we have unrecoverable for this case, this will throw.
+    EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait), std::exception);
 }
 
 HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndDontCallKmdWait) {

@@ -111,8 +111,7 @@ TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     testing::internal::CaptureStderr();
     mock->ioctl_expected = 1;
     mock->ioctl_res = -1;
-    auto ret = bo->exec(0, 0, 0);
-    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_THROW(bo->exec(0, 0, 0), std::exception);
     testing::internal::GetCapturedStderr();
 }
 

@@ -78,7 +78,7 @@ bool BufferObject::close() {
     if (ret != 0) {
         int err = errno;
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
-        UNRECOVERABLE_IF(true);
+        DEBUG_BREAK_IF(true);
         return false;
     }
 
