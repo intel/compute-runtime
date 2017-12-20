@@ -48,7 +48,8 @@ bool PreemptionHelper::allowThreadGroupPreemption(Kernel *kernel, const Workarou
 bool PreemptionHelper::allowMidThreadPreemption(Kernel *kernel, Device &device) {
     bool allowedByKernel = true;
     if (kernel) {
-        allowedByKernel = (kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption == 0);
+        allowedByKernel = (kernel->getKernelInfo().patchInfo.executionEnvironment->DisableMidThreadPreemption == 0) &&
+                          !(kernel->isVmeKernel() && !device.getDeviceInfo().vmeAvcSupportsPreemption);
     }
     bool supportedByDevice = (device.getPreemptionMode() >= PreemptionMode::MidThread);
     return supportedByDevice && allowedByKernel;

@@ -130,6 +130,15 @@ TEST_F(MidThreadPreemptionTests, allowMidThreadPreemptionNullKernel) {
     EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(nullptr, *device));
 }
 
+TEST_F(MidThreadPreemptionTests, allowMidThreadPreemptionDeviceSupportPreemptionOnVmeKernel) {
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getMutableDeviceInfo()->vmeAvcSupportsPreemption = true;
+    delete kernel;
+    kernelInfo->isVmeWorkload = true;
+    kernel = new MockKernel(&program, *kernelInfo, *device);
+    EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(kernel, *device));
+}
+
 TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByDevice) {
     device->setPreemptionMode(PreemptionMode::ThreadGroup);
     executionEnvironment.DisableMidThreadPreemption = 0;
@@ -139,6 +148,15 @@ TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByDevice) {
 TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByKernel) {
     device->setPreemptionMode(PreemptionMode::MidThread);
     executionEnvironment.DisableMidThreadPreemption = 1;
+    EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(kernel, *device));
+}
+
+TEST_F(MidThreadPreemptionTests, disallowMidThreadPreemptionByVmeKernel) {
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    device->getMutableDeviceInfo()->vmeAvcSupportsPreemption = false;
+    delete kernel;
+    kernelInfo->isVmeWorkload = true;
+    kernel = new MockKernel(&program, *kernelInfo, *device);
     EXPECT_FALSE(PreemptionHelper::allowMidThreadPreemption(kernel, *device));
 }
 
@@ -156,8 +174,30 @@ TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByKernel) {
     EXPECT_EQ(PreemptionMode::ThreadGroup, outMode);
 }
 
+TEST_F(MidThreadPreemptionTests, taskPreemptionDisallowMidThreadByVmeKernel) {
+    delete kernel;
+    kernelInfo->isVmeWorkload = true;
+    device->getMutableDeviceInfo()->vmeAvcSupportsPreemption = false;
+    kernel = new MockKernel(&program, *kernelInfo, *device);
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(*device, kernel);
+    //VME disables mid thread and thread group when device does not support it
+    EXPECT_EQ(PreemptionMode::MidBatch, outMode);
+}
+
 TEST_F(MidThreadPreemptionTests, taskPreemptionAllow) {
     executionEnvironment.DisableMidThreadPreemption = 0;
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(*device, kernel);
+    EXPECT_EQ(PreemptionMode::MidThread, outMode);
+}
+
+TEST_F(MidThreadPreemptionTests, taskPreemptionAllowDeviceSupportsPreemptionOnVmeKernel) {
+    executionEnvironment.DisableMidThreadPreemption = 0;
+    delete kernel;
+    kernelInfo->isVmeWorkload = true;
+    kernel = new MockKernel(&program, *kernelInfo, *device);
+    device->getMutableDeviceInfo()->vmeAvcSupportsPreemption = true;
     device->setPreemptionMode(PreemptionMode::MidThread);
     PreemptionMode outMode = PreemptionHelper::taskPreemptionMode(*device, kernel);
     EXPECT_EQ(PreemptionMode::MidThread, outMode);
