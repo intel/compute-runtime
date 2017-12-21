@@ -63,6 +63,9 @@ std::atomic<int> fastLeaksDetectionMode(LeakDetectionMode::STANDARD);
 size_t breakOnAllocationEvent = -1;
 size_t breakOnDeallocationEvent = -1;
 
+// limit size of single allocation in ULT
+const size_t maxAllowedAllocationSize = 128 * 1024 * 1024 + 4096;
+
 static void onAllocationEvent() {
     //bool setBreakPointHereForLeaks = true;
 
@@ -84,6 +87,11 @@ void (*deleteCallback)(void *) = onDeallocationEvent;
 template <AllocationEvent::EventType typeValid, AllocationEvent::EventType typeFail>
 static void *allocate(size_t size) {
     onAllocationEvent();
+
+    if (size > maxAllowedAllocationSize) {
+        std::cerr << "WARNING: Tried to allocate " << size << " bytes but " << maxAllowedAllocationSize << " is alowed!" << std::endl;
+        return nullptr;
+    }
 
     if (!fastLeakDetectionMode) {
         return malloc(size);
@@ -126,6 +134,11 @@ static void *allocate(size_t size) {
 template <AllocationEvent::EventType typeValid, AllocationEvent::EventType typeFail>
 static void *allocate(size_t size, const std::nothrow_t &) {
     onAllocationEvent();
+
+    if (size > maxAllowedAllocationSize) {
+        std::cerr << "WARNING: Tried to allocate " << size << " bytes but " << maxAllowedAllocationSize << " is alowed!" << std::endl;
+        return nullptr;
+    }
 
     if (!fastLeakDetectionMode) {
         return malloc(size);
