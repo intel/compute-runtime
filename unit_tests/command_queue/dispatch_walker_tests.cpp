@@ -202,7 +202,90 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensions) {
+HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm) {
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    kernelInfo.workloadInfo.workDimOffset = 0;
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
+        workItems[dimension - 1] = 256;
+        dispatchWalker<FamilyType>(
+            *pCmdQ,
+            kernel,
+            dimension,
+            globalOffsets,
+            workItems,
+            nullptr,
+            0,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(dimension, *kernel.workDim);
+    }
+}
+
+HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    kernelInfo.workloadInfo.workDimOffset = 0;
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
+        workItems[dimension - 1] = 256;
+        dispatchWalker<FamilyType>(
+            *pCmdQ,
+            kernel,
+            dimension,
+            globalOffsets,
+            workItems,
+            nullptr,
+            0,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(dimension, *kernel.workDim);
+    }
+}
+
+HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeND.set(true);
+    MockKernel kernel(&program, kernelInfo, *pDevice);
+    kernelInfo.workloadInfo.workDimOffset = 0;
+    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+
+    size_t globalOffsets[3] = {0, 0, 0};
+    size_t workItems[3] = {1, 1, 1};
+    for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
+        workItems[dimension - 1] = 256;
+        dispatchWalker<FamilyType>(
+            *pCmdQ,
+            kernel,
+            dimension,
+            globalOffsets,
+            workItems,
+            nullptr,
+            0,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr);
+        EXPECT_EQ(dimension, *kernel.workDim);
+    }
+}
+
+HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     MockKernel kernel(&program, kernelInfo, *pDevice);
     kernelInfo.workloadInfo.workDimOffset = 0;
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
@@ -316,6 +399,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
 HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(&program, kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
@@ -342,9 +426,10 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
 }
 
-HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquared) {
+HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAndND) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     MockKernel kernel(&program, kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;

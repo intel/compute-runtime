@@ -21,6 +21,7 @@
  */
 
 #include "driver_diagnostics_tests.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using namespace OCLRT;
 
@@ -227,19 +228,19 @@ TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableCompute
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, 0, emptyDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndEmptyDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     DispatchInfo emptyDispatchInfo;
     provideLocalWorkGroupSizeHints(nullptr, 0, emptyDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeNDIsDefaultWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
@@ -279,23 +280,23 @@ TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableCompu
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<Device>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, 0, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 TEST_F(PerformanceHintTest, GivenNullContextAndInvalidDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledThenItDoesntCrash) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<Device>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 100, {32, 32, 32}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, 0, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsDefaultWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
@@ -307,23 +308,23 @@ TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeS
 }
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsTrueWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<Device>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, 0, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 TEST_F(PerformanceHintTest, GivenContextAndDispatchinfoAndEnableComputeWorkSizeSquaredIsFalseWhenProvideLocalWorkGroupSizeIsCalledReturnValue) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     auto pDevice = castToObject<Device>(devices[0]);
     MockKernelWithInternals mockKernel(*pDevice, context);
     DispatchInfo invalidDispatchInfo(mockKernel, 2, {32, 32, 1}, {1, 1, 1}, {0, 0, 0});
     provideLocalWorkGroupSizeHints(context, 0, invalidDispatchInfo);
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {

@@ -524,6 +524,5 @@ TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCompu
 }
 
 TEST(localWorkSizeTest, givenDebugVariableEnableComputeWorkSizeNDWhenCheckValueExpectTrue) {
-    bool isEnabled = DebugManager.flags.EnableComputeWorkSizeND.get();
-    EXPECT_TRUE(isEnabled == false);
+    EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeND.get());
 }

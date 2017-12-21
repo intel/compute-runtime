@@ -22,6 +22,7 @@
 
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "driver_diagnostics_tests.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using namespace OCLRT;
 
@@ -385,28 +386,28 @@ TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkS
 
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeSquaredIsTrueWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo().name.c_str(),
              *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 TEST_F(PerformanceHintEnqueueKernelTest, GivenNullLocalSizeAndEnableComputeWorkSizeSquaredIsFalseWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {
 
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     retVal = pCmdQ->enqueueKernel(kernel, 1, nullptr, globalWorkGroupSize, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[NULL_LOCAL_WORKGROUP_SIZE], kernel->getKernelInfo().name.c_str(),
              *kernel->localWorkSizeX, *kernel->localWorkSizeY, *kernel->localWorkSizeZ);
     EXPECT_TRUE(containsHint(expectedHint, userData));
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 TEST_P(PerformanceHintEnqueueKernelBadSizeTest, GivenBadLocalWorkGroupSizeWhenEnqueueKernelIsCallingThenContextProvidesProperHint) {

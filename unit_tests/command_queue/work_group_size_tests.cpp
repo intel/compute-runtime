@@ -24,6 +24,7 @@
 #include "runtime/command_queue/dispatch_walker.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -185,27 +186,25 @@ HWTEST_P(WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredDefau
 }
 
 HWTEST_P(WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredEnabled) {
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
 
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
-
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 HWTEST_P(WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeSquaredDisabled) {
-    bool isWorkGroupSizeEnabled = DebugManager.flags.EnableComputeWorkSizeSquared.get();
+    DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    DebugManager.flags.EnableComputeWorkSizeND.set(false);
     uint32_t simdSize;
     size_t workDim;
     std::tie(simdSize, workDim) = GetParam();
 
     verify<FamilyType>(simdSize, workDim, workDim, workDim);
-
-    DebugManager.flags.EnableComputeWorkSizeSquared.set(isWorkGroupSizeEnabled);
 }
 
 HWTEST_P(WorkGroupSizeChannels, justXWithEnableComputeWorkSizeNDDefault) {
