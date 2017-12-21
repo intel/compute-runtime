@@ -31,12 +31,12 @@ components:
     branch: infra
     clean_on_sync: true
     dest_dir: infra
-    revision: c81cf66d7995e55cb8f11b24d3776e3fc013a809
+    revision: 013cc27b54e817a52e8aeded87cd0aa750b9c83d
     type: git
   internal:
     branch: master
     dest_dir: internal
-    revision: 93d1c17c98d8c051bcd4368686bc9cf2eddd8f8e
+    revision: 3909a5da3ff443b77162f613d7fdf3eab03be7ae
     type: git
   khronos:
     branch: master
