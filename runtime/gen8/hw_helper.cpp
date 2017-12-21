@@ -20,14 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <runtime/helpers/hw_helper.h>
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_helper.inl"
 
 namespace OCLRT {
 typedef BDWFamily Family;
-// Explicitly instantiate HwHelperHw for this device family
-template class HwHelperHw<Family>;
-
-#include "runtime/helpers/hw_helper.inl"
 
 template <>
 size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
@@ -39,4 +36,5 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
     return false;
 }
 
+template class HwHelperHw<Family>;
 } // namespace OCLRT

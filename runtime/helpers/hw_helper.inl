@@ -22,7 +22,9 @@
 
 #include "runtime/helpers/hw_helper.h"
 
+namespace OCLRT {
 template <typename Family>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
     coherencyFlag = true;
 }
+} // namespace OCLRT

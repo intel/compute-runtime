@@ -20,13 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <runtime/helpers/hw_helper.h>
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_helper.inl"
 
 namespace OCLRT {
 typedef SKLFamily Family;
-template class HwHelperHw<Family>;
-
-#include "runtime/helpers/hw_helper.inl"
 
 template <>
 size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
@@ -38,4 +36,6 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580;
 }
+
+template class HwHelperHw<Family>;
 } // namespace OCLRT
