@@ -227,6 +227,21 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShar
     mm->freeGraphicsMemory(gpuAllocation);
 }
 
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFailsThenReturnNull) {
+    SetUpMm<FamilyType>();
+    auto osHandle = 1u;
+    auto size = 4096u;
+    void *pSysMem = (void *)0x1000;
+
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, size));
+    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+
+    mockWddm->failOpenSharedHandle = true;
+
+    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    EXPECT_EQ(nullptr, gpuAllocation);
+}
+
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;

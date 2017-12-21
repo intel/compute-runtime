@@ -142,6 +142,15 @@ class WddmMock : public Wddm {
         releaseGpuPtr(gpuPtr);
         return success;
     }
+
+    bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
+        if (failOpenSharedHandle) {
+            return false;
+        } else {
+            return Wddm::openSharedHandle(handle, alloc);
+        }
+    }
+
     D3DKMT_HANDLE createContext() override {
         createContextResult.called++;
         D3DKMT_HANDLE context = Wddm::createContext();
@@ -238,6 +247,7 @@ class WddmMock : public Wddm {
     CallResult waitFromCpuResult;
     CallResult releaseGpuPtrResult;
     bool callBaseDestroyAllocations = true;
+    bool failOpenSharedHandle = false;
 };
 
 class WddmFixture {

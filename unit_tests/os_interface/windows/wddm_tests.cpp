@@ -744,3 +744,24 @@ HWTEST_F(WddmWithMockGdiTest, createMonitoredFenceIsInitializedWithFenceValueZer
     EXPECT_EQ(0u, gdi.getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
     EXPECT_EQ(1u, wddm.getMonitoredFence().currentFenceValue);
 }
+
+NTSTATUS queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
+    pData->NumAllocations = 0;
+    return 0;
+}
+
+HWTEST_F(WddmWithMockGdiTest, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
+
+    MockGdi gdi;
+    WddmMock wddm(&gdi);
+
+    wddm.init<FamilyType>();
+
+    D3DKMT_HANDLE handle = 0;
+    WddmAllocation *alloc = nullptr;
+
+    gdi.queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);
+    auto ret = wddm.openSharedHandle(handle, alloc);
+
+    EXPECT_EQ(false, ret);
+}

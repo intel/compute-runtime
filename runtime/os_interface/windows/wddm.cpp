@@ -695,6 +695,10 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     auto status = gdi->queryResourceInfo(&QueryResourceInfo);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
+    if (QueryResourceInfo.NumAllocations == 0) {
+        return false;
+    }
+
     std::unique_ptr<char[]> allocPrivateData(new char[QueryResourceInfo.TotalPrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateData(new char[QueryResourceInfo.ResourcePrivateDriverDataSize]);
     std::unique_ptr<char[]> resPrivateRuntimeData(new char[QueryResourceInfo.PrivateRuntimeDataSize]);
@@ -721,7 +725,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
 
     alloc->gmm = Gmm::create((PGMM_RESOURCE_INFO)(allocationInfo[0].pPrivateDriverData));
 
-    return STATUS_SUCCESS;
+    return true;
 }
 
 bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
@@ -757,7 +761,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
 
     alloc->gmm = Gmm::create((PGMM_RESOURCE_INFO)(allocationInfo2[0].pPrivateDriverData));
 
-    return STATUS_SUCCESS;
+    return true;
 }
 
 void *Wddm::lockResource(WddmAllocation *wddmAllocation) {

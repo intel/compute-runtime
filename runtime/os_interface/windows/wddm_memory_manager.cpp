@@ -211,7 +211,9 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     if (ntHandle) {
         wddm->openNTHandle((HANDLE)((UINT_PTR)handle), &allocation);
     } else {
-        wddm->openSharedHandle(handle, &allocation);
+        if (wddm->openSharedHandle(handle, &allocation) == false) {
+            return nullptr;
+        }
     }
 
     // Shared objects are passed without size
@@ -230,8 +232,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
 
     allocation.setGpuAddress(allocation.gpuPtr);
 
-    auto *wddmAllocation = new WddmAllocation(allocation);
-    return wddmAllocation;
+    return new WddmAllocation(allocation);
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool /*isReused*/) {
