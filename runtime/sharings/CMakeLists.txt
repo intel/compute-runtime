@@ -23,6 +23,7 @@ cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 file(GLOB_RECURSE SHARING_ENABLE_CPPS enable*.cpp)
 add_library (${SHARINGS_ENABLE_LIB_NAME} OBJECT ${SHARING_ENABLE_CPPS})
 set_target_properties (${SHARINGS_ENABLE_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+set_target_properties (${SHARINGS_ENABLE_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
 
 target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE
   ${GMM_SOURCE_DIR}/inc/common
