@@ -291,11 +291,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     virtual void updateExecutionStatus();
     void tryFlushEvent();
 
-    using DeleterFuncType = void (*)(Event *);
-    DeleterFuncType getCustomDeleter() const {
-        return &unregisterEvent;
-    }
-
     uint32_t peekTaskCount() const {
         return this->taskCount;
     }
@@ -318,14 +313,11 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         this->cmdType = cmdType;
     }
 
-    void addToRegistry();
     std::vector<Event *> &getParentEvents() { return this->parentEvents; }
 
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);
-
-    static void unregisterEvent(Event *ev);
 
     ECallbackTarget translateToCallbackTarget(cl_int execStatus) {
         switch (execStatus) {
@@ -372,7 +364,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     Context *ctx;
     CommandQueue *cmdQueue;
     cl_command_type cmdType;
-    bool requiresUnregistration;
 
     // callbacks to be executed when this event changes its execution state
     IFList<Callback, true, true> callbacks[(uint32_t)ECallbackTarget::MAX];

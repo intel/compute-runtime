@@ -172,7 +172,6 @@ bool Context::createImpl(const cl_context_properties *properties,
     if (devices.size() > 0) {
         this->memoryManager = this->getDevice(0)->getMemoryManager();
         this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
-        this->eventsRegistry.setDevice(this->getDevice(0));
         if (memoryManager->isAsyncDeleterEnabled()) {
             memoryManager->getDeferredDeleter()->addClient();
         }

@@ -237,8 +237,6 @@ set (RUNTIME_SRCS_EVENT
   event/event.h
   event/event_builder.cpp
   event/event_builder.h
-  event/event_registry.cpp
-  event/event_registry.h
   event/user_event.cpp
   event/user_event.h
   event/hw_timestamps.h

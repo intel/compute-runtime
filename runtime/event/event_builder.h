@@ -63,14 +63,11 @@ class EventBuilder {
 
     Event *finalizeAndRelease() {
         finalize();
-        registerEvent();
         Event *retEvent = this->event;
         this->event = nullptr;
         finalized = false;
         return retEvent;
     }
-
-    void registerEvent();
 
   protected:
     void clear();

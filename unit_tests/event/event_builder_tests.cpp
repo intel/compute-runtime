@@ -108,7 +108,6 @@ TEST(EventBuilder, whenFinalizeIsCalledTwiceOnEventBuilderThenSecondRequestIsDro
     auto numChildren = (ev->peekChildEvents() != nullptr) ? 1U + ev->peekChildEvents()->countSuccessors() : 0;
     eventBuilder.addParentEvent(*falseParentEvent);
     eventBuilder.finalize();
-    eventBuilder.registerEvent();
     // make sure that new parent was not added in second finalize
     EXPECT_EQ(numParents, ev->peekNumEventsBlockingThis());
     EXPECT_EQ(numChildren, (ev->peekChildEvents() != nullptr) ? 1U + ev->peekChildEvents()->countSuccessors() : 0);
@@ -169,21 +168,6 @@ TEST(EventBuilder, whenFinalizeIsCalledWithEmptyEventsListsThenParentAndChildLis
     EXPECT_EQ(0U, event->peekNumEventsBlockingThis());
     EXPECT_EQ(nullptr, event->peekChildEvents());
     event->release();
-}
-
-TEST(EventBuilder, whenFinalizeIsCalledAndCtxIsNotNullThenEventGetsRegistered) {
-    MockContext mockContext;
-    MockCommandQueue mockCommandQueue(&mockContext, nullptr, nullptr);
-
-    EventBuilder eventBuilder;
-    eventBuilder.create<MockEvent<Event>>(&mockCommandQueue, CL_COMMAND_MARKER, 0, 0);
-
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-    Event *event = eventBuilder.finalizeAndRelease();
-
-    EXPECT_EQ(event, mockContext.getEventsRegistry().peekHead());
-    event->release();
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
 }
 
 TEST(EventBuilder, whenFinalizeIsCalledAndBuildersEventsListAreNotEmptyThenEventsListsAreAddedToEvent) {
@@ -256,59 +240,6 @@ TEST(EventBuilder, whenAddingMultipleEventsAsNewParentsThenOnlyValidOnesAreInser
     EXPECT_EQ(event, *eventBuilder.getParentEvents().begin());
     invalidEvent->release();
     event->release();
-}
-
-TEST(EventBuilder, registerEvent) {
-    MockContext mockContext;
-    MockCommandQueue mockCommandQueue(&mockContext, nullptr, nullptr);
-
-    EventBuilder eventBuilder;
-    eventBuilder.create<MockEvent<Event>>(&mockCommandQueue, CL_COMMAND_MARKER, 0, 0);
-
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-    eventBuilder.registerEvent();
-
-    EXPECT_EQ(eventBuilder.getEvent(), mockContext.getEventsRegistry().peekHead());
-    eventBuilder.getEvent()->release();
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-}
-
-TEST(EventBuilder, registerEventForTheSecondtimeDoesNotRegister) {
-    MockContext mockContext;
-    MockCommandQueue mockCommandQueue(&mockContext, nullptr, nullptr);
-
-    EventBuilder eventBuilder;
-    eventBuilder.create<MockEvent<Event>>(&mockCommandQueue, CL_COMMAND_MARKER, 0, 0);
-
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-    eventBuilder.registerEvent();
-    EXPECT_EQ(eventBuilder.getEvent(), mockContext.getEventsRegistry().peekHead());
-
-    eventBuilder.registerEvent();
-
-    Event *event = mockContext.getEventsRegistry().peekHead();
-    EXPECT_EQ(nullptr, event->next);
-
-    eventBuilder.getEvent()->release();
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-}
-
-TEST(EventBuilder, destructorRegistersEvent) {
-    MockContext mockContext;
-    MockCommandQueue mockCommandQueue(&mockContext, nullptr, nullptr);
-
-    EventBuilder *eventBuilder = new EventBuilder;
-    eventBuilder->create<MockEvent<Event>>(&mockCommandQueue, CL_COMMAND_MARKER, 0, 0);
-
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
-
-    Event *event = eventBuilder->getEvent();
-    delete eventBuilder;
-
-    EXPECT_NE(nullptr, mockContext.getEventsRegistry().peekHead());
-
-    event->release();
-    EXPECT_EQ(nullptr, mockContext.getEventsRegistry().peekHead());
 }
 
 TEST(EventBuilder, parentListDoesNotHaveDuplicates) {

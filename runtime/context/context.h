@@ -23,7 +23,6 @@
 #pragma once
 #include "runtime/device/device_vector.h"
 #include "runtime/event/event.h"
-#include "runtime/event/event_registry.h"
 #include "runtime/context/driver_diagnostics.h"
 #include <vector>
 
@@ -88,10 +87,6 @@ class Context : public BaseObject<_cl_context> {
         return svmAllocsManager;
     }
 
-    EventsRegistry &getEventsRegistry() {
-        return eventsRegistry;
-    }
-
     DeviceQueue *getDefaultDeviceQueue();
     void setDefaultDeviceQueue(DeviceQueue *queue);
 
@@ -140,7 +135,6 @@ class Context : public BaseObject<_cl_context> {
     DeviceVector devices;
     MemoryManager *memoryManager;
     SVMAllocsManager *svmAllocsManager = nullptr;
-    EventsRegistry eventsRegistry;
     CommandQueue *specialQueue;
     DeviceQueue *defaultDeviceQueue;
     std::vector<std::unique_ptr<SharingFunctions>> sharingFunctions;

@@ -43,7 +43,6 @@ MockContext::MockContext(Device *device, bool noSpecialQueue) {
         assert(retVal == CL_SUCCESS);
         setSpecialQueue(commandQueue);
     }
-    eventsRegistry.setDevice(device);
 }
 
 MockContext::MockContext(

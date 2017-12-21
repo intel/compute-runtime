@@ -36,43 +36,6 @@ class SmallMockEvent : public Event {
     }
 };
 
-void CL_CALLBACK SetEventCompleteCallback(cl_event e, cl_int status, void *data) {
-    *(bool *)data = true;
-}
-
-TEST(EventCallback, callbackForNonSharedContext) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.EnableAsyncEventsHandler.set(false);
-    MockContext ctx;
-    auto &reg = ctx.getEventsRegistry();
-    auto evt = MockEventBuilder::createAndFinalize<SmallMockEvent>(&ctx);
-    bool complete = false;
-
-    //non-shared context (single device)
-    ctx.isSharedContext = false;
-    evt->switchToSubmitted();
-
-    std::thread t([&]() {
-        //wait for addCallback to be called in main thread
-        while (evt->peekHasCallbacks() == false)
-            ;
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        evt->switchToComplete();
-    });
-
-    EXPECT_FALSE(complete);
-
-    evt->addCallback(SetEventCompleteCallback, CL_COMPLETE, &complete);
-
-    t.join();
-
-    //single device - callback shall be executed provided that event status is broadcast
-    reg.broadcastUpdateAll();
-
-    EXPECT_TRUE(complete);
-    evt->release();
-}
-
 TEST(EventTestMt, waitForEventsDoesNotReturnUntilSetStatusCompletes) {
 
     for (uint32_t i = 0; i < 100; i++) {

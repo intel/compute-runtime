@@ -53,7 +53,6 @@ Event::Event(
       ctx(ctx),
       cmdQueue(cmdQueue),
       cmdType(cmdType),
-      requiresUnregistration(false),
       dataCalculated(false),
       timeStampNode(nullptr),
       perfCounterNode(nullptr),
@@ -129,11 +128,6 @@ Event::~Event() {
         }
 
         if (ctx != nullptr) {
-            if (requiresUnregistration) {
-                // in case Event was not properly unregistered prior to destruction
-                // we need to remove it from registry to guard it from being corrupted
-                ctx->getEventsRegistry().dropEvent(*this);
-            }
             if (timeStampNode != nullptr) {
                 TagAllocator<HwTimeStamps> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventTsAllocator();
                 allocator->returnTag(timeStampNode);
@@ -634,18 +628,6 @@ void Event::tryFlushEvent() {
     }
 }
 
-void Event::unregisterEvent(Event *ev) {
-    if (ev == nullptr) {
-        return;
-    }
-    if (ev->ctx != nullptr) {
-        ev->requiresUnregistration = false;
-        ev->ctx->getEventsRegistry().unregisterEvent(std::unique_ptr<Event>(ev));
-    } else {
-        delete ev;
-    }
-}
-
 void Event::setQueueTimeStamp() {
     if (this->profilingEnabled && (this->cmdQueue != nullptr)) {
         this->cmdQueue->getDevice().getOSTime()->getCpuTime(&queueTimeStamp.CPUTimeinNS);
@@ -725,11 +707,4 @@ void Event::copyPerfCounters(InstrPmRegsCfg *config) {
     memcpy_s(perfConfigurationData, sizeof(InstrPmRegsCfg), config, sizeof(InstrPmRegsCfg));
 }
 
-void Event::addToRegistry() {
-    UNRECOVERABLE_IF(requiresUnregistration);
-    if (this->ctx != nullptr) {
-        requiresUnregistration = true;
-        this->ctx->getEventsRegistry().registerEvent(*this);
-    }
-}
 } // namespace OCLRT

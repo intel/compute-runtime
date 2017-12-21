@@ -285,23 +285,6 @@ TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
     delete context;
 }
 
-TEST_F(ContextTest, givenDeviceOnContextCreationThenUpdateInternalRefCountForEventsRegistry) {
-    EventsRegistry registry;
-    auto pPlatform = OCLRT::platform();
-    cl_platform_id pid = pPlatform;
-    cl_context_properties validProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid, 0};
-    auto device = castToObject<Device>(devices[0]);
-    ASSERT_NE(device, nullptr);
-
-    auto initDeviceRefCount = device->getRefInternalCount();
-
-    auto context = Context::create<Context>(validProperties, DeviceVector(&devices[0], 1), nullptr, nullptr, retVal);
-
-    EXPECT_EQ(initDeviceRefCount + 1, device->getRefInternalCount());
-
-    delete context;
-}
-
 class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,
                                     public ::testing::Test {
   public:

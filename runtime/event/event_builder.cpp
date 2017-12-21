@@ -23,7 +23,6 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/context/context.h"
 #include "runtime/event/event_builder.h"
-#include "runtime/event/event_registry.h"
 #include "runtime/event/user_event.h"
 #include "runtime/helpers/debug_helpers.h"
 
@@ -31,7 +30,6 @@ namespace OCLRT {
 EventBuilder::~EventBuilder() {
     UNRECOVERABLE_IF((this->event == nullptr) && ((parentEvents.size() != 0U)));
     finalize();
-    registerEvent();
 }
 
 void EventBuilder::addParentEvent(Event &newParentEvent) {
@@ -88,12 +86,4 @@ void EventBuilder::clear() {
 
     parentEvents.clear();
 }
-
-void EventBuilder::registerEvent() {
-    if (this->event && !doNotRegister) {
-        this->event->addToRegistry();
-        doNotRegister = true;
-    }
-}
-
 } // namespace OCLRT

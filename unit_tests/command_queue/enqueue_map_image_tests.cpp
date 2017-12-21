@@ -425,8 +425,6 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith2DImageIs
     };
     MockEventWithSetCompleteOnUpdate blockingEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 1);
 
-    pCmdQ->getContext().getEventsRegistry().registerEvent(blockingEvent);
-
     cl_event blockingClEvent = &blockingEvent;
 
     int32_t initialRefCountCmdQ = pCmdQ->getRefInternalCount();
@@ -468,8 +466,6 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIs
         }
     };
     MockEventWithSetCompleteOnUpdate blockingEvent(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 1);
-
-    pCmdQ->getContext().getEventsRegistry().registerEvent(blockingEvent);
 
     cl_event blockingClEvent = &blockingEvent;
 

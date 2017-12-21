@@ -400,13 +400,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     queueOwnership.unlock();
     deviceOwnership.unlock();
 
-    if (blockQueue) {
-        TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
-        if (this->virtualEvent == eventBuilder.getEvent()) {
-            eventBuilder.registerEvent();
-        }
-    }
-
     if (blocking) {
         if (blockQueue) {
             while (isQueueBlocked())

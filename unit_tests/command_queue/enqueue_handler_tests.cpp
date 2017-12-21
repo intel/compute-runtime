@@ -217,39 +217,6 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedUnsetsCurrentCmdQVirtualEventForPrevi
     mockCmdQ->release();
 }
 
-HWTEST_F(EnqueueHandlerTest, blockedEnqueueRegistersEvent) {
-    UserEvent userEvent;
-    cl_event clUserEvent = &userEvent;
-
-    MockKernelWithInternals kernelInternals(*pDevice, &context);
-    Kernel *kernel = kernelInternals.mockKernel;
-    MockMultiDispatchInfo multiDispatchInfo(kernel);
-    cl_event outputEvent = nullptr;
-
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(&context, pDevice, 0);
-
-    bool blocking = false;
-    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
-                                                                 0,
-                                                                 blocking,
-                                                                 multiDispatchInfo,
-                                                                 1,
-                                                                 &clUserEvent,
-                                                                 &outputEvent);
-    ASSERT_NE(nullptr, outputEvent);
-    Event *event = castToObjectOrAbort<Event>(outputEvent);
-    ASSERT_NE(nullptr, event);
-
-    ASSERT_NE(nullptr, mockCmdQ->virtualEvent);
-    EXPECT_EQ(event, mockCmdQ->virtualEvent);
-
-    Event *head = context.getEventsRegistry().peekHead();
-    EXPECT_EQ(head, mockCmdQ->virtualEvent);
-
-    event->release();
-    mockCmdQ->release();
-}
-
 HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
     MockKernelWithInternals kernelInternals(*pDevice, &context);
     Kernel *kernel = kernelInternals.mockKernel;
@@ -269,9 +236,6 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
     ASSERT_NE(nullptr, outputEvent);
     Event *event = castToObjectOrAbort<Event>(outputEvent);
     ASSERT_NE(nullptr, event);
-
-    Event *head = context.getEventsRegistry().peekHead();
-    EXPECT_EQ(head, event);
 
     event->release();
     mockCmdQ->release();

@@ -261,46 +261,6 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
     EXPECT_EQ(100u, cmdQ.taskLevel);
 }
 
-TEST_F(CommandQueueCommandStreamTest, givenCmdQueueBlockedByEventWhenEventIsAsynchronouslyCompletedThenBroadcastUpdateAllIsNotCalledOnIsQueueBlockedCall) {
-    MockContext context;
-    CommandQueue cmdQ(&context, pDevice, 0);
-
-    class MockEventWithSetCompleteOnUpdate : public Event {
-      public:
-        MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
-        }
-        void updateExecutionStatus() override {
-            setStatus(CL_COMPLETE);
-        }
-    };
-
-    MockEventWithSetCompleteOnUpdate *event = new MockEventWithSetCompleteOnUpdate(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    event->setStatus(CL_SUBMITTED);
-
-    Event virtualEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 20);
-
-    event->addChild(virtualEvent);
-
-    // Put Queue in blocked state by assigning virtualEvent
-    virtualEvent.incRefInternal();
-    cmdQ.virtualEvent = &virtualEvent;
-    cmdQ.incRefInternal();
-
-    context.getEventsRegistry().registerEvent(*event);
-
-    EXPECT_TRUE(cmdQ.isQueueBlocked());
-    // This second check is purposely here, queue shouldn't be unblocked asynchrounously in isQueueBlocked
-    // because it can lead to deadlock when isQueueBlocked() is called under device mutex and would try to
-    // acquire registry mutex, while second thread owns mutex for registry processing.
-    EXPECT_TRUE(cmdQ.isQueueBlocked());
-
-    context.getEventsRegistry().broadcastUpdateAll();
-    context.getEventsRegistry().dropEvent(*event);
-
-    event->release();
-}
-
 TEST_F(CommandQueueCommandStreamTest, GetCommandStreamReturnsValidObject) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue commandQueue(&context, pDevice, props);
