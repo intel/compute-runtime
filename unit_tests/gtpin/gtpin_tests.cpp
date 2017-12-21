@@ -245,7 +245,8 @@ TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFai
             -> OCLRT::Buffer * { return nullptr; };
     }
     cl_context ctxt = (cl_context)((Context *)pContext);
-    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, 3 * GB, &res);
+    uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
     for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
         bufferFactory[i] = BufferFuncsBackup[i];
     }
