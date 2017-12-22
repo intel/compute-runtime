@@ -385,7 +385,7 @@ class CommandQueueHw : public CommandQueue {
 
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
-
+    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType);
     void forceDispatchScheduler(OCLRT::MultiDispatchInfo &multiDispatchInfo);
 };
 } // namespace OCLRT

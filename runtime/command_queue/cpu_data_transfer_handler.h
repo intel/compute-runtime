@@ -38,7 +38,6 @@ void *CommandQueueHw<GfxFamily>::cpuDataTransferHandler(MemObj *memObj,
                                                         cl_event *event,
                                                         cl_int &retVal) {
     EventBuilder eventBuilder;
-    bool blockQueue = false;
     bool eventCompleted = false;
     ErrorCodeHelper err(&retVal, CL_SUCCESS);
 
@@ -52,21 +51,15 @@ void *CommandQueueHw<GfxFamily>::cpuDataTransferHandler(MemObj *memObj,
     TakeOwnershipWrapper<Device> deviceOwnership(*device);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
-    auto taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
-    auto updateTaskLevel = isTaskLevelUpdateRequired(taskLevel, eventWaitList, numEventsInWaitList, cmdType);
+    auto blockQueue = false;
+    auto taskLevel = 0u;
+    obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, cmdType);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
-
-    if (updateTaskLevel) {
-        taskLevel++;
-        this->taskLevel = taskLevel;
-    }
 
     if (event) {
         eventBuilder.getEvent()->taskLevel = taskLevel;
     }
-
-    blockQueue = ((taskLevel == Event::eventNotReady) || isQueueBlocked());
 
     if (blockQueue &&
         (cmdType == CL_COMMAND_MAP_BUFFER || cmdType == CL_COMMAND_UNMAP_MEM_OBJECT)) {

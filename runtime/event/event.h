@@ -149,11 +149,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     static cl_int waitForEvents(cl_uint numEvents,
                                 const cl_event *eventList);
 
-    std::unique_ptr<Command> setCommand(std::unique_ptr<Command> newCmd) {
+    void setCommand(std::unique_ptr<Command> newCmd) {
         UNRECOVERABLE_IF(cmdToSubmit.load());
         cmdToSubmit.exchange(newCmd.release());
         eventWithoutCommand = false;
-        return nullptr;
     }
     Command *peekCommand() {
         return cmdToSubmit;

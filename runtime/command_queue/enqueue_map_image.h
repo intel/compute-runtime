@@ -39,7 +39,6 @@ void *CommandQueueHw<GfxFamily>::enqueueMapImage(cl_mem image, cl_bool blockingM
                                                  size_t *imageSlicePitch, cl_uint numEventsInWaitList,
                                                  const cl_event *eventWaitList, cl_event *event,
                                                  cl_int &errcodeRet) {
-    bool blockQueue = false;
     auto pImage = castToObject<Image>(image);
     void *ptrToReturn = nullptr;
     if (context->isProvidingPerformanceHints()) {
@@ -93,15 +92,15 @@ void *CommandQueueHw<GfxFamily>::enqueueMapImage(cl_mem image, cl_bool blockingM
     EventBuilder eventBuilder;
     TakeOwnershipWrapper<Device> deviceOwnership(*device);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
+    auto blockQueue = false;
+    auto taskLevel = 0u;
+    obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, CL_COMMAND_MAP_IMAGE);
 
-    auto taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
     if (event) {
         eventBuilder.create<Event>(this, CL_COMMAND_MAP_IMAGE, taskLevel, Event::eventNotReady);
         *event = eventBuilder.getEvent();
         eventBuilder.getEvent()->setQueueTimeStamp();
     }
-
-    blockQueue = ((taskLevel == Event::eventNotReady) || isQueueBlocked());
 
     if (blockQueue) {
         addMapUnmapToWaitlistEventsDependencies(eventWaitList,
