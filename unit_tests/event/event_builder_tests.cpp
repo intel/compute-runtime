@@ -199,7 +199,7 @@ TEST(EventBuilder, whenFinalizeIsCalledAndParentsListContainsManyEventsFromWhich
     eventBuilder.addParentEvent(*userEventCompleted);
     eventBuilder.addParentEvent(*userEventNotCompleted);
     Event *event = eventBuilder.finalizeAndRelease();
-    EXPECT_FALSE(event->peekIsCompleted());
+    EXPECT_FALSE(event->updateStatusAndCheckCompletion());
     EXPECT_EQ(1U, event->peekNumEventsBlockingThis());
     ASSERT_EQ(nullptr, userEventCompleted->peekChildEvents());
     ASSERT_NE(nullptr, userEventNotCompleted->peekChildEvents());

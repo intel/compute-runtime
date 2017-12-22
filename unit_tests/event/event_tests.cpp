@@ -711,7 +711,7 @@ TEST_P(InternalsEventProfilingTest, GivenProfilingWhenEventCreatedThenProfilingS
     std::unique_ptr<CommandQueue> pCmdQ(new CommandQueue(mockContext, pDevice, props));
 
     std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), GetParam(), 0, 0));
-    EXPECT_TRUE(event.get()->isProfilingEnabled() == CL_TRUE);
+    EXPECT_TRUE(event.get()->isProfilingEnabled());
 }
 
 INSTANTIATE_TEST_CASE_P(InternalsEventProfilingTest,
@@ -723,7 +723,7 @@ TEST_F(InternalsEventTest, GivenProfilingWhenUserEventCreatedThenProfilingNotSet
     std::unique_ptr<CommandQueue> pCmdQ(new CommandQueue(mockContext, pDevice, props));
 
     std::unique_ptr<MockEvent<Event>> event(new MockEvent<Event>(pCmdQ.get(), CL_COMMAND_USER, 0, 0));
-    EXPECT_TRUE(event.get()->isProfilingEnabled() == CL_FALSE);
+    EXPECT_FALSE(event.get()->isProfilingEnabled());
 }
 
 TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
@@ -894,7 +894,7 @@ TEST_F(InternalsEventWithPerfCountersTest, IsPerfCounter_Enabled) {
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
     pCmdQ->setPerfCountersEnabled(true, 2);
     Event *ev = new Event(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    EXPECT_EQ(1u, ev->isProfilingEnabled());
+    EXPECT_TRUE(ev->isProfilingEnabled());
     EXPECT_TRUE(ev->isPerfCountersEnabled());
     delete ev;
     delete pCmdQ;
@@ -1165,13 +1165,13 @@ TEST_F(EventTest, hwPerfCounterMemoryIsPlacedInGraphicsAllocation) {
 
 TEST_F(EventTest, IsPerfCounter_DisabledByNullQueue) {
     Event ev(nullptr, CL_COMMAND_COPY_BUFFER, 3, 0);
-    EXPECT_EQ(0u, ev.isProfilingEnabled());
+    EXPECT_FALSE(ev.isProfilingEnabled());
     EXPECT_FALSE(ev.isPerfCountersEnabled());
 }
 
 TEST_F(EventTest, IsPerfCounter_DisabledByNoProfiling) {
     Event ev(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    EXPECT_EQ(0u, ev.isProfilingEnabled());
+    EXPECT_FALSE(ev.isProfilingEnabled());
     EXPECT_FALSE(ev.isPerfCountersEnabled());
 }
 
@@ -1180,7 +1180,7 @@ TEST_F(InternalsEventTest, IsPerfCounter_DisabledByNoPerfCounter) {
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
 
     Event *ev = new Event(pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 0);
-    EXPECT_EQ(1u, ev->isProfilingEnabled());
+    EXPECT_TRUE(ev->isProfilingEnabled());
     EXPECT_FALSE(ev->isPerfCountersEnabled());
 
     delete ev;

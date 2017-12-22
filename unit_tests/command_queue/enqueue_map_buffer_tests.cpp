@@ -318,7 +318,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCa
     //if task count of csr is higher then event task count with proper dc flushing then we are fine
     EXPECT_EQ(1u, neoEvent->getCompletionStamp());
     //this can't be completed as task count is not reached yet
-    EXPECT_FALSE(neoEvent->peekIsCompleted());
+    EXPECT_FALSE(neoEvent->updateStatusAndCheckCompletion());
 
     auto callbackCalled = 0u;
 
@@ -334,7 +334,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCa
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
     EXPECT_EQ(1u, pCmdQ->latestTaskCountWaited);
 
-    EXPECT_TRUE(neoEvent->peekIsCompleted());
+    EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
 
     EXPECT_EQ(1u, callbackCalled);
 
@@ -403,7 +403,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     auto neoEvent = castToObject<Event>(eventReturned);
     //if task count of csr is higher then event task count with proper dc flushing then we are fine
     EXPECT_EQ(1u, neoEvent->getCompletionStamp());
-    EXPECT_TRUE(neoEvent->peekIsCompleted());
+    EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
 
     //flush task was not called
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
@@ -510,7 +510,7 @@ HWTEST_F(EnqueueMapBufferTest, MapBufferEventProperties) {
 
     auto eventObject = castToObject<Event>(eventReturned);
     EXPECT_EQ(0u, eventObject->peekTaskCount());
-    EXPECT_TRUE(eventObject->peekIsCompleted());
+    EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,

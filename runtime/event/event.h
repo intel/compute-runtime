@@ -109,8 +109,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
     bool calcProfilingData();
-    void setCPUProfilingPath(bool isCPUPath) { isCPUPath ? profilingCpuPath = CL_TRUE : profilingCpuPath = CL_FALSE; }
-    cl_bool isCPUProfilingPath() {
+    void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
+    bool isCPUProfilingPath() {
         return profilingCpuPath;
     }
 
@@ -119,11 +119,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
                                  void *paramValue,
                                  size_t *paramValueSizeRet);
 
-    cl_bool isProfilingEnabled() { return profilingEnabled; }
+    bool isProfilingEnabled() { return profilingEnabled; }
 
-    void setProfilingEnabled(cl_bool profilingEnabled) {
-        this->profilingEnabled = profilingEnabled;
-    }
+    void setProfilingEnabled(bool profilingEnabled) { this->profilingEnabled = profilingEnabled; }
 
     HwTimeStamps *getHwTimeStamp();
     GraphicsAllocation *getHwTimeStampAllocation();
@@ -152,10 +150,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
                                 const cl_event *eventList);
 
     std::unique_ptr<Command> setCommand(std::unique_ptr<Command> newCmd) {
-        std::unique_ptr<Command> prevCmd;
-        prevCmd.reset(cmdToSubmit.exchange(newCmd.release()));
+        UNRECOVERABLE_IF(cmdToSubmit.load());
+        cmdToSubmit.exchange(newCmd.release());
         eventWithoutCommand = false;
-        return prevCmd;
+        return nullptr;
     }
     Command *peekCommand() {
         return cmdToSubmit;
@@ -192,23 +190,20 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     }
 
     // returns true if event is completed (in terms of definition provided by OCL spec)
-    bool peekIsCompleted(const int32_t *executionStatusSnapshot = nullptr) {
-        // Note from OLC spec :
-        //    "A command is considered complete if its execution status
-        //     is CL_COMPLETE or a negative value."
-        int32_t statusSnapshot = 0;
-        if (executionStatusSnapshot != nullptr) {
-            statusSnapshot = *executionStatusSnapshot;
-        } else {
-            statusSnapshot = updateEventAndReturnCurrentStatus();
-        }
-        return (statusSnapshot == CL_COMPLETE) || (statusSnapshot < 0);
+    // Note from OLC spec :
+    //    "A command is considered complete if its execution status
+    //     is CL_COMPLETE or a negative value."
+
+    bool isStatusCompleted(const int32_t *executionStatusSnapshot) {
+        return (*executionStatusSnapshot == CL_COMPLETE) || (*executionStatusSnapshot < 0);
     }
+
+    bool updateStatusAndCheckCompletion();
 
     // Note from OCL spec :
     //      "A negative integer value causes all enqueued commands that wait on this user event
     //       to be terminated."
-    bool peekIsCompletedByTermination(const int32_t *executionStatusSnapshot = nullptr) {
+    bool isStatusCompletedByTermination(const int32_t *executionStatusSnapshot = nullptr) {
         if (executionStatusSnapshot == nullptr) {
             return (peekExecutionStatus() < 0);
         } else {
@@ -373,8 +368,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // e.g. CL_COMPLETE -> CL_SUBMITTED or CL_SUBMITTED -> CL_QUEUED becomes forbiden
     mutable std::atomic<int32_t> executionStatus;
     // Timestamps
-    cl_bool profilingEnabled;
-    cl_bool profilingCpuPath;
+    bool profilingEnabled;
+    bool profilingCpuPath;
     bool dataCalculated;
     TimeStampData queueTimeStamp;
     TimeStampData submitTimeStamp;

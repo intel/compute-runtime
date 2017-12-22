@@ -167,7 +167,7 @@ bool CommandQueue::isQueueBlocked() {
         if (this->virtualEvent->peekExecutionStatus() <= CL_COMPLETE) {
             UNRECOVERABLE_IF(this->virtualEvent == nullptr);
 
-            if (this->virtualEvent->peekIsCompletedByTermination() == false) {
+            if (this->virtualEvent->isStatusCompletedByTermination() == false) {
                 taskCount = this->virtualEvent->peekTaskCount();
                 flushStamp->setStamp(this->virtualEvent->flushStamp->peekStamp());
                 taskLevel = this->virtualEvent->taskLevel;

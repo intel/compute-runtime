@@ -264,7 +264,7 @@ HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
 
     auto eventObject = castToObject<Event>(eventReturned);
     EXPECT_EQ(forceTaskCount + 1, eventObject->peekTaskCount());
-    EXPECT_TRUE(eventObject->peekIsCompleted());
+    EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,
@@ -318,7 +318,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     auto eventObject = castToObject<Event>(eventReturned);
     //this is CPU path , event is manually set to completed state so task count equalizies to CSR = 100
     EXPECT_EQ(100u, eventObject->peekTaskCount());
-    EXPECT_TRUE(eventObject->peekIsCompleted());
+    EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     retVal = clEnqueueUnmapMemObject(
         pCmdQ,

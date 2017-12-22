@@ -104,11 +104,15 @@ Event::Event(
 Event::~Event() {
     try {
         DBG_LOG(EventsDebugEnable, "~Event()", this);
+        //no commands should be registred
+        DEBUG_BREAK_IF(this->cmdToSubmit.load());
+
         submitCommand(true);
 
         int32_t lastStatus = executionStatus;
-        if (peekIsCompleted(&lastStatus) == false) {
+        if (isStatusCompleted(&lastStatus) == false) {
             transitionExecutionStatus(-1);
+            DEBUG_BREAK_IF(peekHasCallbacks() || peekHasChildEvents());
         }
 
         // Note from OCL spec:
@@ -146,6 +150,7 @@ Event::~Event() {
         unblockEventsBlockedByThis(executionStatus);
     } catch (...) //Don't throw from destructor
     {
+        DEBUG_BREAK_IF(false);
     }
 }
 
@@ -161,9 +166,9 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     }
 
     // CL_PROFILING_INFO_NOT_AVAILABLE if event refers to the clEnqueueSVMFree command
-    if (isUserEvent() != CL_FALSE || // or is a user event object.
-        !peekIsCompleted() ||        // if the execution status of the command identified by event is not CL_COMPLETE
-        !profilingEnabled)           // the CL_QUEUE_PROFILING_ENABLE flag is not set for the command-queue,
+    if (isUserEvent() != CL_FALSE ||         // or is a user event object.
+        !updateStatusAndCheckCompletion() || //if the execution status of the command identified by event is not CL_COMPLETE
+        !profilingEnabled)                   // the CL_QUEUE_PROFILING_ENABLE flag is not set for the command-queue,
     {
         return CL_PROFILING_INFO_NOT_AVAILABLE;
     }
@@ -203,7 +208,7 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
                                                                  paramValueSizeRet,
                                                                  getHwPerfCounter(),
                                                                  perfConfigurationData,
-                                                                 peekIsCompleted())) {
+                                                                 updateStatusAndCheckCompletion())) {
                 return CL_PROFILING_INFO_NOT_AVAILABLE;
             }
             return CL_SUCCESS;
@@ -305,7 +310,7 @@ void Event::updateExecutionStatus() {
     }
 
     int32_t statusSnapshot = executionStatus;
-    if (peekIsCompleted(&statusSnapshot)) {
+    if (isStatusCompleted(&statusSnapshot)) {
         executeCallbacks(statusSnapshot);
         return;
     }
@@ -317,7 +322,7 @@ void Event::updateExecutionStatus() {
     }
 
     if (statusSnapshot == CL_QUEUED) {
-        bool abortBlockedTasks = peekIsCompletedByTermination(&statusSnapshot);
+        bool abortBlockedTasks = isStatusCompletedByTermination(&statusSnapshot);
         submitCommand(abortBlockedTasks);
         transitionExecutionStatus(CL_SUBMITTED);
         executeCallbacks(CL_SUBMITTED);
@@ -353,11 +358,11 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
 
     int32_t status = transitionStatus;
     (void)status;
-    DEBUG_BREAK_IF(!(peekIsCompleted(&status) || (peekIsSubmitted(&status))));
+    DEBUG_BREAK_IF(!(isStatusCompleted(&status) || (peekIsSubmitted(&status))));
 
     uint32_t taskLevelToPropagate = Event::eventNotReady;
 
-    if (peekIsCompletedByTermination(&transitionStatus) == false) {
+    if (isStatusCompletedByTermination(&transitionStatus) == false) {
         //if we are event on top of the tree , obtain taskLevel from CSR
         if (taskLevel == Event::eventNotReady) {
             this->taskLevel = getTaskLevel();
@@ -391,7 +396,7 @@ bool Event::setStatus(cl_int status) {
 
     DBG_LOG(EventsDebugEnable, "setStatus event", this, " new status", status, "previousStatus", prevStatus);
 
-    if (peekIsCompleted(&prevStatus)) {
+    if (isStatusCompleted(&prevStatus)) {
         return false;
     }
 
@@ -399,18 +404,18 @@ bool Event::setStatus(cl_int status) {
         return false;
     }
 
-    if (peekIsBlocked() && (peekIsCompletedByTermination(&status) == false)) {
+    if (peekIsBlocked() && (isStatusCompletedByTermination(&status) == false)) {
         return false;
     }
 
-    if ((status == CL_SUBMITTED) || (peekIsCompleted(&status))) {
-        bool abortBlockedTasks = peekIsCompletedByTermination(&status);
+    if ((status == CL_SUBMITTED) || (isStatusCompleted(&status))) {
+        bool abortBlockedTasks = isStatusCompletedByTermination(&status);
         submitCommand(abortBlockedTasks);
     }
 
     this->incRefInternal();
     transitionExecutionStatus(status);
-    if (peekIsCompleted(&status) || (status == CL_SUBMITTED)) {
+    if (isStatusCompleted(&status) || (status == CL_SUBMITTED)) {
         unblockEventsBlockedByThis(status);
     }
     executeCallbacks(status);
@@ -442,8 +447,7 @@ void Event::submitCommand(bool abortTasks) {
         }
         updateTaskCount(complStamp.taskCount);
         flushStamp->setStamp(complStamp.flushStamp);
-        std::unique_ptr<Command> prevSubmittedCmd;
-        prevSubmittedCmd.reset(submittedCmd.exchange(cmdToProcess.release()));
+        submittedCmd.exchange(cmdToProcess.release());
     } else if (profilingCpuPath && endTimeStamp == 0) {
         setEndTimeStamp();
     }
@@ -494,17 +498,6 @@ cl_int Event::waitForEvents(cl_uint numEvents,
             }
         }
 
-        if (currentlyPendingEvents->size() == pendingEventsLeft->size()) {
-            // we're stuck because of some non-trivial (non-explicit) event dependencies
-            // (e.g. event will be signaled from within a callback of an unrelated event)
-            Event *baseEvent = castToObjectOrAbort<Event>((*currentlyPendingEvents)[0]);
-            Context *ctx = baseEvent->ctx;
-            if (ctx == nullptr) {
-                DEBUG_BREAK_IF(true);
-                return CL_INVALID_CONTEXT;
-            }
-        }
-
         std::swap(currentlyPendingEvents, pendingEventsLeft);
         pendingEventsLeft->clear();
     }
@@ -521,9 +514,9 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 
     int32_t blockerStatus = transitionStatus;
-    DEBUG_BREAK_IF(!(peekIsCompleted(&blockerStatus) || peekIsSubmitted(&blockerStatus)));
+    DEBUG_BREAK_IF(!(isStatusCompleted(&blockerStatus) || peekIsSubmitted(&blockerStatus)));
 
-    if ((numEventsBlockingThis > 0) && (peekIsCompletedByTermination(&blockerStatus) == false)) {
+    if ((numEventsBlockingThis > 0) && (isStatusCompletedByTermination(&blockerStatus) == false)) {
         return;
     }
     DBG_LOG(EventsDebugEnable, "Event", this, "is unblocked by", &event);
@@ -535,13 +528,18 @@ inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t tran
     }
 
     int32_t statusToPropagate = CL_SUBMITTED;
-    if (peekIsCompletedByTermination(&blockerStatus)) {
+    if (isStatusCompletedByTermination(&blockerStatus)) {
         statusToPropagate = blockerStatus;
     }
     setStatus(statusToPropagate);
 
     //event may be completed after this operation, transtition the state to not block others.
     this->updateExecutionStatus();
+}
+
+bool Event::updateStatusAndCheckCompletion() {
+    auto currentStatus = updateEventAndReturnCurrentStatus();
+    return isStatusCompleted(&currentStatus);
 }
 
 bool Event::isReadyForSubmission() {
@@ -560,18 +558,12 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
     //    "All callbacks registered for an event object must be called.
     //     All enqueued callbacks shall be called before the event object is destroyed."
     // That's why each registered calback increments the internal refcount
-    try {
-        incRefInternal();
-        DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", (uint32_t)type);
-        callbacks[(uint32_t)target].pushFrontOne(*new Callback(this, fn, type, data));
-    } catch (...) {
-        decRefInternal(); // in case we fail adding callback, we don't want to contaminate
-                          // the internal ref counter
-        throw;
-    }
+    incRefInternal();
+    DBG_LOG(EventsDebugEnable, "event", this, "addCallback", "ECallbackTarget", (uint32_t)type);
+    callbacks[(uint32_t)target].pushFrontOne(*new Callback(this, fn, type, data));
 
     // Callback added after event reached its "completed" state
-    if (peekIsCompleted()) {
+    if (updateStatusAndCheckCompletion()) {
         int32_t status = executionStatus;
         DBG_LOG(EventsDebugEnable, "event", this, "addCallback executing callbacks with status", status);
         executeCallbacks(status);
@@ -586,7 +578,7 @@ void Event::addCallback(Callback::ClbFuncT fn, cl_int type, void *data) {
 
 void Event::executeCallbacks(int32_t executionStatusIn) {
     int32_t execStatus = executionStatusIn;
-    bool terminated = peekIsCompletedByTermination(&execStatus);
+    bool terminated = isStatusCompletedByTermination(&execStatus);
     ECallbackTarget target;
     if (terminated) {
         target = ECallbackTarget::Completed;
@@ -618,7 +610,7 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
 
 void Event::tryFlushEvent() {
     //only if event is not completed, completed event has already been flushed
-    if (cmdQueue && (peekIsCompleted() == false)) {
+    if (cmdQueue && (updateStatusAndCheckCompletion() == false)) {
         //flush the command queue only if it is not blocked event
         if (taskLevel != Event::eventNotReady) {
             cl_event ev = this;

@@ -232,7 +232,7 @@ HWTEST_F(BarrierTest, givenNotBlockedCommandQueueAndEnqueueBarrierWithWaitlistRe
     EXPECT_EQ(latestTaskCountWaitedBeforeEnqueue, this->pCmdQ->latestTaskCountWaited);
     auto pEvent = (Event *)event;
     EXPECT_EQ(17u, pEvent->peekTaskCount());
-    EXPECT_TRUE(pEvent->peekIsCompleted());
+    EXPECT_TRUE(pEvent->updateStatusAndCheckCompletion());
     delete pEvent;
 }
 

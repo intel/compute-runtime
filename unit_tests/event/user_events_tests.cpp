@@ -269,7 +269,7 @@ TEST_F(EventTests, givenNormalEventThatHasParentUserEventWhenUserEventIsUnblocke
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     uEvent.addChild(event);
 
-    EXPECT_FALSE(event.peekIsCompleted());
+    EXPECT_FALSE(event.updateStatusAndCheckCompletion());
     EXPECT_EQ(CL_QUEUED, event.peekExecutionStatus());
 
     uEvent.setStatus(CL_COMPLETE);

@@ -166,7 +166,7 @@ HWTEST_F(EnqueueUnmapMemObjTest, UnmapEventProperties) {
 
     auto eventObject = castToObject<Event>(eventReturned);
     EXPECT_EQ(0u, eventObject->peekTaskCount());
-    EXPECT_TRUE(eventObject->peekIsCompleted());
+    EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     clReleaseEvent(eventReturned);
 }

@@ -303,7 +303,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingMapBufferWillWaitForEv
     auto b1 = clCreateBuffer(context, CL_MEM_READ_WRITE, 20, nullptr, nullptr);
     cl_event meAsClEv = me;
     void *ptr1 = clEnqueueMapBuffer(pCmdQ, b1, CL_TRUE, CL_MAP_READ, 0, 8, 1, &meAsClEv, nullptr, nullptr);
-    ASSERT_TRUE(me->peekIsCompleted());
+    ASSERT_TRUE(me->updateStatusAndCheckCompletion());
     ASSERT_LE(me->updateCountBeforeCompleted, me->updateCount);
 
     clEnqueueUnmapMemObject(pCmdQ, b1, ptr1, 0, nullptr, nullptr);
