@@ -19,19 +19,25 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#pragma once
-#ifdef SUPPORT_SKL
-#include "hw_info_skl.h"
-#endif
-#ifdef SUPPORT_KBL
-#include "hw_info_kbl.h"
-#endif
-#ifdef SUPPORT_BXT
-#include "hw_info_bxt.h"
-#endif
-#ifdef SUPPORT_GLK
-#include "hw_info_glk.h"
-#endif
-#ifdef SUPPORT_CFL
-#include "hw_info_cfl.h"
-#endif
+
+#include "unit_tests/fixtures/device_fixture.h"
+#include "test.h"
+
+using namespace OCLRT;
+
+typedef Test<DeviceFixture> CflDeviceCaps;
+
+CFLTEST_F(CflDeviceCaps, reportsOcl21) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL C 2.1 ", caps.clCVersion);
+}
+
+CFLTEST_F(CflDeviceCaps, kmdNotifyMechanism) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
+    EXPECT_EQ(30, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMs);
+}
+
+CFLTEST_F(CflDeviceCaps, GivenCFLWhenCheckftr64KBpagesThenTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
+}

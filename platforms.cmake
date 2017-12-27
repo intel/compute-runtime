@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -136,6 +136,7 @@ if(SUPPORT_GEN9)
   set(SUPPORT_KBL ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support KBL")
   set(SUPPORT_BXT ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support BXT")
   set(SUPPORT_GLK ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support GLK")
+  set(SUPPORT_CFL ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support CFL")
 endif()
 
 if(TESTS_GEN9)
@@ -150,6 +151,9 @@ if(TESTS_GEN9)
   endif()
   if(SUPPORT_BXT)
     set(TESTS_BXT ${TESTS_GEN9} CACHE BOOL "Build ULTs for BXT")
+  endif()
+  if(SUPPORT_CFL)
+    set(TESTS_CFL ${TESTS_GEN9} CACHE BOOL "Build ULTs for CFL")
   endif()
 endif()
 
@@ -207,6 +211,15 @@ if(SUPPORT_GEN9)
     if(TESTS_GLK)
       ADD_ITEM_FOR_GEN("PLATFORMS" "TESTED"  9 "GLK")
       ADD_ITEM_FOR_GEN("CONFIGURATIONS" "UNIT_TESTS" 9 "glk/1/3/6")
+    endif()
+  endif()
+
+  if(SUPPORT_CFL)
+    ADD_ITEM_FOR_GEN("PLATFORMS" "SUPPORTED" 9 "CFL")
+    ADD_ITEM_FOR_GEN("PLATFORMS" "SUPPORTED_2_0" 9 "CFL")
+    if(TESTS_CFL)
+      ADD_ITEM_FOR_GEN("PLATFORMS" "TESTED"  9 "CFL")
+      ADD_ITEM_FOR_GEN("CONFIGURATIONS" "UNIT_TESTS" 9 "cfl/1/3/6")
     endif()
   endif()
 

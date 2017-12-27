@@ -20,18 +20,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
-#ifdef SUPPORT_SKL
-#include "hw_info_skl.h"
-#endif
-#ifdef SUPPORT_KBL
-#include "hw_info_kbl.h"
-#endif
-#ifdef SUPPORT_BXT
-#include "hw_info_bxt.h"
-#endif
-#ifdef SUPPORT_GLK
-#include "hw_info_glk.h"
-#endif
-#ifdef SUPPORT_CFL
-#include "hw_info_cfl.h"
-#endif
+#include "hw_info_gen9.h"
+
+namespace OCLRT {
+
+struct CFL;
+
+template <>
+struct HwMapper<IGFX_COFFEELAKE> {
+    enum { gfxFamily = IGFX_GEN9_CORE };
+
+    static const char *abbreviation;
+    typedef GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily GfxFamily;
+    typedef CFL GfxProduct;
+};
+} // namespace OCLRT

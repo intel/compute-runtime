@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -205,6 +205,12 @@ extern GFXCORE_FAMILY renderCoreFamily;
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
                      ::testing::internal::GetTypeId<test_fixture>(), \
                      IGFX_GEN9_CORE, IGFX_BROXTON)
+#endif
+#ifdef TESTS_CFL
+#define CFLTEST_F(test_fixture, test_name)                           \
+    FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \
+                     ::testing::internal::GetTypeId<test_fixture>(), \
+                     IGFX_GEN9_CORE, IGFX_COFFEELAKE)
 #endif
 #define HWTEST_TYPED_TEST(CaseName, TestName)                                              \
     template <typename gtest_TypeParam_>                                                   \

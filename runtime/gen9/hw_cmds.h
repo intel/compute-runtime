@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,4 +32,7 @@
 #endif
 #ifdef SUPPORT_GLK
 #include "hw_cmds_glk.h"
+#endif
+#ifdef SUPPORT_CFL
+#include "hw_cmds_cfl.h"
 #endif

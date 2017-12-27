@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -68,6 +68,19 @@ if(TESTS_GLK)
       ${CMAKE_CURRENT_SOURCE_DIR}/glk/linux/hw_info_config_tests.cpp
       PARENT_SCOPE
     )
+  endif(NOT MSVC)
+endif()
+
+if(TESTS_CFL)
+  set(IGDRCL_SRCS_tests_gen9_cfl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cfl/test_device_caps_cfl.cpp
+    PARENT_SCOPE
+  )
+  if(NOT MSVC)
+    set(IGDRCL_SRCS_tests_gen9_cfl_linux
+      ${CMAKE_CURRENT_SOURCE_DIR}/cfl/linux/hw_info_config_tests.cpp
+      PARENT_SCOPE
+  )
   endif(NOT MSVC)
 endif()
 
