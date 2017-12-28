@@ -97,7 +97,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
-    GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, size_t alignment, bool coherent);
+    GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
         return createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness, false);

@@ -69,7 +69,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, bool coherent) {
         return nullptr;
 
     std::unique_lock<std::mutex> lock(mtx);
-    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryForSVM(size, 4096, coherent);
+    GraphicsAllocation *GA = memoryManager->allocateGraphicsMemoryForSVM(size, coherent);
     if (!GA) {
         return nullptr;
     }

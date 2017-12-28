@@ -735,15 +735,35 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
-TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForSVMIsCalledThenGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
+    OsAgnosticMemoryManager memoryManager(false);
     auto size = 4096u;
-    auto allignment = 4096u;
     auto isCoherent = true;
 
-    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, allignment, isCoherent);
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_TRUE(svmAllocation->isCoherent());
+
+    EXPECT_EQ(size, svmAllocation->getUnderlyingBufferSize());
+
+    uintptr_t address = reinterpret_cast<uintptr_t>(svmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(0u, (address & MemoryConstants::pageMask));
+    memoryManager.freeGraphicsMemory(svmAllocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThen64KBGraphicsAllocationIsReturned) {
+    OsAgnosticMemoryManager memoryManager(true);
+    auto size = 4096u;
+    auto isCoherent = true;
+
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
+    EXPECT_NE(nullptr, svmAllocation);
+    EXPECT_TRUE(svmAllocation->isCoherent());
+
+    EXPECT_EQ(MemoryConstants::pageSize64k, svmAllocation->getUnderlyingBufferSize());
+
+    uintptr_t address = reinterpret_cast<uintptr_t>(svmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(0u, (address & MemoryConstants::page64kMask));
     memoryManager.freeGraphicsMemory(svmAllocation);
 }
 

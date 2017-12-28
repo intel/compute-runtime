@@ -77,8 +77,13 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
     return alignedMalloc(size, std::max(alignment, minAlignment));
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, size_t alignment, bool coherent) {
-    auto graphicsAllocation = allocateGraphicsMemory(size, alignment);
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
+    GraphicsAllocation *graphicsAllocation = nullptr;
+    if (enable64kbpages) {
+        graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false);
+    } else {
+        graphicsAllocation = allocateGraphicsMemory(size, MemoryConstants::pageSize);
+    }
     if (graphicsAllocation) {
         graphicsAllocation->setCoherent(coherent);
     }

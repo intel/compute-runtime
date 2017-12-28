@@ -39,6 +39,7 @@ static const size_t allocationAlignment = pageSize; // alignment required to gra
 static const size_t slmWindowAlignment = 128 * kiloByte;
 static const size_t slmWindowSize = 64 * kiloByte;
 static const uintptr_t pageMask = (pageSize - 1);
+static const uintptr_t page64kMask = (pageSize64k - 1);
 static const uint64_t max32BitAppAddress = ((1ULL << 31) - 1);
 static const uint64_t max64BitAppAddress = ((1ULL << 47) - 1);
 }
