@@ -74,9 +74,9 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, driver_ser
     }
 
     pDriverServices->bufferAllocate = OCLRT::gtpinCreateBuffer;
-    pDriverServices->bufferDeallocate = nullptr;
-    pDriverServices->bufferMap = nullptr;
-    pDriverServices->bufferUnMap = nullptr;
+    pDriverServices->bufferDeallocate = OCLRT::gtpinFreeBuffer;
+    pDriverServices->bufferMap = OCLRT::gtpinMapBuffer;
+    pDriverServices->bufferUnMap = OCLRT::gtpinUnmapBuffer;
 
     isGTPinInitialized = true;
 

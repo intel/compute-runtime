@@ -33,23 +33,61 @@ using namespace gtpin;
 
 namespace OCLRT {
 
-GTPIN_DI_STATUS gtpinCreateBuffer(context_handle_t context, uint32_t size, resource_handle_t *resource) {
-    GTPIN_DI_STATUS retVal = GTPIN_DI_ERROR_INVALID_ARGUMENT;
+GTPIN_DI_STATUS gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, resource_handle_t *pResource) {
+    cl_int diag = CL_SUCCESS;
+    Context *pContext = castToObject<Context>((cl_context)context);
+    if ((pContext == nullptr) || (pResource == nullptr)) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    size_t size = alignUp(reqSize, MemoryConstants::cacheLineSize);
+    void *hostPtr = alignedMalloc(size, MemoryConstants::pageSize);
+    if (hostPtr == nullptr) {
+        return GTPIN_DI_ERROR_ALLOCATION_FAILED;
+    }
+    cl_mem buffer = Buffer::create(pContext, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, size, hostPtr, diag);
+    *pResource = (resource_handle_t)buffer;
+    return GTPIN_DI_SUCCESS;
+}
 
-    do {
-        cl_int diag = CL_SUCCESS;
-        Context *pContext = castToObject<Context>((cl_context)context);
-        if (pContext == nullptr) {
-            break;
-        }
-        cl_mem buffer = Buffer::create(pContext, CL_MEM_READ_WRITE, size, nullptr, diag);
-        if (buffer == nullptr) {
-            break;
-        }
-        *resource = (resource_handle_t)buffer;
-        retVal = GTPIN_DI_SUCCESS;
-    } while (false);
+GTPIN_DI_STATUS gtpinFreeBuffer(gtpin::context_handle_t context, gtpin::resource_handle_t resource) {
+    cl_mem buffer = (cl_mem)resource;
+    Context *pContext = castToObject<Context>((cl_context)context);
+    if ((pContext == nullptr) || (buffer == nullptr)) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    auto pMemObj = castToObject<MemObj>(buffer);
+    if (pMemObj == nullptr) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    alignedFree(pMemObj->getHostPtr());
+    pMemObj->release();
+    return GTPIN_DI_SUCCESS;
+}
 
-    return retVal;
+GTPIN_DI_STATUS gtpinMapBuffer(gtpin::context_handle_t context, gtpin::resource_handle_t resource, uint8_t **pAddress) {
+    cl_mem buffer = (cl_mem)resource;
+    Context *pContext = castToObject<Context>((cl_context)context);
+    if ((pContext == nullptr) || (buffer == nullptr) || (pAddress == nullptr)) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    auto pMemObj = castToObject<MemObj>(buffer);
+    if (pMemObj == nullptr) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    *pAddress = (uint8_t *)pMemObj->getHostPtr();
+    return GTPIN_DI_SUCCESS;
+}
+
+GTPIN_DI_STATUS gtpinUnmapBuffer(gtpin::context_handle_t context, gtpin::resource_handle_t resource) {
+    cl_mem buffer = (cl_mem)resource;
+    Context *pContext = castToObject<Context>((cl_context)context);
+    if ((pContext == nullptr) || (buffer == nullptr)) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    auto pMemObj = castToObject<MemObj>(buffer);
+    if (pMemObj == nullptr) {
+        return GTPIN_DI_ERROR_INVALID_ARGUMENT;
+    }
+    return GTPIN_DI_SUCCESS;
 }
 }

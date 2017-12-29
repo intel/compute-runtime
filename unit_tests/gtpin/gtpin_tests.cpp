@@ -64,7 +64,7 @@ void OnCommandBufferCreate(context_handle_t context, gtpin::dx11::command_buffer
 void OnCommandBufferSubmit(gtpin::dx11::command_buffer_handle_t cb, resource_handle_t *resource) {
 }
 
-class GTPinFixture : public ContextFixture {
+class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     using ContextFixture::SetUp;
 
   public:
@@ -72,7 +72,8 @@ class GTPinFixture : public ContextFixture {
     }
 
   protected:
-    void SetUp() {
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
         pPlatform = platform();
         pPlatform->initialize(numPlatformDevices, platformDevices);
         pDevice = pPlatform->getDevice(0);
@@ -98,6 +99,7 @@ class GTPinFixture : public ContextFixture {
     void TearDown() override {
         ContextFixture::TearDown();
         pPlatform->shutdown();
+        MemoryManagementFixture::TearDown();
     }
 
     Platform *pPlatform = nullptr;
@@ -112,60 +114,60 @@ typedef Test<GTPinFixture> GTPinTests;
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenGTPinInitFails) {
     retFromGtPin = GTPin_Init(nullptr, nullptr, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, nullptr, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     retFromGtPin = GTPin_Init(nullptr, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 }
 
 TEST_F(GTPinTests, givenIncompleteArgumentsThenGTPinInitFails) {
     uint32_t ver = 0;
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, &ver);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onContextCreate = OnContextCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onKernelCreate = OnKernelCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onDraw = OnDraw;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsWhenVersionArgumentIsProvidedThenGTPinInitReturnsDriverVersion) {
     uint32_t ver = 0;
 
     retFromGtPin = GTPin_Init(nullptr, nullptr, &ver);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(ver, 0u);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(0u, ver);
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, nullptr, &ver);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(ver, 0u);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(0u, ver);
 
     retFromGtPin = GTPin_Init(nullptr, &driverServices, &ver);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(ver, 0u);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(0u, ver);
 }
 
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
@@ -177,8 +179,11 @@ TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, driverServices.bufferAllocate);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    EXPECT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
 }
 
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsWhenGTPinIsAlreadyInitializedThenGTPinInitFails) {
@@ -190,15 +195,19 @@ TEST_F(GTPinTests, givenValidAndCompleteArgumentsWhenGTPinIsAlreadyInitializedTh
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, driverServices.bufferAllocate);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    EXPECT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_ERROR_INSTANCE_ALREADY_CREATED, retFromGtPin);
+    EXPECT_EQ(GTPIN_DI_ERROR_INSTANCE_ALREADY_CREATED, retFromGtPin);
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsThenBufferAllocateFails) {
     resource_handle_t res;
+    uint32_t buffSize = 400u;
 
     gtpinCallbacks.onContextCreate = OnContextCreate;
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
@@ -208,15 +217,115 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenBufferAllocateFails) {
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, driverServices.bufferAllocate);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    EXPECT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
-    retFromGtPin = (*driverServices.bufferAllocate)(nullptr, 400u, &res);
-    ASSERT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+    retFromGtPin = (*driverServices.bufferAllocate)(nullptr, buffSize, &res);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, buffSize, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenInvalidArgumentsThenBufferDeallocateFails) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    retFromGtPin = (*driverServices.bufferDeallocate)(nullptr, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, (gtpin::resource_handle_t)ctxt);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenInvalidArgumentsThenBufferMapFails) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    EXPECT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    ASSERT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    uint8_t *mappedPtr;
+    retFromGtPin = (*driverServices.bufferMap)(nullptr, nullptr, &mappedPtr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferMap)((gtpin::context_handle_t)ctxt, nullptr, &mappedPtr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    retFromGtPin = (*driverServices.bufferMap)((gtpin::context_handle_t)ctxt, (gtpin::resource_handle_t)ctxt, &mappedPtr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenInvalidArgumentsThenBufferUnMapFails) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    EXPECT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    ASSERT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    retFromGtPin = (*driverServices.bufferUnMap)(nullptr, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferUnMap)((gtpin::context_handle_t)ctxt, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    retFromGtPin = (*driverServices.bufferUnMap)((gtpin::context_handle_t)ctxt, (gtpin::resource_handle_t)ctxt);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
 }
 
 TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFails) {
-    resource_handle_t res;
+
+    InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
+        resource_handle_t res;
+        cl_context ctxt = (cl_context)((Context *)pContext);
+        uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
+        retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
+        if (nonfailingAllocation != failureIndex) {
+            EXPECT_EQ(GTPIN_DI_ERROR_ALLOCATION_FAILED, retFromGtPin);
+        } else {
+            EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+            EXPECT_NE(nullptr, res);
+            retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+            EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+        }
+    };
 
     gtpinCallbacks.onContextCreate = OnContextCreate;
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
@@ -226,35 +335,18 @@ TEST_F(GTPinTests, givenValidRequestForHugeMemoryAllocationThenBufferAllocateFai
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, driverServices.bufferAllocate);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
-    BufferFuncs BufferFuncsBackup[IGFX_MAX_CORE];
-    for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        BufferFuncsBackup[i] = bufferFactory[i];
-        bufferFactory[i].createBufferFunction =
-            [](Context *,
-               cl_mem_flags,
-               size_t,
-               void *,
-               void *,
-               GraphicsAllocation *,
-               bool,
-               bool,
-               bool)
-            -> OCLRT::Buffer * { return nullptr; };
-    }
-    cl_context ctxt = (cl_context)((Context *)pContext);
-    uint32_t hugeSize = 400u; // Will be handled as huge memory allocation
-    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, hugeSize, &res);
-    for (uint32_t i = 0; i < IGFX_MAX_CORE; i++) {
-        bufferFactory[i] = BufferFuncsBackup[i];
-    }
-    ASSERT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+    injectFailures(allocBufferFunc);
 }
 
-TEST_F(GTPinTests, givenValidRequestForMemoryAllocationThenBufferAllocateSucceeds) {
+TEST_F(GTPinTests, givenValidRequestForMemoryAllocationThenBufferAllocateAndDeallocateSucceeds) {
     resource_handle_t res;
+    uint32_t buffSize = 400u;
 
     gtpinCallbacks.onContextCreate = OnContextCreate;
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
@@ -264,17 +356,116 @@ TEST_F(GTPinTests, givenValidRequestForMemoryAllocationThenBufferAllocateSucceed
     gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
     gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, driverServices.bufferAllocate);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    EXPECT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
 
     cl_context ctxt = (cl_context)((Context *)pContext);
-    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, 400u, &res);
-    ASSERT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_NE(nullptr, res);
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, buffSize, &res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, res);
 
-    cl_mem buffer = (cl_mem)res;
-    retVal = clReleaseMemObject(buffer);
-    ASSERT_EQ(retVal, CL_SUCCESS);
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenValidArgumentsForBufferMapWhenCallSequenceIsCorrectThenBufferMapSucceeds) {
+    resource_handle_t res;
+    uint32_t buffSize = 400u;
+
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    ASSERT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, buffSize, &res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, res);
+
+    uint8_t *mappedPtr = nullptr;
+    retFromGtPin = (*driverServices.bufferMap)((gtpin::context_handle_t)ctxt, res, &mappedPtr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenMissingReturnArgumentForBufferMapWhenCallSequenceIsCorrectThenBufferMapFails) {
+    resource_handle_t res;
+    uint32_t buffSize = 400u;
+
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    ASSERT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    EXPECT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, buffSize, &res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, res);
+
+    retFromGtPin = (*driverServices.bufferMap)((gtpin::context_handle_t)ctxt, res, nullptr);
+    EXPECT_NE(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenValidArgumentsForBufferUnMapWhenCallSequenceIsCorrectThenBufferUnMapSucceeds) {
+    resource_handle_t res;
+    uint32_t buffSize = 400u;
+
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    ASSERT_EQ(&OCLRT::gtpinCreateBuffer, driverServices.bufferAllocate);
+    ASSERT_EQ(&OCLRT::gtpinFreeBuffer, driverServices.bufferDeallocate);
+    ASSERT_EQ(&OCLRT::gtpinMapBuffer, driverServices.bufferMap);
+    ASSERT_EQ(&OCLRT::gtpinUnmapBuffer, driverServices.bufferUnMap);
+
+    cl_context ctxt = (cl_context)((Context *)pContext);
+    retFromGtPin = (*driverServices.bufferAllocate)((gtpin::context_handle_t)ctxt, buffSize, &res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, res);
+
+    uint8_t *mappedPtr = nullptr;
+    retFromGtPin = (*driverServices.bufferMap)((gtpin::context_handle_t)ctxt, res, &mappedPtr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    retFromGtPin = (*driverServices.bufferUnMap)((gtpin::context_handle_t)ctxt, res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
 }
 
 } // namespace ULT
