@@ -155,6 +155,7 @@ struct WorkaroundTable {
     bool waDisablePerCtxtPreemptionGranularityControl = false;
     bool waLLCCachingUnsupported = false;
     bool waUseVAlign16OnTileXYBpp816 = false;
+    bool waModifyVFEStateAfterGPGPUPreemption = false;
 };
 
 struct HardwareInfo {

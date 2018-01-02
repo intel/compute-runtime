@@ -43,5 +43,14 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCsrSize(PreemptionMode preemptionMode);
+
+    template <typename GfxFamily>
+    static size_t getPreemptionWaCsSize(const Device &device);
+
+    template <typename GfxFamily>
+    static void applyPreemptionWaCmdsBegin(LinearStream *pCommandStream, const Device &device);
+
+    template <typename GfxFamily>
+    static void applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, const Device &device);
 };
 } // namespace OCLRT

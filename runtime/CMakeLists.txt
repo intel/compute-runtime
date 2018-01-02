@@ -194,6 +194,7 @@ set (RUNTIME_SRCS_COMMAND_STREAM
   command_stream/thread_arbitration_policy.h
   command_stream/preemption.h
   command_stream/preemption.cpp
+  command_stream/preemption.inl
 )
 
 set (RUNTIME_SRCS_COMPILER_INTERFACE

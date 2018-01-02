@@ -111,29 +111,34 @@ GEN9TEST_F(Gen9PreemptionTests, programMidThreadPreemptionLri) {
     EXPECT_EQ(minAlignment, gpgpuCsr->getGpgpuCsrBaseAddress());
 }
 
-GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroup) {
+GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupNoWa) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     WhitelistedRegisters regs = {};
     regs.csChicken1_0x2580 = true;
     pDevice->setForceWhitelistedRegs(true, &regs);
+    const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.overrideMediaVFEStateDirty(false);
     auto csrSurface = csr.getPreemptionCsrAllocation();
     EXPECT_EQ(nullptr, csrSurface);
-    HardwareParse hwParser;
+    HardwareParse hwCsrParser;
+    HardwareParse hwCmdQParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
     MockKernelWithInternals mockKernel(*pDevice);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwParser.parseCommands<FamilyType>(csr.commandStream);
-    hwParser.findHardwareCommands<FamilyType>();
-    auto offset = csr.commandStream.getUsed();
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+    auto offsetCsr = csr.commandStream.getUsed();
+    auto offsetCmdQ = pCmdQ->getCS().getUsed();
 
     bool foundOne = false;
-    for (auto it : hwParser.lriList) {
+    for (auto it : hwCsrParser.lriList) {
         auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
         if (cmd->getRegisterOffset() == 0x2580u) {
             EXPECT_FALSE(foundOne);
@@ -141,18 +146,125 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
         }
     }
     EXPECT_TRUE(foundOne);
+    hwCsrParser.cmdList.clear();
+    hwCsrParser.lriList.clear();
 
-    hwParser.cmdList.clear();
-    hwParser.lriList.clear();
+    bool foundWaLri = false;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        if (cmd->getRegisterOffset() == 0x2600u) {
+            foundWaLri = true;
+        }
+    }
+    EXPECT_FALSE(foundWaLri);
+    hwCmdQParser.cmdList.clear();
+    hwCmdQParser.lriList.clear();
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
-    hwParser.findHardwareCommands<FamilyType>();
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwCmdQParser.findHardwareCommands<FamilyType>();
 
-    for (auto it : hwParser.lriList) {
+    for (auto it : hwCsrParser.lriList) {
         auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
         EXPECT_FALSE(cmd->getRegisterOffset() == 0x2580u);
     }
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2600u);
+    }
+}
+
+GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupWa) {
+    pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
+    WhitelistedRegisters regs = {};
+    regs.csChicken1_0x2580 = true;
+    pDevice->setForceWhitelistedRegs(true, &regs);
+    const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getMemoryManager()->setForce32BitAllocations(false);
+    csr.overrideMediaVFEStateDirty(false);
+    auto csrSurface = csr.getPreemptionCsrAllocation();
+    EXPECT_EQ(nullptr, csrSurface);
+    HardwareParse hwCsrParser;
+    HardwareParse hwCmdQParser;
+    size_t off[3] = {0, 0, 0};
+    size_t gws[3] = {1, 1, 1};
+
+    MockKernelWithInternals mockKernel(*pDevice);
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+    auto offsetCsr = csr.commandStream.getUsed();
+    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+
+    bool foundOne = false;
+    for (auto it : hwCsrParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        if (cmd->getRegisterOffset() == 0x2580u) {
+            EXPECT_FALSE(foundOne);
+            foundOne = true;
+        }
+    }
+    EXPECT_TRUE(foundOne);
+    hwCsrParser.cmdList.clear();
+    hwCsrParser.lriList.clear();
+
+    int foundWaLri = 0;
+    int foundWaLriBegin = 0;
+    int foundWaLriEnd = 0;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        if (cmd->getRegisterOffset() == 0x2600u) {
+            foundWaLri++;
+            if (cmd->getDataDword() == 0xFFFFFFFF) {
+                foundWaLriBegin++;
+            }
+            if (cmd->getDataDword() == 0x0) {
+                foundWaLriEnd++;
+            }
+        }
+    }
+    EXPECT_EQ(2, foundWaLri);
+    EXPECT_EQ(1, foundWaLriBegin);
+    EXPECT_EQ(1, foundWaLriEnd);
+    hwCmdQParser.cmdList.clear();
+    hwCmdQParser.lriList.clear();
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+
+    for (auto it : hwCsrParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2580u);
+    }
+
+    foundWaLri = 0;
+    foundWaLriBegin = 0;
+    foundWaLriEnd = 0;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
+        if (cmd->getRegisterOffset() == 0x2600u) {
+            foundWaLri++;
+            if (cmd->getDataDword() == 0xFFFFFFFF) {
+                foundWaLriBegin++;
+            }
+            if (cmd->getDataDword() == 0x0) {
+                foundWaLriEnd++;
+            }
+        }
+    }
+    EXPECT_EQ(2, foundWaLri);
+    EXPECT_EQ(1, foundWaLriBegin);
+    EXPECT_EQ(1, foundWaLriEnd);
 }
 
 GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledThenPassDevicePreemptionModeThreadGroup) {
@@ -198,32 +310,37 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnq
     EXPECT_EQ(PreemptionMode::ThreadGroup, mockCsr->passedDispatchFlags.preemptionMode);
 }
 
-GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramMidThread) {
+GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramMidThreadNoWa) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
 
     WhitelistedRegisters regs = {};
     regs.csChicken1_0x2580 = true;
     pDevice->setForceWhitelistedRegs(true, &regs);
+    const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.overrideMediaVFEStateDirty(false);
     auto csrSurface = csr.getPreemptionCsrAllocation();
     ASSERT_NE(nullptr, csrSurface);
-    HardwareParse hwParser;
+    HardwareParse hwCsrParser;
+    HardwareParse hwCmdQParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
     MockKernelWithInternals mockKernel(*pDevice);
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwParser.parseCommands<FamilyType>(csr.commandStream);
-    hwParser.findHardwareCommands<FamilyType>();
-    auto offset = csr.commandStream.getUsed();
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+    auto offsetCsr = csr.commandStream.getUsed();
+    auto offsetCmdQ = pCmdQ->getCS().getUsed();
 
     bool foundOneLri = false;
-    for (auto it : hwParser.lriList) {
+    for (auto it : hwCsrParser.lriList) {
         auto cmdLri = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         if (cmdLri->getRegisterOffset() == 0x2580u) {
             EXPECT_FALSE(foundOneLri);
@@ -231,27 +348,150 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
         }
     }
     EXPECT_TRUE(foundOneLri);
-    hwParser.findCsrBaseAddress<FamilyType>();
-    ASSERT_NE(nullptr, hwParser.cmdGpgpuCsrBaseAddress);
-    auto cmdCsr = genCmdCast<GPGPU_CSR_BASE_ADDRESS *>(hwParser.cmdGpgpuCsrBaseAddress);
+
+    bool foundWaLri = false;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmdLri = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (cmdLri->getRegisterOffset() == 0x2600u) {
+            foundWaLri = true;
+        }
+    }
+    EXPECT_FALSE(foundWaLri);
+
+    hwCsrParser.findCsrBaseAddress<FamilyType>();
+    ASSERT_NE(nullptr, hwCsrParser.cmdGpgpuCsrBaseAddress);
+    auto cmdCsr = genCmdCast<GPGPU_CSR_BASE_ADDRESS *>(hwCsrParser.cmdGpgpuCsrBaseAddress);
     ASSERT_NE(nullptr, cmdCsr);
     EXPECT_EQ(csrSurface->getGpuAddressToPatch(), cmdCsr->getGpgpuCsrBaseAddress());
 
-    hwParser.cmdList.clear();
-    hwParser.lriList.clear();
-    hwParser.cmdGpgpuCsrBaseAddress = nullptr;
+    hwCsrParser.cmdList.clear();
+    hwCsrParser.lriList.clear();
+    hwCsrParser.cmdGpgpuCsrBaseAddress = nullptr;
+    hwCmdQParser.cmdList.clear();
+    hwCmdQParser.lriList.clear();
 
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
-    hwParser.findHardwareCommands<FamilyType>();
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(csr.commandStream, offsetCmdQ);
+    hwCmdQParser.findHardwareCommands<FamilyType>();
 
-    for (auto it : hwParser.lriList) {
+    for (auto it : hwCsrParser.lriList) {
         auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
         EXPECT_FALSE(cmd->getRegisterOffset() == 0x2580u);
     }
 
-    hwParser.findCsrBaseAddress<FamilyType>();
-    EXPECT_EQ(nullptr, hwParser.cmdGpgpuCsrBaseAddress);
+    hwCsrParser.findCsrBaseAddress<FamilyType>();
+    EXPECT_EQ(nullptr, hwCsrParser.cmdGpgpuCsrBaseAddress);
+
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2600u);
+    }
+}
+
+GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramMidThreadWa) {
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
+
+    WhitelistedRegisters regs = {};
+    regs.csChicken1_0x2580 = true;
+    pDevice->setForceWhitelistedRegs(true, &regs);
+    const_cast<WorkaroundTable *>(pDevice->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.getMemoryManager()->setForce32BitAllocations(false);
+    csr.overrideMediaVFEStateDirty(false);
+    auto csrSurface = csr.getPreemptionCsrAllocation();
+    ASSERT_NE(nullptr, csrSurface);
+    HardwareParse hwCsrParser;
+    HardwareParse hwCmdQParser;
+    size_t off[3] = {0, 0, 0};
+    size_t gws[3] = {1, 1, 1};
+
+    MockKernelWithInternals mockKernel(*pDevice);
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+    auto offsetCsr = csr.commandStream.getUsed();
+    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+
+    bool foundOneLri = false;
+    for (auto it : hwCsrParser.lriList) {
+        auto cmdLri = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (cmdLri->getRegisterOffset() == 0x2580u) {
+            EXPECT_FALSE(foundOneLri);
+            foundOneLri = true;
+        }
+    }
+    EXPECT_TRUE(foundOneLri);
+
+    int foundWaLri = 0;
+    int foundWaLriBegin = 0;
+    int foundWaLriEnd = 0;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmdLri = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (cmdLri->getRegisterOffset() == 0x2600u) {
+            foundWaLri++;
+            if (cmdLri->getDataDword() == 0xFFFFFFFF) {
+                foundWaLriBegin++;
+            }
+            if (cmdLri->getDataDword() == 0x0) {
+                foundWaLriEnd++;
+            }
+        }
+    }
+    EXPECT_EQ(2, foundWaLri);
+    EXPECT_EQ(1, foundWaLriBegin);
+    EXPECT_EQ(1, foundWaLriEnd);
+
+    hwCsrParser.findCsrBaseAddress<FamilyType>();
+    ASSERT_NE(nullptr, hwCsrParser.cmdGpgpuCsrBaseAddress);
+    auto cmdCsr = genCmdCast<GPGPU_CSR_BASE_ADDRESS *>(hwCsrParser.cmdGpgpuCsrBaseAddress);
+    ASSERT_NE(nullptr, cmdCsr);
+    EXPECT_EQ(csrSurface->getGpuAddressToPatch(), cmdCsr->getGpgpuCsrBaseAddress());
+
+    hwCsrParser.cmdList.clear();
+    hwCsrParser.lriList.clear();
+    hwCsrParser.cmdGpgpuCsrBaseAddress = nullptr;
+    hwCmdQParser.cmdList.clear();
+    hwCmdQParser.lriList.clear();
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
+    hwCsrParser.findHardwareCommands<FamilyType>();
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwCmdQParser.findHardwareCommands<FamilyType>();
+
+    for (auto it : hwCsrParser.lriList) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2580u);
+    }
+
+    hwCsrParser.findCsrBaseAddress<FamilyType>();
+    EXPECT_EQ(nullptr, hwCsrParser.cmdGpgpuCsrBaseAddress);
+
+    foundWaLri = 0;
+    foundWaLriBegin = 0;
+    foundWaLriEnd = 0;
+    for (auto it : hwCmdQParser.lriList) {
+        auto cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(it);
+        if (cmd->getRegisterOffset() == 0x2600u) {
+            foundWaLri++;
+            if (cmd->getDataDword() == 0xFFFFFFFF) {
+                foundWaLriBegin++;
+            }
+            if (cmd->getDataDword() == 0x0) {
+                foundWaLriEnd++;
+            }
+        }
+    }
+    EXPECT_EQ(2, foundWaLri);
+    EXPECT_EQ(1, foundWaLriBegin);
+    EXPECT_EQ(1, foundWaLriEnd);
 }
 
 GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKernelCalledThenPassDisabledPreemptionMode) {
@@ -270,4 +510,45 @@ GEN9TEST_F(Gen9PreemptionEnqueueKernelTest, givenDisabledPreemptionWhenEnqueueKe
 
     EXPECT_EQ(1, mockCsr->flushCalledCount);
     EXPECT_EQ(PreemptionMode::Disabled, mockCsr->passedDispatchFlags.preemptionMode);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidBatch) {
+    size_t expectedSize = 0;
+    device->setPreemptionMode(PreemptionMode::MidBatch);
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
+    EXPECT_EQ(expectedSize, size);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupNoWa) {
+    size_t expectedSize = 0;
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    const_cast<WorkaroundTable *>(device->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
+    EXPECT_EQ(expectedSize, size);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeThreadGroupWa) {
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
+    device->setPreemptionMode(PreemptionMode::ThreadGroup);
+    const_cast<WorkaroundTable *>(device->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
+    EXPECT_EQ(expectedSize, size);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadNoWa) {
+    size_t expectedSize = 0;
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    const_cast<WorkaroundTable *>(device->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = false;
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
+    EXPECT_EQ(expectedSize, size);
+}
+
+GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    size_t expectedSize = 2 * sizeof(MI_LOAD_REGISTER_IMM);
+    device->setPreemptionMode(PreemptionMode::MidThread);
+    const_cast<WorkaroundTable *>(device->getWaTable())->waModifyVFEStateAfterGPGPUPreemption = true;
+    size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
+    EXPECT_EQ(expectedSize, size);
 }

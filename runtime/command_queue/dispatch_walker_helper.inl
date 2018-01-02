@@ -20,21 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_queue/dispatch_walker_helper.h"
+
 namespace OCLRT {
-
-#define CS_GPR_R0 0x2600
-#define CS_GPR_R1 0x2608
-
-#define ALU_OPCODE_LOAD 0x080
-#define ALU_OPCODE_STORE 0x180
-#define ALU_OPCODE_OR 0x103
-#define ALU_OPCODE_AND 0x102
-
-#define ALU_REGISTER_R_0 0x0
-#define ALU_REGISTER_R_1 0x1
-#define ALU_REGISTER_R_SRCA 0x20
-#define ALU_REGISTER_R_SRCB 0x21
-#define ALU_REGISTER_R_ACCU 0x31
 
 // Performs ReadModifyWrite operation on value of a register: Register = Register Operation Mask
 template <typename GfxFamily>
@@ -108,4 +96,4 @@ void addAluReadModifyWriteRegister(
     pCmd5->setPipeControlFlushEnable(true);
     pCmd5->setStateCacheInvalidationEnable(true);
 }
-}
+} // namespace OCLRT

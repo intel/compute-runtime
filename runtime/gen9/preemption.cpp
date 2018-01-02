@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/command_stream/preemption.inl"
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
@@ -68,4 +69,7 @@ size_t PreemptionHelper::getRequiredCsrSize<GfxFamily>(PreemptionMode preemption
     return size;
 }
 
+template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);
+template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);
+template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 } // namespace OCLRT

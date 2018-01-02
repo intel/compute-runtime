@@ -202,6 +202,7 @@ void Wddm::setupWorkaroundTableFromAdapterInfo(WorkaroundTable *table, ADAPTER_I
     COPY_WA(waDisablePerCtxtPreemptionGranularityControl, WaDisablePerCtxtPreemptionGranularityControl);
     COPY_WA(waLLCCachingUnsupported, WaLLCCachingUnsupported);
     COPY_WA(waUseVAlign16OnTileXYBpp816, WaUseVAlign16OnTileXYBpp816);
+    COPY_WA(waModifyVFEStateAfterGPGPUPreemption, WaModifyVFEStateAfterGPGPUPreemption);
 #undef COPY_WA
 }
 

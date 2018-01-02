@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/command_stream/preemption.inl"
 
 namespace OCLRT {
 
@@ -50,4 +51,7 @@ size_t PreemptionHelper::getRequiredCsrSize<GfxFamily>(PreemptionMode preemption
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
 }
 
+template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);
+template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);
+template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 } // namespace OCLRT

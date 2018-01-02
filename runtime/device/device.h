@@ -121,7 +121,7 @@ class Device : public BaseObject<_cl_device_id> {
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
-    PreemptionMode getPreemptionMode() { return preemptionMode; }
+    PreemptionMode getPreemptionMode() const { return preemptionMode; }
     MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return hwInfo.capabilityTable.whitelistedRegisters; }
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;

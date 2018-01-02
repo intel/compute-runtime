@@ -27,6 +27,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/dispatch_walker_helper.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/device/device_info.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/event/perf_counter.h"
@@ -599,6 +600,8 @@ void dispatchWalker(
             }
         }
 
+        PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
+
         // Implement enabling special WA DisableLSQCROPERFforOCL if needed
         applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, kernel, true);
 
@@ -632,6 +635,8 @@ void dispatchWalker(
 
         // Implement disabling special WA DisableLSQCROPERFforOCL if needed
         applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, kernel, false);
+
+        PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
     }
 
     // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
@@ -836,10 +841,12 @@ struct EnqueueOperation {
             //user registers
             size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         }
+        Device &device = commandQueue.getDevice();
         for (auto &dispatchInfo : multiDispatchInfo) {
             auto &kernel = *dispatchInfo.getKernel();
             size += sizeof(typename GfxFamily::GPGPU_WALKER);
             size += getSizeForWADisableLSQCROPERFforOCL<GfxFamily>(&kernel);
+            size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(device);
         }
         return size;
     }
@@ -847,7 +854,7 @@ struct EnqueueOperation {
     static size_t getSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
         size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                       sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
-
+        size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
         if (reserveProfilingCmdsSpace) {
             size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         }

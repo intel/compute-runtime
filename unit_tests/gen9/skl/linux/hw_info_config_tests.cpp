@@ -184,6 +184,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
 
     ReleaseOutHwInfoStructs();
@@ -192,6 +193,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
 
     ReleaseOutHwInfoStructs();
@@ -200,6 +202,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waCompressedResourceRequiresConstVA21);
+    EXPECT_EQ(0u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
 }
 

@@ -87,6 +87,7 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     }
     if ((1 << hwInfo->pPlatform->usRevId) & 0x0fu) {
         pWaTable->waDisablePerCtxtPreemptionGranularityControl = 1;
+        pWaTable->waModifyVFEStateAfterGPGPUPreemption = 1;
     }
 
     if (hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
