@@ -43,10 +43,15 @@ extern bool isGTPinInitialized;
 
 namespace ULT {
 
+int ContextCreateCallbackCount = 0;
+int ContextDestroyCallbackCount = 0;
+
 void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, igc_init_t **igcInit) {
+    ContextCreateCallbackCount++;
 }
 
 void OnContextDestroy(context_handle_t context) {
+    ContextDestroyCallbackCount++;
 }
 
 void OnKernelCreate(context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
@@ -100,6 +105,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         ContextFixture::TearDown();
         pPlatform->shutdown();
         MemoryManagementFixture::TearDown();
+        OCLRT::isGTPinInitialized = false;
     }
 
     Platform *pPlatform = nullptr;
@@ -159,15 +165,15 @@ TEST_F(GTPinTests, givenInvalidArgumentsWhenVersionArgumentIsProvidedThenGTPinIn
 
     retFromGtPin = GTPin_Init(nullptr, nullptr, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_NE(0u, ver);
+    EXPECT_EQ(gtpin::dx11::GTPIN_DX11_INTERFACE_VERSION, ver);
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, nullptr, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_NE(0u, ver);
+    EXPECT_EQ(gtpin::dx11::GTPIN_DX11_INTERFACE_VERSION, ver);
 
     retFromGtPin = GTPin_Init(nullptr, &driverServices, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_NE(0u, ver);
+    EXPECT_EQ(gtpin::dx11::GTPIN_DX11_INTERFACE_VERSION, ver);
 }
 
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
@@ -466,6 +472,80 @@ TEST_F(GTPinTests, givenValidArgumentsForBufferUnMapWhenCallSequenceIsCorrectThe
 
     retFromGtPin = (*driverServices.bufferDeallocate)((gtpin::context_handle_t)ctxt, res);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+}
+
+TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinContextCallbackIsNotCalled) {
+    int prevCount = ContextCreateCallbackCount;
+    cl_device_id device = (cl_device_id)pDevice;
+    auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+
+    prevCount = ContextDestroyCallbackCount;
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ContextDestroyCallbackCount, prevCount);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAreInvalidThenGTPinContextCallbackIsNotCalled) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    int prevCount = ContextCreateCallbackCount;
+    cl_device_id device = (cl_device_id)pDevice;
+    cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
+    auto contextZ = clCreateContext(invalidProperties, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+    EXPECT_EQ(nullptr, contextZ);
+    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+
+    contextZ = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+    EXPECT_EQ(nullptr, contextZ);
+    EXPECT_EQ(ContextCreateCallbackCount, prevCount);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinContextCallbackIsCalled) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onDraw = OnDraw;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferSubmit = OnCommandBufferSubmit;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    int prevCount = ContextCreateCallbackCount;
+    cl_device_id device = (cl_device_id)pDevice;
+    auto context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(ContextCreateCallbackCount, prevCount + 1);
+
+    prevCount = ContextDestroyCallbackCount;
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ContextDestroyCallbackCount, prevCount + 1);
+
+    prevCount = ContextCreateCallbackCount;
+    context = clCreateContextFromType(nullptr, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+    EXPECT_EQ(ContextCreateCallbackCount, prevCount + 1);
+
+    prevCount = ContextDestroyCallbackCount;
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(ContextDestroyCallbackCount, prevCount + 1);
 }
 
 } // namespace ULT

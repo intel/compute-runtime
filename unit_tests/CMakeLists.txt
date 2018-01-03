@@ -179,6 +179,15 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
   endif(${GENX_HAS_PLATFORMS})
 endforeach(GEN_NUM)
 
+if(GTPIN_HEADERS_DIR)
+	foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
+	  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+	  if(${GENX_HAS_PLATFORMS})
+		list(APPEND IGDRCL_SRCS_tests ${IGDRCL_SOURCE_DIR}/runtime/gtpin/gtpin_setup_gen${GEN_NUM}.cpp)
+	  endif(${GENX_HAS_PLATFORMS})
+	endforeach(GEN_NUM)
+endif(GTPIN_HEADERS_DIR)
+
 add_executable(igdrcl_tests
   ${IGDRCL_SRCS_tests}
   $<TARGET_OBJECTS:igdrcl_libult>

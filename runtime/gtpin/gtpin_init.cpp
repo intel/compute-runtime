@@ -33,28 +33,17 @@ using namespace OCLRT;
 
 namespace OCLRT {
 bool isGTPinInitialized = false;
+gtpin::dx11::gtpin_events_t GTPinCallbacks = {0};
 }
 
 GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
                            uint32_t *pDriverVersion) {
-    char ver[128] = {'\0'};
-    uint32_t driverVersion = 0;
-
     if (isGTPinInitialized) {
         return GTPIN_DI_ERROR_INSTANCE_ALREADY_CREATED;
     }
     if (pDriverVersion != nullptr) {
-        // GT-Pin is asking to obtain driver version
-        auto pPlatform = platform();
-        Device *pDevice = pPlatform->getDevice(0);
-        pDevice->getDeviceInfo(CL_DRIVER_VERSION, sizeof(ver), &ver[0], nullptr);
-        uint32_t nums[3] = {0};
-        int numVerSegments = sscanf(&ver[0], "%u.%u.%u", &nums[0], &nums[1], &nums[2]);
-        for (int verSeg = 0; verSeg < numVerSegments; verSeg++) {
-            driverVersion <<= 8;
-            driverVersion |= nums[verSeg];
-        }
-        *pDriverVersion = driverVersion;
+        // GT-Pin is asking to obtain GT-Pin Interface version that is supported
+        *pDriverVersion = gtpin::dx11::GTPIN_DX11_INTERFACE_VERSION;
 
         if ((pDriverServices == nullptr) || (pGtpinEvents == nullptr)) {
             return GTPIN_DI_SUCCESS;
@@ -78,6 +67,7 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, driver_ser
     pDriverServices->bufferMap = OCLRT::gtpinMapBuffer;
     pDriverServices->bufferUnMap = OCLRT::gtpinUnmapBuffer;
 
+    GTPinCallbacks = *pGtpinEvents;
     isGTPinInitialized = true;
 
     return GTPIN_DI_SUCCESS;

@@ -94,4 +94,12 @@ TEST_F(clCreateContextTests, nullUserData) {
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clCreateContextTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
+    cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
+    auto context = clCreateContext(invalidProperties, num_devices, devices, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+    EXPECT_EQ(nullptr, context);
+}
+
 } // namespace ULT

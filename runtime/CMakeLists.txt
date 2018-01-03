@@ -250,10 +250,19 @@ set (RUNTIME_SRCS_EXECUTION_MODEL
 
 if(GTPIN_HEADERS_DIR)
   set (RUNTIME_SRCS_GTPIN
-    gtpin/gtpin_init.cpp
-    gtpin/gtpin_init.h
+    gtpin/gtpin_callbacks.cpp
     gtpin/gtpin_helpers.cpp
     gtpin/gtpin_helpers.h
+    gtpin/gtpin_hw_helper.cpp
+    gtpin/gtpin_hw_helper.h
+    gtpin/gtpin_init.cpp
+    gtpin/gtpin_init.h
+    gtpin/gtpin_notify.h
+  )
+else(GTPIN_HEADERS_DIR)
+  set (RUNTIME_SRCS_GTPIN
+    gtpin/gtpin_callback_stubs.cpp
+    gtpin/gtpin_notify.h
   )
 endif(GTPIN_HEADERS_DIR)
 
@@ -803,6 +812,12 @@ if(${GENERATE_EXECUTABLE})
 
 	if(GTPIN_HEADERS_DIR)
 		list (APPEND RUNTIME_SRCS_DLL gtpin/gtpin_init.cpp)
+		foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
+		  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+		  if(${GENX_HAS_PLATFORMS})
+			list(APPEND RUNTIME_SRCS_GTPIN gtpin/gtpin_setup_gen${GEN_NUM}.cpp)
+		  endif(${GENX_HAS_PLATFORMS})
+		endforeach(GEN_NUM)
 	endif(GTPIN_HEADERS_DIR)
 
 	add_library(${NEO_DYNAMIC_LIB_NAME} SHARED

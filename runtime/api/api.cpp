@@ -33,6 +33,7 @@
 #include "runtime/context/driver_diagnostics.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
@@ -289,6 +290,9 @@ cl_context CL_API_CALL clCreateContext(const cl_context_properties *properties,
 
         DeviceVector allDevs(devices, numDevices);
         context = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
+        if (context != nullptr) {
+            gtpinNotifyContextCreate(context);
+        }
     } while (false);
 
     if (errcodeRet) {
@@ -314,7 +318,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
         }
 
         cl_uint numDevices = 0;
-        /* Querry the number of device first. */
+        /* Query the number of device first. */
         retVal = clGetDeviceIDs(nullptr, deviceType, 0, nullptr, &numDevices);
         if (retVal != CL_SUCCESS) {
             break;
@@ -329,6 +333,9 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
 
         DeviceVector allDevs(supportedDevs.begin(), numDevices);
         pContext = Context::create<Context>(properties, allDevs, funcNotify, userData, retVal);
+        if (pContext != nullptr) {
+            gtpinNotifyContextCreate((cl_context)pContext);
+        }
     } while (false);
 
     if (errcodeRet) {
@@ -353,6 +360,7 @@ cl_int CL_API_CALL clReleaseContext(cl_context context) {
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->release();
+        gtpinNotifyContextDestroy(context);
         return CL_SUCCESS;
     }
 

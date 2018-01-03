@@ -79,4 +79,12 @@ TEST_F(clCreateContextFromTypeTests, noRet) {
     retVal = clReleaseContext(context);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
+
+TEST_F(clCreateContextFromTypeTests, givenInvalidContextCreationPropertiesThenContextCreationFails) {
+    cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
+    auto context = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
+    EXPECT_EQ(nullptr, context);
+}
+
 } // namespace ULT
