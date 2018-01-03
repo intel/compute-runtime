@@ -94,6 +94,50 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+template <typename GfxFamily>
+struct mockedImage : public ImageHw<GfxFamily> {
+    using ImageHw<GfxFamily>::ImageHw;
+    void setAllocatedMappedPtr(void *allocatedMappedPtr) override {
+        ownershipTaken = this->hasOwnership();
+        MemObj::setAllocatedMappedPtr(allocatedMappedPtr);
+    }
+    bool ownershipTaken = false;
+};
+
+HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSetWithImageMutexTaken) {
+
+    auto imageFormat = image->getImageFormat();
+    auto imageDesc = image->getImageDesc();
+    auto graphicsAllocation = image->getGraphicsAllocation();
+    auto surfaceFormatInfo = image->getSurfaceFormatInfo();
+
+    mockedImage<FamilyType> mockImage(context,
+                                      0,
+                                      4096u,
+                                      nullptr,
+                                      imageFormat,
+                                      imageDesc,
+                                      false,
+                                      graphicsAllocation,
+                                      true,
+                                      true,
+                                      0,
+                                      &surfaceFormatInfo,
+                                      nullptr);
+
+    mockImage.createFunction = image->createFunction;
+
+    auto mapFlags = CL_MAP_READ;
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {0, 0, 0};
+
+    pCmdQ->enqueueMapImage(
+        &mockImage, true, mapFlags, origin,
+        region, nullptr, nullptr, 0,
+        nullptr, nullptr, retVal);
+    EXPECT_TRUE(mockImage.ownershipTaken);
+}
+
 TEST_F(EnqueueMapImageTest, checkPointer) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};

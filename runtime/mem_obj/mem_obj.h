@@ -76,7 +76,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void *getAllocatedMappedPtr() const;
     void *getMappedPtr() const;
     void setMappedPtr(void *mappedPtr);
-    void setAllocatedMappedPtr(void *allocatedMappedPtr);
+    MOCKABLE_VIRTUAL void setAllocatedMappedPtr(void *allocatedMappedPtr);
     size_t getMappedSize() { return mappedSize; }
     void setMappedSize(size_t size) { mappedSize = size; }
     size_t getMappedOffset() { return mappedOffset; }

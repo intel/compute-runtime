@@ -50,10 +50,8 @@ void *CommandQueueHw<GfxFamily>::enqueueMapImage(cl_mem image, cl_bool blockingM
         }
     }
 
-    TakeOwnershipWrapper<Device> deviceOwnership(*device);
-
     if (pImage->allowTiling() || pImage->peekSharingHandler()) {
-
+        TakeOwnershipWrapper<Image> imageOwnership(*pImage);
         size_t slicePitch = pImage->getHostPtrSlicePitch();
         GetInfoHelper retSlice(imageSlicePitch, sizeof(size_t), nullptr);
         retSlice.set<size_t>(slicePitch);
@@ -93,6 +91,7 @@ void *CommandQueueHw<GfxFamily>::enqueueMapImage(cl_mem image, cl_bool blockingM
     }
 
     EventBuilder eventBuilder;
+    TakeOwnershipWrapper<Device> deviceOwnership(*device);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
     auto taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
@@ -165,7 +164,6 @@ void *CommandQueueHw<GfxFamily>::enqueueMapImage(cl_mem image, cl_bool blockingM
         ptrToReturn = ptrOffset(pImage->getHostPtr(), offset);
     }
     errcodeRet = CL_SUCCESS;
-    deviceOwnership.lock();
     pImage->setMappedPtr(ptrToReturn);
     return ptrToReturn;
 }
