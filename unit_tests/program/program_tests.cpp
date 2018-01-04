@@ -695,7 +695,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     //    EXPECT_EQ(0, retVal);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(pProgram->getInternalOptions(), ::testing::HasSubstr(std::string("-cl-ext=+cl")));
+    EXPECT_THAT(pProgram->getInternalOptions(), ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
 
     // get build log
     size_t param_value_size_ret = 0u;

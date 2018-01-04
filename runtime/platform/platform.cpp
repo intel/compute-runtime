@@ -107,7 +107,7 @@ std::string Platform::getCompilerExtensions(const char *deviceExtensions) {
     while ((pos = extensionsList.find(" ", pos)) != std::string::npos) {
         extensionsList.replace(pos, 1, ",+");
     }
-    extensionsList = "-cl-ext=+" + extensionsList;
+    extensionsList = "-cl-ext=-all,+" + extensionsList;
     return extensionsList;
 }
 

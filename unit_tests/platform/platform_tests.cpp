@@ -82,7 +82,7 @@ TEST_F(PlatformTest, PlatformGetCompilerExtensions) {
     pPlatform->initialize(numPlatformDevices, platformDevices);
     compilerExtensions = pPlatform->getCompilerExtensions();
 
-    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=+cl")));
+    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
