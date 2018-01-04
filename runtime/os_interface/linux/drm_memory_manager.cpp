@@ -167,7 +167,7 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) {
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
     const size_t minAlignment = MemoryConstants::allocationAlignment;
     size_t cAlignment = alignUp(std::max(alignment, minAlignment), minAlignment);
     // When size == 0 allocate allocationAlignment

@@ -168,7 +168,7 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
     ASSERT_NE(nullptr, mm->getPinBB());
 
-    auto alloc = mm->allocateGraphicsMemory(10 * 1014 * 1024, 1024, true);
+    auto alloc = mm->allocateGraphicsMemory(10 * 1014 * 1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -184,7 +184,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAll
     ASSERT_NE(nullptr, mm->getPinBB());
 
     // one page is too small for early pinning
-    auto alloc = mm->allocateGraphicsMemory(4 * 1024, 1024, true);
+    auto alloc = mm->allocateGraphicsMemory(4 * 1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -199,7 +199,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
     auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
     ASSERT_NE(nullptr, mm->getPinBB());
 
-    auto alloc = mm->allocateGraphicsMemory(1024, 1024, false);
+    auto alloc = mm->allocateGraphicsMemory(1024, 1024, false, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -214,7 +214,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
     auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false);
     ASSERT_EQ(nullptr, mm->getPinBB());
 
-    auto alloc = mm->allocateGraphicsMemory(1024, 1024, true);
+    auto alloc = mm->allocateGraphicsMemory(1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 

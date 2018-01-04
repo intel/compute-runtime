@@ -43,9 +43,9 @@ class DrmMemoryManager : public MemoryManager {
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment) override {
-        return allocateGraphicsMemory(size, alignment, false);
+        return allocateGraphicsMemory(size, alignment, false, false);
     }
-    DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override;
+    DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     DrmAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
         return allocateGraphicsMemory(size, ptr, false);

@@ -156,6 +156,7 @@ struct WorkaroundTable {
     bool waLLCCachingUnsupported = false;
     bool waUseVAlign16OnTileXYBpp816 = false;
     bool waModifyVFEStateAfterGPGPUPreemption = false;
+    bool waCSRUncachable = false;
 };
 
 struct HardwareInfo {

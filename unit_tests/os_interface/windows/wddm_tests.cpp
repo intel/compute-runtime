@@ -316,7 +316,7 @@ TEST_F(WddmTest, GetCpuGpuTime) {
 
 HWTEST_F(WddmTest, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenGraphicsAllocationWithSharedPropertiesIsCreated) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u));
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
@@ -355,7 +355,7 @@ HWTEST_F(WddmTest, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandle
 
 HWTEST_F(WddmTest, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenMapGpuVaWithCpuPtrDepensOnBitness) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u));
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 

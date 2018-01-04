@@ -44,8 +44,6 @@ namespace OCLRT {
 class DevicePreemptionTests : public ::testing::Test {
   public:
     void SetUp() override {
-        dbgRestore = new DebugManagerStateRestore();
-        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
         const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, 0, 0};
         kernelInfo = KernelInfo::create();
         device = MockDevice::create<OCLRT::MockDevice>(nullptr, false);
@@ -60,11 +58,12 @@ class DevicePreemptionTests : public ::testing::Test {
         ASSERT_NE(nullptr, context);
         ASSERT_NE(nullptr, cmdQ);
         forceWhitelistedRegs(true);
-        preemptionMode = PreemptionMode::ThreadGroup;
         waTable = const_cast<WorkaroundTable *>(device->getWaTable());
     }
     void TearDown() override {
-        delete dbgRestore;
+        if (dbgRestore) {
+            delete dbgRestore;
+        }
         delete kernel;
         delete kernelInfo;
         delete dispatchInfo;
@@ -83,7 +82,7 @@ class DevicePreemptionTests : public ::testing::Test {
     MockCommandQueue *cmdQ;
     MockDevice *device;
     MockContext *context;
-    DebugManagerStateRestore *dbgRestore;
+    DebugManagerStateRestore *dbgRestore = nullptr;
     WorkaroundTable *waTable = nullptr;
     SPatchExecutionEnvironment executionEnvironment;
     MockProgram program;

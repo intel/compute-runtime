@@ -55,7 +55,7 @@ class Gmm {
     virtual ~Gmm() = default;
 
     void create();
-    static Gmm *create(const void *alignedPtr, size_t alignedSize);
+    static Gmm *create(const void *alignedPtr, size_t alignedSize, bool uncacheable);
     static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
 
     static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);

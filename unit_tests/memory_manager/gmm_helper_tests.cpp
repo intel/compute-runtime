@@ -43,10 +43,9 @@ class GmmTests : public ::testing::Test {
 };
 
 TEST_F(GmmTests, resourceCreation) {
-    MemoryManager *mm = new OsAgnosticMemoryManager;
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
-
-    auto gmm = Gmm::create(pSysMem, 4096);
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096, false));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -54,22 +53,34 @@ TEST_F(GmmTests, resourceCreation) {
     EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
     EXPECT_TRUE(pSysMem == pGmmSysMem);
 
-    delete gmm;
     mm->freeSystemMemory(pSysMem);
-    delete mm;
 }
 
-TEST_F(GmmTests, resourceCleanupOnDelete) {
-    MemoryManager *mm = new OsAgnosticMemoryManager;
+TEST_F(GmmTests, resourceCreationUncacheable) {
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    auto gmm = Gmm::create(pSysMem, 4096);
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096, true));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
-    delete gmm;
+    void *pGmmSysMem = gmm->gmmResourceInfo->getSystemMemPointer(1);
+    EXPECT_EQ(gmm->resourceParams.Flags.Gpu.NoRestriction, 0u);
+    EXPECT_TRUE(pSysMem == pGmmSysMem);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC, gmm->resourceParams.Usage);
+
     mm->freeSystemMemory(pSysMem);
-    delete mm;
+}
+
+TEST_F(GmmTests, resourceCleanupOnDelete) {
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
+    void *pSysMem = mm->allocateSystemMemory(4096, 4096);
+
+    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096, false));
+
+    ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
+
+    mm->freeSystemMemory(pSysMem);
 }
 
 TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
@@ -78,7 +89,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMM
     MemoryManager *mm = new OsAgnosticMemoryManager;
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    auto gmmRes = Gmm::create(pSysMem, maxSize);
+    auto gmmRes = Gmm::create(pSysMem, maxSize, false);
 
     ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr);
 
@@ -91,7 +102,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMM
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
-    auto gmmRes = Gmm::create(incomingPtr, size);
+    auto gmmRes = Gmm::create(incomingPtr, size, false);
     auto gmmRes2 = Gmm::create(gmmRes->gmmResourceInfo->peekHandle());
 
     //copy is being made

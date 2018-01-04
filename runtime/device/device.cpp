@@ -155,7 +155,8 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
     if (pDevice->preemptionMode == PreemptionMode::MidThread) {
         size_t requiredSize = pHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
         size_t alignment = 256 * MemoryConstants::kiloByte;
-        auto preemptionAllocation = outDevice.memoryManager->allocateGraphicsMemory(requiredSize, alignment);
+        bool uncacheable = pDevice->getWaTable()->waCSRUncachable;
+        auto preemptionAllocation = outDevice.memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
         if (!preemptionAllocation) {
             return false;
         }

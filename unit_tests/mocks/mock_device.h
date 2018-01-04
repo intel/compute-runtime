@@ -114,12 +114,12 @@ class FailMemoryManager : public MemoryManager {
         }
         applyCommonCleanup();
     };
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
         if (fail <= 0) {
             return nullptr;
         }
         fail--;
-        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemory(size, alignment, forcePin);
+        GraphicsAllocation *alloc = agnostic->allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
         allocations.push_back(alloc);
         return alloc;
     };

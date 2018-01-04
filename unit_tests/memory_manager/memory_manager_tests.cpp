@@ -1089,7 +1089,7 @@ TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryM
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
-    Gmm *gmm = Gmm::create(nullptr, 65536);
+    Gmm *gmm = Gmm::create(nullptr, 65536, false);
     EXPECT_NE(nullptr, gmm);
     delete gmm;
 }

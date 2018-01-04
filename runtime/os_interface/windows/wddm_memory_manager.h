@@ -44,7 +44,7 @@ class WddmMemoryManager : public MemoryManager {
 
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override;
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override;
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;

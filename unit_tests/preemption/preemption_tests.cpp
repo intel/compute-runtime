@@ -21,11 +21,27 @@
  */
 
 #include "unit_tests/preemption/preemption_tests.h"
+#include "runtime/helpers/options.h"
 
 using namespace OCLRT;
 
-typedef DevicePreemptionTests ThreadGroupPreemptionTests;
-typedef DevicePreemptionTests MidThreadPreemptionTests;
+class ThreadGroupPreemptionTests : public DevicePreemptionTests {
+    void SetUp() override {
+        dbgRestore = new DebugManagerStateRestore();
+        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
+        preemptionMode = PreemptionMode::ThreadGroup;
+        DevicePreemptionTests::SetUp();
+    }
+};
+
+class MidThreadPreemptionTests : public DevicePreemptionTests {
+    void SetUp() override {
+        dbgRestore = new DebugManagerStateRestore();
+        DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+        preemptionMode = PreemptionMode::MidThread;
+        DevicePreemptionTests::SetUp();
+    }
+};
 
 TEST_F(ThreadGroupPreemptionTests, disallowByKMD) {
     waTable->waDisablePerCtxtPreemptionGranularityControl = 1;
@@ -268,4 +284,38 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 
 TEST(PreemptionTest, defaultMode) {
     EXPECT_EQ(0, DebugManager.flags.ForcePreemptionMode.get());
+}
+
+HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
+    const WorkaroundTable *waTable = platformDevices[0]->pWaTable;
+    WorkaroundTable tmpWaTable;
+    tmpWaTable.waCSRUncachable = false;
+    const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = &tmpWaTable;
+
+    std::unique_ptr<MockDevice> mockDevice(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    ASSERT_NE(nullptr, mockDevice.get());
+
+    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionCsrAllocation());
+    ASSERT_NE(nullptr, csrSurface);
+    EXPECT_FALSE(csrSurface->uncacheable);
+
+    const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
+}
+
+HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
+    const WorkaroundTable *waTable = platformDevices[0]->pWaTable;
+    WorkaroundTable tmpWaTable;
+    tmpWaTable.waCSRUncachable = true;
+    const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = &tmpWaTable;
+
+    std::unique_ptr<MockDevice> mockDevice(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    ASSERT_NE(nullptr, mockDevice.get());
+
+    auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
+    MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionCsrAllocation());
+    ASSERT_NE(nullptr, csrSurface);
+    EXPECT_TRUE(csrSurface->uncacheable);
+
+    const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
 }

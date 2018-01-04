@@ -100,8 +100,7 @@ uint32_t Gmm::getMOCS(uint32_t type) {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
-Gmm *Gmm::create(const void *alignedPtr, size_t alignedSize) {
-
+Gmm *Gmm::create(const void *alignedPtr, size_t alignedSize, bool uncacheable) {
     auto gmm = new Gmm();
 
     gmm->resourceParams.Type = RESOURCE_BUFFER;
@@ -109,7 +108,11 @@ Gmm *Gmm::create(const void *alignedPtr, size_t alignedSize) {
     gmm->resourceParams.BaseWidth = (uint32_t)alignedSize;
     gmm->resourceParams.BaseHeight = 1;
     gmm->resourceParams.Depth = 1;
-    gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    if (!uncacheable) {
+        gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    } else {
+        gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+    }
     gmm->resourceParams.Flags.Info.Linear = 1;
     gmm->resourceParams.Flags.Info.Cacheable = 1;
     gmm->resourceParams.Flags.Gpu.Texture = 1;

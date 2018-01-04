@@ -35,13 +35,13 @@ using namespace OCLRT;
 
 class TestedMemoryManager : public OsAgnosticMemoryManager {
   public:
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
         EXPECT_NE(0u, expectedSize);
         if (expectedSize == size) {
             EXPECT_TRUE(forcePin);
             allocCount++;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin);
+        return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
     };
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override {
         return nullptr;

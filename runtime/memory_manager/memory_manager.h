@@ -81,10 +81,10 @@ class MemoryManager {
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment) {
-        return allocateGraphicsMemory(size, alignment, false);
+        return allocateGraphicsMemory(size, alignment, false, false);
     }
 
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) = 0;
+    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) = 0;
 
@@ -172,7 +172,7 @@ class MemoryManager {
             if (enable64kbpages) {
                 return allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, forcePin);
             } else {
-                return allocateGraphicsMemory(size, MemoryConstants::pageSize, forcePin);
+                return allocateGraphicsMemory(size, MemoryConstants::pageSize, forcePin, false);
             }
         }
     }

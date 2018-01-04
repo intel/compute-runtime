@@ -38,6 +38,7 @@ class MemoryAllocation : public GraphicsAllocation {
     bool allowAubFileWrite = true;
     size_t sizeToFree = 0;
     bool dummyAllocation = false;
+    bool uncacheable = false;
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
 
@@ -62,7 +63,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
         allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(heap32Base, GB - 2 * 4096));
     };
     ~OsAgnosticMemoryManager() override;
-    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) override;
+    GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;

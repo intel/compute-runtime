@@ -83,7 +83,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
     WddmAllocation allocation(nullptr, sizeAligned, nullptr, sizeAligned);
 
-    gmm = Gmm::create(nullptr, sizeAligned);
+    gmm = Gmm::create(nullptr, sizeAligned, false);
 
     while (success) {
         allocation.gmm = gmm;
@@ -108,7 +108,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
     return nullptr;
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
     size_t newAlignment = alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize;
     size_t sizeAligned = size ? alignUp(size, MemoryConstants::pageSize) : MemoryConstants::pageSize;
     void *pSysMem = allocateSystemMemory(sizeAligned, newAlignment);
@@ -122,7 +122,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
     WddmAllocation allocation(pSysMem, sizeAligned, pSysMem, sizeAligned);
     allocation.cpuPtrAllocated = true;
 
-    gmm = Gmm::create(pSysMem, sizeAligned);
+    gmm = Gmm::create(pSysMem, sizeAligned, uncacheable);
 
     while (success) {
         allocation.gmm = gmm;
@@ -178,7 +178,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     allocation.cpuPtrAllocated = cpuPtrAllocated;
     allocation.is32BitAllocation = true;
 
-    gmm = Gmm::create(ptrAligned, sizeAligned);
+    gmm = Gmm::create(ptrAligned, sizeAligned, false);
 
     while (success) {
         allocation.gmm = gmm;
@@ -328,7 +328,7 @@ bool WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
 
-            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = Gmm::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize);
+            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = Gmm::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
             hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
         }
     }

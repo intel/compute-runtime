@@ -40,7 +40,7 @@ OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
 struct OsHandle {
 };
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
 
     auto sizeAligned = alignUp(size, MemoryConstants::pageSize);
     MemoryAllocation *memoryAllocation = nullptr;
@@ -49,6 +49,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
         memoryAllocation = new MemoryAllocation(true, 1, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter);
         counter++;
         memoryAllocation->dummyAllocation = true;
+        memoryAllocation->uncacheable = uncacheable;
         return memoryAllocation;
     }
     auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
@@ -59,6 +60,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
             alignedFree(ptr);
             return nullptr;
         }
+        memoryAllocation->uncacheable = uncacheable;
         allocationMap.insert(std::pair<void *, MemoryAllocation>(ptr, *memoryAllocation));
     }
     counter++;
@@ -66,7 +68,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) {
-    return allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin);
+    return allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr) {
