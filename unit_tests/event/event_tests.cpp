@@ -620,8 +620,8 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     delete pPrintfSurface;
     delete pKernelInfo;
-    delete pKernel;
-    delete pProgram;
+    pKernel->decRefInternal();
+    pProgram->decRefInternal();
     delete pCmdQ;
 }
 

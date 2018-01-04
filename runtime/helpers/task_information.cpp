@@ -105,6 +105,9 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandSt
         this->surfaces.push_back(surface);
     }
     this->kernel = kernel;
+    if (kernel) {
+        kernel->incRefInternal();
+    }
     this->kernelCount = kernelCount;
 }
 
@@ -115,6 +118,9 @@ CommandComputeKernel::~CommandComputeKernel() {
     surfaces.clear();
     if (kernelOperation->ioh.get() == kernelOperation->dsh.get()) {
         kernelOperation->doNotFreeISH = true;
+    }
+    if (kernel) {
+        kernel->decRefInternal();
     }
 }
 

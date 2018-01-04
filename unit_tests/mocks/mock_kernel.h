@@ -212,8 +212,8 @@ class MockKernelWithInternals {
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
     }
     ~MockKernelWithInternals() {
-        delete mockKernel;
-        delete mockProgram;
+        mockKernel->decRefInternal();
+        mockProgram->decRefInternal();
     }
 
     operator MockKernel *() {

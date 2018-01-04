@@ -412,6 +412,23 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
     EXPECT_EQ(sshBase, ssh.getBase());
 }
 
+HWTEST_F(BlockedCommandQueueTest, givenEnqueueBlockedByUserEventWhenItIsEnqueuedThenKernelReferenceCountIsIncreased) {
+    UserEvent userEvent(context);
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    size_t offset = 0;
+    size_t size = 1;
+
+    cl_event blockedEvent = &userEvent;
+
+    auto currentRefCount = mockKernel->getRefInternalCount();
+    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    EXPECT_EQ(currentRefCount + 1, mockKernel->getRefInternalCount());
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_EQ(currentRefCount, mockKernel->getRefInternalCount());
+}
+
 typedef CommandQueueHwTest CommandQueueHwRefCountTest;
 
 HWTEST_F(CommandQueueHwRefCountTest, givenBlockedCmdQWhenNewBlockedEnqueueReplacesVirtualEventThenPreviousVirtualEventDecrementsCmdQRefCount) {

@@ -145,6 +145,7 @@ class ReferenceTrackedObject {
     unique_ptr_if_unused<DerivedClass> decRefInternal() {
         auto customDeleter = tryGetCustomDeleter();
         bool unused = refInternal.dec();
+        UNRECOVERABLE_IF(refInternal.peek() < 0);
         return unique_ptr_if_unused<DerivedClass>(static_cast<DerivedClass *>(this), unused, customDeleter);
     }
 
