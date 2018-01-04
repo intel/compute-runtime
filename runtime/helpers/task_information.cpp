@@ -151,6 +151,14 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     IndirectHeap *dsh = nullptr;
     IndirectHeap *ioh = nullptr;
 
+    IndirectHeap::Type trackedHeaps[] = {IndirectHeap::SURFACE_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::DYNAMIC_STATE, IndirectHeap::INSTRUCTION};
+
+    for (auto trackedHeap = 0u; trackedHeap < ARRAY_COUNT(trackedHeaps); trackedHeap++) {
+        if (commandQueue.getIndirectHeap(trackedHeaps[trackedHeap], 0).getUsed() > 0) {
+            commandQueue.releaseIndirectHeap(trackedHeaps[trackedHeap]);
+        }
+    }
+
     if (executionModelKernel) {
         dsh = devQueue->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         // In ExecutionModel IOH is the same as DSH to eliminate StateBaseAddress reprogramming for scheduler kernel and blocks.
@@ -158,9 +166,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
         memcpy_s(dsh->getSpace(0), dsh->getAvailableSpace(), ptrOffset(kernelOperation->dsh->getBase(), devQueue->colorCalcStateSize), kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
         dsh->getSpace(kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
-
-        if (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)
-            commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
     } else {
         dsh = &commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, requestedDshSize);
         ioh = &commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, requestedIohSize);

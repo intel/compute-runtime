@@ -348,6 +348,69 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     mockCSR->getMemoryManager()->freeGraphicsMemory(printfSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(constantSurface);
 }
+typedef CommandQueueHwTest BlockedCommandQueueTest;
+HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBlockedCommandIsBeingSubmittedItReloadsThemToZeroToKeepProperOffsets) {
+    UserEvent userEvent(context);
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    size_t offset = 0;
+    size_t size = 1;
+
+    cl_event blockedEvent = &userEvent;
+
+    auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+
+    ssh.getSpace(1);
+    ish.getSpace(1);
+    ioh.getSpace(1);
+    dsh.getSpace(1);
+
+    auto ishBase = ish.getBase();
+    auto iohBase = ioh.getBase();
+    auto dshBase = dsh.getBase();
+    auto sshBase = ssh.getBase();
+
+    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_NE(ishBase, ish.getBase());
+    EXPECT_NE(iohBase, ioh.getBase());
+    EXPECT_NE(dshBase, dsh.getBase());
+    EXPECT_NE(sshBase, ssh.getBase());
+}
+
+HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBlockedCommandIsBeingSubmittedThenThoseHeapsAreBeingUsed) {
+    UserEvent userEvent(context);
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    size_t offset = 0;
+    size_t size = 1;
+
+    cl_event blockedEvent = &userEvent;
+
+    auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096u);
+    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
+    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
+    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
+
+    auto ishBase = ish.getBase();
+    auto iohBase = ioh.getBase();
+    auto dshBase = dsh.getBase();
+    auto sshBase = ssh.getBase();
+
+    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+
+    EXPECT_EQ(ishBase, ish.getBase());
+    EXPECT_EQ(iohBase, ioh.getBase());
+    EXPECT_EQ(dshBase, dsh.getBase());
+    EXPECT_EQ(sshBase, ssh.getBase());
+}
 
 typedef CommandQueueHwTest CommandQueueHwRefCountTest;
 
