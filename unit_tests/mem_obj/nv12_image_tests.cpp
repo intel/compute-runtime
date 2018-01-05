@@ -389,20 +389,20 @@ HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
 
     char hostPtr[16 * 16 * 16];
 
-    MockContext contextWithMockCmdQ(device.get(), true);
-    MockCommandQueueHw<FamilyType> cmdQ(&contextWithMockCmdQ, device.get(), 0);
+    auto contextWithMockCmdQ = new MockContext(device.get(), true);
+    auto cmdQ = new MockCommandQueueHw<FamilyType>(contextWithMockCmdQ, device.get(), 0);
 
-    contextWithMockCmdQ.setSpecialQueue(&cmdQ);
+    contextWithMockCmdQ->overrideSpecialQueueAndDecrementRefCount(cmdQ);
 
     // Create Parent NV12 image
     cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-    auto imageNV12 = Image::create(&contextWithMockCmdQ, flags, surfaceFormat, &imageDesc, hostPtr, retVal);
+    auto imageNV12 = Image::create(contextWithMockCmdQ, flags, surfaceFormat, &imageDesc, hostPtr, retVal);
 
-    EXPECT_EQ(2u, cmdQ.EnqueueWriteImageCounter);
-    contextWithMockCmdQ.setSpecialQueue(nullptr);
+    EXPECT_EQ(2u, cmdQ->EnqueueWriteImageCounter);
 
     ASSERT_NE(nullptr, imageNV12);
+    contextWithMockCmdQ->release();
     delete imageNV12;
 }
 

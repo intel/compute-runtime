@@ -102,56 +102,51 @@ Event::Event(
 }
 
 Event::~Event() {
-    try {
-        DBG_LOG(EventsDebugEnable, "~Event()", this);
-        //no commands should be registred
-        DEBUG_BREAK_IF(this->cmdToSubmit.load());
+    DBG_LOG(EventsDebugEnable, "~Event()", this);
+    //no commands should be registred
+    DEBUG_BREAK_IF(this->cmdToSubmit.load());
 
-        submitCommand(true);
+    submitCommand(true);
 
-        int32_t lastStatus = executionStatus;
-        if (isStatusCompleted(&lastStatus) == false) {
-            transitionExecutionStatus(-1);
-            DEBUG_BREAK_IF(peekHasCallbacks() || peekHasChildEvents());
-        }
-
-        // Note from OCL spec:
-        //    "All callbacks registered for an event object must be called.
-        //     All enqueued callbacks shall be called before the event object is destroyed."
-        if (peekHasCallbacks()) {
-            executeCallbacks(lastStatus);
-        }
-
-        {
-            // clean-up submitted command if needed
-            std::unique_ptr<Command> submittedCommand(submittedCmd.exchange(nullptr));
-        }
-
-        if (cmdQueue != nullptr) {
-            cmdQueue->decRefInternal();
-        }
-
-        if (ctx != nullptr) {
-            if (timeStampNode != nullptr) {
-                TagAllocator<HwTimeStamps> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventTsAllocator();
-                allocator->returnTag(timeStampNode);
-            }
-            if (perfCounterNode != nullptr) {
-                TagAllocator<HwPerfCounter> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventPerfCountAllocator();
-                allocator->returnTag(perfCounterNode);
-            }
-            ctx->decRefInternal();
-        }
-        if (perfConfigurationData) {
-            delete perfConfigurationData;
-        }
-
-        // in case event did not unblock child events before
-        unblockEventsBlockedByThis(executionStatus);
-    } catch (...) //Don't throw from destructor
-    {
-        DEBUG_BREAK_IF(false);
+    int32_t lastStatus = executionStatus;
+    if (isStatusCompleted(&lastStatus) == false) {
+        transitionExecutionStatus(-1);
+        DEBUG_BREAK_IF(peekHasCallbacks() || peekHasChildEvents());
     }
+
+    // Note from OCL spec:
+    //    "All callbacks registered for an event object must be called.
+    //     All enqueued callbacks shall be called before the event object is destroyed."
+    if (peekHasCallbacks()) {
+        executeCallbacks(lastStatus);
+    }
+
+    {
+        // clean-up submitted command if needed
+        std::unique_ptr<Command> submittedCommand(submittedCmd.exchange(nullptr));
+    }
+
+    if (cmdQueue != nullptr) {
+        cmdQueue->decRefInternal();
+    }
+
+    if (ctx != nullptr) {
+        if (timeStampNode != nullptr) {
+            TagAllocator<HwTimeStamps> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventTsAllocator();
+            allocator->returnTag(timeStampNode);
+        }
+        if (perfCounterNode != nullptr) {
+            TagAllocator<HwPerfCounter> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventPerfCountAllocator();
+            allocator->returnTag(perfCounterNode);
+        }
+        ctx->decRefInternal();
+    }
+    if (perfConfigurationData) {
+        delete perfConfigurationData;
+    }
+
+    // in case event did not unblock child events before
+    unblockEventsBlockedByThis(executionStatus);
 }
 
 cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,

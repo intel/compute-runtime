@@ -64,7 +64,12 @@ void CommandQueueHwFixture::SetUp(
 }
 
 void CommandQueueHwFixture::TearDown() {
-    delete pCmdQ;
+    //resolve event dependencies
+    if (pCmdQ) {
+        auto blocked = pCmdQ->isQueueBlocked();
+        UNRECOVERABLE_IF(blocked);
+        pCmdQ->release();
+    }
     context->release();
 }
 

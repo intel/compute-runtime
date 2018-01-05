@@ -80,10 +80,10 @@ struct EnqueueWaitlistTest : public EnqueueWaitlistFixture,
     }
 
     void TearDown() override {
-        delete buffer;
-        delete bufferNonZeroCopy;
-        delete image;
-        delete imageNonZeroCopy;
+        buffer->decRefInternal();
+        bufferNonZeroCopy->decRefInternal();
+        image->decRefInternal();
+        imageNonZeroCopy->decRefInternal();
         EnqueueWaitlistFixture::TearDown();
     }
 

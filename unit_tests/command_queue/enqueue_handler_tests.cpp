@@ -37,13 +37,15 @@ class EnqueueHandlerTest : public DeviceFixture,
                            public testing::Test {
   public:
     void SetUp() override {
+        context = new MockContext;
         DeviceFixture::SetUp();
     }
 
     void TearDown() override {
         DeviceFixture::TearDown();
+        context->decRefInternal();
     }
-    MockContext context;
+    MockContext *context;
 };
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) {
@@ -52,7 +54,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) 
     pDevice->resetCommandStreamReceiver(csr);
 
     MockKernelWithInternals mockKernel(*pDevice);
-    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
 
     size_t gws[] = {1, 1, 1};
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
@@ -65,7 +67,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerCallOnEnqueueMarkerDoesntCallProcessE
     auto csr = new MockCsrBase<FamilyType>(tag);
     pDevice->resetCommandStreamReceiver(csr);
 
-    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
 
     mockCmdQ->enqueueMarkerWithWaitList(
         0,
@@ -82,7 +84,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnUnblockedQueueDoesntIncrem
     auto csr = new MockCsrBase<FamilyType>(tag);
     pDevice->resetCommandStreamReceiver(csr);
 
-    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
 
     // put queue into initial unblocked state
     mockCmdQ->taskLevel = 0;
@@ -100,7 +102,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnBlockedQueueShouldNotIncre
     auto csr = new MockCsrBase<FamilyType>(tag);
     pDevice->resetCommandStreamReceiver(csr);
 
-    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(&context, pDevice, 0));
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
 
     // put queue into initial blocked state
     mockCmdQ->taskLevel = Event::eventNotReady;
@@ -115,13 +117,13 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnBlockedQueueShouldNotIncre
 
 HWTEST_F(EnqueueHandlerTest, enqueueBlockedWithoutReturnEventCreatesVirtualEventAndIncremetsCommandQueueInternalRefCount) {
 
-    MockKernelWithInternals kernelInternals(*pDevice, &context);
+    MockKernelWithInternals kernelInternals(*pDevice, context);
 
     Kernel *kernel = kernelInternals.mockKernel;
 
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(&context, pDevice, 0);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
 
     // put queue into initial blocked state
     mockCmdQ->taskLevel = Event::eventNotReady;
@@ -142,19 +144,20 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedWithoutReturnEventCreatesVirtualEvent
     auto refCountInternal = mockCmdQ->getRefInternalCount();
     EXPECT_EQ(initialRefCountInternal + 1, refCountInternal);
 
-    mockCmdQ->decRefInternal();
+    mockCmdQ->virtualEvent->setStatus(CL_COMPLETE);
+    mockCmdQ->isQueueBlocked();
     mockCmdQ->release();
 }
 
 HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualEvent) {
 
-    MockKernelWithInternals kernelInternals(*pDevice, &context);
+    MockKernelWithInternals kernelInternals(*pDevice, context);
 
     Kernel *kernel = kernelInternals.mockKernel;
 
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(&context, pDevice, 0);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
 
     // put queue into initial blocked state
     mockCmdQ->taskLevel = Event::eventNotReady;
@@ -172,7 +175,8 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedSetsVirtualEventAsCurrentCmdQVirtualE
 
     EXPECT_TRUE(mockCmdQ->virtualEvent->isCurrentCmdQVirtualEvent());
 
-    mockCmdQ->decRefInternal();
+    mockCmdQ->virtualEvent->setStatus(CL_COMPLETE);
+    mockCmdQ->isQueueBlocked();
     mockCmdQ->release();
 }
 
@@ -181,13 +185,13 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedUnsetsCurrentCmdQVirtualEventForPrevi
     UserEvent userEvent;
     cl_event clUserEvent = &userEvent;
 
-    MockKernelWithInternals kernelInternals(*pDevice, &context);
+    MockKernelWithInternals kernelInternals(*pDevice, context);
 
     Kernel *kernel = kernelInternals.mockKernel;
 
     MockMultiDispatchInfo multiDispatchInfo(kernel);
 
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(&context, pDevice, 0);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
 
     // put queue into initial blocked state with userEvent
 
@@ -218,12 +222,12 @@ HWTEST_F(EnqueueHandlerTest, enqueueBlockedUnsetsCurrentCmdQVirtualEventForPrevi
 }
 
 HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
-    MockKernelWithInternals kernelInternals(*pDevice, &context);
+    MockKernelWithInternals kernelInternals(*pDevice, context);
     Kernel *kernel = kernelInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(kernel);
     cl_event outputEvent = nullptr;
 
-    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(&context, pDevice, 0);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
 
     bool blocking = false;
     mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,

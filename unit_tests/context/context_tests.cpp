@@ -241,7 +241,7 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDelet
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
-    context.setSpecialQueue(cmdQ);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     //special queue is to be deleted implicitly by context
@@ -252,13 +252,12 @@ TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextDeletedTh
     EXPECT_EQ(1, context.getRefInternalCount());
 
     auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
-    context.setSpecialQueue(cmdQ);
+    context.overrideSpecialQueueAndDecrementRefCount(cmdQ);
     EXPECT_EQ(1, context.getRefInternalCount());
 
     delete cmdQ;
     EXPECT_EQ(1, context.getRefInternalCount());
 
-    //if special queue is deleted explicitly, then it needs to be detached from context
     context.setSpecialQueue(nullptr);
 }
 

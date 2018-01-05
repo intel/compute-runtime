@@ -25,6 +25,8 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/helpers/options.h"
+#include "runtime/platform/platform.h"
+#include "runtime/event/async_events_handler.h"
 
 #include "gtest/gtest.h"
 #include "test.h"
@@ -143,4 +145,6 @@ TEST_F(ScenarioTest, givenAsyncHandlerEnabledAndUserEventBlockingEnqueueAndOutpu
 
     clReleaseEvent(eventOut);
     clReleaseCommandQueue(clCommandQ);
+
+    platform()->getAsyncEventsHandler()->closeThread();
 }

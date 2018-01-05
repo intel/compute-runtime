@@ -124,8 +124,7 @@ Kernel::~Kernel() {
     }
 
     kernelArgHandlers.clear();
-    if (program)
-        program->release();
+    program->release();
 }
 
 // Checks if patch offset is invalid (undefined)

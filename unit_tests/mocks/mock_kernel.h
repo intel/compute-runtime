@@ -203,7 +203,11 @@ class MockKernelWithInternals {
         kernelInfo.patchInfo.threadPayload = &threadPayload;
 
         if (context == nullptr) {
-            context = &mockContext;
+            mockContext = new MockContext;
+            context = mockContext;
+        } else {
+            context->incRefInternal();
+            mockContext = context;
         }
 
         mockProgram = new MockProgram(context);
@@ -214,6 +218,7 @@ class MockKernelWithInternals {
     ~MockKernelWithInternals() {
         mockKernel->decRefInternal();
         mockProgram->decRefInternal();
+        mockContext->decRefInternal();
     }
 
     operator MockKernel *() {
@@ -222,7 +227,7 @@ class MockKernelWithInternals {
 
     MockKernel *mockKernel;
     MockProgram *mockProgram;
-    MockContext mockContext;
+    Context *mockContext;
     KernelInfo kernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     SPatchThreadPayload threadPayload;
@@ -450,8 +455,7 @@ class MockParentKernel : public Kernel {
             delete[](uint64_t *) blockInfo->heapInfo.pDsh;
         }
         if (mockProgram) {
-            this->program = nullptr;
-            delete mockProgram;
+            mockProgram->decRefInternal();
         }
     }
 

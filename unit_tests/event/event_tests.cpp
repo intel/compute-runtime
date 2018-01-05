@@ -330,6 +330,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Event) {
     EXPECT_EQ(sizeof(refCount), sizeReturned);
 
     EXPECT_EQ(2u, refCount);
+    event.release();
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Release_Event) {
@@ -630,9 +631,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, 0);
 
     auto &csr = pDevice->getCommandStreamReceiver();
-    MockBuffer buffer;
+    auto buffer = new MockBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -641,6 +642,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
+    buffer->decRefInternal();
     delete pCmdQ;
 }
 
@@ -649,9 +651,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) 
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, 0);
 
     auto &csr = pDevice->getCommandStreamReceiver();
-    UnalignedBuffer buffer;
+    auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -660,6 +662,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) 
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
+    buffer->decRefInternal();
     delete pCmdQ;
 }
 
@@ -757,9 +760,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
 
     auto &csr = pDevice->getCommandStreamReceiver();
-    UnalignedBuffer buffer;
+    auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -768,6 +771,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
+    buffer->decRefInternal();
     delete pCmdQ;
 }
 
@@ -777,9 +781,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, props);
 
     auto &csr = pDevice->getCommandStreamReceiver();
-    UnalignedBuffer buffer;
+    auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, csr, *pCmdQ)));
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -788,6 +792,7 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
+    buffer->decRefInternal();
     delete pCmdQ;
 }
 
@@ -1308,18 +1313,21 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
         SmallMockEvent ev;
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_SUBMITTED, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
     }
 
     {
         SmallMockEvent ev;
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
     }
 
     {
         SmallMockEvent ev;
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
     }
 
     {
@@ -1327,6 +1335,8 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_SUBMITTED, nullptr);
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
+        ev.decRefInternal();
     }
 
     {
@@ -1334,6 +1344,8 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
+        ev.decRefInternal();
     }
 
     {
@@ -1342,6 +1354,9 @@ TEST(EventCallback, GivenEventWithCallbacksOnPeekHasCallbacksReturnsTrue) {
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_RUNNING, nullptr);
         ev.addCallback(ClbFuncTempStruct::ClbFuncT, CL_COMPLETE, nullptr);
         EXPECT_TRUE(ev.peekHasCallbacks());
+        ev.decRefInternal();
+        ev.decRefInternal();
+        ev.decRefInternal();
     }
 }
 

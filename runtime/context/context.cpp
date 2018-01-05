@@ -87,11 +87,12 @@ CommandQueue *Context::getSpecialQueue() {
 
 void Context::setSpecialQueue(CommandQueue *commandQueue) {
     specialQueue = commandQueue;
-    if (commandQueue) {
-        decRefInternal();
-    } else {
-        incRefInternal();
-    }
+}
+void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue) {
+    setSpecialQueue(commandQueue);
+    commandQueue->setIsSpecialCommandQueue(true);
+    //decrement ref count that special queue added
+    this->decRefInternal();
 };
 
 bool Context::isSpecialQueue(CommandQueue *commandQueue) {
@@ -179,8 +180,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     auto commandQueue = CommandQueue::create(this, devices[0], nullptr, errcodeRet);
     DEBUG_BREAK_IF(commandQueue == nullptr);
-
-    setSpecialQueue(commandQueue);
+    overrideSpecialQueueAndDecrementRefCount(commandQueue);
 
     return true;
 }

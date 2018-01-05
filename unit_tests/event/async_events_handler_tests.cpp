@@ -246,6 +246,7 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
     EXPECT_TRUE(handler->peekIsListEmpty());
     EXPECT_TRUE(handler->peekIsRegisterListEmpty());
     EXPECT_TRUE(userEvent.peekHasCallbacks());
+    userEvent.decRefInternal();
 }
 
 TEST_F(AsyncEventsHandlerTests, givenRegistredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {

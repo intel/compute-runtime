@@ -72,6 +72,7 @@ class CompilerInterface {
     }
 
     static void shutdown() {
+        std::unique_lock<std::mutex> destructionLock(CompilerInterface::mtx);
         if (pInstance) {
             delete pInstance;
             pInstance = nullptr;

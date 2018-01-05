@@ -132,7 +132,7 @@ class unique_ptr_if_unused : public std::unique_ptr<DataType, void (*)(DataType 
 template <typename DerivedClass>
 class ReferenceTrackedObject {
   public:
-    virtual ~ReferenceTrackedObject() = default;
+    virtual ~ReferenceTrackedObject();
 
     int32_t getRefInternalCount() const {
         return refInternal.peek();
@@ -181,4 +181,8 @@ class ReferenceTrackedObject {
     RefCounter<> refInternal;
     RefCounter<> refApi;
 };
+template <typename DerivedClass>
+inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
+    UNRECOVERABLE_IF(refInternal.peek() > 1);
+}
 }

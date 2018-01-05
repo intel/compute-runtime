@@ -212,40 +212,44 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
 }
 
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
-    MockContext context;
-    CommandQueue cmdQ(&context, nullptr, 0);
-    Event userEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    userEvent.setStatus(CL_COMPLETE);
-    userEvent.flushStamp->setStamp(5);
+    auto context = new MockContext;
+    auto cmdQ = new CommandQueue(context, nullptr, 0);
+    auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    userEvent->setStatus(CL_COMPLETE);
+    userEvent->flushStamp->setStamp(5);
+    userEvent->incRefInternal();
 
     FlushStamp expectedFlushStamp = 0;
-    EXPECT_EQ(expectedFlushStamp, cmdQ.flushStamp->peekStamp());
-    userEvent.incRefInternal();
-    cmdQ.virtualEvent = &userEvent;
-    cmdQ.incRefInternal();
+    EXPECT_EQ(expectedFlushStamp, cmdQ->flushStamp->peekStamp());
+    cmdQ->virtualEvent = userEvent;
 
-    EXPECT_FALSE(cmdQ.isQueueBlocked());
-    EXPECT_EQ(userEvent.flushStamp->peekStamp(), cmdQ.flushStamp->peekStamp());
+    EXPECT_FALSE(cmdQ->isQueueBlocked());
+    EXPECT_EQ(userEvent->flushStamp->peekStamp(), cmdQ->flushStamp->peekStamp());
+    userEvent->decRefInternal();
+    cmdQ->decRefInternal();
+    context->decRefInternal();
 }
 
 TEST(CommandQueue, givenCmdQueueBlockedByAbortedVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
-    MockContext context;
+    auto context = new MockContext;
     std::unique_ptr<MockDevice> mockDevice(Device::create<MockDevice>(nullptr));
-    CommandQueue cmdQ(&context, mockDevice.get(), 0);
+    auto cmdQ = new CommandQueue(context, mockDevice.get(), 0);
 
-    Event userEvent(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
-    userEvent.setStatus(-1);
-    userEvent.flushStamp->setStamp(5);
+    auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+    userEvent->setStatus(-1);
+    userEvent->flushStamp->setStamp(5);
 
     FlushStamp expectedFlushStamp = 0;
 
-    EXPECT_EQ(expectedFlushStamp, cmdQ.flushStamp->peekStamp());
-    userEvent.incRefInternal();
-    cmdQ.virtualEvent = &userEvent;
-    cmdQ.incRefInternal();
+    EXPECT_EQ(expectedFlushStamp, cmdQ->flushStamp->peekStamp());
+    userEvent->incRefInternal();
+    cmdQ->virtualEvent = userEvent;
 
-    EXPECT_FALSE(cmdQ.isQueueBlocked());
-    EXPECT_EQ(expectedFlushStamp, cmdQ.flushStamp->peekStamp());
+    EXPECT_FALSE(cmdQ->isQueueBlocked());
+    EXPECT_EQ(expectedFlushStamp, cmdQ->flushStamp->peekStamp());
+    userEvent->decRefInternal();
+    cmdQ->decRefInternal();
+    context->decRefInternal();
 }
 
 struct CommandQueueCommandStreamTest : public CommandQueueMemoryDevice,
@@ -272,7 +276,6 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
     userEvent.setStatus(-1);
     userEvent.incRefInternal();
     cmdQ.virtualEvent = &userEvent;
-    cmdQ.incRefInternal();
 
     EXPECT_FALSE(cmdQ.isQueueBlocked());
     EXPECT_EQ(100u, cmdQ.taskLevel);

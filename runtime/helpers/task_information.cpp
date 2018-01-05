@@ -45,6 +45,15 @@ KernelOperation::~KernelOperation() {
     alignedFree(commandStream->getBase());
 }
 
+CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, CommandStreamReceiver &csr, CommandQueue &cmdQ)
+    : memObj(memObj), csr(csr), cmdQ(cmdQ), op(op) {
+    memObj.incRefInternal();
+}
+
+CommandMapUnmap::~CommandMapUnmap() {
+    memObj.decRefInternal();
+}
+
 CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
         return completionStamp;
@@ -77,12 +86,12 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 
     cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
 
-    if (m.isMemObjZeroCopy() == false) {
+    if (memObj.isMemObjZeroCopy() == false) {
         if (op == MAP) {
-            m.transferDataToHostPtr();
+            memObj.transferDataToHostPtr();
         } else {
             DEBUG_BREAK_IF(op != UNMAP);
-            m.transferDataFromHostPtrToMemoryStorage();
+            memObj.transferDataFromHostPtrToMemoryStorage();
         }
     }
 

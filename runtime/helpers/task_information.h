@@ -59,13 +59,12 @@ class Command : public IFNode<Command> {
 
 class CommandMapUnmap : public Command {
   public:
-    CommandMapUnmap(MapOperationType op, MemObj &m, CommandStreamReceiver &csr, CommandQueue &cmdQ)
-        : m(m), csr(csr), cmdQ(cmdQ), op(op) {
-    }
+    CommandMapUnmap(MapOperationType op, MemObj &memObj, CommandStreamReceiver &csr, CommandQueue &cmdQ);
+    ~CommandMapUnmap() override;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
   private:
-    MemObj &m;
+    MemObj &memObj;
     CommandStreamReceiver &csr;
     CommandQueue &cmdQ;
     MapOperationType op;

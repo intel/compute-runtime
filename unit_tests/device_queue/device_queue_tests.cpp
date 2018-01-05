@@ -253,7 +253,8 @@ TEST_F(DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenSingleDeviceQueueI
     EXPECT_EQ(pContext->getDefaultDeviceQueue(), deviceQueue1);
     EXPECT_EQ(deviceQueue1->getReference(), 2);
 
-    delete deviceQueue1;
+    deviceQueue1->release();
+    deviceQueue2->release();
 
     const_cast<DeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }
@@ -278,7 +279,8 @@ TEST_F(DefaultDeviceQueue, createOnlyOneDefaultDeviceQueueWhenMultipleDeviceQueu
     EXPECT_EQ(pContext->getDefaultDeviceQueue(), deviceQueue1);
     EXPECT_EQ(deviceQueue1->getReference(), 2);
 
-    delete deviceQueue1;
+    deviceQueue1->release();
+    deviceQueue2->release();
 
     const_cast<DeviceInfo *>(&device->getDeviceInfo())->maxOnDeviceQueues = maxOnDeviceQueues;
 }

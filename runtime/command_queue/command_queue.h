@@ -372,6 +372,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration);
 
+    void setIsSpecialCommandQueue(bool newValue) {
+        this->isSpecialCommandQueue = newValue;
+    }
+
     uint16_t getPerfCountersUserRegistersNumber() {
         return perfCountersUserRegistersNumber;
     }
@@ -406,6 +410,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     IndirectHeap *indirectHeap[NUM_HEAPS];
 
     bool mapDcFlushRequired = false;
+    bool isSpecialCommandQueue = false;
 };
 
 typedef CommandQueue *(*CommandQueueCreateFunc)(

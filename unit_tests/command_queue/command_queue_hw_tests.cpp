@@ -121,6 +121,29 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesCreateVirtua
     pHwQ->virtualEvent = nullptr;
 }
 
+HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCommandThenItsRefCountIsBeingIncreased) {
+
+    CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
+    MockBuffer buffer;
+    pHwQ->virtualEvent = nullptr;
+
+    auto currentRefCount = buffer.getRefInternalCount();
+
+    MockEventBuilder eventBuilder;
+    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
+                                                  0,
+                                                  MAP,
+                                                  &buffer,
+                                                  eventBuilder);
+
+    EXPECT_EQ(currentRefCount + 1, buffer.getRefInternalCount());
+
+    ASSERT_NE(nullptr, pHwQ->virtualEvent);
+    pHwQ->virtualEvent->decRefInternal();
+    pHwQ->virtualEvent = nullptr;
+    EXPECT_EQ(currentRefCount, buffer.getRefInternalCount());
+}
+
 HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingAddMapUnmapToWaitlistEventsDependenciesThenVirtualEventIncrementsCommandQueueInternalRefCount) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
@@ -148,11 +171,11 @@ HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingAddMapUnmapToWaitlistE
 
 HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDoesntAddDependenciesIntoChild) {
 
-    MockBuffer buffer;
+    auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
-    Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
-    Event event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
-    const cl_event eventWaitList = &event;
+    auto returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
+    auto event = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
+    const cl_event eventWaitList = event;
 
     pHwQ->virtualEvent = nullptr;
 
@@ -160,47 +183,50 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDoesntAddDependenciesInt
     pHwQ->addMapUnmapToWaitlistEventsDependencies(&eventWaitList,
                                                   1,
                                                   MAP,
-                                                  &buffer,
+                                                  buffer,
                                                   eventBuilder);
 
     EXPECT_EQ(returnEvent, pHwQ->virtualEvent);
 
-    ASSERT_EQ(nullptr, event.peekChildEvents());
+    ASSERT_EQ(nullptr, event->peekChildEvents());
 
     // Release API refcount (i.e. from workload's perspective)
     returnEvent->release();
+    event->decRefInternal();
+    buffer->decRefInternal();
 }
 
 HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenTaskCountIsBeingWaited) {
 
-    MockBuffer buffer;
+    auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
     MockEventBuilder eventBuilder;
     pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
                                                   0,
                                                   MAP,
-                                                  &buffer,
+                                                  buffer,
                                                   eventBuilder);
 
     EXPECT_NE(nullptr, pHwQ->virtualEvent);
     pHwQ->virtualEvent->setStatus(CL_COMPLETE);
 
     EXPECT_EQ(1u, pHwQ->latestTaskCountWaited);
+    buffer->decRefInternal();
 }
 
 HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesInjectedCommand) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
-    MockBuffer buffer;
+    auto buffer = new MockBuffer;
     pHwQ->virtualEvent = nullptr;
 
     MockEventBuilder eventBuilder(returnEvent);
     pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
                                                   0,
                                                   MAP,
-                                                  &buffer,
+                                                  buffer,
                                                   eventBuilder);
     eventBuilder.finalizeAndRelease();
 
@@ -211,11 +237,12 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesInjectedComm
     pHwQ->virtualEvent = nullptr;
     // now delete
     delete returnEvent;
+    buffer->decRefInternal();
 }
 
 HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesPreviousEventHasNotInjectedChild) {
 
-    MockBuffer buffer;
+    auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
     Event event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
@@ -230,13 +257,14 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesPreviousEven
     pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
                                                   0,
                                                   MAP,
-                                                  &buffer,
+                                                  buffer,
                                                   eventBuilder);
 
     EXPECT_EQ(returnEvent, pHwQ->virtualEvent);
     ASSERT_EQ(nullptr, event.peekChildEvents());
 
     returnEvent->release();
+    buffer->decRefInternal();
 }
 
 HWTEST_F(CommandQueueHwTest, GivenNonEmptyQueueOnBlockingMapBufferWillWaitForPrecedingCommandsToComplete) {
@@ -612,8 +640,8 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     };
     auto Value = 0u;
 
-    Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, Event::eventNotReady + 1);
-    clSetEventCallback(&ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &Value);
+    auto ev = new Event(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, Event::eventNotReady + 1);
+    clSetEventCallback(ev, CL_COMPLETE, ClbFuncTempStruct::ClbFuncT, &Value);
 
     auto &csr = this->pCmdQ->getDevice().getCommandStreamReceiver();
     EXPECT_GT(3u, csr.peekTaskCount());
@@ -621,7 +649,9 @@ HWTEST_F(CommandQueueHwTest, GivenEventThatIsNotCompletedWhenFinishIsCalledAndIt
     ret = clFinish(this->pCmdQ);
     ASSERT_EQ(CL_SUCCESS, ret);
 
-    EXPECT_EQ(0u, Value); // will be handled asynchronously
+    ev->updateExecutionStatus();
+    EXPECT_EQ(1u, Value);
+    ev->decRefInternal();
 }
 
 void CloneMdi(MultiDispatchInfo &dst, const MultiDispatchInfo &src) {
@@ -802,35 +832,36 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
         }
     };
 
-    Event event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
+    auto event = new Event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
 
     uint32_t virtualEventTaskLevel = 77;
     uint32_t virtualEventTaskCount = 80;
-    MockEventWithSetCompleteOnUpdate virtualEvent(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
-    virtualEvent.setStatus(CL_SUBMITTED);
+    auto virtualEvent = new MockEventWithSetCompleteOnUpdate(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
+    virtualEvent->setStatus(CL_SUBMITTED);
 
-    cl_event blockedEvent = &event;
+    cl_event blockedEvent = event;
 
     // Put Queue in blocked state by assigning virtualEvent
-    virtualEvent.incRefInternal();
-    event.addChild(virtualEvent);
-    cmdQHw->virtualEvent = &virtualEvent;
-    cmdQHw->incRefInternal();
+    event->addChild(*virtualEvent);
+    virtualEvent->incRefInternal();
+    cmdQHw->virtualEvent = virtualEvent;
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     //new virtual event is created on enqueue, bind it to the created virtual event
-    EXPECT_NE(cmdQHw->virtualEvent, &virtualEvent);
+    EXPECT_NE(cmdQHw->virtualEvent, virtualEvent);
 
-    event.setStatus(CL_SUBMITTED);
+    event->setStatus(CL_SUBMITTED);
 
-    virtualEvent.Event::updateExecutionStatus();
+    virtualEvent->Event::updateExecutionStatus();
     EXPECT_FALSE(cmdQHw->isQueueBlocked());
     // +1 for next level after virtualEvent is unblocked
     // +1 as virtualEvent was a parent for event with actual command that is being submitted
     EXPECT_EQ(virtualEventTaskLevel + 2, cmdQHw->taskLevel);
     //command being submitted was dependant only on virtual event hence only +1
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
+    virtualEvent->decRefInternal();
+    event->decRefInternal();
 }
 
 HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompletedEventWhenEnqueueCompletesVirtualEventThenUpdatedTaskLevelIsPassedToEnqueueAndFlushTask) {
@@ -868,7 +899,6 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     virtualEvent.incRefInternal();
     event.addChild(virtualEvent);
     cmdQHw->virtualEvent = &virtualEvent;
-    cmdQHw->incRefInternal();
 
     cmdQHw->taskLevel = 23;
     cmdQHw->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);

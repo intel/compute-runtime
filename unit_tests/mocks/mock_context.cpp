@@ -41,7 +41,7 @@ MockContext::MockContext(Device *device, bool noSpecialQueue) {
     if (!specialQueue && !noSpecialQueue) {
         auto commandQueue = CommandQueue::create(this, device, nullptr, retVal);
         assert(retVal == CL_SUCCESS);
-        setSpecialQueue(commandQueue);
+        overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }
 }
 
@@ -80,7 +80,7 @@ MockContext::MockContext() {
     if (!specialQueue) {
         auto commandQueue = CommandQueue::create(this, device.get(), nullptr, retVal);
         assert(retVal == CL_SUCCESS);
-        setSpecialQueue(commandQueue);
+        overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }
 }
 

@@ -57,6 +57,7 @@ TEST_F(clSetEventCallback_, ValidEvent) {
     cl_event clevent = (cl_event)event;
     retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    event->decRefInternal();
     delete event;
 }
 
@@ -74,11 +75,13 @@ TEST_F(clSetEventCallback_, ValidCallbackTypes) {
     cl_event clevent = (cl_event)event;
     retVal = clSetEventCallback(clevent, CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    event->decRefInternal();
     delete event;
     event = new Event(nullptr, 0, 0, 0);
     clevent = (cl_event)event;
     retVal = clSetEventCallback(clevent, CL_RUNNING, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    event->decRefInternal();
     delete event;
     event = new Event(nullptr, 0, 0, 0);
     clevent = (cl_event)event;
@@ -112,6 +115,8 @@ TEST_F(clSetEventCallback_, MultipleCallbacks) {
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = clSetEventCallback(clevent, CL_SUBMITTED, eventCallBack, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    event->decRefInternal();
+    event->decRefInternal();
     delete event;
 }
 
