@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,18 +22,21 @@
 
 #pragma once
 
+#include "runtime/helpers/debug_helpers.h"
+
 #include <cinttypes>
 #include <cstddef>
 #include <vector>
 
-template <typename DataType, uint32_t OnStackCapacity>
+template <typename DataType, size_t OnStackCapacity>
 class StackVec {
   public:
-    static const uint32_t onStackCaps = OnStackCapacity;
+    using iterator = DataType *;
+    using const_iterator = const DataType *;
 
-    StackVec()
-        : dynamicMem(nullptr) {
-    }
+    static const size_t onStackCaps = OnStackCapacity;
+
+    StackVec() = default;
 
     template <typename ItType>
     StackVec(ItType beginIt, ItType endIt)
@@ -48,7 +51,7 @@ class StackVec {
             push_back(*beginIt);
             ++beginIt;
         }
-        onStackSize = static_cast<uint32_t>(count);
+        onStackSize = count;
     }
 
     StackVec(const StackVec &rhs)
@@ -62,6 +65,12 @@ class StackVec {
             push_back(v);
         }
     }
+
+    explicit StackVec(size_t initialSize)
+        : StackVec() {
+        resize(initialSize);
+    }
+
     StackVec &operator=(const StackVec &rhs) {
         clear();
 
@@ -81,6 +90,7 @@ class StackVec {
 
         return *this;
     }
+
     StackVec(StackVec &&rhs)
         : dynamicMem(nullptr) {
         if (rhs.dynamicMem != nullptr) {
@@ -92,6 +102,7 @@ class StackVec {
             push_back(v);
         }
     }
+
     StackVec &operator=(StackVec &&rhs) {
         clear();
 
@@ -146,7 +157,7 @@ class StackVec {
             dynamicMem->clear();
             return;
         }
-        clearStackObjets();
+        clearStackObjects();
     }
 
     void push_back(const DataType &v) { // NOLINT
@@ -177,7 +188,7 @@ class StackVec {
         return *(onStackMem + idx);
     }
 
-    DataType *begin() {
+    iterator begin() {
         if (dynamicMem) {
             return dynamicMem->data();
         }
@@ -185,7 +196,7 @@ class StackVec {
         return onStackMem;
     }
 
-    const DataType *begin() const {
+    const_iterator begin() const {
         if (dynamicMem) {
             return dynamicMem->data();
         }
@@ -193,7 +204,7 @@ class StackVec {
         return onStackMem;
     }
 
-    DataType *end() {
+    iterator end() {
         if (dynamicMem) {
             return dynamicMem->data() + dynamicMem->size();
         }
@@ -201,7 +212,7 @@ class StackVec {
         return onStackMem + onStackSize;
     }
 
-    const DataType *end() const {
+    const_iterator end() const {
         if (dynamicMem) {
             return dynamicMem->data() + dynamicMem->size();
         }
@@ -209,14 +220,54 @@ class StackVec {
         return onStackMem + onStackSize;
     }
 
-    void resize(size_t newCapacity) {
-        if (newCapacity > onStackCaps) {
-            ensureDynamicMem();
-            dynamicMem->resize(newCapacity);
-        }
+    void resize(size_t newSize) {
+        this->resizeImpl(newSize, nullptr);
+    }
+
+    void resize(size_t newSize, const DataType &value) {
+        resizeImpl(newSize, &value);
     }
 
   private:
+    void resizeImpl(size_t newSize, const DataType *value) {
+        // new size does not fit into internal mem
+        if (newSize > onStackCaps) {
+            ensureDynamicMem();
+        }
+
+        // memory already backed by stl vector
+        if (dynamicMem != nullptr) {
+            if (value != nullptr) {
+                dynamicMem->resize(newSize, *value);
+            } else {
+                dynamicMem->resize(newSize);
+            }
+            return;
+        }
+
+        if (newSize <= onStackSize) {
+            // trim elements
+            clearStackObjects(newSize, onStackSize - newSize);
+            onStackSize = newSize;
+            return;
+        }
+
+        // add new elements
+        if (value != nullptr) {
+            // copy-construct elements
+            while (onStackSize < newSize) {
+                new (onStackMem + onStackSize) DataType(*value);
+                ++onStackSize;
+            }
+        } else {
+            // default-construct elements
+            while (onStackSize < newSize) {
+                new (onStackMem + onStackSize) DataType();
+                ++onStackSize;
+            }
+        }
+    }
+
     void ensureDynamicMem() {
         if (dynamicMem == nullptr) {
             dynamicMem = new std::vector<DataType>();
@@ -225,20 +276,45 @@ class StackVec {
                 for (auto it = onStackMem, end = onStackMem + onStackSize; it != end; ++it) {
                     dynamicMem->push_back(std::move(*it));
                 }
-                clearStackObjets();
+                clearStackObjects();
             }
         }
     }
 
-    void clearStackObjets() {
-        for (auto it = onStackMem, end = onStackMem + onStackSize; it != end; ++it) {
-            it->~DataType();
-        }
+    void clearStackObjects() {
+        clearStackObjects(0, onStackSize);
         onStackSize = 0;
     }
 
+    void clearStackObjects(size_t offset, size_t count) {
+        UNRECOVERABLE_IF(offset + count > onStackSize);
+        for (auto it = onStackMem + offset, end = onStackMem + offset + count; it != end; ++it) {
+            it->~DataType();
+        }
+    }
+
     alignas(alignof(DataType)) char onStackMemRawBytes[sizeof(DataType[onStackCaps])];
-    std::vector<DataType> *dynamicMem;
+    std::vector<DataType> *dynamicMem = nullptr;
     DataType *const onStackMem = reinterpret_cast<DataType *const>(onStackMemRawBytes);
-    uint32_t onStackSize = 0;
+    size_t onStackSize = 0;
 };
+
+template <typename T, size_t LhsStackCaps, size_t RhsStackCaps>
+bool operator==(const StackVec<T, LhsStackCaps> &lhs,
+                const StackVec<T, RhsStackCaps> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    auto lhsIt = lhs.begin();
+    auto lhsEnd = lhs.end();
+    auto rhsIt = rhs.begin();
+
+    for (; lhsIt != lhsEnd; ++lhsIt, ++rhsIt) {
+        if (*lhsIt != *rhsIt) {
+            return false;
+        }
+    }
+
+    return true;
+}

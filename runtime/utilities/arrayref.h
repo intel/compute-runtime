@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,9 @@
 template <typename DataType>
 class ArrayRef {
   public:
+    using iterator = DataType *;
+    using const_iterator = const DataType *;
+
     template <typename IteratorType>
     ArrayRef(IteratorType b, IteratorType e)
         : b(&*b), e(&*(e - 1) + 1) {
@@ -65,19 +68,19 @@ class ArrayRef {
         return b[idx];
     }
 
-    DataType *begin() {
+    iterator begin() {
         return b;
     }
 
-    const DataType *begin() const {
+    const_iterator begin() const {
         return b;
     }
 
-    DataType *end() {
+    iterator end() {
         return e;
     }
 
-    const DataType *end() const {
+    const_iterator end() const {
         return e;
     }
 
@@ -94,3 +97,23 @@ class ArrayRef {
     DataType *b;
     DataType *e;
 };
+
+template <typename T>
+bool operator==(const ArrayRef<T> &lhs,
+                const ArrayRef<T> &rhs) {
+    if (lhs.size() != rhs.size()) {
+        return false;
+    }
+
+    auto lhsIt = lhs.begin();
+    auto lhsEnd = lhs.end();
+    auto rhsIt = rhs.begin();
+
+    for (; lhsIt != lhsEnd; ++lhsIt, ++rhsIt) {
+        if (*lhsIt != *rhsIt) {
+            return false;
+        }
+    }
+
+    return true;
+}

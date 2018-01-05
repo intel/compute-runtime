@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,14 +24,15 @@
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/iflist.h"
 #include "runtime/utilities/stackvec.h"
-
 #include "unit_tests/utilities/containers_tests_helpers.h"
 
+#include "gmock/gmock-matchers.h"
 #include "gtest/gtest.h"
 
 #include <cinttypes>
 #include <memory>
 #include <numeric>
+#include <type_traits>
 #include <vector>
 
 using namespace OCLRT;
@@ -1085,6 +1086,11 @@ TEST(StackVec, Constructor) {
     ASSERT_FALSE(contains(&smaller, &*smaller.begin()));
 }
 
+TEST(StackVec, ConstructorWithInitialSizeGetsResizedAutomaticallyDuringConstruction) {
+    StackVec<int, 5> vec1(10);
+    EXPECT_EQ(10U, vec1.size());
+}
+
 TEST(StackVec, CopyConstructor) {
     using Type = int;
     constexpr size_t sizeBase = 7;
@@ -1276,6 +1282,116 @@ TEST(StackVec, Reserve) {
     ASSERT_LE(1024U, v.capacity());
 }
 
+TEST(StackVec, Resize) {
+    struct Element {
+        Element()
+            : v(7) {
+            data = new int[100];
+        }
+
+        Element(int v)
+            : v(v) {
+            data = new int[100];
+        }
+
+        ~Element() {
+            if (data != nullptr) {
+                delete[] data;
+                data = nullptr;
+            }
+            v = -77;
+        }
+
+        Element(const Element &rhs) {
+            this->v = rhs.v;
+            this->data = new int[100];
+        }
+
+        Element(Element &&rhs) {
+            this->v = rhs.v;
+            this->data = rhs.data;
+            rhs.data = nullptr;
+        }
+
+        Element &operator=(const Element &rhs) {
+            this->v = rhs.v;
+            delete[] this->data;
+            this->data = new int[100];
+            return *this;
+        }
+
+        Element &operator=(Element &&rhs) {
+            this->v = rhs.v;
+            delete[] this->data;
+            this->data = rhs.data;
+            rhs.data = nullptr;
+            return *this;
+        }
+
+        int v = 9;
+        int *data = nullptr;
+    };
+
+    StackVec<Element, 5> vec;
+    vec.resize(1);
+    ASSERT_EQ(1U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_TRUE(contains(&vec, &*vec.begin()));
+
+    vec.resize(3, Element(11));
+    ASSERT_EQ(3U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_EQ(11, vec[1].v);
+    EXPECT_EQ(11, vec[2].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_NE(nullptr, vec[1].data);
+    EXPECT_NE(nullptr, vec[2].data);
+    EXPECT_TRUE(contains(&vec, &*vec.begin()));
+
+    vec.resize(2);
+    ASSERT_EQ(2U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_EQ(11, vec[1].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_NE(nullptr, vec[1].data);
+    EXPECT_TRUE(contains(&vec, &*vec.begin()));
+
+    vec.resize(7);
+    ASSERT_EQ(7U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_EQ(11, vec[1].v);
+    EXPECT_EQ(7, vec[2].v);
+    EXPECT_EQ(7, vec[3].v);
+    EXPECT_EQ(7, vec[4].v);
+    EXPECT_EQ(7, vec[5].v);
+    EXPECT_EQ(7, vec[6].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_NE(nullptr, vec[1].data);
+    EXPECT_NE(nullptr, vec[2].data);
+    EXPECT_NE(nullptr, vec[3].data);
+    EXPECT_NE(nullptr, vec[4].data);
+    EXPECT_NE(nullptr, vec[5].data);
+    EXPECT_NE(nullptr, vec[6].data);
+    EXPECT_FALSE(contains(&vec, &*vec.begin()));
+
+    vec.resize(1);
+    ASSERT_EQ(1U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_FALSE(contains(&vec, &*vec.begin()));
+
+    vec.resize(3, Element(55));
+    ASSERT_EQ(3U, vec.size());
+    EXPECT_EQ(7, vec[0].v);
+    EXPECT_EQ(55, vec[1].v);
+    EXPECT_EQ(55, vec[2].v);
+    EXPECT_NE(nullptr, vec[0].data);
+    EXPECT_NE(nullptr, vec[1].data);
+    EXPECT_NE(nullptr, vec[2].data);
+    EXPECT_FALSE(contains(&vec, &*vec.begin()));
+}
+
 TEST(StackVec, Iterators) {
     using Type = int;
     StackVec<Type, 5> v;
@@ -1361,6 +1477,59 @@ TEST(StackVec, ComplexElements) {
     v.reset();
 }
 
+TEST(StackVec, DefinesIteratorTypes) {
+    struct S {
+    };
+
+    using StackVecT = StackVec<S, 5>;
+    using iterator = StackVecT::iterator;
+    using const_iterator = StackVecT::const_iterator;
+
+    StackVecT vec;
+    const StackVecT &constVec = vec;
+
+    static_assert(std::is_same<iterator, decltype(vec.begin())>::value, "iterator types do not match");
+    static_assert(std::is_same<iterator, decltype(vec.end())>::value, "iterator types do not match");
+    static_assert(std::is_same<const_iterator, decltype(constVec.begin())>::value, "iterator types do not match");
+    static_assert(std::is_same<const_iterator, decltype(constVec.end())>::value, "iterator types do not match");
+}
+
+TEST(StackVec, EqualsOperatorReturnsFalseIfStackVecsHaveDifferentSizes) {
+    StackVec<int, 5> longer;
+    longer.resize(4, 0);
+
+    StackVec<int, 10> shorter;
+    shorter.resize(2, 0);
+
+    EXPECT_FALSE(longer == shorter);
+    EXPECT_FALSE(shorter == longer);
+}
+
+TEST(StackVec, EqualsOperatorReturnsFalseIfDataNotEqual) {
+    char dataA[] = {0, 1, 3, 4, 5};
+    char dataB[] = {0, 1, 3, 5, 4};
+
+    StackVec<char, 10> vecA{dataA, dataA + sizeof(dataA)};
+    StackVec<char, 15> vecB{dataB, dataB + sizeof(dataB)};
+    EXPECT_FALSE(vecA == vecB);
+}
+
+TEST(StackVec, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
+    StackVec<char, 10> vecA;
+    StackVec<char, 15> vecB;
+
+    EXPECT_TRUE(vecA == vecB);
+}
+
+TEST(StackVec, EqualsOperatorReturnsTrueIfDataIsEqual) {
+    char dataA[] = {0, 1, 3, 4, 5};
+    char dataB[] = {0, 1, 3, 4, 5};
+
+    StackVec<char, 10> vecA{dataA, dataA + sizeof(dataA)};
+    StackVec<char, 15> vecB{dataB, dataB + sizeof(dataB)};
+    EXPECT_TRUE(vecA == vecB);
+}
+
 int sum(ArrayRef<int> a) {
     int sum = 0;
     for (auto v : a) {
@@ -1421,4 +1590,55 @@ TEST(ArrayRef, ImplicitCoversionToArrayrefOfConst) {
     ArrayRef<const int> constArrayRef = arrayRef;
     EXPECT_EQ(arrayRef.begin(), constArrayRef.begin());
     EXPECT_EQ(arrayRef.end(), constArrayRef.end());
+}
+
+TEST(ArrayRef, DefinesIteratorTypes) {
+    struct S {
+    };
+
+    using ArrayT = ArrayRef<S>;
+    using iterator = ArrayT::iterator;
+    using const_iterator = ArrayT::const_iterator;
+
+    ArrayT array;
+    const ArrayT constArray;
+
+    static_assert(std::is_same<iterator, decltype(array.begin())>::value, "iterator types do not match");
+    static_assert(std::is_same<iterator, decltype(array.end())>::value, "iterator types do not match");
+    static_assert(std::is_same<const_iterator, decltype(constArray.begin())>::value, "iterator types do not match");
+    static_assert(std::is_same<const_iterator, decltype(constArray.end())>::value, "iterator types do not match");
+}
+
+TEST(ArrayRef, EqualsOperatorReturnsFalseIfArraysReferenceContaintersOfDifferentLenghts) {
+    char data[] = {0, 1, 3, 4, 5};
+
+    ArrayRef<char> longer{data, sizeof(data)};
+    ArrayRef<char> shorter{data, sizeof(data) - 1};
+    EXPECT_FALSE(longer == shorter);
+    EXPECT_FALSE(shorter == longer);
+}
+
+TEST(ArrayRef, EqualsOperatorReturnsFalseIfDataNotEqual) {
+    char dataA[] = {0, 1, 3, 4, 5};
+    char dataB[] = {0, 1, 3, 5, 4};
+
+    ArrayRef<char> arrayA{dataA, sizeof(dataA)};
+    ArrayRef<char> arrayB{dataB, sizeof(dataB)};
+    EXPECT_FALSE(arrayA == arrayB);
+}
+
+TEST(ArrayRef, EqualsOperatorReturnsTrueIfBothContainersAreEmpty) {
+    ArrayRef<char> arrayA;
+    ArrayRef<char> arrayB;
+
+    EXPECT_TRUE(arrayA == arrayB);
+}
+
+TEST(ArrayRef, EqualsOperatorReturnsTrueIfDataIsEqual) {
+    char dataA[] = {0, 1, 3, 4, 5};
+    char dataB[] = {0, 1, 3, 4, 5};
+
+    ArrayRef<char> arrayA{dataA, sizeof(dataA)};
+    ArrayRef<char> arrayB{dataB, sizeof(dataB)};
+    EXPECT_TRUE(arrayA == arrayB);
 }
