@@ -173,6 +173,23 @@ TEST(CommandQueue, IOQ_taskLevelFromCompletionStamp) {
     EXPECT_EQ(cs.flushStamp, cmdQ.flushStamp->peekStamp());
 }
 
+TEST(CommandQueue, givenTimeStampWithTaskCountNotReadyStatusWhenupdateFromCompletionStampIsBeingCalledThenQueueTaskCountIsNotUpdated) {
+    MockContext context;
+
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cmdQ.taskCount = 1u;
+
+    CompletionStamp cs = {
+        Event::eventNotReady,
+        0,
+        0,
+        0,
+        EngineType::ENGINE_RCS};
+    cmdQ.updateFromCompletionStamp(cs);
+    EXPECT_EQ(1u, cmdQ.taskCount);
+}
+
 TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTaskLevelIsUpdated) {
     MockContext context;
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
