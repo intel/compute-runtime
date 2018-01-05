@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/instrumentation/instrumentation.h"
+#include "instrumentation.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 
@@ -46,6 +46,8 @@ TEST(InstrumentationTest, instrCheckPmRegsCfg) {
     uint32_t *pLastPmRegsCfgHandle = nullptr;
     const void *pASInterface = nullptr;
     instrCheckPmRegsCfg(pQueryPmRegsCfg, pLastPmRegsCfgHandle, pASInterface);
+    InstrPmRegsCfg cfg;
+    instrCheckPmRegsCfg(&cfg, pLastPmRegsCfgHandle, pASInterface);
 }
 
 TEST(InstrumentationTest, instrGetPerfCountersQueryData) {
@@ -71,14 +73,14 @@ TEST(InstrumentationTest, instrEscGetPmRegsCfg) {
 
 TEST(InstrumentationTest, instrEscHwMetricsEnable) {
     InstrEscCbData cbData = {0};
-    int enable = 0;
+    bool enable = false;
     instrEscHwMetricsEnable(cbData, enable);
 }
 
 TEST(InstrumentationTest, instrEscLoadPmRegsCfg) {
     InstrEscCbData cbData = {0};
     InstrPmRegsCfg *pCfg = nullptr;
-    int hardwareAccess = 0;
+    bool hardwareAccess = false;
     instrEscLoadPmRegsCfg(cbData, pCfg, hardwareAccess);
 }
 
@@ -99,7 +101,7 @@ TEST(InstrumentationTest, instrEscSendReadRegsCfg) {
 }
 
 TEST(InstrumentationTest, instrSetAvailable) {
-    int enabled = 0;
+    bool enabled = false;
     instrSetAvailable(enabled);
 }
 

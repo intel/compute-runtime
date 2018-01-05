@@ -27,23 +27,23 @@
 namespace OCLRT {
 class OSInterface;
 
-int hwMetricsEnableFuncPassing(InstrEscCbData cbData, int enable);
-int hwMetricsEnableFuncFailing(InstrEscCbData cbData, int enable);
-int autoSamplingStart(InstrEscCbData cbData, void **ppOAInterface);
-int autoSamplingStartFailing(InstrEscCbData cbData, void **ppOAInterface);
-int autoSamplingStop(void **ppOAInterface);
-int getPmRegsCfgPassing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
-int getPmRegsCfgFailing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
-int checkPmRegsCfgPassing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
-int checkPmRegsCfgFailing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
-int loadPmRegsCfgPassing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, int hardwareAccess);
-int loadPmRegsCfgFailing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, int hardwareAccess);
+bool hwMetricsEnableFuncPassing(InstrEscCbData cbData, bool enable);
+bool hwMetricsEnableFuncFailing(InstrEscCbData cbData, bool enable);
+bool autoSamplingStart(InstrEscCbData cbData, void **ppOAInterface);
+bool autoSamplingStartFailing(InstrEscCbData cbData, void **ppOAInterface);
+bool autoSamplingStop(void **ppOAInterface);
+bool getPmRegsCfgPassing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
+bool getPmRegsCfgFailing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling);
+bool checkPmRegsCfgPassing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
+bool checkPmRegsCfgFailing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface);
+bool loadPmRegsCfgPassing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess);
+bool loadPmRegsCfgFailing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess);
 template <typename GTDI_QUERY, typename HwPerfCountersLayout>
 void getPerfCountersQueryData(InstrEscCbData cbData, GTDI_QUERY *pData, HwPerfCountersLayout *pLayout, uint64_t cpuRawTimestamp, void *pASInterface, InstrPmRegsCfg *pPmRegsCfg, bool useMiRPC, bool resetASData = false, const InstrAllowedContexts *pAllowedContexts = NULL);
-int setPmRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
-int setPmRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
-int sendReadRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
-int sendReadRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
+bool setPmRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
+bool setPmRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues);
+bool sendReadRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
+bool sendReadRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes);
 
 class PerfCounterFlags {
   public:

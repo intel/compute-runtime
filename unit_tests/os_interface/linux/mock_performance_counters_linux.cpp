@@ -66,7 +66,7 @@ int dlcloseMock(void *handle) throw() {
     }
     return 0;
 }
-uint64_t setPlatformInfo(uint32_t productId, void *pSkuTable) {
+uint32_t setPlatformInfo(uint32_t productId, void *pSkuTable) {
     PerfCounterFlagsLinux::setPlatformInfoFuncCalled++;
     return 0;
 }

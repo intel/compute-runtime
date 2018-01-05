@@ -70,16 +70,16 @@ bool PerformanceCountersLinux::verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *p
     return false;
 }
 bool PerformanceCountersLinux::getPerfmonConfig(InstrPmRegsCfg *pCfg) {
-    unsigned int oaCfgHandle = pCfg->oaCounters.handle;
-    unsigned int gpCfgHandle = pCfg->gpCounters.handle;
+    unsigned int oaCfgHandle = pCfg->OaCounters.Handle;
+    unsigned int gpCfgHandle = pCfg->GpCounters.Handle;
     int fd = osInterface->get()->getDrm()->getFileDescriptor();
     if (perfmonLoadConfigFunc(fd, nullptr, &oaCfgHandle, &gpCfgHandle) != 0) {
         return false;
     }
-    if (pCfg->oaCounters.handle != 0 && oaCfgHandle != pCfg->oaCounters.handle) {
+    if (pCfg->OaCounters.Handle != 0 && oaCfgHandle != pCfg->OaCounters.Handle) {
         return false;
     }
-    if (pCfg->gpCounters.handle != 0 && gpCfgHandle != pCfg->gpCounters.handle) {
+    if (pCfg->GpCounters.Handle != 0 && gpCfgHandle != pCfg->GpCounters.Handle) {
         return false;
     }
     return true;

@@ -444,10 +444,10 @@ bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint conf
             perfCounters->shutdown();
             return false;
         }
-        InstrReadRegsCfg *pUserCounters = &perfConfigurationData->readRegs;
-        for (uint32_t i = 0; i < pUserCounters->regsCount; ++i) {
+        InstrReadRegsCfg *pUserCounters = &perfConfigurationData->ReadRegs;
+        for (uint32_t i = 0; i < pUserCounters->RegsCount; ++i) {
             perfCountersUserRegistersNumber++;
-            if (pUserCounters->reg[i].bitSize > 32) {
+            if (pUserCounters->Reg[i].BitSize > 32) {
                 perfCountersUserRegistersNumber++;
             }
         }

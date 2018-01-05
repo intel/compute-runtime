@@ -129,40 +129,29 @@ typedef struct {
 } HwPerfCounters;
 
 typedef struct {
-    uint32_t offset;
-    union {
-        uint32_t value32;
-        uint64_t value64;
-    };
-    uint32_t bitSize;
-    uint32_t flags;
+    uint32_t Offset;
+    uint32_t BitSize;
 } InstrPmReg;
 
 typedef struct {
-    uint32_t handle;
-    InstrPmReg reg[INSTR_MAX_PM_REGS];
-    uint32_t regsCount;
-    uint32_t pendingRegsCount;
+    uint32_t Handle;
+    uint32_t RegsCount;
 } InstrPmRegsOaCountersCfg;
 
 typedef struct {
-    uint32_t handle;
-    InstrPmReg reg[INSTR_MAX_PM_REGS];
-    uint32_t regsCount;
-    uint32_t pendingRegsCount;
+    uint32_t Handle;
+    uint32_t RegsCount;
 } InstrPmRegsGpCountersCfg;
 
 typedef struct {
-    uint32_t handle;
-    InstrPmReg reg[INSTR_MAX_READ_REGS];
-    uint32_t regsCount;
-    uint32_t srmsCount;
+    InstrPmReg Reg[INSTR_MAX_READ_REGS];
+    uint32_t RegsCount;
 } InstrReadRegsCfg;
 
 typedef struct {
-    InstrPmRegsOaCountersCfg oaCounters;
-    InstrPmRegsGpCountersCfg gpCounters;
-    InstrReadRegsCfg readRegs;
+    InstrPmRegsOaCountersCfg OaCounters;
+    InstrPmRegsGpCountersCfg GpCounters;
+    InstrReadRegsCfg ReadRegs;
 } InstrPmRegsCfg;
 
 typedef struct {
@@ -172,14 +161,14 @@ typedef struct {
     bool DDI;
 } InstrEscCbData;
 
-int instrAutoSamplingStart(
+bool instrAutoSamplingStart(
     InstrEscCbData cbData,
     void **ppOAInterface);
 
-int instrAutoSamplingStop(
+bool instrAutoSamplingStop(
     void **ppOAInterface);
 
-int instrCheckPmRegsCfg(
+bool instrCheckPmRegsCfg(
     InstrPmRegsCfg *pQueryPmRegsCfg,
     uint32_t *pLastPmRegsCfgHandle,
     const void *pASInterface);
@@ -195,39 +184,39 @@ void instrGetPerfCountersQueryData(
     bool resetASData = false,
     const InstrAllowedContexts *pAllowedContexts = nullptr);
 
-int instrEscGetPmRegsCfg(
+bool instrEscGetPmRegsCfg(
     InstrEscCbData cbData,
     uint32_t cfgId,
     InstrPmRegsCfg *pCfg,
     InstrAutoSamplingMode *pAutoSampling);
 
-int instrEscHwMetricsEnable(
+bool instrEscHwMetricsEnable(
     InstrEscCbData cbData,
-    int enable);
+    bool enable);
 
-int instrEscLoadPmRegsCfg(
+bool instrEscLoadPmRegsCfg(
     InstrEscCbData cbData,
     InstrPmRegsCfg *pCfg,
-    int hardwareAccess = 1);
+    bool hardwareAccess = 1);
 
-int instrEscSetPmRegsCfg(
+bool instrEscSetPmRegsCfg(
     InstrEscCbData cbData,
     uint32_t count,
     uint32_t *pOffsets,
     uint32_t *pValues);
 
-int instrEscSendReadRegsCfg(
+bool instrEscSendReadRegsCfg(
     InstrEscCbData cbData,
     uint32_t count,
     uint32_t *pOffsets,
     uint32_t *pBitSizes);
 
-int instrSetAvailable(int enabled);
+bool instrSetAvailable(bool enabled);
 
 void instrEscVerifyEnable(
     InstrEscCbData cbData);
 
-uint64_t instrSetPlatformInfo(
+uint32_t instrSetPlatformInfo(
     uint32_t productId,
     void *pSkuTable);
 

@@ -20,26 +20,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/instrumentation/instrumentation.h"
+#include "instrumentation.h"
 
 namespace OCLRT {
 
-int instrAutoSamplingStart(
+bool instrAutoSamplingStart(
     InstrEscCbData cbData,
     void **ppOAInterface) {
-    return -1;
+    return false;
 }
 
-int instrAutoSamplingStop(
+bool instrAutoSamplingStop(
     void **ppOAInterface) {
-    return -1;
+    return false;
 }
 
-int instrCheckPmRegsCfg(
+bool instrCheckPmRegsCfg(
     InstrPmRegsCfg *pQueryPmRegsCfg,
     uint32_t *pLastPmRegsCfgHandle,
     const void *pASInterface) {
-    return -1;
+    return false;
 }
 
 void instrGetPerfCountersQueryData(
@@ -54,52 +54,52 @@ void instrGetPerfCountersQueryData(
     const InstrAllowedContexts *pAllowedContexts) {
 }
 
-int instrEscGetPmRegsCfg(
+bool instrEscGetPmRegsCfg(
     InstrEscCbData cbData,
     uint32_t cfgId,
     InstrPmRegsCfg *pCfg,
     InstrAutoSamplingMode *pAutoSampling) {
-    return -1;
+    return false;
 }
 
-int instrEscHwMetricsEnable(
+bool instrEscHwMetricsEnable(
     InstrEscCbData cbData,
-    int enable) {
-    return -1;
+    bool enable) {
+    return false;
 }
 
-int instrEscLoadPmRegsCfg(
+bool instrEscLoadPmRegsCfg(
     InstrEscCbData cbData,
     InstrPmRegsCfg *pCfg,
-    int hardwareAccess) {
-    return -1;
+    bool hardwareAccess) {
+    return false;
 }
 
-int instrEscSetPmRegsCfg(
+bool instrEscSetPmRegsCfg(
     InstrEscCbData cbData,
     uint32_t count,
     uint32_t *pOffsets,
     uint32_t *pValues) {
-    return -1;
+    return false;
 }
 
-int instrEscSendReadRegsCfg(
+bool instrEscSendReadRegsCfg(
     InstrEscCbData cbData,
     uint32_t count,
     uint32_t *pOffsets,
     uint32_t *pBitSizes) {
-    return -1;
+    return false;
 }
 
-int instrSetAvailable(int enabled) {
-    return -1;
+bool instrSetAvailable(bool enabled) {
+    return false;
 }
 
 void instrEscVerifyEnable(
     InstrEscCbData cbData) {
 }
 
-uint64_t instrSetPlatformInfo(
+uint32_t instrSetPlatformInfo(
     uint32_t productId,
     void *pSkuTable) {
     return 0;

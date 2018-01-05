@@ -68,7 +68,7 @@ void PerformanceCounters::initialize(const HardwareInfo *hwInfo) {
     gfxFamily = hwInfo->pPlatform->eRenderCoreFamily;
 }
 void PerformanceCounters::enableImpl() {
-    hwMetricsEnabled = (hwMetricsEnableFunc(cbData, true) != 0) ? false : true;
+    hwMetricsEnabled = hwMetricsEnableFunc(cbData, true);
 
     if (!pAutoSamplingInterface && hwMetricsEnabled) {
         autoSamplingStartFunc(cbData, &pAutoSamplingInterface);
@@ -108,12 +108,12 @@ InstrPmRegsCfg *PerformanceCounters::getPmRegsCfg(uint32_t configuration) {
     }
 
     InstrPmRegsCfg *pPmRegsCfg = new InstrPmRegsCfg();
-    pPmRegsCfg->oaCounters.handle = INSTR_PM_REGS_CFG_INVALID;
+    pPmRegsCfg->OaCounters.Handle = INSTR_PM_REGS_CFG_INVALID;
 
     mutex.lock();
     std::lock_guard<std::mutex> lg(mutex, std::adopt_lock);
 
-    if (getPmRegsCfgFunc(cbData, configuration, pPmRegsCfg, nullptr) == 0) {
+    if (getPmRegsCfgFunc(cbData, configuration, pPmRegsCfg, nullptr)) {
         return pPmRegsCfg;
     }
     delete pPmRegsCfg;
@@ -123,8 +123,8 @@ bool PerformanceCounters::verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *pLastP
     if (pCfg == nullptr || pLastPmRegsCfgHandle == nullptr || pLastPmRegsCfgPending == nullptr) {
         return false;
     }
-    if (checkPmRegsCfgFunc(pCfg, pLastPmRegsCfgHandle, pAutoSamplingInterface) == 0) {
-        if (loadPmRegsCfgFunc(cbData, pCfg, 1) == 0) {
+    if (checkPmRegsCfgFunc(pCfg, pLastPmRegsCfgHandle, pAutoSamplingInterface)) {
+        if (loadPmRegsCfgFunc(cbData, pCfg, 1)) {
             return true;
         }
     }
@@ -158,7 +158,7 @@ bool PerformanceCounters::processEventReport(size_t inputParamSize, void *inputP
 }
 
 int PerformanceCounters::sendPerfConfiguration(uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
-    int ret = -1;
+    bool ret = false;
 
     if (count == 0 || pOffsets == NULL || pValues == NULL) {
         return CL_INVALID_VALUE;
@@ -172,7 +172,7 @@ int PerformanceCounters::sendPerfConfiguration(uint32_t count, uint32_t *pOffset
         ret = sendReadRegsCfgFunc(cbData, count - 1, pOffsets + 1, pValues + 1);
     }
 
-    return ret != 0 ? CL_PROFILING_INFO_NOT_AVAILABLE : CL_SUCCESS;
+    return ret ? CL_SUCCESS : CL_PROFILING_INFO_NOT_AVAILABLE;
 }
 
 size_t PerformanceCounters::querySize() {

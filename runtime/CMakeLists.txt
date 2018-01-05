@@ -336,8 +336,8 @@ set (RUNTIME_SRCS_INDIRECT_HEAP
 )
 
 set (RUNTIME_SRCS_INSTRUMENTATION
-  instrumentation/instrumentation.cpp
-  instrumentation/instrumentation.h
+  instrumentation${SKU_INFO_SRCS_DIR_SUFFIX}/instrumentation.cpp
+  instrumentation${SKU_INFO_SRCS_DIR_SUFFIX}/instrumentation.h
 )
 
 set (RUNTIME_SRCS_KERNEL
@@ -769,6 +769,10 @@ if(NOT GMMUMD_LIB_NAME)
   set(GMMUMD_LIB_NAME "gmm_umd" CACHE STRING "name of gmm static library")
 endif()
 target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
+
+if(HAVE_INSTRUMENTATION)
+target_link_libraries(${NEO_STATIC_LIB_NAME} instrumentation_umd)
+endif()
 
 if(WIN32)
   if(GTPIN_HEADERS_DIR)

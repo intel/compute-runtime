@@ -54,83 +54,83 @@ int PerfCounterFlags::loadPmRegsCfgCalled;
 int PerfCounterFlags::setPmRegsCfgCalled;
 int PerfCounterFlags::sendReadRegsCfgCalled;
 
-int hwMetricsEnableFuncFailing(InstrEscCbData cbData, int enable) {
+bool hwMetricsEnableFuncFailing(InstrEscCbData cbData, bool enable) {
     PerfCounterFlags::escHwMetricsCalled++;
     PerfCounterFlags::hwMetricsEnableStatus = enable;
-    return -1;
+    return false;
 }
-int hwMetricsEnableFuncPassing(InstrEscCbData cbData, int enable) {
+bool hwMetricsEnableFuncPassing(InstrEscCbData cbData, bool enable) {
     PerfCounterFlags::escHwMetricsCalled++;
     PerfCounterFlags::hwMetricsEnableStatus = enable;
-    return 0;
+    return true;
 }
-int autoSamplingStart(InstrEscCbData cbData, void **ppOAInterface) {
+bool autoSamplingStart(InstrEscCbData cbData, void **ppOAInterface) {
     PerfCounterFlags::autoSamplingFuncCalled++;
     PerfCounterFlags::autoSamplingStarted++;
     ppOAInterface[0] = new char[1];
-    return 0;
+    return true;
 }
-int autoSamplingStartFailing(InstrEscCbData cbData, void **ppOAInterface) {
+bool autoSamplingStartFailing(InstrEscCbData cbData, void **ppOAInterface) {
     PerfCounterFlags::autoSamplingFuncCalled++;
     PerfCounterFlags::autoSamplingStarted++;
     ppOAInterface[0] = nullptr;
-    return -1;
+    return false;
 }
-int autoSamplingStop(void **ppOAInterface) {
+bool autoSamplingStop(void **ppOAInterface) {
     PerfCounterFlags::autoSamplingFuncCalled++;
     PerfCounterFlags::autoSamplingStopped++;
     if (ppOAInterface[0]) {
         delete[] static_cast<char *>(ppOAInterface[0]);
         ppOAInterface[0] = nullptr;
-        return 0;
+        return true;
     }
-    return -1;
+    return false;
 }
-int getPmRegsCfgPassing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling) {
+bool getPmRegsCfgPassing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling) {
     PerfCounterFlags::getPmRegsCfgCalled++;
     if (cfgId == 1) {
-        pCfg->readRegs.regsCount = 2;
-        pCfg->readRegs.reg[0].bitSize = 32;
-        pCfg->readRegs.reg[1].bitSize = 64;
+        pCfg->ReadRegs.RegsCount = 2;
+        pCfg->ReadRegs.Reg[0].BitSize = 32;
+        pCfg->ReadRegs.Reg[1].BitSize = 64;
     }
-    return 0;
+    return true;
 }
-int getPmRegsCfgFailing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling) {
+bool getPmRegsCfgFailing(InstrEscCbData cbData, uint32_t cfgId, InstrPmRegsCfg *pCfg, InstrAutoSamplingMode *pAutoSampling) {
     PerfCounterFlags::getPmRegsCfgCalled++;
-    return -1;
+    return false;
 }
-int checkPmRegsCfgPassing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface) {
+bool checkPmRegsCfgPassing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface) {
     PerfCounterFlags::checkPmRegsCfgCalled++;
-    return 0;
+    return true;
 }
-int checkPmRegsCfgFailing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface) {
+bool checkPmRegsCfgFailing(InstrPmRegsCfg *pQueryPmRegsCfg, uint32_t *pLastPmRegsCfgHandle, const void *pASInterface) {
     PerfCounterFlags::checkPmRegsCfgCalled++;
-    return -1;
+    return false;
 }
-int loadPmRegsCfgPassing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, int hardwareAccess) {
+bool loadPmRegsCfgPassing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess) {
     PerfCounterFlags::loadPmRegsCfgCalled++;
-    return 0;
+    return true;
 }
-int loadPmRegsCfgFailing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, int hardwareAccess) {
+bool loadPmRegsCfgFailing(InstrEscCbData cbData, InstrPmRegsCfg *pCfg, bool hardwareAccess) {
     PerfCounterFlags::loadPmRegsCfgCalled++;
-    return -1;
+    return false;
 }
 
-int setPmRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
+bool setPmRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
     PerfCounterFlags::setPmRegsCfgCalled++;
-    return 0;
+    return true;
 }
-int setPmRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
+bool setPmRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pValues) {
     PerfCounterFlags::setPmRegsCfgCalled++;
-    return -1;
+    return false;
 }
-int sendReadRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes) {
+bool sendReadRegsCfgFuncPassing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes) {
     PerfCounterFlags::sendReadRegsCfgCalled++;
-    return 0;
+    return true;
 }
-int sendReadRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes) {
+bool sendReadRegsCfgFuncFailing(InstrEscCbData cbData, uint32_t count, uint32_t *pOffsets, uint32_t *pBitSizes) {
     PerfCounterFlags::sendReadRegsCfgCalled++;
-    return -1;
+    return false;
 }
 
 template <typename GTDI_QUERY, typename HwPerfCountersLayout>

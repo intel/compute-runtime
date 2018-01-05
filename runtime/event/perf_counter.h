@@ -23,7 +23,7 @@
 #pragma once
 
 #include "runtime/event/hw_timestamps.h"
-#include "runtime/instrumentation/instrumentation.h"
+#include "instrumentation.h"
 
 namespace OCLRT {
 

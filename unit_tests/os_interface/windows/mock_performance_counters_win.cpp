@@ -38,7 +38,7 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(OSTime *osT
 int PerfCounterFlagsWin::setAvailableFuncCalled;
 int PerfCounterFlagsWin::verifyEnableFuncCalled;
 
-int setAvailable(int value) {
+bool setAvailable(bool value) {
     PerfCounterFlagsWin::setAvailableFuncCalled++;
     return value;
 }

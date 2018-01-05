@@ -28,7 +28,7 @@
 
 namespace OCLRT {
 
-int setAvailable(int value);
+bool setAvailable(bool value);
 void verifyEnable(InstrEscCbData cbData);
 
 class PerfCounterFlagsWin : public PerfCounterFlags {

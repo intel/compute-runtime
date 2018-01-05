@@ -86,7 +86,7 @@ target_include_directories(igdrcl_libult PRIVATE
   ${INSTRUMENTATION_INCLUDE_PATH}
   ${GTEST_INCLUDE_DIR}
   ${KHRONOS_HEADERS_DIR}
-    ${IGDRCL__IGC_INCLUDE_DIR}
+  ${IGDRCL__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
   ${GMOCK_INCLUDE_DIR}
 )
@@ -96,6 +96,10 @@ target_include_directories(igdrcl_libult_cs PRIVATE
 )
 target_include_directories(igdrcl_libult BEFORE PRIVATE ${HW_SRC_INCLUDES})
 target_include_directories(igdrcl_libult_cs BEFORE PRIVATE ${HW_SRC_INCLUDES})
+
+# if(HAVE_INSTRUMENTATION)
+# target_include_directories(igdrcl_libult PRIVATE $<TARGET_PROPERTY:instrumentation_umd,INTERFACE_INCLUDE_DIRECTORIES>)
+# endif()
 
 set_target_properties (igdrcl_libult PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties (igdrcl_libult_cs PROPERTIES POSITION_INDEPENDENT_CODE ON)

@@ -285,20 +285,20 @@ void dispatchPerfCountersUserCounterCommands(
     uint32_t cmdNum = 0;
     uint32_t regAddr = 0;
     auto configData = commandQueue.getPerfCountersConfigData();
-    auto userRegs = &configData->readRegs;
+    auto userRegs = &configData->ReadRegs;
 
-    for (uint32_t i = 0; i < userRegs->regsCount; i++) {
+    for (uint32_t i = 0; i < userRegs->RegsCount; i++) {
         auto pRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
         *pRegister = MI_STORE_REGISTER_MEM::sInit();
 
-        regAddr = userRegs->reg[i].offset;
+        regAddr = userRegs->Reg[i].Offset;
         pRegister->setRegisterAddress(regAddr);
         //offset between base (low) registers is cl_ulong wide
         address = baseAddr + i * sizeof(cl_ulong);
         pRegister->setMemoryAddress(address);
         cmdNum++;
 
-        if (userRegs->reg[i].bitSize > 32) {
+        if (userRegs->Reg[i].BitSize > 32) {
             pRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
             *pRegister = MI_STORE_REGISTER_MEM::sInit();
 

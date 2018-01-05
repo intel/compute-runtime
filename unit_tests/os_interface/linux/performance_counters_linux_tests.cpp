@@ -418,9 +418,9 @@ TEST_P(PerformanceCountersLinuxGetPerfmonConfigTest, givenPassingPerfmonLoadConf
         performanceCountersLinux->setPerfmonLoadConfigFunc(perfmonLoadConfigChangingOa);
     }
     if (isZeroValue) {
-        config.oaCounters.handle = 0;
+        config.OaCounters.Handle = 0;
     } else {
-        config.oaCounters.handle = 1;
+        config.OaCounters.Handle = 1;
     }
     auto retVal = performanceCountersLinux->getPerfmonConfig(&config);
     EXPECT_EQ(1, PerfCounterFlagsLinux::perfmonLoadConfigCalled);
@@ -441,9 +441,9 @@ TEST_P(PerformanceCountersLinuxGetPerfmonConfigTest, givenPassingPerfmonLoadConf
         performanceCountersLinux->setPerfmonLoadConfigFunc(perfmonLoadConfigChangingGp);
     }
     if (isZeroValue) {
-        config.gpCounters.handle = 0;
+        config.GpCounters.Handle = 0;
     } else {
-        config.gpCounters.handle = 1;
+        config.GpCounters.Handle = 1;
     }
     auto retVal = performanceCountersLinux->getPerfmonConfig(&config);
     EXPECT_EQ(1, PerfCounterFlagsLinux::perfmonLoadConfigCalled);
