@@ -1486,7 +1486,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     errCode = p->processGenBinary();
     ASSERT_EQ(CL_SUCCESS, errCode);
 
-    auto &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext);
+    const SipKernel &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
 
     const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0));
 

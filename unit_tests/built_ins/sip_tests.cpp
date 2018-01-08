@@ -77,3 +77,13 @@ TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
     EXPECT_NE(nullptr, strstr(src, "!opencl.compiler.options"));
     EXPECT_NE(nullptr, strstr(src, "!opencl.kernels"));
 }
+
+TEST(Sip, getType) {
+    uint32_t binary = 0;
+
+    SipKernel csr{SipKernelType::Csr, &binary, sizeof(binary)};
+    EXPECT_EQ(SipKernelType::Csr, csr.getType());
+
+    SipKernel undefined{SipKernelType::COUNT, &binary, sizeof(binary)};
+    EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
+}

@@ -49,8 +49,13 @@ class SipKernel {
     const char *getBinary() const {
         return binary.get();
     }
+
     size_t getBinarySize() const {
         return binarySize;
+    }
+
+    SipKernelType getType() const {
+        return type;
     }
 
   protected:

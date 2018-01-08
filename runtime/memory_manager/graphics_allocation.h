@@ -92,7 +92,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         return gpuAddress + allocationOffset;
     }
 
-    uint64_t getGpuAddressToPatch() {
+    uint64_t getGpuAddressToPatch() const {
         DEBUG_BREAK_IF(gpuAddress < gpuBaseAddress);
         return gpuAddress + allocationOffset - gpuBaseAddress;
     }
