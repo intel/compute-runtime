@@ -515,11 +515,10 @@ bool Wddm::freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::createAllocation(WddmAllocation *alloc) {
-    NTSTATUS status = STATUS_SUCCESS;
+NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO AllocationInfo = {0};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
-    bool success = false;
     size_t size;
 
     if (alloc == nullptr)
@@ -547,7 +546,7 @@ bool Wddm::createAllocation(WddmAllocation *alloc) {
     CreateAllocation.pAllocationInfo = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    while (!success) {
+    while (status != STATUS_SUCCESS) {
 
         status = gdi->createAllocation(&CreateAllocation);
 
@@ -557,16 +556,14 @@ bool Wddm::createAllocation(WddmAllocation *alloc) {
         }
 
         alloc->handle = AllocationInfo.hAllocation;
-        success = mapGpuVirtualAddress(alloc, alloc->getAlignedCpuPtr(), size, alloc->is32BitAllocation, false);
+        status = mapGpuVirtualAddress(alloc, alloc->getAlignedCpuPtr(), size, alloc->is32BitAllocation, false) == true ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
 
-        if (!success) {
+        if (status != STATUS_SUCCESS) {
             DEBUG_BREAK_IF(true);
             break;
         }
-
-        success = true;
     }
-    return success;
+    return status;
 }
 
 bool Wddm::createAllocation64k(WddmAllocation *alloc) {

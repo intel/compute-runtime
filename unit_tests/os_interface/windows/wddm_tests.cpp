@@ -105,12 +105,12 @@ HWTEST_F(WddmTest, allocation) {
     ASSERT_NE(gmm, nullptr);
 
     allocation.gmm = gmm;
-    bool error = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
 
-    EXPECT_TRUE(error);
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    error = mockWddm->destroyAllocation(&allocation);
+    auto error = mockWddm->destroyAllocation(&allocation);
     EXPECT_TRUE(error);
 
     releaseGmm(gmm);
@@ -139,9 +139,9 @@ HWTEST_F(WddmTest, createAllocation32bit) {
     allocation.gmm = gmm;
     allocation.is32BitAllocation = true; // mark 32 bit allocation
 
-    bool success = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
 
-    EXPECT_TRUE(success);
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
     EXPECT_EQ(1u, wddmMock->mapGpuVirtualAddressResult.called);
@@ -149,7 +149,7 @@ HWTEST_F(WddmTest, createAllocation32bit) {
     EXPECT_LE(heap32baseAddress, allocation.gpuPtr);
     EXPECT_GT(heap32baseAddress + heap32Size, allocation.gpuPtr);
 
-    success = mockWddm->destroyAllocation(&allocation);
+    auto success = mockWddm->destroyAllocation(&allocation);
     EXPECT_TRUE(success);
 
     releaseGmm(gmm);
@@ -200,12 +200,12 @@ HWTEST_F(WddmTest, mapAndFreeGpuVa) {
     ASSERT_NE(gmm, nullptr);
 
     allocation.gmm = gmm;
-    bool error = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
 
-    EXPECT_TRUE(error);
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 
@@ -231,7 +231,8 @@ HWTEST_F(WddmTest, givenNullAllocationWhenCreateThenAllocateAndMap) {
     ASSERT_NE(gmm, nullptr);
 
     allocation.gmm = gmm;
-    bool error = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.gpuPtr != 0);
     EXPECT_TRUE(allocation.gpuPtr == Gmm::canonize(allocation.gpuPtr));
 
@@ -251,12 +252,12 @@ HWTEST_F(WddmTest, makeResidentNonResident) {
     ASSERT_NE(gmm, nullptr);
 
     allocation.gmm = gmm;
-    bool error = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
 
-    EXPECT_TRUE(error);
+    EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 

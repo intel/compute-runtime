@@ -31,6 +31,11 @@
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm.h"
 #include <algorithm>
+#pragma warning(push)
+#pragma warning(disable : 4005)
+#include <ntstatus.h>
+#pragma warning(pop)
+
 #undef max
 
 namespace OCLRT {
@@ -63,13 +68,15 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
         delete gmm;
         return allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
     }
-
     WddmAllocation allocation(nullptr, imgInfo.size);
     allocation.gmm = gmm;
-    bool success = wddm->createAllocation(&allocation);
+    auto status = wddm->createAllocation(&allocation);
+    if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
+        deferredDeleter->drain(true);
+        status = wddm->createAllocation(&allocation);
+    }
     allocation.setGpuAddress(allocation.gpuPtr);
-
-    if (success) {
+    if (status == STATUS_SUCCESS) {
         auto *wddmAllocation = new WddmAllocation(allocation);
         return wddmAllocation;
     }
@@ -126,7 +133,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
 
     while (success) {
         allocation.gmm = gmm;
-        success = wddm->createAllocation(&allocation);
+        success = wddm->createAllocation(&allocation) == STATUS_SUCCESS;
 
         if (!success)
             break;
@@ -182,7 +189,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
 
     while (success) {
         allocation.gmm = gmm;
-        success = wddm->createAllocation(&allocation);
+        success = wddm->createAllocation(&allocation) == STATUS_SUCCESS;
 
         if (!success)
             break;

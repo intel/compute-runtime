@@ -34,6 +34,10 @@
 #include "unit_tests/mock_gdi/mock_gdi.h"
 #include "unit_tests/mocks/mock_gmm_memory.h"
 #include "unit_tests//os_interface/windows/mock_gdi_interface.h"
+#pragma warning(push)
+#pragma warning(disable : 4005)
+#include <ntstatus.h>
+#pragma warning(pop)
 
 using namespace OCLRT;
 
@@ -103,9 +107,15 @@ class WddmMock : public Wddm {
         freeGpuVirtualAddresResult.called++;
         return freeGpuVirtualAddresResult.success = Wddm::freeGpuVirtualAddres(gpuPtr, size);
     }
-    bool createAllocation(WddmAllocation *alloc) override {
+    NTSTATUS createAllocation(WddmAllocation *alloc) override {
         createAllocationResult.called++;
-        return createAllocationResult.success = Wddm::createAllocation(alloc);
+        if (callBaseDestroyAllocations) {
+            createAllocationResult.success = Wddm::createAllocation(alloc) == STATUS_SUCCESS;
+        } else {
+            createAllocationResult.success = true;
+            return createAllocationStatus;
+        }
+        return STATUS_SUCCESS;
     }
     bool createAllocation64k(WddmAllocation *alloc) override {
         createAllocationResult.called++;
@@ -246,6 +256,7 @@ class WddmMock : public Wddm {
     CallResult unlockResult;
     CallResult waitFromCpuResult;
     CallResult releaseGpuPtrResult;
+    NTSTATUS createAllocationStatus;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
 };

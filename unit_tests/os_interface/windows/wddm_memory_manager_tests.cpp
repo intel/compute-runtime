@@ -1475,6 +1475,62 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledT
     EXPECT_EQ(1u, wddm->releaseGpuPtrResult.called);
 }
 
+TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {
+    WddmMock *wddm = new WddmMock;
+    wddm->callBaseDestroyAllocations = false;
+    MockDeferredDeleter *deleter = new MockDeferredDeleter;
+    MockWddmMemoryManager memoryManager(wddm);
+    memoryManager.setDeferredDeleter(deleter);
+
+    cl_image_desc imgDesc;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageInfo imgInfo;
+    imgInfo.imgDesc = &imgDesc;
+    wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+    EXPECT_EQ(0, deleter->drainCalled);
+    EXPECT_EQ(0u, wddm->createAllocationResult.called);
+    deleter->expectDrainBlockingValue(true);
+    memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    EXPECT_EQ(1, deleter->drainCalled);
+    EXPECT_EQ(2u, wddm->createAllocationResult.called);
+}
+
+TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCanAllocateMemoryForTiledImageThenDrainIsNotCalledAndCreateAllocationIsCalledOnce) {
+    WddmMock *wddm = new WddmMock;
+    wddm->callBaseDestroyAllocations = false;
+    MockDeferredDeleter *deleter = new MockDeferredDeleter;
+    MockWddmMemoryManager memoryManager(wddm);
+    memoryManager.setDeferredDeleter(deleter);
+
+    cl_image_desc imgDesc;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageInfo imgInfo;
+    imgInfo.imgDesc = &imgDesc;
+    wddm->createAllocationStatus = STATUS_SUCCESS;
+    EXPECT_EQ(0, deleter->drainCalled);
+    EXPECT_EQ(0u, wddm->createAllocationResult.called);
+    auto allocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    EXPECT_EQ(0, deleter->drainCalled);
+    EXPECT_EQ(1u, wddm->createAllocationResult.called);
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenCreateAllocationIsCalledOnce) {
+    WddmMock *wddm = new WddmMock;
+    wddm->callBaseDestroyAllocations = false;
+    MockWddmMemoryManager memoryManager(wddm);
+    memoryManager.setDeferredDeleter(nullptr);
+
+    cl_image_desc imgDesc;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    ImageInfo imgInfo;
+    imgInfo.imgDesc = &imgDesc;
+    wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+    EXPECT_EQ(0u, wddm->createAllocationResult.called);
+    memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    EXPECT_EQ(1u, wddm->createAllocationResult.called);
+}
+
 HWTEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
     WddmMock *wddm = new WddmMock;
     EXPECT_TRUE(wddm->init<FamilyType>());
