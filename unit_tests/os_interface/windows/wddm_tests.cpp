@@ -746,7 +746,7 @@ HWTEST_F(WddmWithMockGdiTest, createMonitoredFenceIsInitializedWithFenceValueZer
     EXPECT_EQ(1u, wddm.getMonitoredFence().currentFenceValue);
 }
 
-NTSTATUS queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
+NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
     pData->NumAllocations = 0;
     return 0;
 }
