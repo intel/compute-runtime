@@ -93,9 +93,13 @@ inline size_t alignSizeWholePage(const void *ptr, size_t size) {
 }
 
 template <size_t alignment, typename T>
-inline bool isAligned(T ptr) {
-    auto p = (uintptr_t)ptr;
-    return (p % alignment) == 0;
+inline constexpr bool isAligned(T val) {
+    return (static_cast<size_t>(val) % alignment) == 0;
+}
+
+template <size_t alignment, typename T>
+inline bool isAligned(T *ptr) {
+    return ((reinterpret_cast<uintptr_t>(ptr)) % alignment) == 0;
 }
 
 template <typename T>

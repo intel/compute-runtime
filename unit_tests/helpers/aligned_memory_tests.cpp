@@ -264,3 +264,18 @@ TYPED_TEST(IsAlignedTests, aligned) {
     auto ptr3 = reinterpret_cast<TypeParam *>(reinterpret_cast<uintptr_t>(ptr) & ~((alignof(TypeParam) >> 1) - 1));
     EXPECT_FALSE(isAligned(ptr3));
 }
+
+TEST(IsAligned, nonPointerType) {
+    EXPECT_TRUE(isAligned<3>(0));
+    EXPECT_FALSE(isAligned<3>(1));
+    EXPECT_FALSE(isAligned<3>(2));
+    EXPECT_TRUE(isAligned<3>(3));
+    EXPECT_FALSE(isAligned<3>(4));
+    EXPECT_FALSE(isAligned<3>(5));
+    EXPECT_TRUE(isAligned<3>(6));
+}
+
+TEST(IsAligned, supportsConstexprEvaluation) {
+    static_assert(false == isAligned<3>(2), "");
+    static_assert(true == isAligned<3>(3), "");
+}
