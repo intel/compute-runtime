@@ -26,7 +26,10 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
+
+#include "gmock/gmock-matchers.h"
 
 using namespace OCLRT;
 
@@ -284,6 +287,80 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 TEST(PreemptionTest, defaultMode) {
     EXPECT_EQ(0, DebugManager.flags.ForcePreemptionMode.get());
 }
+
+struct PreemptionHwTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {
+};
+
+HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterImmWhenPreemptionModeIsChanging) {
+    PreemptionMode mode = GetParam();
+
+    if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
+        EXPECT_EQ(0U, PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode));
+        return;
+    }
+
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode);
+    EXPECT_LE(sizeof(MI_LOAD_REGISTER_IMM), requiredSize);
+
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+
+    size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
+    uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
+    MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
+
+    PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, &csrSurface, nullptr);
+    EXPECT_EQ(requiredSize, cmdStream.getUsed());
+}
+
+HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToTheStream) {
+    PreemptionMode mode = GetParam();
+
+    if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
+        LinearStream cmdStream(nullptr, 0U);
+        PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, nullptr, nullptr);
+        EXPECT_EQ(0U, cmdStream.getUsed());
+        return;
+    }
+
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    auto hwDetails = GetPreemptionTestHwDetails<FamilyType>();
+
+    uint32_t defaultRegValue = hwDetails.defaultRegValue;
+
+    uint32_t expectedRegValue = defaultRegValue;
+    if (hwDetails.modeToRegValueMap.find(mode) != hwDetails.modeToRegValueMap.end()) {
+        expectedRegValue = hwDetails.modeToRegValueMap[mode];
+    }
+
+    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode);
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+
+    size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
+    uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
+    MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
+
+    PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, &csrSurface, nullptr);
+
+    HardwareParse cmdParser;
+    cmdParser.parseCommands<FamilyType>(cmdStream);
+    const uint32_t regAddress = hwDetails.regAddress;
+    MI_LOAD_REGISTER_IMM *cmd = findMmioCmd<FamilyType>(cmdParser.cmdList.begin(), cmdParser.cmdList.end(), regAddress);
+    ASSERT_NE(nullptr, cmd);
+    EXPECT_EQ(expectedRegValue, cmd->getDataDword());
+}
+
+INSTANTIATE_TEST_CASE_P(
+    CreateParametrizedPreemptionHwTest,
+    PreemptionHwTest,
+    ::testing::Values(PreemptionMode::Disabled, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread));
 
 HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     const WorkaroundTable *waTable = platformDevices[0]->pWaTable;

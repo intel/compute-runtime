@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ static constexpr uint32_t midThreadVal = 0;
 }; // namespace PreemptionSKL
 
 template <>
-void PreemptionHelper::programPreemptionMode<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
+void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
     uint32_t regVal = 0;
     if (preemptionMode == PreemptionMode::MidThread) {
         regVal = PreemptionSKL::midThreadVal | PreemptionSKL::mask;
@@ -61,7 +61,7 @@ void PreemptionHelper::programPreemptionMode<GfxFamily>(LinearStream *cmdStream,
 }
 
 template <>
-size_t PreemptionHelper::getRequiredCsrSize<GfxFamily>(PreemptionMode preemptionMode) {
+size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode preemptionMode) {
     size_t size = sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
     if (preemptionMode == PreemptionMode::MidThread) {
         size += sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);

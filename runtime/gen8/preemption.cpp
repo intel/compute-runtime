@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@ static constexpr uint32_t cmdLevelVal = (1 << 2);
 }; // namespace PreemptionBDW
 
 template <>
-void PreemptionHelper::programPreemptionMode<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
+void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
     uint32_t regVal = 0;
     if (preemptionMode == PreemptionMode::ThreadGroup) {
         regVal = PreemptionBDW::threadGroupVal;
@@ -47,7 +47,7 @@ void PreemptionHelper::programPreemptionMode<GfxFamily>(LinearStream *cmdStream,
 }
 
 template <>
-size_t PreemptionHelper::getRequiredCsrSize<GfxFamily>(PreemptionMode preemptionMode) {
+size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode preemptionMode) {
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
 }
 

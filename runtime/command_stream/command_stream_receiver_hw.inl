@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -503,7 +503,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCsrSize() {
     size += getCmdSizeForCoherency();
 
     if (csrSizeRequestFlags.preemptionRequestChanged) {
-        size += PreemptionHelper::getRequiredCsrSize<GfxFamily>(memoryManager->device->getPreemptionMode());
+        size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(memoryManager->device->getPreemptionMode());
     }
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
@@ -531,7 +531,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
     if (csrSizeRequestFlags.preemptionRequestChanged) {
-        PreemptionHelper::programPreemptionMode<GfxFamily>(&csr, dispatchFlags.preemptionMode, preemptionCsrAllocation, nullptr);
+        PreemptionHelper::programCmdStream<GfxFamily>(&csr, dispatchFlags.preemptionMode, preemptionCsrAllocation, nullptr);
         this->lastPreemptionMode = dispatchFlags.preemptionMode;
     }
 }

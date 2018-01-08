@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
@@ -32,66 +33,21 @@
 
 using namespace OCLRT;
 
-typedef DevicePreemptionTests Gen8PreemptionTests;
-typedef PreemptionEnqueueKernelTest Gen8PreemptionEnqueueKernelTest;
+using Gen8PreemptionTests = DevicePreemptionTests;
+using Gen8PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
 
-GEN8TEST_F(Gen8PreemptionTests, programThreadGroupPreemptionLri) {
-    preemptionMode = PreemptionMode::ThreadGroup;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(expectedSize, requiredSize);
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
-
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2248u, lri->getRegisterOffset());
-    uint32_t expectedData = 0;
-    EXPECT_EQ(expectedData, lri->getDataDword());
+template <>
+PreemptionTestHwDetails GetPreemptionTestHwDetails<BDWFamily>() {
+    PreemptionTestHwDetails ret;
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = 0;
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = (1 << 2);
+    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
+    ret.regAddress = 0x2248u;
+    return ret;
 }
 
-GEN8TEST_F(Gen8PreemptionTests, programMidBatchPreemptionLri) {
-    preemptionMode = PreemptionMode::MidBatch;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(expectedSize, requiredSize);
-
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-
+GEN8TEST_F(Gen8PreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
-
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
-    EXPECT_EQ(requiredSize, cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2248u, lri->getRegisterOffset());
-    uint32_t expectedData = DwordBuilder::build(2, false);
-    EXPECT_EQ(expectedData, lri->getDataDword());
-}
-
-GEN8TEST_F(Gen8PreemptionTests, programPreemptionLri) {
-    preemptionMode = PreemptionMode::ThreadGroup;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(expectedSize, requiredSize);
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-
-    device->setPreemptionMode(preemptionMode);
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
-
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
-    EXPECT_EQ(requiredSize, cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2248u, lri->getRegisterOffset());
-    uint32_t expectedData = 0;
-    EXPECT_EQ(expectedData, lri->getDataDword());
 }
 
 GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogram) {
@@ -99,38 +55,21 @@ GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreempt
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.getMemoryManager()->setForce32BitAllocations(false);
     csr.overrideMediaVFEStateDirty(false);
-    HardwareParse hwParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
     MockKernelWithInternals mockKernel(*pDevice);
 
+    HardwareParse hwParser;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwParser.parseCommands<FamilyType>(csr.commandStream);
-    hwParser.findHardwareCommands<FamilyType>();
     auto offset = csr.commandStream.getUsed();
-
-    bool foundOne = false;
-    for (auto it : hwParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        if (cmd->getRegisterOffset() == 0x2248u) {
-            EXPECT_FALSE(foundOne);
-            foundOne = true;
-        }
-    }
-    EXPECT_TRUE(foundOne);
-
-    hwParser.cmdList.clear();
-    hwParser.lriList.clear();
-
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
+    pCmdQ->flush();
     hwParser.parseCommands<FamilyType>(csr.commandStream, offset);
-    hwParser.findHardwareCommands<FamilyType>();
 
-    for (auto it : hwParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2248u);
-    }
+    size_t numMmiosFound = countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), 0x2248u);
+    EXPECT_EQ(1U, numMmiosFound);
 }
 
 GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenValidKernelForPreemptionWhenEnqueueKernelCalledThenPassDevicePreemptionMode) {

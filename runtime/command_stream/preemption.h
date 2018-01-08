@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,10 +39,10 @@ class PreemptionHelper {
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
 
     template <typename GfxFamily>
-    static void programPreemptionMode(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel);
+    static void programCmdStream(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel);
 
     template <typename GfxFamily>
-    static size_t getRequiredCsrSize(PreemptionMode preemptionMode);
+    static size_t getRequiredCmdStreamSize(PreemptionMode preemptionMode);
 
     template <typename GfxFamily>
     static size_t getPreemptionWaCsSize(const Device &device);

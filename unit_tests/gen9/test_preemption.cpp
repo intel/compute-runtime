@@ -27,6 +27,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 
 namespace OCLRT {
@@ -43,74 +44,20 @@ void HardwareParse::findCsrBaseAddress<SKLFamily>() {
 
 using namespace OCLRT;
 
-typedef DevicePreemptionTests Gen9PreemptionTests;
-typedef PreemptionEnqueueKernelTest Gen9PreemptionEnqueueKernelTest;
-typedef MidThreadPreemptionEnqueueKernelTest Gen9MidThreadPreemptionEnqueueKernelTest;
-typedef ThreadGroupPreemptionEnqueueKernelTest Gen9ThreadGroupPreemptionEnqueueKernelTest;
+using Gen9PreemptionTests = DevicePreemptionTests;
+using Gen9PreemptionEnqueueKernelTest = PreemptionEnqueueKernelTest;
+using Gen9MidThreadPreemptionEnqueueKernelTest = MidThreadPreemptionEnqueueKernelTest;
+using Gen9ThreadGroupPreemptionEnqueueKernelTest = ThreadGroupPreemptionEnqueueKernelTest;
 
-GEN9TEST_F(Gen9PreemptionTests, programThreadGroupPreemptionLri) {
-    preemptionMode = PreemptionMode::ThreadGroup;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(expectedSize, requiredSize);
-
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
-    EXPECT_EQ(requiredSize, cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2580u, lri->getRegisterOffset());
-    uint32_t expectedData = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
-    EXPECT_EQ(expectedData, lri->getDataDword());
-}
-
-GEN9TEST_F(Gen9PreemptionTests, programMidBatchPreemptionLri) {
-    preemptionMode = PreemptionMode::MidBatch;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
-    EXPECT_EQ(expectedSize, requiredSize);
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
-
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
-    EXPECT_EQ(requiredSize, cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2580u, lri->getRegisterOffset());
-    uint32_t expectedData = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
-    EXPECT_EQ(expectedData, lri->getDataDword());
-}
-
-GEN9TEST_F(Gen9PreemptionTests, programMidThreadPreemptionLri) {
-    preemptionMode = PreemptionMode::MidThread;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename FamilyType::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
-    size_t requiredSize = PreemptionHelper::getRequiredCsrSize<FamilyType>(preemptionMode);
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM) + sizeof(GPGPU_CSR_BASE_ADDRESS);
-    EXPECT_EQ(expectedSize, requiredSize);
-    auto &cmdStream = cmdQ->getCS(requiredSize);
-    size_t minSize = device->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
-    uint64_t minAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface((void *)minAlignment, minSize);
-    executionEnvironment->DisableMidThreadPreemption = 0;
-
-    device->setPreemptionMode(preemptionMode);
-    EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(kernel.get(), *device));
-
-    PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, &csrSurface, nullptr);
-    EXPECT_EQ(requiredSize, cmdStream.getUsed());
-
-    auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream.getBase();
-    EXPECT_EQ(0x2580u, lri->getRegisterOffset());
-    uint32_t expectedData = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
-    EXPECT_EQ(expectedData, lri->getDataDword());
-
-    auto gpgpuCsr = (GPGPU_CSR_BASE_ADDRESS *)((uintptr_t)lri + sizeof(MI_LOAD_REGISTER_IMM));
-    EXPECT_EQ(minAlignment, gpgpuCsr->getGpgpuCsrBaseAddress());
+template <>
+PreemptionTestHwDetails GetPreemptionTestHwDetails<SKLFamily>() {
+    PreemptionTestHwDetails ret;
+    ret.modeToRegValueMap[PreemptionMode::ThreadGroup] = DwordBuilder::build(1, true) | DwordBuilder::build(2, true, false);
+    ret.modeToRegValueMap[PreemptionMode::MidBatch] = DwordBuilder::build(2, true) | DwordBuilder::build(1, true, false);
+    ret.modeToRegValueMap[PreemptionMode::MidThread] = DwordBuilder::build(2, true, false) | DwordBuilder::build(1, true, false);
+    ret.defaultRegValue = ret.modeToRegValueMap[PreemptionMode::MidBatch];
+    ret.regAddress = 0x2580u;
+    return ret;
 }
 
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupNoWa) {
@@ -124,58 +71,27 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     csr.overrideMediaVFEStateDirty(false);
     auto csrSurface = csr.getPreemptionCsrAllocation();
     EXPECT_EQ(nullptr, csrSurface);
-    HardwareParse hwCsrParser;
-    HardwareParse hwCmdQParser;
     size_t off[3] = {0, 0, 0};
     size_t gws[3] = {1, 1, 1};
 
     MockKernelWithInternals mockKernel(*pDevice);
 
+    HardwareParse hwParserCsr;
+    HardwareParse hwParserCmdQ;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
-    hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
-    hwCmdQParser.findHardwareCommands<FamilyType>();
+    hwParserCsr.parseCommands<FamilyType>(csr.commandStream);
+    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS());
     auto offsetCsr = csr.commandStream.getUsed();
     auto offsetCmdQ = pCmdQ->getCS().getUsed();
-
-    bool foundOne = false;
-    for (auto it : hwCsrParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        if (cmd->getRegisterOffset() == 0x2580u) {
-            EXPECT_FALSE(foundOne);
-            foundOne = true;
-        }
-    }
-    EXPECT_TRUE(foundOne);
-    hwCsrParser.cmdList.clear();
-    hwCsrParser.lriList.clear();
-
-    bool foundWaLri = false;
-    for (auto it : hwCmdQParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        if (cmd->getRegisterOffset() == 0x2600u) {
-            foundWaLri = true;
-        }
-    }
-    EXPECT_FALSE(foundWaLri);
-    hwCmdQParser.cmdList.clear();
-    hwCmdQParser.lriList.clear();
-
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
-    hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
-    hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
-    hwCmdQParser.findHardwareCommands<FamilyType>();
+    pCmdQ->flush();
+    hwParserCsr.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
+    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
 
-    for (auto it : hwCsrParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2580u);
-    }
-    for (auto it : hwCmdQParser.lriList) {
-        auto cmd = genCmdCast<typename FamilyType::MI_LOAD_REGISTER_IMM *>(it);
-        EXPECT_FALSE(cmd->getRegisterOffset() == 0x2600u);
-    }
+    EXPECT_EQ(1U, countMmio<FamilyType>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end(), 0x2580u));
+    EXPECT_EQ(0U, countMmio<FamilyType>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end(), 0x2600u));
+    EXPECT_EQ(0U, countMmio<FamilyType>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end(), 0x2580u));
+    EXPECT_EQ(0U, countMmio<FamilyType>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end(), 0x2600u));
 }
 
 GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogramThreadGroupWa) {

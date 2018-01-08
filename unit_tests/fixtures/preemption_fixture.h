@@ -29,6 +29,8 @@
 
 #include <cinttypes>
 #include <memory>
+#include <type_traits>
+#include <unordered_map>
 
 namespace iOpenCL {
 struct SPatchExecutionEnvironment;
@@ -90,3 +92,22 @@ struct MidThreadPreemptionEnqueueKernelTest : OCLRT::PreemptionEnqueueKernelTest
     OCLRT::HardwareInfo *globalHwInfo;
     OCLRT::PreemptionMode originalPreemptionMode;
 };
+
+struct PreemptionTestHwDetails {
+    struct PreemptionModeHashT {
+        auto operator()(const OCLRT::PreemptionMode &preemptionMode) const -> std::underlying_type<OCLRT::PreemptionMode>::type {
+            return static_cast<std::underlying_type<OCLRT::PreemptionMode>::type>(preemptionMode);
+        }
+    };
+
+    bool supportsPreemptionProgramming() const {
+        return modeToRegValueMap.size() > 0;
+    }
+
+    uint32_t regAddress = 0;
+    std::unordered_map<OCLRT::PreemptionMode, uint32_t, PreemptionModeHashT> modeToRegValueMap;
+    uint32_t defaultRegValue = 0;
+};
+
+template <typename FamilyType>
+PreemptionTestHwDetails GetPreemptionTestHwDetails();
