@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,7 +71,10 @@ BDWTEST_F(ThreadArbitrationGen8, givenPreambleWhenItIsProgrammedThenThreadArbitr
     typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(**platformDevices, true);
-    PreambleHelper<BDWFamily>::programPreamble(&linearStream, **platformDevices, l3Config, ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin);
+
+    PreambleHelper<BDWFamily>::programPreamble(&linearStream, MockDevice(**platformDevices), l3Config,
+                                               ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin,
+                                               nullptr);
 
     parseCommands<BDWFamily>(cs);
 
@@ -84,7 +87,7 @@ BDWTEST_F(ThreadArbitrationGen8, givenPreambleWhenItIsProgrammedThenThreadArbitr
     EXPECT_EQ(RegisterOffset, lri.getRegisterOffset());
     EXPECT_EQ(1u, lri.getDataDword() & 1);
 
-    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(**platformDevices));
+    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(MockDevice(**platformDevices)));
 }
 
 typedef PreambleFixture Gen8UrbEntryAllocationSize;

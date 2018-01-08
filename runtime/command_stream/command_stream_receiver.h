@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -108,6 +108,12 @@ class CommandStreamReceiver {
 
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) = 0;
     MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait);
+
+    // returns size of block that needs to be reserved at the beginning of each instruction heap for CommandStreamReceiver
+    MOCKABLE_VIRTUAL size_t getInstructionHeapCmdStreamReceiverReservedSize() const;
+
+    // allows CommandStreamReceiver to prepopulate reserved block in instruction heap
+    MOCKABLE_VIRTUAL void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const;
 
   protected:
     // taskCount - # of tasks submitted

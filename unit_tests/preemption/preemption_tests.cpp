@@ -25,6 +25,7 @@
 #include "unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -288,21 +289,157 @@ TEST(PreemptionTest, defaultMode) {
     EXPECT_EQ(0, DebugManager.flags.ForcePreemptionMode.get());
 }
 
+TEST(PreemptionTest, whenPreemptionModeIsNotMidThreadThenInstructionHeapSipKernelReservedSizeIsEmpty) {
+    char buffer[4096];
+    LinearStream instructionHeap(buffer, sizeof(buffer));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+
+    mockDevice->setPreemptionMode(PreemptionMode::Disabled);
+    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
+    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
+    ASSERT_EQ(0U, instructionHeap.getUsed());
+
+    mockDevice->setPreemptionMode(PreemptionMode::MidBatch);
+    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
+    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
+    ASSERT_EQ(0U, instructionHeap.getUsed());
+
+    mockDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
+    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
+    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
+    ASSERT_EQ(0U, instructionHeap.getUsed());
+}
+
+TEST(PreemptionTest, instructionHeapIsInvalidIfItSmallerThanSipKernel) {
+    char instructionHeapBuffer[4096];
+    LinearStream instructionHeap(instructionHeapBuffer, sizeof(instructionHeapBuffer));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+    instructionHeap.getSpace(sizeof(sipPattern) - 1);
+    memcpy_s(instructionHeapBuffer, sizeof(instructionHeapBuffer), sipPattern, sizeof(sipPattern));
+
+    {
+        MockBuiltins mockBuiltins;
+        mockBuiltins.overrideGlobalBuiltins();
+        {
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
+                                                                                      sipPattern, sizeof(sipPattern)));
+            mockBuiltins.overrideSipKernel(std::move(sipOverride));
+        }
+
+        EXPECT_FALSE(PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(instructionHeap, *mockDevice));
+    }
+}
+
+TEST(PreemptionTest, instructionHeapIsInvalidIfItDoesNotContainSipKernelAtTheBegining) {
+    char instructionHeapBuffer[4096];
+    LinearStream instructionHeap(instructionHeapBuffer, sizeof(instructionHeapBuffer));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+    instructionHeap.getSpace(sizeof(instructionHeapBuffer));
+    memcpy_s(instructionHeapBuffer + 1, sizeof(instructionHeapBuffer) - 1, sipPattern, sizeof(sipPattern));
+
+    {
+        MockBuiltins mockBuiltins;
+        mockBuiltins.overrideGlobalBuiltins();
+        {
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
+                                                                                      sipPattern, sizeof(sipPattern)));
+            mockBuiltins.overrideSipKernel(std::move(sipOverride));
+        }
+
+        EXPECT_FALSE(PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(instructionHeap, *mockDevice));
+    }
+}
+
+TEST(PreemptionTest, instructionHeapIsValidIfItContainSipKernelAtTheBegining) {
+    char instructionHeapBuffer[4096];
+    LinearStream instructionHeap(instructionHeapBuffer, sizeof(instructionHeapBuffer));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+    instructionHeap.getSpace(sizeof(instructionHeapBuffer));
+    memcpy_s(instructionHeapBuffer, sizeof(instructionHeapBuffer), sipPattern, sizeof(sipPattern));
+
+    {
+        MockBuiltins mockBuiltins;
+        mockBuiltins.overrideGlobalBuiltins();
+        {
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
+                                                                                      sipPattern, sizeof(sipPattern)));
+            mockBuiltins.overrideSipKernel(std::move(sipOverride));
+        }
+
+        EXPECT_TRUE(PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(instructionHeap, *mockDevice));
+    }
+}
+
+TEST(PreemptionTest, whenPreemptionModeIsMidThreadThenInstructionHeapSipKernelReservedBlockIsProperlyInitialized) {
+    char instructionHeapBuffer[4096];
+    memset(instructionHeapBuffer, 7, sizeof(instructionHeapBuffer));
+    LinearStream instructionHeap(instructionHeapBuffer, sizeof(instructionHeapBuffer));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+
+    {
+        MockBuiltins mockBuiltins;
+        mockBuiltins.overrideGlobalBuiltins();
+        {
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
+                                                                                      sipPattern, sizeof(sipPattern)));
+            mockBuiltins.overrideSipKernel(std::move(sipOverride));
+        }
+
+        EXPECT_EQ(sizeof(sipPattern), PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
+        PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
+        EXPECT_TRUE(PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(instructionHeap, *mockDevice));
+        EXPECT_EQ(7, instructionHeapBuffer[sizeof(sipPattern)]); // check for overflow
+    }
+}
+
 struct PreemptionHwTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {
 };
 
+HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsNotChanging) {
+    PreemptionMode mode = GetParam();
+    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, mode);
+    EXPECT_EQ(0U, requiredSize);
+
+    StackVec<char, 4096> buffer(requiredSize);
+    LinearStream cmdStream(buffer.begin(), buffer.size());
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    {
+        MockBuiltins tmpBuiltins;
+        char sipData[16] = {0};
+        tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, sipData, sizeof(sipData)}));
+        tmpBuiltins.overrideGlobalBuiltins();
+        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode,
+                                                       nullptr, LinearStream(nullptr, 0), *mockDevice);
+    }
+    EXPECT_EQ(0U, cmdStream.getUsed());
+}
+
 HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterImmWhenPreemptionModeIsChanging) {
     PreemptionMode mode = GetParam();
+    PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
 
     if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
-        EXPECT_EQ(0U, PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode));
+        EXPECT_EQ(0U, PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, differentPreemptionMode));
         return;
     }
 
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode);
-    EXPECT_LE(sizeof(MI_LOAD_REGISTER_IMM), requiredSize);
+    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, differentPreemptionMode);
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), requiredSize);
 
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
@@ -313,16 +450,21 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
-    PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, &csrSurface, nullptr);
+    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode,
+                                                   nullptr, LinearStream(nullptr, 0), *mockDevice);
     EXPECT_EQ(requiredSize, cmdStream.getUsed());
 }
 
 HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToTheStream) {
     PreemptionMode mode = GetParam();
+    PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
 
     if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         LinearStream cmdStream(nullptr, 0U);
-        PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, nullptr, nullptr);
+        LinearStream instructionHeap(nullptr, 0U);
+        PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode, nullptr,
+                                                       instructionHeap, *mockDevice);
         EXPECT_EQ(0U, cmdStream.getUsed());
         return;
     }
@@ -337,17 +479,16 @@ HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToT
         expectedRegValue = hwDetails.modeToRegValueMap[mode];
     }
 
-    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode);
+    size_t requiredSize = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(mode, differentPreemptionMode);
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
-
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
 
     size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minCsrAlignment, minCsrSize);
 
-    PreemptionHelper::programCmdStream<FamilyType>(&cmdStream, mode, &csrSurface, nullptr);
+    PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, differentPreemptionMode,
+                                                   &csrSurface, LinearStream(nullptr, 0), *mockDevice);
 
     HardwareParse cmdParser;
     cmdParser.parseCommands<FamilyType>(cmdStream);

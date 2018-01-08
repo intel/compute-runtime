@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/preamble.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "hw_cmds.h"
 #include "reg_configs.h"
 #include "runtime/device/device.h"
@@ -64,10 +65,12 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 }
 
 template <typename GfxFamily>
-uint32_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const HardwareInfo &hwInfo) {
+uint32_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    return sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+    size_t requiredSize = sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+    requiredSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
+    return static_cast<uint32_t>(requiredSize);
 }
 
 template <typename GfxFamily>
@@ -105,11 +108,18 @@ void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, const HardwareInfo &hwInfo, uint32_t l3Config, uint32_t requiredThreadArbitrationPolicy) {
+void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
+                                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
     programPipelineSelect(pCommandStream);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
-    programGenSpecificPreambleWorkArounds(pCommandStream, hwInfo);
+    programPreemption(pCommandStream, device, preemptionCsr);
+    programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
+}
+
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, const Device &device, GraphicsAllocation *preemptionCsr) {
+    PreemptionHelper::programPreamble<GfxFamily>(*pCommandStream, device, preemptionCsr);
 }
 
 template <typename GfxFamily>

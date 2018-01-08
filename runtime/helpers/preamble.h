@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@ namespace OCLRT {
 
 struct HardwareInfo;
 class Device;
+class GraphicsAllocation;
 class LinearStream;
 
 template <typename GfxFamily>
@@ -37,13 +38,15 @@ struct PreambleHelper {
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream);
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
+    static void programPreemption(LinearStream *pCommandStream, const Device &device, GraphicsAllocation *preemptionCsr);
     static void setupPipeControlInFrontOfCommand(void *pCmd, const HardwareInfo *hwInfo, bool isVfeCommand);
     static void programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress);
-    static void programPreamble(LinearStream *pCommandStream, const HardwareInfo &hwInfo, uint32_t l3Config, uint32_t requiredThreadArbitrationPolicy);
+    static void programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
+                                uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static void programPSForMedia(LinearStream *pCommandStream, bool enable);
     static bool getMediaSamplerDopClockGateEnable(LinearStream *pCommandStream);
-    static uint32_t getAdditionalCommandsSize(const HardwareInfo &hwInfo);
+    static uint32_t getAdditionalCommandsSize(const Device &device);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
 };

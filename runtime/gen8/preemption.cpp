@@ -35,23 +35,42 @@ static constexpr uint32_t cmdLevelVal = (1 << 2);
 }; // namespace PreemptionBDW
 
 template <>
-void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
+void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
+                                                   GraphicsAllocation *preemptionCsr, const LinearStream &ih, const Device &device) {
+    if (newPreemptionMode == oldPreemptionMode) {
+        return;
+    }
+
     uint32_t regVal = 0;
-    if (preemptionMode == PreemptionMode::ThreadGroup) {
+    if (newPreemptionMode == PreemptionMode::ThreadGroup) {
         regVal = PreemptionBDW::threadGroupVal;
     } else {
         regVal = PreemptionBDW::cmdLevelVal;
     }
 
-    LriHelper<GfxFamily>::program(cmdStream, PreemptionBDW::mmioAddress, regVal);
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionBDW::mmioAddress, regVal);
 }
 
 template <>
-size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode preemptionMode) {
+size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode) {
+    if (newPreemptionMode == oldPreemptionMode) {
+        return 0;
+    }
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+}
+
+template <>
+size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device) {
+    return 0;
+}
+
+template <>
+void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, const Device &device,
+                                                  const GraphicsAllocation *preemptionCsr) {
 }
 
 template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
+
 } // namespace OCLRT

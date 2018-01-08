@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@ void PreambleHelper<BDWFamily>::programThreadArbitration(LinearStream *pCommandS
 }
 
 template <>
-uint32_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const HardwareInfo &hwInfo) {
+uint32_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
     return 0;
 }
 

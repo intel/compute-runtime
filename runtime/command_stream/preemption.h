@@ -38,11 +38,22 @@ class PreemptionHelper {
     static bool allowMidThreadPreemption(Kernel *kernel, Device &device);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
 
-    template <typename GfxFamily>
-    static void programCmdStream(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel);
+    static size_t getInstructionHeapSipKernelReservedSize(const Device &device);
+    static void initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, const Device &device);
+    static bool isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, const Device &device);
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSize(PreemptionMode preemptionMode);
+    static size_t getRequiredPreambleSize(const Device &device);
+
+    template <typename GfxFamily>
+    static void programPreamble(LinearStream &preambleCmdStream, const Device &device, const GraphicsAllocation *preemptionCsr);
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
+
+    template <typename GfxFamily>
+    static void programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
+                                 GraphicsAllocation *preemptionCsr, const LinearStream &ih, const Device &device);
 
     template <typename GfxFamily>
     static size_t getPreemptionWaCsSize(const Device &device);

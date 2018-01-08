@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,8 +36,10 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_csr.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -740,4 +742,27 @@ HWTEST_F(KmdNotifyTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphi
     commandQ->enqueueMarkerWithWaitList(0, nullptr, nullptr);
     auto commandStreamGraphicsAllocation2 = commandQ->getCS(0).getGraphicsAllocation();
     EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
+}
+
+TEST(CommandQueueGetIndirectHeap, whenNewInstructionHeapIsBeingCreatedThenCommandStreamReceiverCanReserveAMemoryBlockAtItsBegining) {
+    char pattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+    static_assert(false == isAligned<MemoryConstants::cacheLineSize>(sizeof(pattern)),
+                  "Will be checking for automatic cacheline alignment, so pattern length must not be a multiple of cacheline");
+    size_t alignedPatternSize = alignUp(sizeof(pattern), MemoryConstants::cacheLineSize);
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver;
+    mockDevice->resetCommandStreamReceiver(csr);
+
+    csr->instructionHeapReserveredData.assign(pattern, pattern + sizeof(pattern));
+    MockCommandQueue cmdQ{nullptr, mockDevice.get(), nullptr};
+    IndirectHeap &heap = cmdQ.getIndirectHeap(OCLRT::IndirectHeap::INSTRUCTION, 8192);
+    EXPECT_LE(8192U, heap.getAvailableSpace());
+    EXPECT_EQ(alignedPatternSize, heap.getUsed());
+
+    ASSERT_LE(sizeof(pattern), heap.getMaxAvailableSpace());
+    char *reservedBlock = reinterpret_cast<char *>(heap.getBase());
+    auto dataFoundInReservedBlock = ArrayRef<char>(reservedBlock, sizeof(pattern));
+    auto expectedData = ArrayRef<char>(csr->instructionHeapReserveredData);
+    EXPECT_THAT(dataFoundInReservedBlock, testing::ContainerEq(expectedData));
 }

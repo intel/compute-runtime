@@ -50,6 +50,15 @@ GEN8TEST_F(Gen8PreemptionTests, allowThreadGroupPreemptionReturnsTrue) {
     EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
 }
 
+GEN8TEST_F(Gen8PreemptionTests, doesNotProgramPreamble) {
+    size_t requiredSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*device);
+    EXPECT_EQ(0U, requiredSize);
+
+    LinearStream cmdStream{nullptr, 0};
+    PreemptionHelper::programPreamble<FamilyType>(cmdStream, *device, nullptr);
+    EXPECT_EQ(0U, cmdStream.getUsed());
+}
+
 GEN8TEST_F(Gen8PreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSamePreemptionRequestThenDontReprogram) {
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -238,6 +238,13 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
             minHeapSize -= MemoryConstants::pageSize;
         }
 
+        size_t reservedSize = 0;
+        if (heapType == IndirectHeap::INSTRUCTION) {
+            reservedSize = alignUp(device->getCommandStreamReceiver().getInstructionHeapCmdStreamReceiverReservedSize(),
+                                   MemoryConstants::cacheLineSize);
+        }
+
+        minRequiredSize += reservedSize;
         minRequiredSize = minRequiredSize ? std::max(minRequiredSize, minHeapSize) : 0;
         minRequiredSize = minRequiredSize > 0 ? alignUp(minRequiredSize, MemoryConstants::cacheLineSize) : 0;
 
@@ -254,6 +261,11 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
         } else {
             heap = new IndirectHeap(heapMemory);
             heap->overrideMaxSize(minRequiredSize);
+        }
+
+        if (heapType == IndirectHeap::INSTRUCTION) {
+            device->getCommandStreamReceiver().initializeInstructionHeapCmdStreamReceiverReservedBlock(*heap);
+            heap->align(MemoryConstants::cacheLineSize);
         }
     }
 

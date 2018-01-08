@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@ set(IGDRCL_SRCS_tests_mocks
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_buffer.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_builtins.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_command_queue.h"

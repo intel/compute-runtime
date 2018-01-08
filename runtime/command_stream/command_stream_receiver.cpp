@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/preemption.h"
+#include "runtime/device/device.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/os_interface/os_interface.h"
@@ -197,4 +200,13 @@ void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSi
         requiredScratchSize = newRequiredScratchSize;
     }
 }
+
+size_t CommandStreamReceiver::getInstructionHeapCmdStreamReceiverReservedSize() const {
+    return PreemptionHelper::getInstructionHeapSipKernelReservedSize(*memoryManager->device);
+}
+
+void CommandStreamReceiver::initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const {
+    return PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(ih, *memoryManager->device);
+}
+
 } // namespace OCLRT

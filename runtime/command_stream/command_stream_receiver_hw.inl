@@ -67,11 +67,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 }
 
 template <typename GfxFamily>
-size_t getSizeRequiredPreambleCS(const HardwareInfo &hwInfo) {
+size_t getSizeRequiredPreambleCS(const Device &device) {
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
            sizeof(typename GfxFamily::PIPELINE_SELECT) +
            sizeof(typename GfxFamily::PIPE_CONTROL) +
-           sizeof(typename GfxFamily::MEDIA_VFE_STATE) + PreambleHelper<GfxFamily>::getAdditionalCommandsSize(hwInfo);
+           sizeof(typename GfxFamily::MEDIA_VFE_STATE) + PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
 }
 
 template <typename GfxFamily>
@@ -163,11 +163,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != dispatchFlags.mediaSamplerRequired;
 
-    auto &commandStreamCSR = this->getCS(getRequiredCsrSize());
+    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSize(dispatchFlags));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     initPageTableManagerRegisters(commandStreamCSR);
-    programPreemption(commandStreamCSR, dispatchFlags);
+    programPreemption(commandStreamCSR, dispatchFlags, ih);
     programCoherency(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
@@ -491,8 +491,8 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCsrSize() {
-    size_t size = getSizeRequiredPreambleCS<GfxFamily>(hwInfo) +
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags) {
+    size_t size = getSizeRequiredPreambleCS<GfxFamily>(*memoryManager->device) +
                   sizeof(typename GfxFamily::STATE_BASE_ADDRESS) +
                   sizeof(PIPE_CONTROL) +
                   getRequiredPipeControlSize() +
@@ -502,9 +502,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCsrSize() {
     }
     size += getCmdSizeForCoherency();
 
-    if (csrSizeRequestFlags.preemptionRequestChanged) {
-        size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(memoryManager->device->getPreemptionMode());
-    }
+    size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
+
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
 
@@ -529,11 +528,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    if (csrSizeRequestFlags.preemptionRequestChanged) {
-        PreemptionHelper::programCmdStream<GfxFamily>(&csr, dispatchFlags.preemptionMode, preemptionCsrAllocation, nullptr);
-        this->lastPreemptionMode = dispatchFlags.preemptionMode;
-    }
+inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags,
+                                                                  const LinearStream &ih) {
+    PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionCsrAllocation,
+                                                  ih, *memoryManager->device);
+    this->lastPreemptionMode = dispatchFlags.preemptionMode;
 }
 
 template <typename GfxFamily>
@@ -562,7 +561,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, hwInfo, newL3Config, this->requiredThreadArbitrationPolicy);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, *memoryManager->device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionCsrAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
         this->lastSentThreadAribtrationPolicy = this->requiredThreadArbitrationPolicy;

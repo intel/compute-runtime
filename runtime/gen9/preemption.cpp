@@ -20,6 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <cstring>
+
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/preemption.inl"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -40,33 +43,62 @@ static constexpr uint32_t midThreadVal = 0;
 }; // namespace PreemptionSKL
 
 template <>
-void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream *cmdStream, PreemptionMode &preemptionMode, GraphicsAllocation *preemptionCsr, GraphicsAllocation *sipKernel) {
+void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream,
+                                                   PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
+                                                   GraphicsAllocation *preemptionCsr,
+                                                   const LinearStream &ih, const Device &device) {
+    if (oldPreemptionMode == newPreemptionMode) {
+        DEBUG_BREAK_IF((newPreemptionMode == PreemptionMode::MidThread) && (false == isValidInstructionHeapForMidThreadPreemption(ih, device)));
+        return;
+    }
+
     uint32_t regVal = 0;
-    if (preemptionMode == PreemptionMode::MidThread) {
+    if (newPreemptionMode == PreemptionMode::MidThread) {
         regVal = PreemptionSKL::midThreadVal | PreemptionSKL::mask;
-    } else if (preemptionMode == PreemptionMode::ThreadGroup) {
+    } else if (newPreemptionMode == PreemptionMode::ThreadGroup) {
         regVal = PreemptionSKL::threadGroupVal | PreemptionSKL::mask;
     } else {
         regVal = PreemptionSKL::cmdLevelVal | PreemptionSKL::mask;
     }
 
-    LriHelper<GfxFamily>::program(cmdStream, PreemptionSKL::mmioAddress, regVal);
-
-    if (preemptionMode == PreemptionMode::MidThread) {
-        typedef typename GfxFamily::GPGPU_CSR_BASE_ADDRESS GPGPU_CSR_BASE_ADDRESS;
-        auto csr = (GPGPU_CSR_BASE_ADDRESS *)cmdStream->getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS));
-        *csr = GPGPU_CSR_BASE_ADDRESS::sInit();
-        csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
-    }
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionSKL::mmioAddress, regVal);
 }
 
 template <>
-size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode preemptionMode) {
-    size_t size = sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
-    if (preemptionMode == PreemptionMode::MidThread) {
-        size += sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
+size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode) {
+    if (newPreemptionMode == oldPreemptionMode) {
+        return 0;
     }
-    return size;
+    return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+}
+
+template <>
+size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return 0;
+    }
+
+    return sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS) + sizeof(typename GfxFamily::STATE_SIP);
+}
+
+template <>
+void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, const Device &device,
+                                                  const GraphicsAllocation *preemptionCsr) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return;
+    }
+
+    UNRECOVERABLE_IF(nullptr == preemptionCsr);
+    using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
+    using STATE_SIP = typename GfxFamily::STATE_SIP;
+
+    auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
+    csr->init();
+    csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
+
+    auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
+    sip->init();
+    sip->setSystemInstructionPointer(0);
 }
 
 template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);

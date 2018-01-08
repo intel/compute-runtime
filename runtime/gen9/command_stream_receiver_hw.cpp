@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,7 +56,7 @@ template <>
 void CommandStreamReceiverHw<Family>::addDcFlushToPipeControl(Family::PIPE_CONTROL *pCmd, bool flushDC) {
 }
 
-template size_t getSizeRequiredPreambleCS<Family>(const HardwareInfo &hwInfo);
+template size_t getSizeRequiredPreambleCS<Family>(const Device &device);
 
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/string.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include <vector>
 
@@ -198,6 +199,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::tagAddress;
+    std::vector<char> instructionHeapReserveredData;
+
+    ~MockCommandStreamReceiver() {
+    }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override;
 
@@ -221,4 +226,23 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     void setOSInterface(OSInterface *osInterface);
+
+    size_t getInstructionHeapCmdStreamReceiverReservedSize() const override {
+        if (instructionHeapReserveredData.size() == 0) {
+            return CommandStreamReceiver::getInstructionHeapCmdStreamReceiverReservedSize();
+        }
+
+        return instructionHeapReserveredData.size();
+    }
+
+    void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const override {
+        if (instructionHeapReserveredData.size() == 0) {
+            CommandStreamReceiver::initializeInstructionHeapCmdStreamReceiverReservedBlock(ih);
+            return;
+        }
+
+        void *block = ih.getSpace(instructionHeapReserveredData.size());
+        memcpy_s(block, instructionHeapReserveredData.size(),
+                 instructionHeapReserveredData.data(), instructionHeapReserveredData.size());
+    }
 };

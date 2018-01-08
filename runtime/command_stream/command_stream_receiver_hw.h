@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,14 +61,14 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     static void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress);
     static void alignToCacheLine(LinearStream &commandStream);
 
-    size_t getRequiredCsrSize();
+    size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
     size_t getCmdSizeForCoherency();
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override;
 
   protected:
-    void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
+    void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags, const LinearStream &ih);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programPreamble(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
@@ -93,5 +93,5 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 };
 
 template <typename GfxFamily>
-size_t getSizeRequiredPreambleCS(const HardwareInfo &hwInfo);
+size_t getSizeRequiredPreambleCS(const Device &device);
 } // namespace OCLRT

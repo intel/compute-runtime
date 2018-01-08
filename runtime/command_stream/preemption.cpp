@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,8 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/preemption.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 
 namespace OCLRT {
@@ -99,6 +102,39 @@ void PreemptionHelper::adjustDefaultPreemptionMode(RuntimeCapabilityTable &devic
     } else {
         deviceCapabilities.defaultPreemptionMode = PreemptionMode::Disabled;
     }
+}
+
+size_t PreemptionHelper::getInstructionHeapSipKernelReservedSize(const Device &device) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return 0;
+    }
+
+    return BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device).getBinarySize();
+}
+
+void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, const Device &device) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return;
+    }
+
+    const SipKernel &sip = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device);
+    size_t sipSize = sip.getBinarySize();
+    UNRECOVERABLE_IF(sipSize > ih.getAvailableSpace());
+    UNRECOVERABLE_IF(0 != ih.getUsed());
+    void *blockForSip = ih.getSpace(sipSize);
+    UNRECOVERABLE_IF(nullptr == blockForSip);
+    auto err = memcpy_s(blockForSip, sipSize, sip.getBinary(), sipSize);
+    UNRECOVERABLE_IF(err != 0);
+}
+
+// verify that SIP CSR kernel resides at the begining of the InstructionHeap
+bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, const Device &device) {
+    const SipKernel &sip = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device);
+    if (ih.getUsed() < sip.getBinarySize()) {
+        return false;
+    }
+
+    return (0 == memcmp(ih.getBase(), sip.getBinary(), sip.getBinarySize()));
 }
 
 } // namespace OCLRT

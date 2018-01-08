@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -565,7 +565,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(commandStreamReceiver.hwInfo);
+    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
     size_t sizeNeeded = sizeNeededForPreamble +
@@ -598,7 +598,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(commandStreamReceiver.hwInfo);
+    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
     size_t sizeNeeded = sizeNeededForPreamble +
@@ -631,7 +631,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = getSizeRequiredPreambleCS<FamilyType>(commandStreamReceiver.hwInfo) +
+    size_t sizeNeeded = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo)) +
                         sizeof(STATE_BASE_ADDRESS) +
                         sizeof(PIPE_CONTROL) +
                         commandStreamReceiver.getRequiredPipeControlSize() +
@@ -639,7 +639,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
-    csrCS.getSpace(csrCS.getAvailableSpace() - commandStreamReceiver.getRequiredCsrSize());
+    DispatchFlags flags;
+    csrCS.getSpace(csrCS.getAvailableSpace() - commandStreamReceiver.getRequiredCmdStreamSize(flags));
     auto expectedBase = csrCS.getBase();
 
     // This case handles when we have *just* enough space
@@ -1784,11 +1785,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, requiredCsrSizeAlignedToCacheline)
     csrSizeRequest.l3ConfigChanged = true;
 
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCsrSize();
+    DispatchFlags flags;
+    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
 
     csrSizeRequest.l3ConfigChanged = false;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCsrSize();
+    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
 
     EXPECT_EQ(alignUp(l3ConfigChangedSize, MemoryConstants::cacheLineSize), l3ConfigChangedSize);
     EXPECT_EQ(alignUp(l3ConfigNotChangedSize, MemoryConstants::cacheLineSize), l3ConfigNotChangedSize);

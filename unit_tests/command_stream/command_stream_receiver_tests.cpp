@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/mem_obj/buffer.h"
@@ -30,9 +31,12 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "test.h"
 #include "runtime/helpers/cache_policy.h"
+
+#include "gmock/gmock-matchers.h"
 
 using namespace OCLRT;
 
@@ -203,4 +207,40 @@ TEST_F(CommandStreamReceiverTest, makeResidentWithoutParametersDoesNothing) {
 HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, csr.dispatchMode);
+}
+
+TEST(CommandStreamReceiver, cmdStreamReceiverReservedBlockInInstructionHeapIsBasedOnPreemptionHelper) {
+    char pattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
+
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+
+    {
+        MockBuiltins mockBuiltins;
+        mockBuiltins.overrideGlobalBuiltins();
+        {
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
+                                                                                      pattern, sizeof(pattern)));
+            mockBuiltins.overrideSipKernel(std::move(sipOverride));
+        }
+
+        size_t reservedSize = mockDevice->getCommandStreamReceiver().getInstructionHeapCmdStreamReceiverReservedSize();
+        size_t expectedSize = OCLRT::PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice);
+        EXPECT_NE(0U, expectedSize);
+        EXPECT_EQ(expectedSize, reservedSize);
+        ASSERT_LE(expectedSize, reservedSize);
+
+        StackVec<char, 4096> cmdStreamIhBuffer;
+        cmdStreamIhBuffer.resize(reservedSize);
+        LinearStream cmdStreamReceiverInstrucionHeap{cmdStreamIhBuffer.begin(), cmdStreamIhBuffer.size()};
+        mockDevice->getCommandStreamReceiver().initializeInstructionHeapCmdStreamReceiverReservedBlock(cmdStreamReceiverInstrucionHeap);
+
+        StackVec<char, 4096> preemptionHelperIhBuffer;
+        preemptionHelperIhBuffer.resize(expectedSize);
+        LinearStream preemptionHelperInstrucionHeap{preemptionHelperIhBuffer.begin(), preemptionHelperIhBuffer.size()};
+        PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(preemptionHelperInstrucionHeap, *mockDevice);
+
+        cmdStreamIhBuffer.resize(expectedSize);
+        EXPECT_THAT(preemptionHelperIhBuffer, testing::ContainerEq(cmdStreamIhBuffer));
+    }
 }

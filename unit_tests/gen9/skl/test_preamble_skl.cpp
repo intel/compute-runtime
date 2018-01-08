@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,10 +21,11 @@
  */
 
 #include "runtime/command_stream/thread_arbitration_policy.h"
+#include "runtime/command_stream/preemption.h"
+#include "runtime/gen9/reg_configs.h"
 #include "runtime/helpers/preamble.h"
 #include "unit_tests/preamble/preamble_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "runtime/gen9/reg_configs.h"
 
 using namespace OCLRT;
 
@@ -76,10 +77,11 @@ typedef PreambleFixture ThreadArbitration;
 SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsSetToRoundRobin) {
     typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
-    HardwareInfo hwInfo;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
-    PreambleHelper<SKLFamily>::programPreamble(&linearStream, **platformDevices, l3Config, ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin);
+    PreambleHelper<SKLFamily>::programPreamble(&linearStream, MockDevice(**platformDevices), l3Config,
+                                               ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin,
+                                               nullptr);
 
     parseCommands<SKLFamily>(cs);
 
@@ -93,7 +95,8 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     EXPECT_EQ(0xE404u, lri.getRegisterOffset());
     EXPECT_EQ(0x100u, lri.getDataDword());
 
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getAdditionalCommandsSize(hwInfo));
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL),
+              PreambleHelper<SKLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
 }
 
 GEN9TEST_F(PreambleVfeState, WaOff) {
