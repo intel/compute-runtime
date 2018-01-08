@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,12 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/preemption.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
+#include "unit_tests/fixtures/preemption_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/preemption/preemption_tests.h"
 
 namespace OCLRT {
 
@@ -55,7 +57,7 @@ GEN9TEST_F(Gen9PreemptionTests, programThreadGroupPreemptionLri) {
 
     auto &cmdStream = cmdQ->getCS(requiredSize);
 
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel, waTable));
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
     PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
     EXPECT_EQ(requiredSize, cmdStream.getUsed());
 
@@ -72,7 +74,7 @@ GEN9TEST_F(Gen9PreemptionTests, programMidBatchPreemptionLri) {
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM);
     EXPECT_EQ(expectedSize, requiredSize);
     auto &cmdStream = cmdQ->getCS(requiredSize);
-    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel, waTable));
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
 
     PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, nullptr, nullptr);
     EXPECT_EQ(requiredSize, cmdStream.getUsed());
@@ -94,10 +96,10 @@ GEN9TEST_F(Gen9PreemptionTests, programMidThreadPreemptionLri) {
     size_t minSize = device->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minAlignment = 2 * 256 * MemoryConstants::kiloByte;
     MockGraphicsAllocation csrSurface((void *)minAlignment, minSize);
-    executionEnvironment.DisableMidThreadPreemption = 0;
+    executionEnvironment->DisableMidThreadPreemption = 0;
 
     device->setPreemptionMode(preemptionMode);
-    EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(kernel, *device));
+    EXPECT_TRUE(PreemptionHelper::allowMidThreadPreemption(kernel.get(), *device));
 
     PreemptionHelper::programPreemptionMode<FamilyType>(&cmdStream, preemptionMode, &csrSurface, nullptr);
     EXPECT_EQ(requiredSize, cmdStream.getUsed());

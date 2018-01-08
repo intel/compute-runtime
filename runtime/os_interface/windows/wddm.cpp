@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -265,7 +265,7 @@ bool Wddm::createDevice() {
     if (adapter) {
         CreateDevice.hAdapter = adapter;
         CreateDevice.Flags.LegacyMode = FALSE;
-        if (DebugManager.flags.ForcePreemptionMode.get() != PreemptionMode::Disabled) {
+        if (static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get()) != PreemptionMode::Disabled) {
             CreateDevice.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
         }
 

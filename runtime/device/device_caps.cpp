@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,8 +64,8 @@ const char *builtInKernels = ""; // the "always available" (extension-independen
 
 void Device::checkPriorityHints() {
 #ifdef SUPPORT_PRIORITY_HINTS
-    if (DebugManager.flags.ForcePreemptionMode.get() > PreemptionMode::Disabled ||
-        (preemptionMode >= ThreadGroup)) {
+    if (static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get()) > PreemptionMode::Disabled ||
+        (preemptionMode >= PreemptionMode::ThreadGroup)) {
         deviceExtensions += "cl_khr_priority_hints ";
         deviceInfo.priorityHintsSupported = true;
     }

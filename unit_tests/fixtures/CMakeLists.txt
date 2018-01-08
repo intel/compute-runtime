@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -48,6 +48,8 @@ set(IGDRCL_SRCS_tests_fixtures
     "${CMAKE_CURRENT_SOURCE_DIR}/memory_management_fixture.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/platform_fixture.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/program_fixture.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/program_fixture.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_fixture.h"
