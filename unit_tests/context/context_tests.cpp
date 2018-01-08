@@ -123,15 +123,6 @@ TEST_F(ContextTest, specialQueue) {
     EXPECT_NE(specialQ, nullptr);
 }
 
-TEST_F(ContextTest, isSpecialQueue) {
-    MockContext context((Device *)devices[0]);
-
-    auto specialQ = context.getSpecialQueue();
-    EXPECT_NE(specialQ, nullptr);
-
-    EXPECT_TRUE(context.isSpecialQueue(specialQ));
-}
-
 TEST_F(ContextTest, setSpecialQueue) {
     MockContext context((Device *)devices[0], true);
 
@@ -139,14 +130,9 @@ TEST_F(ContextTest, setSpecialQueue) {
     EXPECT_EQ(specialQ, nullptr);
 
     auto cmdQ = new CommandQueue(&context, (Device *)devices[0], 0);
-    EXPECT_FALSE(context.isSpecialQueue(cmdQ));
-
     context.setSpecialQueue(cmdQ);
-
     specialQ = context.getSpecialQueue();
     EXPECT_NE(specialQ, nullptr);
-
-    EXPECT_TRUE(context.isSpecialQueue(specialQ));
 }
 
 TEST_F(ContextTest, defaultQueue) {
@@ -155,14 +141,6 @@ TEST_F(ContextTest, defaultQueue) {
     context->setDefaultDeviceQueue(dq);
     EXPECT_EQ(dq, context->getDefaultDeviceQueue());
     delete dq;
-}
-
-TEST_F(ContextTest, deleteSpecialQueue) {
-    context->deleteSpecialQueue();
-    EXPECT_EQ(context->getSpecialQueue(), nullptr);
-
-    context->deleteSpecialQueue();
-    EXPECT_EQ(context->getSpecialQueue(), nullptr);
 }
 
 TEST_F(ContextTest, givenCmdQueueWithoutContextWhenBeingCreatedNextDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {

@@ -47,8 +47,6 @@ TEST_F(clGetPlatformIDsTests, getInfo) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, platform);
-
-    pContext->deleteSpecialQueue();
 }
 
 TEST_F(clGetPlatformIDsTests, NoPlatformListReturnsError) {

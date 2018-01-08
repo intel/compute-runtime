@@ -95,17 +95,6 @@ void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueu
     this->decRefInternal();
 };
 
-bool Context::isSpecialQueue(CommandQueue *commandQueue) {
-    return specialQueue == commandQueue;
-};
-
-void Context::deleteSpecialQueue() {
-    if (specialQueue) {
-        delete specialQueue;
-        specialQueue = nullptr;
-    }
-}
-
 bool Context::createImpl(const cl_context_properties *properties,
                          const DeviceVector &devices,
                          void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),

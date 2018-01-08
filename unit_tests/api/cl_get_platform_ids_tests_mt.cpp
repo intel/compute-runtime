@@ -43,7 +43,5 @@ TEST_F(clGetPlatformIDsMtTests, mtsafeGet) {
     t1.join();
 
     EXPECT_EQ(threadPlatform, platform);
-
-    pContext->deleteSpecialQueue();
 }
 } // namespace ULT

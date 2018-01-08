@@ -93,8 +93,6 @@ class Context : public BaseObject<_cl_context> {
     CommandQueue *getSpecialQueue();
     void setSpecialQueue(CommandQueue *commandQueue);
     void overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueue);
-    bool isSpecialQueue(CommandQueue *commandQueue);
-    void deleteSpecialQueue();
 
     template <typename Sharing>
     Sharing *getSharing();
