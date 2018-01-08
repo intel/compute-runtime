@@ -30,8 +30,11 @@
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
-using namespace OCLRT;
 using namespace ::testing;
+
+namespace OCLRT {
+extern void fillWaTable(_WA_TABLE *dstWaTable, const WorkaroundTable *srcWaTable);
+extern void fillFtrTable(_SKU_FEATURE_TABLE *dstFtrTable, const FeatureTable *srcFtrTable);
 
 class GmmTests : public ::testing::Test {
   public:
@@ -560,3 +563,42 @@ TEST_F(GmmTests, copyResourceBlt) {
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }
+
+TEST(GmmTest, givenFeatureTableWhenFillingStructureForGmmThenCopyOnlySelectedValues) {
+    _SKU_FEATURE_TABLE requestedFtrTable = {};
+    _SKU_FEATURE_TABLE refFtrTable = {};
+    FeatureTable featureTable;
+    memset(&featureTable, 1, sizeof(FeatureTable));
+
+    refFtrTable.FtrStandardMipTailFormat = 1;
+    refFtrTable.FtrULT = 1;
+    refFtrTable.FtrEDram = 1;
+    refFtrTable.FtrFrameBufferLLC = 1;
+    refFtrTable.FtrCrystalwell = 1;
+    refFtrTable.FtrDisplayEngineS3d = 1;
+    refFtrTable.FtrDisplayYTiling = 1;
+    refFtrTable.FtrFbc = 1;
+    refFtrTable.FtrVERing = 1;
+    refFtrTable.FtrVcs2 = 1;
+    refFtrTable.FtrLCIA = 1;
+    refFtrTable.FtrIA32eGfxPTEs = 1;
+    refFtrTable.FtrWddm2GpuMmu = 1;
+
+    fillFtrTable(&requestedFtrTable, &featureTable);
+    EXPECT_TRUE(memcmp(&requestedFtrTable, &refFtrTable, sizeof(_SKU_FEATURE_TABLE)) == 0);
+}
+
+TEST(GmmTest, givenWaTableWhenFillingStructureForGmmThenCopyOnlySelectedValues) {
+    _WA_TABLE requestedWaTable = {};
+    _WA_TABLE refWaTable = {};
+    WorkaroundTable waTable;
+    memset(&waTable, 1, sizeof(WorkaroundTable));
+
+    refWaTable.WaFbcLinearSurfaceStride = 1;
+    refWaTable.WaDisableEdramForDisplayRT = 1;
+    refWaTable.WaEncryptedEdramOnlyPartials = 1;
+
+    fillWaTable(&requestedWaTable, &waTable);
+    EXPECT_TRUE(memcmp(&requestedWaTable, &refWaTable, sizeof(_WA_TABLE)) == 0);
+}
+} // namespace OCLRT

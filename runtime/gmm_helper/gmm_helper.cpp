@@ -53,6 +53,27 @@ PGFX_DEBUG_CONTROL pDebugControl;
 }
 
 namespace OCLRT {
+void fillWaTable(_WA_TABLE *dstWaTable, const OCLRT::WorkaroundTable *srcWaTable) {
+    dstWaTable->WaFbcLinearSurfaceStride = srcWaTable->waFbcLinearSurfaceStride;
+    dstWaTable->WaDisableEdramForDisplayRT = srcWaTable->waDisableEdramForDisplayRT;
+    dstWaTable->WaEncryptedEdramOnlyPartials = srcWaTable->waEncryptedEdramOnlyPartials;
+}
+
+void fillFtrTable(_SKU_FEATURE_TABLE *dstFtrTable, const OCLRT::FeatureTable *srcFtrTable) {
+    dstFtrTable->FtrStandardMipTailFormat = srcFtrTable->ftrStandardMipTailFormat;
+    dstFtrTable->FtrULT = srcFtrTable->ftrULT;
+    dstFtrTable->FtrEDram = srcFtrTable->ftrEDram;
+    dstFtrTable->FtrFrameBufferLLC = srcFtrTable->ftrFrameBufferLLC;
+    dstFtrTable->FtrCrystalwell = srcFtrTable->ftrCrystalwell;
+    dstFtrTable->FtrDisplayEngineS3d = srcFtrTable->ftrDisplayEngineS3d;
+    dstFtrTable->FtrDisplayYTiling = srcFtrTable->ftrDisplayYTiling;
+    dstFtrTable->FtrFbc = srcFtrTable->ftrFbc;
+    dstFtrTable->FtrVERing = srcFtrTable->ftrVERing;
+    dstFtrTable->FtrVcs2 = srcFtrTable->ftrVcs2;
+    dstFtrTable->FtrLCIA = srcFtrTable->ftrLCIA;
+    dstFtrTable->FtrIA32eGfxPTEs = srcFtrTable->ftrIA32eGfxPTEs;
+    dstFtrTable->FtrWddm2GpuMmu = srcFtrTable->ftrWddm2GpuMmu;
+}
 
 void Gmm::create() {
     if (resourceParams.BaseWidth >= maxPossiblePitch) {
@@ -67,28 +88,12 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
                       const WorkaroundTable *pWaTable,
                       const GT_SYSTEM_INFO *pGtSysInfo) {
     // fill values Gmmlib requested
-    _SKU_FEATURE_TABLE skuTable;
-    memset(&skuTable, 0, sizeof(skuTable));
-    skuTable.FtrStandardMipTailFormat = pSkuTable->ftrStandardMipTailFormat;
-    skuTable.FtrULT = pSkuTable->ftrULT;
-    skuTable.FtrEDram = pSkuTable->ftrEDram;
-    skuTable.FtrFrameBufferLLC = pSkuTable->ftrFrameBufferLLC;
-    skuTable.FtrCrystalwell = pSkuTable->ftrCrystalwell;
-    skuTable.FtrDisplayEngineS3d = pSkuTable->ftrDisplayEngineS3d;
-    skuTable.FtrDisplayYTiling = pSkuTable->ftrDisplayYTiling;
-    skuTable.FtrFbc = pSkuTable->ftrFbc;
-    skuTable.FtrVERing = pSkuTable->ftrVERing;
-    skuTable.FtrVcs2 = pSkuTable->ftrVcs2;
-    skuTable.FtrLCIA = pSkuTable->ftrLCIA;
-    skuTable.FtrIA32eGfxPTEs = pSkuTable->ftrIA32eGfxPTEs;
+    _SKU_FEATURE_TABLE gmmFtrTable = {};
+    _WA_TABLE gmmWaTable = {};
+    fillFtrTable(&gmmFtrTable, pSkuTable);
+    fillWaTable(&gmmWaTable, pWaTable);
 
-    _WA_TABLE waTable;
-    memset(&waTable, 0, sizeof(waTable));
-    waTable.WaFbcLinearSurfaceStride = pWaTable->waFbcLinearSurfaceStride;
-    waTable.WaDisableEdramForDisplayRT = pWaTable->waDisableEdramForDisplayRT;
-    waTable.WaEncryptedEdramOnlyPartials = pWaTable->waEncryptedEdramOnlyPartials;
-
-    bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &skuTable, &waTable, pGtSysInfo, GMM_OGL_VISTA);
+    bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_OGL_VISTA);
     DEBUG_BREAK_IF(!success);
     return success;
 }

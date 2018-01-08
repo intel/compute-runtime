@@ -181,6 +181,7 @@ void Wddm::setupFeatureTableFromAdapterInfo(FeatureTable *table, ADAPTER_INFO *a
     COPY_FTR(ftrLLCBypass, FtrLLCBypass);
     COPY_FTR(ftrDisplayEngineS3d, FtrDisplayEngineS3d);
     COPY_FTR(ftrVERing, FtrVERing);
+    COPY_FTR(ftrWddm2GpuMmu, FtrWddm2GpuMmu);
 #undef COPY_FTR
 }
 void Wddm::setupWorkaroundTableFromAdapterInfo(WorkaroundTable *table, ADAPTER_INFO *adapterInfo) {
