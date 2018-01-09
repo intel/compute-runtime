@@ -34,7 +34,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[0], 256u);
     EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
@@ -46,7 +46,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 
     workGroup[0] = 1536;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[0], 256u);
     EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
@@ -95,22 +95,22 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 64u);
-    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 2u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 48;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 16u);
     ;
-    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[1], 16u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 12;
     workGroup[1] = 512;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 4u);
-    EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[1], 64u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -153,8 +153,8 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 64u);
-    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 2u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 96;
@@ -162,15 +162,15 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     workGroup[2] = 4;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 32u);
-    EXPECT_EQ(workGroupSize[1], 2u);
-    EXPECT_EQ(workGroupSize[2], 1u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 2u);
 
     workGroup[0] = 12;
     workGroup[1] = 512;
     workGroup[2] = 48;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 4u);
-    EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[1], 64u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 2;
@@ -368,7 +368,33 @@ TEST(localWorkSizeTest, givenVeriousGwsSizesWithImagesWhenLwsIsComputedThenPrope
     wsInfo.simdSize = 8;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 1u);
-    EXPECT_EQ(workGroupSize[1], 64u);
+    EXPECT_EQ(workGroupSize[1], 128u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize16WhenLwsIsComputedThenMaxWorkgroupSizeIsChoosen) {
+    WorkSizeInfo wsInfo(256u, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0, false, false);
+
+    size_t workGroup[3] = {1, 1, 1};
+    size_t workGroupSize[3];
+
+    workGroup[0] = 1048576;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, 1);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize8WhenLwsIsComputedThenMaxWorkgroupSizeIsChoosen) {
+    WorkSizeInfo wsInfo(256u, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0, false, false);
+
+    size_t workGroup[3] = {1, 1, 1};
+    size_t workGroupSize[3];
+
+    workGroup[0] = 1048576;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, 1);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -491,6 +517,19 @@ TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCompu
     OCLRT::computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workGroup, wsInfo.simdSize, workDim);
     EXPECT_EQ(workGroupSize[0], 113u);
     EXPECT_EQ(workGroupSize[1], 2u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8WhenGwsIs1024ThenLwsIsComputedAsMaxOptimalMultipliedBySimd) {
+    WorkSizeInfo wsInfo(1024, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {32, 32, 1};
+    size_t workGroupSize[3];
+
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 32u);
+    EXPECT_EQ(workGroupSize[1], 8u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 

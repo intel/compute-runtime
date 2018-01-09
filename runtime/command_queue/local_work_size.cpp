@@ -32,7 +32,7 @@
 
 namespace OCLRT {
 
-static const uint32_t optimalHardwareThreadCountGeneric[] = {8, 4, 2, 1}; // Optimal for most BDW+
+static const uint32_t optimalHardwareThreadCountGeneric[] = {32, 16, 8, 4, 2, 1};
 
 static const uint32_t primeNumbers[] = {
     251,
