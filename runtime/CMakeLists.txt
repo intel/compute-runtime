@@ -691,8 +691,7 @@ foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
       endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_IT}")
     endforeach(SRC_IT)
 
-    # Set-up gen include dir and sources for the dll
-    list(APPEND HW_SRC_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/gen${GEN_NUM})
+    # Set-up gen sources for the dll
     list(APPEND HW_SRC_LINK ${GEN${GEN_NUM}_SRC_LINK})
 
     source_group("gen${GEN_NUM}" FILES ${RUNTIME_SRCS_GEN${GEN_NUM}} ${GEN${GEN_NUM}_SRC_LINK} )

@@ -30,7 +30,6 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/get_info.h"
-#include "hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"

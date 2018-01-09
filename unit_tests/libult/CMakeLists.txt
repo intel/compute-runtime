@@ -33,7 +33,6 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
       endif()
     endforeach()
     GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
-    list (APPEND HW_SRC_INCLUDES ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM} ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM})
     list (APPEND IGDRCL_SRCS_LIB_ULT
       ${IGDRCL_SOURCE_DIR}/unit_tests/libult/gen${GEN_NUM}.cpp
       ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/enable_family_full.cpp

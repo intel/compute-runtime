@@ -23,7 +23,6 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/context/context.h"
-#include "hw_info.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/queue_helpers.h"

@@ -24,7 +24,6 @@
 #include <algorithm>
 #include "runtime/device/device.h"
 #include "runtime/helpers/basic_math.h"
-#include "hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sharings/sharing_factory.h"

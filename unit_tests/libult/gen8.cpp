@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_info.h"
 #include "hw_cmds.h"
 #include "runtime/command_stream/command_stream_receiver_hw.inl"
 #include "runtime/memory_manager/memory_manager.h"

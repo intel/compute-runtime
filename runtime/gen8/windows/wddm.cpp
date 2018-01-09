@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_info.h"
 #include "hw_cmds.h"
 #include "runtime/os_interface/windows/wddm.h"
 #include "runtime/os_interface/windows/wddm.inl"

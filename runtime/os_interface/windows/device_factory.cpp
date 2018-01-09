@@ -22,7 +22,6 @@
 
 #ifdef _WIN32
 
-#include "hw_info.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
