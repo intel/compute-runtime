@@ -29,6 +29,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/sku_info/operations/sku_info_transfer.h"
 
 extern "C" {
 
@@ -53,28 +54,6 @@ PGFX_DEBUG_CONTROL pDebugControl;
 }
 
 namespace OCLRT {
-void fillWaTable(_WA_TABLE *dstWaTable, const OCLRT::WorkaroundTable *srcWaTable) {
-    dstWaTable->WaFbcLinearSurfaceStride = srcWaTable->waFbcLinearSurfaceStride;
-    dstWaTable->WaDisableEdramForDisplayRT = srcWaTable->waDisableEdramForDisplayRT;
-    dstWaTable->WaEncryptedEdramOnlyPartials = srcWaTable->waEncryptedEdramOnlyPartials;
-}
-
-void fillFtrTable(_SKU_FEATURE_TABLE *dstFtrTable, const OCLRT::FeatureTable *srcFtrTable) {
-    dstFtrTable->FtrStandardMipTailFormat = srcFtrTable->ftrStandardMipTailFormat;
-    dstFtrTable->FtrULT = srcFtrTable->ftrULT;
-    dstFtrTable->FtrEDram = srcFtrTable->ftrEDram;
-    dstFtrTable->FtrFrameBufferLLC = srcFtrTable->ftrFrameBufferLLC;
-    dstFtrTable->FtrCrystalwell = srcFtrTable->ftrCrystalwell;
-    dstFtrTable->FtrDisplayEngineS3d = srcFtrTable->ftrDisplayEngineS3d;
-    dstFtrTable->FtrDisplayYTiling = srcFtrTable->ftrDisplayYTiling;
-    dstFtrTable->FtrFbc = srcFtrTable->ftrFbc;
-    dstFtrTable->FtrVERing = srcFtrTable->ftrVERing;
-    dstFtrTable->FtrVcs2 = srcFtrTable->ftrVcs2;
-    dstFtrTable->FtrLCIA = srcFtrTable->ftrLCIA;
-    dstFtrTable->FtrIA32eGfxPTEs = srcFtrTable->ftrIA32eGfxPTEs;
-    dstFtrTable->FtrWddm2GpuMmu = srcFtrTable->ftrWddm2GpuMmu;
-}
-
 void Gmm::create() {
     if (resourceParams.BaseWidth >= maxPossiblePitch) {
         resourceParams.Flags.Gpu.NoRestriction = 1;
@@ -90,8 +69,8 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
     // fill values Gmmlib requested
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
-    fillFtrTable(&gmmFtrTable, pSkuTable);
-    fillWaTable(&gmmWaTable, pWaTable);
+    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
+    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
 
     bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_OGL_VISTA);
     DEBUG_BREAK_IF(!success);

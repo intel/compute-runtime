@@ -29,6 +29,8 @@
 #include "runtime/os_interface/windows/wddm.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/sku_info/operations/sku_info_receiver.h"
+
 namespace OCLRT {
 
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -54,8 +56,8 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         tempHwInfos[devNum].pWaTable = waTable;
         tempHwInfos[devNum].pSysInfo = new GT_SYSTEM_INFO(adapterInfo->SystemInfo);
 
-        Wddm::setupFeatureTableFromAdapterInfo(featureTable, adapterInfo);
-        Wddm::setupWorkaroundTableFromAdapterInfo(waTable, adapterInfo);
+        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo);
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo);
 
         auto productFamily = tempHwInfos[devNum].pPlatform->eProductFamily;
         DEBUG_BREAK_IF(hardwareInfoTable[productFamily] == nullptr);

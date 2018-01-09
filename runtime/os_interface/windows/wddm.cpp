@@ -34,6 +34,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/wddm_helper.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/sku_info/operations/sku_info_receiver.h"
 #include <dxgi.h>
 #include <ntstatus.h>
 #include "CL/cl.h"
@@ -111,103 +112,6 @@ bool Wddm::enumAdapters(unsigned int devNum, ADAPTER_INFO *adapterInfo) {
     return success;
 }
 
-void Wddm::setupFeatureTableFromAdapterInfo(FeatureTable *table, ADAPTER_INFO *adapterInfo) {
-#define COPY_FTR(DST_VAL_NAME, SRC_VAL_NAME) table->DST_VAL_NAME = adapterInfo->SkuTable.SRC_VAL_NAME
-    COPY_FTR(ftrDesktop, FtrDesktop);
-    COPY_FTR(ftrChannelSwizzlingXOREnabled, FtrChannelSwizzlingXOREnabled);
-
-    COPY_FTR(ftrGtBigDie, FtrGtBigDie);
-    COPY_FTR(ftrGtMediumDie, FtrGtMediumDie);
-    COPY_FTR(ftrGtSmallDie, FtrGtSmallDie);
-
-    COPY_FTR(ftrGT1, FtrGT1);
-    COPY_FTR(ftrGT1_5, FtrGT1_5);
-    COPY_FTR(ftrGT2, FtrGT2);
-    COPY_FTR(ftrGT2_5, FtrGT2_5);
-    COPY_FTR(ftrGT3, FtrGT3);
-    COPY_FTR(ftrGT4, FtrGT4);
-
-    COPY_FTR(ftrIVBM0M1Platform, FtrIVBM0M1Platform);
-    COPY_FTR(ftrSGTPVSKUStrapPresent, FtrSGTPVSKUStrapPresent);
-    COPY_FTR(ftrGTA, FtrGTA);
-    COPY_FTR(ftrGTC, FtrGTC);
-    COPY_FTR(ftrGTX, FtrGTX);
-    COPY_FTR(ftr5Slice, Ftr5Slice);
-
-    COPY_FTR(ftrGpGpuMidBatchPreempt, FtrGpGpuMidBatchPreempt);
-    COPY_FTR(ftrGpGpuThreadGroupLevelPreempt, FtrGpGpuThreadGroupLevelPreempt);
-    COPY_FTR(ftrGpGpuMidThreadLevelPreempt, FtrGpGpuMidThreadLevelPreempt);
-
-    COPY_FTR(ftrIoMmuPageFaulting, FtrIoMmuPageFaulting);
-    COPY_FTR(ftrWddm2Svm, FtrWddm2Svm);
-    COPY_FTR(ftrPooledEuEnabled, FtrPooledEuEnabled);
-
-    COPY_FTR(ftrResourceStreamer, FtrResourceStreamer);
-
-    COPY_FTR(ftrPPGTT, FtrPPGTT);
-    COPY_FTR(ftrSVM, FtrSVM);
-    COPY_FTR(ftrEDram, FtrEDram);
-    COPY_FTR(ftrL3IACoherency, FtrL3IACoherency);
-    COPY_FTR(ftrIA32eGfxPTEs, FtrIA32eGfxPTEs);
-
-    COPY_FTR(ftr3dMidBatchPreempt, Ftr3dMidBatchPreempt);
-    COPY_FTR(ftr3dObjectLevelPreempt, Ftr3dObjectLevelPreempt);
-    COPY_FTR(ftrPerCtxtPreemptionGranularityControl, FtrPerCtxtPreemptionGranularityControl);
-
-    COPY_FTR(ftrDisplayYTiling, FtrDisplayYTiling);
-    COPY_FTR(ftrTranslationTable, FtrTranslationTable);
-    COPY_FTR(ftrUserModeTranslationTable, FtrUserModeTranslationTable);
-
-    COPY_FTR(ftrEnableGuC, FtrEnableGuC);
-
-    COPY_FTR(ftrFbc, FtrFbc);
-    COPY_FTR(ftrFbc2AddressTranslation, FtrFbc2AddressTranslation);
-    COPY_FTR(ftrFbcBlitterTracking, FtrFbcBlitterTracking);
-    COPY_FTR(ftrFbcCpuTracking, FtrFbcCpuTracking);
-
-    COPY_FTR(ftrVcs2, FtrVcs2);
-    COPY_FTR(ftrVEBOX, FtrVEBOX);
-    COPY_FTR(ftrSingleVeboxSlice, FtrSingleVeboxSlice);
-    COPY_FTR(ftrULT, FtrULT);
-    COPY_FTR(ftrLCIA, FtrLCIA);
-    COPY_FTR(ftrGttCacheInvalidation, FtrGttCacheInvalidation);
-    COPY_FTR(ftrTileMappedResource, FtrTileMappedResource);
-    COPY_FTR(ftrAstcHdr2D, FtrAstcHdr2D);
-    COPY_FTR(ftrAstcLdr2D, FtrAstcLdr2D);
-
-    COPY_FTR(ftrStandardMipTailFormat, FtrStandardMipTailFormat);
-    COPY_FTR(ftrFrameBufferLLC, FtrFrameBufferLLC);
-    COPY_FTR(ftrCrystalwell, FtrCrystalwell);
-    COPY_FTR(ftrLLCBypass, FtrLLCBypass);
-    COPY_FTR(ftrDisplayEngineS3d, FtrDisplayEngineS3d);
-    COPY_FTR(ftrVERing, FtrVERing);
-    COPY_FTR(ftrWddm2GpuMmu, FtrWddm2GpuMmu);
-#undef COPY_FTR
-}
-void Wddm::setupWorkaroundTableFromAdapterInfo(WorkaroundTable *table, ADAPTER_INFO *adapterInfo) {
-#define COPY_WA(DST_VAL_NAME, SRC_VAL_NAME) table->DST_VAL_NAME = adapterInfo->WaTable.SRC_VAL_NAME
-    COPY_WA(waDoNotUseMIReportPerfCount, WaDoNotUseMIReportPerfCount);
-
-    COPY_WA(waEnablePreemptionGranularityControlByUMD, WaEnablePreemptionGranularityControlByUMD);
-    COPY_WA(waSendMIFLUSHBeforeVFE, WaSendMIFLUSHBeforeVFE);
-    COPY_WA(waReportPerfCountUseGlobalContextID, WaReportPerfCountUseGlobalContextID);
-    COPY_WA(waDisableLSQCROPERFforOCL, WaDisableLSQCROPERFforOCL);
-    COPY_WA(waMsaa8xTileYDepthPitchAlignment, WaMsaa8xTileYDepthPitchAlignment);
-    COPY_WA(waLosslessCompressionSurfaceStride, WaLosslessCompressionSurfaceStride);
-    COPY_WA(waFbcLinearSurfaceStride, WaFbcLinearSurfaceStride);
-    COPY_WA(wa4kAlignUVOffsetNV12LinearSurface, Wa4kAlignUVOffsetNV12LinearSurface);
-    COPY_WA(waEncryptedEdramOnlyPartials, WaEncryptedEdramOnlyPartials);
-    COPY_WA(waDisableEdramForDisplayRT, WaDisableEdramForDisplayRT);
-    COPY_WA(waForcePcBbFullCfgRestore, WaForcePcBbFullCfgRestore);
-    COPY_WA(waCompressedResourceRequiresConstVA21, WaCompressedResourceRequiresConstVA21);
-    COPY_WA(waDisablePerCtxtPreemptionGranularityControl, WaDisablePerCtxtPreemptionGranularityControl);
-    COPY_WA(waLLCCachingUnsupported, WaLLCCachingUnsupported);
-    COPY_WA(waUseVAlign16OnTileXYBpp816, WaUseVAlign16OnTileXYBpp816);
-    COPY_WA(waModifyVFEStateAfterGPGPUPreemption, WaModifyVFEStateAfterGPGPUPreemption);
-    COPY_WA(waCSRUncachable, WaCSRUncachable);
-#undef COPY_WA
-}
-
 bool Wddm::queryAdapterInfo() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
@@ -222,10 +126,10 @@ bool Wddm::queryAdapterInfo() {
     // translate
     if (status == STATUS_SUCCESS) {
         featureTable.reset(new FeatureTable());
-        Wddm::setupFeatureTableFromAdapterInfo(featureTable.get(), adapterInfo);
+        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), adapterInfo);
 
         waTable.reset(new WorkaroundTable());
-        Wddm::setupWorkaroundTableFromAdapterInfo(waTable.get(), adapterInfo);
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable.get(), adapterInfo);
     }
 
     return status == STATUS_SUCCESS;

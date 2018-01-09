@@ -471,8 +471,10 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 endif()
 
 # Project-wide include paths
+set(SKU_INFO_SRCS_DIR_SUFFIX "/")
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
+include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${SKU_INFO_SRCS_DIR_SUFFIX})
 
 # Define where to put binaries
 if(MSVC)

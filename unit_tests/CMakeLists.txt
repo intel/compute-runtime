@@ -57,6 +57,7 @@ add_subdirectory(program)
 add_subdirectory(sampler)
 add_subdirectory(scenarios)
 add_subdirectory(scheduler)
+add_subdirectory(sku_info)
 add_subdirectory(sharings)
 add_subdirectory(utilities)
 
@@ -123,6 +124,7 @@ set(IGDRCL_SRCS_tests
   ${IGDRCL_SRCS_tests_sampler}
   ${IGDRCL_SRCS_tests_scenarios}
   ${IGDRCL_SRCS_tests_scheduler}
+  ${IGDRCL_SRCS_tests_sku_info}
   ${IGDRCL_SRCS_tests_sharings}
   ${IGDRCL_SRCS_tests_utilities}
 )
@@ -348,6 +350,7 @@ source_group("source files\\program" FILES ${IGDRCL_SRCS_tests_program})
 source_group("source files\\sampler" FILES ${IGDRCL_SRCS_tests_sampler})
 source_group("source files\\scenarios" FILES ${IGDRCL_SRCS_tests_scenarios})
 source_group("source files\\scheduler" FILES ${IGDRCL_SRCS_tests_scheduler})
+source_group("source files\\sku_info" FILES ${IGDRCL_SRCS_tests_sku_info})
 source_group("source files\\sharings" FILES ${IGDRCL_SRCS_tests_sharings})
 source_group("source files\\utilities" FILES ${IGDRCL_SRCS_tests_utilities})
 

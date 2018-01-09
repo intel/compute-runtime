@@ -458,6 +458,20 @@ list (APPEND RUNTIME_SRCS_SCHEDULER
   scheduler/CMakeLists.txt
 )
 
+set (RUNTIME_SRCS_SKU_INFO
+  sku_info/sku_info_base.h
+  sku_info/operations/sku_info_transfer.h
+  sku_info/definitions${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info.h
+  sku_info/operations${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info_transfer.cpp
+)
+
+if (WIN32)
+  list (APPEND RUNTIME_SRCS_SKU_INFO
+      sku_info/operations/sku_info_receiver.h
+      sku_info/operations${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info_receiver.cpp
+  )
+endif(WIN32)
+
 set (RUNTIME_SRCS_SHARINGS
   sharings/sharing.h
   sharings/sharing.cpp
@@ -628,6 +642,7 @@ set (RUNTIME_SRCS
   ${RUNTIME_SRCS_PROGRAM}
   ${RUNTIME_SRCS_SAMPLER}
   ${RUNTIME_SRCS_SCHEDULER}
+  ${RUNTIME_SRCS_SKU_INFO}
   ${RUNTIME_SRCS_SHARINGS}
   ${RUNTIME_SRCS_TBX}
   ${RUNTIME_SRCS_UTILITIES}
@@ -900,6 +915,7 @@ if (WIN32)
   source_group("source files\\program" FILES ${RUNTIME_SRCS_PROGRAM})
   source_group("source files\\sampler" FILES ${RUNTIME_SRCS_SAMPLER})
   source_group("source files\\scheduler" FILES ${RUNTIME_SRCS_SCHEDULER})
+  source_group("source files\\sku_info" FILES ${RUNTIME_SRCS_SKU_INFO})
   source_group("source files\\sharings" FILES ${RUNTIME_SRCS_SHARINGS})
   source_group("source files\\tbx" FILES ${RUNTIME_SRCS_TBX})
   source_group("source files\\utilities" FILES ${RUNTIME_SRCS_UTILITIES})

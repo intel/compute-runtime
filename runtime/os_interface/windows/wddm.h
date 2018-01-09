@@ -69,8 +69,6 @@ class Wddm {
     static Wddm *createWddm(Gdi *gdi = nullptr);
 
     static bool enumAdapters(unsigned int devNum, ADAPTER_INFO *adapterInfo);
-    static void setupFeatureTableFromAdapterInfo(FeatureTable *table, ADAPTER_INFO *adapterInfo);
-    static void setupWorkaroundTableFromAdapterInfo(WorkaroundTable *table, ADAPTER_INFO *adapterInfo);
 
     MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
