@@ -421,6 +421,8 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
             }
         }
     }
+    DBG_LOG(PrintLWSSizes, "Input GWS enqueueBlocked", dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z,
+            " Driver deduced LWS", workGroupSize[0], workGroupSize[1], workGroupSize[2]);
     return {workGroupSize[0], workGroupSize[1], workGroupSize[2]};
 }
 

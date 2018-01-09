@@ -21,13 +21,14 @@
 */
 
 #include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/helpers/options.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
     //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSlice, localMemorySize, imgUsed, yTiledSurface
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
     size_t workGroupSize[3];
@@ -64,7 +65,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
     size_t workGroupSize[3];
@@ -88,7 +89,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -114,7 +115,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -146,7 +147,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 3;
     size_t workGroup[3] = {384, 384, 384};
     size_t workGroupSize[3];
@@ -182,7 +183,7 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
-    OCLRT::WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    OCLRT::WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 3;
     size_t workGroup[3] = {384, 384, 384};
     size_t workGroupSize[3];
@@ -225,7 +226,7 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual256WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 256, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 256, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -236,8 +237,8 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual256WhenComputeCalledThenLo
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelAddConstantMultiply) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, true, true);
+TEST(localWorkSizeTest, givenKernelWithTileYImagesAndBarrierWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -257,8 +258,8 @@ TEST(localWorkSizeTest, basemarkKernelAddConstantMultiply) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelAddDrop) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+TEST(localWorkSizeTest, givenKernelWithTwoDimensionalGlobalSizesWhenLwsIsComputedThenItHasMaxWorkgroupSize) {
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -271,35 +272,8 @@ TEST(localWorkSizeTest, basemarkKernelAddDrop) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelAddForcesAndDensity) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
-    uint32_t workDim = 2;
-    size_t workGroup[3] = {1, 1, 1};
-    size_t workGroupSize[3];
-
-    workGroup[0] = 1024;
-    workGroup[1] = 1024;
-    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 256u);
-    EXPECT_EQ(workGroupSize[1], 1u);
-    EXPECT_EQ(workGroupSize[2], 1u);
-}
-TEST(localWorkSizeTest, basemarkKernelAdvect) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
-    uint32_t workDim = 2;
-    size_t workGroup[3] = {1, 1, 1};
-    size_t workGroupSize[3];
-
-    workGroup[0] = 1024;
-    workGroup[1] = 1024;
-    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 256u);
-    EXPECT_EQ(workGroupSize[1], 1u);
-    EXPECT_EQ(workGroupSize[2], 1u);
-}
-
-TEST(localWorkSizeTest, basemarkKernelAlignedBuff2Img) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, true, true);
+TEST(localWorkSizeTest, givenKernelWithBarriersAndTiledImagesWithYdimensionHigherThenXDimensionWhenLwsIsComputedThenItMimicsTiling) {
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -333,8 +307,8 @@ TEST(localWorkSizeTest, basemarkKernelAlignedBuff2Img) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelAlignedCopyBuffer) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
+TEST(localWorkSizeTest, givenHighOneDimensionalGwsWhenLwsIsComputedThenMaxWorkgoupSizeIsUsed) {
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -354,8 +328,8 @@ TEST(localWorkSizeTest, basemarkKernelAlignedCopyBuffer) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelAlignedCopyBuff2D) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, IGFX_GEN9_CORE, 32u, 0u, true, true);
+TEST(localWorkSizeTest, givenVeriousGwsSizesWithImagesWhenLwsIsComputedThenProperSizesAreReturned) {
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -398,8 +372,8 @@ TEST(localWorkSizeTest, basemarkKernelAlignedCopyBuff2D) {
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, basemarkKernelGenerateHistogram) {
-    WorkSizeInfo wsInfo(256u, 1u, 32, 4096u, IGFX_GEN9_CORE, 56u, 65536u, true, true);
+TEST(localWorkSizeTest, givenKernelUtilizingImagesAndSlmWhenLwsIsBeingComputedThenItMimicsGlobalWorkgroupSizes) {
+    WorkSizeInfo wsInfo(256u, 1u, 32, 4096u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 65536u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -420,7 +394,7 @@ TEST(localWorkSizeTest, basemarkKernelGenerateHistogram) {
 }
 
 TEST(localWorkSizeTest, useStrictRatio) {
-    WorkSizeInfo wsInfo(256u, 0u, 32u, 0u, IGFX_GEN9_CORE, 0u, 0u, true, true);
+    WorkSizeInfo wsInfo(256u, 0u, 32u, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 0u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
     size_t workGroupSize[3];
@@ -448,7 +422,7 @@ TEST(localWorkSizeTest, useStrictRatio) {
 }
 
 TEST(localWorkSizeTest, useBarriers) {
-    WorkSizeInfo wsInfo(256u, 1u, 32u, 0u, IGFX_GEN9_CORE, 56u, 0u, true, true);
+    WorkSizeInfo wsInfo(256u, 1u, 32u, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {194, 234, 1};
     size_t workGroupSize[3];
@@ -471,13 +445,10 @@ TEST(localWorkSizeTest, useBarriers) {
     EXPECT_EQ(workGroupSize[0], 2u);
     EXPECT_EQ(workGroupSize[1], 78u);
     EXPECT_EQ(workGroupSize[2], 1u);
-
-    wsInfo.coreFamily = IGFX_GEN8_CORE;
-    wsInfo.setMinWorkGroupSize();
 }
 
 TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 16, 0u, IGFX_GEN9_CORE, 6u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 6u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {2048, 272, 1};
     size_t workGroupSize[3];
