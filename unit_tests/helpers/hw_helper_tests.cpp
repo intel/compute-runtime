@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,21 @@
  */
 
 #include "unit_tests/helpers/hw_helper_tests.h"
+#include "runtime/helpers/options.h"
+
+void HwHelperTest::SetUp() {
+    memcpy(&testPlatform, platformDevices[0]->pPlatform, sizeof(testPlatform));
+    memcpy(&testFtrTable, platformDevices[0]->pSkuTable, sizeof(testFtrTable));
+    memcpy(&testWaTable, platformDevices[0]->pWaTable, sizeof(testWaTable));
+    memcpy(&testSysInfo, platformDevices[0]->pSysInfo, sizeof(testSysInfo));
+    hwInfo.capabilityTable = platformDevices[0]->capabilityTable;
+    hwInfo.pPlatform = &testPlatform;
+    hwInfo.pSkuTable = &testFtrTable;
+    hwInfo.pSysInfo = &testSysInfo;
+    hwInfo.pWaTable = &testWaTable;
+}
+void HwHelperTest::TearDown() {
+}
 
 HWTEST_F(HwHelperTest, getReturnsValidHwHelper) {
     auto helper = HwHelper::get(renderCoreFamily);
@@ -94,13 +109,18 @@ HWTEST_F(HwHelperTest, setCapabilityCoherencyFlagDummy) {
     bool coherency = false;
 
     auto helper = HwHelper::get(renderCoreFamily);
-    helper.setCapabilityCoherencyFlag(pHwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(&hwInfo, coherency);
 }
 
 HWTEST_F(HwHelperTest, setupPreemptionRegistersDummy) {
     bool preemption = false;
     auto helper = HwHelper::get(renderCoreFamily);
-    helper.setupPreemptionRegisters(pHwInfo, preemption);
+    helper.setupPreemptionRegisters(&hwInfo, preemption);
+}
+
+HWTEST_F(HwHelperTest, adjustDefaultEngineTypeDummy) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    helper.adjustDefaultEngineType(&hwInfo);
 }
 
 TEST(DwordBuilderTest, setNonMaskedBits) {

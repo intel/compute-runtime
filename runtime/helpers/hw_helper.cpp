@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +52,9 @@ void HwHelper::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coh
 
 bool HwHelper::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
     return false;
+}
+
+void HwHelper::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 } // namespace OCLRT

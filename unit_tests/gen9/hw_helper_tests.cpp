@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@ GEN9TEST_F(HwHelperTestSkl, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    helper.setCapabilityCoherencyFlag(pHwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(&hwInfo, coherency);
     EXPECT_TRUE(coherency);
 }
 
@@ -41,12 +41,19 @@ GEN9TEST_F(HwHelperTestSkl, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(pHwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
     EXPECT_FALSE(preemption);
-    EXPECT_FALSE(pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_FALSE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(pHwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
     EXPECT_TRUE(preemption);
-    EXPECT_TRUE(pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+    EXPECT_TRUE(hwInfo.capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+}
+
+GEN9TEST_F(HwHelperTestSkl, adjustDefaultEngineType) {
+    auto engineType = hwInfo.capabilityTable.nodeOrdinal;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    helper.adjustDefaultEngineType(&hwInfo);
+    EXPECT_EQ(engineType, hwInfo.capabilityTable.nodeOrdinal);
 }

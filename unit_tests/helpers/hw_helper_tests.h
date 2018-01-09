@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,32 +24,18 @@
 
 #include "runtime/device/device.h"
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/options.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
 
-class HwHelperTest : public testing::Test,
-                     public PlatformFixture {
-    void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
-        const HardwareInfo &hwInfo = pPlatform->getDevice(0)->getHardwareInfo();
-        pHwInfo = const_cast<HardwareInfo *>(&hwInfo);
-        pOldPlatform = pHwInfo->pPlatform;
-        memcpy(&testPlatform, pOldPlatform, sizeof(testPlatform));
-        capabilities = pHwInfo->capabilityTable;
-        pHwInfo->pPlatform = &testPlatform;
-    }
-    void TearDown() override {
-        pHwInfo->pPlatform = pOldPlatform;
-        pHwInfo->capabilityTable = capabilities;
-        PlatformFixture::TearDown();
-    }
+class HwHelperTest : public testing::Test {
+    void SetUp() override;
+    void TearDown() override;
 
   protected:
-    const PLATFORM *pOldPlatform;
     PLATFORM testPlatform;
-    RuntimeCapabilityTable capabilities;
-    HardwareInfo *pHwInfo;
+    FeatureTable testFtrTable;
+    WorkaroundTable testWaTable;
+    GT_SYSTEM_INFO testSysInfo;
+    HardwareInfo hwInfo;
 };

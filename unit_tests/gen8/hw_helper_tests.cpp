@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@ GEN8TEST_F(HwHelperTestBdw, setCapabilityCoherencyFlag) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool coherency = false;
-    helper.setCapabilityCoherencyFlag(pHwInfo, coherency);
+    helper.setCapabilityCoherencyFlag(&hwInfo, coherency);
     EXPECT_TRUE(coherency);
 }
 
@@ -42,10 +42,17 @@ GEN8TEST_F(HwHelperTestBdw, setupPreemptionRegisters) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     bool preemption = false;
-    preemption = helper.setupPreemptionRegisters(pHwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
     EXPECT_FALSE(preemption);
 
     preemption = true;
-    preemption = helper.setupPreemptionRegisters(pHwInfo, preemption);
+    preemption = helper.setupPreemptionRegisters(&hwInfo, preemption);
     EXPECT_FALSE(preemption);
+}
+
+GEN8TEST_F(HwHelperTestBdw, adjustDefaultEngineType) {
+    auto engineType = hwInfo.capabilityTable.nodeOrdinal;
+    auto &helper = HwHelper::get(renderCoreFamily);
+    helper.adjustDefaultEngineType(&hwInfo);
+    EXPECT_EQ(engineType, hwInfo.capabilityTable.nodeOrdinal);
 }

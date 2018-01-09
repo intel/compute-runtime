@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,6 +38,7 @@ class HwHelper {
     virtual size_t getMaxBarrierRegisterPerSlice() const;
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag);
     virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable);
+    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo);
 
   protected:
     HwHelper(){};
@@ -78,6 +79,8 @@ class HwHelperHw : public HwHelper {
     void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) override;
 
     bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) override;
+
+    void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
 
   private:
     HwHelperHw(){};

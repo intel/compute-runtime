@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,6 +67,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         tempHwInfos[devNum].capabilityTable.ftrSvm = adapterInfo->SkuTable.FtrSVM;
 
         HwHelper &hwHelper = HwHelper::get(adapterInfo->GfxPlatform.eRenderCoreFamily);
+        hwHelper.adjustDefaultEngineType(&tempHwInfos[devNum]);
         hwHelper.setCapabilityCoherencyFlag(&tempHwInfos[devNum], tempHwInfos[devNum].capabilityTable.ftrSupportsCoherency);
         hwHelper.setupPreemptionRegisters(&tempHwInfos[devNum], !!adapterInfo->WaTable.WaEnablePreemptionGranularityControlByUMD);
         // Instrumentation

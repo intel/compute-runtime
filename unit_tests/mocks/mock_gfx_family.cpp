@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -47,6 +47,10 @@ template <>
 bool HwHelperHw<GENX>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return enable;
+}
+
+template <>
+void HwHelperHw<GENX>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 struct hw_helper_static_init {
