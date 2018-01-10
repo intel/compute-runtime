@@ -158,6 +158,17 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, negativeFailedIoctlSsCount) {
     EXPECT_EQ(-5, ret);
 }
 
+CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfoWaFlags) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+
+    drm->StoredDeviceRevID = 0;
+    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+
+    ReleaseOutHwInfoStructs();
+}
+
 CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfoEdram) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 

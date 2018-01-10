@@ -147,6 +147,7 @@ struct SkuInfoBaseReference {
         refWaTable.waUseVAlign16OnTileXYBpp816 = true;
         refWaTable.waModifyVFEStateAfterGPGPUPreemption = true;
         refWaTable.waCSRUncachable = true;
+        refWaTable.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
     }
 }; // namespace SkuInfoBaseReference
 } // namespace OCLRT

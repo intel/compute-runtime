@@ -268,7 +268,7 @@ TEST_F(Nv12ImageTest, createNV12YPlaneImage) {
     auto imageYPlane = createImageWithFlags(CL_MEM_READ_WRITE);
 
     ASSERT_NE(nullptr, imageYPlane);
-
+    EXPECT_EQ(true, imageYPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageYPlane->getGraphicsAllocation());
 
     cl_image_desc parentDimensions, planeDimensions;
@@ -311,6 +311,7 @@ TEST_F(Nv12ImageTest, createNV12UVPlaneImage) {
 
     ASSERT_NE(nullptr, imageUVPlane);
 
+    EXPECT_EQ(true, imageUVPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageUVPlane->getGraphicsAllocation());
 
     cl_image_desc parentDimensions, planeDimensions;
@@ -359,6 +360,7 @@ TEST_F(Nv12ImageTest, createNV12UVPlaneImageWithOffsetOfUVPlane) {
 
     ASSERT_NE(nullptr, imageUVPlane);
 
+    EXPECT_EQ(true, imageUVPlane->isImageFromImage());
     EXPECT_EQ(imageNV12->getGraphicsAllocation(), imageUVPlane->getGraphicsAllocation());
 
     cl_image_desc parentDimensions, planeDimensions;

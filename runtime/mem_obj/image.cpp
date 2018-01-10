@@ -320,6 +320,9 @@ Image *Image::create(Context *context,
         if ((imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) || ((imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) && (imageDesc->mem_object != nullptr))) {
             image->associatedMemObject = castToObject<MemObj>(imageDesc->mem_object);
         }
+        if (parentImage) {
+            image->isImageFromImageCreated = true;
+        }
         // Driver needs to store rowPitch passed by the app in order to synchronize the host_ptr later on map call
         image->setHostPtrRowPitch(imageDesc->image_row_pitch ? imageDesc->image_row_pitch : hostPtrRowPitch);
         image->setHostPtrSlicePitch(hostPtrSlicePitch);

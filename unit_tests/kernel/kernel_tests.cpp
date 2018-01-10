@@ -22,7 +22,9 @@
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/surface_formats.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -1561,6 +1563,57 @@ TEST_F(KernelResidencyTest, test_MakeArgsResident) {
 
     delete pKernel;
     delete pKernelInfo;
+}
+
+HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
+    ASSERT_NE(nullptr, pDevice);
+
+    //create NV12 image
+    cl_mem_flags flags = CL_MEM_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_NV12_INTEL;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 16;
+    imageDesc.image_height = 16;
+    imageDesc.image_depth = 1;
+
+    cl_int retVal;
+    MockContext context;
+    std::unique_ptr<OCLRT::Image> imageNV12(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+
+    //create Y plane
+    imageFormat.image_channel_order = CL_R;
+    flags = CL_MEM_READ_ONLY;
+    surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    imageDesc.image_width = 0;
+    imageDesc.image_height = 0;
+    imageDesc.image_depth = 0;
+    imageDesc.mem_object = imageNV12.get();
+
+    std::unique_ptr<OCLRT::Image> imageY(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    KernelArgInfo kernelArgInfo;
+    kernelArgInfo.isImage = true;
+
+    pKernelInfo->kernelArgInfo.push_back(kernelArgInfo);
+
+    std::unique_ptr<MockProgram> program(new MockProgram);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(program.get(), *pKernelInfo, *pDevice));
+
+    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    pKernel->storeKernelArg(0, Kernel::IMAGE_OBJ, (cl_mem)imageY.get(), NULL, 0);
+    pKernel->makeResident(pDevice->getCommandStreamReceiver());
+
+    EXPECT_FALSE(imageNV12->isImageFromImage());
+    EXPECT_TRUE(imageY->isImageFromImage());
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.peekSamplerCacheFlushRequired());
 }
 
 struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {

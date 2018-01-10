@@ -211,6 +211,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoWaFlags) {
     EXPECT_EQ(1u, outHwInfo.pWaTable->waDisableLSQCROPERFforOCL);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waForcePcBbFullCfgRestore);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -220,6 +221,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoWaFlags) {
     EXPECT_EQ(0u, outHwInfo.pWaTable->waDisableLSQCROPERFforOCL);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waForcePcBbFullCfgRestore);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -229,6 +231,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoWaFlags) {
     EXPECT_EQ(0u, outHwInfo.pWaTable->waDisableLSQCROPERFforOCL);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waEncryptedEdramOnlyPartials);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waForcePcBbFullCfgRestore);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 }
 
 KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfoEdram) {

@@ -254,6 +254,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
+    if (getMemoryManager()->device->getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+        if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
+            auto pCmd = addPipeControlCmd(commandStreamCSR);
+            pCmd->setTextureCacheInvalidationEnable(true);
+            if (this->samplerCacheFlushRequired == SamplerCacheFlushState::samplerCacheFlushBefore) {
+                this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushAfter;
+            } else {
+                this->samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
+            }
+        }
+    }
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
@@ -272,6 +283,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             pCmd->setConstantCacheInvalidationEnable(true);
             pCmd->setStateCacheInvalidationEnable(true);
         }
+
         auto address = (uint64_t)this->getTagAddress();
         pCmd->setAddressHigh(address >> 32);
         pCmd->setAddress(address & (0xffffffff));
@@ -514,6 +526,11 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
 
     size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
+    if (getMemoryManager()->device->getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+        if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
+            size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        }
+    }
     return size;
 }
 

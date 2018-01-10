@@ -230,6 +230,17 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoInvalidMinEuInPool) {
     EXPECT_EQ((outHwInfo.pSysInfo->EUCount - outHwInfo.pSysInfo->EuCountPerPoolMin), outHwInfo.pSysInfo->EuCountPerPoolMax);
 }
 
+GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoWaFlags) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+
+    drm->StoredDeviceRevID = 0;
+    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+
+    ReleaseOutHwInfoStructs();
+}
+
 template <typename T>
 class GlkHwInfoTests : public ::testing::Test {
 };

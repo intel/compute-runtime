@@ -100,8 +100,9 @@ class MemObj : public BaseObject<_cl_mem> {
 
     virtual bool allowTiling() { return false; }
 
-    CommandQueue *getAssociatedCommandQueue() { return cmdQueuePtr; };
-    Device *getAssociatedDevice() { return device; };
+    CommandQueue *getAssociatedCommandQueue() { return cmdQueuePtr; }
+    Device *getAssociatedDevice() { return device; }
+    bool isImageFromImage() const { return isImageFromImageCreated; }
 
     virtual cl_int unmapObj(CommandQueue *cmdQ, void *ptr, cl_uint numEventsInWaitList,
                             const cl_event *eventWaitList, cl_event *event) {
@@ -147,6 +148,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;
+    bool isImageFromImageCreated = false;
     MemoryManager *memoryManager = nullptr;
     GraphicsAllocation *graphicsAllocation;
     GraphicsAllocation *mcsAllocation = nullptr;

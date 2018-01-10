@@ -81,6 +81,7 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pWaTable->waEncryptedEdramOnlyPartials = 1;
     pWaTable->waDisableEdramForDisplayRT = 1;
     pWaTable->waForcePcBbFullCfgRestore = 1;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
     if ((1 << hwInfo->pPlatform->usRevId) & 0x0eu) {
         pWaTable->waCompressedResourceRequiresConstVA21 = 1;

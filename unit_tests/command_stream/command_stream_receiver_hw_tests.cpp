@@ -353,7 +353,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDeviceWithPreemptionSupportTh
 HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeControl) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
-    configureCSRHeapStatesToNonDirty<FamilyType>();
+    configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel / 2;
 
     flushTask(commandStreamReceiver);
@@ -365,6 +365,105 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeCont
 
     auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itorPC);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    OCLRT::WorkaroundTable *waTable = nullptr;
+    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired);
+    configureCSRtoNonDirtyState<FamilyType>();
+    commandStreamReceiver.taskLevel = taskLevel;
+    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(commandStreamReceiver.commandStream.getUsed(), 0u);
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.peekSamplerCacheFlushRequired());
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorPC);
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeThenSendPipecontrol) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
+    configureCSRtoNonDirtyState<FamilyType>();
+    commandStreamReceiver.taskLevel = taskLevel;
+    OCLRT::WorkaroundTable *waTable = nullptr;
+    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+
+    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter, commandStreamReceiver.peekSamplerCacheFlushRequired());
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    auto pipeControlCmd = (typename FamilyType::PIPE_CONTROL *)*itorPC;
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushBeforeAndWaSamplerCacheFlushBetweenRedescribedSurfaceReadsDasabledThenDontSendPipecontrol) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
+    configureCSRtoNonDirtyState<FamilyType>();
+    commandStreamReceiver.taskLevel = taskLevel;
+    OCLRT::WorkaroundTable *waTable = nullptr;
+    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+
+    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(commandStreamReceiver.commandStream.getUsed(), 0u);
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore, commandStreamReceiver.peekSamplerCacheFlushRequired());
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorPC);
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushAfterThenSendPipecontrol) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushAfter);
+    configureCSRtoNonDirtyState<FamilyType>();
+    commandStreamReceiver.taskLevel = taskLevel;
+    OCLRT::WorkaroundTable *waTable = nullptr;
+    waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+
+    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
+    EXPECT_EQ(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired, commandStreamReceiver.peekSamplerCacheFlushRequired());
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itorPC);
+    auto pipeControlCmd = (typename FamilyType::PIPE_CONTROL *)*itorPC;
+    EXPECT_TRUE(pipeControlCmd->getTextureCacheInvalidationEnable());
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, completionStampValid) {
@@ -1952,6 +2051,31 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequir
     EXPECT_NE(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
     auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
     EXPECT_EQ(sizeof(PIPELINE_SELECT), difference);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenSamplerCacheFlushSentThenRequiredCsrSizeContainsPipecontrolSize) {
+    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
+    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags;
+    commandStreamReceiver.isPreambleSent = true;
+
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired);
+    auto samplerCacheNotFlushedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
+    auto samplerCacheFlushBeforeSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    EXPECT_EQ(samplerCacheNotFlushedSize, samplerCacheFlushBeforeSize);
+
+    OCLRT::WorkaroundTable *waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
+    bool tmp = waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads;
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
+
+    samplerCacheFlushBeforeSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    auto difference = samplerCacheFlushBeforeSize - samplerCacheNotFlushedSize;
+    EXPECT_EQ(sizeof(typename FamilyType::PIPE_CONTROL), difference);
+    waTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = tmp;
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {

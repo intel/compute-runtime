@@ -71,6 +71,7 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     pWaTable->waLosslessCompressionSurfaceStride = 1;
     pWaTable->waFbcLinearSurfaceStride = 1;
     pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
     if (pPlatform->usRevId <= 0x6) {
         pWaTable->waDisableLSQCROPERFforOCL = 1;

@@ -76,6 +76,7 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pWaTable->waSendMIFLUSHBeforeVFE = 1;
     pWaTable->waForcePcBbFullCfgRestore = 1;
     pWaTable->waReportPerfCountUseGlobalContextID = 1;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
     int enabled = 0;
     int retVal = drm->getEnabledPooledEu(enabled);

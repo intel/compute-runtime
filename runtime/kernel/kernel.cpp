@@ -882,6 +882,10 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
                 auto clMem = (const cl_mem)kernelArguments[argIndex].object;
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
+                DEBUG_BREAK_IF(memObj == nullptr);
+                if (memObj->isImageFromImage()) {
+                    commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushBefore);
+                }
                 commandStreamReceiver.makeResident(*memObj->getGraphicsAllocation());
                 if (memObj->getMcsAllocation()) {
                     commandStreamReceiver.makeResident(*memObj->getMcsAllocation());

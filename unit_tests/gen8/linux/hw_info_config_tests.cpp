@@ -135,6 +135,17 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, negativeFailedIoctlSsCount) {
     EXPECT_EQ(-5, ret);
 }
 
+BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfoWaFlags) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+
+    drm->StoredDeviceRevID = 0;
+    int ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
+
+    ReleaseOutHwInfoStructs();
+}
+
 BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfoEdram) {
     auto hwInfoConfig = HwInfoConfig::get(productFamily);
 

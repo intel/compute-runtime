@@ -70,6 +70,7 @@ int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInf
     pWaTable->waLosslessCompressionSurfaceStride = 1;
     pWaTable->waFbcLinearSurfaceStride = 1;
     pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
     if (hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_28W_DEVICE_F0_ID ||
         hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {

@@ -127,6 +127,7 @@ class SkuInfoReceiver {
         RECEIVE_WA(UseVAlign16OnTileXYBpp816);
         RECEIVE_WA(ModifyVFEStateAfterGPGPUPreemption);
         RECEIVE_WA(CSRUncachable);
+        RECEIVE_WA(SamplerCacheFlushBetweenRedescribedSurfaceReads);
 #undef RECEIVE_WA
     }
 };

@@ -115,5 +115,6 @@ struct WorkaroundTableBase {
     bool waUseVAlign16OnTileXYBpp816 = false;
     bool waModifyVFEStateAfterGPGPUPreemption = false;
     bool waCSRUncachable = false;
+    bool waSamplerCacheFlushBetweenRedescribedSurfaceReads = false;
 };
 } // namespace OCLRT

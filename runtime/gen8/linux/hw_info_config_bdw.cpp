@@ -54,6 +54,7 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
     pWaTable->waReportPerfCountUseGlobalContextID = 1;
     pWaTable->waUseVAlign16OnTileXYBpp816 = 1;
     pWaTable->waModifyVFEStateAfterGPGPUPreemption = 1;
+    pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
     if (hwInfo->pPlatform->usDeviceID == IBDW_GT3_HALO_MOBL_DEVICE_F0_ID ||
         hwInfo->pPlatform->usDeviceID == IBDW_GT3_SERV_DEVICE_F0_ID) {

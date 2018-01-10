@@ -49,6 +49,11 @@ class CommandStreamReceiver {
         BatchedDispatch             // dispatching is batched, explicit clFlush is required
     };
 
+    enum class SamplerCacheFlushState {
+        samplerCacheFlushNotRequired,
+        samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image
+        samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
+    };
     CommandStreamReceiver();
     virtual ~CommandStreamReceiver();
 
@@ -115,6 +120,8 @@ class CommandStreamReceiver {
     // allows CommandStreamReceiver to prepopulate reserved block in instruction heap
     MOCKABLE_VIRTUAL void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const;
 
+    void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
+
   protected:
     // taskCount - # of tasks submitted
     uint32_t taskCount = 0;
@@ -156,6 +163,7 @@ class CommandStreamReceiver {
     bool disableL3Cache = 0;
     uint32_t requiredScratchSize = 0;
     uint64_t totalMemoryUsed = 0u;
+    SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);

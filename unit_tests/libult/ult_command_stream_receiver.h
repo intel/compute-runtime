@@ -79,6 +79,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     GraphicsAllocation *getPreemptionCsrAllocation() {
         return this->preemptionCsrAllocation;
     }
+    using SamplerCacheFlushState = CommandStreamReceiver::SamplerCacheFlushState;
+    SamplerCacheFlushState peekSamplerCacheFlushRequired() const { return this->samplerCacheFlushRequired; }
 
   protected:
     using BaseClass::CommandStreamReceiver::memoryManager;

@@ -212,6 +212,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     EXPECT_EQ(1u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waCSRUncachable);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -222,6 +223,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     EXPECT_EQ(1u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waCSRUncachable);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -232,6 +234,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     EXPECT_EQ(0u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
     EXPECT_EQ(1u, outHwInfo.pWaTable->waCSRUncachable);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 
     ReleaseOutHwInfoStructs();
 
@@ -242,6 +245,7 @@ SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoWaFlags) {
     EXPECT_EQ(0u, outHwInfo.pWaTable->waModifyVFEStateAfterGPGPUPreemption);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waDisablePerCtxtPreemptionGranularityControl);
     EXPECT_EQ(0u, outHwInfo.pWaTable->waCSRUncachable);
+    EXPECT_EQ(1u, outHwInfo.pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads);
 }
 
 SKLTEST_F(HwInfoConfigTestLinuxSkl, configureHwInfoEdram) {
