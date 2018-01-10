@@ -206,6 +206,15 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
+    if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
+        makeResident(*batchBuffer.commandBufferAllocation);
+    } else {
+        allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
+        batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
+    }
+
+    processResidency(allocationsForResidency);
+
     // Write our batch buffer
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
     auto currentOffset = batchBuffer.usedSize;
@@ -349,6 +358,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     pollForCompletion(engineOrdinal);
+
     return 0;
 }
 
@@ -378,35 +388,48 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineO
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.residencyTaskCount < (int)this->taskCount) {
-        auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-        auto gpuAddress = gfxAllocation.getGpuAddress();
-        auto size = gfxAllocation.getUnderlyingBufferSize();
-
-        if (size == 0 || !(((MemoryAllocation *)&gfxAllocation)->allowAubFileWrite))
-            return;
-
-        {
-            std::ostringstream str;
-            str << "ppgtt: " << std::hex << std::showbase << gpuAddress;
-            stream.addComment(str.str().c_str());
-        }
-
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-            static const size_t pageSize = 4096;
-            auto vmAddr = (static_cast<uintptr_t>(gpuAddress) + offset) & ~(pageSize - 1);
-            auto pAddr = physAddress & ~(pageSize - 1);
-
-            AUB::reserveAddressPPGTT(stream, vmAddr, pageSize, pAddr);
-
-            AUB::addMemoryWrite(stream, physAddress,
-                reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(cpuAddress) + offset),
-                size, AubMemDump::AddressSpaceValues::TraceNonlocal);
-        };
-        ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
-
         this->getMemoryManager()->pushAllocationForResidency(&gfxAllocation);
     }
     gfxAllocation.residencyTaskCount = (int)this->taskCount;
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
+    auto gpuAddress = gfxAllocation.getGpuAddress();
+    auto size = gfxAllocation.getUnderlyingBufferSize();
+
+    if (size == 0 || !(((MemoryAllocation *)&gfxAllocation)->allowAubFileWrite))
+        return;
+
+    {
+        std::ostringstream str;
+        str << "ppgtt: " << std::hex << std::showbase << gpuAddress;
+        stream.addComment(str.str().c_str());
+    }
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+        static const size_t pageSize = 4096;
+        auto vmAddr = (static_cast<uintptr_t>(gpuAddress) + offset) & ~(pageSize - 1);
+        auto pAddr = physAddress & ~(pageSize - 1);
+
+        AUB::reserveAddressPPGTT(stream, vmAddr, pageSize, pAddr);
+
+        AUB::addMemoryWrite(stream, physAddress,
+                            reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(cpuAddress) + offset),
+                            size, AubMemDump::AddressSpaceValues::TraceNonlocal);
+    };
+    ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
+
+    for (auto &gfxAllocation : residencyAllocations) {
+        writeMemory(*gfxAllocation);
+        gfxAllocation->residencyTaskCount = (int)this->taskCount;
+    }
 }
 
 template <typename GfxFamily>

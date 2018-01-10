@@ -275,7 +275,7 @@ HWTEST_F(KernelImageArgTest, givenImgWithMcsAllocWhenMakeResidentThenMakeMcsAllo
     pKernel->makeResident(*csr.get());
     EXPECT_TRUE(csr->isMadeResident(mcsAlloc));
 
-    csr->makeSurfacePackNonResident();
+    csr->makeSurfacePackNonResident(nullptr);
 
     EXPECT_TRUE(csr->isMadeNonResident(mcsAlloc));
 

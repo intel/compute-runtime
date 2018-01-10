@@ -31,6 +31,7 @@ using OCLRT::AUBCommandStreamReceiverHw;
 using OCLRT::BatchBuffer;
 using OCLRT::CommandStreamReceiver;
 using OCLRT::GraphicsAllocation;
+using OCLRT::ResidencyContainer;
 using OCLRT::HardwareInfo;
 using OCLRT::LinearStream;
 using OCLRT::MemoryManager;
@@ -116,4 +117,66 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment)
     mm->freeGraphicsMemory(commandBuffer);
     delete csr;
     delete mm;
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBufferAllocation) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> csr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<MemoryManager> mm(csr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = mm->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    auto engineOrdinal = OCLRT::ENGINE_RCS;
+
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+    csr->flush(batchBuffer, engineOrdinal, nullptr);
+
+    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ((int)csr->peekTaskCount(), commandBuffer->residencyTaskCount);
+
+    csr->makeSurfacePackNonResident(nullptr);
+
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    mm->freeGraphicsMemoryImpl(commandBuffer);
+    csr->setMemoryManager(nullptr);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAllocations) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> csr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<MemoryManager> mm(csr->createMemoryManager(false));
+    auto gfxAllocation = mm->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+
+    GraphicsAllocation *commandBuffer = mm->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    auto engineOrdinal = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {gfxAllocation};
+
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    csr->flush(batchBuffer, engineOrdinal, &allocationsForResidency);
+
+    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)csr->peekTaskCount(), gfxAllocation->residencyTaskCount);
+
+    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ((int)csr->peekTaskCount(), commandBuffer->residencyTaskCount);
+
+    csr->makeSurfacePackNonResident(&allocationsForResidency);
+
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    mm->freeGraphicsMemory(commandBuffer);
+    mm->freeGraphicsMemoryImpl(gfxAllocation);
+    csr->setMemoryManager(nullptr);
 }

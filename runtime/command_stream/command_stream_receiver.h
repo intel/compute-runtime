@@ -64,7 +64,7 @@ class CommandStreamReceiver {
     virtual void makeCoherent(void *address, size_t length){};
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
-    void makeSurfacePackNonResident();
+    void makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency);
     virtual void processResidency(ResidencyContainer *allocationsForResidency) {}
     virtual void processEviction();
 

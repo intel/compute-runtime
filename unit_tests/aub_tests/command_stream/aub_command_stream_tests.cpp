@@ -107,14 +107,18 @@ TEST_F(AUBcommandstreamTests, makeResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    commandStreamReceiver.createAllocationAndHandleResidency(buffer, size);
+    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(buffer, size);
+    ResidencyContainer allocationsForResidency = {graphicsAllocation};
+    commandStreamReceiver.processResidency(&allocationsForResidency);
 }
 
 HWTEST_F(AUBcommandstreamTests, expectMemorySingle) {
     uint32_t buffer = 0xdeadbeef;
     size_t size = sizeof(buffer);
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    commandStreamReceiver.createAllocationAndHandleResidency(&buffer, size);
+    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(&buffer, size);
+    ResidencyContainer allocationsForResidency = {graphicsAllocation};
+    commandStreamReceiver.processResidency(&allocationsForResidency);
 
     AUBCommandStreamFixture::expectMemory<FamilyType>(&buffer, &buffer, size);
 }
@@ -128,7 +132,10 @@ HWTEST_F(AUBcommandstreamTests, expectMemoryLarge) {
     }
 
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    commandStreamReceiver.createAllocationAndHandleResidency(buffer, sizeBuffer);
+    auto graphicsAllocation = commandStreamReceiver.createAllocationAndHandleResidency(buffer, sizeBuffer);
+    ResidencyContainer allocationsForResidency = {graphicsAllocation};
+    commandStreamReceiver.processResidency(&allocationsForResidency);
+
     AUBCommandStreamFixture::expectMemory<FamilyType>(buffer, buffer, sizeBuffer);
     delete[] buffer;
 }

@@ -1194,7 +1194,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident();
+    tCsr->makeSurfacePackNonResident(nullptr);
 
     //check that each packet is not resident
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
@@ -1216,7 +1216,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident();
+    tCsr->makeSurfacePackNonResident(nullptr);
 
     EXPECT_EQ(0u, residency->size());
 
@@ -1484,7 +1484,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, false, false, cs.getUsed(), &cs};
     csr->flush(batchBuffer3, EngineType::ENGINE_RCS, nullptr);
-    csr->makeSurfacePackNonResident();
+    csr->makeSurfacePackNonResident(nullptr);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
@@ -1575,7 +1575,7 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInMemoryM
     EXPECT_NE(0u, mm->getResidencyAllocations().size());
 
     csr->processResidency(nullptr);
-    csr->makeSurfacePackNonResident();
+    csr->makeSurfacePackNonResident(nullptr);
     EXPECT_EQ(0u, mm->getResidencyAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
@@ -1593,7 +1593,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
     EXPECT_NE(0u, mm->getResidencyAllocations().size());
 
     csr->processResidency(nullptr);
-    csr->makeSurfacePackNonResident();
+    csr->makeSurfacePackNonResident(nullptr);
 
     EXPECT_EQ(0u, mm->getResidencyAllocations().size());
     EXPECT_FALSE(allocation1->isResident());

@@ -336,7 +336,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             flushStamp->setStamp(this->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr));
             this->latestFlushedTaskCount = this->taskCount + 1;
-            this->makeSurfacePackNonResident();
+            this->makeSurfacePackNonResident(nullptr);
         } else {
             auto commandBuffer = new CommandBuffer;
             commandBuffer->batchBuffer = batchBuffer;
@@ -348,7 +348,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             this->submissionAggregator->recordCommandBuffer(commandBuffer);
         }
     } else {
-        this->makeSurfacePackNonResident();
+        this->makeSurfacePackNonResident(nullptr);
     }
 
     //check if we are not over the budget, if we are do implicit flush
@@ -436,13 +436,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
             this->latestFlushedTaskCount = lastTaskCount;
             this->flushStamp->setStamp(flushStamp);
-
-            for (auto &graphicsAllocation : surfacesForSubmit) {
-                this->makeNonResident(*graphicsAllocation);
-            }
-            surfacesForSubmit.clear();
+            this->makeSurfacePackNonResident(&surfacesForSubmit);
             resourcePackage.clear();
-            this->processEviction();
         }
         this->totalMemoryUsed = 0;
     }

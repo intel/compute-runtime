@@ -168,28 +168,28 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
     auto mappedPtr = pCmdQ->enqueueMapImage(srcImage, CL_TRUE, CL_MAP_WRITE | CL_MAP_READ,
                                             origin, region, &mappedRowPitch, &mappedSlicePitch,
                                             0, nullptr, nullptr, retVal);
-    if (!srcImage->allowTiling()) {
-        pCommandStreamReceiver->makeResident(*srcImage->getGraphicsAllocation());
-        pCommandStreamReceiver->makeNonResident(*srcImage->getGraphicsAllocation());
-    }
-
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto mappedPtrStart = static_cast<uint8_t *>(mappedPtr);
-    auto srcMemoryStart = srcMemory;
+    uint8_t *mappedPtrStart;
+    uint8_t *srcMemoryStart;
 
-    // validate mapped region
-    srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch * origin[2]);
-    srcMemoryStart = ptrOffset(srcMemoryStart, inputRowPitch * origin[1]);
-    srcMemoryStart = ptrOffset(srcMemoryStart, elementSize * origin[0]);
-    for (size_t z = 0; z < region[2]; z++) {
-        for (size_t y = 0; y < region[1]; y++) {
-            AUBCommandStreamFixture::expectMemory<FamilyType>(mappedPtrStart, srcMemoryStart, elementSize * region[0]);
-            mappedPtrStart = ptrOffset(mappedPtrStart, mappedRowPitch);
-            srcMemoryStart = ptrOffset(srcMemoryStart, inputRowPitch);
+    if (srcImage->allowTiling()) {
+        mappedPtrStart = static_cast<uint8_t *>(mappedPtr);
+        srcMemoryStart = srcMemory;
+
+        // validate mapped region
+        srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch * origin[2]);
+        srcMemoryStart = ptrOffset(srcMemoryStart, inputRowPitch * origin[1]);
+        srcMemoryStart = ptrOffset(srcMemoryStart, elementSize * origin[0]);
+        for (size_t z = 0; z < region[2]; z++) {
+            for (size_t y = 0; y < region[1]; y++) {
+                AUBCommandStreamFixture::expectMemory<FamilyType>(mappedPtrStart, srcMemoryStart, elementSize * region[0]);
+                mappedPtrStart = ptrOffset(mappedPtrStart, mappedRowPitch);
+                srcMemoryStart = ptrOffset(srcMemoryStart, inputRowPitch);
+            }
+            mappedPtrStart = ptrOffset(mappedPtrStart, mappedSlicePitch - (mappedRowPitch * region[1]));
+            srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch - (inputRowPitch * (region[1])));
         }
-        mappedPtrStart = ptrOffset(mappedPtrStart, mappedSlicePitch - (mappedRowPitch * region[1]));
-        srcMemoryStart = ptrOffset(srcMemoryStart, inputSlicePitch - (inputRowPitch * (region[1])));
     }
 
     // write to mapped ptr
