@@ -56,18 +56,18 @@ The driver has the following functional delta compared to previously released dr
 * Intel's former open-source Beignet driver  
   https://01.org/beignet
 
-## Generic extensions
+### Generic extensions
 * cl_khr_mipmap
 * cl_khr_mipmap_writes
 * cl_khr_priority_hints
 * cl_khr_throttle_hints
 * cl_khr_fp64
-## Preview extensions
+### Preview extensions
 * cl_intelx_video_enhancement
 * cl_intelx_video_enhancement_camera_pipeline
 * cl_intelx_video_enhancement_color_pipeline
 * cl_intelx_hevc_pak
-## Other capabilities
+### Other capabilities
 * OpenGL sharing with MESA driver
 * CL_MEM_SVM_FINE_GRAIN_BUFFER (if using unpatched i915)
 
