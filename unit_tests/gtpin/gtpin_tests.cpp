@@ -502,14 +502,14 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextCreationArgumentsAre
     int prevCount = ContextCreateCallbackCount;
     cl_device_id device = (cl_device_id)pDevice;
     cl_context_properties invalidProperties[3] = {CL_CONTEXT_PLATFORM, (cl_context_properties) nullptr, 0};
-    auto contextZ = clCreateContext(invalidProperties, 1, &device, nullptr, nullptr, &retVal);
+    auto context = clCreateContext(invalidProperties, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
-    EXPECT_EQ(nullptr, contextZ);
+    EXPECT_EQ(nullptr, context);
     EXPECT_EQ(ContextCreateCallbackCount, prevCount);
 
-    contextZ = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
+    context = clCreateContextFromType(invalidProperties, CL_DEVICE_TYPE_GPU, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
-    EXPECT_EQ(nullptr, contextZ);
+    EXPECT_EQ(nullptr, context);
     EXPECT_EQ(ContextCreateCallbackCount, prevCount);
 }
 
