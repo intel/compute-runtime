@@ -350,4 +350,10 @@ void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyn
     }
     memoryManager->freeGraphicsMemory(allocation);
 }
+
+bool MemObj::checkIfMemoryTransferIsRequired(size_t offset, const void *ptr, cl_command_type cmdType) {
+    auto bufferStorage = ptrOffset(this->getCpuAddressForMemoryTransfer(), offset);
+    auto isMemTransferNeeded = !((bufferStorage == ptr) && (cmdType == CL_COMMAND_READ_BUFFER || cmdType == CL_COMMAND_WRITE_BUFFER));
+    return isMemTransferNeeded;
+}
 } // namespace OCLRT

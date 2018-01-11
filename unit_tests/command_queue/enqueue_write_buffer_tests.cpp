@@ -25,6 +25,7 @@
 #include "runtime/gen_common/reg_configs.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -324,4 +325,78 @@ HWTEST_F(EnqueueWriteBufferTypeTest, MediaVFEState) {
 
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer,
+                                         CL_FALSE,
+                                         0,
+                                         MemoryConstants::cacheLineSize,
+                                         ptr,
+                                         0,
+                                         nullptr,
+                                         nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer,
+                                         CL_FALSE,
+                                         0,
+                                         MemoryConstants::cacheLineSize,
+                                         ptr,
+                                         0,
+                                         nullptr,
+                                         nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer,
+                                       CL_FALSE,
+                                       0,
+                                       MemoryConstants::cacheLineSize,
+                                       ptr,
+                                       0,
+                                       nullptr,
+                                       nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer,
+                                       CL_FALSE,
+                                       0,
+                                       MemoryConstants::cacheLineSize,
+                                       ptr,
+                                       0,
+                                       nullptr,
+                                       nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }

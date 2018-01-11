@@ -136,6 +136,8 @@ void *CommandQueueHw<GfxFamily>::cpuDataTransferHandler(MemObj *memObj,
             memcpy_s(bufferStorage, size, ptr, size);
             eventCompleted = true;
             break;
+        case CL_COMMAND_MARKER:
+            break;
         default:
             err.set(CL_INVALID_OPERATION);
         }

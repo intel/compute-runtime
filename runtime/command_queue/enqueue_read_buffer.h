@@ -46,11 +46,31 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
     cl_event *event) {
 
     cl_int retVal = CL_SUCCESS;
-
+    auto isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(offset, ptr, CL_COMMAND_READ_BUFFER);
     if ((DebugManager.flags.DoCpuCopyOnReadBuffer.get() ||
          buffer->isReadWriteOnCpuAllowed(blockingRead, numEventsInWaitList, ptr, size)) &&
         context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {
+        if (!isMemTransferNeeded) {
+            cpuDataTransferHandler(buffer,
+                                   CL_COMMAND_MARKER,
+                                   CL_TRUE,
+                                   offset,
+                                   size,
+                                   ptr,
+                                   numEventsInWaitList,
+                                   eventWaitList,
+                                   event,
+                                   retVal);
+            if (event) {
+                auto pEvent = castToObjectOrAbort<Event>(*event);
+                pEvent->setCmdType(CL_COMMAND_READ_BUFFER);
+            }
 
+            if (context->isProvidingPerformanceHints()) {
+                context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
+            }
+            return retVal;
+        }
         cpuDataTransferHandler(buffer,
                                CL_COMMAND_READ_BUFFER,
                                CL_TRUE,
@@ -63,9 +83,28 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
                                retVal);
         return retVal;
     }
-
     MultiDispatchInfo dispatchInfo;
+    if (!isMemTransferNeeded) {
+        NullSurface s;
+        Surface *surfaces[] = {&s};
+        enqueueHandler<CL_COMMAND_MARKER>(
+            surfaces,
+            blockingRead == CL_TRUE,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_READ_BUFFER);
+        }
 
+        if (context->isProvidingPerformanceHints()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
+        }
+
+        return CL_SUCCESS;
+    }
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
                                                                           this->getContext(), this->getDevice());
     builder.takeOwnership(this->context);
@@ -87,7 +126,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }
     }
-
     enqueueHandler<CL_COMMAND_READ_BUFFER>(
         surfaces,
         blockingRead == CL_TRUE,
@@ -95,8 +133,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
         numEventsInWaitList,
         eventWaitList,
         event);
-
     builder.releaseOwnership();
+
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

@@ -23,28 +23,32 @@
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "driver_diagnostics_tests.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
 
 using namespace OCLRT;
 
 TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadWhenEnqueueReadBufferIsCallingWithCPUCopyThenContextProvidesProperHint) {
 
     buffer->forceDisallowCPUCopy = false;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     pCmdQ->enqueueReadBuffer(
         buffer,
         CL_TRUE,
         0,
         MemoryConstants::cacheLineSize,
-        address,
+        ptr,
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), ptr);
     EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
 }
 
 TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferIsCallingThenContextProvidesHintsAboutAlignments) {
 
-    uintptr_t addressForReadBuffer = (uintptr_t)address;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    uintptr_t addressForReadBuffer = (uintptr_t)ptr;
     size_t sizeForReadBuffer = MemoryConstants::cacheLineSize;
     if (!alignedAddress) {
         addressForReadBuffer++;
@@ -63,6 +67,7 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
     EXPECT_TRUE(containsHint(expectedHint, userData));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBuffer, sizeForReadBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
     EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    alignedFree(ptr);
 }
 
 TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferRectIsCallingThenContextProvidesHintsAboutAlignments) {
@@ -99,7 +104,25 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
     EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteWhenEnqueueWriteBufferIsCallingWithoutCPUCopyThenContextProvidesProperHint) {
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferDoesntShareMemWithCPUWhenEnqueueWriteBufferIsCallingWithoutCPUCopyThenContextProvidesRequiedCopyHint) {
+
+    buffer->forceDisallowCPUCopy = true;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    pCmdQ->enqueueWriteBuffer(
+        buffer,
+        CL_FALSE,
+        0,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferSharesMemWithCPUWhenEnqueueWriteBufferIsCallingWithoutCPUCopyThenContextProvidesCopyDoenstRequiedHint) {
 
     buffer->forceDisallowCPUCopy = true;
     pCmdQ->enqueueWriteBuffer(
@@ -111,11 +134,29 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteWhenEnqueueWriteBu
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteWhenEnqueueWriteBufferIsCallingWithCPUCopyThenContextProvidesProperHint) {
+TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteAndBufferDoesntShareMemWithCPUWhenEnqueueWriteBufferIsCallingWithCPUCopyThenContextProvidesRequiedCopyHint) {
+
+    buffer->forceDisallowCPUCopy = false;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    pCmdQ->enqueueWriteBuffer(
+        buffer,
+        CL_TRUE,
+        0,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteAndBufferSharesMemWithCPUWhenEnqueueWriteBufferIsCallingWithCPUCopyThenContextProvidesCopyDoenstRequiedHint) {
 
     buffer->forceDisallowCPUCopy = false;
     pCmdQ->enqueueWriteBuffer(
@@ -127,7 +168,75 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingWriteWhenEnqueueWriteBuffe
         0,
         nullptr,
         nullptr);
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndBufferDoesntShareMemWithCPUWhenEnqueueReadBufferIsCallingWithoutCPUCopyThenContextProvidesRequiedCopyHint) {
+
+    buffer->forceDisallowCPUCopy = true;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    pCmdQ->enqueueReadBuffer(
+        buffer,
+        CL_FALSE,
+        0,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), ptr);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndBufferSharesMemWithCPUWhenEnqueueReadBufferIsCallingWithoutCPUCopyThenContextProvidesCopyDoenstRequiedHint) {
+
+    buffer->forceDisallowCPUCopy = true;
+    pCmdQ->enqueueReadBuffer(
+        buffer,
+        CL_FALSE,
+        0,
+        MemoryConstants::cacheLineSize,
+        address,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferDoesntShareMemWithCPUWhenEnqueueReadBufferIsCallingWithCPUCopyThenContextProvidesRequiedCopyHint) {
+
+    buffer->forceDisallowCPUCopy = false;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    pCmdQ->enqueueReadBuffer(
+        buffer,
+        CL_TRUE,
+        0,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), ptr);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferSharesMemWithCPUWhenEnqueueReadBufferIsCallingWithCPUCopyThenContextProvidesCopyDoenstRequiedHint) {
+
+    buffer->forceDisallowCPUCopy = false;
+    pCmdQ->enqueueReadBuffer(
+        buffer,
+        CL_TRUE,
+        0,
+        MemoryConstants::cacheLineSize,
+        address,
+        0,
+        nullptr,
+        nullptr);
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer), address);
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
