@@ -131,7 +131,7 @@ typedef struct {
 typedef struct {
     uint32_t offset;
     union {
-        uint64_t value32;
+        uint32_t value32;
         uint64_t value64;
     };
     uint32_t bitSize;
@@ -169,7 +169,7 @@ typedef struct {
     void *hAdapter;
     void *hDevice;
     void *pfnEscapeCb;
-    int DDI;
+    bool DDI;
 } InstrEscCbData;
 
 int instrAutoSamplingStart(
