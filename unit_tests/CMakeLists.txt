@@ -79,6 +79,11 @@ if(NOT GTEST_SHUFFLE)
 endif(NOT GTEST_SHUFFLE)
 message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
 
+if(GTEST_FILTERING_PATTERN)
+  set(GTEST_FILTER_OPTION "--gtest_filter=${GTEST_FILTERING_PATTERN}")
+  message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
+endif(GTEST_FILTERING_PATTERN)
+
 set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/abort.cpp
@@ -503,7 +508,7 @@ function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} ${DST} ${CMAKE_CURRENT_SOURCE_DIR}/verify.bat ${TargetDir}/verify.bat
       COMMAND WORKING_DIRECTORY ${TargetDir}
       COMMAND echo Running igdrcl_tests with App Verifier
-      COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${IGDRCL_TESTS_LISTENER_OPTION}
+      COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
       COMMAND echo App Verifier returned: %errorLevel%
     )
   endif()
@@ -519,7 +524,7 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
     POST_BUILD
     COMMAND WORKING_DIRECTORY ${TargetDir}
     COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
-    COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION}
+    COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
   )
   add_dependencies(run_unit_tests run_${product}_unit_tests)
 endfunction(gen_run_unit_tests)
