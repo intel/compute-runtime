@@ -41,6 +41,8 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrLCIA = 1;
         refFtrTable.FtrIA32eGfxPTEs = 1;
         refFtrTable.FtrWddm2GpuMmu = 1;
+        refFtrTable.FtrTranslationTable = 1;
+        refFtrTable.FtrUserModeTranslationTable = 1;
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
@@ -48,6 +50,7 @@ struct SkuInfoBaseReference {
         refWaTable.WaFbcLinearSurfaceStride = 1;
         refWaTable.WaDisableEdramForDisplayRT = 1;
         refWaTable.WaEncryptedEdramOnlyPartials = 1;
+        refWaTable.WaLosslessCompressionSurfaceStride = 1;
     }
 
     static void fillReferenceFtrToReceive(FeatureTable &refFtrTable) {
