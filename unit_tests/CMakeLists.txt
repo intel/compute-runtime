@@ -38,6 +38,7 @@ add_subdirectory(gen_common)
 if(GTPIN_HEADERS_DIR)
 add_subdirectory(gtpin)
 endif(GTPIN_HEADERS_DIR)
+add_subdirectory(gmm_helper)
 add_subdirectory(helpers)
 add_subdirectory(indirect_heap)
 add_subdirectory(instrumentation)
@@ -108,6 +109,7 @@ set(IGDRCL_SRCS_tests
   ${IGDRCL_SRCS_tests_execution_model}
   ${IGDRCL_SRCS_tests_fixtures}
   ${IGDRCL_SRCS_tests_gen_common}
+  ${IGDRCL_SRCS_tests_gmm_helper}
   ${IGDRCL_SRCS_tests_helpers}
   ${IGDRCL_SRCS_tests_instrumentation}
   ${IGDRCL_SRCS_tests_indirect_heap}
@@ -334,6 +336,7 @@ source_group("source files\\event" FILES ${IGDRCL_SRCS_tests_event})
 source_group("source files\\execution_model" FILES ${IGDRCL_SRCS_tests_execution_model})
 source_group("source files\\fixtures" FILES ${IGDRCL_SRCS_tests_fixtures})
 source_group("source files\\gen_common" FILES ${IGDRCL_SRCS_tests_gen_common})
+source_group("source files\\gmm_helper" FILES ${IGDRCL_SRCS_tests_gmm_helper})
 source_group("source files\\helpers" FILES ${IGDRCL_SRCS_tests_helpers})
 source_group("source files\\indirect_heap" FILES ${IGDRCL_SRCS_tests_indirect_heap})
 source_group("source files\\instrumentation" FILES ${IGDRCL_SRCS_tests_instrumentation})

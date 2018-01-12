@@ -118,15 +118,13 @@ Gmm *Gmm::create(GMM_RESOURCE_INFO *inputGmm) {
     return gmm;
 }
 
-Gmm *Gmm::queryImgParams(ImageInfo &imgInfo,
-                         GFXCORE_FAMILY gfxFamily) {
+Gmm *Gmm::createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
     Gmm *gmm = new Gmm();
-    gmm->queryImageParams(imgInfo, gfxFamily);
+    gmm->queryImageParams(imgInfo, hwInfo);
     return gmm;
 }
 
-void Gmm::queryImageParams(ImageInfo &imgInfo,
-                           GFXCORE_FAMILY gfxFamily) {
+void Gmm::queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
     uint32_t imageWidth = static_cast<uint32_t>(imgInfo.imgDesc->image_width);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
@@ -176,6 +174,15 @@ void Gmm::queryImageParams(ImageInfo &imgInfo,
     if (imgInfo.imgDesc->image_row_pitch && imgInfo.imgDesc->mem_object) {
         this->resourceParams.OverridePitch = (uint32_t)imgInfo.imgDesc->image_row_pitch;
         this->resourceParams.Flags.Info.AllowVirtualPadding = true;
+    }
+
+    if (hwInfo.capabilityTable.ftrCompression && imgInfo.preferRenderCompression) {
+        this->resourceParams.Flags.Info.Linear = 0;
+        this->resourceParams.Flags.Info.TiledY = 1;
+        this->resourceParams.Flags.Info.RenderCompressed = 1;
+        this->resourceParams.Flags.Gpu.CCS = 1;
+        this->resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
+        this->isRenderCompressed = true;
     }
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
@@ -229,7 +236,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo,
         imgInfo.yOffsetForUVPlane = reqOffsetInfo.Lock.Offset / reqOffsetInfo.Lock.Pitch;
     }
 
-    imgInfo.qPitch = queryQPitch(gfxFamily, this->resourceParams.Type);
+    imgInfo.qPitch = queryQPitch(hwInfo.pPlatform->eRenderCoreFamily, this->resourceParams.Type);
     return;
 }
 

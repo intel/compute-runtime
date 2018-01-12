@@ -34,14 +34,12 @@ static SurfaceFormatInfo mockSurfaceFormat;
 
 class MockGmm : public Gmm {
   public:
-    static std::unique_ptr<Gmm> queryImgParams(ImageInfo &imgInfo,
-                                               GFXCORE_FAMILY family = GFXCORE_FAMILY::IGFX_UNKNOWN_CORE) {
-        auto queryFamily = family;
-        if (queryFamily == GFXCORE_FAMILY::IGFX_UNKNOWN_CORE) {
-            const HardwareInfo *hwinfo = *platformDevices;
-            queryFamily = hwinfo->pPlatform->eRenderCoreFamily;
+    static std::unique_ptr<Gmm> queryImgParams(ImageInfo &imgInfo, const HardwareInfo *hwInfo = nullptr) {
+        auto queryHwInfo = hwInfo;
+        if (!queryHwInfo) {
+            queryHwInfo = *platformDevices;
         }
-        return std::unique_ptr<Gmm>(Gmm::queryImgParams(imgInfo, queryFamily));
+        return std::unique_ptr<Gmm>(Gmm::createGmmAndQueryImgParams(imgInfo, *queryHwInfo));
     }
 
     static ImageInfo initImgInfo(cl_image_desc &imgDesc, int mipLevel, const SurfaceFormatInfo *surfaceFormat) {

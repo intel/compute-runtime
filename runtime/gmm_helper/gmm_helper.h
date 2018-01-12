@@ -34,6 +34,7 @@ void GMMPrintMessage(uint32_t debugLevel, const char *debugMessageFmt, ...);
 }
 
 namespace OCLRT {
+struct HardwareInfo;
 struct FeatureTable;
 struct WorkaroundTable;
 struct ImageInfo;
@@ -63,9 +64,9 @@ class Gmm {
 
     static uint32_t getMOCS(uint32_t type);
 
-    void queryImageParams(ImageInfo &imgInfo, GFXCORE_FAMILY gfxFamily);
+    void queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
 
-    static Gmm *queryImgParams(ImageInfo &imgInfo, GFXCORE_FAMILY gfxFamily);
+    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
 
     static void queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc);
 

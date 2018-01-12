@@ -194,7 +194,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                std::unique_ptr<Gmm> gmm(Gmm::queryImgParams(queryGmmImgInfo, hwInfo.pPlatform->eRenderCoreFamily));
+                std::unique_ptr<Gmm> gmm(Gmm::createGmmAndQueryImgParams(queryGmmImgInfo, hwInfo));
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -205,11 +205,11 @@ Image *Image::create(Context *context,
         else if (parentImage != nullptr) {
             DEBUG_BREAK_IF(!IsNV12Image(&parentImage->getImageFormat()));
             memory = parentImage->getGraphicsAllocation();
-            memory->gmm->queryImageParams(imgInfo, hwInfo.pPlatform->eRenderCoreFamily);
+            memory->gmm->queryImageParams(imgInfo, hwInfo);
             isTilingAllowed = parentImage->allowTiling();
         } else {
             gmm = new Gmm();
-            gmm->queryImageParams(imgInfo, hwInfo.pPlatform->eRenderCoreFamily);
+            gmm->queryImageParams(imgInfo, hwInfo);
             if (flags & CL_MEM_USE_HOST_PTR) {
                 errcodeRet = CL_INVALID_HOST_PTR;
                 if (hostPtr) {
@@ -668,7 +668,7 @@ cl_int Image::getImageParams(Context *context,
 
     Gmm *gmm = nullptr;
     gmm = new Gmm();
-    gmm->queryImageParams(imgInfo, hwInfo.pPlatform->eRenderCoreFamily);
+    gmm->queryImageParams(imgInfo, hwInfo);
     delete gmm;
 
     *imageRowPitch = imgInfo.rowPitch;

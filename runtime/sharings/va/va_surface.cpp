@@ -77,7 +77,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, true);
 
-    Gmm *gmm = Gmm::queryImgParams(imgInfo, hwInfo.pPlatform->eRenderCoreFamily);
+    Gmm *gmm = Gmm::createGmmAndQueryImgParams(imgInfo, hwInfo);
     DEBUG_BREAK_IF(alloc->gmm != nullptr);
     alloc->gmm = gmm;
 
