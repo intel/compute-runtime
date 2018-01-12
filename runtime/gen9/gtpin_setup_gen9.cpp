@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtpin_dx11_interface.h"
+#include "gtpin_ocl_interface.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
 
 namespace OCLRT {

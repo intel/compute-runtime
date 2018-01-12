@@ -113,7 +113,7 @@ if(ARTIFACTS_DIR)
 endif(ARTIFACTS_DIR)
 
 if(NOT GTPIN_HEADERS_DIR)
-    if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_dx11_interface.h") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_driver_common.h"))
+    if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_ocl_interface.h") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_driver_common.h"))
 	    get_filename_component(GTPIN_HEADERS_DIR "../internal/gtpin/" ABSOLUTE)
         message(STATUS "GT-Pin headers dir: ${GTPIN_HEADERS_DIR}")
     endif()

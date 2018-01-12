@@ -22,7 +22,7 @@
  */
 
 #include "config.h"
-#include "gtpin_dx11_interface.h"
+#include "gtpin_ocl_interface.h"
 #include "gtpin_helpers.h"
 #include "CL/cl.h"
 #include "runtime/context/context.h"

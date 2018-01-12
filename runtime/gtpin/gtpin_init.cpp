@@ -33,17 +33,17 @@ using namespace OCLRT;
 
 namespace OCLRT {
 bool isGTPinInitialized = false;
-gtpin::dx11::gtpin_events_t GTPinCallbacks = {0};
+gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
 }
 
-GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
+GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
                            uint32_t *pDriverVersion) {
     if (isGTPinInitialized) {
         return GTPIN_DI_ERROR_INSTANCE_ALREADY_CREATED;
     }
     if (pDriverVersion != nullptr) {
         // GT-Pin is asking to obtain GT-Pin Interface version that is supported
-        *pDriverVersion = gtpin::dx11::GTPIN_DX11_INTERFACE_VERSION;
+        *pDriverVersion = gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION;
 
         if ((pDriverServices == nullptr) || (pGtpinEvents == nullptr)) {
             return GTPIN_DI_SUCCESS;
@@ -55,10 +55,9 @@ GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, driver_ser
     if ((pGtpinEvents->onContextCreate == nullptr) ||
         (pGtpinEvents->onContextDestroy == nullptr) ||
         (pGtpinEvents->onKernelCreate == nullptr) ||
-        (pGtpinEvents->onDraw == nullptr) ||
         (pGtpinEvents->onKernelSubmit == nullptr) ||
         (pGtpinEvents->onCommandBufferCreate == nullptr) ||
-        (pGtpinEvents->onCommandBufferSubmit == nullptr)) {
+        (pGtpinEvents->onCommandBufferComplete == nullptr)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
 

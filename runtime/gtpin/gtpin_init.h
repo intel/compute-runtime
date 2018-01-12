@@ -21,13 +21,13 @@
  */
 #pragma once
 
-#include "gtpin_dx11_interface.h"
+#include "gtpin_ocl_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::dx11::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, uint32_t *pDriverVersion);
+gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, uint32_t *pDriverVersion);
 
 #ifdef __cplusplus
 }

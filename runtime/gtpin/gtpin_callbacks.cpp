@@ -21,7 +21,7 @@
  */
 
 #include "config.h"
-#include "gtpin_dx11_interface.h"
+#include "gtpin_ocl_interface.h"
 #include "CL/cl.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info.h"
@@ -32,7 +32,7 @@ using namespace gtpin;
 
 namespace OCLRT {
 extern bool isGTPinInitialized;
-extern gtpin::dx11::gtpin_events_t GTPinCallbacks;
+extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
 igc_init_t *pIgcInfo = nullptr;
 
