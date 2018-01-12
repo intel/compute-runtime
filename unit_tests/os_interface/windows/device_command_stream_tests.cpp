@@ -114,6 +114,8 @@ class WddmCommandStreamWithMockGdiFixture : public WddmFixture {
         mm->device = device;
 
         tagAllocation = mm->allocateGraphicsMemory(1024, 4096);
+        auto tagBuffer = (uint32_t *)tagAllocation->getUnderlyingBuffer();
+        tagBuffer[0] = initialHardwareTag;
     }
 
     void TearDown() {
@@ -339,7 +341,7 @@ TEST_F(WddmCommandStreamTest, killAllTemporaryAllocation) {
     ASSERT_NE(nullptr, graphicsAllocation);
 
     graphicsAllocation->taskCount = 1;
-    csr->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    csr->waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
     //no memory leaks reported makes this test pass.
 }
 
@@ -356,7 +358,7 @@ TEST_F(WddmCommandStreamTest, killCompletedAllocations) {
     graphicsAllocation->taskCount = 1;
     graphicsAllocation2->taskCount = 100;
 
-    csr->cleanAllocationList(1, TEMPORARY_ALLOCATION);
+    csr->waitForTaskCountAndCleanAllocationList(1, TEMPORARY_ALLOCATION);
     //graphicsAllocation2 still lives
     EXPECT_EQ(host_ptr2, graphicsAllocation2->getUnderlyingBuffer());
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -409,7 +409,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             if (printfHandler) {
                 printfHandler->printEnqueueOutput();
             }
-            commandStreamReceiver.cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+            commandStreamReceiver.waitForTaskCountAndCleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
         }
     }
 }

@@ -98,7 +98,7 @@ GraphicsAllocation *CommandStreamReceiver::createAllocationAndHandleResidency(co
     return graphicsAllocation;
 }
 
-void CommandStreamReceiver::cleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
+void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
 
     auto address = getTagAddress();
     if (address && requiredTaskCount != (unsigned int)-1) {
@@ -153,6 +153,9 @@ void CommandStreamReceiver::cleanupResources() {
     if (!memoryManager)
         return;
 
+    waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, TEMPORARY_ALLOCATION);
+    waitForTaskCountAndCleanAllocationList(this->latestFlushedTaskCount, REUSABLE_ALLOCATION);
+
     if (scratchAllocation) {
         memoryManager->freeGraphicsMemory(scratchAllocation);
         scratchAllocation = nullptr;
@@ -161,9 +164,6 @@ void CommandStreamReceiver::cleanupResources() {
     if (preemptionCsrAllocation) {
         memoryManager->freeGraphicsMemory(preemptionCsrAllocation);
     }
-
-    cleanAllocationList(-1, TEMPORARY_ALLOCATION);
-    cleanAllocationList(-1, REUSABLE_ALLOCATION);
 
     if (commandStream.getBase()) {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
@@ -196,7 +196,7 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
 
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAllocation = allocation;
-    this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
+    this->tagAddress = allocation ? reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer()) : nullptr;
 }
 
 void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSize) {

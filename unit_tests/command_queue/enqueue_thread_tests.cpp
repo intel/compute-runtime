@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -509,6 +509,7 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
     pMyDevice->setMemoryManager(memoryManager);
 
     auto pTagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t));
+    *(uint32_t *)(pTagAllocation->getUnderlyingBuffer()) = initialHardwareTag;
     ASSERT_NE(nullptr, pTagAllocation);
     pMyDevice->setTagAllocation(pTagAllocation);
 

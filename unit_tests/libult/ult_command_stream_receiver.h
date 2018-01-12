@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,6 +46,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
     using BaseClass::CommandStreamReceiver::lastSentThreadAribtrationPolicy;
+    using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
@@ -77,16 +78,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
   protected:
-    using BaseClass::CommandStreamReceiver::cleanAllocationList;
     using BaseClass::CommandStreamReceiver::memoryManager;
     using BaseClass::CommandStreamReceiver::tagAddress;
     using BaseClass::CommandStreamReceiver::tagAllocation;
+    using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
     GraphicsAllocation *tempTagLocation;
 };
 
 template <typename GfxFamily>
 UltCommandStreamReceiver<GfxFamily>::~UltCommandStreamReceiver() {
+    this->setTagAllocation(nullptr);
     delete tempTagLocation;
 }
 

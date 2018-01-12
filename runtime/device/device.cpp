@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,14 +83,14 @@ Device::Device(const HardwareInfo &hwInfo,
 
 Device::~Device() {
     DEBUG_BREAK_IF(nullptr == memoryManager);
-    if (memoryManager) {
-        memoryManager->freeGraphicsMemory(tagAllocation);
-    }
-    tagAllocation = nullptr;
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
     delete commandStreamReceiver;
+    if (memoryManager) {
+        memoryManager->freeGraphicsMemory(tagAllocation);
+    }
+    tagAllocation = nullptr;
     commandStreamReceiver = nullptr;
     if (memoryManager) {
         memoryManager->waitForDeletions();

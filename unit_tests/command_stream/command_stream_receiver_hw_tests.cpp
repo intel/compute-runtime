@@ -2823,3 +2823,40 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenThreeTas
     auto ppcAfterChange = genCmdCast<typename FamilyType::PIPE_CONTROL *>(ppc3);
     EXPECT_NE(nullptr, ppcAfterChange);
 }
+
+typedef UltCommandStreamReceiverTest CommandStreamReceiverCleanupTests;
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAllocationsArePresentThenCleanupResourcesOnlyCleansThoseAboveLatestFlushTaskLevel) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto memoryManager = pDevice->getMemoryManager();
+
+    auto temporaryToClean = memoryManager->allocateGraphicsMemory(4096u);
+    auto temporaryToHold = memoryManager->allocateGraphicsMemory(4096u);
+
+    auto reusableToClean = memoryManager->allocateGraphicsMemory(4096u);
+    auto reusableToHold = memoryManager->allocateGraphicsMemory(4096u);
+
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryToClean), TEMPORARY_ALLOCATION);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(temporaryToHold), TEMPORARY_ALLOCATION);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToClean), REUSABLE_ALLOCATION);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(reusableToHold), REUSABLE_ALLOCATION);
+
+    temporaryToClean->taskCount = 1;
+    reusableToClean->taskCount = 1;
+
+    temporaryToHold->taskCount = 10;
+    reusableToHold->taskCount = 10;
+
+    commandStreamReceiver.latestFlushedTaskCount = 9;
+    commandStreamReceiver.cleanupResources();
+
+    EXPECT_EQ(reusableToHold, memoryManager->allocationsForReuse.peekHead());
+    EXPECT_EQ(reusableToHold, memoryManager->allocationsForReuse.peekTail());
+
+    EXPECT_EQ(temporaryToHold, memoryManager->graphicsAllocations.peekHead());
+    EXPECT_EQ(temporaryToHold, memoryManager->graphicsAllocations.peekTail());
+
+    commandStreamReceiver.latestFlushedTaskCount = 11;
+    commandStreamReceiver.cleanupResources();
+    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+}

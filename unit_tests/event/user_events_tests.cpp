@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -909,7 +909,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
     MemoryManager *memoryManager = csr.getMemoryManager();
     //kill some temporary objects that fixture creates.
-    csr.cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    csr.waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
 
     EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
 

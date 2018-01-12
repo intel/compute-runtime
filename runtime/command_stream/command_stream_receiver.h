@@ -75,7 +75,7 @@ class CommandStreamReceiver {
     void setMemoryManager(MemoryManager *mm);
 
     GraphicsAllocation *createAllocationAndHandleResidency(const void *address, size_t size, bool addToDefferFreeList = true);
-    void cleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType);
+    void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() { return osInterface.get(); };
