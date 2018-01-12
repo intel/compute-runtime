@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -324,5 +324,29 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithMedPriority
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnQueueWithPriority) {
+    auto pDevice = pPlatform->getDevice(0);
+    DeviceInfo &devInfo = const_cast<DeviceInfo &>(pDevice->getDeviceInfo());
+    devInfo.priorityHintsSupported = false;
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
+    EXPECT_EQ(nullptr, cmdqd);
+    EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, returnSuccessOnQueueWithPriority) {
+    auto pDevice = pPlatform->getDevice(0);
+    DeviceInfo &devInfo = const_cast<DeviceInfo &>(pDevice->getDeviceInfo());
+    devInfo.priorityHintsSupported = true;
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
+    auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
+    EXPECT_NE(nullptr, cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = clReleaseCommandQueue(cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
 }
 } // namespace ULT

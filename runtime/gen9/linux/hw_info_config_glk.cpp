@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,7 +39,7 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
 
     pSkuTable->ftrGpGpuMidBatchPreempt = 1;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = 1;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = 0;
     pSkuTable->ftr3dMidBatchPreempt = 1;
     pSkuTable->ftr3dObjectLevelPreempt = 1;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = 1;

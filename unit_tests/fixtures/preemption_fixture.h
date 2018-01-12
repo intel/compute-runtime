@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/gen_common/test.h"
 
@@ -51,8 +52,6 @@ using PreemptionEnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactor
 using PreemptionEnqueueKernelTest = Test<PreemptionEnqueueKernelFixture>;
 }
 
-class DebugManagerStateRestore;
-
 class DevicePreemptionTests : public ::testing::Test {
   public:
     void SetUp() override;
@@ -77,20 +76,22 @@ class DevicePreemptionTests : public ::testing::Test {
 
 struct ThreadGroupPreemptionEnqueueKernelTest : OCLRT::PreemptionEnqueueKernelTest {
     void SetUp() override;
-
     void TearDown() override;
 
     OCLRT::HardwareInfo *globalHwInfo;
     OCLRT::PreemptionMode originalPreemptionMode;
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
 };
 
 struct MidThreadPreemptionEnqueueKernelTest : OCLRT::PreemptionEnqueueKernelTest {
     void SetUp() override;
-
     void TearDown() override;
 
     OCLRT::HardwareInfo *globalHwInfo;
     OCLRT::PreemptionMode originalPreemptionMode;
+
+    std::unique_ptr<DebugManagerStateRestore> dbgRestore;
 };
 
 struct PreemptionTestHwDetails {

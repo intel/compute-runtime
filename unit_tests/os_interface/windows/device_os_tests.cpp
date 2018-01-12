@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
 #include "runtime/helpers/get_info.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_device.h"
 
 using namespace ::testing;
@@ -72,14 +73,10 @@ TEST(DeviceOsTest, DeviceCreationFail) {
 }
 
 TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
-    HardwareInfo *hwInfo = const_cast<HardwareInfo *>(*platformDevices);
-    auto defaultPreemption = hwInfo->capabilityTable.defaultPreemptionMode;
-    hwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-
-    auto pDevice = Device::create<OCLRT::FailDeviceAfterOne>(hwInfo);
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+    auto pDevice = Device::create<OCLRT::FailDeviceAfterOne>(nullptr);
 
     EXPECT_THAT(pDevice, nullptr);
-
-    hwInfo->capabilityTable.defaultPreemptionMode = defaultPreemption;
 }
 } // namespace OCLRT

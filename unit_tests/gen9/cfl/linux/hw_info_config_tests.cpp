@@ -53,6 +53,29 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
 
+    //constant sysInfo/ftr flags
+    EXPECT_EQ(1u, outHwInfo.pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled);
+    EXPECT_TRUE(outHwInfo.pSysInfo->VEBoxInfo.IsValid);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrVEBOX);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGpGpuMidThreadLevelPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dMidBatchPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dObjectLevelPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPerCtxtPreemptionGranularityControl);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPPGTT);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrSVM);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrIA32eGfxPTEs);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrDisplayYTiling);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTranslationTable);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrUserModeTranslationTable);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEnableGuC);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbc);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbc2AddressTranslation);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcBlitterTracking);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrFbcCpuTracking);
+
     ReleaseOutHwInfoStructs();
 
     drm->StoredDeviceID = ICFL_GT1_DT_DEVICE_F0_ID;

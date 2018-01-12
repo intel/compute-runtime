@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -72,7 +72,7 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 Device::Device(const HardwareInfo &hwInfo,
                bool isRootDevice)
     : memoryManager(nullptr), enabledClVersion(false), hwInfo(hwInfo), isRoot(isRootDevice),
-      commandStreamReceiver(nullptr), tagAddress(nullptr), tagAllocation(nullptr),
+      commandStreamReceiver(nullptr), tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
       osTime(nullptr), slmWindowStartAddress(nullptr) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
@@ -93,6 +93,10 @@ Device::~Device() {
     tagAllocation = nullptr;
     commandStreamReceiver = nullptr;
     if (memoryManager) {
+        if (preemptionAllocation) {
+            memoryManager->freeGraphicsMemory(preemptionAllocation);
+            preemptionAllocation = nullptr;
+        }
         memoryManager->waitForDeletions();
     }
     delete memoryManager;
@@ -156,11 +160,11 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
         size_t requiredSize = pHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
         size_t alignment = 256 * MemoryConstants::kiloByte;
         bool uncacheable = pDevice->getWaTable()->waCSRUncachable;
-        auto preemptionAllocation = outDevice.memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
-        if (!preemptionAllocation) {
+        pDevice->preemptionAllocation = outDevice.memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
+        if (!pDevice->preemptionAllocation) {
             return false;
         }
-        commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+        commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
     }
 
     return true;

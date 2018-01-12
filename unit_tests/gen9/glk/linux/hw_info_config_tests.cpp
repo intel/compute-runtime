@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,6 +58,27 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGTA);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
+
+    //constant sysInfo/ftr flags
+    EXPECT_EQ(1u, outHwInfo.pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled);
+    EXPECT_TRUE(outHwInfo.pSysInfo->VEBoxInfo.IsValid);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuMidBatchPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGpGpuThreadGroupLevelPreempt);
+    EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGpGpuMidThreadLevelPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dMidBatchPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftr3dObjectLevelPreempt);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPerCtxtPreemptionGranularityControl);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrLCIA);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrPPGTT);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrL3IACoherency);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrIA32eGfxPTEs);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTranslationTable);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrUserModeTranslationTable);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEnableGuC);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrTileMappedResource);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrULT);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcHdr2D);
+    EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrAstcLdr2D);
 
     ReleaseOutHwInfoStructs();
 

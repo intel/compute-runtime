@@ -31,7 +31,6 @@
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -84,6 +83,9 @@ void DevicePreemptionTests::forceWhitelistedRegs(bool whitelisted) {
 }
 
 void ThreadGroupPreemptionEnqueueKernelTest::SetUp() {
+    dbgRestore.reset(new DebugManagerStateRestore());
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::ThreadGroup));
+
     globalHwInfo = const_cast<HardwareInfo *>(platformDevices[0]);
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;
     globalHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
@@ -99,6 +101,9 @@ void ThreadGroupPreemptionEnqueueKernelTest::TearDown() {
 }
 
 void MidThreadPreemptionEnqueueKernelTest::SetUp() {
+    dbgRestore.reset(new DebugManagerStateRestore());
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
+
     globalHwInfo = const_cast<HardwareInfo *>(platformDevices[0]);
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;
     globalHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;

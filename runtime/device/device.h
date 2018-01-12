@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -122,6 +122,7 @@ class Device : public BaseObject<_cl_device_id> {
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
     static decltype(&PerformanceCounters::create) createPerformanceCountersFunc;
     PreemptionMode getPreemptionMode() const { return preemptionMode; }
+    GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
     MOCKABLE_VIRTUAL const WhitelistedRegisters &getWhitelistedRegisters() { return hwInfo.capabilityTable.whitelistedRegisters; }
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
@@ -148,6 +149,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     volatile uint32_t *tagAddress;
     GraphicsAllocation *tagAllocation;
+    GraphicsAllocation *preemptionAllocation;
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;

@@ -34,6 +34,8 @@
 
 using namespace OCLRT;
 
+extern int preemptionModeFromDebugManager;
+
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
@@ -96,6 +98,27 @@ TEST_F(ThreadGroupPreemptionTests, simpleAllow) {
 
 TEST_F(ThreadGroupPreemptionTests, allowDefaultModeForNonKernelRequest) {
     EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*device, nullptr));
+}
+
+TEST_F(ThreadGroupPreemptionTests, givenKernelWithNoEnvironmentPatchSetWhenLSQCWaIsTurnedOnThenThreadGroupPreemptionIsBeingSelected) {
+    kernelInfo.get()->patchInfo.executionEnvironment = nullptr;
+    waTable->waDisableLSQCROPERFforOCL = 1;
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
+    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*device, kernel.get()));
+}
+
+TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOnThenThreadGroupPreemptionIsBeingSelected) {
+    executionEnvironment.get()->UsesFencesForReadWriteImages = 0;
+    waTable->waDisableLSQCROPERFforOCL = 1;
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
+    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*device, kernel.get()));
+}
+
+TEST_F(ThreadGroupPreemptionTests, givenKernelWithEnvironmentPatchSetWhenLSQCWaIsTurnedOffThenThreadGroupPreemptionIsBeingSelected) {
+    executionEnvironment.get()->UsesFencesForReadWriteImages = 1;
+    waTable->waDisableLSQCROPERFforOCL = 0;
+    EXPECT_TRUE(PreemptionHelper::allowThreadGroupPreemption(kernel.get(), waTable));
+    EXPECT_EQ(PreemptionMode::ThreadGroup, PreemptionHelper::taskPreemptionMode(*device, kernel.get()));
 }
 
 TEST_F(ThreadGroupPreemptionTests, allowMidBatch) {
@@ -286,7 +309,7 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 }
 
 TEST(PreemptionTest, defaultMode) {
-    EXPECT_EQ(0, DebugManager.flags.ForcePreemptionMode.get());
+    EXPECT_EQ(0, preemptionModeFromDebugManager);
 }
 
 TEST(PreemptionTest, whenPreemptionModeIsNotMidThreadThenInstructionHeapSipKernelReservedSizeIsEmpty) {
@@ -517,6 +540,9 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     ASSERT_NE(nullptr, csrSurface);
     EXPECT_FALSE(csrSurface->uncacheable);
 
+    GraphicsAllocation *devCsrSurface = mockDevice->getPreemptionAllocation();
+    EXPECT_EQ(csrSurface, devCsrSurface);
+
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
 }
 
@@ -533,6 +559,9 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     MemoryAllocation *csrSurface = static_cast<MemoryAllocation *>(csr.getPreemptionCsrAllocation());
     ASSERT_NE(nullptr, csrSurface);
     EXPECT_TRUE(csrSurface->uncacheable);
+
+    GraphicsAllocation *devCsrSurface = mockDevice->getPreemptionAllocation();
+    EXPECT_EQ(csrSurface, devCsrSurface);
 
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = waTable;
 }

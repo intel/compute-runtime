@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,7 +46,7 @@ GEN9TEST_F(Gen9DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
 }
 
 GEN9TEST_F(Gen9DeviceCaps, defaultPreemptionMode) {
-    EXPECT_TRUE(PreemptionMode::ThreadGroup == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
+    EXPECT_EQ(PreemptionMode::MidThread, pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
 
 GEN9TEST_F(Gen9DeviceCaps, whitelistedRegisters) {

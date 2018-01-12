@@ -55,7 +55,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     true,  // ftrSupportsVmeAvcTextureSampler
     false, // ftrSupportsVmeAvcPreemption
     false,
-    PreemptionMode::ThreadGroup,
+    PreemptionMode::MidThread,
     {true, false},
     &isSimulationCFL,
     true,

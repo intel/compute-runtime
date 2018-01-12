@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 #include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "gmock/gmock.h"
 #include <algorithm>
 #include <mutex>
@@ -156,6 +157,9 @@ std::string getRunPath(char *argv0) {
 
     return res;
 }
+
+extern int preemptionModeFromDebugManager;
+int preemptionModeFromDebugManager = -1;
 
 int main(int argc, char **argv) {
     int retVal = 0;
@@ -351,6 +355,10 @@ int main(int argc, char **argv) {
 
     gEnvironment->setMockFileNames(fclMockFile, igcMockFile);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);
+
+    // globally override-disable preemption to speed-up test execution
+    preemptionModeFromDebugManager = OCLRT::DebugManager.flags.ForcePreemptionMode.get();
+    OCLRT::DebugManager.flags.ForcePreemptionMode.set(static_cast<int>(PreemptionMode::Disabled));
 
 #if defined(__linux__)
     //ULTs timeout

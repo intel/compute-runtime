@@ -161,9 +161,6 @@ void CommandStreamReceiver::cleanupResources() {
         scratchAllocation = nullptr;
     }
 
-    if (preemptionCsrAllocation) {
-        memoryManager->freeGraphicsMemory(preemptionCsrAllocation);
-    }
 
     if (commandStream.getBase()) {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
