@@ -1459,10 +1459,9 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledTh
     MockWddmMemoryManager memoryManager(wddm);
     memoryManager.setDeferredDeleter(deleter);
     EXPECT_EQ(0, deleter->deferDeletionCalled);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0, nullptr, nullptr);
+    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0);
     EXPECT_EQ(1, deleter->deferDeletionCalled);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
-    EXPECT_EQ(1u, wddm->releaseGpuPtrResult.called);
 }
 
 TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledThenCannotDeferDeletions) {
@@ -1470,9 +1469,8 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledT
     wddm->callBaseDestroyAllocations = false;
     MockWddmMemoryManager memoryManager(wddm);
     memoryManager.setDeferredDeleter(nullptr);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0, nullptr, nullptr);
+    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
-    EXPECT_EQ(1u, wddm->releaseGpuPtrResult.called);
 }
 
 TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {

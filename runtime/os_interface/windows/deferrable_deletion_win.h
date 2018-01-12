@@ -30,7 +30,7 @@ class Wddm;
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
     DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                           D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr);
+                           D3DKMT_HANDLE resourceHandle);
     void apply() override;
     ~DeferrableDeletionImpl();
 
@@ -40,7 +40,5 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
     uint32_t allocationCount;
     uint64_t lastFenceValue;
     D3DKMT_HANDLE resourceHandle;
-    void *cpuPtr;
-    void *gpuPtr;
 };
 } // namespace OCLRT

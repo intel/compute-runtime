@@ -79,7 +79,7 @@ class WddmMemoryManager : public MemoryManager {
         residencyLock = false;
     }
 
-    bool tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr);
+    bool tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle);
 
     bool isMemoryBudgetExhausted() const override { return memoryBudgetExhausted; }
 

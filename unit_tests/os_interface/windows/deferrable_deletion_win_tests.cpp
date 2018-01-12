@@ -28,14 +28,12 @@ using namespace OCLRT;
 class MockDeferrableDeletion : public DeferrableDeletionImpl {
   public:
     MockDeferrableDeletion(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                           D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr) : DeferrableDeletionImpl(wddm, handles, allocationCount, lastFenceValue, resourceHandle, cpuPtr, gpuPtr){};
+                           D3DKMT_HANDLE resourceHandle) : DeferrableDeletionImpl(wddm, handles, allocationCount, lastFenceValue, resourceHandle){};
     Wddm *getWddm() { return wddm; }
     D3DKMT_HANDLE *getHandles() { return handles; }
     uint32_t getAllocationCount() { return allocationCount; }
     uint64_t getLastFenceValue() { return lastFenceValue; }
     D3DKMT_HANDLE getResourceHandle() { return resourceHandle; }
-    void *getCpuPtr() { return cpuPtr; }
-    void *getGpuPtr() { return gpuPtr; }
 };
 
 class DeferrableDeletionTest : public ::testing::Test {
@@ -45,12 +43,10 @@ class DeferrableDeletionTest : public ::testing::Test {
     uint32_t allocationCount = 1;
     uint64_t lastFenceValue = 0;
     D3DKMT_HANDLE resourceHandle = 0;
-    char cpuPtr;
-    char gpuPtr;
 };
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenIsCreatedThenObjectMembersAreSetProperly) {
-    MockDeferrableDeletion deletion(&wddm, &handle, allocationCount, lastFenceValue, resourceHandle, (void *)&cpuPtr, (void *)&gpuPtr);
+    MockDeferrableDeletion deletion(&wddm, &handle, allocationCount, lastFenceValue, resourceHandle);
     EXPECT_EQ(&wddm, deletion.getWddm());
     EXPECT_NE(nullptr, deletion.getHandles());
     EXPECT_EQ(handle, *deletion.getHandles());
@@ -58,13 +54,11 @@ TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenIsCreatedThenObjectMem
     EXPECT_EQ(allocationCount, deletion.getAllocationCount());
     EXPECT_EQ(lastFenceValue, deletion.getLastFenceValue());
     EXPECT_EQ(resourceHandle, deletion.getResourceHandle());
-    EXPECT_EQ((void *)&cpuPtr, deletion.getCpuPtr());
-    EXPECT_EQ((void *)&gpuPtr, deletion.getGpuPtr());
 }
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenApplyIsCalledThenDeletionIsApplied) {
     wddm.callBaseDestroyAllocations = false;
-    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)&wddm, &handle, allocationCount, lastFenceValue, resourceHandle, (void *)nullptr, (void *)nullptr));
+    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)&wddm, &handle, allocationCount, lastFenceValue, resourceHandle));
     EXPECT_EQ(0, wddm.destroyAllocationResult.called);
     deletion->apply();
     EXPECT_EQ(1, wddm.destroyAllocationResult.called);

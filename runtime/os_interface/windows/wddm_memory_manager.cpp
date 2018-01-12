@@ -301,20 +301,20 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             unlockResource(input);
             input->setLocked(false);
         }
-        status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle, cpuPtr, gpuPtr);
+        status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle);
         DEBUG_BREAK_IF(!status);
+        ::alignedFree(cpuPtr);
+        wddm->releaseGpuPtr(gpuPtr);
     }
     delete gfxAllocation;
 }
 
-bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr) {
+bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle) {
     bool status = true;
     if (deferredDeleter) {
-        deferredDeleter->deferDeletion(DeferrableDeletion::create(wddm, handles, allocationCount, lastFenceValue, resourceHandle, cpuPtr, gpuPtr));
+        deferredDeleter->deferDeletion(DeferrableDeletion::create(wddm, handles, allocationCount, lastFenceValue, resourceHandle));
     } else {
         status = wddm->destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle);
-        ::alignedFree(cpuPtr);
-        wddm->releaseGpuPtr(gpuPtr);
     }
     return status;
 }
@@ -359,7 +359,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
         }
     }
 
-    bool success = tryDeferDeletions(handles, allocationCount, lastFenceValue, 0, nullptr, nullptr);
+    bool success = tryDeferDeletions(handles, allocationCount, lastFenceValue, 0);
 
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {

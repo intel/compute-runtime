@@ -21,7 +21,6 @@
  */
 
 #include "runtime/os_interface/windows/wddm.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/windows/deferrable_deletion_win.h"
 
 namespace OCLRT {
@@ -31,10 +30,10 @@ DeferrableDeletion *DeferrableDeletion::create(Args... args) {
     return new DeferrableDeletionImpl(std::forward<Args>(args)...);
 }
 template DeferrableDeletion *DeferrableDeletion::create(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                                                        D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr);
+                                                        D3DKMT_HANDLE resourceHandle);
 
 DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                                               D3DKMT_HANDLE resourceHandle, void *cpuPtr, void *gpuPtr) {
+                                               D3DKMT_HANDLE resourceHandle) {
     this->wddm = wddm;
     if (handles) {
         this->handles = new D3DKMT_HANDLE[allocationCount];
@@ -45,16 +44,10 @@ DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handle
     this->allocationCount = allocationCount;
     this->lastFenceValue = lastFenceValue;
     this->resourceHandle = resourceHandle;
-    this->cpuPtr = cpuPtr;
-    this->gpuPtr = gpuPtr;
 }
 void DeferrableDeletionImpl::apply() {
     bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle);
     DEBUG_BREAK_IF(!destroyStatus);
-    ::alignedFree(cpuPtr);
-    cpuPtr = nullptr;
-    wddm->releaseGpuPtr(gpuPtr);
-    gpuPtr = nullptr;
 }
 DeferrableDeletionImpl::~DeferrableDeletionImpl() {
     if (handles) {
