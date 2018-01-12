@@ -68,7 +68,7 @@ DECLARE_DEBUG_VARIABLE(bool, EnableAsyncEventsHandler, true, "Enables async even
 DECLARE_DEBUG_VARIABLE(bool, EnableForcePin, true, "Enables early pinning for memory object")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64kbpages, -1, "-1: default behaviour, 0 Disables, 1 Enables support for 64KB pages for driver allocated fine grain svm buffers")
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeND, true, "Enables diffrent algorithm to compute local work size")
-DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algorithm to compute the most squared work group as possible")
+DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, true, "Enables algorithm to compute the most squared work group as possible")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableKmdNotify, -1, "-1: dont override, 0: disable, 1: enable")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideKmdNotifyDelayMs, -1, "-1: dont override, 0: infinite timeout, >0: timeout in ms")
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")

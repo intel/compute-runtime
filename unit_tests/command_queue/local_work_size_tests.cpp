@@ -22,6 +22,7 @@
 
 #include "runtime/command_queue/dispatch_walker.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -95,8 +96,8 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 128u);
-    EXPECT_EQ(workGroupSize[1], 2u);
+    EXPECT_EQ(workGroupSize[0], 16u);
+    EXPECT_EQ(workGroupSize[1], 16u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 48;
@@ -115,6 +116,8 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
@@ -232,8 +235,8 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual256WhenComputeCalledThenLo
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 128u);
-    EXPECT_EQ(workGroupSize[1], 2u);
+    EXPECT_EQ(workGroupSize[0], 16u);
+    EXPECT_EQ(workGroupSize[1], 16u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -267,8 +270,8 @@ TEST(localWorkSizeTest, givenKernelWithTwoDimensionalGlobalSizesWhenLwsIsCompute
     workGroup[0] = 1024;
     workGroup[1] = 1024;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 256u);
-    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[0], 16u);
+    EXPECT_EQ(workGroupSize[1], 16u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -521,6 +524,8 @@ TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCompu
 }
 
 TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8WhenGwsIs1024ThenLwsIsComputedAsMaxOptimalMultipliedBySimd) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
     WorkSizeInfo wsInfo(1024, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
 
     uint32_t workDim = 2;
@@ -535,4 +540,7 @@ TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8When
 
 TEST(localWorkSizeTest, givenDebugVariableEnableComputeWorkSizeNDWhenCheckValueExpectTrue) {
     EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeND.get());
+}
+TEST(localWorkSizeTest, givenDefaultDebugVariablesWhenEnableComputeWorkSizeSquaredIsCheckdThenTrueIsReturned) {
+    EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeSquared.get());
 }

@@ -294,6 +294,37 @@ void computeWorkgroupSize2D(uint32_t maxWorkGroupSize, size_t workGroupSize[3], 
     }
 }
 
+void computeWorkgroupSizeSquared(uint32_t maxWorkGroupSize, size_t workGroupSize[3], const size_t workItems[3], size_t simdSize, const uint32_t workDim) {
+    for (int i = 0; i < 3; i++)
+        workGroupSize[i] = 1;
+    size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
+    for (auto i = 0u; i < workDim; i++) {
+        uint32_t requiredWorkItemsCount = maxWorkGroupSize;
+        while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
+            requiredWorkItemsCount = requiredWorkItemsCount >> 1;
+        itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
+    }
+    if (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] >= maxWorkGroupSize) {
+        while (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] > maxWorkGroupSize) {
+            if (itemsPowerOfTwoDivisors[0] > itemsPowerOfTwoDivisors[1])
+                itemsPowerOfTwoDivisors[0] = itemsPowerOfTwoDivisors[0] >> 1;
+            else
+                itemsPowerOfTwoDivisors[1] = itemsPowerOfTwoDivisors[1] >> 1;
+        }
+        for (auto i = 0u; i < 3; i++)
+            workGroupSize[i] = itemsPowerOfTwoDivisors[i];
+        return;
+
+    } else if (workItems[0] * workItems[1] > maxWorkGroupSize) {
+        computeWorkgroupSize2D(maxWorkGroupSize, workGroupSize, workItems, simdSize);
+        return;
+    } else {
+        for (auto i = 0u; i < workDim; i++)
+            workGroupSize[i] = workItems[i];
+        return;
+    }
+}
+
 void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const size_t workItems[3], const uint32_t workDim) {
     for (int i = 0; i < 3; i++)
         workGroupSize[i] = 1;
@@ -303,8 +334,11 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
         return;
     } else {
         //Find biggest power of two which devide each dimension size
-
         if (wsInfo.slmTotalSize == 0 && wsInfo.hasBarriers == 0) {
+            if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
+                return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
+            }
+
             size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
             for (auto i = 0u; i < workDim; i++) {
                 uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalHardwareThreadCountGeneric[0]);
@@ -370,37 +404,6 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
     }
 }
 
-void computeWorkgroupSizeSquared(uint32_t maxWorkGroupSize, size_t workGroupSize[3], const size_t workItems[3], size_t simdSize, const uint32_t workDim) {
-    for (int i = 0; i < 3; i++)
-        workGroupSize[i] = 1;
-    size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
-    for (auto i = 0u; i < workDim; i++) {
-        uint32_t requiredWorkItemsCount = maxWorkGroupSize;
-        while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
-            requiredWorkItemsCount = requiredWorkItemsCount >> 1;
-        itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
-    }
-    if (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] >= maxWorkGroupSize) {
-        while (itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] > maxWorkGroupSize) {
-            if (itemsPowerOfTwoDivisors[0] > itemsPowerOfTwoDivisors[1])
-                itemsPowerOfTwoDivisors[0] = itemsPowerOfTwoDivisors[0] >> 1;
-            else
-                itemsPowerOfTwoDivisors[1] = itemsPowerOfTwoDivisors[1] >> 1;
-        }
-        for (auto i = 0u; i < 3; i++)
-            workGroupSize[i] = itemsPowerOfTwoDivisors[i];
-        return;
-
-    } else if (workItems[0] * workItems[1] > maxWorkGroupSize) {
-        computeWorkgroupSize2D(maxWorkGroupSize, workGroupSize, workItems, simdSize);
-        return;
-    } else {
-        for (auto i = 0u; i < workDim; i++)
-            workGroupSize[i] = workItems[i];
-        return;
-    }
-}
-
 Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     size_t workGroupSize[3] = {};
     if (dispatchInfo.getKernel() != nullptr) {
@@ -452,20 +455,12 @@ Vec3<size_t> canonizeWorkgroup(Vec3<size_t> workgroup) {
 void provideLocalWorkGroupSizeHints(Context *context, uint32_t maxWorkGroupSize, DispatchInfo dispatchInfo) {
     if (context != nullptr && context->isProvidingPerformanceHints() && dispatchInfo.getDim() <= 3) {
         size_t preferredWorkGroupSize[3];
-        size_t workItems[3] = {dispatchInfo.getGWS().x, dispatchInfo.getGWS().y, dispatchInfo.getGWS().z};
-        if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-            WorkSizeInfo wsInfo(dispatchInfo);
-            computeWorkgroupSizeND(wsInfo, preferredWorkGroupSize, workItems, dispatchInfo.getDim());
-        } else {
-            auto simd = dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
-            if (dispatchInfo.getDim() == 1)
-                computeWorkgroupSize1D(maxWorkGroupSize, preferredWorkGroupSize, workItems, simd);
-            else if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && dispatchInfo.getDim() == 2) {
-                computeWorkgroupSizeSquared(maxWorkGroupSize, preferredWorkGroupSize, workItems, simd, dispatchInfo.getDim());
-            } else {
-                computeWorkgroupSize2D(maxWorkGroupSize, preferredWorkGroupSize, workItems, simd);
-            }
-        }
+
+        auto lws = computeWorkgroupSize(dispatchInfo);
+        preferredWorkGroupSize[0] = lws.x;
+        preferredWorkGroupSize[1] = lws.y;
+        preferredWorkGroupSize[2] = lws.z;
+
         if (dispatchInfo.getEnqueuedWorkgroupSize().x == 0) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, NULL_LOCAL_WORKGROUP_SIZE, dispatchInfo.getKernel()->getKernelInfo().name.c_str(),
                                             preferredWorkGroupSize[0], preferredWorkGroupSize[1], preferredWorkGroupSize[2]);
