@@ -23,8 +23,10 @@
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
@@ -37,8 +39,18 @@ using OCLRT::LinearStream;
 using OCLRT::MemoryManager;
 using OCLRT::ObjectNotResident;
 using OCLRT::platformDevices;
+using OCLRT::DebugManager;
 
 typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
+
+template <typename GfxFamily>
+struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
+    MockAubCsr(const HardwareInfo &hwInfoIn) : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn){};
+
+    CommandStreamReceiver::DispatchMode peekDispatchMode() {
+        return this->dispatchMode;
+    }
+};
 
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
@@ -50,6 +62,19 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreat
     EXPECT_EQ(nullptr, csr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
+    DebugManager.flags.CsrDispatchMode.set(0);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0]));
+    EXPECT_EQ(CommandStreamReceiver::DispatchMode::BatchedDispatch, aubCsr->peekDispatchMode());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDebugSettingsThenItHasProperDispatchModeEnabled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.CsrDispatchMode.set(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0]));
+    EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenMemoryManagerIsNotNull) {
@@ -106,6 +131,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment)
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
 
     // First flush typically includes a preamble and chain to command buffer
+    csr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
     csr->flush(batchBuffer, engineOrdinal, nullptr);
     EXPECT_EQ(0ull, csr->engineInfoTable[engineOrdinal].tailRingBuffer % ringTailAlignment);
 

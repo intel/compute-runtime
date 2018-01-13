@@ -91,6 +91,8 @@ HWTEST_P(AUBCopyBuffer, simple) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     pSrcMemory = ptrOffset(pSrcMemory, srcOffset);
     pDstMemory = ptrOffset(pDstMemory, dstOffset);
 

@@ -170,6 +170,8 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     // Compute our memory expecations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
@@ -300,6 +302,8 @@ HWTEST_P(AUBSimpleArgIntegrateTest, simple) {
         eventWaitList,
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
+
+    pCmdQ->flush();
 
     // Compute our memory expecations based on kernel execution
     size_t globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];

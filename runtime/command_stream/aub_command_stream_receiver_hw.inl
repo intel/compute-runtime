@@ -33,6 +33,10 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn)
     : BaseClass(hwInfoIn) {
+    this->dispatchMode = CommandStreamReceiver::DispatchMode::BatchedDispatch;
+    if (DebugManager.flags.CsrDispatchMode.get()) {
+        this->dispatchMode = (CommandStreamReceiver::DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+    }
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
         engineInfo.ggttLRCA = 0u;

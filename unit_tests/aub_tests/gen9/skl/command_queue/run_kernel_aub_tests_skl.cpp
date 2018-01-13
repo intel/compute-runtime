@@ -460,6 +460,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     ((MemoryAllocation *)motionVectorBuffer->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
     ((MemoryAllocation *)residualsBuffer->getGraphicsAllocation())->allowAubFileWrite = false;    // disallow file overwrite from cpu in next enqueue calls
     ((MemoryAllocation *)shapesBuffer->getGraphicsAllocation())->allowAubFileWrite = false;       // disallow file overwrite from cpu in next enqueue calls

@@ -115,6 +115,8 @@ HWTEST_P(AUBCopyBufferRect, simple) {
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     // Verify Output, line by line
     uint8_t src[rowPitch * slicePitch];
     memset(src, 0, sizeof(src));

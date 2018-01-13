@@ -69,7 +69,8 @@ struct AUBFixture : public AUBCommandStreamFixture,
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
         CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
         BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, false, false, pCS->getUsed(), pCS};
-        pCommandStreamReceiver->flush(batchBuffer, engineOrdinal, nullptr);
+        ResidencyContainer allocationsForResidency;
+        pCommandStreamReceiver->flush(batchBuffer, engineOrdinal, &allocationsForResidency);
 
         auto mmioBase = AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineOrdinal).mmioBase;
         AUBCommandStreamFixture::expectMMIO<FamilyType>(mmioBase + 0x2094, noopId);
@@ -82,9 +83,11 @@ HWTEST_F(AUBcommandstreamTests, testFlushTwice) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(*pCS);
     BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, false, false, pCS->getUsed(), pCS};
-    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
+    ResidencyContainer allocationsForResidency;
+    pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, &allocationsForResidency);
     BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, false, false, pCS->getUsed(), pCS};
-    pCommandStreamReceiver->flush(batchBuffer2, EngineType::ENGINE_RCS, nullptr);
+    ResidencyContainer allocationsForResidency2;
+    pCommandStreamReceiver->flush(batchBuffer2, EngineType::ENGINE_RCS, &allocationsForResidency);
 }
 
 HWTEST_F(AUBcommandstreamTests, testNoopIdRcs) {

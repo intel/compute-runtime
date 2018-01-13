@@ -228,6 +228,8 @@ HWTEST_P(AubFillImage, simple) {
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     ((MemoryAllocation *)image->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
     size_t imgOrigin[] = {0, 0, 0};
     size_t imgRegion[] = {testWidth, testHeight, testDepth};

@@ -79,6 +79,8 @@ HWTEST_P(AUBFillBuffer, simple) {
         event);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     pDestMemory = reinterpret_cast<decltype(pDestMemory)>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
 
     // The memory under offset should be untouched
