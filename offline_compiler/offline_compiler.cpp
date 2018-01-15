@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,6 +37,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/platform/extensions.h"
 #include "elf/writer.h"
 #include <iomanip>
 #include <list>
@@ -489,6 +490,8 @@ int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
             if (retVal != CL_SUCCESS) {
                 printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
             }
+            std::string extensionsList = getExtensionsList(*hwInfo);
+            internalOptions.append(convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
         }
     }
 

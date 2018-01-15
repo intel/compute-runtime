@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -420,6 +420,8 @@ set (RUNTIME_SRCS_PLATFORM
   platform/platform.cpp
   platform/platform.h
   platform/platform_info.h
+  platform/extensions.cpp
+  platform/extensions.h
 )
 
 set (RUNTIME_SRCS_PROGRAM

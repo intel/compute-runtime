@@ -230,7 +230,7 @@ TEST_F(CompilerInterfaceTest, WhenBuildIsInvokedThenFclReceivesListOfExtensionsI
     gEnvironment->fclPushDebugVars(debugVars);
     retVal = pCompilerInterface->build(*pProgram, inputArgs, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->getCompilerExtensions()));
+    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }
 
@@ -299,7 +299,7 @@ TEST_F(CompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtension
     gEnvironment->fclPushDebugVars(fclDebugVars);
     retVal = pCompilerInterface->compile(*pProgram, inputArgs);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->getCompilerExtensions()));
+    EXPECT_THAT(receivedInternalOptions, testing::HasSubstr(platform()->peekCompilerExtensions()));
     gEnvironment->fclPopDebugVars();
 }
 

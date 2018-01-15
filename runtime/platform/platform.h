@@ -53,7 +53,7 @@ class Platform : public BaseObject<_cl_platform_id> {
                    void *paramValue,
                    size_t *paramValueSizeRet);
 
-    std::string getCompilerExtensions();
+    const std::string &peekCompilerExtensions() const;
 
     bool initialize(size_t numDevices,
                     const HardwareInfo **devices);
@@ -75,7 +75,6 @@ class Platform : public BaseObject<_cl_platform_id> {
         StateInited,
     };
     cl_uint state = StateNone;
-    std::string getCompilerExtensions(const char *deviceExtensions);
     void fillGlobalDispatchTable();
 
     PlatformInfo *platformInfo = nullptr;
@@ -85,4 +84,4 @@ class Platform : public BaseObject<_cl_platform_id> {
 };
 
 Platform *platform();
-}
+} // namespace OCLRT

@@ -30,6 +30,7 @@
 #include "runtime/device/driver_info.h"
 #include "CL/cl_ext_intel.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/platform/extensions.h"
 
 namespace OCLRT {
 extern const char *familyName[];
@@ -40,24 +41,6 @@ static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
 static const char *spirvVersion = "SPIR-V_1.0 ";
 static std::string driverVersion = NEO_DRIVER_VERSION;
-static const std::string deviceExtensionsList = "cl_khr_3d_image_writes "
-                                                "cl_khr_byte_addressable_store "
-                                                "cl_khr_fp16 "
-                                                "cl_khr_depth_images "
-                                                "cl_khr_global_int32_base_atomics "
-                                                "cl_khr_global_int32_extended_atomics "
-                                                "cl_khr_icd "
-                                                "cl_khr_image2d_from_buffer "
-                                                "cl_khr_local_int32_base_atomics "
-                                                "cl_khr_local_int32_extended_atomics "
-                                                "cl_intel_subgroups "
-                                                "cl_intel_required_subgroup_size "
-                                                "cl_intel_subgroups_short "
-                                                "cl_khr_spir "
-                                                "cl_intel_accelerator "
-                                                "cl_intel_media_block_io "
-                                                "cl_intel_driver_diagnostics "
-                                                "cl_intel_device_side_avc_motion_estimation ";
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 

@@ -91,7 +91,7 @@ cl_int Program::build(
                 break;
             }
 
-            internalOptions.append(platform()->getCompilerExtensions());
+            internalOptions.append(platform()->peekCompilerExtensions());
             inputArgs.pInput = (char *)(sourceCode.c_str());
             inputArgs.InputSize = (uint32_t)sourceCode.size();
             inputArgs.pOptions = options.c_str();
@@ -159,4 +159,4 @@ cl_int Program::build(
 
     return retVal;
 }
-}
+} // namespace OCLRT

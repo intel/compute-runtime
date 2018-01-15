@@ -28,6 +28,7 @@
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "gmock/gmock.h"
 
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(x[0]))
 
@@ -59,6 +60,21 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     delete pOfflineCompiler;
+}
+
+TEST_F(OfflineCompilerTests, TestExtensions) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 }
 
 TEST_F(OfflineCompilerTests, GoodBuildTest) {

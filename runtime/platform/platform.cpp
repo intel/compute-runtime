@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "runtime/platform/extensions.h"
 #include "CL/cl_ext.h"
 
 namespace OCLRT {
@@ -100,18 +101,7 @@ cl_int Platform::getInfo(cl_platform_info paramName,
     return retVal;
 }
 
-std::string Platform::getCompilerExtensions(const char *deviceExtensions) {
-    std::string extensionsList = deviceExtensions;
-    extensionsList.pop_back();
-    size_t pos = 0;
-    while ((pos = extensionsList.find(" ", pos)) != std::string::npos) {
-        extensionsList.replace(pos, 1, ",+");
-    }
-    extensionsList = "-cl-ext=-all,+" + extensionsList;
-    return extensionsList;
-}
-
-std::string Platform::getCompilerExtensions() {
+const std::string &Platform::peekCompilerExtensions() const {
     return compilerExtensions;
 }
 
@@ -158,7 +148,7 @@ bool Platform::initialize(size_t numDevices,
                 break;
             }
 
-            compilerExtensions = getCompilerExtensions(pDevice->getDeviceInfo().deviceExtensions);
+            compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pDevice->getDeviceInfo().deviceExtensions);
         } else {
             return false;
         }

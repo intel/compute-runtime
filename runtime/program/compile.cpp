@@ -150,7 +150,7 @@ cl_int Program::compile(
         TranslationArgs inputArgs = {};
 
         // set parameters for compilation
-        internalOptions.append(platform()->getCompilerExtensions());
+        internalOptions.append(platform()->peekCompilerExtensions());
         inputArgs.pInput = pCompileData;
         inputArgs.InputSize = (uint32_t)compileDataSize;
         inputArgs.pOptions = options.c_str();

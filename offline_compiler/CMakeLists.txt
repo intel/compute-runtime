@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,8 @@ set(CLOC_SRCS_LIB
   ${IGDRCL_SOURCE_DIR}/offline_compiler/helper.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/compiler_interface/create_main.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/hw_info.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/platform/extensions.h
+  ${IGDRCL_SOURCE_DIR}/runtime/platform/extensions.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/file_io.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp

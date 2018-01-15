@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/options.h"
 #include "runtime/device/device.h"
+#include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -75,12 +76,12 @@ TEST_F(PlatformTest, getDevices) {
     EXPECT_EQ(nullptr, allDevices);
 }
 
-TEST_F(PlatformTest, PlatformGetCompilerExtensions) {
-    std::string compilerExtensions = pPlatform->getCompilerExtensions();
+TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
+    std::string compilerExtensions = pPlatform->peekCompilerExtensions();
     EXPECT_EQ(std::string(""), compilerExtensions);
 
     pPlatform->initialize(numPlatformDevices, platformDevices);
-    compilerExtensions = pPlatform->getCompilerExtensions();
+    compilerExtensions = pPlatform->peekCompilerExtensions();
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
@@ -150,4 +151,52 @@ TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenIn
     EXPECT_FALSE(ret);
     EXPECT_FALSE(platform->isInitialized());
     delete platform;
+}
+
+TEST_F(PlatformTest, getAsCompilerEnabledExtensionsString) {
+    const HardwareInfo *hwInfo;
+    hwInfo = platformDevices[0];
+    std::string extensionsList = getExtensionsList(*hwInfo);
+    EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
+
+    if (hwInfo->capabilityTable.clVersionSupport > 20) {
+        EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
+        EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_il_program")));
+    }
+
+    if (hwInfo->capabilityTable.ftrSupportsFP64) {
+        EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_fp64")));
+    }
+}
+
+TEST_F(PlatformTest, getAsCompilerEnabledExtensionsStringTestNotFP64) {
+    HardwareInfo TesthwInfo = *platformDevices[0];
+    TesthwInfo.capabilityTable.ftrSupportsFP64 = false;
+    TesthwInfo.capabilityTable.clVersionSupport = 10;
+
+    std::string extensionsList = getExtensionsList(TesthwInfo);
+    EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
+
+    std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
+    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
+
+    EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_fp64"))));
+    EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_subgroups"))));
+}
+
+TEST_F(PlatformTest, testRemoveLastSpace) {
+    std::string emptyString = "";
+    removeLastSpace(emptyString);
+    EXPECT_EQ(std::string(""), emptyString);
+
+    std::string xString = "x";
+    removeLastSpace(xString);
+    EXPECT_EQ(std::string("x"), xString);
+
+    std::string xSpaceString = "x ";
+    removeLastSpace(xSpaceString);
+    EXPECT_EQ(std::string("x"), xSpaceString);
 }
