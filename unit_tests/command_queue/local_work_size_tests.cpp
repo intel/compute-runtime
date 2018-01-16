@@ -22,13 +22,15 @@
 
 #include "runtime/command_queue/dispatch_walker.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSlice, localMemorySize, imgUsed, yTiledSurface
+    //wsInfo maxWorkGroupSize, hasBariers, simdSize, slmTotalSize, coreFamily, numThreadsPerSubSlice, localMemorySize, imgUsed, yTiledSurface
     WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 1;
     size_t workGroup[3] = {6144, 1, 1};
@@ -274,7 +276,28 @@ TEST(localWorkSizeTest, given2DdispatchWithImagesAndSquaredAlgorithmOnWhenLwsIsC
 }
 
 TEST(localWorkSizeTest, givenKernelWithTileYImagesAndBarrierWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
-    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
+    WorkSizeInfo wsInfo(256, true, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {1, 1, 1};
+    size_t workGroupSize[3];
+
+    workGroup[0] = 2048;
+    workGroup[1] = 2048;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 32u);
+    EXPECT_EQ(workGroupSize[1], 8u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+
+    workGroup[0] = 1920;
+    workGroup[1] = 1080;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 32u);
+    EXPECT_EQ(workGroupSize[1], 8u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenKernelWithTileYImagesAndNoBarriersWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
+    WorkSizeInfo wsInfo(256, false, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
     uint32_t workDim = 2;
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -569,6 +592,23 @@ TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8When
     EXPECT_EQ(workGroupSize[0], 32u);
     EXPECT_EQ(workGroupSize[1], 8u);
     EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenDispatchInfoWhenWorkSizeInfoIsCreatedThenItHasCorrectNumberOfThreads) {
+    MockDevice device(*platformDevices[0]);
+    MockKernelWithInternals kernel(device);
+    DispatchInfo dispatchInfo;
+    dispatchInfo.setKernel(kernel.mockKernel);
+
+    auto threadsPerEu = platformDevices[0]->pSysInfo->ThreadCount / platformDevices[0]->pSysInfo->EUCount;
+    auto euPerSubSlice = platformDevices[0]->pSysInfo->ThreadCount / platformDevices[0]->pSysInfo->MaxEuPerSubSlice;
+
+    auto deviceInfo = device.getMutableDeviceInfo();
+    deviceInfo->maxNumEUsPerSubSlice = euPerSubSlice;
+    deviceInfo->numThreadsPerEU = threadsPerEu;
+
+    WorkSizeInfo workSizeInfo(dispatchInfo);
+    EXPECT_EQ(workSizeInfo.numThreadsPerSubSlice, threadsPerEu * euPerSubSlice);
 }
 
 TEST(localWorkSizeTest, givenDebugVariableEnableComputeWorkSizeNDWhenCheckValueExpectTrue) {

@@ -153,13 +153,13 @@ std::map<std::string, size_t> typeSizeMap = {
     {"double8", sizeof(cl_double8)},
     {"double16", sizeof(cl_double16)},
 };
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, uint32_t hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface) {
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
     this->slmTotalSize = slmTotalSize;
     this->coreFamily = coreFamily;
-    this->numThreadsPerSlice = numThreadsPerSlice;
+    this->numThreadsPerSubSlice = numThreadsPerSubSlice;
     this->localMemSize = localMemSize;
     this->imgUsed = imgUsed;
     this->yTiledSurfaces = yTiledSurface;
@@ -167,11 +167,11 @@ WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, uint32_t hasBarriers, uint
 }
 WorkSizeInfo::WorkSizeInfo(const DispatchInfo &dispatchInfo) {
     this->maxWorkGroupSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxWorkGroupSize;
-    this->hasBarriers = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment->HasBarriers;
+    this->hasBarriers = !!dispatchInfo.getKernel()->getKernelInfo().patchInfo.executionEnvironment->HasBarriers;
     this->simdSize = (uint32_t)dispatchInfo.getKernel()->getKernelInfo().getMaxSimdSize();
     this->slmTotalSize = (uint32_t)dispatchInfo.getKernel()->slmTotalSize;
     this->coreFamily = dispatchInfo.getKernel()->getDevice().getHardwareInfo().pPlatform->eRenderCoreFamily;
-    this->numThreadsPerSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxNumEUsPerSubSlice;
+    this->numThreadsPerSubSlice = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().maxNumEUsPerSubSlice * dispatchInfo.getKernel()->getDevice().getDeviceInfo().numThreadsPerEU;
     this->localMemSize = (uint32_t)dispatchInfo.getKernel()->getDevice().getDeviceInfo().localMemSize;
     setIfUseImg(dispatchInfo.getKernel());
     setMinWorkGroupSize();
@@ -187,9 +187,9 @@ void WorkSizeInfo::setIfUseImg(Kernel *pKernel) {
 }
 void WorkSizeInfo::setMinWorkGroupSize() {
     minWorkGroupSize = 0;
-    if (hasBarriers > 0) {
+    if (hasBarriers) {
         uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
-        minWorkGroupSize = numThreadsPerSlice * simdSize / maxBarriersPerHSlice;
+        minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
     }
     if (slmTotalSize > 0) {
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);

@@ -97,11 +97,11 @@ struct WorkSizeInfo {
 
     uint32_t maxWorkGroupSize;
     uint32_t minWorkGroupSize;
-    uint32_t hasBarriers;
+    bool hasBarriers;
     uint32_t simdSize;
     uint32_t slmTotalSize;
     GFXCORE_FAMILY coreFamily;
-    uint32_t numThreadsPerSlice;
+    uint32_t numThreadsPerSubSlice;
     uint32_t localMemSize;
     bool imgUsed = false;
     bool yTiledSurfaces = false;
@@ -109,7 +109,7 @@ struct WorkSizeInfo {
     bool useStrictRatio = false;
     float targetRatio = 0;
 
-    WorkSizeInfo(uint32_t maxWorkGroupSize, uint32_t hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
+    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, GFXCORE_FAMILY coreFamily, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface);
     WorkSizeInfo(const DispatchInfo &dispatchInfo);
     void setIfUseImg(Kernel *pKernel);
     void setMinWorkGroupSize();
