@@ -127,4 +127,9 @@ uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
     return 0x782;
 }
 
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getPipelineSelectMaskBits() {
+    return pipelineSelectMediaSamplerDopClockGateMaskBits;
+}
+
 } // namespace OCLRT

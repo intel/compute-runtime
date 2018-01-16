@@ -59,7 +59,7 @@ void PreambleHelper<SKLFamily>::programPSForMedia(LinearStream *pCommandStream, 
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
     *pCmd = PIPELINE_SELECT::sInit();
-    pCmd->setMaskBits(0x10);
+    pCmd->setMaskBits(getPipelineSelectMaskBits());
     pCmd->setMediaSamplerDopClockGateEnable(!enable);
 }
 

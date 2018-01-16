@@ -63,6 +63,11 @@ bool PreambleHelper<BDWFamily>::getMediaSamplerDopClockGateEnable(LinearStream *
 template <>
 void PreambleHelper<BDWFamily>::programPSForMedia(LinearStream *, bool) {}
 
+template <>
+uint32_t PreambleHelper<BDWFamily>::getPipelineSelectMaskBits() {
+    return 0;
+}
+
 // Explicitly instantiate PreambleHelper for BDW device family
 template struct PreambleHelper<BDWFamily>;
 } // namespace OCLRT

@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_gen9
   ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_sample.cpp
   PARENT_SCOPE
 )

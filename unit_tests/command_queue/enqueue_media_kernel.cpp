@@ -146,7 +146,7 @@ HWTEST_F(MediaKernelCommandQueueTest,
     bool samplerClockGateEnable = PreambleHelper<FamilyType>::getMediaSamplerDopClockGateEnable(
         reinterpret_cast<LinearStream *>(pPreceedingPipelineSelect));
 
-    EXPECT_EQ(0x10u, pPreceedingPipelineSelect->getMaskBits());
+    EXPECT_EQ(PreambleHelper<FamilyType>::getPipelineSelectMaskBits(), pPreceedingPipelineSelect->getMaskBits());
     EXPECT_EQ(false, samplerClockGateEnable);
     EXPECT_EQ(0u, pPreceedingPipelineSelect->getPipelineSelection());
 }
@@ -186,7 +186,7 @@ HWTEST_F(MediaKernelCommandQueueTest,
     bool samplerClockGateEnable = PreambleHelper<FamilyType>::getMediaSamplerDopClockGateEnable(
         reinterpret_cast<LinearStream *>(pFollowingPipelineSelect));
 
-    EXPECT_EQ(0x10u, pFollowingPipelineSelect->getMaskBits());
+    EXPECT_EQ(PreambleHelper<FamilyType>::getPipelineSelectMaskBits(), pFollowingPipelineSelect->getMaskBits());
     EXPECT_EQ(true, samplerClockGateEnable);
     EXPECT_EQ(0u, pFollowingPipelineSelect->getPipelineSelection());
 }

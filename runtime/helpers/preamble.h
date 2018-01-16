@@ -26,6 +26,8 @@
 #include "runtime/command_stream/thread_arbitration_policy.h"
 namespace OCLRT {
 
+const uint32_t pipelineSelectMediaSamplerDopClockGateMaskBits = 0x10;
+
 struct HardwareInfo;
 class Device;
 class GraphicsAllocation;
@@ -49,6 +51,7 @@ struct PreambleHelper {
     static uint32_t getAdditionalCommandsSize(const Device &device);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
+    static uint32_t getPipelineSelectMaskBits();
 };
 
 template <PRODUCT_FAMILY ProductFamily>
