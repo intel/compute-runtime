@@ -329,7 +329,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfx
         auto gpuAddress = gfxAllocation.getGpuAddress();
         auto size = gfxAllocation.getUnderlyingBufferSize();
 
-        if (size == 0 || !(((MemoryAllocation *)&gfxAllocation)->allowAubFileWrite))
+        if ((size == 0) || !!(gfxAllocation.getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE))
             return;
 
         PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {

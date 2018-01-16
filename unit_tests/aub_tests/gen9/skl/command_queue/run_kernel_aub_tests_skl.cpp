@@ -209,8 +209,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
         event0);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ((MemoryAllocation *)intermediateBuffer->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
-
     // depends on kernel0
     retVal = pCmdQ2->enqueueKernel(
         pKernel1,
@@ -361,8 +359,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         retVal);
     ASSERT_NE(nullptr, srcImage);
 
-    ((MemoryAllocation *)srcImage->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
-
     auto refImage = Image::create(
         context,
         flags,
@@ -371,8 +367,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         refMemory,
         retVal);
     ASSERT_NE(nullptr, refImage);
-
-    ((MemoryAllocation *)refImage->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
 
     cl_short2 *predMem = new cl_short2[PRED_BUFFER_SIZE];
     for (int i = 0; i < PRED_BUFFER_SIZE; i++) {
@@ -459,12 +453,6 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
         nullptr,
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
-
-    pCmdQ->flush();
-
-    ((MemoryAllocation *)motionVectorBuffer->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
-    ((MemoryAllocation *)residualsBuffer->getGraphicsAllocation())->allowAubFileWrite = false;    // disallow file overwrite from cpu in next enqueue calls
-    ((MemoryAllocation *)shapesBuffer->getGraphicsAllocation())->allowAubFileWrite = false;       // disallow file overwrite from cpu in next enqueue calls
 
     cl_short2 destinationMV[MV_BUFFER_SIZE];
     cl_short destinationResiduals[RESIDUALS_BUFFER_SIZE];

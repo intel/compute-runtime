@@ -150,9 +150,6 @@ HWTEST_P(AUBMapImage, MapUpdateUnmapVerify) {
         srcMemory,
         retVal);
     ASSERT_NE(nullptr, srcImage);
-    if (srcImage->allowTiling()) {
-        ((MemoryAllocation *)srcImage->getGraphicsAllocation())->allowAubFileWrite = false;
-    }
 
     auto origin = std::get<2>(GetParam()).offsets;
 

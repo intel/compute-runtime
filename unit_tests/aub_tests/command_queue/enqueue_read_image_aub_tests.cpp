@@ -168,11 +168,6 @@ HWTEST_P(AUBReadImage, simpleUnalignedMemory) {
         retVal);
     ASSERT_NE(nullptr, srcImage);
 
-    if (srcImage->allowTiling()) {
-        ((MemoryAllocation *)srcImage->getGraphicsAllocation())->allowAubFileWrite = false;
-        ((MemoryAllocation *)graphicsAllocation)->allowAubFileWrite = false;
-    }
-
     auto origin = std::get<2>(GetParam()).offsets;
 
     // Only draw 1/4 of the original image

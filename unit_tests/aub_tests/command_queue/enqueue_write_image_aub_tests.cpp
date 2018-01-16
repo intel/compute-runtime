@@ -182,7 +182,6 @@ HWTEST_P(AUBWriteImage, simpleUnalignedMemory) {
         nullptr,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    ((MemoryAllocation *)dstImage->getGraphicsAllocation())->allowAubFileWrite = false; // disallow file overwrite from cpu in next enqueue calls
 
     auto readMemory = new uint8_t[dstImage->getSize()];
     size_t imgOrigin[] = {0, 0, 0};

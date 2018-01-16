@@ -41,7 +41,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer *allocationsForResidency) override;
-    void writeMemory(GraphicsAllocation &gfxAllocation);
+    bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
     void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);

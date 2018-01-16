@@ -397,13 +397,14 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfx
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
     auto gpuAddress = gfxAllocation.getGpuAddress();
     auto size = gfxAllocation.getUnderlyingBufferSize();
+    auto allocType = gfxAllocation.getAllocationType();
 
-    if (size == 0 || !(((MemoryAllocation *)&gfxAllocation)->allowAubFileWrite))
-        return;
+    if ((size == 0) || !!(allocType & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE))
+        return false;
 
     {
         std::ostringstream str;
@@ -423,6 +424,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
                             size, AubMemDump::AddressSpaceValues::TraceNonlocal);
     };
     ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
+
+    if (!!(allocType & GraphicsAllocation::ALLOCATION_TYPE_BUFFER) ||
+        !!(allocType & GraphicsAllocation::ALLOCATION_TYPE_IMAGE))
+        gfxAllocation.setAllocationType(allocType | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+
+    return true;
 }
 
 template <typename GfxFamily>
@@ -430,7 +437,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
     auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
 
     for (auto &gfxAllocation : residencyAllocations) {
-        writeMemory(*gfxAllocation);
+        if (!writeMemory(*gfxAllocation)) {
+            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) ||
+                             !!(gfxAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE)));
+        }
         gfxAllocation->residencyTaskCount = (int)this->taskCount;
     }
 }

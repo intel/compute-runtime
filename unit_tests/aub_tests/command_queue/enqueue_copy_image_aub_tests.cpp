@@ -130,10 +130,6 @@ HWTEST_P(AUBCopyImage, simple) {
         testImageDimensions / 2,
         1};
 
-    //disallow file overwrite from cpu in next enqueue calls
-    ((MemoryAllocation *)srcImage->getGraphicsAllocation())->allowAubFileWrite = false;
-    ((MemoryAllocation *)dstImage->getGraphicsAllocation())->allowAubFileWrite = false;
-
     retVal = pCmdQ->enqueueCopyImage(
         srcImage,
         dstImage,

@@ -148,8 +148,6 @@ HWTEST_P(AUBCreateImageArray, CheckArrayImages) {
 
     uint32_t *readMemory = nullptr;
     if (image->allowTiling()) {
-        // writeImg inside createImg
-        ((MemoryAllocation *)image->getGraphicsAllocation())->allowAubFileWrite = false;
         readMemory = new uint32_t[image->getSize()];
         size_t imgOrigin[] = {0, 0, 0};
         size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
@@ -254,7 +252,6 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithDoubledRowPitchThatIsCreatedWithCopyHos
         uint8_t *readMemory = nullptr;
         if (image->allowTiling()) {
             readMemory = new uint8_t[testImageDimensions * testImageDimensions * elementSize * 4];
-            ((MemoryAllocation *)image->getGraphicsAllocation())->allowAubFileWrite = false;
             size_t imgOrigin[] = {0, 0, 0};
             size_t imgRegion[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth ? imageDesc.image_depth : 1};
             retVal = pCmdQ->enqueueReadImage(image, CL_TRUE, imgOrigin, imgRegion, 0, 0, readMemory, 0, nullptr, nullptr);
@@ -310,7 +307,6 @@ HWTEST_P(AUBCreateImageHostPtr, imageWithRowPitchCreatedWithUseHostPtrFlagCopied
             &imageDesc,
             pUseHostPtr,
             retVal);
-        ((MemoryAllocation *)image->getGraphicsAllocation())->allowAubFileWrite = false;
         ASSERT_EQ(CL_SUCCESS, retVal);
         EXPECT_EQ(image->getImageDesc().image_row_pitch, imgInfo.rowPitch);
         EXPECT_EQ(image->getHostPtrRowPitch(), (size_t)passedRowPitch);
@@ -409,7 +405,6 @@ HWTEST_F(AUBCreateImage, image3DCreatedWithDoubledSlicePitchWhenQueriedForDataRe
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     auto image = Image::create(context, flags, surfaceFormat,
                                &imageDesc, host_ptr, retVal);
-    ((MemoryAllocation *)image->getGraphicsAllocation())->allowAubFileWrite = false;
 
     depthToCopy = imageDesc.image_depth;
     auto imageStorage = (uint8_t *)image->getCpuAddress();

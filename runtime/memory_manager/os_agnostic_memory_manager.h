@@ -35,7 +35,6 @@ class MemoryAllocation : public GraphicsAllocation {
     bool cpuPtrAllocated;
     unsigned int refCount;
     unsigned long long id;
-    bool allowAubFileWrite = true;
     size_t sizeToFree = 0;
     bool dummyAllocation = false;
     bool uncacheable = false;

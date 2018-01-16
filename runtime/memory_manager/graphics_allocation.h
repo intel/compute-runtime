@@ -56,6 +56,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         ALLOCATION_TYPE_BUFFER,
         ALLOCATION_TYPE_IMAGE,
         ALLOCATION_TYPE_TAG_BUFFER,
+        ALLOCATION_TYPE_NON_AUB_WRITABLE = 0x40000000,
         ALLOCATION_TYPE_WRITABLE = 0x80000000
     };
 
