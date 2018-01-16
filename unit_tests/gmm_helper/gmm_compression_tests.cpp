@@ -31,23 +31,23 @@ struct GmmCompressionTests : public ::testing::Test {
     void SetUp() override {
         localPlatformDevice = **platformDevices;
         localPlatformDevice.capabilityTable.ftrCompression = true;
+        setupImgInfo();
     }
 
-    void setupImgDesc() {
+    void setupImgInfo() {
         imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
         imgDesc.image_width = 2;
         imgDesc.image_height = 2;
+        imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+        imgInfo.preferRenderCompression = true;
     }
 
     HardwareInfo localPlatformDevice = {};
     cl_image_desc imgDesc = {};
+    ImageInfo imgInfo = {};
 };
 
 TEST_F(GmmCompressionTests, givenPreferRenderCompressionAndCompressionFtrEnabledWhenQueryingThenSetAppropriateFlags) {
-    setupImgDesc();
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.preferRenderCompression = true;
-
     auto queryGmm = MockGmm::queryImgParams(imgInfo, &localPlatformDevice);
 
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.Linear);
@@ -59,9 +59,6 @@ TEST_F(GmmCompressionTests, givenPreferRenderCompressionAndCompressionFtrEnabled
 }
 
 TEST_F(GmmCompressionTests, givenPreferRenderCompressionAndCompressionFtrDisabledWhenQueryingThenSetAppropriateFlags) {
-    setupImgDesc();
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
-    imgInfo.preferRenderCompression = true;
     localPlatformDevice.capabilityTable.ftrCompression = false;
 
     auto queryGmm = MockGmm::queryImgParams(imgInfo, &localPlatformDevice);
@@ -73,8 +70,6 @@ TEST_F(GmmCompressionTests, givenPreferRenderCompressionAndCompressionFtrDisable
 }
 
 TEST_F(GmmCompressionTests, givenPreferRenderCompressionDisabledAndCompressionFtrEnabledWhenQueryingThenSetAppropriateFlags) {
-    setupImgDesc();
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     imgInfo.preferRenderCompression = false;
 
     auto queryGmm = MockGmm::queryImgParams(imgInfo, &localPlatformDevice);
@@ -82,5 +77,23 @@ TEST_F(GmmCompressionTests, givenPreferRenderCompressionDisabledAndCompressionFt
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Info.RenderCompressed);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.CCS);
     EXPECT_EQ(0u, queryGmm->resourceParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_FALSE(queryGmm->isRenderCompressed);
+}
+
+TEST_F(GmmCompressionTests, givenSupportedAuxL1FormatWhenQueryingThenAllow) {
+    auto queryGmm = MockGmm::queryImgParams(imgInfo, &localPlatformDevice);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+
+    EXPECT_TRUE(queryGmm->auxFormatSupported(resourceFormat));
+    EXPECT_TRUE(queryGmm->isRenderCompressed);
+}
+
+TEST_F(GmmCompressionTests, givenNotSupportedAuxL1FormatWhenQueryingThenDisallow) {
+    imgInfo.surfaceFormat = &readOnlyDepthSurfaceFormats[2];
+
+    auto queryGmm = MockGmm::queryImgParams(imgInfo, &localPlatformDevice);
+    auto resourceFormat = queryGmm->gmmResourceInfo->getResourceFormat();
+
+    EXPECT_FALSE(queryGmm->auxFormatSupported(resourceFormat));
     EXPECT_FALSE(queryGmm->isRenderCompressed);
 }
