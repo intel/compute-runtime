@@ -58,13 +58,6 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     EXPECT_EQ(workGroupSize[0], 9u);
     EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
-
-    workGroup[0] = 128;
-    wsInfo.simdSize = 0;
-    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 1u);
-    EXPECT_EQ(workGroupSize[1], 1u);
-    EXPECT_EQ(workGroupSize[2], 1u);
 }
 
 TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLocalGroupComputed) {
@@ -313,6 +306,27 @@ TEST(localWorkSizeTest, givenKernelWithTileYImagesAndNoBarriersWhenWorkgroupSize
     workGroup[1] = 1080;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenSimd16KernelWithTileYImagesAndNoBarriersWhenWorkgroupSizeIsComputedThenItMimicsTilingPattern) {
+    WorkSizeInfo wsInfo(256, false, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, true);
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {1, 1, 1};
+    size_t workGroupSize[3];
+
+    workGroup[0] = 2048;
+    workGroup[1] = 2048;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 32u);
+    EXPECT_EQ(workGroupSize[1], 4u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+
+    workGroup[0] = 1920;
+    workGroup[1] = 1080;
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 32u);
     EXPECT_EQ(workGroupSize[1], 4u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }

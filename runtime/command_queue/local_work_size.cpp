@@ -99,7 +99,7 @@ inline uint32_t factor<0>(size_t workItems, uint32_t workSize, uint32_t maxWorkG
 }
 
 void computePowerOfTwoLWS(const size_t workItems[3], size_t simdSize, uint32_t maxWorkGroupSize, size_t workGroupSize[3], const uint32_t workDim, bool canUseNx4) {
-    uint32_t targetIndex = 0;
+    uint32_t targetIndex = canUseNx4 ? 2 : 0;
 
     while (optimalHardwareThreadCountGeneric[targetIndex] > 1 && maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize)
         targetIndex++;
@@ -330,76 +330,75 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
         workGroupSize[i] = 1;
 
     uint64_t totalNuberOfItems = workItems[0] * workItems[1] * workItems[2];
-    if (wsInfo.simdSize == 0) {
+
+    UNRECOVERABLE_IF(wsInfo.simdSize == 0);
+
+    //Find biggest power of two which devide each dimension size
+    if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
+        if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
+            return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
+        }
+
+        size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
+        for (auto i = 0u; i < workDim; i++) {
+            uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalHardwareThreadCountGeneric[0]);
+            while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
+                requiredWorkItemsCount = requiredWorkItemsCount >> 1;
+            itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
+        }
+
+        bool canUseNx4 = (wsInfo.imgUsed &&
+                          (itemsPowerOfTwoDivisors[0] >= 4 || (itemsPowerOfTwoDivisors[0] >= 2 && wsInfo.simdSize == 8)) &&
+                          itemsPowerOfTwoDivisors[1] >= 4);
+
+        //If computed dimension sizes which are powers of two are creating group which is
+        //bigger than maxWorkGroupSize or this group would create more than optimal hardware threads then downsize it
+        uint64_t allItems = itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] * itemsPowerOfTwoDivisors[2];
+        if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalHardwareThreadCountGeneric[0])) {
+            computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo.simdSize, wsInfo.maxWorkGroupSize, workGroupSize, workDim, canUseNx4);
+            return;
+        }
+        //If coputed workgroup is at this point in correct size
+        else if (allItems >= wsInfo.simdSize) {
+            itemsPowerOfTwoDivisors[1] = canUseNx4 ? 4 : itemsPowerOfTwoDivisors[1];
+            for (auto i = 0u; i < workDim; i++)
+                workGroupSize[i] = itemsPowerOfTwoDivisors[i];
+            return;
+        }
+    }
+    //If dimensions are not powers of two but total number of items is less than max work group size
+    if (totalNuberOfItems <= wsInfo.maxWorkGroupSize) {
+        for (auto i = 0u; i < workDim; i++)
+            workGroupSize[i] = workItems[i];
         return;
     } else {
-        //Find biggest power of two which devide each dimension size
-        if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers) {
-            if (DebugManager.flags.EnableComputeWorkSizeSquared.get() && workDim == 2 && !wsInfo.imgUsed) {
-                return computeWorkgroupSizeSquared(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize, workDim);
-            }
+        if (workDim == 1)
+            computeWorkgroupSize1D(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize);
+        else {
+            uint32_t xyzFactors[3][1024];
+            uint32_t xyzFactorsLen[3] = {};
 
-            size_t itemsPowerOfTwoDivisors[3] = {1, 1, 1};
+            //check if algorithm should use ratio
+            wsInfo.checkRatio(workItems);
+
+            //find all divisors for all dimensions
+            for (int i = 0; i < 3; i++)
+                xyzFactors[i][xyzFactorsLen[i]++] = 1;
             for (auto i = 0u; i < workDim; i++) {
-                uint32_t requiredWorkItemsCount = uint32_t(wsInfo.simdSize * optimalHardwareThreadCountGeneric[0]);
-                while (requiredWorkItemsCount > 1 && !(Math::isDivisableByPowerOfTwoDivisor(uint32_t(workItems[i]), requiredWorkItemsCount)))
-                    requiredWorkItemsCount = requiredWorkItemsCount >> 1;
-                itemsPowerOfTwoDivisors[i] = requiredWorkItemsCount;
-            }
-
-            bool canUseNx4 = (wsInfo.imgUsed &&
-                              (itemsPowerOfTwoDivisors[0] >= 4 || (itemsPowerOfTwoDivisors[0] >= 2 && wsInfo.simdSize == 8)) &&
-                              itemsPowerOfTwoDivisors[1] >= 4);
-
-            //If computed dimension sizes which are powers of two are creating group which is
-            //bigger than maxWorkGroupSize or this group would create more than optimal hardware threads then downsize it
-            uint64_t allItems = itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] * itemsPowerOfTwoDivisors[2];
-            if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalHardwareThreadCountGeneric[0])) {
-                computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo.simdSize, wsInfo.maxWorkGroupSize, workGroupSize, workDim, canUseNx4);
-                return;
-            }
-            //If coputed workgroup is at this point in correct size
-            else if (allItems >= wsInfo.simdSize) {
-                itemsPowerOfTwoDivisors[1] = canUseNx4 ? 4 : itemsPowerOfTwoDivisors[1];
-                for (auto i = 0u; i < workDim; i++)
-                    workGroupSize[i] = itemsPowerOfTwoDivisors[i];
-                return;
-            }
-        }
-        //If dimensions are not powers of two but total number of items is less than max work group size
-        if (totalNuberOfItems <= wsInfo.maxWorkGroupSize) {
-            for (auto i = 0u; i < workDim; i++)
-                workGroupSize[i] = workItems[i];
-            return;
-        } else {
-            if (workDim == 1)
-                computeWorkgroupSize1D(wsInfo.maxWorkGroupSize, workGroupSize, workItems, wsInfo.simdSize);
-            else {
-                uint32_t xyzFactors[3][1024];
-                uint32_t xyzFactorsLen[3] = {};
-
-                //check if algorithm should use ratio
-                wsInfo.checkRatio(workItems);
-
-                //find all divisors for all dimensions
-                for (int i = 0; i < 3; i++)
-                    xyzFactors[i][xyzFactorsLen[i]++] = 1;
-                for (auto i = 0u; i < workDim; i++) {
-                    for (auto j = 2u; j < wsInfo.maxWorkGroupSize; ++j) {
-                        if ((workItems[i] % j) == 0) {
-                            xyzFactors[i][xyzFactorsLen[i]++] = j;
-                        }
+                for (auto j = 2u; j < wsInfo.maxWorkGroupSize; ++j) {
+                    if ((workItems[i] % j) == 0) {
+                        xyzFactors[i][xyzFactorsLen[i]++] = j;
                     }
                 }
-                if (wsInfo.useRatio) {
-                    choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
-                    if (wsInfo.useStrictRatio && workGroupSize[0] * workGroupSize[1] * 2 <= wsInfo.simdSize) {
-                        wsInfo.useStrictRatio = false;
-                        choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
-                    }
-                } else
-                    choosePreferredWorkGroupSizeWithOutRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, workDim);
             }
+            if (wsInfo.useRatio) {
+                choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
+                if (wsInfo.useStrictRatio && workGroupSize[0] * workGroupSize[1] * 2 <= wsInfo.simdSize) {
+                    wsInfo.useStrictRatio = false;
+                    choosePreferredWorkGroupSizeWithRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo);
+                }
+            } else
+                choosePreferredWorkGroupSizeWithOutRatio(xyzFactors, xyzFactorsLen, workGroupSize, workItems, wsInfo, workDim);
         }
     }
 }
