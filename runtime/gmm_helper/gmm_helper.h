@@ -82,7 +82,7 @@ class Gmm {
     uint32_t getRenderHAlignment();
     uint32_t getRenderVAlignment();
     static uint32_t getRenderAlignment(uint32_t alignment);
-    bool auxFormatSupported(GMM_RESOURCE_FORMAT &gmmFormat);
+    void applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
 
     uint32_t queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType);
 

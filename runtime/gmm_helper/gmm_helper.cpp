@@ -176,14 +176,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
         this->resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
-    if (hwInfo.capabilityTable.ftrCompression && imgInfo.preferRenderCompression && auxFormatSupported(this->resourceParams.Format)) {
-        this->resourceParams.Flags.Info.Linear = 0;
-        this->resourceParams.Flags.Info.TiledY = 1;
-        this->resourceParams.Flags.Info.RenderCompressed = 1;
-        this->resourceParams.Flags.Gpu.CCS = 1;
-        this->resourceParams.Flags.Gpu.UnifiedAuxSurface = 1;
-        this->isRenderCompressed = true;
-    }
+    applyAuxFlags(imgInfo, hwInfo);
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
 
@@ -391,10 +384,5 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
     gmmResourceCopyBLT.Sys.BufferSize = size;
 
     return this->gmmResourceInfo->cpuBlt(&gmmResourceCopyBLT);
-}
-
-bool Gmm::auxFormatSupported(GMM_RESOURCE_FORMAT &gmmFormat) {
-    const auto &formatInfo = pGmmGlobalContext->GetPlatformInfo().FormatTable[gmmFormat];
-    return !!formatInfo.AuxL1eFormat;
 }
 } // namespace OCLRT

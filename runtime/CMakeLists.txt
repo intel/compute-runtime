@@ -336,8 +336,8 @@ set (RUNTIME_SRCS_INDIRECT_HEAP
 )
 
 set (RUNTIME_SRCS_INSTRUMENTATION
-  instrumentation${SKU_INFO_SRCS_DIR_SUFFIX}/instrumentation.cpp
-  instrumentation${SKU_INFO_SRCS_DIR_SUFFIX}/instrumentation.h
+  instrumentation${BRANCH_DIR_SUFFIX}/instrumentation.cpp
+  instrumentation${BRANCH_DIR_SUFFIX}/instrumentation.h
 )
 
 set (RUNTIME_SRCS_KERNEL
@@ -374,6 +374,7 @@ set (RUNTIME_SRCS_GMM_HELPER
   gmm_helper/gmm_helper.h
   gmm_helper/gmm_lib.h
   gmm_helper/resource_info.h
+  gmm_helper${BRANCH_DIR_SUFFIX}/gmm_utils.cpp
  )
 
 if (WIN32)
@@ -461,14 +462,14 @@ list (APPEND RUNTIME_SRCS_SCHEDULER
 set (RUNTIME_SRCS_SKU_INFO
   sku_info/sku_info_base.h
   sku_info/operations/sku_info_transfer.h
-  sku_info/definitions${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info.h
-  sku_info/operations${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info_transfer.cpp
+  sku_info/definitions${BRANCH_DIR_SUFFIX}/sku_info.h
+  sku_info/operations${BRANCH_DIR_SUFFIX}/sku_info_transfer.cpp
 )
 
 if (WIN32)
   list (APPEND RUNTIME_SRCS_SKU_INFO
       sku_info/operations/sku_info_receiver.h
-      sku_info/operations${SKU_INFO_SRCS_DIR_SUFFIX}/sku_info_receiver.cpp
+      sku_info/operations${BRANCH_DIR_SUFFIX}/sku_info_receiver.cpp
   )
 endif(WIN32)
 
