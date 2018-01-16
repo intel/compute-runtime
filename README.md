@@ -17,14 +17,51 @@ You may obtain a copy of the License at:
 
 https://opensource.org/licenses/MIT
 
+## Dependencies
+
+GmmLib - https://github.com/intel/gmmlib  
+Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler  
+Google Test v1.7.0 - https://github.com/google/googletest  
+Google Mock v1.7.0 - https://github.com/google/googlemock  
+Khronos OpenCL Headers - https://github.com/KhronosGroup/OpenCL-Headers  
+LibDRM - https://anongit.freedesktop.org/git/mesa/drm.git  
+
 ## Building
 
-<TODO:insert instructions here>
+1. Download all dependencies and create workspace folder as below:
+```
+	workspace
+	  |- clang_source
+	  |- common_clang
+	  |- llvm_patches
+	  |- llvm_source
+	  |- gmmlib                 https://github.com/intel/gmmlib
+	  |- gmock                  https://github.com/google/googlemock
+	  |- gtest                  https://github.com/google/googletest
+	  |- igc                    https://github.com/intel/intel-graphics-compiler
+	  |- khronos                https://github.com/KhronosGroup/OpenCL-Headers
+	  |- libdrm                 https://anongit.freedesktop.org/git/mesa/drm.git
+	  |- neo                    https://github.com/intel/compute-runtime
+```
+
+2. In your workspace create folder where you will build. For example:
+```
+mkdir build
+```
+
+3. Build complete driver using commands:
+```
+cd build
+
+cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
+
+make -j`nproc` package
+```
 
 
 ### Install
 
-<TODO:insert instructions here>
+To install OpenCL driver please use deb package generated during build
 
 ## Supported Platforms
 
