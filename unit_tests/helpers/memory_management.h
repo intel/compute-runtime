@@ -76,6 +76,7 @@ extern void *fastEventsDeallocated[maxEvents];
 extern std::atomic<int> fastEventsAllocatedCount;
 extern std::atomic<int> fastEventsDeallocatedCount;
 extern std::atomic<int> fastLeaksDetectionMode;
+extern bool memsetNewAllocations;
 
 extern size_t failingAllocation;
 extern std::atomic<size_t> numAllocations;

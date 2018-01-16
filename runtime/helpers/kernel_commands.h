@@ -92,6 +92,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         LinearStream &commandStream,
         IndirectHeap &dsh,
         IndirectHeap &ih,
+        size_t ihReservedBlockSize,
         IndirectHeap &ioh,
         IndirectHeap &ssh,
         const Kernel &kernel,

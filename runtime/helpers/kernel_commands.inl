@@ -319,6 +319,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     LinearStream &commandStream,
     IndirectHeap &dsh,
     IndirectHeap &ih,
+    size_t ihReservedBlockSize,
     IndirectHeap &ioh,
     IndirectHeap &ssh,
     const Kernel &kernel,
@@ -401,7 +402,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         dsh,
         offsetInterfaceDescriptor,
-        kernelStartOffset,
+        kernelStartOffset + ihReservedBlockSize,
         kernel.getCrossThreadDataSize(),
         sizePerThreadData,
         dstBindingTablePointer,

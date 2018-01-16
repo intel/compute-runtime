@@ -456,6 +456,7 @@ void dispatchWalker(
     bool executionModelKernel = multiDispatchInfo.begin()->getKernel()->isParentKernel;
 
     // Allocate command stream and indirect heaps
+    size_t cmdQInstructionHeapReservedBlockSize = 0;
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
         commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize), MemoryConstants::pageSize);
@@ -471,12 +472,15 @@ void dispatchWalker(
             ioh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredIOH(multiDispatchInfo); });
         }
         ish = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredIH(multiDispatchInfo); });
+        cmdQInstructionHeapReservedBlockSize = commandQueue.getInstructionHeapReservedBlockSize();
+
         ssh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredSSH(multiDispatchInfo); });
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh),
                                                    UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
-        if (executionModelKernel)
+        if (executionModelKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
+        }
     } else {
         commandStream = &commandQueue.getCS(0);
         if (executionModelKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
@@ -582,6 +586,7 @@ void dispatchWalker(
             *commandStream,
             *dsh,
             *ish,
+            cmdQInstructionHeapReservedBlockSize,
             *ioh,
             *ssh,
             kernel,
@@ -749,6 +754,7 @@ void dispatchScheduler(
         *commandStream,
         *dsh,
         *ish,
+        0,
         *ioh,
         *ssh,
         scheduler,

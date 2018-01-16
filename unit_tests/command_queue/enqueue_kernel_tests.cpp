@@ -550,7 +550,7 @@ HWTEST_P(EnqueueWorkItemTests, InterfaceDescriptorData) {
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
     auto kernelStartPointer = ((uint64_t)IDD.getKernelStartPointerHigh() << 32) + IDD.getKernelStartPointer();
-    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize());
+    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     EXPECT_NE(0u, IDD.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, IDD.getCrossThreadConstantDataReadLength());
@@ -1114,9 +1114,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
-    EXPECT_EQ(6u, cmdBuffer->surfaces.size());
+    EXPECT_EQ(6u + csrSurfaceCount, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenDefaultCommandStreamReceiverWhenClFlushIsCalledThenSuccessIsReturned) {

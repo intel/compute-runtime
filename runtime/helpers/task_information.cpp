@@ -166,12 +166,16 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     IndirectHeap *dsh = nullptr;
     IndirectHeap *ioh = nullptr;
 
-    IndirectHeap::Type trackedHeaps[] = {IndirectHeap::SURFACE_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::DYNAMIC_STATE, IndirectHeap::INSTRUCTION};
+    IndirectHeap::Type trackedHeaps[] = {IndirectHeap::SURFACE_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::DYNAMIC_STATE};
 
     for (auto trackedHeap = 0u; trackedHeap < ARRAY_COUNT(trackedHeaps); trackedHeap++) {
         if (commandQueue.getIndirectHeap(trackedHeaps[trackedHeap], 0).getUsed() > 0) {
             commandQueue.releaseIndirectHeap(trackedHeaps[trackedHeap]);
         }
+    }
+
+    if (commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getUsed() > commandQueue.getInstructionHeapReservedBlockSize()) {
+        commandQueue.releaseIndirectHeap(IndirectHeap::INSTRUCTION);
     }
 
     if (executionModelKernel) {
@@ -195,7 +199,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     IndirectHeap &ish = commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION, requestedIshSize);
     IndirectHeap &ssh = commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, requestedSshSize);
 
-    memcpy_s(ish.getBase(), requestedIshSize, kernelOperation->ish->getBase(), kernelOperation->ish->getUsed());
+    memcpy_s(ptrOffset(ish.getBase(), commandQueue.getInstructionHeapReservedBlockSize()), requestedIshSize, kernelOperation->ish->getBase(), kernelOperation->ish->getUsed());
     ish.getSpace(kernelOperation->ish->getUsed());
 
     memcpy_s(ssh.getBase(), requestedSshSize, kernelOperation->ssh->getBase(), kernelOperation->ssh->getUsed());

@@ -213,6 +213,11 @@ uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
     return taskLevel;
 }
 
+size_t CommandQueue::getInstructionHeapReservedBlockSize() const {
+    return alignUp(device->getCommandStreamReceiver().getInstructionHeapCmdStreamReceiverReservedSize(),
+                   MemoryConstants::cacheLineSize);
+}
+
 IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
                                             size_t minRequiredSize) {
     DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
@@ -240,8 +245,7 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
 
         size_t reservedSize = 0;
         if (heapType == IndirectHeap::INSTRUCTION) {
-            reservedSize = alignUp(device->getCommandStreamReceiver().getInstructionHeapCmdStreamReceiverReservedSize(),
-                                   MemoryConstants::cacheLineSize);
+            reservedSize = getInstructionHeapReservedBlockSize();
         }
 
         minRequiredSize += reservedSize;

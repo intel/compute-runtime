@@ -33,6 +33,7 @@
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -42,6 +43,8 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
+
+#include "gmock/gmock-matchers.h"
 
 using namespace OCLRT;
 
@@ -376,39 +379,100 @@ HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIs
     mockCSR->getMemoryManager()->freeGraphicsMemory(printfSurface);
     mockCSR->getMemoryManager()->freeGraphicsMemory(constantSurface);
 }
+
 typedef CommandQueueHwTest BlockedCommandQueueTest;
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBlockedCommandIsBeingSubmittedItReloadsThemToZeroToKeepProperOffsets) {
+    DebugManagerStateRestore debugStateRestore;
+    bool oldMemsetAllocationsFlag = MemoryManagement::memsetNewAllocations;
+    MemoryManagement::memsetNewAllocations = true;
+
+    DebugManager.flags.ForcePreemptionMode.set(0); // allow default preemption mode
+    auto deviceWithDefaultPreemptionMode = std::unique_ptr<MockDevice>(DeviceHelper<>::create(nullptr));
+    this->pDevice->setPreemptionMode(deviceWithDefaultPreemptionMode->getPreemptionMode());
+    this->pDevice->getCommandStreamReceiver().setPreemptionCsrAllocation(deviceWithDefaultPreemptionMode->getPreemptionAllocation());
+
+    DebugManager.flags.DisableResourceRecycling.set(true);
+
     UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
     MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    mockKernelWithInternals.kernelHeader.KernelHeapSize = sizeof(mockKernelWithInternals.kernelIsa);
     auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    IndirectHeap::Type heaps[] = {IndirectHeap::INSTRUCTION, IndirectHeap::INDIRECT_OBJECT,
+                                  IndirectHeap::DYNAMIC_STATE, IndirectHeap::SURFACE_STATE};
+
+    size_t prealocatedHeapSize = 2 * 64 * KB;
+    for (auto heapType : heaps) {
+        auto &heap = pCmdQ->getIndirectHeap(heapType, prealocatedHeapSize);
+        heap.getSpace(16);
+        memset(heap.getBase(), 0, prealocatedHeapSize);
+    }
+
+    // preallocating memsetted allocations to get predictable results
+    pCmdQ->getDevice().getMemoryManager()->cleanAllocationList(-1, REUSABLE_ALLOCATION);
+    DebugManager.flags.DisableResourceRecycling.set(false);
+
+    std::set<void *> reusableHeaps;
+    for (unsigned int i = 0; i < 5; ++i) {
+        void *mem = alignedMalloc(prealocatedHeapSize, 64);
+        reusableHeaps.insert(mem);
+        memset(mem, 0, prealocatedHeapSize);
+        std::unique_ptr<GraphicsAllocation> reusableAlloc{new MockGraphicsAllocation(mem, prealocatedHeapSize)};
+        pCmdQ->getDevice().getMemoryManager()->storeAllocation(std::move(reusableAlloc), REUSABLE_ALLOCATION);
+    }
+
+    // disable further allocation reuse
+    DebugManager.flags.DisableResourceRecycling.set(true);
 
     size_t offset = 0;
     size_t size = 1;
-
-    cl_event blockedEvent = &userEvent;
-
-    auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096u);
-    auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
-    auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
-    auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
-
-    ssh.getSpace(1);
-    ish.getSpace(1);
-    ioh.getSpace(1);
-    dsh.getSpace(1);
-
-    auto ishBase = ish.getBase();
-    auto iohBase = ioh.getBase();
-    auto dshBase = dsh.getBase();
-    auto sshBase = ssh.getBase();
-
-    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
+    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr); // blocked command
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_NE(ishBase, ish.getBase());
-    EXPECT_NE(iohBase, ioh.getBase());
-    EXPECT_NE(dshBase, dsh.getBase());
-    EXPECT_NE(sshBase, ssh.getBase());
+    // make sure used heaps are from preallocated pool
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0).getBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0).getBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getBase()));
+
+    pCmdQ->getDevice().getMemoryManager()->cleanAllocationList(-1, REUSABLE_ALLOCATION);
+    std::unordered_map<int, std::vector<char>> blockedCommandHeaps;
+    int i = 0;
+    for (auto heapType : heaps) {
+        auto &heap = pCmdQ->getIndirectHeap(heapType, 0);
+        blockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getBase()), reinterpret_cast<char *>(heap.getBase()) + heap.getUsed());
+
+        // prepare new heaps for nonblocked command
+        pCmdQ->releaseIndirectHeap(heapType);
+        ++i;
+    }
+
+    pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 0, nullptr, nullptr); // nonblocked command
+    i = 0;
+    std::unordered_map<int, std::vector<char>> nonblockedCommandHeaps;
+    for (auto heapType : heaps) {
+        auto &heap = pCmdQ->getIndirectHeap(heapType, 0);
+        nonblockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getBase()), reinterpret_cast<char *>(heap.getBase()) + heap.getUsed());
+        ++i;
+    }
+
+    // expecting blocked command to be programmed indentically to a non-blocked counterpart
+    EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::INSTRUCTION)],
+                testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::INSTRUCTION)]));
+    EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::INDIRECT_OBJECT)],
+                testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::INDIRECT_OBJECT)]));
+    EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::DYNAMIC_STATE)],
+                testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::DYNAMIC_STATE)]));
+    EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::SURFACE_STATE)],
+                testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::SURFACE_STATE)]));
+
+    for (auto ptr : reusableHeaps) {
+        alignedFree(ptr);
+    }
+
+    BuiltIns::shutDown();
+    MemoryManagement::memsetNewAllocations = oldMemsetAllocationsFlag;
 }
 
 HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBlockedCommandIsBeingSubmittedThenThoseHeapsAreBeingUsed) {

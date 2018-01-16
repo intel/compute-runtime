@@ -261,7 +261,7 @@ HWTEST_F(EnqueueCopyBufferTest, InterfaceDescriptorData) {
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
     auto kernelStartPointer = ((uint64_t)cmdIDD->getKernelStartPointerHigh() << 32) + cmdIDD->getKernelStartPointer();
-    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize());
+    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     EXPECT_NE(0u, cmdIDD->getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, cmdIDD->getCrossThreadConstantDataReadLength());

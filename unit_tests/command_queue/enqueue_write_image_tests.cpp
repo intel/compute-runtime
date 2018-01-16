@@ -204,7 +204,7 @@ HWTEST_F(EnqueueWriteImageTest, interfaceDescriptorData) {
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
     auto kernelStartPointer = ((uint64_t)interfaceDescriptorData.getKernelStartPointerHigh() << 32) + interfaceDescriptorData.getKernelStartPointer();
-    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize());
+    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     // EnqueueWriteImage uses a byte copy.  Need to convert to bytes.
     auto localWorkSize = 2 * 2 * sizeof(float);

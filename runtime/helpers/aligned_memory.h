@@ -36,17 +36,23 @@
 #endif
 
 template <typename T>
-inline T alignUp(T ptrBefore, size_t alignment) {
-    auto addrBefore = (uintptr_t)ptrBefore;
-    auto addrAfter = (addrBefore + alignment - 1) & ~(alignment - 1);
-    return (T)addrAfter;
+constexpr inline T alignUp(T before, size_t alignment) {
+    return static_cast<T>((static_cast<size_t>(before) + alignment - 1) & ~(alignment - 1));
 }
 
 template <typename T>
-inline T alignDown(T ptrBefore, size_t alignment) {
-    auto addrBefore = (uintptr_t)ptrBefore;
-    auto addrAfter = addrBefore & ~(alignment - 1);
-    return (T)addrAfter;
+constexpr inline T *alignUp(T *ptrBefore, size_t alignment) {
+    return reinterpret_cast<T *>(alignUp(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
+}
+
+template <typename T>
+constexpr inline T alignDown(T before, size_t alignment) {
+    return static_cast<T>(static_cast<size_t>(before) & ~(alignment - 1));
+}
+
+template <typename T>
+constexpr inline T *alignDown(T *ptrBefore, size_t alignment) {
+    return reinterpret_cast<T *>(alignDown(reinterpret_cast<uintptr_t>(ptrBefore), alignment));
 }
 
 inline void *alignedMalloc(size_t bytes, size_t alignment) {

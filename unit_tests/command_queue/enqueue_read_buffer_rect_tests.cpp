@@ -329,7 +329,7 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_InterfaceDescriptorData) {
 
     // Validate the kernel start pointer.  Technically, a kernel can start at address 0 but let's force a value.
     auto kernelStartPointer = ((uint64_t)IDD.getKernelStartPointerHigh() << 32) + IDD.getKernelStartPointer();
-    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize());
+    EXPECT_LE(kernelStartPointer, cmdSBA->getInstructionBufferSize() * MemoryConstants::pageSize);
 
     EXPECT_NE(0u, IDD.getNumberOfThreadsInGpgpuThreadGroup());
     EXPECT_NE(0u, IDD.getCrossThreadConstantDataReadLength());
