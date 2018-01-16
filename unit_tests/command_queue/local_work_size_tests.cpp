@@ -96,8 +96,8 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLoca
     size_t workGroupSize[3];
 
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 16u);
-    EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 2u);
     EXPECT_EQ(workGroupSize[2], 1u);
 
     workGroup[0] = 48;
@@ -228,8 +228,11 @@ TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
-TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual256WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 256, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+TEST(localWorkSizeTest, given2DimWorkGroupAndSquaredAlgorithmWhenComputeCalledThenLocalGroupComputed) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -237,6 +240,36 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual256WhenComputeCalledThenLo
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 16u);
     EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, given1DimWorkGroupAndSquaredAlgorithmOnWhenComputeCalledThenSquaredAlgorithmIsNotExecuted) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+    uint32_t workDim = 1;
+    size_t workGroup[3] = {1024, 1, 1};
+    size_t workGroupSize[3];
+
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, given2DdispatchWithImagesAndSquaredAlgorithmOnWhenLwsIsComputedThenSquaredAlgorithmIsNotExecuted) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(true);
+
+    WorkSizeInfo wsInfo(256, 0u, 32, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, true, false);
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {256, 96, 1};
+    size_t workGroupSize[3];
+
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 64u);
+    EXPECT_EQ(workGroupSize[1], 4u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -270,8 +303,8 @@ TEST(localWorkSizeTest, givenKernelWithTwoDimensionalGlobalSizesWhenLwsIsCompute
     workGroup[0] = 1024;
     workGroup[1] = 1024;
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
-    EXPECT_EQ(workGroupSize[0], 16u);
-    EXPECT_EQ(workGroupSize[1], 16u);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 
@@ -541,6 +574,7 @@ TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8When
 TEST(localWorkSizeTest, givenDebugVariableEnableComputeWorkSizeNDWhenCheckValueExpectTrue) {
     EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeND.get());
 }
+
 TEST(localWorkSizeTest, givenDefaultDebugVariablesWhenEnableComputeWorkSizeSquaredIsCheckdThenTrueIsReturned) {
-    EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeSquared.get());
+    EXPECT_FALSE(DebugManager.flags.EnableComputeWorkSizeSquared.get());
 }
