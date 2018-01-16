@@ -483,9 +483,11 @@ set(BRANCH_DIR_SUFFIX "/")
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
-include_directories(${IGDRCL_SOURCE_DIR}/runtime/instrumentation${BRANCH_DIR_SUFFIX})
 if(HAVE_INSTRUMENTATION)
+  include_directories(${IGDRCL_SOURCE_DIR}/runtime/instrumentation${BRANCH_DIR_SUFFIX})
   include_directories($<TARGET_PROPERTY:instrumentation_umd,INTERFACE_INCLUDE_DIRECTORIES>)
+else()
+  include_directories(${IGDRCL_SOURCE_DIR}/runtime/instrumentation)
 endif()
 
 # Define where to put binaries
