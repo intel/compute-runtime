@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "hw_cmds_base.h"
+#include "runtime/gen9/hw_cmds_base.h"
 
 namespace OCLRT {
 

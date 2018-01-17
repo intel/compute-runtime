@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 struct BdwParse;
 namespace OCLRT {
 struct GEN8 {
-#include "hw_cmds_generated.h"
+#include "runtime/gen8/hw_cmds_generated.h"
     typedef struct tagMEDIA_SURFACE_STATE {
         union tagTheStructure {
             struct tagCommon {

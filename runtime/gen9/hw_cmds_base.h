@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +32,8 @@ struct SklParse;
 namespace OCLRT {
 
 struct GEN9 {
-#include "hw_cmds_generated_patched.h"
-#include "hw_cmds_generated.h"
+#include "runtime/gen9/hw_cmds_generated_patched.h"
+#include "runtime/gen9/hw_cmds_generated.h"
 };
 
 struct SKLFamily : public GEN9 {
