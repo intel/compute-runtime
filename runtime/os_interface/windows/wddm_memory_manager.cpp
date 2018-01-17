@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -261,8 +261,10 @@ void WddmMemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     WddmAllocation *input = static_cast<WddmAllocation *>(gfxAllocation);
-    auto status = validateAllocation(input);
-    DEBUG_BREAK_IF(!status);
+    DEBUG_BREAK_IF(!validateAllocation(input));
+    if (gfxAllocation == nullptr) {
+        return;
+    }
     acquireResidencyLock();
     if (input->getTrimCandidateListPosition() != trimListUnusedPosition) {
         removeFromTrimCandidateList(gfxAllocation, true);
@@ -274,7 +276,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {
-            status = unmapAuxVA(input->gmm, input->gpuPtr);
+            auto status = unmapAuxVA(input->gmm, input->gpuPtr);
             DEBUG_BREAK_IF(!status);
         }
         delete input->gmm;
@@ -305,7 +307,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
             unlockResource(input);
             input->setLocked(false);
         }
-        status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle);
+        auto status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle);
         DEBUG_BREAK_IF(!status);
         ::alignedFree(cpuPtr);
         wddm->releaseGpuPtr(gpuPtr);

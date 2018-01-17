@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -532,6 +532,11 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
 
     delete storage.fragmentStorageData[1].osHandleStorage;
     delete storage.fragmentStorageData[1].residency;
+}
+
+HWTEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
+    SetUpMm<FamilyType>();
+    mm->freeGraphicsMemory(nullptr);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
