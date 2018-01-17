@@ -336,8 +336,8 @@ set (RUNTIME_SRCS_INDIRECT_HEAP
 )
 
 set (RUNTIME_SRCS_INSTRUMENTATION
-  instrumentation${BRANCH_DIR_SUFFIX}/instrumentation.cpp
-  instrumentation${BRANCH_DIR_SUFFIX}/instrumentation.h
+  instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/instrumentation.cpp
+  instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/instrumentation.h
 )
 
 set (RUNTIME_SRCS_KERNEL
