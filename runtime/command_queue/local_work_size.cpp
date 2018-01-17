@@ -21,6 +21,7 @@
  */
 
 #include "runtime/context/context.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/dispatch_info.h"
@@ -100,8 +101,9 @@ inline uint32_t factor<0>(size_t workItems, uint32_t workSize, uint32_t maxWorkG
 
 void computePowerOfTwoLWS(const size_t workItems[3], size_t simdSize, uint32_t maxWorkGroupSize, size_t workGroupSize[3], const uint32_t workDim, bool canUseNx4) {
     uint32_t targetIndex = canUseNx4 ? 2 : 0;
+    auto arraySize = arrayCount(optimalHardwareThreadCountGeneric);
 
-    while (optimalHardwareThreadCountGeneric[targetIndex] > 1 && maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize)
+    while (targetIndex < arraySize && optimalHardwareThreadCountGeneric[targetIndex] > 1 && maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize)
         targetIndex++;
     uint32_t optimalLocalThreads = optimalHardwareThreadCountGeneric[targetIndex];
 
