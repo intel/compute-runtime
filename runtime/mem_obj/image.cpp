@@ -177,6 +177,7 @@ Image *Image::create(Context *context,
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
         auto isTilingAllowed = context->isSharedContext ? false : Gmm::allowTiling(*imageDesc);
+        imgInfo.preferRenderCompression = isTilingAllowed;
 
         bool zeroCopy = false;
         bool transferNeeded = false;

@@ -942,3 +942,60 @@ TEST(ImageGetSurfaceFormatInfoTest, givenNullptrFormatWhenGetSurfaceFormatInfoIs
     auto surfaceFormat = Image::getSurfaceFormatFromTable(0, nullptr);
     EXPECT_EQ(nullptr, surfaceFormat);
 }
+
+class ImageCompressionTests : public ::testing::Test {
+  public:
+    class MyMemoryManager : public MockMemoryManager {
+      public:
+        GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
+            mockMethodCalled = true;
+            capturedImgInfo = imgInfo;
+            return OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, gmm);
+        }
+        ImageInfo capturedImgInfo = {};
+        bool mockMethodCalled = false;
+    };
+
+    void SetUp() override {
+        myMemoryManager = new MyMemoryManager();
+        mockDevice.reset(Device::create<MockDevice>(*platformDevices));
+        mockDevice->injectMemoryManager(myMemoryManager);
+        mockContext.reset(new MockContext(mockDevice.get()));
+    }
+
+    std::unique_ptr<MockDevice> mockDevice;
+    std::unique_ptr<MockContext> mockContext;
+    MyMemoryManager *myMemoryManager = nullptr;
+
+    cl_image_desc imageDesc = {};
+    cl_image_format imageFormat{CL_RGBA, CL_UNORM_INT8};
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+    cl_int retVal = CL_SUCCESS;
+};
+
+TEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferRenderCompression) {
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    auto image = std::unique_ptr<Image>(Image::create(mockContext.get(), flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(image->isTiledImage);
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_TRUE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+}
+
+TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferRenderCompression) {
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 5;
+
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+
+    auto image = std::unique_ptr<Image>(Image::create(mockContext.get(), flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    ASSERT_NE(nullptr, image);
+    EXPECT_FALSE(image->isTiledImage);
+    EXPECT_TRUE(myMemoryManager->mockMethodCalled);
+    EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
+}
