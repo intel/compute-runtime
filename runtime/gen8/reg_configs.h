@@ -25,6 +25,7 @@
 
 namespace OCLRT {
 
+struct BDWFamily;
 template <>
 struct L3CNTLREGConfig<IGFX_BROADWELL> {
     static const uint32_t valueForSLM = 0x60000121u;
@@ -35,5 +36,4 @@ template <>
 struct L3CNTLRegisterOffset<BDWFamily> {
     static const uint32_t registerOffset = 0x7034;
 };
-
 }

@@ -25,6 +25,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/pipeline_select_helper.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
 #include "gtest/gtest.h"
@@ -242,24 +243,31 @@ struct HardwareParse {
 
     template <typename CmdType>
     CmdType *getCommand(GenCmdList::iterator itorStart, GenCmdList::iterator itorEnd) {
-        auto itorCmd = find<CmdType *>(cmdList.begin(), cmdList.end());
+        auto itorCmd = find<CmdType *>(itorStart, itorEnd);
         return itorCmd != cmdList.end()
                    ? genCmdCast<CmdType *>(*itorCmd)
-                   : nullptr;
-    }
-
-    // pass found iterator to itorStart
-    template <typename CmdType>
-    CmdType *getCommand(GenCmdList::iterator *itorStart, GenCmdList::iterator itorEnd) {
-        *itorStart = find<CmdType *>(*itorStart, itorEnd);
-        return *itorStart != cmdList.end()
-                   ? genCmdCast<CmdType *>(**itorStart)
                    : nullptr;
     }
 
     template <typename CmdType>
     CmdType *getCommand() {
         return getCommand<CmdType>(cmdList.begin(), cmdList.end());
+    }
+
+    template <typename FamilyType>
+    int getNumberOfPipelineSelectsThatEnablePipelineSelect() {
+        typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
+        int numCommands = 0;
+        auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
+        while (itorCmd != cmdList.end()) {
+            auto cmd = getCommand<PIPELINE_SELECT>(itorCmd, cmdList.end());
+            if (cmd->getPipelineSelection() == PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU &&
+                pipelineSelectEnablePipelineSelectMaskBits == (pipelineSelectEnablePipelineSelectMaskBits & cmd->getMaskBits())) {
+                numCommands++;
+            }
+            itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
+        }
+        return numCommands;
     }
 
     // The starting point of parsing commandBuffers.  This is important

@@ -174,6 +174,7 @@ struct UltCommandStreamReceiverTest
 
         commandStreamReceiver.lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
         commandStreamReceiver.lastSentCoherencyRequest = 0;
+        commandStreamReceiver.lastMediaSamplerConfig = 0;
     }
 
     template <typename GfxFamily>
@@ -438,6 +439,41 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, preambleShouldBeSentIfNeverSent) {
 
     EXPECT_TRUE(commandStreamReceiver.isPreambleSent);
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfNeverSentPreambleAndMediaSamplerRequirementChanged) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = false;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfNeverSentPreambleAndMediaSamplerRequirementNotChanged) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = false;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldNotBeSentIfSentPreambleAndMediaSamplerRequirementDoesntChanged) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_EQ(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
+}
+HWTEST_F(CommandStreamReceiverFlushTaskTests, pipelineSelectShouldBeSentIfSentPreambleAndMediaSamplerRequirementDoesntChanged) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 1;
+    flushTask(commandStreamReceiver);
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    EXPECT_NE(nullptr, getCommand<typename FamilyType::PIPELINE_SELECT>());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldBeSentIfNeverSent) {
@@ -1761,6 +1797,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
     commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
     commandStreamReceiver.lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
 
     auto &csrCS = commandStreamReceiver.getCS();

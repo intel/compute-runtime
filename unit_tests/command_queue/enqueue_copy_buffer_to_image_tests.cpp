@@ -233,17 +233,9 @@ HWTEST_F(EnqueueCopyBufferToImageTest, surfaceState) {
 }
 
 HWTEST_F(EnqueueCopyBufferToImageTest, pipelineSelect) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
     enqueueCopyBufferToImage<FamilyType>();
-
-    auto *cmd = (PIPELINE_SELECT *)cmdPipelineSelect;
-
-    // Verify we have a valid length
-    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, cmd->getPipelineSelection());
-
-    // Specifying GPGPU mode requires setting equivalent mask bits.
-    EXPECT_EQ(0x3u, cmd->getMaskBits() & 0x3);
+    int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
+    EXPECT_EQ(1, numCommands);
 }
 
 HWTEST_F(EnqueueCopyBufferToImageTest, mediaVFEState) {

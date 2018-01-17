@@ -20,9 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/helpers/preamble.h"
-#include "runtime/gen8/reg_configs.h"
 #include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {
@@ -56,16 +53,12 @@ uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-bool PreambleHelper<BDWFamily>::getMediaSamplerDopClockGateEnable(LinearStream *) {
-    return false;
-}
-
-template <>
-void PreambleHelper<BDWFamily>::programPSForMedia(LinearStream *, bool) {}
-
-template <>
-uint32_t PreambleHelper<BDWFamily>::getPipelineSelectMaskBits() {
-    return 0;
+void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
+    typedef typename BDWFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
+    *pCmd = PIPELINE_SELECT::sInit();
+    pCmd->setMaskBits(pipelineSelectEnablePipelineSelectMaskBits);
+    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }
 
 // Explicitly instantiate PreambleHelper for BDW device family

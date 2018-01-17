@@ -135,7 +135,7 @@ class CommandStreamReceiver {
 
     uint32_t lastSentL3Config = 0;
     int8_t lastSentCoherencyRequest = -1;
-    bool lastMediaSamplerConfig = false;
+    int8_t lastMediaSamplerConfig = -1;
     PreemptionMode lastPreemptionMode = PreemptionMode::Disabled;
     uint32_t latestSentStatelessMocsConfig;
 

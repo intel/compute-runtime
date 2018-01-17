@@ -162,7 +162,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.coherencyRequestChanged = this->lastSentCoherencyRequest != static_cast<int8_t>(dispatchFlags.requiresCoherency);
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
-    csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != dispatchFlags.mediaSamplerRequired;
+    csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
 
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSize(dispatchFlags));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
@@ -171,7 +171,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programPreemption(commandStreamCSR, dispatchFlags, ih);
     programCoherency(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
-    programMediaSampler(commandStreamCSR, dispatchFlags);
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
+        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStreamCSR, dispatchFlags.mediaSamplerRequired);
+        this->lastMediaSamplerConfig = dispatchFlags.mediaSamplerRequired;
+    }
     programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
 
     size_t requiredScratchSizeInBytes = requiredScratchSize * (hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice * hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount);
@@ -300,11 +303,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto bbEndPaddingSize = this->dispatchMode == DispatchMode::ImmediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
 
     if (submitTask) {
-        if (csrSizeRequestFlags.mediaSamplerConfigChanged && !dispatchFlags.mediaSamplerRequired) {
-            PreambleHelper<GfxFamily>::programPSForMedia(&commandStreamTask, false);
-            this->lastMediaSamplerConfig = false;
-        }
-
         this->addBatchBufferEnd(commandStreamTask, &bbEndLocation);
         this->emitNoop(commandStreamTask, bbEndPaddingSize);
         this->alignToCacheLine(commandStreamTask);
@@ -546,14 +544,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
 
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
-    }
-}
-
-template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged && dispatchFlags.mediaSamplerRequired) {
-        PreambleHelper<GfxFamily>::programPSForMedia(&csr, true);
-        this->lastMediaSamplerConfig = true;
     }
 }
 

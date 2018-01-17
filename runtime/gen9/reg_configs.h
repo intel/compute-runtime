@@ -23,7 +23,7 @@
 #pragma once
 #include "runtime/helpers/preamble.h"
 namespace OCLRT {
-
+struct SKLFamily;
 template <>
 struct L3CNTLREGConfig<IGFX_SKYLAKE> {
     static const uint32_t valueForSLM = 0x60000121u;

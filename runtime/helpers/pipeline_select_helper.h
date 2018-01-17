@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,14 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/preamble.h"
-#include "runtime/helpers/preamble.inl"
-#include "test.h"
+#pragma once
+#include "stdint.h"
 
-using namespace OCLRT;
-
-typedef ::testing::Test Gen9MaskBitsTest;
-
-GEN9TEST_F(Gen9MaskBitsTest, pipelineSelectMaskBitsIsMediaSamplerDopClockGateMaskBits) {
-    EXPECT_EQ(pipelineSelectMediaSamplerDopClockGateMaskBits, PreambleHelper<SKLFamily>::getPipelineSelectMaskBits());
+namespace OCLRT {
+const uint32_t pipelineSelectEnablePipelineSelectMaskBits = 0x3;
+const uint32_t pipelineSelectMediaSamplerDopClockGateMaskBits = 0x10;
 }

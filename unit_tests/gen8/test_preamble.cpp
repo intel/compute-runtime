@@ -111,9 +111,3 @@ BDWTEST_F(PreambleVfeState, basic) {
     EXPECT_TRUE(pc.getDcFlushEnable());
     EXPECT_EQ(1u, pc.getCommandStreamerStallEnable());
 }
-
-typedef ::testing::Test BdwMaskBitsTest;
-
-BDWTEST_F(BdwMaskBitsTest, noPipelineSelectMaskBits) {
-    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getPipelineSelectMaskBits());
-}

@@ -117,16 +117,9 @@ HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
 }
 
 HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveOnePS) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
     parseWalkers<FamilyType>();
-    auto itorCmd1 = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
-    ASSERT_NE(cmdList.end(), itorCmd1);
-    auto itorCmd2 = itorCmd1;
-    ++itorCmd2;
-    itorCmd2 = find<PIPELINE_SELECT *>(itorCmd2, cmdList.end());
-
-    EXPECT_EQ(cmdList.end(), itorCmd2);
+    int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
+    EXPECT_EQ(1, numCommands);
 }
 
 HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveOneVFEState) {

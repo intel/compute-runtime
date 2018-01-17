@@ -20,8 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/helpers/preamble.h"
 #include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {
@@ -44,23 +42,16 @@ uint32_t PreambleHelper<SKLFamily>::getL3Config(const HardwareInfo &hwInfo, bool
 }
 
 template <>
-bool PreambleHelper<SKLFamily>::getMediaSamplerDopClockGateEnable(LinearStream *pCommandStream) {
+void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-
-    auto pCmd = reinterpret_cast<PIPELINE_SELECT *>(pCommandStream);
-
-    return pCmd->getMediaSamplerDopClockGateEnable();
-}
-
-template <>
-void PreambleHelper<SKLFamily>::programPSForMedia(LinearStream *pCommandStream, bool enable) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    typedef typename SKLFamily::PIPE_CONTROL PIPE_CONTROL;
 
     auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
     *pCmd = PIPELINE_SELECT::sInit();
-    pCmd->setMaskBits(getPipelineSelectMaskBits());
-    pCmd->setMediaSamplerDopClockGateEnable(!enable);
+
+    auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    pCmd->setMaskBits(mask);
+    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
+    pCmd->setMediaSamplerDopClockGateEnable(!mediaSamplerRequired);
 }
 
 template <>
@@ -74,4 +65,4 @@ void PreambleHelper<SKLFamily>::setupPipeControlInFrontOfCommand(void *pCmd, con
 }
 
 template struct PreambleHelper<SKLFamily>;
-} // namespace OCLRT
+}

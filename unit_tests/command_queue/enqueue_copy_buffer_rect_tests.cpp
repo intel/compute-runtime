@@ -300,18 +300,9 @@ HWTEST_F(EnqueueCopyBufferRectTest, 2D_InterfaceDescriptorData) {
 }
 
 HWTEST_F(EnqueueCopyBufferRectTest, 2D_PipelineSelect) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
     enqueueCopyBufferRect2D<FamilyType>();
-
-    auto *cmd = (PIPELINE_SELECT *)cmdPipelineSelect;
-    ASSERT_NE(nullptr, cmd);
-
-    // Verify we have a valid length
-    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, cmd->getPipelineSelection());
-
-    // Specifying GPGPU mode requires setting equivalent mask bits.
-    EXPECT_EQ(0x3u, cmd->getMaskBits() & 0x3);
+    int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
+    EXPECT_EQ(1, numCommands);
 }
 
 HWTEST_F(EnqueueCopyBufferRectTest, 2D_MediaVFEState) {
@@ -489,17 +480,9 @@ HWTEST_F(EnqueueCopyBufferRectTest, 3D_InterfaceDescriptorData) {
 }
 
 HWTEST_F(EnqueueCopyBufferRectTest, 3D_PipelineSelect) {
-    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
-
     enqueueCopyBufferRect3D<FamilyType>();
-
-    auto *cmd = (PIPELINE_SELECT *)cmdPipelineSelect;
-
-    // Verify we have a valid length
-    EXPECT_EQ(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU, cmd->getPipelineSelection());
-
-    // Specifying GPGPU mode requires setting equivalent mask bits.
-    EXPECT_EQ(0x3u, cmd->getMaskBits() & 0x3);
+    int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
+    EXPECT_EQ(1, numCommands);
 }
 
 HWTEST_F(EnqueueCopyBufferRectTest, 3D_MediaVFEState) {

@@ -33,15 +33,6 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPipelineSelect(LinearStream *pCommandStream) {
-    typedef typename GfxFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    auto pCmd = (PIPELINE_SELECT *)pCommandStream->getSpace(sizeof(PIPELINE_SELECT));
-    *pCmd = PIPELINE_SELECT::sInit();
-    pCmd->setMaskBits(0x3);
-    pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
-}
-
-template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
@@ -111,7 +102,6 @@ template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
                                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
-    programPipelineSelect(pCommandStream);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
     programPreemption(pCommandStream, device, preemptionCsr);
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
@@ -125,11 +115,6 @@ void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
     return 0x782;
-}
-
-template <typename GfxFamily>
-uint32_t PreambleHelper<GfxFamily>::getPipelineSelectMaskBits() {
-    return pipelineSelectMediaSamplerDopClockGateMaskBits;
 }
 
 } // namespace OCLRT

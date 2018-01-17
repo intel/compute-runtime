@@ -1,0 +1,102 @@
+/*
+ * Copyright (c) 2017, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "unit_tests/fixtures/media_kernel_fixture.h"
+#include "runtime/helpers/preamble.inl"
+#include "test.h"
+
+using namespace OCLRT;
+typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<SKLFamily>();
+
+    auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
+    EXPECT_EQ(1u, numCommands);
+
+    auto pCmd = getCommand<PIPELINE_SELECT>();
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
+    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<SKLFamily>();
+
+    auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
+    EXPECT_EQ(1u, numCommands);
+
+    auto pCmd = getCommand<PIPELINE_SELECT>();
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
+    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<SKLFamily>();
+    auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
+    EXPECT_EQ(1u, numCommands);
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<SKLFamily>();
+    auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
+    EXPECT_EQ(1u, numCommands);
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<SKLFamily>();
+    enqueueVmeKernel<SKLFamily>();
+
+    auto commands = getCommandsList<PIPELINE_SELECT>();
+    EXPECT_EQ(2u, commands.size());
+
+    auto pCmd = static_cast<PIPELINE_SELECT *>(commands.back());
+
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<SKLFamily>();
+    enqueueRegularKernel<SKLFamily>();
+
+    auto commands = getCommandsList<PIPELINE_SELECT>();
+    EXPECT_EQ(2u, commands.size());
+
+    auto pCmd = static_cast<PIPELINE_SELECT *>(commands.back());
+
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
+}

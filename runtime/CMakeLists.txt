@@ -302,6 +302,7 @@ set (RUNTIME_SRCS_HELPERS
   helpers/options.h
   helpers/per_thread_data.cpp
   helpers/per_thread_data.h
+  helpers/pipeline_select_helper.h
   helpers/preamble.h
   helpers/preamble.inl
   helpers/ptr_math.h
