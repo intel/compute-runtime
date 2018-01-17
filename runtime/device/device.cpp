@@ -88,17 +88,17 @@ Device::~Device() {
     }
     delete commandStreamReceiver;
     if (memoryManager) {
-        memoryManager->freeGraphicsMemory(tagAllocation);
-    }
-    tagAllocation = nullptr;
-    commandStreamReceiver = nullptr;
-    if (memoryManager) {
         if (preemptionAllocation) {
             memoryManager->freeGraphicsMemory(preemptionAllocation);
             preemptionAllocation = nullptr;
         }
         memoryManager->waitForDeletions();
     }
+    if (memoryManager) {
+        memoryManager->freeGraphicsMemory(tagAllocation);
+    }
+    tagAllocation = nullptr;
+    commandStreamReceiver = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
     alignedFree(this->slmWindowStartAddress);

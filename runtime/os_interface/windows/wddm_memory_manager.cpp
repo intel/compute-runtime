@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -267,6 +269,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     }
 
     releaseResidencyLock();
+
+    UNRECOVERABLE_IF(gfxAllocation->taskCount != ObjectNotUsed && this->device && this->device->peekCommandStreamReceiver() && gfxAllocation->taskCount > *this->device->getCommandStreamReceiver().getTagAddress());
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {

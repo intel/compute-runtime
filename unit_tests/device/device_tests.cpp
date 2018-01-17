@@ -54,6 +54,10 @@ TEST_F(DeviceTest, getCommandStreamReceiver) {
     EXPECT_NE(nullptr, &pDevice->getCommandStreamReceiver());
 }
 
+TEST_F(DeviceTest, givenDeviceWhenPeekCommandStreamReceiverIsCalledThenCommandStreamReceiverIsReturned) {
+    EXPECT_NE(nullptr, pDevice->peekCommandStreamReceiver());
+}
+
 TEST_F(DeviceTest, getSupportedClVersion) {
     auto version = pDevice->getSupportedClVersion();
     auto version2 = pDevice->getHardwareInfo().capabilityTable.clVersionSupport;

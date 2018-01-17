@@ -90,6 +90,8 @@ class Device : public BaseObject<_cl_device_id> {
     }
 
     CommandStreamReceiver &getCommandStreamReceiver();
+    CommandStreamReceiver *peekCommandStreamReceiver();
+
     volatile uint32_t *getTagAddress() const;
 
     const char *getProductAbbrev() const;
@@ -174,6 +176,10 @@ inline void Device::getCap(const void *&src,
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
     return *commandStreamReceiver;
+}
+
+inline CommandStreamReceiver *Device::peekCommandStreamReceiver() {
+    return commandStreamReceiver;
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {
