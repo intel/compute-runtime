@@ -332,9 +332,16 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
 }
 
 cl_int CommandQueue::enqueueAcquireSharedObjects(cl_uint numObjects, const cl_mem *memObjects, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *oclEvent, cl_uint cmdType) {
+    if ((memObjects == nullptr && numObjects != 0) || (memObjects != nullptr && numObjects == 0)) {
+        return CL_INVALID_VALUE;
+    }
 
     for (unsigned int object = 0; object < numObjects; object++) {
-        auto memObject = castToObjectOrAbort<MemObj>(memObjects[object]);
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+
         memObject->peekSharingHandler()->acquire(memObject);
         memObject->acquireCount++;
     }
@@ -351,8 +358,16 @@ cl_int CommandQueue::enqueueAcquireSharedObjects(cl_uint numObjects, const cl_me
 }
 
 cl_int CommandQueue::enqueueReleaseSharedObjects(cl_uint numObjects, const cl_mem *memObjects, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *oclEvent, cl_uint cmdType) {
+    if ((memObjects == nullptr && numObjects != 0) || (memObjects != nullptr && numObjects == 0)) {
+        return CL_INVALID_VALUE;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
-        auto memObject = castToObjectOrAbort<MemObj>(memObjects[object]);
+        auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr || memObject->peekSharingHandler() == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+
         memObject->peekSharingHandler()->release(memObject);
         DEBUG_BREAK_IF(memObject->acquireCount <= 0);
         memObject->acquireCount--;

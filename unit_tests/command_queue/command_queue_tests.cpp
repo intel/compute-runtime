@@ -34,6 +34,7 @@
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -776,4 +777,106 @@ TEST(CommandQueueGetIndirectHeap, whenCheckingForCsrInstructionHeapReservedBlock
 
     EXPECT_GE(alignedPatternSize, csr->getInstructionHeapCmdStreamReceiverReservedSize());
     EXPECT_EQ(alignedPatternSize, cmdQ.getInstructionHeapReservedBlockSize());
+}
+
+TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSuccess) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_uint numObjects = 0;
+    cl_mem *memObjects = nullptr;
+
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+}
+
+TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = nullptr;
+
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    numObjects = 0;
+    memObjects = (cl_mem *)1;
+
+    result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    numObjects = 0;
+    memObjects = (cl_mem *)1;
+
+    result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    cl_mem memObject = nullptr;
+
+    numObjects = 1;
+    memObjects = &memObject;
+
+    result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
+    memObject = buffer.get();
+
+    numObjects = 1;
+    memObjects = &memObject;
+
+    result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
+}
+
+TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenNoObjectsThenReturnSuccess) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_uint numObjects = 0;
+    cl_mem *memObjects = nullptr;
+
+    cl_int result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+}
+
+TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = nullptr;
+
+    cl_int result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    numObjects = 0;
+    memObjects = (cl_mem *)1;
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    numObjects = 0;
+    memObjects = (cl_mem *)1;
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_VALUE);
+
+    cl_mem memObject = nullptr;
+
+    numObjects = 1;
+    memObjects = &memObject;
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
+
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
+    memObject = buffer.get();
+
+    numObjects = 1;
+    memObjects = &memObject;
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
 }
