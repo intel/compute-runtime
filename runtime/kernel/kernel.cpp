@@ -1975,7 +1975,7 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
             cl_mem_flags flags = pMemObj->getFlags();
             if ((accessQualifier == CL_KERNEL_ARG_ACCESS_READ_ONLY && ((flags | CL_MEM_WRITE_ONLY) == flags)) ||
                 (accessQualifier == CL_KERNEL_ARG_ACCESS_WRITE_ONLY && ((flags | CL_MEM_READ_ONLY) == flags))) {
-                return CL_INVALID_KERNEL_ARGS;
+                return CL_INVALID_ARG_VALUE;
             }
         } else {
             return CL_INVALID_VALUE;

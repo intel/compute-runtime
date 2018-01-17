@@ -174,14 +174,14 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
 
-    EXPECT_EQ(retVal, CL_INVALID_KERNEL_ARGS);
+    EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
     retVal = clSetKernelArg(
         pKernel,
         0,
         sizeof(memObj),
         &memObj);
 
-    EXPECT_EQ(retVal, CL_INVALID_KERNEL_ARGS);
+    EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 
     retVal = clSetKernelArg(
         pKernel,
@@ -189,7 +189,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
         sizeof(memObj),
         &memObj);
 
-    EXPECT_EQ(retVal, CL_INVALID_KERNEL_ARGS);
+    EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 
     retVal = clSetKernelArg(
         pKernel,
@@ -213,7 +213,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     cl_mem memObj = img.get();
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
 
-    EXPECT_EQ(retVal, CL_INVALID_KERNEL_ARGS);
+    EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
     Image *image = NULL;
     memObj = image;
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
