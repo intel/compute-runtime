@@ -202,6 +202,26 @@ HWTEST_F(KernelArgSvmTest, SetKernelArgValidSvmAllocStateful) {
     delete[] svmPtr;
 }
 
+HWTEST_F(KernelArgSvmTest, givenOffsetedSvmPointerWhenSetArgSvmAllocIsCalledThenProperSvmAddressIsPatched) {
+    std::unique_ptr<char[]> svmPtr(new char[256]);
+
+    auto offsetedPtr = svmPtr.get() + 4;
+
+    GraphicsAllocation svmAlloc(svmPtr.get(), 256);
+    pKernelInfo->usesSsh = true;
+    pKernelInfo->requiresSshForBuffers = true;
+
+    pKernel->setArgSvmAlloc(0, offsetedPtr, &svmAlloc);
+
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
+    EXPECT_EQ(offsetedPtr, surfaceAddress);
+}
+
 TEST_F(KernelArgSvmTest, SetKernelArgImmediateInvalidArgValue) {
     auto retVal = pKernel->setArgImmediate(0, 256, nullptr);
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);

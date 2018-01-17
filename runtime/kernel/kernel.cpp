@@ -817,7 +817,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             size_t offset = ptrDiff(ptrToPatch, svmAlloc->getUnderlyingBuffer());
             allocSize -= offset;
         }
-        Buffer::setSurfaceState(&getContext(), surfaceState, allocSize, ptrToPatch, svmAlloc);
+        Buffer::setSurfaceState(&getContext(), surfaceState, allocSize, ptrToPatch, nullptr);
     }
 
     if (!kernelArguments[argIndex].isPatched) {
