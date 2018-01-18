@@ -705,6 +705,10 @@ foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
 
     list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/enable_family_full.cpp)
 
+    if(GTPIN_HEADERS_DIR)
+      list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/gtpin_setup_gen${GEN_NUM}.cpp)
+    endif(GTPIN_HEADERS_DIR)
+
     # Append this GEN's sources to the list of all sources
     foreach(SRC_IT ${RUNTIME_SRCS_GEN${GEN_NUM}})
       if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_IT}")
