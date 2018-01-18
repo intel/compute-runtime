@@ -511,6 +511,42 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     delete pKernelInfo;
 }
 
+TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWhenKernelIsBeingDestroyedThenAllocationIsAddedToDefferedFreeList) {
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    SPatchAllocateStatelessPrivateSurface tokenSPS;
+    tokenSPS.SurfaceStateHeapOffset = 64;
+    tokenSPS.DataParamOffset = 40;
+    tokenSPS.DataParamSize = 8;
+    tokenSPS.PerThreadPrivateMemorySize = 112;
+    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &tokenSPS;
+
+    SPatchDataParameterStream tokenDPS;
+    tokenDPS.DataParameterStreamSize = 64;
+    pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
+
+    SPatchExecutionEnvironment tokenEE;
+    tokenEE.CompiledSIMD32 = true;
+    pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
+
+    MockContext context;
+    MockProgram program(&context);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
+    pKernel->initialize();
+
+    auto memoryManager = pDevice->getMemoryManager();
+
+    auto privateSurface = pKernel->getPrivateSurface();
+    auto tagAddress = context.getDevice(0)->getTagAddress();
+
+    privateSurface->taskCount = *tagAddress + 1;
+
+    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    pKernel.reset(nullptr);
+
+    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_EQ(memoryManager->graphicsAllocations.peekHead(), privateSurface);
+}
+
 TEST_F(KernelPrivateSurfaceTest, testPrivateSurfaceAllocationFailure) {
     ASSERT_NE(nullptr, pDevice);
 
