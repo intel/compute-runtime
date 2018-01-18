@@ -172,6 +172,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                        : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 
     outHwInfo->capabilityTable.instrumentationEnabled = false;
+    outHwInfo->capabilityTable.ftrCompression = false;
 
     bool preemption = drm->hasPreemption();
     preemption = hwHelper.setupPreemptionRegisters(outHwInfo, preemption);
