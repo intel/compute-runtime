@@ -87,6 +87,7 @@ Device::~Device() {
         performanceCounters->shutdown();
     }
     delete commandStreamReceiver;
+    commandStreamReceiver = nullptr;
     if (memoryManager) {
         if (preemptionAllocation) {
             memoryManager->freeGraphicsMemory(preemptionAllocation);
@@ -98,7 +99,6 @@ Device::~Device() {
         memoryManager->freeGraphicsMemory(tagAllocation);
     }
     tagAllocation = nullptr;
-    commandStreamReceiver = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
     alignedFree(this->slmWindowStartAddress);

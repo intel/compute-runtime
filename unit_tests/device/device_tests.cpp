@@ -117,3 +117,16 @@ TEST_F(DeviceTest, getEngineTypeDefault) {
 
     EXPECT_EQ(defaultEngineType, actualEngineType);
 }
+
+struct SmallMockDevice : public Device {
+    SmallMockDevice(const HardwareInfo &hwInfo, bool isRootDevice = true)
+        : Device(hwInfo, isRootDevice) {}
+    GraphicsAllocation *peekTagAllocation() { return this->tagAllocation; }
+};
+
+TEST(DeviceCreation, givenDeviceWithUsedTagAllocationWhenItIsDestroyedThenThereAreNoCrashesAndLeaks) {
+    overrideCommandStreamReceiverCreation = 1;
+    std::unique_ptr<SmallMockDevice> device(Device::create<SmallMockDevice>(platformDevices[0]));
+    auto tagAllocation = device->peekTagAllocation();
+    tagAllocation->taskCount = 1;
+}
