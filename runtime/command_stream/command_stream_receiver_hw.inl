@@ -84,6 +84,14 @@ inline typename GfxFamily::PIPE_CONTROL *CommandStreamReceiverHw<GfxFamily>::add
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
+        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, dispatchFlags.mediaSamplerRequired);
+        this->lastMediaSamplerConfig = dispatchFlags.mediaSamplerRequired;
+    }
+}
+
+template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
@@ -171,10 +179,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programPreemption(commandStreamCSR, dispatchFlags, ih);
     programCoherency(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStreamCSR, dispatchFlags.mediaSamplerRequired);
-        this->lastMediaSamplerConfig = dispatchFlags.mediaSamplerRequired;
-    }
+    programPipelineSelect(commandStreamCSR, dispatchFlags);
     programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
 
     size_t requiredScratchSizeInBytes = requiredScratchSize * (hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice * hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount);
