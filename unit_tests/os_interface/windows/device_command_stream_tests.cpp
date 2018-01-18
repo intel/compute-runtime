@@ -519,36 +519,43 @@ struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
         setCompressionEnabled(true);
     }
 
+    void createMockWddm() {
+        myMockWddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+    }
+
     HardwareInfo hwInfo = {};
+    std::unique_ptr<WddmMock> myMockWddm;
 };
 
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCreatePagetableMngr) {
-    EXPECT_EQ(nullptr, mockWddm->getPageTableManager());
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, mockWddm);
-    ASSERT_NE(nullptr, mockWddm->getPageTableManager());
+    createMockWddm();
+    EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
+    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
+    ASSERT_NE(nullptr, myMockWddm->getPageTableManager());
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddm->getPageTableManager());
+    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
 
     GMM_DEVICE_CALLBACKS expectedDeviceCb = {};
     GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
     unsigned int expectedFlags = (TT_TYPE::TRTT | TT_TYPE::AUXTT);
+    auto myGdi = myMockWddm->getGdi();
     // clang-format off
-    expectedDeviceCb.Adapter         = mockWddm->getAdapter();
-    expectedDeviceCb.hDevice         = mockWddm->getDevice();
-    expectedDeviceCb.PagingQueue     = mockWddm->getPagingQueue();
-    expectedDeviceCb.PagingFence     = mockWddm->getPagingQueueSyncObject();
+    expectedDeviceCb.Adapter         = myMockWddm->getAdapter();
+    expectedDeviceCb.hDevice         = myMockWddm->getDevice();
+    expectedDeviceCb.PagingQueue     = myMockWddm->getPagingQueue();
+    expectedDeviceCb.PagingFence     = myMockWddm->getPagingQueueSyncObject();
 
-    expectedDeviceCb.pfnAllocate     = gdi.createAllocation;
-    expectedDeviceCb.pfnDeallocate   = gdi.destroyAllocation;
-    expectedDeviceCb.pfnMapGPUVA     = gdi.mapGpuVirtualAddress;
-    expectedDeviceCb.pfnMakeResident = gdi.makeResident;
-    expectedDeviceCb.pfnEvict        = gdi.evict;
-    expectedDeviceCb.pfnReserveGPUVA = gdi.reserveGpuVirtualAddress;
-    expectedDeviceCb.pfnUpdateGPUVA  = gdi.updateGpuVirtualAddress;
-    expectedDeviceCb.pfnWaitFromCpu  = gdi.waitForSynchronizationObjectFromCpu;
-    expectedDeviceCb.pfnLock         = gdi.lock2;
-    expectedDeviceCb.pfnUnLock       = gdi.unlock2;
-    expectedDeviceCb.pfnEscape       = gdi.escape;
+    expectedDeviceCb.pfnAllocate     = myGdi->createAllocation;
+    expectedDeviceCb.pfnDeallocate   = myGdi->destroyAllocation;
+    expectedDeviceCb.pfnMapGPUVA     = myGdi->mapGpuVirtualAddress;
+    expectedDeviceCb.pfnMakeResident = myGdi->makeResident;
+    expectedDeviceCb.pfnEvict        = myGdi->evict;
+    expectedDeviceCb.pfnReserveGPUVA = myGdi->reserveGpuVirtualAddress;
+    expectedDeviceCb.pfnUpdateGPUVA  = myGdi->updateGpuVirtualAddress;
+    expectedDeviceCb.pfnWaitFromCpu  = myGdi->waitForSynchronizationObjectFromCpu;
+    expectedDeviceCb.pfnLock         = myGdi->lock2;
+    expectedDeviceCb.pfnUnLock       = myGdi->unlock2;
+    expectedDeviceCb.pfnEscape       = myGdi->escape;
 
     expectedTTCallbacks.pfWriteL3Adr = TTCallbacks<FamilyType>::writeL3Address;
     // clang-format on
@@ -560,15 +567,17 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDontCreatePagetableMngr) {
     setCompressionEnabled(false);
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, mockWddm);
-    EXPECT_EQ(nullptr, mockWddm->getPageTableManager());
+    createMockWddm();
+    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
+    EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 }
 
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTranslationTableOnce) {
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, mockWddm);
+    createMockWddm();
+    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
     mockWddmCsr.overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(mockWddm->getPageTableManager());
+    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
     mockWddmCsr.setMemoryManager(mm);
     mockWddmCsr.setTagAllocation(tagAllocation);
 
@@ -577,7 +586,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     auto graphicsAllocation = mm->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(graphicsAllocation);
 
-    EXPECT_FALSE(mockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
 
     EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&csrCS, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
     EXPECT_CALL(*mockMngr, initContextTRTableRegister(&csrCS, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
@@ -585,7 +594,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     DispatchFlags dispatchFlags;
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_TRUE(mockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_TRUE(myMockWddm->peekIsPageTableManagerInitialized());
 
     // flush again to check if PT manager was initialized once
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
@@ -595,10 +604,11 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontInitTranslationTable) {
     setCompressionEnabled(false);
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, mockWddm);
+    createMockWddm();
+    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
     mockWddmCsr.overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
 
-    EXPECT_EQ(nullptr, mockWddm->getPageTableManager());
+    EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 
     mockWddmCsr.setMemoryManager(mm);
     mockWddmCsr.setTagAllocation(tagAllocation);
@@ -606,12 +616,12 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     auto graphicsAllocation = mm->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(graphicsAllocation);
 
-    EXPECT_FALSE(mockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
 
     DispatchFlags dispatchFlags;
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_FALSE(mockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
 
     mm->freeGraphicsMemory(graphicsAllocation);
 }

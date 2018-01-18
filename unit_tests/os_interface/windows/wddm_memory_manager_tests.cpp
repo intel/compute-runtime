@@ -32,6 +32,17 @@
 using namespace OCLRT;
 using namespace ::testing;
 
+void WddmMemoryManagerFixture::SetUp() {
+    MemoryManagementFixture::SetUp();
+    WddmFixture::SetUp();
+    ASSERT_NE(nullptr, wddm);
+    if (platformDevices[0]->capabilityTable.ftrCompression) {
+        GMM_DEVICE_CALLBACKS dummyDeviceCallbacks = {};
+        GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
+        wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
+    }
+}
+
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm());
     uint64_t base = 0x56000;

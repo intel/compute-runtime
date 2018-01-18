@@ -474,6 +474,62 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields
     delete image;
 }
 
+HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    McsSurfaceInfo msi = {10, 20, 3};
+    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+
+    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    image->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    image->setMcsSurfaceInfo(msi);
+    image->setMcsAllocation(mcsAlloc);
+    cl_mem memObj = image.get();
+
+    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
+                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
+                RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+    EXPECT_TRUE(surfaceState->getAuxiliarySurfaceMode() == (typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
+    EXPECT_EQ(msi.pitch, surfaceState->getAuxiliarySurfacePitch());
+    EXPECT_EQ(msi.qPitch, surfaceState->getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(msi.multisampleCount, static_cast<uint32_t>(surfaceState->getNumberOfMultisamples()));
+    EXPECT_EQ(mcsAlloc->getGpuAddress(), surfaceState->getAuxiliarySurfaceBaseAddress());
+}
+
+HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultisampledImgIsCalledThenDontProgramAuxFields) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    McsSurfaceInfo msi = {0, 0, 3};
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    cl_image_format imgFormat = {CL_DEPTH, CL_FLOAT};
+    imgDesc.num_samples = 8;
+
+    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc, &imgFormat));
+    image->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    image->setMcsSurfaceInfo(msi);
+    cl_mem memObj = image.get();
+
+    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
+                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
+    EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
+                RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
+    EXPECT_TRUE(surfaceState->getAuxiliarySurfaceMode() == (typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)0);
+    EXPECT_EQ(1u, surfaceState->getAuxiliarySurfacePitch());
+    EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(msi.multisampleCount, static_cast<uint32_t>(surfaceState->getNumberOfMultisamples()));
+    EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
+}
+
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 

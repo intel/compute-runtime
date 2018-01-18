@@ -41,11 +41,7 @@ class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixt
   public:
     WddmMemoryManager *mm = nullptr;
 
-    virtual void SetUp() {
-        MemoryManagementFixture::SetUp();
-        WddmFixture::SetUp();
-        ASSERT_NE(nullptr, wddm);
-    }
+    virtual void SetUp();
 
     template <typename FamiltyType>
     void SetUpMm() {

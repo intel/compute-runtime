@@ -186,9 +186,7 @@ void ImageHw<GfxFamily>::setAuxSurfaceStateParams(RENDER_SURFACE_STATE *surfaceS
         } else if (isDepthFormat(imageFormat)) {
             surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
         }
-    }
-
-    if (gmm && gmm->isRenderCompressed) {
+    } else if (gmm && gmm->isRenderCompressed) {
         surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)5);
         surfaceState->setAuxiliarySurfacePitch(std::max(gmm->gmmResourceInfo->getRenderAuxPitchTiles(), 1u));
         surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
