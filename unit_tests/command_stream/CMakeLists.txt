@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,8 @@ set(IGDRCL_SRCS_tests_command_stream
     "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_fixture.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp"

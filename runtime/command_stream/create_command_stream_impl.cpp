@@ -20,51 +20,51 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_stream/create_command_stream_impl.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/device_command_stream.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/os_interface/device_factory.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
 
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
-    return createCommandStreamImpl(pHwInfo);
-}
+extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
-    bool result;
+CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
+    auto funcCreate = commandStreamReceiverFactory[pHwInfo->pPlatform->eRenderCoreFamily];
+    if (funcCreate == nullptr) {
+        return nullptr;
+    }
+    CommandStreamReceiver *commandStreamReceiver = nullptr;
     int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr) {
-        auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
-        auto hwInfoConst = *platformDevices;
+        if (csr >= CSR_TYPES_NUM)
+            return nullptr;
 
-        for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-            if (hardwarePrefix[j] == nullptr)
-                continue;
-            if (strcmp(hardwarePrefix[j], productFamily.c_str()) == 0) {
-                hwInfoConst = hardwareInfoTable[j];
-                break;
-            }
+        Gmm::initContext(pHwInfo->pPlatform,
+                         pHwInfo->pSkuTable,
+                         pHwInfo->pWaTable,
+                         pHwInfo->pSysInfo);
+
+        switch (csr) {
+        case CSR_AUB:
+            commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true);
+            initialHardwareTag = -1;
+            break;
+        case CSR_TBX:
+            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo);
+            break;
+        case CSR_HW_WITH_AUB: {
+            commandStreamReceiver = funcCreate(*pHwInfo, true);
+            break;
         }
-
-        *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
-        hardwareInfoSetupGt[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo));
-
-        numDevicesReturned = 1;
-        return true;
+        default:
+            break;
+        }
+    } else {
+        commandStreamReceiver = funcCreate(*pHwInfo, false);
     }
-    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned);
-    if (result) {
-        DEBUG_BREAK_IF(hwInfo == nullptr);
-        // For now only one device should be present
-        DEBUG_BREAK_IF(numDevicesReturned != 1);
-    }
-    return result;
+    return commandStreamReceiver;
 }
+
 } // namespace OCLRT

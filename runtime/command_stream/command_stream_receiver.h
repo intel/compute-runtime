@@ -158,5 +158,5 @@ class CommandStreamReceiver {
     uint64_t totalMemoryUsed = 0u;
 };
 
-typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn);
+typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);
 } // namespace OCLRT

@@ -31,8 +31,9 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn)
-    : BaseClass(hwInfoIn) {
+AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone)
+    : BaseClass(hwInfoIn),
+      standalone(standalone) {
     this->dispatchMode = CommandStreamReceiver::DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (CommandStreamReceiver::DispatchMode)DebugManager.flags.CsrDispatchMode.get();
@@ -182,8 +183,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName) {
-    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn);
+CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone) {
+    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, standalone);
 
     // Open our file
     csr->stream.open(fileName.c_str());
@@ -210,11 +211,13 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
-    if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
-        makeResident(*batchBuffer.commandBufferAllocation);
-    } else {
-        allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
-        batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
+    if (this->standalone) {
+        if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
+            makeResident(*batchBuffer.commandBufferAllocation);
+        } else {
+            allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
+            batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
+        }
     }
 
     processResidency(allocationsForResidency);
@@ -361,7 +364,9 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         submitLRCA(engineType, contextDescriptor);
     }
 
-    pollForCompletion(engineType);
+    if (this->standalone) {
+        pollForCompletion(engineType);
+    }
     return 0;
 }
 
@@ -390,10 +395,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.residencyTaskCount < (int)this->taskCount) {
+    auto submissionTaskCount = this->taskCount + 1;
+    if (gfxAllocation.residencyTaskCount < (int)submissionTaskCount) {
         this->getMemoryManager()->pushAllocationForResidency(&gfxAllocation);
     }
-    gfxAllocation.residencyTaskCount = (int)this->taskCount;
+    gfxAllocation.residencyTaskCount = submissionTaskCount;
 }
 
 template <typename GfxFamily>
@@ -441,7 +447,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
             DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) ||
                              !!(gfxAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE)));
         }
-        gfxAllocation->residencyTaskCount = (int)this->taskCount;
+        gfxAllocation->residencyTaskCount = this->taskCount + 1;
     }
 }
 

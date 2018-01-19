@@ -51,10 +51,13 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     void addContextToken();
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone);
 
-    AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
+    AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone);
     ~AUBCommandStreamReceiverHw() override;
+
+    AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;
+    AUBCommandStreamReceiverHw &operator=(const AUBCommandStreamReceiverHw &) = delete;
 
     void initializeEngine(EngineType engineType);
 
@@ -77,6 +80,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     } engineInfoTable[EngineType::NUM_ENGINES];
 
     AUBCommandStreamReceiver::AubFileStream stream;
+    bool standalone;
 
     TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type ppgtt;
     PDPE ggtt;

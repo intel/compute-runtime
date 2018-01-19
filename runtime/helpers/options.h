@@ -36,7 +36,11 @@ enum CommandStreamReceiverType {
     // Capture an AUB file automatically for all traffic going through Device -> CommandStreamReceiver
     CSR_AUB,
     // Capture an AUB and tunnel all commands going through Device -> CommandStreamReceiver to a TBX server
-    CSR_TBX
+    CSR_TBX,
+    // Use receiver for real HW and capture AUB file
+    CSR_HW_WITH_AUB,
+    // Number of CSR types
+    CSR_TYPES_NUM
 };
 
 namespace OCLRT {

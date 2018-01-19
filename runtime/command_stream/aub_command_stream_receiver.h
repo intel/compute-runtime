@@ -30,10 +30,10 @@ struct HardwareInfo;
 class CommandStreamReceiver;
 
 struct AUBCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename, bool standalone);
 
     using AubFileStream = AubMemDump::AubFileStream;
 };
 
-typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &fileName);
+typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone);
 }

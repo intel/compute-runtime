@@ -36,6 +36,6 @@ class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
   public:
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump);
 };
 }

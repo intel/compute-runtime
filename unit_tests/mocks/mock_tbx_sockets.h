@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/device_command_stream.inl"
-#include "runtime/os_interface/windows/wddm_device_command_stream.inl"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+#pragma once
+#include "runtime/tbx/tbx_sockets.h"
 
 namespace OCLRT {
 
-template class DeviceCommandStreamReceiver<SKLFamily>;
-template class WddmCommandStreamReceiver<SKLFamily>;
-template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<SKLFamily>>;
-}
+class MockTbxSockets : public TbxSockets {
+  public:
+    MockTbxSockets(){};
+    ~MockTbxSockets() override = default;
+
+    bool init(const std::string &hostNameOrIp, uint16_t port) override { return true; };
+    void close() override{};
+
+    bool writeGTT(uint32_t gttOffset, uint64_t entry) override { return true; };
+
+    bool readMemory(uint64_t offset, void *data, size_t size) override { return true; };
+    bool writeMemory(uint64_t offset, const void *data, size_t size) override { return true; };
+
+    bool readMMIO(uint32_t offset, uint32_t *data) override { return true; };
+    bool writeMMIO(uint32_t offset, uint32_t data) override { return true; };
+};
+} // namespace OCLRT

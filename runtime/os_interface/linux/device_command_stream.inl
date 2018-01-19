@@ -21,13 +21,19 @@
  */
 
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "runtime/os_interface/linux/drm_command_stream.h"
 #include "hw_cmds.h"
 #include "drm_command_stream.h"
 
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo) {
-    return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr, gemCloseWorkerMode::gemCloseWorkerInactive);
+CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump) {
+    if (withAubDump) {
+        return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(hwInfo);
+    } else {
+        return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr);
+    }
 };
 }

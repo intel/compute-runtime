@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,7 @@ list (APPEND IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_device.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_memory_manager.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_memory_manager.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
 )

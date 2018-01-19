@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/create_command_stream_impl.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/options.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
@@ -36,9 +37,13 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
     assert(nullptr != pHwInfo->pPlatform);
     auto offset = !overrideCommandStreamReceiverCreation ? IGFX_MAX_CORE : 0;
     overrideCommandStreamReceiverCreation = false;
-    auto funcCreate = commandStreamReceiverFactory[offset + pHwInfo->pPlatform->eRenderCoreFamily];
-    if (funcCreate) {
-        commandStreamReceiver = funcCreate(*pHwInfo);
+    if (offset != 0) {
+        auto funcCreate = commandStreamReceiverFactory[offset + pHwInfo->pPlatform->eRenderCoreFamily];
+        if (funcCreate) {
+            commandStreamReceiver = funcCreate(*pHwInfo, false);
+        }
+    } else {
+        commandStreamReceiver = createCommandStreamImpl(pHwInfo);
     }
     return commandStreamReceiver;
 }

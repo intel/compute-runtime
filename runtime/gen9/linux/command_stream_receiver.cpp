@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,9 +22,11 @@
 
 #include "runtime/os_interface/linux/device_command_stream.inl"
 #include "runtime/os_interface/linux/drm_command_stream.inl"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 
 namespace OCLRT {
 
 template class DeviceCommandStreamReceiver<SKLFamily>;
 template class DrmCommandStreamReceiver<SKLFamily>;
+template class CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<SKLFamily>>;
 }

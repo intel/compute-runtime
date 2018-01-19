@@ -26,13 +26,18 @@
 #pragma warning(disable : 4005)
 #include "hw_cmds.h"
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo) {
-    return new WddmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr);
+CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump) {
+    if (withAubDump) {
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>(hwInfo);
+    } else {
+        return new WddmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr);
+    }
 }
 }

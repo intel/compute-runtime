@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/tbx/tbx_sockets.h"
+#include "runtime/tbx/tbx_sockets_imp.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
 
@@ -28,58 +28,22 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
-#include <winsock.h>
 typedef int socklen_t;
 #else
 #include <netdb.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-typedef int SOCKET;
 typedef struct sockaddr SOCKADDR;
 #define SOCKET_ERROR -1
 #define INVALID_SOCKET -1
 #define WSAECONNRESET -1
 #endif
 #include <cstdint>
-#include <iostream>
 #include "tbx_proto.h"
 
 namespace OCLRT {
-
-class TbxSocketsImp : public TbxSockets {
-  public:
-    TbxSocketsImp(std::ostream &err = std::cerr);
-    ~TbxSocketsImp() override = default;
-
-    bool init(const std::string &hostNameOrIp, uint16_t port) override;
-    void close() override;
-
-    bool writeGTT(uint32_t gttOffset, uint64_t entry) override;
-
-    bool readMemory(uint64_t offset, void *data, size_t size) override;
-    bool writeMemory(uint64_t offset, const void *data, size_t size) override;
-
-    bool readMMIO(uint32_t offset, uint32_t *data) override;
-    bool writeMMIO(uint32_t offset, uint32_t data) override;
-
-  protected:
-    std::ostream &cerrStream;
-    SOCKET m_socket = 0;
-
-    bool connectToServer(const std::string &hostNameOrIp, uint16_t port);
-    bool sendWriteData(const void *buffer, size_t sizeInBytes);
-    bool getResponseData(void *buffer, size_t sizeInBytes);
-
-    inline uint32_t getNextTransID() { return transID++; }
-
-    void logErrorInfo(const char *tag);
-
-  private:
-    uint32_t transID = 0;
-};
 
 TbxSocketsImp::TbxSocketsImp(std::ostream &err)
     : cerrStream(err) {
@@ -365,7 +329,4 @@ bool TbxSocketsImp::getResponseData(void *buffer, size_t sizeInBytes) {
     return true;
 }
 
-TbxSockets *TbxSockets::create() {
-    return new TbxSocketsImp;
-}
 } // namespace OCLRT

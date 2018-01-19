@@ -45,9 +45,9 @@ typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 
 template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
-    MockAubCsr(const HardwareInfo &hwInfoIn) : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn){};
+    MockAubCsr(const HardwareInfo &hwInfoIn, bool standalone) : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, standalone){};
 
-    CommandStreamReceiver::DispatchMode peekDispatchMode() {
+    CommandStreamReceiver::DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
     }
 };
@@ -58,7 +58,7 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreat
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 
-    CommandStreamReceiver *aubCsr = AUBCommandStreamReceiver::create(hwInfo, "");
+    CommandStreamReceiver *aubCsr = AUBCommandStreamReceiver::create(hwInfo, "", true);
     EXPECT_EQ(nullptr, aubCsr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
@@ -66,41 +66,41 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreat
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
     DebugManager.flags.CsrDispatchMode.set(0);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     EXPECT_EQ(CommandStreamReceiver::DispatchMode::BatchedDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDebugSettingsThenItHasProperDispatchModeEnabled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenMemoryManagerIsNotNull) {
     HardwareInfo hwInfo;
 
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(hwInfo));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(hwInfo, true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     EXPECT_NE(nullptr, memoryManager.get());
     aubCsr->setMemoryManager(nullptr);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
     // First makeResident marks the allocation resident
     aubCsr->makeResident(*gfxAllocation);
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount(), gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
 
     // Second makeResident should have no impact
     aubCsr->makeResident(*gfxAllocation);
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount(), gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
 
     // First makeNonResident marks the allocation as nonresident
@@ -118,7 +118,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment) {
-    auto aubCsr = new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]);
+    auto aubCsr = new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true);
     auto memoryManager = aubCsr->createMemoryManager(false);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
@@ -146,7 +146,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment)
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBufferAllocation) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
@@ -162,7 +162,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBuff
     aubCsr->flush(batchBuffer, engineType, nullptr);
 
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount(), commandBuffer->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
 
     aubCsr->makeSurfacePackNonResident(nullptr);
 
@@ -173,7 +173,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBuff
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAllocations) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -192,10 +192,10 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAl
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
 
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount(), gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
 
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount(), commandBuffer->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
 
     aubCsr->makeSurfacePackNonResident(&allocationsForResidency);
 
@@ -208,7 +208,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAl
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationIsCreatedThenItDoesntHaveTypeNonAubWritable) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -219,7 +219,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnDefaultAllocationThenAllocationTypeShouldNotBeMadeNonAubWritable) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -233,7 +233,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnBufferAndImageAllocationsThenAllocationsTypesShouldBeMadeNonAubWritable) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -254,7 +254,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsntNonAubWritableThenWriteMemoryIsAllowed) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -265,7 +265,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsNonAubWritableThenWriteMemoryIsNotAllowed) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -277,8 +277,29 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationSizeIsZeroThenWriteMemoryIsNotAllowed) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0]));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     auto gfxAllocation = GraphicsAllocation((void *)0x1234, 0);
 
     EXPECT_FALSE(aubCsr->writeMemory(gfxAllocation));
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnCommandBufferAllocation) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    aubCsr->flush(batchBuffer, engineType, nullptr);
+
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+
+    memoryManager->freeGraphicsMemoryImpl(commandBuffer);
+    aubCsr->setMemoryManager(nullptr);
 }

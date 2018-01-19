@@ -41,7 +41,7 @@ void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     strfilename << testInfo->test_case_name() << "_" << testInfo->name();
 
     const auto &hwInfo = device.getHardwareInfo();
-    pCommandStreamReceiver = AUBCommandStreamReceiver::create(hwInfo, strfilename.str());
+    pCommandStreamReceiver = AUBCommandStreamReceiver::create(hwInfo, strfilename.str(), true);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
     device.resetCommandStreamReceiver(pCommandStreamReceiver);

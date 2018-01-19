@@ -57,7 +57,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     UltCommandStreamReceiver(const UltCommandStreamReceiver &) = delete;
     UltCommandStreamReceiver &operator=(const UltCommandStreamReceiver &) = delete;
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn) {
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump) {
         return new UltCommandStreamReceiver<GfxFamily>(hwInfoIn);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/device_command_stream.inl"
-#include "runtime/os_interface/windows/wddm_device_command_stream.inl"
-#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "runtime/tbx/tbx_sockets_imp.h"
+
+using namespace OCLRT;
 
 namespace OCLRT {
-
-template class DeviceCommandStreamReceiver<SKLFamily>;
-template class WddmCommandStreamReceiver<SKLFamily>;
-template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<SKLFamily>>;
+TbxSockets *TbxSockets::create() {
+    return new TbxSocketsImp;
 }
+} // namespace OCLRT

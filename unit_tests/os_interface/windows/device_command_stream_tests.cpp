@@ -25,6 +25,7 @@
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
@@ -133,14 +134,20 @@ typedef ::Test<WddmCommandStreamFixture> WddmCommandStreamTest;
 typedef ::Test<WddmCommandStreamWithMockGdiFixture> WddmCommandStreamMockGdiTest;
 typedef ::Test<WddmCommandStreamFixture> WddmDefaultTest;
 
-TEST(DeviceCommandStreamTest, Create) {
-    auto ptr = DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(DEFAULT_TEST_PLATFORM::hwInfo);
-    EXPECT_NE(nullptr, ptr);
-    auto wddm = static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(ptr)->peekWddm();
+TEST(DeviceCommandStreamTest, CreateWddmCSR) {
+    std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(DEFAULT_TEST_PLATFORM::hwInfo, false)));
+    EXPECT_NE(nullptr, csr);
+    std::unique_ptr<Wddm> wddm(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(csr.get())->peekWddm());
     EXPECT_NE(nullptr, wddm);
-    delete ptr;
-    //wddm still valid
-    delete wddm;
+}
+
+TEST(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
+    std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(DEFAULT_TEST_PLATFORM::hwInfo, true)));
+    EXPECT_NE(nullptr, csr);
+    std::unique_ptr<Wddm> wddm(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(csr.get())->peekWddm());
+    EXPECT_NE(nullptr, wddm);
+    auto aubCSR = static_cast<CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> *>(csr.get())->aubCSR;
+    EXPECT_NE(nullptr, aubCSR);
 }
 
 TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedMonitoredFence) {

@@ -122,7 +122,7 @@ namespace OCLRT {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 }
 
-CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn) {
+CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump) {
     return nullptr;
 };
 

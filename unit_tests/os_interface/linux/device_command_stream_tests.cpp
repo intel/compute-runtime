@@ -54,13 +54,21 @@ class DeviceCommandStreamLeaksFixture : public DeviceFixture,
 typedef Test<DeviceCommandStreamLeaksFixture> DeviceCommandStreamLeaksTest;
 
 HWTEST_F(DeviceCommandStreamLeaksTest, Create) {
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0]));
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false));
     DrmMockSuccess mockDrm;
     EXPECT_NE(nullptr, ptr);
 }
 
-HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenItIsCreateThenGemCloseWorkerInactiveModeIsSelected) {
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0]));
+HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenItIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false));
     auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
     EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
+}
+
+HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWithAubDumWhenItIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], true));
+    auto drmCsrWithAubDump = (CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<FamilyType>> *)ptr.get();
+    EXPECT_EQ(drmCsrWithAubDump->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerInactive);
+    auto aubCSR = static_cast<CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<FamilyType>> *>(ptr.get())->aubCSR;
+    EXPECT_NE(nullptr, aubCSR);
 }

@@ -180,6 +180,10 @@ set (RUNTIME_SRCS_COMMAND_STREAM
   command_stream/command_stream_receiver.h
   command_stream/command_stream_receiver_hw.h
   command_stream/command_stream_receiver_hw.inl
+  command_stream/command_stream_receiver_with_aub_dump.h
+  command_stream/command_stream_receiver_with_aub_dump.inl
+  command_stream/create_command_stream_impl.cpp
+  command_stream/create_command_stream_impl.h
   command_stream/csr_definitions.h
   command_stream/device_command_stream.h
   command_stream/linear_stream.cpp
@@ -484,8 +488,9 @@ set (RUNTIME_SRCS_SHARINGS
 
 set (RUNTIME_SRCS_TBX
   tbx/tbx_proto.h
-  tbx/tbx_sockets.cpp
   tbx/tbx_sockets.h
+  tbx/tbx_sockets_imp.cpp
+  tbx/tbx_sockets_imp.h
 )
 
 set (RUNTIME_SRCS_UTILITIES
@@ -813,6 +818,7 @@ if(${GENERATE_EXECUTABLE})
 	  dll/options.cpp
 	  dll/create_command_stream.cpp
 	  dll/create_deferred_deleter.cpp
+	  dll/create_tbx_sockets.cpp
 	  helpers/abort.cpp
 	  helpers/debug_helpers.cpp
 	  gmm_helper/resource_info.cpp
