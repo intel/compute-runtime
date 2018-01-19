@@ -84,13 +84,7 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
         }
         pDevice->increaseProgramCount();
 
-        bool forceStateless = is32bit | DebugManager.flags.DisableStatelessToStatefulOptimization.get();
-
-        if (force32BitAddressess) {
-            forceStateless = true;
-        }
-
-        if (forceStateless) {
+        if (DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
         }
     }
