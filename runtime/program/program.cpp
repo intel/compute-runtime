@@ -120,14 +120,12 @@ Program::~Program() {
     delete blockKernelManager;
 
     if (constantSurface) {
-        auto memoryManager = pDevice->getMemoryManager();
-        memoryManager->freeGraphicsMemory(constantSurface);
+        pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface);
         constantSurface = nullptr;
     }
 
     if (globalSurface) {
-        auto memoryManager = pDevice->getMemoryManager();
-        memoryManager->freeGraphicsMemory(globalSurface);
+        pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
         globalSurface = nullptr;
     }
 }

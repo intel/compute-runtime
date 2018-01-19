@@ -1295,7 +1295,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
 
     // All fragments ready for release
-    taskCount = 1;
+    currentGpuTag = 1;
     csr.latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
@@ -1351,7 +1351,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
 
     // All fragments ready for release
-    taskCount = taskCountReady - 1;
+    currentGpuTag = taskCountReady - 1;
     csr.latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
@@ -1383,4 +1383,36 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
         EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
         EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
     }
+}
+TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasNotUsedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsDestroyedInPlace) {
+    auto notUsedAllocation = memoryManager->allocateGraphicsMemory(4096);
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(notUsedAllocation);
+    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+}
+
+TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsDestroyedInPlace) {
+    auto usedAllocationButGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
+
+    auto tagAddress = memoryManager->csr->getTagAddress();
+    ASSERT_NE(0u, *tagAddress);
+
+    usedAllocationButGpuCompleted->taskCount = *tagAddress - 1;
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationButGpuCompleted);
+    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+}
+
+TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
+    auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
+
+    auto tagAddress = memoryManager->csr->getTagAddress();
+
+    usedAllocationAndNotGpuCompleted->taskCount = *tagAddress + 1;
+
+    memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
+    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_EQ(memoryManager->graphicsAllocations.peekHead(), usedAllocationAndNotGpuCompleted);
+
+    //change task count so cleanup will not clear alloc in use
+    usedAllocationAndNotGpuCompleted->taskCount = ObjectNotUsed;
 }

@@ -36,6 +36,7 @@ class MemoryManagerWithCsrFixture {
     GMockMemoryManager *gmockMemoryManager;
     MockCommandStreamReceiver csr;
     uint32_t taskCount = 0;
+    uint32_t currentGpuTag = initialHardwareTag;
 
     MemoryManagerWithCsrFixture() {
     }

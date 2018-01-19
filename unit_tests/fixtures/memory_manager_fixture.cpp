@@ -33,7 +33,7 @@ void MemoryManagerWithCsrFixture::SetUp() {
 
     ON_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerCleanAllocationList));
 
-    csr.tagAddress = &taskCount;
+    csr.tagAddress = &currentGpuTag;
     memoryManager->csr = &csr;
 }
 

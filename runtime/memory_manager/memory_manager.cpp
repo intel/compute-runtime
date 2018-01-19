@@ -253,6 +253,15 @@ void MemoryManager::clearEvictionAllocations() {
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
     freeGraphicsMemoryImpl(gfxAllocation);
 }
+//if not in use destroy in place
+//if in use pass to temporary allocation list that is cleaned on blocking calls
+void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
+    if (gfxAllocation->taskCount == ObjectNotUsed || gfxAllocation->taskCount <= *csr->getTagAddress()) {
+        freeGraphicsMemory(gfxAllocation);
+    } else {
+        storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
+    }
+}
 
 void MemoryManager::waitForDeletions() {
     if (deferredDeleter) {

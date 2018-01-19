@@ -123,6 +123,8 @@ class MemoryManager {
 
     void freeGraphicsMemory(GraphicsAllocation *gfxAllocation);
 
+    void checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation);
+
     void freeGmm(GraphicsAllocation *gfxAllocation);
 
     virtual uint64_t getSystemSharedMemory() = 0;

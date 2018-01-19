@@ -114,11 +114,7 @@ Kernel::~Kernel() {
     crossThreadDataSize = 0;
 
     if (privateSurface) {
-        if (privateSurface->taskCount == ObjectNotUsed || privateSurface->taskCount <= *device.getTagAddress()) {
-            device.getMemoryManager()->freeGraphicsMemory(privateSurface);
-        } else {
-            device.getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(privateSurface), TEMPORARY_ALLOCATION);
-        }
+        device.getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(privateSurface);
         privateSurface = nullptr;
     }
 

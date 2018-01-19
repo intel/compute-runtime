@@ -29,6 +29,7 @@ set(IGDRCL_SRCS_tests_program
   ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/process_elf_binary_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/process_spir_binary_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/program_data_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_from_binary.h
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_source.h
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_block_kernels_tests.cpp

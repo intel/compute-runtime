@@ -61,7 +61,7 @@ void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
     this->memoryManager->freeGraphicsMemory(tagAllocation);
     tagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t));
     auto pTagMemory = reinterpret_cast<uint32_t *>(tagAllocation->getUnderlyingBuffer());
-    *pTagMemory = -1;
+    *pTagMemory = initialHardwareTag;
     tagAddress = pTagMemory;
     commandStreamReceiver->setMemoryManager(memoryManager);
     commandStreamReceiver->setTagAllocation(tagAllocation);
