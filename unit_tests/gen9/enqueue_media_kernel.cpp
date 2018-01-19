@@ -27,7 +27,7 @@
 using namespace OCLRT;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<SKLFamily>();
 
@@ -42,7 +42,7 @@ GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelFirstTimeThenProgram
     EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
 }
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueRegularKernel<SKLFamily>();
 
@@ -57,21 +57,21 @@ GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelFirstTimeThenProg
     EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
 }
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<SKLFamily>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<SKLFamily>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueRegularKernel<SKLFamily>();
     enqueueVmeKernel<SKLFamily>();
@@ -86,7 +86,7 @@ GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueVmeKernelAfterNonVmeKernelThe
     EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
 }
 
-GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<SKLFamily>();
     enqueueRegularKernel<SKLFamily>();
@@ -99,4 +99,30 @@ GEN9TEST_F(MediaKernelTest, givenGen9CSRWhenEnqueueNonVmeKernelAfterVmeKernelThe
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     EXPECT_EQ(expectedMask, pCmd->getMaskBits());
     EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToFalse) {
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getCommandStreamReceiver());
+    csr->lastVmeSubslicesConfig = true;
+    enqueueVmeKernel<FamilyType>();
+    EXPECT_TRUE(csr->lastVmeSubslicesConfig);
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelThenVmeSubslicesConfigDoesntChangeToTrue) {
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getCommandStreamReceiver());
+    csr->lastVmeSubslicesConfig = false;
+    enqueueVmeKernel<FamilyType>();
+    EXPECT_FALSE(csr->lastVmeSubslicesConfig);
+}
+
+GEN9TEST_F(MediaKernelTest, gen9CmdSizeForMediaSampler) {
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&pDevice->getCommandStreamReceiver());
+
+    csr->lastVmeSubslicesConfig = false;
+    EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(false));
+    EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(true));
+
+    csr->lastVmeSubslicesConfig = true;
+    EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(false));
+    EXPECT_EQ(0u, csr->getCmdSizeForMediaSampler(true));
 }

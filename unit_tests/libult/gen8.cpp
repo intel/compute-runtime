@@ -20,10 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/command_stream/command_stream_receiver_hw.inl"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/command_stream/device_command_stream.h"
+#include "runtime/helpers/base_object.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
 namespace OCLRT {

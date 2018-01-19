@@ -132,6 +132,7 @@ class CommandStreamReceiver {
     bool isPreambleSent = false;
     bool GSBAFor32BitProgrammed = false;
     bool mediaVfeStateDirty = true;
+    bool lastVmeSubslicesConfig = false;
 
     uint32_t lastSentL3Config = 0;
     int8_t lastSentCoherencyRequest = -1;

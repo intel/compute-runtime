@@ -181,6 +181,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags);
     programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
+    programMediaSampler(commandStreamCSR, dispatchFlags);
 
     size_t requiredScratchSizeInBytes = requiredScratchSize * (hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice * hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount);
 
@@ -503,6 +504,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }
     size += getCmdSizeForCoherency();
+    size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
 
     size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
 
@@ -568,5 +570,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
         PreambleHelper<GfxFamily>::programVFEState(&csr, hwInfo, requiredScratchSize, getScratchPatchAddress());
         overrideMediaVFEStateDirty(false);
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
+}
+
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
+    return 0;
 }
 } // namespace OCLRT

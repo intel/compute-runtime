@@ -63,6 +63,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
     size_t getCmdSizeForCoherency();
+    size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override;
@@ -72,6 +73,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);
+    void programMediaSampler(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
