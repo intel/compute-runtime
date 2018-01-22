@@ -53,7 +53,7 @@ set_target_properties(
     mock_gdi
     PROPERTIES DEBUG_OUTPUT_NAME "gdi32_mock"
     RELEASE_OUTPUT_NAME "gdi32_mock"
-    RELEASE-INTERNAL_OUTPUT_NAME "gdi32_mock"
+    RELEASEINTERNAL_OUTPUT_NAME "gdi32_mock"
     OUTPUT_NAME "gdi32_mock"
 )
 
