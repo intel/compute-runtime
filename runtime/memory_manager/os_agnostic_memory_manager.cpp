@@ -57,7 +57,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     if (ptr != nullptr) {
         memoryAllocation = new MemoryAllocation(true, 1, ptr, reinterpret_cast<uint64_t>(ptr), size, counter);
         if (!memoryAllocation) {
-            alignedFree(ptr);
+            alignedFreeWrapper(ptr);
             return nullptr;
         }
         memoryAllocation->uncacheable = uncacheable;
@@ -93,7 +93,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
     void *ptrAlloc = nullptr;
 
     if (size < 0xfffff000)
-        ptrAlloc = alignedMalloc(allocationSize, MemoryConstants::allocationAlignment);
+        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
     void *gpuPointer = allocator32Bit->allocate(allocationSize);
 
     DEBUG_BREAK_IF(allocationMap.find(ptrAlloc) != allocationMap.end());
@@ -153,10 +153,10 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     if (is32BitAllocation) {
         allocator32Bit->free(gpuPtrToFree, sizeToFree);
         if (freeMemory) {
-            ::alignedFree(ptr);
+            alignedFreeWrapper(ptr);
         }
     } else if (freeMemory) {
-        ::alignedFree(ptr);
+        alignedFreeWrapper(ptr);
     }
     delete gfxAllocation;
 }

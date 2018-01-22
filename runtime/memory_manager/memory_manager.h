@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@
 #include "runtime/memory_manager/host_ptr_manager.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/32bit_memory.h"
-
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/utilities/tag_allocator_base.h"
 
 #include <cstdint>
@@ -54,6 +54,10 @@ class SVMAllocsManager;
 enum allocationType {
     TEMPORARY_ALLOCATION,
     REUSABLE_ALLOCATION
+};
+
+struct AlignedMallocRestrictions {
+    uintptr_t minAddress;
 };
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
@@ -206,6 +210,18 @@ class MemoryManager {
 
     bool isAsyncDeleterEnabled() const;
     virtual bool isMemoryBudgetExhausted() const;
+
+    virtual AlignedMallocRestrictions *getAlignedMallocRestrictions() {
+        return nullptr;
+    }
+
+    MOCKABLE_VIRTUAL void *alignedMallocWrapper(size_t bytes, size_t alignment) {
+        return ::alignedMalloc(bytes, alignment);
+    }
+
+    MOCKABLE_VIRTUAL void alignedFreeWrapper(void *ptr) {
+        ::alignedFree(ptr);
+    }
 
   protected:
     std::recursive_mutex mtx;

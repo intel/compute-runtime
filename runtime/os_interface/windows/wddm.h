@@ -22,6 +22,7 @@
 
 #pragma once
 #include "runtime/os_interface/windows/windows_wrapper.h"
+#include "runtime/os_interface/windows/windows_defs.h"
 #include "umKmInc/sharedata.h"
 #include "runtime/helpers/debug_helpers.h"
 #include <d3d9types.h>
@@ -183,6 +184,10 @@ class Wddm {
     void initPageTableManagerRegisters(LinearStream &stream);
     bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
 
+    uintptr_t getWddmMinAddress() {
+        return this->minAddress;
+    }
+
   protected:
     bool initialized;
     bool gdiAllocated;
@@ -208,6 +213,7 @@ class Wddm {
     uintptr_t maximumApplicationAddress;
     GPUNODE_ORDINAL node;
     std::unique_ptr<GmmMemory> gmmMemory;
+    uintptr_t minAddress;
 
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages);
     MOCKABLE_VIRTUAL bool openAdapter();

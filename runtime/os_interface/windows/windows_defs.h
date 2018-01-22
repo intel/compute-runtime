@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,19 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/gdi_interface.h"
-#include "runtime/os_interface/windows/wddm.h"
+#pragma once
 
 namespace OCLRT {
 
-template <typename GfxFamily>
-bool Wddm::configureDeviceAddressSpace() {
-    SYSTEM_INFO sysInfo;
-    Wddm::getSystemInfo(&sysInfo);
-    maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
-    minAddress = windowsMinAddress;
-    return gmmMemory->configureDeviceAddressSpace(adapter, device, gdi->escape,
-                                                  maximumApplicationAddress + 1u,
-                                                  0, 0, adapterInfo->SkuTable.FtrL3IACoherency, 0, 0);
-}
+constexpr uintptr_t windowsMinAddress = 0x200000;
+
 } // namespace OCLRT

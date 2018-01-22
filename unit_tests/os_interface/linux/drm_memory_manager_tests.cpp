@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -138,8 +138,6 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 };
 
 typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
-
-/* ---- */
 
 TEST_F(DrmMemoryManagerTest, pinBBnotCreated) {
     mock->ioctl_expected = 0;
@@ -1492,6 +1490,10 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
 
 TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
     EXPECT_TRUE(memoryManager->peekVirtualPaddingSupport());
+}
+
+TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
+    EXPECT_EQ(nullptr, memoryManager->getAlignedMallocRestrictions());
 }
 
 TEST(Allocator32BitUsingHeapAllocator, given32BitAllocatorWhenMMapFailsThenNullptrIsReturned) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -389,6 +389,27 @@ HWTEST_F(WddmTest, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandle
     }
 
     mm.freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(WddmTest, givenWddmCreatedWhenNotInitedThenMinAddressZero) {
+    Wddm *wddm = Wddm::createWddm();
+    uintptr_t expected = 0;
+    uintptr_t actual = wddm->getWddmMinAddress();
+    EXPECT_EQ(expected, actual);
+
+    delete wddm;
+}
+
+HWTEST_F(WddmTest, givenWddmCreatedWhenInitedThenMinAddressValid) {
+    Wddm *wddm = Wddm::createWddm();
+    bool ret = wddm->init<FamilyType>();
+    EXPECT_TRUE(ret);
+
+    uintptr_t expected = windowsMinAddress;
+    uintptr_t actual = wddm->getWddmMinAddress();
+    EXPECT_EQ(expected, actual);
+
+    delete wddm;
 }
 
 HWTEST_F(WddmInstrumentationTest, configureDeviceAddressSpaceOnInit) {

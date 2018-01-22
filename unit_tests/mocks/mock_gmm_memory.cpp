@@ -21,6 +21,7 @@
 */
 
 #include "mock_gmm_memory.h"
+#include "runtime/os_interface/windows/windows_defs.h"
 
 using namespace ::testing;
 
@@ -34,7 +35,9 @@ GmmMemory *GmmMemory::create() {
     if (MockGmmMemory::MockGmmMemoryFlag == MockGmmMemory::MockType::MockDummy) {
         return new MockGmmMemoryDummy();
     } else {
-        return new NiceMock<GmockGmmMemory>();
+        GmockGmmMemory *gmmMemory = new NiceMock<GmockGmmMemory>();
+        ON_CALL(*gmmMemory, getInternalGpuVaRangeLimit()).WillByDefault(::testing::Return(OCLRT::windowsMinAddress));
+        return gmmMemory;
     }
 }
 

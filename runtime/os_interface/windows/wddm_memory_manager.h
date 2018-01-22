@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -85,6 +85,8 @@ class WddmMemoryManager : public MemoryManager {
 
     bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override;
 
+    AlignedMallocRestrictions *getAlignedMallocRestrictions() override;
+
   protected:
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     WddmAllocation *getTrimCandidateHead() {
@@ -113,6 +115,7 @@ class WddmMemoryManager : public MemoryManager {
     uint64_t lastPeriodicTrimFenceValue = 0;
     uint32_t trimCandidatesCount = 0;
     bool memoryBudgetExhausted = false;
+    AlignedMallocRestrictions mallocRestrictions;
 
   private:
     Wddm *wddm;

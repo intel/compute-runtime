@@ -67,6 +67,7 @@ Wddm::Wddm(Gdi *gdi) : initialized(false),
     maximumApplicationAddress = 0;
     node = GPUNODE_3D;
     gmmMemory = std::unique_ptr<GmmMemory>(GmmMemory::create());
+    minAddress = 0;
 }
 
 Wddm::Wddm() : Wddm(new Gdi()) {

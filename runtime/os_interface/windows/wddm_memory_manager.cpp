@@ -55,6 +55,7 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, Wddm *wddm) : MemoryM
     asyncDeleterEnabled = DebugManager.flags.EnableDeferredDeleter.get();
     if (asyncDeleterEnabled)
         deferredDeleter = createDeferredDeleter();
+    mallocRestrictions.minAddress = wddm->getWddmMinAddress();
 }
 
 void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
@@ -309,7 +310,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         }
         auto status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle);
         DEBUG_BREAK_IF(!status);
-        ::alignedFree(cpuPtr);
+        alignedFreeWrapper(cpuPtr);
         wddm->releaseGpuPtr(gpuPtr);
     }
     delete gfxAllocation;
@@ -747,4 +748,9 @@ bool WddmMemoryManager::trimResidencyToBudget(uint64_t bytes) {
 bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
     return wddm->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->gmm, true);
 }
+
+AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
+    return &mallocRestrictions;
+}
+
 } // namespace OCLRT

@@ -1431,3 +1431,140 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
     //change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->taskCount = ObjectNotUsed;
 }
+
+class MockAlignMallocMemoryManager : public MockMemoryManager {
+  public:
+    MockAlignMallocMemoryManager() : MockMemoryManager() {
+        testMallocRestrictions.minAddress = 0;
+        alignMallocRestrictions = nullptr;
+        alignMallocCount = 0;
+        alignMallocMaxIter = 3;
+        returnNullBad = false;
+        returnNullGood = false;
+    }
+
+    AlignedMallocRestrictions testMallocRestrictions;
+    AlignedMallocRestrictions *alignMallocRestrictions;
+
+    static const uintptr_t alignMallocMinAddress = 0x100000;
+    static const uintptr_t alignMallocStep = 10;
+    int alignMallocMaxIter;
+    int alignMallocCount;
+    bool returnNullBad;
+    bool returnNullGood;
+
+    void *alignedMallocWrapper(size_t size, size_t align) override {
+        if (alignMallocCount < alignMallocMaxIter) {
+            alignMallocCount++;
+            if (!returnNullBad) {
+                return reinterpret_cast<void *>(alignMallocMinAddress - alignMallocStep);
+            } else {
+                return nullptr;
+            }
+        }
+        alignMallocCount = 0;
+        if (!returnNullGood) {
+            return reinterpret_cast<void *>(alignMallocMinAddress + alignMallocStep);
+        } else {
+            return nullptr;
+        }
+    };
+
+    void alignedFreeWrapper(void *) override {
+        alignMallocCount = 0;
+    }
+
+    AlignedMallocRestrictions *getAlignedMallocRestrictions() override {
+        return alignMallocRestrictions;
+    }
+};
+
+class MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
+  public:
+    MockAlignMallocMemoryManager *alignedMemoryManager = nullptr;
+
+    void SetUp() override {
+        MemoryAllocatorTest::SetUp();
+
+        alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager();
+        //assert we have memory manager
+        ASSERT_NE(nullptr, memoryManager);
+    }
+
+    void TearDown() override {
+        alignedMemoryManager->alignedFreeWrapper(nullptr);
+        delete alignedMemoryManager;
+
+        MemoryAllocatorTest::TearDown();
+    }
+};
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWhenNullAlignRestrictionsThenNotUseRestrictions) {
+    EXPECT_EQ(nullptr, memoryManager->getAlignedMallocRestrictions());
+    EXPECT_EQ(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    uintptr_t expectedVal = MockAlignMallocMemoryManager::alignMallocMinAddress - MockAlignMallocMemoryManager::alignMallocStep;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWhenZeroAlignRestrictionsThenNotUseRestrictions) {
+    alignedMemoryManager->alignMallocRestrictions = &alignedMemoryManager->testMallocRestrictions;
+    EXPECT_NE(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    alignedMemoryManager->alignMallocCount = 0;
+    uintptr_t expectedVal = MockAlignMallocMemoryManager::alignMallocMinAddress - MockAlignMallocMemoryManager::alignMallocStep;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+
+    alignedMemoryManager->alignMallocCount = alignedMemoryManager->alignMallocMaxIter + 1;
+    expectedVal = MockAlignMallocMemoryManager::alignMallocMinAddress + MockAlignMallocMemoryManager::alignMallocStep;
+    memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWitNonZeroAlignRestrictionsWhenFirstGoodAddressThenUseRestrictionsAndReturnFirst) {
+    alignedMemoryManager->alignMallocRestrictions = &alignedMemoryManager->testMallocRestrictions;
+    alignedMemoryManager->testMallocRestrictions.minAddress = MockAlignMallocMemoryManager::alignMallocMinAddress;
+    EXPECT_NE(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    alignedMemoryManager->alignMallocCount = alignedMemoryManager->alignMallocMaxIter + 1;
+    uintptr_t expectedVal = MockAlignMallocMemoryManager::alignMallocMinAddress + MockAlignMallocMemoryManager::alignMallocStep;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWitNonZeroAlignRestrictionsWhenFirstNullAddressThenUseRestrictionsAndReturnFirstNull) {
+    alignedMemoryManager->alignMallocRestrictions = &alignedMemoryManager->testMallocRestrictions;
+    alignedMemoryManager->testMallocRestrictions.minAddress = MockAlignMallocMemoryManager::alignMallocMinAddress;
+    EXPECT_NE(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    alignedMemoryManager->alignMallocCount = alignedMemoryManager->alignMallocMaxIter + 1;
+    alignedMemoryManager->returnNullGood = true;
+    uintptr_t expectedVal = 0;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWitNonZeroAlignRestrictionsWhenFirstBadAnotherGoodAddressThenUseRestrictionsAndReturnAnother) {
+    alignedMemoryManager->alignMallocRestrictions = &alignedMemoryManager->testMallocRestrictions;
+    alignedMemoryManager->testMallocRestrictions.minAddress = MockAlignMallocMemoryManager::alignMallocMinAddress;
+    EXPECT_NE(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    alignedMemoryManager->alignMallocCount = 0;
+    uintptr_t expectedVal = MockAlignMallocMemoryManager::alignMallocMinAddress + MockAlignMallocMemoryManager::alignMallocStep;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}
+
+TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWitNonZeroAlignRestrictionsWhenFirstBadAnotherNullAddressThenUseRestrictionsAndReturnNull) {
+    alignedMemoryManager->alignMallocRestrictions = &alignedMemoryManager->testMallocRestrictions;
+    alignedMemoryManager->testMallocRestrictions.minAddress = MockAlignMallocMemoryManager::alignMallocMinAddress;
+    EXPECT_NE(nullptr, alignedMemoryManager->getAlignedMallocRestrictions());
+
+    alignedMemoryManager->alignMallocCount = 0;
+    alignedMemoryManager->returnNullGood = true;
+    uintptr_t expectedVal = 0;
+    uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
+    EXPECT_EQ(expectedVal, memVal);
+}

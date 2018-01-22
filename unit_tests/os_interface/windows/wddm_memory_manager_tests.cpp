@@ -550,6 +550,13 @@ HWTEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
     mm->freeGraphicsMemory(nullptr);
 }
 
+HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenValueIsReturned) {
+    SetUpMm<FamilyType>();
+    AlignedMallocRestrictions *mallocRestrictions = mm->getAlignedMallocRestrictions();
+    ASSERT_NE(nullptr, mallocRestrictions);
+    EXPECT_EQ(OCLRT::windowsMinAddress, mallocRestrictions->minAddress);
+}
+
 HWTEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation;

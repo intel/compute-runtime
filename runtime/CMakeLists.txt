@@ -564,6 +564,7 @@ if (WIN32)
     os_interface/windows/wddm_engine_mapper.inl
     os_interface/windows/wddm_memory_manager.cpp
     os_interface/windows/wddm_memory_manager.h
+    os_interface/windows/windows_defs.h
     os_interface/windows/windows_inc.cpp
     os_interface/windows/windows_wrapper.h
     os_interface/windows/performance_counters_win.cpp

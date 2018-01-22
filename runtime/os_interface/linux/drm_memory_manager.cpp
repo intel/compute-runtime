@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,6 @@
  */
 
 #include "runtime/device/device.h"
-#include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/32bit_memory.h"
@@ -50,13 +49,13 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
     }
 
     if (forcePinAllowed) {
-        auto mem = ::alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+        auto mem = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
         DEBUG_BREAK_IF(mem == nullptr);
 
         pinBB = allocUserptr(reinterpret_cast<uintptr_t>(mem), MemoryConstants::pageSize, 0, true);
 
         if (!pinBB) {
-            ::alignedFree(mem);
+            alignedFreeWrapper(mem);
         } else {
             pinBB->isAllocated = true;
         }
@@ -129,7 +128,7 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
                 }
 
             } else {
-                ::alignedFree(address);
+                alignedFreeWrapper(address);
             }
         }
     }
@@ -174,7 +173,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     // It's needed to prevent overlapping pages with user pointers
     size_t cSize = std::max(alignUp(size, minAlignment), minAlignment);
 
-    auto res = ::alignedMalloc(cSize, cAlignment);
+    auto res = alignedMallocWrapper(cSize, cAlignment);
 
     if (!res)
         return nullptr;
@@ -182,7 +181,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(res), cSize, 0, true);
 
     if (!bo) {
-        ::alignedFree(res);
+        alignedFreeWrapper(res);
         return nullptr;
     }
 

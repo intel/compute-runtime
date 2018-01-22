@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/memory_manager/deferred_deleter.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
@@ -73,8 +74,35 @@ MemoryManager::~MemoryManager() {
 
 void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
     // Establish a minimum alignment of 16bytes.
-    const size_t minAlignment = 16;
-    return alignedMalloc(size, std::max(alignment, minAlignment));
+    constexpr size_t minAlignment = 16;
+    alignment = std::max(alignment, minAlignment);
+    auto restrictions = getAlignedMallocRestrictions();
+    void *ptr = nullptr;
+
+    ptr = alignedMallocWrapper(size, alignment);
+    if (restrictions == nullptr) {
+        return ptr;
+    } else if (restrictions->minAddress == 0) {
+        return ptr;
+    } else {
+        if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
+            StackVec<void *, 100> invalidMemVector;
+            invalidMemVector.push_back(ptr);
+            do {
+                ptr = alignedMallocWrapper(size, alignment);
+                if (restrictions->minAddress > reinterpret_cast<uintptr_t>(ptr) && ptr != nullptr) {
+                    invalidMemVector.push_back(ptr);
+                } else {
+                    break;
+                }
+            } while (1);
+            for (auto &it : invalidMemVector) {
+                alignedFreeWrapper(it);
+            }
+        }
+    }
+
+    return ptr;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {

@@ -52,6 +52,10 @@ class GmmMemoryBase {
                    : false;
     }
 
+    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit() {
+        return static_cast<uintptr_t>(pGmmGlobalContext->GetInternalGpuVaRangeLimit());
+    }
+
   protected:
     GmmMemoryBase() = default;
 };

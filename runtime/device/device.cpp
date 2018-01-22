@@ -94,14 +94,13 @@ Device::~Device() {
             preemptionAllocation = nullptr;
         }
         memoryManager->waitForDeletions();
-    }
-    if (memoryManager) {
+
         memoryManager->freeGraphicsMemory(tagAllocation);
+        alignedFree(this->slmWindowStartAddress);
     }
     tagAllocation = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
-    alignedFree(this->slmWindowStartAddress);
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,

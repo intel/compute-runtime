@@ -22,6 +22,7 @@
 
 #pragma once
 #include "gmm_memory.h"
+#include "runtime/os_interface/windows/windows_defs.h"
 #include "gmock/gmock.h"
 
 namespace OCLRT {
@@ -52,6 +53,10 @@ class MockGmmMemoryDummy : public GmmMemory {
                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
         return true;
     }
+
+    uintptr_t getInternalGpuVaRangeLimit() {
+        return OCLRT::windowsMinAddress;
+    }
 };
 
 class GmockGmmMemory : public GmmMemory {
@@ -70,5 +75,7 @@ class GmockGmmMemory : public GmmMemory {
                       BOOLEAN BDWL3Coherency,
                       GMM_GFX_SIZE_T SizeOverride,
                       GMM_GFX_SIZE_T SlmGfxSpaceReserve));
+
+    MOCK_METHOD0(getInternalGpuVaRangeLimit, uintptr_t());
 };
 } // namespace OCLRT
