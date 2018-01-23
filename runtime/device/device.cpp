@@ -197,7 +197,7 @@ void *Device::getSLMWindowStartAddress() {
 
 void Device::prepareSLMWindow() {
     if (this->slmWindowStartAddress == nullptr) {
-        this->slmWindowStartAddress = alignedMalloc(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
+        this->slmWindowStartAddress = memoryManager->allocateSystemMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
     }
 }
 

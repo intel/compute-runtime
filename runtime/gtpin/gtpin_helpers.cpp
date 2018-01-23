@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 #include "runtime/context/context.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 using namespace gtpin;
 
@@ -40,7 +41,7 @@ GTPIN_DI_STATUS gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, re
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
     size_t size = alignUp(reqSize, MemoryConstants::cacheLineSize);
-    void *hostPtr = alignedMalloc(size, MemoryConstants::pageSize);
+    void *hostPtr = pContext->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
     if (hostPtr == nullptr) {
         return GTPIN_DI_ERROR_ALLOCATION_FAILED;
     }
@@ -90,4 +91,4 @@ GTPIN_DI_STATUS gtpinUnmapBuffer(context_handle_t context, resource_handle_t res
     }
     return GTPIN_DI_SUCCESS;
 }
-}
+} // namespace OCLRT
