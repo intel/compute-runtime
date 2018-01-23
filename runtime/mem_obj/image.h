@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -147,7 +147,6 @@ class Image : public MemObj {
     ImageCreatFunc createFunction;
     void transferDataFromHostPtrToMemoryStorage() override;
 
-    int getImageDimension(cl_image_desc &imgDesc);
     uint32_t getQPitch() { return qPitch; }
     void setQPitch(uint32_t qPitch) { this->qPitch = qPitch; }
     size_t getHostPtrRowPitch() { return hostPtrRowPitch; }
@@ -226,6 +225,7 @@ class Image : public MemObj {
     static bool isValidARGBFormat(const cl_image_format *imageFormat);
     static bool isValidDepthStencilFormat(const cl_image_format *imageFormat);
     static bool isValidYUVFormat(const cl_image_format *imageFormat);
+    static bool hasAlphaChannel(const cl_image_format *imageFormat);
 };
 
 template <typename GfxFamily>
@@ -264,6 +264,7 @@ class ImageHw : public Image {
     void setMediaImageArg(void *memory) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
+    void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
 
     static Image *create(Context *context,
                          cl_mem_flags flags,

@@ -172,6 +172,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
     } else if (gmm && gmm->isRenderCompressed) {
         setAuxParamsForCCS(surfaceState, gmm);
     }
+    appendSurfaceStateParams(surfaceState);
 }
 
 template <typename GfxFamily>
@@ -199,6 +200,10 @@ void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, 
     surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
     surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
                                                  gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
+}
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
 }
 
 template <typename GfxFamily>

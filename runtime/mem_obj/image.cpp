@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1208,5 +1208,22 @@ bool Image::isValidYUVFormat(const cl_image_format *imageFormat) {
     bool isValidDataType = (dataType == CL_UNORM_INT8);
 
     return isValidOrder && isValidDataType;
+}
+
+bool Image::hasAlphaChannel(const cl_image_format *imageFormat) {
+    auto channelOrder = imageFormat->image_channel_order;
+    return (channelOrder == CL_A) ||
+           (channelOrder == CL_Rx) ||
+           (channelOrder == CL_RA) ||
+           (channelOrder == CL_RGx) ||
+           (channelOrder == CL_RGBx) ||
+           (channelOrder == CL_RGBA) ||
+           (channelOrder == CL_BGRA) ||
+           (channelOrder == CL_ARGB) ||
+           (channelOrder == CL_INTENSITY) ||
+           (channelOrder == CL_sRGBA) ||
+           (channelOrder == CL_sBGRA) ||
+           (channelOrder == CL_sRGBx) ||
+           (channelOrder == CL_ABGR);
 }
 } // namespace OCLRT

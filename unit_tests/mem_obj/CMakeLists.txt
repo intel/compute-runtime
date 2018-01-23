@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     "${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbufer_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_copy_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image_format_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_redescribe_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_release_mapped_ptr_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_set_arg_tests.cpp"
