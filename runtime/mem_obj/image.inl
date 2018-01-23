@@ -40,9 +40,9 @@ union SURFACE_STATE_BUFFER_LENGTH {
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
+    auto gmm = getGraphicsAllocation()->gmm;
 
     auto imageCount = std::max(getImageDesc().image_depth, getImageDesc().image_array_size);
     if (imageCount == 0) {
@@ -60,11 +60,9 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
     auto hAlign = RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT_HALIGN_4;
     auto vAlign = RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT_VALIGN_4;
 
-    if (getGraphicsAllocation()->gmm) {
-        hAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(
-            getGraphicsAllocation()->gmm->getRenderHAlignment());
-        vAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(
-            getGraphicsAllocation()->gmm->getRenderVAlignment());
+    if (gmm) {
+        hAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_HORIZONTAL_ALIGNMENT>(gmm->getRenderHAlignment());
+        vAlign = static_cast<typename RENDER_SURFACE_STATE::SURFACE_VERTICAL_ALIGNMENT>(gmm->getRenderVAlignment());
     }
 
     if (cubeFaceIndex != __GMM_NO_CUBE_MAP) {
@@ -148,7 +146,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
             tileMode = RENDER_SURFACE_STATE::TILE_MODE_YMAJOR;
         }
     } else {
-        auto tileWalk = getGraphicsAllocation()->gmm->gmmResourceInfo->getTileType();
+        auto tileWalk = gmm->gmmResourceInfo->getTileType();
         tileMode = static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(Gmm::getRenderTileMode(tileWalk));
     }
     surfaceState->setTileMode(tileMode);
@@ -169,30 +167,39 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
     surfaceState->setNumberOfMultisamples((typename RENDER_SURFACE_STATE::NUMBER_OF_MULTISAMPLES)mcsSurfaceInfo.multisampleCount);
     surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
 
-    setAuxSurfaceStateParams(surfaceState);
+    if (imageDesc.num_samples > 1) {
+        setAuxParamsForMultisamples(surfaceState);
+    } else if (gmm && gmm->isRenderCompressed) {
+        setAuxParamsForCCS(surfaceState, gmm);
+    }
 }
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setAuxSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState) {
-    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
-    auto gmm = getGraphicsAllocation()->gmm;
+void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState) {
+    if (getMcsAllocation()) {
+        auto mcsGmm = getMcsAllocation()->gmm;
+        auto gmmFlags = mcsGmm->gmmResourceInfo->getResourceFlags();
 
-    if (imageDesc.num_samples > 1) {
-        if (getMcsAllocation()) {
+        if (gmmFlags->Gpu.CCS) { // Ignore MCS allocation when Color Control Surface is available
+            setAuxParamsForCCS(surfaceState, mcsGmm);
+        } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
             surfaceState->setAuxiliarySurfacePitch(mcsSurfaceInfo.pitch);
             surfaceState->setAuxiliarySurfaceQpitch(mcsSurfaceInfo.qPitch);
             surfaceState->setAuxiliarySurfaceBaseAddress(mcsAllocation->getGpuAddress());
-        } else if (isDepthFormat(imageFormat)) {
-            surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
         }
-    } else if (gmm && gmm->isRenderCompressed) {
-        surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)5);
-        surfaceState->setAuxiliarySurfacePitch(std::max(gmm->gmmResourceInfo->getRenderAuxPitchTiles(), 1u));
-        surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
-        surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
-                                                     gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
+    } else if (isDepthFormat(imageFormat)) {
+        surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
     }
+}
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    surfaceState->setAuxiliarySurfaceMode((AUXILIARY_SURFACE_MODE)5);
+    surfaceState->setAuxiliarySurfacePitch(std::max(gmm->gmmResourceInfo->getRenderAuxPitchTiles(), 1u));
+    surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
+    surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
+                                                 gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
 }
 
 template <typename GfxFamily>

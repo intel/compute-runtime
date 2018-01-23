@@ -230,7 +230,8 @@ class Image : public MemObj {
 
 template <typename GfxFamily>
 class ImageHw : public Image {
-    typedef typename GfxFamily::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
   public:
     ImageHw(Context *context,
@@ -258,7 +259,8 @@ class ImageHw : public Image {
     }
 
     void setImageArg(void *memory, bool setAsMediaBlockImage) override;
-    void setAuxSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
+    void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
+    void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void setMediaImageArg(void *memory) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
