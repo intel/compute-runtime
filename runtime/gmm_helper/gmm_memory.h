@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,38 +21,13 @@
 */
 
 #pragma once
-#include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+#include "runtime/gmm_helper/gmm_memory_base.h"
 
 namespace OCLRT {
-class GmmMemory {
+class GmmMemory : public GmmMemoryBase {
   public:
     static GmmMemory *create();
-
     virtual ~GmmMemory() = default;
-
-    MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
-                                                      GMM_ESCAPE_HANDLE hDevice,
-                                                      GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                      GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN FaultableSvm,
-                                                      BOOLEAN SparseReady,
-                                                      BOOLEAN BDWL3Coherency,
-                                                      GMM_GFX_SIZE_T SizeOverride,
-                                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
-        return GmmConfigureDeviceAddressSpace(
-                   hAdapter,
-                   hDevice,
-                   pfnEscape,
-                   SvmSize,
-                   FaultableSvm,
-                   SparseReady,
-                   BDWL3Coherency,
-                   SizeOverride,
-                   SlmGfxSpaceReserve) != 0
-                   ? true
-                   : false;
-    }
 
   protected:
     GmmMemory() = default;

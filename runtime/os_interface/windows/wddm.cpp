@@ -24,7 +24,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/gmm_memory.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/os_interface/windows/wddm.h"

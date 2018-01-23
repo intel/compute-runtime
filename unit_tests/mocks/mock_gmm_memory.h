@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
 */
 
 #pragma once
-#include "runtime/gmm_helper/gmm_memory.h"
+#include "gmm_memory.h"
 #include "gmock/gmock.h"
 
 namespace OCLRT {
@@ -58,7 +58,7 @@ class GmockGmmMemory : public GmmMemory {
   public:
     ~GmockGmmMemory() = default;
 
-    GmockGmmMemory();
+    GmockGmmMemory() = default;
 
     MOCK_METHOD9(configureDeviceAddressSpace,
                  bool(GMM_ESCAPE_HANDLE hAdapter,

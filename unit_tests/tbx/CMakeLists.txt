@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -37,11 +37,14 @@ target_compile_definitions(igdrcl_tbx_tests PRIVATE MOCKABLE_VIRTUAL=virtual)
 if(UNIX)
   target_link_libraries(igdrcl_tbx_tests dl pthread)
 elseif(WIN32)
+    target_include_directories(igdrcl_tbx_tests PRIVATE
+      ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+    )
 	target_sources(igdrcl_tbx_tests PUBLIC
 		${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
 		${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
 		${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
-		${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_memory.cpp
+		${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
 	 )
 	target_link_libraries(igdrcl_tbx_tests Ws2_32)
 endif(UNIX)

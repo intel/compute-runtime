@@ -381,7 +381,8 @@ set (RUNTIME_SRCS_GMM_HELPER
 if (WIN32)
   list (APPEND RUNTIME_SRCS_GMM_HELPER
     gmm_helper/page_table_mngr.h
-    gmm_helper/gmm_memory.h
+    gmm_helper${BRANCH_DIR_SUFFIX}/gmm_memory.h
+    gmm_helper/gmm_memory_base.h
   )
 endif(WIN32)
 

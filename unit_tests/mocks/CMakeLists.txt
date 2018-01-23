@@ -60,8 +60,8 @@ if (WIN32)
  list (APPEND IGDRCL_SRCS_tests_mocks
    "${CMAKE_CURRENT_SOURCE_DIR}/mock_d3d_objects.h"
    "${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h"
-   "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory.h"
-   "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory.cpp"
+   "${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h"
+   "${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp"
    "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h"
    "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp"
   )

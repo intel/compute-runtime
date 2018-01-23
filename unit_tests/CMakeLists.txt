@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -222,6 +222,7 @@ target_include_directories(igdrcl_tests PRIVATE
   ${INSTRUMENTATION_INCLUDE_PATH}
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
+  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
 )
 
 if(MSVC)

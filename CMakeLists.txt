@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -483,6 +483,7 @@ set(BRANCH_DIR_SUFFIX "/")
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
+include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/${BRANCH_DIR_SUFFIX})
 
 if(HAVE_INSTRUMENTATION)
   set(${IGDRCL__INSTRUMENTATION_DIR_SUFFIX} ${BRANCH_DIR_SUFFIX})

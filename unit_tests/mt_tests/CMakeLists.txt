@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -76,7 +76,7 @@ if(MSVC)
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_memory.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
   )
 else(MSVC)
   list(APPEND IGDRCL_SRCS_mt_tests
@@ -116,6 +116,7 @@ if(MSVC)
     ${WDK_INCLUDE_PATHS}
     ${GMM_INCLUDE_PATHS}
     ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
   target_link_libraries (igdrcl_mt_tests Ws2_32.lib)
 else()

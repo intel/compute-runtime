@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -43,6 +43,12 @@ target_include_directories(igdrcl_aub_tests PRIVATE
     ${GMOCK_INCLUDE_DIR}
     ${GMM_INCLUDE_PATHS}
 )
+
+if(WIN32)
+  target_include_directories(igdrcl_aub_tests PRIVATE
+    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+  )
+endif(WIN32)
 
 add_subdirectory(command_queue)
 add_subdirectory(command_stream)

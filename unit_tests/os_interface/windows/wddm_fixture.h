@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/gmm_fixture.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
-#include "unit_tests/mocks/mock_gmm_memory.h"
+#include "mock_gmm_memory.h"
 #include "unit_tests//os_interface/windows/mock_gdi_interface.h"
 #pragma warning(push)
 #pragma warning(disable : 4005)

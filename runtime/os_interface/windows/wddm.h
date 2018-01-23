@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "runtime/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/gmm_memory.h"
+#include "gmm_memory.h"
 #include <memory>
 #include <atomic>
 

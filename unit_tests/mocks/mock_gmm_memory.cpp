@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,9 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "unit_tests/mocks/mock_gmm_memory.h"
+#include "mock_gmm_memory.h"
 
 using namespace ::testing;
-using namespace OCLRT::MockGmmMemory;
 
 namespace OCLRT {
 
@@ -32,13 +31,11 @@ MockType MockGmmMemoryFlag = MockType::MockDummy;
 }
 
 GmmMemory *GmmMemory::create() {
-    if (MockGmmMemoryFlag == MockType::MockDummy) {
+    if (MockGmmMemory::MockGmmMemoryFlag == MockGmmMemory::MockType::MockDummy) {
         return new MockGmmMemoryDummy();
     } else {
         return new NiceMock<GmockGmmMemory>();
     }
 }
 
-GmockGmmMemory::GmockGmmMemory() {
-}
 } // namespace OCLRT
