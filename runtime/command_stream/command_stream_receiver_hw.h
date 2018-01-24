@@ -62,6 +62,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     static void alignToCacheLine(LinearStream &commandStream);
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
+    size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags);
     size_t getCmdSizeForCoherency();
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);

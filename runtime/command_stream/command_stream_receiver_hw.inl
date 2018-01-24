@@ -69,7 +69,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 template <typename GfxFamily>
 size_t getSizeRequiredPreambleCS(const Device &device) {
     return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
-           sizeof(typename GfxFamily::PIPELINE_SELECT) +
            sizeof(typename GfxFamily::PIPE_CONTROL) +
            sizeof(typename GfxFamily::MEDIA_VFE_STATE) + PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
 }
@@ -172,7 +171,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
 
-    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSize(dispatchFlags));
+    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     initPageTableManagerRegisters(commandStreamCSR);
@@ -492,6 +491,11 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
     }
     return scratchAddress;
 }
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags) {
+    size_t size = getRequiredCmdStreamSize(dispatchFlags);
+    return alignUp(size, MemoryConstants::cacheLineSize);
+}
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags) {
@@ -500,6 +504,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
                   sizeof(PIPE_CONTROL) +
                   getRequiredPipeControlSize() +
                   sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
+        size += sizeof(typename GfxFamily::PIPELINE_SELECT);
+    }
     if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL);
     }
@@ -507,8 +514,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
 
     size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
-
-    return alignUp(size, MemoryConstants::cacheLineSize);
+    return size;
 }
 
 template <typename GfxFamily>

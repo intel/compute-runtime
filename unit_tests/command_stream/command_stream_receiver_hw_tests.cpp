@@ -200,6 +200,15 @@ struct UltCommandStreamReceiverTest
     uint32_t dcFlushRequiredTaskCount;
 };
 
+HWTEST_F(UltCommandStreamReceiverTest, requiredCmdSizeForPreamble) {
+    auto expectedCmdSize =
+        sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) +
+        sizeof(typename FamilyType::PIPE_CONTROL) +
+        sizeof(typename FamilyType::MEDIA_VFE_STATE) +
+        PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
+
+    EXPECT_EQ(expectedCmdSize, getSizeRequiredPreambleCS<FamilyType>(*pDevice));
+}
 HWTEST_F(UltCommandStreamReceiverTest, testInitialState) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -653,6 +662,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPreambleSbaAndPc) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
@@ -671,13 +681,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     size_t sizeNeeded = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo)) +
                         sizeof(STATE_BASE_ADDRESS) +
                         sizeof(PIPE_CONTROL) +
+                        sizeof(PIPELINE_SELECT) +
                         commandStreamReceiver.getRequiredPipeControlSize() +
                         sizeof(MI_BATCH_BUFFER_START);
 
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
     DispatchFlags flags;
-    csrCS.getSpace(csrCS.getAvailableSpace() - commandStreamReceiver.getRequiredCmdStreamSize(flags));
+    csrCS.getSpace(csrCS.getAvailableSpace() - commandStreamReceiver.getRequiredCmdStreamSizeAligned(flags));
     auto expectedBase = csrCS.getBase();
 
     // This case handles when we have *just* enough space
@@ -1821,21 +1832,78 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, requiredCsrSizeAlignedToCacheline) {
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnL3ConfigChanged) {
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    csrSizeRequest.l3ConfigChanged = true;
-
-    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
     DispatchFlags flags;
+    commandStreamReceiver.isPreambleSent = true;
+
+    csrSizeRequest.l3ConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
     auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
 
     csrSizeRequest.l3ConfigChanged = false;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
     auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
 
-    EXPECT_EQ(alignUp(l3ConfigChangedSize, MemoryConstants::cacheLineSize), l3ConfigChangedSize);
-    EXPECT_EQ(alignUp(l3ConfigNotChangedSize, MemoryConstants::cacheLineSize), l3ConfigNotChangedSize);
+    EXPECT_NE(l3ConfigNotChangedSize, l3ConfigChangedSize);
+    auto difference = l3ConfigChangedSize - l3ConfigNotChangedSize;
+    EXPECT_EQ(sizeof(PIPE_CONTROL), difference);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnL3ConfigChanged) {
+    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags;
+    commandStreamReceiver.isPreambleSent = false;
+
+    csrSizeRequest.l3ConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    csrSizeRequest.l3ConfigChanged = false;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    EXPECT_EQ(l3ConfigNotChangedSize, l3ConfigChangedSize);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnmediaSamplerConfigChanged) {
+    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags;
+    commandStreamReceiver.isPreambleSent = false;
+
+    csrSizeRequest.mediaSamplerConfigChanged = false;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    csrSizeRequest.mediaSamplerConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    EXPECT_EQ(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnmediaSamplerConfigChanged) {
+    typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
+    UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
+    CsrSizeRequestFlags csrSizeRequest = {};
+    DispatchFlags flags;
+    commandStreamReceiver.isPreambleSent = true;
+
+    csrSizeRequest.mediaSamplerConfigChanged = false;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    csrSizeRequest.mediaSamplerConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
+    auto mediaSamplerConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+
+    EXPECT_NE(mediaSamplerConfigChangedSize, mediaSamplerConfigNotChangedSize);
+    auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
+    EXPECT_EQ(sizeof(PIPELINE_SELECT), difference);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTaskIsCalledThenNoFlushIsCalled) {
