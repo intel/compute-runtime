@@ -50,7 +50,7 @@ struct DispatchFlags {
     bool GSBA32BitRequired = false;
     bool mediaSamplerRequired = false;
     bool requiresCoherency = false;
-    bool low_priority = false;
+    bool lowPriority = false;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
     FlushStampTrackingObj *flushStampReference = nullptr;

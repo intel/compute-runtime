@@ -85,8 +85,6 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
                                                                                   CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     bool queueOnDeviceUsed = false;
     bool priorityHintsUsed = false;
-    bool priorityHintsNotSupported = false;
-    Device *pDevice;
 
     cl_queue_properties *pProp = &properties[0];
     if (commandQueueProperties) {
@@ -111,14 +109,13 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
         *pProp++ = queueThrottle;
     }
     *pProp++ = 0;
-    pDevice = castToObject<Device>(devices[0]);
-    priorityHintsNotSupported = !pDevice->getDeviceInfo().priorityHintsSupported;
+
     cmdQ = clCreateCommandQueueWithProperties(
         pContext,
         devices[0],
         properties,
         &retVal);
-    if ((queueOnDeviceUsed && priorityHintsUsed) || (priorityHintsNotSupported && priorityHintsUsed)) {
+    if (queueOnDeviceUsed && priorityHintsUsed) {
         EXPECT_EQ(nullptr, cmdQ);
         EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
         return;
@@ -285,7 +282,6 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemoryWhenNumberOfDevic
 
 TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemory) {
     InjectedFunction method = [this](size_t failureIndex) {
-
         cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
         auto retVal = CL_INVALID_VALUE;
 
@@ -326,21 +322,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithMedPriority
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnQueueWithPriority) {
-    auto pDevice = pPlatform->getDevice(0);
-    DeviceInfo &devInfo = const_cast<DeviceInfo &>(pDevice->getDeviceInfo());
-    devInfo.priorityHintsSupported = false;
-    cl_int retVal = CL_SUCCESS;
-    cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
-    auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
-    EXPECT_EQ(nullptr, cmdqd);
-    EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
-}
-
 TEST_F(clCreateCommandQueueWithPropertiesApi, returnSuccessOnQueueWithPriority) {
-    auto pDevice = pPlatform->getDevice(0);
-    DeviceInfo &devInfo = const_cast<DeviceInfo &>(pDevice->getDeviceInfo());
-    devInfo.priorityHintsSupported = true;
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -349,4 +331,32 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnSuccessOnQueueWithPriority) 
     retVal = clReleaseCommandQueue(cmdqd);
     EXPECT_EQ(retVal, CL_SUCCESS);
 }
+
+std::pair<uint32_t, QueuePriority> priorityParams[3]{
+    std::make_pair(CL_QUEUE_PRIORITY_LOW_KHR, QueuePriority::LOW),
+    std::make_pair(CL_QUEUE_PRIORITY_MED_KHR, QueuePriority::MEDIUM),
+    std::make_pair(CL_QUEUE_PRIORITY_HIGH_KHR, QueuePriority::HIGH)};
+
+class clCreateCommandQueueWithPropertiesApiPriority : public clCreateCommandQueueWithPropertiesApi,
+                                                      public ::testing::WithParamInterface<std::pair<uint32_t, QueuePriority>> {
+};
+
+TEST_P(clCreateCommandQueueWithPropertiesApiPriority, givenCreateQueueWithWhenPriorityPropertiesThenSetCorrectProirityInternally) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, GetParam().first, 0};
+    auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
+    EXPECT_NE(nullptr, cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    auto commandQueue = castToObject<CommandQueue>(cmdqd);
+    EXPECT_EQ(commandQueue->getPriority(), GetParam().second);
+
+    retVal = clReleaseCommandQueue(cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+}
+
+INSTANTIATE_TEST_CASE_P(AllValidPriorities,
+                        clCreateCommandQueueWithPropertiesApiPriority,
+                        ::testing::ValuesIn(priorityParams));
+
 } // namespace ULT

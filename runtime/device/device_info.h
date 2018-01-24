@@ -131,7 +131,6 @@ struct DeviceInfo {
     uint32_t                     computeUnitsUsedForScratch;
     bool                         force32BitAddressess;
     bool                         preemptionSupported;
-    bool                         priorityHintsSupported;
     double                       platformHostTimerResolution;
 
     size_t                       planarYuvMaxWidth;

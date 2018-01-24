@@ -184,7 +184,7 @@ inline void DrmCommandStreamReceiver<GfxFamily>::overrideMediaVFEStateDirty(bool
 
 template <typename GfxFamily>
 inline void DrmCommandStreamReceiver<GfxFamily>::programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    bool &currentContextDirtyFlag = dispatchFlags.low_priority ? mediaVfeStateLowPriorityDirty : mediaVfeStateDirty;
+    bool &currentContextDirtyFlag = dispatchFlags.lowPriority ? mediaVfeStateLowPriorityDirty : mediaVfeStateDirty;
 
     if (currentContextDirtyFlag) {
         PreambleHelper<GfxFamily>::programVFEState(&csr, hwInfo, requiredScratchSize, getScratchPatchAddress());

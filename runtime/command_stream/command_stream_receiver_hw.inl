@@ -335,7 +335,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
-    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, dispatchFlags.requiresCoherency, dispatchFlags.low_priority, streamToSubmit.getUsed(), &streamToSubmit};
+    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, streamToSubmit.getUsed(), &streamToSubmit};
     EngineType engineType = device->getEngineType();
 
     if (submitCSR | submitTask) {

@@ -43,9 +43,17 @@ class CommandQueueHw : public CommandQueue {
     CommandQueueHw(Context *context,
                    Device *device,
                    const cl_queue_properties *properties) : BaseClass(context, device, properties) {
-        if (getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
-            low_priority = true;
+
+        auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
+
+        if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) {
+            priority = QueuePriority::LOW;
+        } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_MED_KHR)) {
+            priority = QueuePriority::MEDIUM;
+        } else if (clPriority & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_HIGH_KHR)) {
+            priority = QueuePriority::HIGH;
         }
+
         if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
             device->getCommandStreamReceiver().overrideDispatchPolicy(CommandStreamReceiver::BatchedDispatch);
         }

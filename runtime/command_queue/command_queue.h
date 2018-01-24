@@ -41,20 +41,21 @@ class IndirectHeap;
 class Kernel;
 class MemObj;
 
+enum class QueuePriority {
+    LOW,
+    MEDIUM,
+    HIGH
+};
+
 template <>
 struct OpenCLObjectMapper<_cl_command_queue> {
     typedef class CommandQueue DerivedType;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// CommandQueue - Core implementation
-////////////////////////////////////////////////////////////////////////////////
 class CommandQueue : public BaseObject<_cl_command_queue> {
   public:
     static const cl_ulong objectMagic = 0x1234567890987654LL;
     enum { NUM_HEAPS = IndirectHeap::NUM_TYPES };
-
-    bool low_priority;
 
     static CommandQueue *create(Context *context, Device *device,
                                 const cl_queue_properties *properties,
@@ -381,6 +382,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return perfCountersUserRegistersNumber;
     }
 
+    QueuePriority getPriority() const {
+        return priority;
+    }
+
     // taskCount of last task
     uint32_t taskCount;
 
@@ -399,6 +404,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Device *device;
 
     cl_command_queue_properties commandQueueProperties;
+
+    QueuePriority priority;
 
     bool perfCountersEnabled;
     cl_uint perfCountersConfig;

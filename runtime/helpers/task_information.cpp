@@ -70,7 +70,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.dcFlush = true;
     dispatchFlags.useSLM = true;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    dispatchFlags.low_priority = cmdQ.low_priority;
+    dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -250,7 +250,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.GSBA32BitRequired = NDRangeKernel;
     dispatchFlags.requiresCoherency = requiresCoherency;
-    dispatchFlags.low_priority = commandQueue.low_priority;
+    dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), kernel);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -291,7 +291,7 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
     dispatchFlags.dcFlush = shouldFlushDC(clCommandType, nullptr);
-    dispatchFlags.low_priority = cmdQ.low_priority;
+    dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);

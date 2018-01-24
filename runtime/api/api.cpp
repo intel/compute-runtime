@@ -3481,13 +3481,6 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         }
     }
 
-    if (getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR)) {
-        if (!pDevice->getDeviceInfo().priorityHintsSupported) {
-            err.set(CL_INVALID_QUEUE_PROPERTIES);
-            return commandQueue;
-        }
-    }
-
     auto maskedFlags = getCmdQueueProperties<cl_command_queue_properties>(properties) &
                        minimumCreateDeviceQueueFlags;
 

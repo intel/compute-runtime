@@ -133,7 +133,7 @@ struct UltCommandStreamReceiverTest
         DispatchFlags dispatchFlags;
         dispatchFlags.blocking = block;
         dispatchFlags.requiresCoherency = requiresCoherency;
-        dispatchFlags.low_priority = lowPriority;
+        dispatchFlags.lowPriority = lowPriority;
 
         return commandStreamReceiver.flushTask(
             commandStream,
@@ -2153,7 +2153,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     auto usedAfterFirstFlushTask = commandStream.getUsed();
 
     dispatchFlags.requiresCoherency = true;
-    dispatchFlags.low_priority = true;
+    dispatchFlags.lowPriority = true;
 
     mockCsr->flushTask(commandStream,
                        commandStream.getUsed(),

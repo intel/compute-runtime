@@ -522,7 +522,7 @@ struct DrmCsrVfeTests : ::testing::Test {
     };
 
     void flushTask(CommandStreamReceiver &csr, LinearStream &stream, bool lowPriority) {
-        dispatchFlags.low_priority = lowPriority;
+        dispatchFlags.lowPriority = lowPriority;
         csr.flushTask(stream, 0, stream, stream, stream, stream, 0, dispatchFlags);
     }
 

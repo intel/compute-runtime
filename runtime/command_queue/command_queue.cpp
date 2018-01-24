@@ -65,12 +65,12 @@ CommandQueue::CommandQueue() : CommandQueue(nullptr, nullptr, 0) {
 
 CommandQueue::CommandQueue(Context *context,
                            Device *deviceId,
-                           const cl_queue_properties *properties) : low_priority(false),
-                                                                    taskCount(0),
+                           const cl_queue_properties *properties) : taskCount(0),
                                                                     taskLevel(0),
                                                                     virtualEvent(nullptr),
                                                                     context(context),
                                                                     device(deviceId),
+                                                                    priority(QueuePriority::MEDIUM),
                                                                     perfCountersEnabled(false),
                                                                     perfCountersConfig(UINT32_MAX),
                                                                     perfCountersUserRegistersNumber(0),
@@ -427,7 +427,7 @@ void CommandQueue::flushWaitList(
         if (flushTask) {
             DispatchFlags dispatchFlags;
             dispatchFlags.GSBA32BitRequired = ndRangeKernel;
-            dispatchFlags.low_priority = low_priority;
+            dispatchFlags.lowPriority = priority == QueuePriority::LOW;
             dispatchFlags.implicitFlush = true;
             dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, nullptr);
 

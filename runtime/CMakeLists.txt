@@ -765,12 +765,6 @@ if (UNIX)
   )
 endif (UNIX)
 
-#cl_khr_priority support
-if(NOT MSVC)
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC -DSUPPORT_PRIORITY_HINTS)
-  message(STATUS "Supporting priority hints")
-endif()
-
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 
 link_directories(${GMM_LIB_PATHS})

@@ -44,16 +44,6 @@ static std::string driverVersion = NEO_DRIVER_VERSION;
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 
-void Device::checkPriorityHints() {
-#ifdef SUPPORT_PRIORITY_HINTS
-    if (static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get()) > PreemptionMode::Disabled ||
-        (preemptionMode >= PreemptionMode::ThreadGroup)) {
-        deviceExtensions += "cl_khr_priority_hints ";
-        deviceInfo.priorityHintsSupported = true;
-    }
-#endif
-}
-
 bool Device::getEnabled64kbPages() {
     if (DebugManager.flags.Enable64kbpages.get() == -1) {
         // assign value according to os and hw configuration
@@ -170,25 +160,25 @@ void Device::initializeCaps() {
     deviceInfo.hostUnifiedMemory = CL_TRUE;
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
-    deviceInfo.preferredVectorWidthChar   = 16;
-    deviceInfo.preferredVectorWidthShort  = 8;
-    deviceInfo.preferredVectorWidthInt    = 4;
-    deviceInfo.preferredVectorWidthLong   = 1;
-    deviceInfo.preferredVectorWidthFloat  = 1;
+    deviceInfo.preferredVectorWidthChar = 16;
+    deviceInfo.preferredVectorWidthShort = 8;
+    deviceInfo.preferredVectorWidthInt = 4;
+    deviceInfo.preferredVectorWidthLong = 1;
+    deviceInfo.preferredVectorWidthFloat = 1;
     deviceInfo.preferredVectorWidthDouble = 1;
-    deviceInfo.preferredVectorWidthHalf   = 8;
-    deviceInfo.nativeVectorWidthChar      = 16;
-    deviceInfo.nativeVectorWidthShort     = 8;
-    deviceInfo.nativeVectorWidthInt       = 4;
-    deviceInfo.nativeVectorWidthLong      = 1;
-    deviceInfo.nativeVectorWidthFloat     = 1;
-    deviceInfo.nativeVectorWidthDouble    = 1;
-    deviceInfo.nativeVectorWidthHalf      = 8;
-    deviceInfo.maxReadImageArgs           = 128;
-    deviceInfo.maxWriteImageArgs          = 128;
-    deviceInfo.maxReadWriteImageArgs      = 0;
-    deviceInfo.maxParameterSize           = 1024;
-    deviceInfo.executionCapabilities      = CL_EXEC_KERNEL;
+    deviceInfo.preferredVectorWidthHalf = 8;
+    deviceInfo.nativeVectorWidthChar = 16;
+    deviceInfo.nativeVectorWidthShort = 8;
+    deviceInfo.nativeVectorWidthInt = 4;
+    deviceInfo.nativeVectorWidthLong = 1;
+    deviceInfo.nativeVectorWidthFloat = 1;
+    deviceInfo.nativeVectorWidthDouble = 1;
+    deviceInfo.nativeVectorWidthHalf = 8;
+    deviceInfo.maxReadImageArgs = 128;
+    deviceInfo.maxWriteImageArgs = 128;
+    deviceInfo.maxReadWriteImageArgs = 0;
+    deviceInfo.maxParameterSize = 1024;
+    deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
     deviceInfo.addressBits = 64;
 
@@ -337,7 +327,6 @@ void Device::initializeCaps() {
         hwInfo.capabilityTable.ftrSvm * hwInfo.capabilityTable.ftrSupportsCoherency *
         (CL_DEVICE_SVM_FINE_GRAIN_BUFFER | CL_DEVICE_SVM_ATOMICS));
     deviceInfo.preemptionSupported = false;
-    deviceInfo.priorityHintsSupported = false;
     deviceInfo.maxGlobalVariableSize = 64 * 1024;
     deviceInfo.globalVariablePreferredTotalSize = (size_t)deviceInfo.maxMemAllocSize;
 
@@ -352,9 +341,5 @@ void Device::initializeCaps() {
 
     deviceInfo.internalDriverVersion = CL_DEVICE_DRIVER_VERSION_INTEL_NEO1;
     deviceInfo.enabled64kbPages = getEnabled64kbPages();
-
-#ifdef SUPPORT_PRIORITY_HINTS
-    checkPriorityHints();
-#endif
 }
 } // namespace OCLRT

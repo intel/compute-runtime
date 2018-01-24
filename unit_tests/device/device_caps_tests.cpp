@@ -486,44 +486,11 @@ TEST(Device_GetCaps, givenOpenCL12DeviceCapsWhenAskedForCPUcopyFlagThenTrueIsRet
     EXPECT_TRUE(caps.cpuCopyAllowed);
 }
 
-TEST(Device_GetCaps, deviceReportsPriorityHintsExtensionWhenSupportEnabled) {
-    DebugManagerStateRestore stateRestorer;
-    PreemptionMode forceMode = PreemptionMode::ThreadGroup;
-    DebugManager.flags.ForcePreemptionMode.set((int32_t)forceMode);
-
+TEST(Device_GetCaps, deviceReportsPriorityHintsExtension) {
     auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
-#ifdef SUPPORT_PRIORITY_HINTS
-    EXPECT_TRUE(caps.priorityHintsSupported);
+
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_priority_hints")));
-#else
-    EXPECT_FALSE(caps.priorityHintsSupported);
-#endif
-}
-
-TEST(Device_GetCaps, deviceDoesntReportsPriorityHintsExtensionWhenPreemptionDisabled) {
-    DebugManagerStateRestore stateRestorer;
-    PreemptionMode forceMode = PreemptionMode::Disabled;
-    DebugManager.flags.ForcePreemptionMode.set((int32_t)forceMode);
-
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(caps.priorityHintsSupported);
-}
-
-TEST(Device_GetCaps, deviceDoesntReportsPriorityHintsExtensionWhenDefaultPreemptionDisabled) {
-    DebugManagerStateRestore stateRestorer;
-
-    const HardwareInfo &hwRef = *platformDevices[0];
-    HardwareInfo hwTest = hwRef;
-    auto devPreemption = hwTest.capabilityTable.defaultPreemptionMode;
-    hwTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(&hwTest));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_FALSE(caps.priorityHintsSupported);
-
-    hwTest.capabilityTable.defaultPreemptionMode = devPreemption;
 }
 
 TEST(Device_GetCaps, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReported) {
