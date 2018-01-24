@@ -1510,10 +1510,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTwoConsecutiveNDRangeKernelsS
     if (pDevice->getDeviceInfo().force32BitAddressess == true) {
         EXPECT_EQ(pDevice->getMemoryManager()->allocator32Bit->getBase(), GSHaddress);
     } else {
-        if (is64bit)
+        if (is64bit) {
             EXPECT_EQ(graphicsAddress - PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), GSHaddress);
-        else
+        } else {
             EXPECT_EQ(0u, GSHaddress);
+        }
     }
 
     //now re-try to see if SBA is not programmed
@@ -1618,10 +1619,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNDRangeKernelAndReadBufferSta
     if (pDevice->getDeviceInfo().force32BitAddressess == true) {
         EXPECT_EQ(pDevice->getMemoryManager()->allocator32Bit->getBase(), GSHaddress);
     } else {
-        if (is64bit)
+        if (is64bit) {
             EXPECT_EQ(graphicsAddress - PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit(), GSHaddress);
-        else
+        } else {
             EXPECT_EQ(0u, GSHaddress);
+        }
     }
 
     size_t tempBuffer[] = {0, 1, 2};
@@ -1687,8 +1689,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeDoNotS
     std::unique_ptr<GraphicsAllocation> allocationReusable = pDevice->getMemoryManager()->obtainReusableAllocation(4096);
 
     if (allocationReusable.get() != nullptr) {
-        if (is64bit)
+        if (is64bit) {
             EXPECT_NE(scratchAllocation, allocationReusable.get());
+        }
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationReusable.release());
     }
 }

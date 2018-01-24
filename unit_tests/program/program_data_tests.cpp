@@ -228,8 +228,9 @@ TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPres
     EXPECT_NE(nullptr, pProgram->getConstantSurface());
     EXPECT_EQ(0, memcmp(constValue, reinterpret_cast<char *>(pProgram->getConstantSurface()->getUnderlyingBuffer()), constSize));
 
-    if (is64bit)
+    if (is64bit) {
         EXPECT_TRUE(pProgram->getConstantSurface()->is32BitAllocation);
+    }
 }
 
 TEST_F(ProgramDataTest, AllocateGlobalMemorySurfaceProgramBinaryInfo) {
@@ -421,8 +422,9 @@ TEST_F(ProgramDataTest, Given32BitDeviceWhenGlobalMemorySurfaceIsPresentThenItHa
 
     EXPECT_NE(nullptr, pProgram->getGlobalSurface());
     EXPECT_EQ(0, memcmp(globalValue, reinterpret_cast<char *>(pProgram->getGlobalSurface()->getUnderlyingBuffer()), globalSize));
-    if (is64bit)
+    if (is64bit) {
         EXPECT_TRUE(pProgram->getGlobalSurface()->is32BitAllocation);
+    }
 
     delete[] pAllocateGlobalMemorySurface;
 }

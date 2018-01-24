@@ -120,8 +120,9 @@ TEST_F(ElfTests, givenElfWriterWhenSectionAndFailuresThenFalseIsReturned) {
             EH_TYPE_EXECUTABLE,
             EH_MACHINE_NONE,
             0);
-        if (nonfailingAllocation == failureIndex)
+        if (nonfailingAllocation == failureIndex) {
             ASSERT_NE(nullptr, pWriter);
+        }
 
         if (pWriter != nullptr) {
             char sectionData[16];

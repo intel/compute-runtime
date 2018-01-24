@@ -160,8 +160,9 @@ TEST(ZeroCopyBufferWith32BitAddressing, GivenDeviceSupporting32BitAddressingWhen
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_TRUE(buffer->isMemObjZeroCopy());
-        if( is64bit)
+        if( is64bit) {
             EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
+        }
         delete buffer;
         alignedFree(host_ptr);
         DebugManager.flags.Force32bitAddressing.set(false);

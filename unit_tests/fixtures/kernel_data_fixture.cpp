@@ -108,14 +108,19 @@ void KernelDataTest::buildAndDecode() {
     EXPECT_STREQ(pKernelInfo->name.c_str(), kernelName.c_str());
 
     // validate each heap
-    if (pKernelHeap != nullptr)
+    if (pKernelHeap != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pKernelHeap, pKernelHeap, kernelHeapSize));
-    if (pGsh != nullptr)
+    }
+    if (pGsh != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pGsh, pGsh, gshSize));
-    if (pDsh != nullptr)
+    }
+    if (pDsh != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pDsh, pDsh, dshSize));
-    if (pSsh != nullptr)
+    }
+    if (pSsh != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pSsh, pSsh, sshSize));
-    if (pPatchList != nullptr)
+    }
+    if (pPatchList != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pPatchList, pPatchList, patchListSize));
+    }
 }
