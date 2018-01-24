@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,7 +90,13 @@ void SamplerHw<GfxFamily>::setArg(void *memory) {
         samplerState->setUAddressMinFilterRoundingEnable(false);
         samplerState->setUAddressMagFilterRoundingEnable(false);
     }
+    appendSamplerStateParams(samplerState);
 }
+
+template <typename GfxFamily>
+void SamplerHw<GfxFamily>::appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state) {
+}
+
 template <typename GfxFamily>
 size_t SamplerHw<GfxFamily>::getSamplerStateSize() {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;

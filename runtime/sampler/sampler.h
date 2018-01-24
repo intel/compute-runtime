@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,10 +23,10 @@
 #pragma once
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
 class Context;
+struct HardwareInfo;
 
 template <>
 struct OpenCLObjectMapper<_cl_sampler> {
@@ -60,44 +60,43 @@ class Sampler : public BaseObject<_cl_sampler> {
 
     unsigned int getSnapWaValue() const;
 
-    // clang-format off
-    cl_context         context;
-    cl_bool            normalizedCoordinates;
+    cl_context context;
+    cl_bool normalizedCoordinates;
     cl_addressing_mode addressingMode;
-    cl_filter_mode     filterMode;
-    // clang-format off
+    cl_filter_mode filterMode;
 };
 
 template <typename GfxFamily>
 struct SamplerHw : public Sampler {
     void setArg(void *memory) override;
+    void appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state);
 
-    SamplerHw(Context *context, 
+    SamplerHw(Context *context,
               cl_bool normalizedCoordinates,
-              cl_addressing_mode addressingMode, 
-              cl_filter_mode filterMode) : Sampler(context, 
-                                                   normalizedCoordinates, 
-                                                   addressingMode, 
+              cl_addressing_mode addressingMode,
+              cl_filter_mode filterMode) : Sampler(context,
+                                                   normalizedCoordinates,
+                                                   addressingMode,
                                                    filterMode) {
     }
 
-    static Sampler *create(Context *context, 
+    static Sampler *create(Context *context,
                            cl_bool normalizedCoordinates,
-                           cl_addressing_mode addressingMode, 
+                           cl_addressing_mode addressingMode,
                            cl_filter_mode filterMode) {
         return new SamplerHw<GfxFamily>(context,
-                                         normalizedCoordinates, 
-                                         addressingMode, 
-                                         filterMode);
+                                        normalizedCoordinates,
+                                        addressingMode,
+                                        filterMode);
     }
 
     static size_t getSamplerStateSize();
 };
 
-typedef Sampler *(*SamplerCreateFunc)(Context *context, 
-                           cl_bool normalizedCoordinates,
-                           cl_addressing_mode addressingMode, 
-                           cl_filter_mode filterMode);
+typedef Sampler *(*SamplerCreateFunc)(Context *context,
+                                      cl_bool normalizedCoordinates,
+                                      cl_addressing_mode addressingMode,
+                                      cl_filter_mode filterMode);
 
-typedef size_t(*getSamplerStateSizeHwFunc)();
+typedef size_t (*getSamplerStateSizeHwFunc)();
 }

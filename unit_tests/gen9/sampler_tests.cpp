@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,15 +20,23 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// Sampler factory table initialization.
-// Family, gfxCore came from outside, do not set them here unless you
-// really know what you are doing
+#include "runtime/sampler/sampler.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "test.h"
+#include <memory>
 
-template struct SamplerHw<Family>;
-template <>
-void populateFactoryTable<SamplerHw<Family>>() {
-    extern SamplerCreateFunc samplerFactory[IGFX_MAX_CORE];
-    extern getSamplerStateSizeHwFunc getSamplerStateSizeHw[IGFX_MAX_CORE];
-    samplerFactory[gfxCore] = SamplerHw<Family>::create;
-    getSamplerStateSizeHw[gfxCore] = SamplerHw<Family>::getSamplerStateSize;
+using namespace OCLRT;
+
+typedef Test<DeviceFixture> Gen9SamplerTest;
+
+GEN9TEST_F(Gen9SamplerTest, appendSamplerStateParamsDoesNothing) {
+    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+    std::unique_ptr<MockContext> context(new MockContext());
+    std::unique_ptr<SamplerHw<FamilyType>> sampler(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
+    auto stateWithoutAppendedParams = SAMPLER_STATE::sInit();
+    auto stateWithAppendedParams = SAMPLER_STATE::sInit();
+    EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
+    sampler->appendSamplerStateParams(&stateWithAppendedParams);
+    EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
 }

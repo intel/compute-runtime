@@ -22,7 +22,6 @@
 
 #pragma once
 #include "unit_tests/mocks/mock_device.h"
-#include "runtime/helpers/hw_info.h"
 #include <cassert>
 
 namespace OCLRT {

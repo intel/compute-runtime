@@ -26,6 +26,7 @@ set(IGDRCL_SRCS_tests_gen9
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps.cpp
