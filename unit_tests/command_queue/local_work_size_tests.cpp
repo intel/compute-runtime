@@ -85,7 +85,7 @@ TEST(localWorkSizeTest, given1DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0u, false, false);
     uint32_t workDim = 2;
     size_t workGroup[3] = {384, 96, 1};
     size_t workGroupSize[3];
@@ -145,7 +145,7 @@ TEST(localWorkSizeTest, given2DimWorkGroupAndSimdEqual32WhenComputeCalledThenLoc
 }
 
 TEST(localWorkSizeTest, given3DimWorkGroupAndSimdEqual8WhenComputeCalledThenLocalGroupComputed) {
-    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(256, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0u, false, false);
     uint32_t workDim = 3;
     size_t workGroup[3] = {384, 384, 384};
     size_t workGroupSize[3];
@@ -446,7 +446,7 @@ TEST(localWorkSizeTest, givenVeriousGwsSizesWithImagesWhenLwsIsComputedThenPrope
 }
 
 TEST(localWorkSizeTest, givenHigh1DGwsAndSimdSize16WhenLwsIsComputedThenMaxWorkgroupSizeIsChoosen) {
-    WorkSizeInfo wsInfo(256u, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0, false, false);
+    WorkSizeInfo wsInfo(256u, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0, false, false);
 
     size_t workGroup[3] = {1, 1, 1};
     size_t workGroupSize[3];
@@ -596,7 +596,7 @@ TEST(localWorkSizeTest, given2DimWorkWhenComputeSquaredCalledThenLocalGroupCompu
 TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8WhenGwsIs1024ThenLwsIsComputedAsMaxOptimalMultipliedBySimd) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
-    WorkSizeInfo wsInfo(1024, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 32u, 0u, false, false);
+    WorkSizeInfo wsInfo(1024, 0u, 8, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0u, false, false);
 
     uint32_t workDim = 2;
     size_t workGroup[3] = {32, 32, 1};
@@ -605,6 +605,36 @@ TEST(localWorkSizeTest, givenDeviceSupportingLws1024AndKernelCompiledInSimd8When
     OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
     EXPECT_EQ(workGroupSize[0], 32u);
     EXPECT_EQ(workGroupSize[1], 8u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenDeviceWith36ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf8HwThreads) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 36u, 0u, false, false);
+
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {1024, 1024, 1};
+    size_t workGroupSize[3];
+
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 128u);
+    EXPECT_EQ(workGroupSize[1], 1u);
+    EXPECT_EQ(workGroupSize[2], 1u);
+}
+
+TEST(localWorkSizeTest, givenDeviceWith56ThreadsPerSubsliceWhenSimd16KernelIsBeingSubmittedThenWorkgroupContainsOf16HwThreads) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableComputeWorkSizeSquared.set(false);
+    WorkSizeInfo wsInfo(256, 0u, 16, 0u, platformDevices[0]->pPlatform->eRenderCoreFamily, 56u, 0u, false, false);
+
+    uint32_t workDim = 2;
+    size_t workGroup[3] = {1024, 1024, 1};
+    size_t workGroupSize[3];
+
+    OCLRT::computeWorkgroupSizeND(wsInfo, workGroupSize, workGroup, workDim);
+    EXPECT_EQ(workGroupSize[0], 256u);
+    EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
 

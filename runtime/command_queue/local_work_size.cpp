@@ -33,6 +33,10 @@
 
 namespace OCLRT {
 
+//threshold used to determine what kind of device is underneath
+//big cores like SKL have 8EU * 7 HW threads per subslice and are considered as highThreadCount devices
+constexpr uint32_t highThreadCountThreshold = 56u;
+
 static const uint32_t optimalHardwareThreadCountGeneric[] = {32, 16, 8, 4, 2, 1};
 
 static const uint32_t primeNumbers[] = {
@@ -99,12 +103,16 @@ inline uint32_t factor<0>(size_t workItems, uint32_t workSize, uint32_t maxWorkG
     return workSize;
 }
 
-void computePowerOfTwoLWS(const size_t workItems[3], size_t simdSize, uint32_t maxWorkGroupSize, size_t workGroupSize[3], const uint32_t workDim, bool canUseNx4) {
-    uint32_t targetIndex = canUseNx4 ? 2 : 0;
+void computePowerOfTwoLWS(const size_t workItems[3], WorkSizeInfo &workGroupInfo, size_t workGroupSize[3], const uint32_t workDim, bool canUseNx4) {
+    uint32_t targetIndex = (canUseNx4 || workGroupInfo.numThreadsPerSubSlice < highThreadCountThreshold) ? 2 : 0;
     auto arraySize = arrayCount(optimalHardwareThreadCountGeneric);
+    auto simdSize = workGroupInfo.simdSize;
 
-    while (targetIndex < arraySize && optimalHardwareThreadCountGeneric[targetIndex] > 1 && maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize)
+    while (targetIndex < arraySize &&
+           optimalHardwareThreadCountGeneric[targetIndex] > 1 &&
+           workGroupInfo.maxWorkGroupSize < optimalHardwareThreadCountGeneric[targetIndex] * simdSize) {
         targetIndex++;
+    }
     uint32_t optimalLocalThreads = optimalHardwareThreadCountGeneric[targetIndex];
 
     if (workDim == 2) {
@@ -357,7 +365,7 @@ void computeWorkgroupSizeND(WorkSizeInfo wsInfo, size_t workGroupSize[3], const 
         //bigger than maxWorkGroupSize or this group would create more than optimal hardware threads then downsize it
         uint64_t allItems = itemsPowerOfTwoDivisors[0] * itemsPowerOfTwoDivisors[1] * itemsPowerOfTwoDivisors[2];
         if (allItems > wsInfo.simdSize && (allItems > wsInfo.maxWorkGroupSize || allItems > wsInfo.simdSize * optimalHardwareThreadCountGeneric[0])) {
-            computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo.simdSize, wsInfo.maxWorkGroupSize, workGroupSize, workDim, canUseNx4);
+            computePowerOfTwoLWS(itemsPowerOfTwoDivisors, wsInfo, workGroupSize, workDim, canUseNx4);
             return;
         }
         //If coputed workgroup is at this point in correct size
