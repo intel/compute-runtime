@@ -25,4 +25,5 @@
 namespace OCLRT {
 void gtpinNotifyContextCreate(cl_context context);
 void gtpinNotifyContextDestroy(cl_context context);
+void gtpinNotifyKernelCreate(cl_kernel kernel);
 }

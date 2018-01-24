@@ -23,9 +23,11 @@
 #include "config.h"
 #include "gtpin_ocl_interface.h"
 #include "CL/cl.h"
+#include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_info.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"
 
 using namespace gtpin;
@@ -53,6 +55,29 @@ void gtpinNotifyContextCreate(cl_context context) {
 void gtpinNotifyContextDestroy(cl_context context) {
     if (isGTPinInitialized) {
         (*GTPinCallbacks.onContextDestroy)((context_handle_t)context);
+    }
+}
+
+void gtpinNotifyKernelCreate(cl_kernel kernel) {
+    if (isGTPinInitialized) {
+        auto pKernel = castToObject<Kernel>(kernel);
+        Context *pContext = &(pKernel->getContext());
+        cl_context context = (cl_context)pContext;
+        const KernelInfo &kInfo = pKernel->getKernelInfo();
+        instrument_params_in_t paramsIn;
+        paramsIn.kernel_type = GTPIN_KERNEL_TYPE_CS;
+        paramsIn.simd = (GTPIN_SIMD_WIDTH)kInfo.getMaxSimdSize();
+        paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap();
+        paramsIn.orig_kernel_size = static_cast<uint32_t>(pKernel->getKernelHeapSize());
+        paramsIn.buffer_type = GTPIN_BUFFER_BINDFULL;
+        paramsIn.buffer_desc.BTI = kInfo.patchInfo.bindingTableState->Count;
+        paramsIn.igc_hash_id = kInfo.heapInfo.pKernelHeader->ShaderHashCode;
+        paramsIn.kernel_name = (char *)kInfo.name.c_str();
+        paramsIn.igc_info = nullptr;
+        instrument_params_out_t paramsOut = {0};
+        (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
+        pKernel->substituteKernelHeap(paramsOut.inst_kernel_binary, paramsOut.inst_kernel_size);
+        pKernel->setKernelId(paramsOut.kernel_id);
     }
 }
 }

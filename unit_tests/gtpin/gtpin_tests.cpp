@@ -26,11 +26,15 @@
 #include "runtime/gtpin/gtpin_init.h"
 #include "runtime/gtpin/gtpin_helpers.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/file_io.h"
 #include "runtime/helpers/options.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/helpers/kernel_binary_helper.h"
+#include "unit_tests/helpers/test_files.h"
 #include "test.h"
 #include "gtest/gtest.h"
 
@@ -45,6 +49,7 @@ namespace ULT {
 
 int ContextCreateCallbackCount = 0;
 int ContextDestroyCallbackCount = 0;
+int KernelCreateCallbackCount = 0;
 
 void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, igc_init_t **igcInit) {
     ContextCreateCallbackCount++;
@@ -55,6 +60,10 @@ void OnContextDestroy(context_handle_t context) {
 }
 
 void OnKernelCreate(context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+    paramsOut->inst_kernel_binary = const_cast<uint8_t *>(paramsIn->orig_kernel_binary);
+    paramsOut->inst_kernel_size = paramsIn->orig_kernel_size;
+    paramsOut->kernel_id = paramsIn->igc_hash_id;
+    KernelCreateCallbackCount++;
 }
 
 void OnKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
@@ -525,6 +534,114 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinContextCallbackIsCalle
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(ContextDestroyCallbackCount, prevCount + 1);
+}
+
+TEST_F(GTPinTests, givenUninitializedGTPinInterfaceThenGTPinKernelCreateCallbackIsNotCalled) {
+    cl_kernel kernel = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    void *pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd8", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd8.cl");
+    sourceSize = loadDataFromFile(testFile.c_str(), pSource);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    pProgram = clCreateProgramWithSource(
+        (cl_context)((Context *)pContext),
+        1,
+        (const char **)&pSource,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    int prevCount = KernelCreateCallbackCount;
+    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount, KernelCreateCallbackCount);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    deleteDataReadFromFile(pSource);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceThenGTPinKernelCreateCallbackIsCalled) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_kernel kernel = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    void *pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd8", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd8.cl");
+    sourceSize = loadDataFromFile(testFile.c_str(), pSource);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    pProgram = clCreateProgramWithSource(
+        (cl_context)((Context *)pContext),
+        1,
+        (const char **)&pSource,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    int prevCount = KernelCreateCallbackCount;
+    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(prevCount + 1, KernelCreateCallbackCount);
+
+    Kernel *pKernel = (Kernel *)kernel;
+    const KernelInfo &kInfo = pKernel->getKernelInfo();
+    uint64_t gtpinKernelId = pKernel->getKernelId();
+    EXPECT_EQ(kInfo.heapInfo.pKernelHeader->ShaderHashCode, gtpinKernelId);
+
+    retVal = clReleaseKernel(kernel);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    deleteDataReadFromFile(pSource);
 }
 
 } // namespace ULT

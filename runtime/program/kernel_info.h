@@ -235,5 +235,6 @@ struct KernelInfo {
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t argumentsToPatchNum = 0;
     uint32_t systemKernelOffset = 0;
+    uint64_t kernelId = 0;
 };
 } // namespace OCLRT

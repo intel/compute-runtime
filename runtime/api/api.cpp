@@ -1323,6 +1323,9 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
+    if (kernel != nullptr) {
+        gtpinNotifyKernelCreate(kernel);
+    }
     return kernel;
 }
 

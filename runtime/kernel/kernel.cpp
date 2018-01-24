@@ -684,6 +684,23 @@ size_t Kernel::getKernelHeapSize() const {
     return kernelInfo.heapInfo.pKernelHeader->KernelHeapSize;
 }
 
+void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize) {
+    KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
+    void **pKernelHeap = const_cast<void **>(&pKernelInfo->heapInfo.pKernelHeap);
+    *pKernelHeap = newKernelHeap;
+    SKernelBinaryHeaderCommon *pHeader = const_cast<SKernelBinaryHeaderCommon *>(pKernelInfo->heapInfo.pKernelHeader);
+    pHeader->KernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
+}
+
+uint64_t Kernel::getKernelId() const {
+    return kernelInfo.kernelId;
+}
+
+void Kernel::setKernelId(uint64_t newKernelId) {
+    KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
+    pKernelInfo->kernelId = newKernelId;
+}
+
 const void *Kernel::getSurfaceStateHeap() const {
     return kernelInfo.usesSsh
                ? pSshLocal

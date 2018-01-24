@@ -157,6 +157,10 @@ class Kernel : public BaseObject<_cl_kernel> {
     size_t getDynamicStateHeapSize() const;
     size_t getNumberOfSurfaceStates() const;
 
+    void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
+    uint64_t getKernelId() const;
+    void setKernelId(uint64_t newKernelId);
+
     const std::vector<SimpleKernelArgInfo> &getKernelArguments() const {
         return kernelArguments;
     }
