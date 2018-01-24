@@ -240,7 +240,34 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenBlockingReadAndBufferSharesMemWith
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
-TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteWhenEnqueueWriteBufferRectIsCallingThenContextProvidesProperHint) {
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndNotSharedMemWhenEnqueueWriteBufferRectIsCallingThenContextProvidesProperHint) {
+
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 2, 1};
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+
+    pCmdQ->enqueueWriteBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndSharedMemWhenEnqueueWriteBufferRectIsCallingThenContextProvidesProperHint) {
 
     size_t bufferOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
@@ -261,7 +288,7 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteWhenEnqueueWriteBu
         nullptr,
         nullptr);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer));
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer));
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 

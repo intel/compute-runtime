@@ -45,7 +45,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
     cl_event *event) {
 
     cl_int retVal = CL_SUCCESS;
-    auto isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(offset, ptr, CL_COMMAND_WRITE_BUFFER);
+    auto isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(offset, 0, ptr, CL_COMMAND_WRITE_BUFFER);
     if ((DebugManager.flags.DoCpuCopyOnWriteBuffer.get() ||
          buffer->isReadWriteOnCpuAllowed(blockingWrite, numEventsInWaitList, const_cast<void *>(ptr), size)) &&
         context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {

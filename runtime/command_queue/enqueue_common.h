@@ -685,4 +685,21 @@ void CommandQueueHw<GfxFamily>::addMapUnmapToWaitlistEventsDependencies(const cl
     }
     this->virtualEvent = eventBuilder->getEvent();
 }
+template <typename GfxFamily>
+void CommandQueueHw<GfxFamily>::computeOffsetsValueForRectCommands(size_t *bufferOffset,
+                                                                   size_t *hostOffset,
+                                                                   const size_t *bufferOrigin,
+                                                                   const size_t *hostOrigin,
+                                                                   const size_t *region,
+                                                                   size_t bufferRowPitch,
+                                                                   size_t bufferSlicePitch,
+                                                                   size_t hostRowPitch,
+                                                                   size_t hostSlicePitch) {
+    size_t computedBufferRowPitch = bufferRowPitch ? bufferRowPitch : region[0];
+    size_t computedBufferSlicePitch = bufferSlicePitch ? bufferSlicePitch : region[1] * computedBufferRowPitch;
+    size_t computedHostRowPitch = hostRowPitch ? hostRowPitch : region[0];
+    size_t computedHostSlicePitch = hostSlicePitch ? hostSlicePitch : region[1] * computedHostRowPitch;
+    *bufferOffset = bufferOrigin[2] * computedBufferSlicePitch + bufferOrigin[1] * computedBufferRowPitch + bufferOrigin[0];
+    *hostOffset = hostOrigin[2] * computedHostSlicePitch + hostOrigin[1] * computedHostRowPitch + hostOrigin[0];
+}
 } // namespace OCLRT

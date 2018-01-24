@@ -395,5 +395,14 @@ class CommandQueueHw : public CommandQueue {
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
     void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType);
     void forceDispatchScheduler(OCLRT::MultiDispatchInfo &multiDispatchInfo);
+    static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
+                                                   size_t *hostOffset,
+                                                   const size_t *bufferOrigin,
+                                                   const size_t *hostOrigin,
+                                                   const size_t *region,
+                                                   size_t bufferRowPitch,
+                                                   size_t bufferSlicePitch,
+                                                   size_t hostRowPitch,
+                                                   size_t hostSlicePitch);
 };
 } // namespace OCLRT

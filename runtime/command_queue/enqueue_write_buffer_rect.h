@@ -48,7 +48,31 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     cl_event *event) {
 
     MultiDispatchInfo dispatchInfo;
+    size_t bufferOffset;
+    size_t hostOffset;
+    computeOffsetsValueForRectCommands(&bufferOffset, &hostOffset, bufferOrigin, hostOrigin, region, bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch);
+    auto isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, CL_COMMAND_WRITE_BUFFER_RECT);
+    if (!isMemTransferNeeded) {
+        NullSurface s;
+        Surface *surfaces[] = {&s};
+        enqueueHandler<CL_COMMAND_MARKER>(
+            surfaces,
+            blockingWrite == CL_TRUE,
+            dispatchInfo,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_WRITE_BUFFER_RECT);
+        }
 
+        if (context->isProvidingPerformanceHints()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(buffer), ptr);
+        }
+
+        return CL_SUCCESS;
+    }
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
                                                                           this->getContext(), this->getDevice());
     builder.takeOwnership(this->context);
@@ -82,4 +106,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
 
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

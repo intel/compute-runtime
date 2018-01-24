@@ -351,9 +351,13 @@ void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyn
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-bool MemObj::checkIfMemoryTransferIsRequired(size_t offset, const void *ptr, cl_command_type cmdType) {
-    auto bufferStorage = ptrOffset(this->getCpuAddressForMemoryTransfer(), offset);
-    auto isMemTransferNeeded = !((bufferStorage == ptr) && (cmdType == CL_COMMAND_READ_BUFFER || cmdType == CL_COMMAND_WRITE_BUFFER));
+bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *hostPtr, cl_command_type cmdType) {
+    auto bufferStorage = ptrOffset(this->getCpuAddressForMemoryTransfer(), offsetInMemObjest);
+    auto hostStorage = ptrOffset(hostPtr, offsetInHostPtr);
+    auto isMemTransferNeeded = !((bufferStorage == hostStorage) &&
+                                 (cmdType == CL_COMMAND_WRITE_BUFFER || cmdType == CL_COMMAND_READ_BUFFER ||
+                                  cmdType == CL_COMMAND_WRITE_BUFFER_RECT || cmdType == CL_COMMAND_READ_BUFFER_RECT ||
+                                  cmdType == CL_COMMAND_WRITE_IMAGE || cmdType == CL_COMMAND_READ_IMAGE));
     return isMemTransferNeeded;
 }
 } // namespace OCLRT

@@ -214,3 +214,54 @@ TEST(MemObj, givenMemObjWhenItDoesntHaveGraphicsAllocationThenWaitForCsrCompleti
     EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
     memObj.waitForCsrCompletion();
 }
+TEST(MemObj, givenMemObjAndPointerToObjStorageWithProperCommandWhenCheckIfMemTransferRequiredThenReturnFalse) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+    void *ptr = memObj.getCpuAddressForMemoryTransfer();
+    bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER);
+    EXPECT_FALSE(isMemTransferNeeded);
+
+    isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_READ_BUFFER);
+    EXPECT_FALSE(isMemTransferNeeded);
+
+    isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER_RECT);
+    EXPECT_FALSE(isMemTransferNeeded);
+
+    isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_READ_BUFFER_RECT);
+    EXPECT_FALSE(isMemTransferNeeded);
+
+    isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_IMAGE);
+    EXPECT_FALSE(isMemTransferNeeded);
+
+    isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_READ_IMAGE);
+    EXPECT_FALSE(isMemTransferNeeded);
+}
+TEST(MemObj, givenMemObjAndPointerToObjStorageBadCommandWhenCheckIfMemTransferRequiredThenReturnTrue) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+    void *ptr = memObj.getCpuAddressForMemoryTransfer();
+    bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_FILL_BUFFER);
+    EXPECT_TRUE(isMemTransferNeeded);
+}
+TEST(MemObj, givenMemObjAndPointerToDiffrentStorageAndProperCommandWhenCheckIfMemTransferRequiredThenReturnTrue) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+    void *ptr = (void *)0x1234;
+    bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER);
+    EXPECT_TRUE(isMemTransferNeeded);
+}

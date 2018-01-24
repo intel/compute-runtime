@@ -121,7 +121,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     void waitForCsrCompletion();
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
-    bool checkIfMemoryTransferIsRequired(size_t offset, const void *ptr, cl_command_type cmdType);
+    bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
