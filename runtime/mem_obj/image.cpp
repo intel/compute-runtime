@@ -144,6 +144,7 @@ Image *Image::create(Context *context,
         switch (imageDesc->image_type) {
         case CL_MEM_OBJECT_IMAGE3D:
             imageDepth = imageDesc->image_depth;
+        // FALLTHROUGH
         case CL_MEM_OBJECT_IMAGE2D:
         case CL_MEM_OBJECT_IMAGE2D_ARRAY:
             imageHeight = imageDesc->image_height;
