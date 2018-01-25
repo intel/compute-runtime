@@ -49,6 +49,9 @@ enum OCLPlane {
     PLANE_UV
 };
 
+constexpr uint32_t cacheDisabledIndex = 0;
+constexpr uint32_t cacheEnabledIndex = 4;
+
 class Gmm {
   public:
     static const uint32_t maxPossiblePitch = 2147483648;
@@ -93,5 +96,6 @@ class Gmm {
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     bool isRenderCompressed = false;
+    static bool useSimplifiedMocsTable;
 };
 } // namespace OCLRT

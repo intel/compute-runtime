@@ -78,6 +78,14 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
 }
 
 uint32_t Gmm::getMOCS(uint32_t type) {
+    if (useSimplifiedMocsTable) {
+        if (type == GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) {
+            return cacheDisabledIndex;
+        } else {
+            return cacheEnabledIndex;
+        }
+    }
+
     MEMORY_OBJECT_CONTROL_STATE mocs =
         pGmmGlobalContext->GetCachePolicyObj()->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
@@ -385,4 +393,7 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
 
     return this->gmmResourceInfo->cpuBlt(&gmmResourceCopyBLT);
 }
+
+bool Gmm::useSimplifiedMocsTable = false;
+
 } // namespace OCLRT

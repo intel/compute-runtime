@@ -21,6 +21,7 @@
  */
 
 #include "mock_os_layer.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "unit_tests/custom_event_listener.h"
 #include "test.h"
 
@@ -200,6 +201,21 @@ TEST_F(DrmTests, failOnParamBoost) {
     auto ptr = DrmWrap::createDrm(0);
     //non-fatal error - issue warning only
     EXPECT_NE(ptr, nullptr);
+}
+
+TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenDeviceIsCreatedThenGmmSwitchesToSimplifiedMocsSelection) {
+    Gmm::useSimplifiedMocsTable = false;
+    failOnParamBoost = -1;
+    auto ptr = DrmWrap::createDrm(0);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    Gmm::useSimplifiedMocsTable = false;
+}
+
+TEST_F(DrmTests, givenKernelSupportingTurboPatchWhenDeviceIsCreatedThenSimplifiedMocsSelectionIsFalse) {
+    auto ptr = DrmWrap::createDrm(0);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_FALSE(Gmm::useSimplifiedMocsTable);
 }
 
 #if defined(I915_PARAM_HAS_PREEMPTION)

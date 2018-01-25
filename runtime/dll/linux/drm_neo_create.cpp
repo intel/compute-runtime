@@ -25,6 +25,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/drm_null_device.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "drm/i915_drm.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <stdio.h>
@@ -212,6 +213,8 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     // Activate the Turbo Boost Frequency feature
     ret = drmObject->enableTurboBoost();
     if (ret != 0) {
+        //turbo patch not present, we are not on custom Kernel, switch to simplified Mocs selection
+        Gmm::useSimplifiedMocsTable = true;
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 

@@ -560,4 +560,21 @@ TEST_F(GmmTests, copyResourceBlt) {
     EXPECT_EQ(1u, retVal);
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }
+
+TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
+    Gmm::useSimplifiedMocsTable = true;
+    auto index = Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    auto expectedIndex = cacheDisabledIndex;
+    EXPECT_EQ(expectedIndex, index);
+    Gmm::useSimplifiedMocsTable = false;
+}
+
+TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForCachedIndexThen4IsReturned) {
+    Gmm::useSimplifiedMocsTable = true;
+    auto index = Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    auto expectedIndex = cacheEnabledIndex;
+    EXPECT_EQ(expectedIndex, index);
+    Gmm::useSimplifiedMocsTable = false;
+}
+
 } // namespace OCLRT
