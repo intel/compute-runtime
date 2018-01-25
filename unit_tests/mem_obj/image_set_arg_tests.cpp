@@ -420,6 +420,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWithoutCcsWhenSetArgIsCalledThenProg
 
     auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
     EXPECT_EQ(0u, mockMcsGmmResInfo->getResourceFlags()->Gpu.CCS);
+    EXPECT_EQ(0u, mockMcsGmmResInfo->getResourceFlags()->Gpu.UnifiedAuxSurface);
 
     retVal = clSetKernelArg(
         pKernel,
@@ -535,7 +536,7 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatAndRenderCompressionWhenSetArgOnMultis
     EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
-HWTEST_F(ImageSetArgTest, givenMcsAllocationWithCcsWhenSetArgIsCalledThenProgramAuxFieldsForCcs) {
+HWTEST_F(ImageSetArgTest, givenMcsAllocationWithCcsAndUnifiedAuxWhenSetArgIsCalledThenProgramAuxFieldsForCcs) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
@@ -554,7 +555,9 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWithCcsWhenSetArgIsCalledThenProgram
 
     auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
     mockMcsGmmResInfo->mockResourceCreateParams.Flags.Gpu.CCS = 1;
+    mockMcsGmmResInfo->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
     EXPECT_EQ(1u, mockMcsGmmResInfo->getResourceFlags()->Gpu.CCS);
+    EXPECT_EQ(1u, mockMcsGmmResInfo->getResourceFlags()->Gpu.UnifiedAuxSurface);
     EXPECT_CALL(*mockMcsGmmResInfo, getRenderAuxPitchTiles()).Times(1).WillOnce(Return(expectedRenderAuxPitchTiles));
     EXPECT_CALL(*mockMcsGmmResInfo, getAuxQPitch()).Times(1).WillOnce(Return(expectedAuxQPitch));
     EXPECT_CALL(*mockMcsGmmResInfo, getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS)).Times(1).WillOnce(Return(expectedAuxSurfaceOffset));
@@ -569,6 +572,40 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWithCcsWhenSetArgIsCalledThenProgram
     EXPECT_EQ(expectedRenderAuxPitchTiles, surfaceState->getAuxiliarySurfacePitch());
     EXPECT_EQ(expectedAuxQPitch, surfaceState->getAuxiliarySurfaceQpitch());
     EXPECT_EQ(surfaceState->getSurfaceBaseAddress() + expectedAuxSurfaceOffset, surfaceState->getAuxiliarySurfaceBaseAddress());
+}
+
+HWTEST_F(ImageSetArgTest, givenMcsAllocationWithCcsAndWithoutUnifiedAuxWhenSetArgIsCalledThenProgramAuxFieldsForCcs) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    McsSurfaceInfo msi = {10, 20, 3};
+    auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
+    mcsAlloc->gmm = Gmm::create(nullptr, 1, false);
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+
+    auto image = std::unique_ptr<Image>(Image2dHelper<>::create(context, &imgDesc));
+    image->setMcsSurfaceInfo(msi);
+    image->setMcsAllocation(mcsAlloc);
+    cl_mem memObj = image.get();
+
+    auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
+    mockMcsGmmResInfo->mockResourceCreateParams.Flags.Gpu.CCS = 1;
+    mockMcsGmmResInfo->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 0;
+    EXPECT_EQ(1u, mockMcsGmmResInfo->getResourceFlags()->Gpu.CCS);
+    EXPECT_EQ(0u, mockMcsGmmResInfo->getResourceFlags()->Gpu.UnifiedAuxSurface);
+
+    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
+                                                                                 pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
+                RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+    EXPECT_TRUE(surfaceState->getAuxiliarySurfaceMode() == (typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);
+    EXPECT_EQ(msi.pitch, surfaceState->getAuxiliarySurfacePitch());
+    EXPECT_EQ(msi.qPitch, surfaceState->getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(msi.multisampleCount, static_cast<uint32_t>(surfaceState->getNumberOfMultisamples()));
+    EXPECT_EQ(mcsAlloc->getGpuAddress(), surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
