@@ -389,3 +389,197 @@ HWTEST_F(EnqueueReadBufferRectTest, blockingRequiresPipeControlAfterWalkerWithDC
         EXPECT_TRUE(cmd->getDcFlushEnable());
     }
 }
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    uint32_t taskLevelCmdQ = 17;
+    pCmdQ->taskLevel = taskLevelCmdQ;
+
+    uint32_t taskLevelEvent1 = 8;
+    uint32_t taskLevelEvent2 = 19;
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
+    Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2};
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+    cl_event event = nullptr;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    retVal = pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        ptr,
+        numEventsInWaitList,
+        eventWaitList,
+        &event);
+    ;
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(19u, pEvent->taskLevel);
+    EXPECT_EQ(19u, pCmdQ->taskLevel);
+    EXPECT_EQ(CL_COMMAND_READ_BUFFER_RECT, (const int)pEvent->getCommandType());
+
+    pEvent->release();
+}
+HWTEST_F(EnqueueReadBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    uint32_t taskLevelCmdQ = 17;
+    pCmdOOQ->taskLevel = taskLevelCmdQ;
+
+    uint32_t taskLevelEvent1 = 8;
+    uint32_t taskLevelEvent2 = 19;
+    Event event1(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
+    Event event2(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2};
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+    cl_event event = nullptr;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    retVal = pCmdOOQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        ptr,
+        numEventsInWaitList,
+        eventWaitList,
+        &event);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(19u, pEvent->taskLevel);
+    EXPECT_EQ(19u, pCmdOOQ->taskLevel);
+    EXPECT_EQ(CL_COMMAND_READ_BUFFER_RECT, (const int)pEvent->getCommandType());
+
+    pEvent->release();
+}
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    retVal = pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        0,
+        slicePitch,
+        0,
+        slicePitch,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    retVal = pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        0,
+        rowPitch,
+        0,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTheSameStorageWithHostWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    size_t bufferOrigin[] = {50, 50, 0};
+    size_t hostOrigin[] = {20, 20, 0};
+    size_t region[] = {50, 50, 1};
+    size_t hostOffset = (bufferOrigin[2] - hostOrigin[2]) * slicePitch + (bufferOrigin[1] - hostOrigin[1]) * rowPitch + (bufferOrigin[0] - hostOrigin[0]);
+    auto hostStorage = ptrOffset(ptr, hostOffset);
+    retVal = pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        hostStorage,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDiffrentStorageWithHostWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = buffer->getCpuAddressForMemoryTransfer();
+    size_t bufferOrigin[] = {50, 50, 0};
+    size_t hostOrigin[] = {10, 10, 0};
+    size_t region[] = {50, 50, 1};
+    retVal = pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}

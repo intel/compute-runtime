@@ -72,7 +72,8 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
 
 TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadBufferRectIsCallingThenContextProvidesHintsAboutAlignments) {
 
-    uintptr_t addressForReadBufferRect = (uintptr_t)address;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    uintptr_t addressForReadBufferRect = (uintptr_t)ptr;
     size_t sizeForReadBufferRect = MemoryConstants::cacheLineSize;
     if (!alignedAddress) {
         addressForReadBufferRect++;
@@ -102,6 +103,59 @@ TEST_P(PerformanceHintEnqueueReadBufferTest, GivenHostPtrAndSizeAlignmentsWhenEn
     EXPECT_TRUE(containsHint(expectedHint, userData));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadBufferRect, sizeForReadBufferRect, MemoryConstants::pageSize, MemoryConstants::pageSize);
     EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndNotSharedMemWhenEnqueueReadBufferRectIsCallingThenContextProvidesProperHint) {
+
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 2, 1};
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+
+    pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), ptr);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+    alignedFree(ptr);
+}
+
+TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingReadAndSharedMemWhenEnqueueReadBufferRectIsCallingThenContextProvidesProperHint) {
+
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 2, 1};
+
+    pCmdQ->enqueueReadBufferRect(
+        buffer,
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        address,
+        0,
+        nullptr,
+        nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_BUFFER_RECT_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer), address);
+    EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
 TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndBufferDoesntShareMemWithCPUWhenEnqueueWriteBufferIsCallingWithoutCPUCopyThenContextProvidesRequiedCopyHint) {
