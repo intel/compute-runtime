@@ -95,6 +95,10 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->gmm->gmmResourceInfo->getResourceFormat(), flags);
     }
 
+    if (alloc->gmm->unifiedAuxTranslationCapable() && sharedResource) {
+        alloc->gmm->isRenderCompressed = context->getMemoryManager()->mapAuxGpuVA(alloc);
+    }
+
     return Image::createSharedImage(context, d3dTextureObj, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0);
 }
 

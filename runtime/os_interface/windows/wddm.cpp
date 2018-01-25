@@ -396,14 +396,10 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         return false;
     }
 
-    if (gmm && gmm->isRenderCompressed) {
-        GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-        ddiUpdateAuxTable.BaseGpuVA = gpuPtr;
-        ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
-        ddiUpdateAuxTable.DoNotWait = true;
-        ddiUpdateAuxTable.Map = true;
-        return updateAuxTable(ddiUpdateAuxTable);
+    if (gmm->isRenderCompressed) {
+        return updateAuxTable(gpuPtr, gmm, true);
     }
+
     return status == STATUS_SUCCESS;
 }
 
@@ -889,8 +885,16 @@ void Wddm::initPageTableManagerRegisters(LinearStream &stream) {
     }
 }
 
-bool Wddm::updateAuxTable(GMM_DDI_UPDATEAUXTABLE &ddiUpdateAuxTable) {
-    return pageTableManager->updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
+bool Wddm::updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map) {
+    if (pageTableManager.get()) {
+        GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
+        ddiUpdateAuxTable.BaseGpuVA = gpuVa;
+        ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
+        ddiUpdateAuxTable.DoNotWait = true;
+        ddiUpdateAuxTable.Map = map ? 1u : 0u;
+        return pageTableManager->updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
+    }
+    return false;
 }
 
 void Wddm::resetPageTableManager(GmmPageTableMngr *newPageTableManager) {

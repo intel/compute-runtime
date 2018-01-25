@@ -60,6 +60,19 @@ HWTEST_F(WddmTest, doubleCreation) {
     delete wddmMock;
 }
 
+TEST_F(WddmTest, givenNullPageTableManagerWhenUpdateAuxTableCalledThenReturnFalse) {
+    auto wddmMock = std::make_unique<WddmMock>();
+
+    wddmMock->resetPageTableManager(nullptr);
+    EXPECT_EQ(nullptr, wddmMock->getPageTableManager());
+
+    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockGmmRes->setUnifiedAuxTranslationCapable();
+
+    EXPECT_FALSE(wddmMock->updateAuxTable(1234u, gmm.get(), true));
+}
+
 TEST(WddmTestEnumAdapters, expectTrue) {
     ADAPTER_INFO adpaterInfo;
     const HardwareInfo hwInfo = *platformDevices[0];

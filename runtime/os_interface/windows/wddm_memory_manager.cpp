@@ -276,7 +276,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {
-            auto status = unmapAuxVA(input->gmm, input->gpuPtr);
+            auto status = wddm->updateAuxTable(input->gpuPtr, input->gmm, false);
             DEBUG_BREAK_IF(!status);
         }
         delete input->gmm;
@@ -744,12 +744,7 @@ bool WddmMemoryManager::trimResidencyToBudget(uint64_t bytes) {
     return numberOfBytesToTrim == 0;
 }
 
-bool WddmMemoryManager::unmapAuxVA(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuVA) {
-    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-    ddiUpdateAuxTable.BaseGpuVA = gpuVA;
-    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
-    ddiUpdateAuxTable.DoNotWait = true;
-    ddiUpdateAuxTable.Map = false;
-    return wddm->updateAuxTable(ddiUpdateAuxTable);
+bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
+    return wddm->updateAuxTable(graphicsAllocation->getGpuAddress(), graphicsAllocation->gmm, true);
 }
 } // namespace OCLRT

@@ -181,7 +181,7 @@ class Wddm {
 
     void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
     void initPageTableManagerRegisters(LinearStream &stream);
-    bool updateAuxTable(GMM_DDI_UPDATEAUXTABLE &ddiUpdateAuxTable);
+    bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
 
   protected:
     bool initialized;

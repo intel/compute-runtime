@@ -112,6 +112,12 @@ uint32_t MockGmmResourceInfo::getBitsPerPixel() {
     return (surfaceFormatInfo->PerChannelSizeInBytes << 3) * surfaceFormatInfo->NumChannels;
 }
 
+void MockGmmResourceInfo::setUnifiedAuxTranslationCapable() {
+    mockResourceCreateParams.Flags.Gpu.CCS = 1;
+    mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
+    mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
+}
+
 MockGmmResourceInfo::MockGmmResourceInfo() {}
 MockGmmResourceInfo::~MockGmmResourceInfo() {}
 } // namespace OCLRT

@@ -178,9 +178,8 @@ template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState) {
     if (getMcsAllocation()) {
         auto mcsGmm = getMcsAllocation()->gmm;
-        auto gmmFlags = mcsGmm->gmmResourceInfo->getResourceFlags();
 
-        if (gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface) { // Ignore MCS allocation when Color Control Surface is available
+        if (mcsGmm->unifiedAuxTranslationCapable()) { // Ignore MCS allocation when Color Control Surface is available
             setAuxParamsForCCS(surfaceState, mcsGmm);
         } else {
             surfaceState->setAuxiliarySurfaceMode((typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE)1);

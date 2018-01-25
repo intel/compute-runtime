@@ -1654,6 +1654,31 @@ TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManager
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
+HWTEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {
+    auto myWddm = new WddmMock();
+    EXPECT_TRUE(myWddm->init<FamilyType>());
+    WddmMemoryManager memoryManager(false, myWddm);
+
+    auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
+    myWddm->resetPageTableManager(mockMngr);
+
+    auto allocation = memoryManager.allocateGraphicsMemory(4096);
+
+    GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
+    GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
+    expectedDdiUpdateAuxTable.BaseGpuVA = allocation->getGpuAddress();
+    expectedDdiUpdateAuxTable.BaseResInfo = allocation->gmm->gmmResourceInfo->peekHandle();
+    expectedDdiUpdateAuxTable.DoNotWait = true;
+    expectedDdiUpdateAuxTable.Map = true;
+
+    EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
+
+    auto result = memoryManager.mapAuxGpuVA(allocation);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVaThenMapAuxVa) {
     std::unique_ptr<Gmm> gmm(Gmm::create((void *)123, 4096u, false));
     gmm->isRenderCompressed = true;

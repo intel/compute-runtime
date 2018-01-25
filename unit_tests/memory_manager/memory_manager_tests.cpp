@@ -735,6 +735,21 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
+    OsAgnosticMemoryManager memoryManager;
+
+    auto gmm = Gmm::create(nullptr, 123, false);
+    auto allocation = memoryManager.allocateGraphicsMemory(123);
+    allocation->gmm = gmm;
+
+    auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockGmmRes->setUnifiedAuxTranslationCapable();
+
+    EXPECT_FALSE(memoryManager.mapAuxGpuVA(allocation));
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
     OsAgnosticMemoryManager memoryManager(false);
     auto size = 4096u;

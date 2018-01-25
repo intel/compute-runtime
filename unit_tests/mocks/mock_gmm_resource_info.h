@@ -91,6 +91,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     void overrideReturnedRenderPitch(size_t newPitch) { rowPitch = newPitch; }
 
+    void setUnifiedAuxTranslationCapable();
+
   protected:
     MockGmmResourceInfo();
 

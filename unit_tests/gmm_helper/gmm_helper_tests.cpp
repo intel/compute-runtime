@@ -561,6 +561,36 @@ TEST_F(GmmTests, copyResourceBlt) {
     EXPECT_TRUE(memcmp(&expectedCpuBlt, &requestedCpuBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }
 
+TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {
+    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+
+    mockResource->setUnifiedAuxTranslationCapable();
+    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.CCS);
+    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface);
+    EXPECT_EQ(1u, mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed);
+
+    EXPECT_TRUE(gmm->unifiedAuxTranslationCapable());
+}
+
+TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
+    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+
+    mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;
+    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
+    mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 1;
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // CCS == 0
+
+    mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 1;
+    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 0;
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // UnifiedAuxSurface == 0
+
+    mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
+    mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 0;
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
+}
+
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
     Gmm::useSimplifiedMocsTable = true;
     auto index = Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);

@@ -1361,6 +1361,20 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockCalledThenDoNoth
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
+    mock->ioctl_expected = 3;
+    auto gmm = Gmm::create(nullptr, 123, false);
+    auto allocation = memoryManager->allocateGraphicsMemory(123, 123);
+    allocation->gmm = gmm;
+
+    auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    mockGmmRes->setUnifiedAuxTranslationCapable();
+
+    EXPECT_FALSE(memoryManager->mapAuxGpuVA(allocation));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragmentIsReusedThenOnlyUnmapSizeIsLargerWhileSizeStaysTheSame) {
     DebugManagerStateRestore dbgFlagsKeeper;
     //USERPTR + WAIT + CLOSE

@@ -86,6 +86,7 @@ class Gmm {
     uint32_t getRenderVAlignment();
     static uint32_t getRenderAlignment(uint32_t alignment);
     void applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+    bool unifiedAuxTranslationCapable() const;
 
     uint32_t queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType);
 

@@ -394,6 +394,11 @@ uint8_t Gmm::resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t heig
     return this->gmmResourceInfo->cpuBlt(&gmmResourceCopyBLT);
 }
 
+bool Gmm::unifiedAuxTranslationCapable() const {
+    auto gmmFlags = this->gmmResourceInfo->getResourceFlags();
+    return gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface && gmmFlags->Info.RenderCompressed;
+}
+
 bool Gmm::useSimplifiedMocsTable = false;
 
 } // namespace OCLRT

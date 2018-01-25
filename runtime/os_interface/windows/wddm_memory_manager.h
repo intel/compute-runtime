@@ -83,6 +83,8 @@ class WddmMemoryManager : public MemoryManager {
 
     bool isMemoryBudgetExhausted() const override { return memoryBudgetExhausted; }
 
+    bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) override;
+
   protected:
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     WddmAllocation *getTrimCandidateHead() {
@@ -111,7 +113,6 @@ class WddmMemoryManager : public MemoryManager {
     uint64_t lastPeriodicTrimFenceValue = 0;
     uint32_t trimCandidatesCount = 0;
     bool memoryBudgetExhausted = false;
-    bool unmapAuxVA(Gmm *gmm, D3DGPU_VIRTUAL_ADDRESS &gpuVA);
 
   private:
     Wddm *wddm;
