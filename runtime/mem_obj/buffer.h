@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 
 namespace OCLRT {
 class Buffer;
+class MemoryManager;
 
 typedef Buffer *(*BufferCreatFunc)(Context *context,
                                    cl_mem_flags flags,
@@ -125,7 +126,8 @@ class Buffer : public MemObj {
                             cl_int &errcodeRet,
                             bool &isZeroCopy,
                             bool &allocateMemory,
-                            bool &copyMemoryFromHostPtr);
+                            bool &copyMemoryFromHostPtr,
+                            MemoryManager *memMngr);
 };
 
 template <typename GfxFamily>

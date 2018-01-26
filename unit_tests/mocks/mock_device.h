@@ -39,8 +39,8 @@ extern bool initialized;
 
 class MockDevice : public Device {
   public:
-    using Device::initializeCaps;
     using Device::commandStreamReceiver;
+    using Device::initializeCaps;
 
     void setOSTime(OSTime *osTime);
     void setDriverInfo(DriverInfo *driverInfo);
@@ -181,6 +181,11 @@ class FailDeviceAfterOne : public Device {
         : Device(hwInfo, isRootDevice) {
         memoryManager = new FailMemoryManager(1);
     }
+};
+
+class MockAlignedMallocManagerDevice : public MockDevice {
+  public:
+    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, bool isRootDevice = true);
 };
 
 } // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,9 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace OCLRT {
 
@@ -61,6 +63,41 @@ void api_fixture::TearDown() {
 
     BuiltInFixture::TearDown();
     PlatformFixture::TearDown();
+    MemoryManagementFixture::TearDown();
+}
+
+void api_fixture_using_aligned_memory_manager::SetUp() {
+    retVal = CL_SUCCESS;
+    retSize = 0;
+
+    MemoryManagementFixture::SetUp();
+
+    device = Device::create<MockAlignedMallocManagerDevice>(*platformDevices);
+    Device *devPtr = reinterpret_cast<Device *>(device);
+    cl_device_id clDevice = devPtr;
+
+    context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    Context *ctxPtr = reinterpret_cast<Context *>(context);
+
+    commandQueue = new CommandQueue(context, devPtr, 0);
+
+    program = new MockProgram(ctxPtr);
+    Program *prgPtr = reinterpret_cast<Program *>(program);
+
+    kernel = new MockKernel(prgPtr, *program->MockProgram::getKernelInfo(), *devPtr);
+    ASSERT_NE(nullptr, kernel);
+    BuiltInFixture::SetUp(devPtr);
+}
+
+void api_fixture_using_aligned_memory_manager::TearDown() {
+    delete kernel;
+    delete commandQueue;
+    context->release();
+    program->release();
+    delete device;
+
+    BuiltInFixture::TearDown();
     MemoryManagementFixture::TearDown();
 }
 } // namespace OCLRT

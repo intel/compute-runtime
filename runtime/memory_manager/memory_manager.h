@@ -78,7 +78,7 @@ class MemoryManager {
     MemoryManager(bool enable64kbpages);
 
     virtual ~MemoryManager();
-    void *allocateSystemMemory(size_t size, size_t alignment);
+    MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size) {
         return allocateGraphicsMemory(size, static_cast<size_t>(0u));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -94,9 +94,9 @@ Buffer *Buffer::create(Context *context,
     bool copyMemoryFromHostPtr = false;
 
     MemoryManager *memoryManager = context->getMemoryManager();
-    DEBUG_BREAK_IF(!memoryManager);
+    UNRECOVERABLE_IF(!memoryManager);
 
-    checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr);
+    checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr, memoryManager);
 
     if (hostPtr && context->isProvidingPerformanceHints()) {
         if (zeroCopy) {
@@ -113,30 +113,27 @@ Buffer *Buffer::create(Context *context,
     }
     if (errcodeRet == CL_SUCCESS) {
         while (true) {
-            if (memoryManager) {
-                if (flags & CL_MEM_USE_HOST_PTR) {
-                    memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
-                    if (memory) {
-                        zeroCopy = true;
-                        isHostPtrSVM = true;
-                        copyMemoryFromHostPtr = false;
-                        allocateMemory = false;
-                    }
+            if (flags & CL_MEM_USE_HOST_PTR) {
+                memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
+                if (memory) {
+                    zeroCopy = true;
+                    isHostPtrSVM = true;
+                    copyMemoryFromHostPtr = false;
+                    allocateMemory = false;
                 }
-                if (allocateMemory) {
-                    memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
-                    if (context->isProvidingPerformanceHints()) {
-                        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
-                    }
-                } else {
-                    if (!memory) {
-                        //Host ptr was not created with clSVMAlloc - create graphic allocation
-                        memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, hostPtr, true);
-                    }
+            }
+            if (allocateMemory) {
+                memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
+                if (context->isProvidingPerformanceHints()) {
+                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
                 }
             } else {
-                DEBUG_BREAK_IF(true);
+                if (!memory) {
+                    //Host ptr was not created with clSVMAlloc - create graphic allocation
+                    memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, hostPtr, true);
+                }
             }
+
             if (!memory) {
                 errcodeRet = CL_OUT_OF_HOST_MEMORY;
                 break;
@@ -191,15 +188,23 @@ void Buffer::checkMemory(cl_mem_flags flags,
                          cl_int &errcodeRet,
                          bool &isZeroCopy,
                          bool &allocateMemory,
-                         bool &copyMemoryFromHostPtr) {
+                         bool &copyMemoryFromHostPtr,
+                         MemoryManager *memMngr) {
     errcodeRet = CL_SUCCESS;
     isZeroCopy = false;
     allocateMemory = false;
     copyMemoryFromHostPtr = false;
+    uintptr_t minAddress = 0;
+    auto memRestrictions = memMngr->getAlignedMallocRestrictions();
+    if (memRestrictions) {
+        minAddress = memRestrictions->minAddress;
+    }
 
     if (flags & CL_MEM_USE_HOST_PTR) {
         if (hostPtr) {
-            if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr || alignUp(size, MemoryConstants::cacheLineSize) != size) {
+            if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
+                alignUp(size, MemoryConstants::cacheLineSize) != size ||
+                minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
                 allocateMemory = true;
                 isZeroCopy = false;
                 copyMemoryFromHostPtr = true;

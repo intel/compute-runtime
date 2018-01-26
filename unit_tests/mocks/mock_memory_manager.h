@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -45,4 +45,26 @@ class GMockMemoryManager : public OsAgnosticMemoryManager {
     // cleanAllocationList call defined in MemoryManager.
     bool MemoryManagerCleanAllocationList(uint32_t waitTaskCount, uint32_t allocationType) { return MemoryManager::cleanAllocationList(waitTaskCount, allocationType); }
 };
+
+class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
+  public:
+    MockAllocSysMemAgnosticMemoryManager() : OsAgnosticMemoryManager() {
+        ptrRestrictions = nullptr;
+        testRestrictions.minAddress = 0;
+    }
+
+    AlignedMallocRestrictions *getAlignedMallocRestrictions() override {
+        return ptrRestrictions;
+    }
+
+    void *allocateSystemMemory(size_t size, size_t alignment) override {
+        constexpr size_t minAlignment = 16;
+        alignment = std::max(alignment, minAlignment);
+        return alignedMalloc(size, alignment);
+    }
+
+    AlignedMallocRestrictions testRestrictions;
+    AlignedMallocRestrictions *ptrRestrictions;
+};
+
 } // namespace OCLRT

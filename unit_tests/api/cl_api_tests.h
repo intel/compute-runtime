@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,9 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "runtime/api/api.h"
+#include "test.h"
+
+#include <memory>
 
 namespace OCLRT {
 
@@ -33,6 +36,7 @@ class CommandQueue;
 class Context;
 class MockKernel;
 class MockProgram;
+class MockAlignedMallocManagerDevice;
 
 struct api_fixture : public MemoryManagementFixture,
                      public PlatformFixture,
@@ -65,4 +69,25 @@ struct api_tests : public api_fixture,
         api_fixture::TearDown();
     }
 };
+
+struct api_fixture_using_aligned_memory_manager : public MemoryManagementFixture,
+                                                  public BuiltInFixture {
+    using BuiltInFixture::SetUp;
+
+  public:
+    virtual void SetUp();
+    virtual void TearDown();
+
+    cl_int retVal;
+    size_t retSize;
+
+    CommandQueue *commandQueue;
+    Context *context;
+    MockKernel *kernel;
+    MockProgram *program;
+    MockAlignedMallocManagerDevice *device;
+};
+
+using api_test_using_aligned_memory_manager = Test<api_fixture_using_aligned_memory_manager>;
+
 } // namespace OCLRT

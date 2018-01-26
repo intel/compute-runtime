@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,12 @@
 
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
+#include "runtime/command_queue/command_queue.h"
+#include "runtime/mem_obj/buffer.h"
+#include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_program.h"
 
 using namespace OCLRT;
 
@@ -174,4 +180,68 @@ TEST_F(clCreateBufferTests, noRet) {
 
     delete[] pHostMem;
 }
+
+using clCreateBufferTestsWithRestrictions = api_test_using_aligned_memory_manager;
+
+TEST_F(clCreateBufferTestsWithRestrictions, givenMemoryManagerRestrictionsWhenMinIsLesserThanHostPtrThenUseZeroCopy) {
+    std::unique_ptr<unsigned char[]> hostMem(nullptr);
+    unsigned char *destMem = nullptr;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    const unsigned int bufferSize = MemoryConstants::pageSize * 3;
+    const unsigned int destBufferSize = MemoryConstants::pageSize;
+    cl_mem buffer = nullptr;
+
+    uintptr_t minAddress = 0;
+    MockAllocSysMemAgnosticMemoryManager *memMngr = reinterpret_cast<MockAllocSysMemAgnosticMemoryManager *>(device->getMemoryManager());
+    memMngr->ptrRestrictions = &memMngr->testRestrictions;
+    EXPECT_EQ(minAddress, memMngr->ptrRestrictions->minAddress);
+
+    hostMem.reset(new unsigned char[bufferSize]);
+
+    destMem = hostMem.get();
+    destMem += MemoryConstants::pageSize;
+    destMem -= (reinterpret_cast<uintptr_t>(destMem) % MemoryConstants::pageSize);
+
+    buffer = clCreateBuffer(context, flags, destBufferSize, destMem, &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    Buffer *bufferObj = OCLRT::castToObject<Buffer>(buffer);
+    EXPECT_TRUE(bufferObj->isMemObjZeroCopy());
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateBufferTestsWithRestrictions, givenMemoryManagerRestrictionsWhenMinIsLesserThanHostPtrThenCreateCopy) {
+    std::unique_ptr<unsigned char[]> hostMem(nullptr);
+    unsigned char *destMem = nullptr;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    const unsigned int realBufferSize = MemoryConstants::pageSize * 3;
+    const unsigned int destBufferSize = MemoryConstants::pageSize;
+    cl_mem buffer = nullptr;
+
+    MockAllocSysMemAgnosticMemoryManager *memMngr = reinterpret_cast<MockAllocSysMemAgnosticMemoryManager *>(device->getMemoryManager());
+    memMngr->ptrRestrictions = &memMngr->testRestrictions;
+
+    hostMem.reset(new unsigned char[realBufferSize]);
+
+    destMem = hostMem.get();
+    destMem += MemoryConstants::pageSize;
+    destMem -= (reinterpret_cast<uintptr_t>(destMem) % MemoryConstants::pageSize);
+    memMngr->ptrRestrictions->minAddress = reinterpret_cast<uintptr_t>(destMem) + 1;
+
+    buffer = clCreateBuffer(context, flags, destBufferSize, destMem, &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    Buffer *bufferObj = OCLRT::castToObject<Buffer>(buffer);
+    EXPECT_FALSE(bufferObj->isMemObjZeroCopy());
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 } // namespace ULT

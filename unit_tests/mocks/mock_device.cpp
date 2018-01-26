@@ -90,3 +90,10 @@ OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MemoryManager(false)
     agnostic = new OsAgnosticMemoryManager(false);
     this->fail = fail;
 }
+
+MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, bool isRootDevice) : MockDevice(hwInfo, isRootDevice) {
+    //delete regular OsAgnosticMemoryManager
+    delete memoryManager;
+    //and create specific
+    memoryManager = new MockAllocSysMemAgnosticMemoryManager();
+}
