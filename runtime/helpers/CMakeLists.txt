@@ -60,6 +60,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble.h
   ${CMAKE_CURRENT_SOURCE_DIR}/preamble.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/properties_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
   ${CMAKE_CURRENT_SOURCE_DIR}/queue_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sampler_helpers.h

@@ -162,7 +162,7 @@ TEST_F(WddmCommandStreamTest, Flush) {
     GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
     EXPECT_EQ(1u, wddm->submitResult.called);
@@ -178,7 +178,7 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), offset, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), offset, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
@@ -192,7 +192,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
@@ -210,7 +210,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndPreemptionIsDisabled
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
@@ -228,13 +228,67 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndPreemptionIsEnabledT
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
 
     EXPECT_TRUE(pHeader->NeedsMidBatchPreEmptionSupport);
+
+    memManager->freeGraphicsMemory(commandBuffer);
+}
+
+TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenSetHeaderFieldsProperly) {
+    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::LOW, cs.getUsed(), &cs};
+    csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
+    auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
+
+    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
+
+    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(1, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
+
+    memManager->freeGraphicsMemory(commandBuffer);
+}
+
+TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumThenSetHeaderFieldsProperly) {
+    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
+    auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
+
+    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
+
+    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
+
+    memManager->freeGraphicsMemory(commandBuffer);
+}
+
+TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThenSetHeaderFieldsProperly) {
+    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::HIGH, cs.getUsed(), &cs};
+    csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
+    auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
+
+    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
+    const uint32_t maxRequestedSubsliceCount = 7;
+    EXPECT_EQ(0, pHeader->UmdRequestedSliceState);
+    EXPECT_EQ((wddm->getGtSysInfo()->SubSliceCount <= maxRequestedSubsliceCount) ? wddm->getGtSysInfo()->SubSliceCount : 0, pHeader->UmdRequestedSubsliceCount);
+    EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
 
     memManager->freeGraphicsMemory(commandBuffer);
 }
@@ -409,7 +463,7 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
 
     gdi.getMakeResidentArg().NumAllocations = 0;
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
     EXPECT_NE(0u, gdi.getMakeResidentArg().NumAllocations);

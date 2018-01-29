@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -24,15 +24,18 @@
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/helpers/properties_helper.h"
 #include <vector>
 namespace OCLRT {
 class Event;
 class FlushStampTracker;
+
 struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,
                 size_t startOffset,
                 bool requiresCoherency,
                 bool lowPriority,
+                QueueThrottle throttle,
                 size_t usedSize,
                 LinearStream *stream);
     BatchBuffer() {}
@@ -40,6 +43,7 @@ struct BatchBuffer {
     size_t startOffset = 0u;
     bool requiresCoherency = false;
     bool low_priority = false;
+    QueueThrottle throttle = QueueThrottle::MEDIUM;
     size_t usedSize = 0u;
 
     //only used in drm csr in gem close worker active mode

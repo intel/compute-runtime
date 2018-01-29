@@ -32,14 +32,14 @@ using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
 using OCLRT::BatchBuffer;
 using OCLRT::CommandStreamReceiver;
+using OCLRT::DebugManager;
 using OCLRT::GraphicsAllocation;
-using OCLRT::ResidencyContainer;
 using OCLRT::HardwareInfo;
 using OCLRT::LinearStream;
 using OCLRT::MemoryManager;
 using OCLRT::ObjectNotResident;
 using OCLRT::platformDevices;
-using OCLRT::DebugManager;
+using OCLRT::ResidencyContainer;
 
 typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 
@@ -128,7 +128,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldLeaveProperRingTailAlignment)
     auto engineType = OCLRT::ENGINE_RCS;
     auto ringTailAlignment = sizeof(uint64_t);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
     // First flush typically includes a preamble and chain to command buffer
     aubCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
@@ -153,7 +153,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnCommandBuff
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
@@ -181,7 +181,7 @@ HWTEST_F(AubCommandStreamReceiverTests, flushShouldCallMakeResidentOnResidencyAl
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
@@ -291,7 +291,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);

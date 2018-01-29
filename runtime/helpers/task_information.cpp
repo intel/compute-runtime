@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,6 +71,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.useSLM = true;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
+    dispatchFlags.throttle = cmdQ.getThrottle();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -251,6 +252,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.GSBA32BitRequired = NDRangeKernel;
     dispatchFlags.requiresCoherency = requiresCoherency;
     dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
+    dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), kernel);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -292,6 +294,7 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.blocking = blocking;
     dispatchFlags.dcFlush = shouldFlushDC(clCommandType, nullptr);
     dispatchFlags.lowPriority = cmdQ.getPriority() == QueuePriority::LOW;
+    dispatchFlags.throttle = cmdQ.getThrottle();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);

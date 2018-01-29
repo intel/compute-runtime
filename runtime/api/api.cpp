@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -3473,6 +3473,13 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR)) {
+            err.set(CL_INVALID_QUEUE_PROPERTIES);
+            return commandQueue;
+        }
+    }
+
+    if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
+        if (getCmdQueueProperties<cl_queue_throttle_khr>(properties, CL_QUEUE_THROTTLE_KHR)) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
             return commandQueue;
         }

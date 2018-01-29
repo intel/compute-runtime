@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -86,7 +86,7 @@ TEST_F(Tbx_command_stream, DISABLED_flush) {
     memset(buffer, 0, 4096);
     LinearStream cs(buffer, 4096);
     size_t startOffset = 0;
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -98,7 +98,7 @@ HWTEST_F(Tbx_command_stream, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     auto &engineInfo = tbxCsr->engineInfoTable[EngineType::ENGINE_RCS];
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), startOffset, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     auto size = engineInfo.sizeRCS;
     engineInfo.sizeRCS = 64;

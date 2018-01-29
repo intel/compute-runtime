@@ -71,6 +71,7 @@ CommandQueue::CommandQueue(Context *context,
                                                                     context(context),
                                                                     device(deviceId),
                                                                     priority(QueuePriority::MEDIUM),
+                                                                    throttle(QueueThrottle::MEDIUM),
                                                                     perfCountersEnabled(false),
                                                                     perfCountersConfig(UINT32_MAX),
                                                                     perfCountersUserRegistersNumber(0),
@@ -430,6 +431,7 @@ void CommandQueue::flushWaitList(
             DispatchFlags dispatchFlags;
             dispatchFlags.GSBA32BitRequired = ndRangeKernel;
             dispatchFlags.lowPriority = priority == QueuePriority::LOW;
+            dispatchFlags.throttle = throttle;
             dispatchFlags.implicitFlush = true;
             dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, nullptr);
 

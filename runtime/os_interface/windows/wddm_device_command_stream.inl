@@ -86,7 +86,6 @@ template <typename GfxFamily>
 FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
                                                        EngineType engineType, ResidencyContainer *allocationsForResidency) {
     void *commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
-    bool success = true;
 
     if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
         makeResident(*batchBuffer.commandBufferAllocation);
@@ -104,11 +103,24 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         pHeader->NeedsMidBatchPreEmptionSupport = 0u;
     }
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
+
     pHeader->UmdRequestedSliceState = 0;
-    pHeader->UmdRequestedSubsliceCount = 0;
     pHeader->UmdRequestedEUCount = wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount;
 
-    success = wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader);
+    const uint32_t maxRequestedSubsliceCount = 7;
+    switch (batchBuffer.throttle) {
+    case QueueThrottle::LOW:
+        pHeader->UmdRequestedSubsliceCount = 1;
+        break;
+    case QueueThrottle::MEDIUM:
+        pHeader->UmdRequestedSubsliceCount = 0;
+        break;
+    case QueueThrottle::HIGH:
+        pHeader->UmdRequestedSubsliceCount = (wddm->getGtSysInfo()->SubSliceCount <= maxRequestedSubsliceCount) ? wddm->getGtSysInfo()->SubSliceCount : 0;
+        break;
+    }
+
+    wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader);
     return wddm->getMonitoredFence().lastSubmittedFence;
 }
 

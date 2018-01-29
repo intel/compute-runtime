@@ -85,6 +85,7 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
                                                                                   CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     bool queueOnDeviceUsed = false;
     bool priorityHintsUsed = false;
+    bool throttleHintsUsed = false;
 
     cl_queue_properties *pProp = &properties[0];
     if (commandQueueProperties) {
@@ -107,6 +108,7 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
     if (queueThrottle) {
         *pProp++ = CL_QUEUE_THROTTLE_KHR;
         *pProp++ = queueThrottle;
+        throttleHintsUsed = true;
     }
     *pProp++ = 0;
 
@@ -116,6 +118,10 @@ TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
         properties,
         &retVal);
     if (queueOnDeviceUsed && priorityHintsUsed) {
+        EXPECT_EQ(nullptr, cmdQ);
+        EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
+        return;
+    } else if (queueOnDeviceUsed && throttleHintsUsed) {
         EXPECT_EQ(nullptr, cmdQ);
         EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
         return;
@@ -341,7 +347,7 @@ class clCreateCommandQueueWithPropertiesApiPriority : public clCreateCommandQueu
                                                       public ::testing::WithParamInterface<std::pair<uint32_t, QueuePriority>> {
 };
 
-TEST_P(clCreateCommandQueueWithPropertiesApiPriority, givenCreateQueueWithWhenPriorityPropertiesThenSetCorrectProirityInternally) {
+TEST_P(clCreateCommandQueueWithPropertiesApiPriority, givenCreateQueueWithWhenPriorityPropertiesThenSetCorrectPriorityInternally) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, GetParam().first, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -358,5 +364,32 @@ TEST_P(clCreateCommandQueueWithPropertiesApiPriority, givenCreateQueueWithWhenPr
 INSTANTIATE_TEST_CASE_P(AllValidPriorities,
                         clCreateCommandQueueWithPropertiesApiPriority,
                         ::testing::ValuesIn(priorityParams));
+
+std::pair<uint32_t, QueueThrottle> throttleParams[3]{
+    std::make_pair(CL_QUEUE_THROTTLE_LOW_KHR, QueueThrottle::LOW),
+    std::make_pair(CL_QUEUE_THROTTLE_MED_KHR, QueueThrottle::MEDIUM),
+    std::make_pair(CL_QUEUE_THROTTLE_HIGH_KHR, QueueThrottle::HIGH)};
+
+class clCreateCommandQueueWithPropertiesApiThrottle : public clCreateCommandQueueWithPropertiesApi,
+                                                      public ::testing::WithParamInterface<std::pair<uint32_t, QueueThrottle>> {
+};
+
+TEST_P(clCreateCommandQueueWithPropertiesApiThrottle, givenCreateQueueWithWhenThrottlePropertiesThenSetCorrectThrottleInternally) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ondevice[] = {CL_QUEUE_THROTTLE_KHR, GetParam().first, 0};
+    auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
+    EXPECT_NE(nullptr, cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+
+    auto commandQueue = castToObject<CommandQueue>(cmdqd);
+    EXPECT_EQ(commandQueue->getThrottle(), GetParam().second);
+
+    retVal = clReleaseCommandQueue(cmdqd);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+}
+
+INSTANTIATE_TEST_CASE_P(AllValidThrottleValues,
+                        clCreateCommandQueueWithPropertiesApiThrottle,
+                        ::testing::ValuesIn(throttleParams));
 
 } // namespace ULT

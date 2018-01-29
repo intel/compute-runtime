@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -61,6 +61,10 @@ void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resou
         return;
     }
 
+    if (primaryCommandBuffer->next->batchBuffer.throttle != primaryCommandBuffer->batchBuffer.throttle) {
+        return;
+    }
+
     auto nextCommandBuffer = primaryCommandBuffer->next;
     ResourcePackage newResources;
 
@@ -102,7 +106,7 @@ void OCLRT::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resou
     }
 }
 
-OCLRT::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset, bool requiresCoherency, bool lowPriority, size_t usedSize, LinearStream *stream) : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset), requiresCoherency(requiresCoherency), low_priority(lowPriority), usedSize(usedSize), stream(stream) {
+OCLRT::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset, bool requiresCoherency, bool lowPriority, QueueThrottle throttle, size_t usedSize, LinearStream *stream) : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset), requiresCoherency(requiresCoherency), low_priority(lowPriority), throttle(throttle), usedSize(usedSize), stream(stream) {
 }
 
 OCLRT::CommandBuffer::CommandBuffer() {

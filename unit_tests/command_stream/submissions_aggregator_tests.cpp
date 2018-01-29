@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -386,7 +386,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
     EXPECT_EQ(12u, totalUsedSize);
 }
 
-TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferenctCoherencySettingWhenAggregateIsCalledThenTheyAreNotAgggregated) {
+TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentCoherencySettingWhenAggregateIsCalledThenTheyAreNotAgggregated) {
     MockSubmissionAggregator submissionsAggregator;
 
     CommandBuffer *cmdBuffer = new CommandBuffer;
@@ -414,7 +414,35 @@ TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferenctCoherencySetti
     EXPECT_EQ(1u, cmdBuffer->inspectionId);
 }
 
-TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferenctPrioritySettingWhenAggregateIsCalledThenTheyAreNotAgggregated) {
+TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentThrottleSettingWhenAggregateIsCalledThenTheyAreNotAgggregated) {
+    MockSubmissionAggregator submissionsAggregator;
+
+    CommandBuffer *cmdBuffer = new CommandBuffer;
+    CommandBuffer *cmdBuffer2 = new CommandBuffer;
+
+    GraphicsAllocation alloc1(nullptr, 1);
+    GraphicsAllocation alloc7(nullptr, 7);
+
+    cmdBuffer->batchBuffer.throttle = QueueThrottle::LOW;
+    cmdBuffer2->batchBuffer.throttle = QueueThrottle::MEDIUM;
+
+    cmdBuffer->surfaces.push_back(&alloc1);
+    cmdBuffer2->surfaces.push_back(&alloc7);
+
+    submissionsAggregator.recordCommandBuffer(cmdBuffer);
+    submissionsAggregator.recordCommandBuffer(cmdBuffer2);
+
+    ResourcePackage resourcePackage;
+    size_t totalUsedSize = 0;
+    size_t totalMemoryBudget = 200;
+    submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget);
+    EXPECT_EQ(1u, totalUsedSize);
+    EXPECT_EQ(1u, resourcePackage.size());
+    EXPECT_NE(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
+    EXPECT_EQ(1u, cmdBuffer->inspectionId);
+}
+
+TEST(SubmissionsAggregator, givenCommandBuffersRequiringDifferentPrioritySettingWhenAggregateIsCalledThenTheyAreNotAgggregated) {
     MockSubmissionAggregator submissionsAggregator;
 
     CommandBuffer *cmdBuffer = new CommandBuffer;

@@ -203,7 +203,7 @@ TEST_F(DrmCommandStreamTest, Flush) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(boHandle, flushStamp);
     EXPECT_EQ(cs.getBase(), nullptr);
@@ -231,7 +231,7 @@ TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, true, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, true, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(cs.getBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
@@ -255,7 +255,7 @@ TEST_F(DrmCommandStreamTest, FlushInvalidAddress) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     delete[] commandBuffer;
 }
@@ -280,7 +280,7 @@ TEST_F(DrmCommandStreamTest, FlushMultipleTimes) {
     LinearStream cs(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(0u, cs.getAvailableSpace());
 }
@@ -308,7 +308,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyBB) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -333,7 +333,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyNotPaddedBB) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -365,7 +365,7 @@ TEST_F(DrmCommandStreamTest, FlushNotAligned) {
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -419,7 +419,7 @@ TEST_F(DrmCommandStreamTest, FlushCheckFlags) {
     csr->makeResident(allocation2);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -453,7 +453,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -498,7 +498,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -804,7 +804,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
     csr->alignToCacheLine(cs);
     auto storedBase = cs.getBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(cs.getBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
@@ -837,7 +837,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
     EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
@@ -884,7 +884,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
     csr->alignToCacheLine(cs);
     auto storedBase = cs.getBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(cs.getBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
@@ -918,7 +918,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
     EXPECT_EQ(3, this->mock->ioctl_cnt);
@@ -1360,7 +1360,7 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(cs.getBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
@@ -1427,7 +1427,7 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushCalled) {
     EXPECT_FALSE(isResident(allocation1->getBO()));
     EXPECT_FALSE(isResident(allocation2->getBO()));
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(cs.getBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
@@ -1458,7 +1458,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     LinearStream cs(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
     commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
@@ -1467,7 +1467,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     cs.replaceGraphicsAllocation(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer2, EngineType::ENGINE_RCS, nullptr);
 
     auto allocation = mm->allocateGraphicsMemory(1024, 4096);
@@ -1484,7 +1484,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     cs.replaceGraphicsAllocation(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer3, EngineType::ENGINE_RCS, nullptr);
     csr->makeSurfacePackNonResident(nullptr);
     mm->freeGraphicsMemory(allocation);
@@ -1496,7 +1496,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     cs.replaceGraphicsAllocation(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer4{cs.getGraphicsAllocation(), 24, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer4{cs.getGraphicsAllocation(), 24, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer4, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -1511,7 +1511,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyBB) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -1526,7 +1526,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyNotPaddedBB) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -1541,7 +1541,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotAligned) {
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
@@ -1559,7 +1559,7 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
     csr->makeResident(*allocation);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, cs.getUsed(), &cs};
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 4, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     csr->makeNonResident(*allocation);
     mm->freeGraphicsMemory(allocation);

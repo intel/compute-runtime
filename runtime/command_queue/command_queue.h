@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/helpers/properties_helper.h"
 #include "runtime/event/user_event.h"
 #include "runtime/os_interface/performance_counters.h"
 #include <atomic>
@@ -386,6 +387,10 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return priority;
     }
 
+    QueueThrottle getThrottle() const {
+        return throttle;
+    }
+
     // taskCount of last task
     uint32_t taskCount;
 
@@ -408,6 +413,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     cl_command_queue_properties commandQueueProperties;
 
     QueuePriority priority;
+    QueueThrottle throttle;
 
     bool perfCountersEnabled;
     cl_uint perfCountersConfig;

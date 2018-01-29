@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/properties_helper.h"
 #include <limits>
 
 namespace OCLRT {
@@ -51,6 +52,7 @@ struct DispatchFlags {
     bool mediaSamplerRequired = false;
     bool requiresCoherency = false;
     bool lowPriority = false;
+    QueueThrottle throttle = QueueThrottle::MEDIUM;
     bool implicitFlush = false;
     bool outOfOrderExecutionAllowed = false;
     FlushStampTrackingObj *flushStampReference = nullptr;

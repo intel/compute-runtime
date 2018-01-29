@@ -3142,3 +3142,96 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
     EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
 }
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToLowWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
+    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.throttle = QueueThrottle::LOW;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
+    auto cmdBuffer = cmdBufferList.peekHead();
+
+    EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::LOW);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToMediumWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
+    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.throttle = QueueThrottle::MEDIUM;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
+    auto cmdBuffer = cmdBufferList.peekHead();
+
+    EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::MEDIUM);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToHighWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {
+    typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.throttle = QueueThrottle::HIGH;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
+    auto cmdBuffer = cmdBufferList.peekHead();
+
+    EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
+}
