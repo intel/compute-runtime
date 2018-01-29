@@ -26,6 +26,8 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/platform/platform.h"
+#include "runtime/device/device.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "runtime/sharings/va/va_surface.h"
 #include <cstring>
@@ -47,6 +49,23 @@ clCreateFromVA_APIMediaSurfaceINTEL(cl_context context, cl_mem_flags flags, VASu
     }
 
     return VASurface::createSharedVaSurface(pContext, pContext->getSharing<VASharingFunctions>(), flags, surface, plane, errcodeRet);
+}
+
+cl_int CL_API_CALL
+clGetDeviceIDsFromVA_APIMediaAdapterINTEL(cl_platform_id platform, cl_va_api_device_source_intel mediaAdapterType,
+                                          void *mediaAdapter, cl_va_api_device_set_intel mediaAdapterSet, cl_uint numEntries,
+                                          cl_device_id *devices, cl_uint *numDevices) {
+
+    Platform *pPlatform = nullptr;
+    auto status = validateObjects(WithCastToInternal(platform, &pPlatform));
+    if (status != CL_SUCCESS) {
+        return CL_INVALID_PLATFORM;
+    }
+
+    cl_device_id device = pPlatform->getDevice(0);
+    GetInfoHelper::set(devices, device);
+    GetInfoHelper::set(numDevices, 1u);
+    return CL_SUCCESS;
 }
 
 cl_int CL_API_CALL

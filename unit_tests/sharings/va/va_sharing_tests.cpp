@@ -22,18 +22,21 @@
 
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/device/device.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sharings/va/va_sharing.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/sharings/va/mock_va_sharing.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "runtime/sharings/va/va_surface.h"
 #include "runtime/api/api.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
-class VaSharingTests : public ::testing::Test {
+class VaSharingTests : public ::testing::Test, public PlatformFixture {
   public:
     void SetUp() override {
+        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
         vaSharing = new MockVaSharing;
         context.setSharingFunctions(&vaSharing->m_sharingFunctions);
         vaSharing->updateAcquiredHandle(sharingHandle);
@@ -47,6 +50,7 @@ class VaSharingTests : public ::testing::Test {
         }
         context.releaseSharingFunctions(SharingType::VA_SHARING);
         delete vaSharing;
+        PlatformFixture::TearDown();
     }
 
     void updateAcquiredHandle(unsigned int handle) {
@@ -397,4 +401,27 @@ TEST_F(VaSharingTests, givenContextWhenEmptySharingTableEmptyThenReturnsNullptr)
     context.clearSharingFunctions();
     VASharingFunctions *sharingF = context.getSharing<VASharingFunctions>();
     EXPECT_EQ(sharingF, nullptr);
+}
+
+TEST_F(VaSharingTests, givenValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+
+    cl_platform_id platformId = this->pPlatform;
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(platformId, 0u, nullptr, 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_SUCCESS, errCode);
+    EXPECT_EQ(1u, numDevices);
+    EXPECT_NE(nullptr, platform()->getDevice(0));
+    EXPECT_EQ(platform()->getDevice(0), devices);
+}
+
+TEST_F(VaSharingTests, givenInValidPlatformWhenGetDeviceIdsFromVaApiMediaAdapterCalledThenReturnFirstDevice) {
+    cl_device_id devices = 0;
+    cl_uint numDevices = 0;
+
+    auto errCode = clGetDeviceIDsFromVA_APIMediaAdapterINTEL(nullptr, 0u, nullptr, 0u, 1, &devices, &numDevices);
+    EXPECT_EQ(CL_INVALID_PLATFORM, errCode);
+    EXPECT_EQ(0u, numDevices);
+    EXPECT_EQ(0u, devices);
 }

@@ -76,6 +76,7 @@ std::string VaSharingBuilderFactory::getExtensions() {
 
 void VaSharingBuilderFactory::fillGlobalDispatchTable() {
     crtGlobalDispatchTable.clCreateFromVA_APIMediaSurfaceINTEL = clCreateFromVA_APIMediaSurfaceINTEL;
+    crtGlobalDispatchTable.clGetDeviceIDsFromVA_APIMediaAdapterINTEL = clGetDeviceIDsFromVA_APIMediaAdapterINTEL;
     crtGlobalDispatchTable.clEnqueueReleaseVA_APIMediaSurfacesINTEL = clEnqueueReleaseVA_APIMediaSurfacesINTEL;
     crtGlobalDispatchTable.clEnqueueAcquireVA_APIMediaSurfacesINTEL = clEnqueueAcquireVA_APIMediaSurfacesINTEL;
 }
@@ -88,6 +89,7 @@ void VaSharingBuilderFactory::fillGlobalDispatchTable() {
     }
 void *VaSharingBuilderFactory::getExtensionFunctionAddress(const std::string &functionName) {
     RETURN_FUNC_PTR_IF_EXIST(clCreateFromVA_APIMediaSurfaceINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clGetDeviceIDsFromVA_APIMediaAdapterINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueAcquireVA_APIMediaSurfacesINTEL);
     RETURN_FUNC_PTR_IF_EXIST(clEnqueueReleaseVA_APIMediaSurfacesINTEL);
 
@@ -95,5 +97,5 @@ void *VaSharingBuilderFactory::getExtensionFunctionAddress(const std::string &fu
 }
 
 static SharingFactory::RegisterSharing<VaSharingBuilderFactory, VASharingFunctions> vaSharing;
-}
+} // namespace OCLRT
 #endif

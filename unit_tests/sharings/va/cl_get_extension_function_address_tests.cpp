@@ -42,4 +42,9 @@ TEST_F(clGetExtensionFunctionAddressTests, clEnqueueReleaseVA_APIMediaSurfacesIN
     auto retVal = clGetExtensionFunctionAddress("clEnqueueReleaseVA_APIMediaSurfacesINTEL");
     EXPECT_EQ(retVal, reinterpret_cast<void *>(clEnqueueReleaseVA_APIMediaSurfacesINTEL));
 }
+
+TEST_F(clGetExtensionFunctionAddressTests, clGetDeviceIDsFromVA_APIMediaAdapterINTEL) {
+    auto retVal = clGetExtensionFunctionAddress("clGetDeviceIDsFromVA_APIMediaAdapterINTEL");
+    EXPECT_EQ(retVal, reinterpret_cast<void *>(clGetDeviceIDsFromVA_APIMediaAdapterINTEL));
+}
 } // namespace ULT

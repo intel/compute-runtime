@@ -96,10 +96,12 @@ TEST_F(VaSharingEnablerTests, givenVaFactoryWhenAskedThenGlobalIcdIsConfigured) 
     crtGlobalDispatchTable.clCreateFromVA_APIMediaSurfaceINTEL = nullptr;
     crtGlobalDispatchTable.clEnqueueReleaseVA_APIMediaSurfacesINTEL = nullptr;
     crtGlobalDispatchTable.clEnqueueAcquireVA_APIMediaSurfacesINTEL = nullptr;
+    crtGlobalDispatchTable.clGetDeviceIDsFromVA_APIMediaAdapterINTEL = nullptr;
     factory->fillGlobalDispatchTable();
     EXPECT_NE(nullptr, crtGlobalDispatchTable.clCreateFromVA_APIMediaSurfaceINTEL);
     EXPECT_NE(nullptr, crtGlobalDispatchTable.clEnqueueAcquireVA_APIMediaSurfacesINTEL);
     EXPECT_NE(nullptr, crtGlobalDispatchTable.clEnqueueAcquireVA_APIMediaSurfacesINTEL);
+    EXPECT_NE(nullptr, crtGlobalDispatchTable.clGetDeviceIDsFromVA_APIMediaAdapterINTEL);
 }
 
 TEST_F(VaSharingEnablerTests, givenVaFactoryWhenAskedThenBuilderIsCreated) {

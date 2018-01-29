@@ -71,5 +71,8 @@ TYPED_TEST(VABaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInO
 
     EXPECT_EQ(reinterpret_cast<void *>(clEnqueueReleaseVA_APIMediaSurfacesINTEL),
               genericObject->dispatch.crtDispatch->clEnqueueReleaseVA_APIMediaSurfacesINTEL);
+
+    EXPECT_EQ(reinterpret_cast<void *>(clGetDeviceIDsFromVA_APIMediaAdapterINTEL),
+              genericObject->dispatch.crtDispatch->clGetDeviceIDsFromVA_APIMediaAdapterINTEL);
 }
 } // namespace OCLRT

@@ -226,8 +226,6 @@ TYPED_TEST(BaseObjectTests, commonRuntimeExpectsDispatchTableAtFirstPointerInObj
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder12);
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder13);
 
-    EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder15);
-
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder18);
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder19);
     EXPECT_EQ(nullptr, genericObject->dispatch.crtDispatch->placeholder20);

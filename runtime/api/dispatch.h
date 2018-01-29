@@ -1045,6 +1045,15 @@ typedef CL_API_ENTRY cl_mem(CL_API_CALL *INTELpfn_clCreateFromVA_APIMediaSurface
     cl_uint plane,
     cl_int *errcodeRet) CL_API_SUFFIX__VERSION_1_2;
 
+typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL)(
+    cl_platform_id platform,
+    cl_va_api_device_source_intel mediaAdapterType,
+    void *mediaAdapter,
+    cl_va_api_device_set_intel mediaAdapterSet,
+    cl_uint numEntries,
+    cl_device_id *devices,
+    cl_uint *numDevices) CL_API_SUFFIX__VERSION_1_2;
+
 typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clEnqueueAcquireVA_APIMediaSurfacesINTEL)(
     cl_command_queue commandQueue,
     cl_uint numObjects,
@@ -1062,6 +1071,7 @@ typedef CL_API_ENTRY cl_int(CL_API_CALL *INTELpfn_clEnqueueReleaseVA_APIMediaSur
     cl_event *event) CL_API_SUFFIX__VERSION_1_2;
 #else
 typedef void (*INTELpfn_clCreateFromVA_APIMediaSurfaceINTEL)();
+typedef void (*INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL)();
 typedef void (*INTELpfn_clEnqueueAcquireVA_APIMediaSurfacesINTEL)();
 typedef void (*INTELpfn_clEnqueueReleaseVA_APIMediaSurfacesINTEL)();
 #endif
@@ -1270,7 +1280,7 @@ struct SCRTDispatchTable {
     // VAMedia sharing extension
 #ifdef LIBVA
     INTELpfn_clCreateFromVA_APIMediaSurfaceINTEL clCreateFromVA_APIMediaSurfaceINTEL;
-    void *placeholder15; // clGetDeviceIDsFromVA_APIMediaAdapterINTEL handled by CRT
+    INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL clGetDeviceIDsFromVA_APIMediaAdapterINTEL;
     INTELpfn_clEnqueueReleaseVA_APIMediaSurfacesINTEL clEnqueueReleaseVA_APIMediaSurfacesINTEL;
     INTELpfn_clEnqueueAcquireVA_APIMediaSurfacesINTEL clEnqueueAcquireVA_APIMediaSurfacesINTEL;
 #else
