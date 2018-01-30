@@ -31,6 +31,7 @@
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "test.h"
 #include "gmock/gmock.h"
 #include <memory>
@@ -231,6 +232,24 @@ TEST(Device_GetCaps, givenForcePreemptionModeDebugVariableWhenCreateDeviceThenSe
         auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
 
         EXPECT_TRUE(forceMode == device->getPreemptionMode());
+    }
+}
+
+TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSipKernelIsCreated) {
+    DebugManagerStateRestore dbgRestorer;
+    {
+        BuiltIns::shutDown();
+
+        MockBuiltins mockBuiltins;
+        EXPECT_EQ(nullptr, mockBuiltins.peekCurrentInstance());
+        mockBuiltins.overrideGlobalBuiltins();
+        EXPECT_EQ(&mockBuiltins, mockBuiltins.peekCurrentInstance());
+        EXPECT_FALSE(mockBuiltins.getSipKernelCalled);
+
+        DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
+        auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+        EXPECT_TRUE(mockBuiltins.getSipKernelCalled);
+        mockBuiltins.restoreGlobalBuiltins();
     }
 }
 

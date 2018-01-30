@@ -23,6 +23,8 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "hw_cmds.h"
+#include "runtime/built_ins/built_ins.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -101,6 +103,8 @@ Device::~Device() {
     tagAllocation = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
+    BuiltIns::shutDown();
+    CompilerInterface::shutdown();
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
@@ -164,6 +168,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
             return false;
         }
         commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
+        BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice);
     }
 
     return true;

@@ -44,11 +44,19 @@ class MockBuiltins : public OCLRT::BuiltIns {
         BuiltIns::pInstance = this;
     }
 
+    void restoreGlobalBuiltins() {
+        BuiltIns::pInstance = originalGlobalBuiltins;
+    }
+
+    static BuiltIns *peekCurrentInstance() {
+        return BuiltIns::pInstance;
+    }
+
     const OCLRT::SipKernel &getSipKernel(OCLRT::SipKernelType type, const OCLRT::Device &device) override {
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];
         }
-
+        getSipKernelCalled = true;
         return BuiltIns::getSipKernel(type, device);
     }
 
@@ -58,4 +66,5 @@ class MockBuiltins : public OCLRT::BuiltIns {
 
     OCLRT::BuiltIns *originalGlobalBuiltins = nullptr;
     std::map<OCLRT::SipKernelType, std::unique_ptr<OCLRT::SipKernel>> sipKernelsOverride;
+    bool getSipKernelCalled = false;
 };
