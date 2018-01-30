@@ -96,7 +96,14 @@ class Wddm {
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     void registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);
-    MOCKABLE_VIRTUAL void releaseGpuPtr(void *gpuPtr);
+    MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
+    MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
+    MOCKABLE_VIRTUAL bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
+        return VirtualFree(ptr, size, flags) != 0 ? true : false;
+    }
+    MOCKABLE_VIRTUAL void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+        return reinterpret_cast<void *>(VirtualAlloc(inPtr, size, flags, type));
+    }
 
     template <typename GfxFamily>
     bool configureDeviceAddressSpace();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,6 +58,8 @@ class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixt
     }
 
     virtual void TearDown() {
+        WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
+        EXPECT_EQ(0, mockWddm->reservedAddresses.size());
         delete mm;
         this->wddm = nullptr;
         WddmFixture::TearDown();
@@ -91,6 +93,8 @@ class MockWddmMemoryManagerFixture : public WddmFixture {
     }
 
     virtual void TearDown() {
+        WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
+        EXPECT_EQ(0, mockWddm->reservedAddresses.size());
         delete mm;
         this->wddm = nullptr;
         WddmFixture::TearDown();
@@ -105,8 +109,22 @@ class GmockWddm : public Wddm {
     using Wddm::device;
 
     GmockWddm() {
+        virtualAllocAddress = OCLRT::windowsMinAddress;
     }
     ~GmockWddm() = default;
+
+    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
+        return true;
+    }
+
+    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+        void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
+        size += MemoryConstants::pageSize;
+        size -= size % MemoryConstants::pageSize;
+        virtualAllocAddress += size;
+        return tmp;
+    }
+    uintptr_t virtualAllocAddress;
 
     MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
 };

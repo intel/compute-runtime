@@ -39,12 +39,13 @@
 #include <ntstatus.h>
 #pragma warning(pop)
 
+#include <set>
+
 using namespace OCLRT;
 
 OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo);
 
 class WddmMock : public Wddm {
-
     struct CallResult {
         uint32_t called = 0;
         uint64_t uint64ParamPassed = -1;
@@ -80,9 +81,33 @@ class WddmMock : public Wddm {
                  createContextResult(),
                  lockResult(),
                  unlockResult(),
-                 waitFromCpuResult() {}
+                 waitFromCpuResult(),
+                 releaseReservedAddressResult(),
+                 reserveValidAddressRangeResult() {
+        reservedAddresses.clear();
+        virtualAllocAddress = OCLRT::windowsMinAddress;
+    }
 
-    WddmMock(Gdi *gdi) : Wddm(gdi) {
+    WddmMock(Gdi *gdi) : Wddm(gdi),
+                         makeResidentResult(),
+                         makeNonResidentResult(),
+                         mapGpuVirtualAddressResult(),
+                         freeGpuVirtualAddresResult(),
+                         createAllocationResult(),
+                         destroyAllocationResult(),
+                         destroyContextResult(),
+                         queryAdapterInfoResult(),
+                         submitResult(),
+                         waitOnGPUResult(),
+                         configureDeviceAddressSpaceResult(),
+                         createContextResult(),
+                         lockResult(),
+                         unlockResult(),
+                         waitFromCpuResult(),
+                         releaseReservedAddressResult(),
+                         reserveValidAddressRangeResult() {
+        reservedAddresses.clear();
+        virtualAllocAddress = OCLRT::windowsMinAddress;
     }
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override {
@@ -134,12 +159,9 @@ class WddmMock : public Wddm {
         uint32_t allocationCount = 0;
         D3DKMT_HANDLE resourceHandle = 0;
         void *cpuPtr = nullptr;
-        void *gpuPtr = nullptr;
+        void *reserveAddress = alloc->getReservedAddress();
         if (alloc->peekSharedHandle()) {
             resourceHandle = alloc->resourceHandle;
-            if (is32bit) {
-                gpuPtr = (void *)alloc->gpuPtr;
-            }
         } else {
             allocationHandles = &alloc->handle;
             allocationCount = 1;
@@ -149,7 +171,7 @@ class WddmMock : public Wddm {
         }
         auto success = destroyAllocations(allocationHandles, allocationCount, alloc->getResidencyData().lastFence, resourceHandle);
         ::alignedFree(cpuPtr);
-        releaseGpuPtr(gpuPtr);
+        releaseReservedAddress(reserveAddress);
         return success;
     }
 
@@ -228,9 +250,39 @@ class WddmMock : public Wddm {
         return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue);
     }
 
-    void releaseGpuPtr(void *gpuPtr) override {
-        releaseGpuPtrResult.called++;
-        Wddm::releaseGpuPtr(gpuPtr);
+    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
+        return true;
+    }
+
+    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+        void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
+        size += MemoryConstants::pageSize;
+        size -= size % MemoryConstants::pageSize;
+        virtualAllocAddress += size;
+        return tmp;
+    }
+
+    void releaseReservedAddress(void *reservedAddress) override {
+        releaseReservedAddressResult.called++;
+        if (reservedAddress != nullptr) {
+            std::set<void *>::iterator it;
+            it = reservedAddresses.find(reservedAddress);
+            EXPECT_NE(reservedAddresses.end(), it);
+            reservedAddresses.erase(it);
+        }
+        Wddm::releaseReservedAddress(reservedAddress);
+    }
+
+    bool reserveValidAddressRange(size_t size, void *&reservedMem) {
+        reserveValidAddressRangeResult.called++;
+        bool ret = Wddm::reserveValidAddressRange(size, reservedMem);
+        if (reservedMem != nullptr) {
+            std::set<void *>::iterator it;
+            it = reservedAddresses.find(reservedMem);
+            EXPECT_EQ(reservedAddresses.end(), it);
+            reservedAddresses.insert(reservedMem);
+        }
+        return ret;
     }
 
     GmmMemory *getGmmMemory() {
@@ -255,10 +307,60 @@ class WddmMock : public Wddm {
     CallResult lockResult;
     CallResult unlockResult;
     CallResult waitFromCpuResult;
-    CallResult releaseGpuPtrResult;
+    CallResult releaseReservedAddressResult;
+    CallResult reserveValidAddressRangeResult;
     NTSTATUS createAllocationStatus;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
+    std::set<void *> reservedAddresses;
+    uintptr_t virtualAllocAddress;
+};
+
+class WddmMockReserveAddress : public WddmMock {
+  public:
+    WddmMockReserveAddress() : WddmMock() {
+        returnGood = 0;
+        returnInvalidCount = 0;
+        returnInvalidIter = 0;
+        returnNullCount = 0;
+        returnNullIter = 0;
+    }
+    WddmMockReserveAddress(Gdi *gdi) : WddmMock(gdi) {
+        returnGood = 0;
+        returnInvalidCount = 0;
+        returnInvalidIter = 0;
+        returnNullCount = 0;
+        returnNullIter = 0;
+    }
+
+    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+        if (returnGood != 0) {
+            return WddmMock::virtualAllocWrapper(inPtr, size, flags, type);
+        }
+
+        if (returnInvalidCount != 0) {
+            returnInvalidIter++;
+            if (returnInvalidIter > returnInvalidCount) {
+                return WddmMock::virtualAllocWrapper(inPtr, size, flags, type);
+            }
+            if (returnNullCount != 0) {
+                returnNullIter++;
+                if (returnNullIter > returnNullCount) {
+                    return nullptr;
+                }
+                return reinterpret_cast<void *>(0x1000);
+            }
+            return reinterpret_cast<void *>(0x1000);
+        }
+
+        return nullptr;
+    }
+
+    uint32_t returnGood;
+    uint32_t returnInvalidCount;
+    uint32_t returnInvalidIter;
+    uint32_t returnNullCount;
+    uint32_t returnNullIter;
 };
 
 class WddmFixture {
@@ -306,10 +408,13 @@ class WddmFixture {
     }
 
     virtual void TearDown() {
-        if (wddm != nullptr)
+        if (wddm != nullptr) {
+            EXPECT_EQ(0, mockWddm->reservedAddresses.size());
             delete wddm;
-        if (mockGdiDll != nullptr)
+        }
+        if (mockGdiDll != nullptr) {
             delete mockGdiDll;
+        }
     }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize)
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr)
         : GraphicsAllocation(cpuPtrIn, sizeIn),
           cpuPtrAllocated(false),
           handle(0),
@@ -56,6 +56,7 @@ class WddmAllocation : public GraphicsAllocation {
           alignedCpuPtr(alignedCpuPtr),
           alignedSize(alignedSize) {
         trimListPosition = trimListUnusedPosition;
+        reservedAddressSpace = reservedAddr;
     }
 
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle) : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
@@ -65,13 +66,14 @@ class WddmAllocation : public GraphicsAllocation {
                                                                            alignedCpuPtr(nullptr),
                                                                            alignedSize(sizeIn) {
         trimListPosition = trimListUnusedPosition;
+        reservedAddressSpace = nullptr;
     }
 
-    WddmAllocation(void *alignedCpuPtr, size_t sizeIn)
-        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn) {
+    WddmAllocation(void *alignedCpuPtr, size_t sizeIn, void *reservedAddress)
+        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn, reservedAddress) {
     }
 
-    WddmAllocation() : WddmAllocation(nullptr, 0, nullptr, 0) {
+    WddmAllocation() : WddmAllocation(nullptr, 0, nullptr, 0, nullptr) {
     }
 
     void *getAlignedCpuPtr() const {
@@ -99,10 +101,19 @@ class WddmAllocation : public GraphicsAllocation {
         return trimListPosition;
     }
 
+    void *getReservedAddress() const {
+        return this->reservedAddressSpace;
+    }
+
+    void setReservedAddress(void *reserveMem) {
+        this->reservedAddressSpace = reserveMem;
+    }
+
   protected:
     void *alignedCpuPtr;
     size_t alignedSize;
     ResidencyData residency;
     size_t trimListPosition;
+    void *reservedAddressSpace;
 };
 } // namespace OCLRT

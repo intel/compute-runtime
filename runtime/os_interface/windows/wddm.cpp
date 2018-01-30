@@ -34,6 +34,7 @@
 #include "runtime/helpers/wddm_helper.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
+#include "runtime/utilities/stackvec.h"
 #include <dxgi.h>
 #include <ntstatus.h>
 #include "CL/cl.h"
@@ -341,7 +342,8 @@ bool Wddm::evict(OsHandleStorage &osHandles) {
 }
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, uint64_t size, bool allocation32bit, bool use64kbPages) {
-    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, cpuPtr, size, allocation->gpuPtr, allocation32bit, use64kbPages);
+    void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
+    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, size, allocation->gpuPtr, allocation32bit, use64kbPages);
 }
 
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages) {
@@ -371,7 +373,7 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     } else {
         MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
         MapGPUVA.MinimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
-        MapGPUVA.MaximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7ffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
+        MapGPUVA.MaximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7fffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
 
         if (!cpuPtr) {
             MapGPUVA.MinimumAddress = adapterInfo->GfxPartition.Standard.Base;
@@ -870,10 +872,10 @@ void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, Wdd
     }
 }
 
-void Wddm::releaseGpuPtr(void *gpuPtr) {
-    if (gpuPtr) {
-        auto status = VirtualFree(gpuPtr, 0, MEM_RELEASE);
-        DEBUG_BREAK_IF(status != 1);
+void Wddm::releaseReservedAddress(void *reservedAddress) {
+    if (reservedAddress) {
+        auto status = virtualFreeWrapper(reservedAddress, 0, MEM_RELEASE);
+        DEBUG_BREAK_IF(!status);
     }
 }
 
@@ -900,6 +902,32 @@ bool Wddm::updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map) {
 
 void Wddm::resetPageTableManager(GmmPageTableMngr *newPageTableManager) {
     pageTableManager.reset(newPageTableManager);
+}
+
+bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
+    reservedMem = virtualAllocWrapper(nullptr, size, MEM_RESERVE, PAGE_READWRITE);
+    if (reservedMem == nullptr) {
+        return false;
+    } else if (minAddress > reinterpret_cast<uintptr_t>(reservedMem)) {
+        StackVec<void *, 100> invalidAddrVector;
+        invalidAddrVector.push_back(reservedMem);
+        do {
+            reservedMem = virtualAllocWrapper(nullptr, size, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
+            if (minAddress > reinterpret_cast<uintptr_t>(reservedMem) && reservedMem != nullptr) {
+                invalidAddrVector.push_back(reservedMem);
+            } else {
+                break;
+            }
+        } while (1);
+        for (auto &it : invalidAddrVector) {
+            auto status = virtualFreeWrapper(it, 0, MEM_RELEASE);
+            DEBUG_BREAK_IF(!status);
+        }
+        if (reservedMem == nullptr) {
+            return false;
+        }
+    }
+    return true;
 }
 
 } // namespace OCLRT

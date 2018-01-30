@@ -111,7 +111,7 @@ HWTEST_F(WddmTest, allocation) {
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
     Gmm *gmm;
 
     gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -143,7 +143,7 @@ HWTEST_F(WddmTest, createAllocation32bit) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
 
-    WddmAllocation allocation(alignedPtr, alignedSize);
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr);
     Gmm *gmm;
 
     gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -206,7 +206,7 @@ HWTEST_F(WddmTest, mapAndFreeGpuVa) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
     Gmm *gmm;
 
     gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -237,7 +237,7 @@ HWTEST_F(WddmTest, givenNullAllocationWhenCreateThenAllocateAndMap) {
     ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
 
-    WddmAllocation allocation(nullptr, 100);
+    WddmAllocation allocation(nullptr, 100, nullptr);
     Gmm *gmm;
 
     gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -258,7 +258,7 @@ HWTEST_F(WddmTest, makeResidentNonResident) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
     Gmm *gmm;
 
     gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -559,7 +559,7 @@ HWTEST_F(WddmWithMockGdiTest, makeResidentMultipleHandles) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -584,7 +584,7 @@ HWTEST_F(WddmWithMockGdiTest, makeResidentMultipleHandlesWithReturnBytesToTrim) 
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -606,7 +606,6 @@ HWTEST_F(WddmWithMockGdiTest, makeResidentMultipleHandlesWithReturnBytesToTrim) 
 }
 
 TEST_F(WddmWithMockGdiTest, makeNonResidentCallsEvict) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
@@ -628,13 +627,12 @@ TEST_F(WddmWithMockGdiTest, makeNonResidentCallsEvict) {
 }
 
 HWTEST_F(WddmWithMockGdiTest, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCallsWaitFromCpu) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
     wddm.init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.getResidencyData().lastFence = 20;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -667,13 +665,12 @@ HWTEST_F(WddmWithMockGdiTest, destroyAllocationWithLastFenceValueGreaterThanCurr
 }
 
 HWTEST_F(WddmWithMockGdiTest, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoesNotCallWaitFromCpu) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
     wddm.init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -706,13 +703,12 @@ HWTEST_F(WddmWithMockGdiTest, destroyAllocationWithLastFenceValueLessEqualToCurr
 }
 
 HWTEST_F(WddmWithMockGdiTest, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
     wddm.init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -735,13 +731,12 @@ HWTEST_F(WddmWithMockGdiTest, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpu
 }
 
 HWTEST_F(WddmWithMockGdiTest, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
     wddm.init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -764,7 +759,6 @@ HWTEST_F(WddmWithMockGdiTest, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIs
 }
 
 HWTEST_F(WddmWithMockGdiTest, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurrentFenceValueIsSetToOne) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
@@ -786,7 +780,6 @@ NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
 }
 
 HWTEST_F(WddmWithMockGdiTest, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
-
     MockGdi gdi;
     WddmMock wddm(&gdi);
 
@@ -799,4 +792,91 @@ HWTEST_F(WddmWithMockGdiTest, givenOpenSharedHandleWhenZeroAllocationsThenReturn
     auto ret = wddm.openSharedHandle(handle, alloc);
 
     EXPECT_EQ(false, ret);
+}
+
+using WddmReserveAddressTest = WddmTest;
+
+HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
+    std::unique_ptr<WddmMockReserveAddress> wddmMockPtr(new WddmMockReserveAddress());
+    WddmMockReserveAddress *wddmMock = wddmMockPtr.get();
+    size_t size = 0x1000;
+    void *reserve = nullptr;
+
+    bool ret = wddmMock->init<FamilyType>();
+    EXPECT_TRUE(ret);
+
+    wddmMock->returnGood = 1;
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
+    ret = wddmMock->reserveValidAddressRange(size, reserve);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
+    wddmMock->releaseReservedAddress(reserve);
+}
+
+HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
+    std::unique_ptr<WddmMockReserveAddress> wddmMockPtr(new WddmMockReserveAddress());
+    WddmMockReserveAddress *wddmMock = wddmMockPtr.get();
+    size_t size = 0x1000;
+    void *reserve = nullptr;
+
+    bool ret = wddmMock->init<FamilyType>();
+    EXPECT_TRUE(ret);
+    uintptr_t expectedReserve = 0;
+    ret = wddmMock->reserveValidAddressRange(size, reserve);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
+}
+
+HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
+    std::unique_ptr<WddmMockReserveAddress> wddmMockPtr(new WddmMockReserveAddress());
+    WddmMockReserveAddress *wddmMock = wddmMockPtr.get();
+    size_t size = 0x1000;
+    void *reserve = nullptr;
+
+    bool ret = wddmMock->init<FamilyType>();
+    EXPECT_TRUE(ret);
+
+    wddmMock->returnInvalidCount = 1;
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
+
+    ret = wddmMock->reserveValidAddressRange(size, reserve);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
+    wddmMock->releaseReservedAddress(reserve);
+}
+
+HWTEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
+    std::unique_ptr<WddmMockReserveAddress> wddmMockPtr(new WddmMockReserveAddress());
+    WddmMockReserveAddress *wddmMock = wddmMockPtr.get();
+    size_t size = 0x1000;
+    void *reserve = nullptr;
+
+    bool ret = wddmMock->init<FamilyType>();
+    EXPECT_TRUE(ret);
+
+    wddmMock->returnInvalidCount = 2;
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
+
+    ret = wddmMock->reserveValidAddressRange(size, reserve);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
+    wddmMock->releaseReservedAddress(reserve);
+}
+
+HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
+    std::unique_ptr<WddmMockReserveAddress> wddmMockPtr(new WddmMockReserveAddress());
+    WddmMockReserveAddress *wddmMock = wddmMockPtr.get();
+    size_t size = 0x1000;
+    void *reserve = nullptr;
+
+    bool ret = wddmMock->init<FamilyType>();
+    EXPECT_TRUE(ret);
+
+    wddmMock->returnInvalidCount = 2;
+    wddmMock->returnNullCount = 1;
+    uintptr_t expectedReserve = 0;
+
+    ret = wddmMock->reserveValidAddressRange(size, reserve);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }

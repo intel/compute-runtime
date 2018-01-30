@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -221,6 +221,7 @@ NTSTATUS __stdcall D3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *
 }
 
 NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVA) {
+    uint64_t maxSvmAddress = sizeof(size_t) == 8 ? 0x7fffffffffff : 0xffffffff;
     if (mapGpuVA == nullptr || mapGpuVA->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -240,6 +241,9 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
     if (mapGpuVA->BaseAddress == 0) {
         mapGpuVA->VirtualAddress = mapGpuVA->MinimumAddress;
     } else {
+        if (maxSvmAddress != mapGpuVA->MaximumAddress) {
+            return STATUS_INVALID_PARAMETER;
+        }
         mapGpuVA->VirtualAddress = mapGpuVA->BaseAddress;
     }
 
