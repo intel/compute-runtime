@@ -467,7 +467,7 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
     auto dsh = createFullHeap(requestedSize);
     auto ish = createFullHeap(requestedSize);
     auto ioh = createFullHeap(requestedSize);
-    auto ssh = createFullHeap(requestedSize);
+    auto ssh = createFullHeap(maxSshSize);
 
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
@@ -482,7 +482,7 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
     EXPECT_LT(cmdQueueDsh.getMaxAvailableSpace(), dsh->getMaxAvailableSpace());
     EXPECT_LT(cmdQueueIsh.getMaxAvailableSpace(), ish->getMaxAvailableSpace());
     EXPECT_LT(cmdQueueIoh.getMaxAvailableSpace(), ioh->getMaxAvailableSpace());
-    EXPECT_LT(cmdQueueSsh.getMaxAvailableSpace(), ssh->getMaxAvailableSpace());
+    EXPECT_EQ(cmdQueueSsh.getMaxAvailableSpace(), ssh->getMaxAvailableSpace());
 
     cmdComputeKernel->submit(0, false);
 

@@ -434,7 +434,12 @@ TEST_P(CommandQueueIndirectHeapTest, getIndirectHeapCanRecycle) {
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), requiredSize);
     ASSERT_NE(nullptr, &indirectHeap);
-    EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);
+    if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
+        //no matter what SSH is always capped
+        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), maxSshSize);
+    } else {
+        EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);
+    }
 }
 
 TEST_P(CommandQueueIndirectHeapTest, alignSizeToCacheLine) {
@@ -469,8 +474,13 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
 
     EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
 
-    //make sure we are below 64 KB even though we reuse 128KB.
-    EXPECT_LE(indirectHeap.getMaxAvailableSpace(), 64 * KB);
+    //if we obtain heap from reusable pool, we need to keep the size of allocation
+    //surface state heap is an exception, it is capped at ~60KB
+    if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
+        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), 64 * KB - MemoryConstants::pageSize);
+    } else {
+        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), 128 * KB);
+    }
 
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
 }

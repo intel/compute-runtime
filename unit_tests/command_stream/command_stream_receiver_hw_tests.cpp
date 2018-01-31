@@ -531,6 +531,54 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldBeSentIfSize
     EXPECT_NE(cmdList.end(), stateBaseAddressItor);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    configureCSRtoNonDirtyState<FamilyType>();
+
+    dsh.replaceBuffer(nullptr, 0);
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenSshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    configureCSRtoNonDirtyState<FamilyType>();
+
+    ssh.replaceBuffer(nullptr, 0);
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenIohHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    configureCSRtoNonDirtyState<FamilyType>();
+
+    ioh.replaceBuffer(nullptr, 0);
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenIshHeapChangeWhenFlushTaskIsCalledThenSbaIsReloaded) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    configureCSRtoNonDirtyState<FamilyType>();
+
+    ih.replaceBuffer(nullptr, 0);
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto stateBaseAddressItor = find<typename FamilyType::STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), stateBaseAddressItor);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldNotBeSentIfTheSame) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;

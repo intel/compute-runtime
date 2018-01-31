@@ -237,34 +237,34 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
     }
 
     if (!heapMemory) {
-        // Heap should be at least minHeapSize unless we're requesting an empty heap
-        size_t minHeapSize = 64 * KB;
-        if (IndirectHeap::SURFACE_STATE == heapType) {
-            minHeapSize -= MemoryConstants::pageSize;
-        }
-
         size_t reservedSize = 0;
         if (heapType == IndirectHeap::INSTRUCTION) {
             reservedSize = getInstructionHeapReservedBlockSize();
         }
-
+        auto finalHeapSize = defaultHeapSize;
         minRequiredSize += reservedSize;
-        minRequiredSize = minRequiredSize ? std::max(minRequiredSize, minHeapSize) : 0;
-        minRequiredSize = minRequiredSize > 0 ? alignUp(minRequiredSize, MemoryConstants::cacheLineSize) : 0;
 
-        const size_t heapAlignment = MemoryConstants::pageSize;
-        heapMemory = memoryManager->obtainReusableAllocation(minRequiredSize).release();
+        finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
+
+        heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize).release();
 
         if (!heapMemory) {
-            heapMemory = memoryManager->allocateGraphicsMemory(minRequiredSize, heapAlignment);
+            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
+        } else {
+            finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
+        }
+
+        if (IndirectHeap::SURFACE_STATE == heapType) {
+            DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
+            finalHeapSize = maxSshSize;
         }
 
         if (heap) {
-            heap->replaceBuffer(heapMemory->getUnderlyingBuffer(), minRequiredSize);
+            heap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
             heap->replaceGraphicsAllocation(heapMemory);
         } else {
             heap = new IndirectHeap(heapMemory);
-            heap->overrideMaxSize(minRequiredSize);
+            heap->overrideMaxSize(finalHeapSize);
         }
 
         if (heapType == IndirectHeap::INSTRUCTION) {
