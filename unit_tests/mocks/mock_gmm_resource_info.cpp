@@ -103,8 +103,6 @@ void MockGmmResourceInfo::setSurfaceFormat() {
     iterate(readOnlyDepthSurfaceFormats, numReadOnlyDepthSurfaceFormats);
     iterate(readWriteDepthSurfaceFormats, numReadWriteDepthSurfaceFormats);
 
-    iterate(snormSurfaceFormats, numSnormSurfaceFormats);
-
     ASSERT_NE(nullptr, surfaceFormatInfo);
 }
 

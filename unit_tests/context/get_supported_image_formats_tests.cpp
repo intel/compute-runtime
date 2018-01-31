@@ -37,8 +37,8 @@ struct GetSupportedImageFormatsTest : public PlatformFixture,
                                       public ContextFixture,
                                       public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
-    using PlatformFixture::SetUp;
     using ContextFixture::SetUp;
+    using PlatformFixture::SetUp;
 
     GetSupportedImageFormatsTest() {
     }
@@ -102,9 +102,6 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormats) {
     for (cl_uint entry = 0; entry < numImageFormats; ++entry) {
         EXPECT_NE(0u, imageFormatList[entry].image_channel_order);
         EXPECT_NE(0u, imageFormatList[entry].image_channel_data_type);
-        // don't report SNORM
-        EXPECT_TRUE(CL_SNORM_INT8 != imageFormatList[entry].image_channel_data_type);
-        EXPECT_TRUE(CL_SNORM_INT16 != imageFormatList[entry].image_channel_data_type);
     }
 
     delete[] imageFormatList;

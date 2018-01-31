@@ -246,9 +246,9 @@ cl_int Context::getSupportedImageFormats(
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
 
-    cl_uint numImageFormats = 0;
-    cl_uint numDepthFormats = 0;
-    const SurfaceFormatInfo *surfaceFormats = nullptr;
+    size_t numImageFormats = 0;
+    size_t numDepthFormats = 0;
+    const SurfaceFormatInfo *baseSurfaceFormats = nullptr;
     const SurfaceFormatInfo *depthFormats = nullptr;
 
     const bool nv12ExtensionEnabled = device->getDeviceInfo().nv12Extension;
@@ -258,26 +258,26 @@ cl_int Context::getSupportedImageFormats(
     bool appendDepthSurfaces = true;
 
     if (flags & CL_MEM_READ_ONLY) {
-        numImageFormats = static_cast<cl_uint>(numReadOnlySurfaceFormats);
-        surfaceFormats = readOnlySurfaceFormats;
+        numImageFormats = numReadOnlySurfaceFormats;
+        baseSurfaceFormats = readOnlySurfaceFormats;
         depthFormats = readOnlyDepthSurfaceFormats;
-        numDepthFormats = static_cast<cl_uint>(numReadOnlyDepthSurfaceFormats);
+        numDepthFormats = numReadOnlyDepthSurfaceFormats;
         appendPlanarYUVSurfaces = true;
         appendPackedYUVSurfaces = true;
     } else if (flags & CL_MEM_WRITE_ONLY) {
-        numImageFormats = static_cast<cl_uint>(numWriteOnlySurfaceFormats);
-        surfaceFormats = writeOnlySurfaceFormats;
+        numImageFormats = numWriteOnlySurfaceFormats;
+        baseSurfaceFormats = writeOnlySurfaceFormats;
         depthFormats = readWriteDepthSurfaceFormats;
-        numDepthFormats = static_cast<cl_uint>(numReadWriteDepthSurfaceFormats);
+        numDepthFormats = numReadWriteDepthSurfaceFormats;
     } else if (nv12ExtensionEnabled && (flags & CL_MEM_NO_ACCESS_INTEL)) {
-        numImageFormats = static_cast<cl_uint>(numReadOnlySurfaceFormats);
-        surfaceFormats = readOnlySurfaceFormats;
+        numImageFormats = numReadOnlySurfaceFormats;
+        baseSurfaceFormats = readOnlySurfaceFormats;
         appendPlanarYUVSurfaces = true;
     } else {
-        numImageFormats = static_cast<cl_uint>(numReadWriteSurfaceFormats);
-        surfaceFormats = readWriteSurfaceFormats;
+        numImageFormats = numReadWriteSurfaceFormats;
+        baseSurfaceFormats = readWriteSurfaceFormats;
         depthFormats = readWriteDepthSurfaceFormats;
-        numDepthFormats = static_cast<cl_uint>(numReadWriteDepthSurfaceFormats);
+        numDepthFormats = numReadWriteDepthSurfaceFormats;
     }
 
     if (!Image::isImage2d(imageType)) {
@@ -289,44 +289,40 @@ cl_int Context::getSupportedImageFormats(
     }
 
     if (imageFormats) {
-        numImageFormats = std::min(numEntries, numImageFormats);
-
         cl_uint entry = 0;
-        for (entry = 0; entry < numImageFormats; ++entry) {
-            imageFormats[entry] = surfaceFormats[entry].OCLImageFormat;
-        }
+        auto appendFormats = [&](const SurfaceFormatInfo *srcSurfaceFormats, size_t srcFormatsCount) {
+            for (size_t srcFormatPos = 0; srcFormatPos < srcFormatsCount && entry < numEntries; ++srcFormatPos, ++entry) {
+                imageFormats[entry] = srcSurfaceFormats[srcFormatPos].OCLImageFormat;
+            }
+        };
+
+        appendFormats(baseSurfaceFormats, numImageFormats);
 
         if (nv12ExtensionEnabled && appendPlanarYUVSurfaces) {
-            for (uint32_t planarEntry = 0; planarEntry < numPlanarYuvSurfaceFormats && (entry < numEntries); ++planarEntry, ++entry) {
-                imageFormats[entry] = planarYuvSurfaceFormats[planarEntry].OCLImageFormat;
-            }
+            appendFormats(planarYuvSurfaceFormats, numPlanarYuvSurfaceFormats);
         }
 
         if (appendDepthSurfaces) {
-            for (uint32_t depthEntry = 0; depthEntry < numDepthFormats && (entry < numEntries); ++depthEntry, ++entry) {
-                imageFormats[entry] = depthFormats[depthEntry].OCLImageFormat;
-            }
+            appendFormats(depthFormats, numDepthFormats);
         }
 
         if (packedYuvExtensionEnabled && appendPackedYUVSurfaces) {
-            for (uint32_t packedEntry = 0; packedEntry < numPackedYuvSurfaceFormats && (entry < numEntries); ++packedEntry, ++entry) {
-                imageFormats[entry] = packedYuvSurfaceFormats[packedEntry].OCLImageFormat;
-            }
+            appendFormats(packedYuvSurfaceFormats, numPackedYuvSurfaceFormats);
         }
     }
 
     if (numImageFormatsReturned) {
         if (nv12ExtensionEnabled && appendPlanarYUVSurfaces) {
-            numImageFormats += static_cast<cl_uint>(numPlanarYuvSurfaceFormats);
+            numImageFormats += numPlanarYuvSurfaceFormats;
         }
         if (packedYuvExtensionEnabled && appendPackedYUVSurfaces) {
-            numImageFormats += static_cast<cl_uint>(numPackedYuvSurfaceFormats);
+            numImageFormats += numPackedYuvSurfaceFormats;
         }
         if (appendDepthSurfaces) {
             numImageFormats += numDepthFormats;
         }
 
-        *numImageFormatsReturned = numImageFormats;
+        *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
     }
     return CL_SUCCESS;
 }

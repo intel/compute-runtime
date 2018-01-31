@@ -23,83 +23,66 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/image.h"
 #include "gtest/gtest.h"
+#include <array>
 
 using namespace OCLRT;
 
-typedef decltype(numSnormSurfaceFormats) SnormSurfaceFormatsCountType;
-class GetSurfaceFormatTest : public ::testing::TestWithParam<std::tuple<size_t /*format index*/, uint64_t /*flags*/>> {
-  public:
-    void SetUp() override {
-        size_t index;
-        std::tie(index, flags) = GetParam();
-        surfaceFormat = snormSurfaceFormats[index];
-    }
+const cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
 
-    void compareFormats(const SurfaceFormatInfo *first, const SurfaceFormatInfo *second) {
-        EXPECT_EQ(first->GenxSurfaceFormat, second->GenxSurfaceFormat);
-        EXPECT_EQ(first->GMMSurfaceFormat, second->GMMSurfaceFormat);
-        EXPECT_EQ(first->GMMTileWalk, second->GMMTileWalk);
-        EXPECT_EQ(first->ImageElementSizeInBytes, second->ImageElementSizeInBytes);
-        EXPECT_EQ(first->NumChannels, second->NumChannels);
-        EXPECT_EQ(first->OCLImageFormat.image_channel_data_type, second->OCLImageFormat.image_channel_data_type);
-        EXPECT_EQ(first->OCLImageFormat.image_channel_order, second->OCLImageFormat.image_channel_order);
-        EXPECT_EQ(first->PerChannelSizeInBytes, second->PerChannelSizeInBytes);
-    }
-
-    SurfaceFormatInfo surfaceFormat;
-    cl_mem_flags flags;
+const std::tuple<const SurfaceFormatInfo *, const size_t> paramsForSnormTests[] = {
+    std::make_tuple(readOnlySurfaceFormats, numReadOnlySurfaceFormats),
+    std::make_tuple(writeOnlySurfaceFormats, numWriteOnlySurfaceFormats),
+    std::make_tuple(readWriteSurfaceFormats, numReadWriteSurfaceFormats),
 };
 
-TEST_P(GetSurfaceFormatTest, givenSnormFormatWhenGetSurfaceFormatFromTableIsCalledThenReturnsCorrectFormat) {
-    auto format = Image::getSurfaceFormatFromTable(flags, &surfaceFormat.OCLImageFormat);
-    EXPECT_NE(nullptr, format);
-    compareFormats(&surfaceFormat, format);
+const std::array<SurfaceFormatInfo, 6> referenceSnormSurfaceFormats = {{
+    // clang-format off
+    {{CL_R, CL_SNORM_INT8},     GMM_FORMAT_R8_SNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R8_SNORM,           0, 1, 1, 1},
+    {{CL_R, CL_SNORM_INT16},    GMM_FORMAT_R16_SNORM_TYPE,          GFX3DSTATE_SURFACEFORMAT_R16_SNORM,          0, 1, 2, 2},
+    {{CL_RG, CL_SNORM_INT8},    GMM_FORMAT_R8G8_SNORM_TYPE,         GFX3DSTATE_SURFACEFORMAT_R8G8_SNORM,         0, 2, 1, 2},
+    {{CL_RG, CL_SNORM_INT16},   GMM_FORMAT_R16G16_SNORM_TYPE,       GFX3DSTATE_SURFACEFORMAT_R16G16_SNORM,       0, 2, 2, 4},
+    {{CL_RGBA, CL_SNORM_INT8},  GMM_FORMAT_R8G8B8A8_SNORM_TYPE,     GFX3DSTATE_SURFACEFORMAT_R8G8B8A8_SNORM,     0, 4, 1, 4},
+    {{CL_RGBA, CL_SNORM_INT16}, GMM_FORMAT_R16G16B16A16_SNORM_TYPE, GFX3DSTATE_SURFACEFORMAT_R16G16B16A16_SNORM, 0, 4, 2, 8},
+    // clang-format on
+}};
+
+using SnormSurfaceFormatAccessFlagsTests = ::testing::TestWithParam<uint64_t /*flags*/>;
+
+TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatFromTableIsCalledThenReturnsCorrectFormat) {
+    EXPECT_EQ(6u, referenceSnormSurfaceFormats.size());
+    cl_mem_flags flags = GetParam();
+
+    for (size_t i = 0u; i < referenceSnormSurfaceFormats.size(); i++) {
+        const auto &snormSurfaceFormat = referenceSnormSurfaceFormats[i];
+        auto format = Image::getSurfaceFormatFromTable(flags, &snormSurfaceFormat.OCLImageFormat);
+        EXPECT_NE(nullptr, format);
+        EXPECT_TRUE(memcmp(&snormSurfaceFormat, format, sizeof(SurfaceFormatInfo)) == 0);
+    }
 }
 
-cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
+using SnormSurfaceFormatTests = ::testing::TestWithParam<std::tuple<const SurfaceFormatInfo *, const size_t>>;
+
+TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceFormatsThenFindExactCount) {
+    const SurfaceFormatInfo *formatsTable = std::get<0>(GetParam());
+    size_t formatsTableCount = std::get<1>(GetParam());
+
+    size_t snormFormatsFound = 0;
+    for (size_t i = 0; i < formatsTableCount; i++) {
+        auto oclFormat = formatsTable[i].OCLImageFormat;
+        if (CL_SNORM_INT8 == oclFormat.image_channel_data_type || CL_SNORM_INT16 == oclFormat.image_channel_data_type) {
+            EXPECT_TRUE(oclFormat.image_channel_order == CL_R || oclFormat.image_channel_order == CL_RG || oclFormat.image_channel_order == CL_RGBA);
+            snormFormatsFound++;
+        }
+    }
+    EXPECT_EQ(6u, snormFormatsFound);
+}
 
 INSTANTIATE_TEST_CASE_P(
     ImageSnormTests,
-    GetSurfaceFormatTest,
-    ::testing::Combine(
-        ::testing::Range(static_cast<SnormSurfaceFormatsCountType>(0u), numSnormSurfaceFormats),
-        ::testing::ValuesIn(flagsForTests)));
-
-class IsSnormFormatTest : public ::testing::TestWithParam<std::tuple<uint32_t /*image data type*/, bool /*expected value*/>> {
-  public:
-    void SetUp() override {
-        std::tie(format.image_channel_data_type, expectedValue) = GetParam();
-    }
-
-    cl_image_format format;
-    bool expectedValue;
-};
-
-TEST_P(IsSnormFormatTest, givenSnormFormatWhenGetSurfaceFormatFromTableIsCalledThenReturnsCorrectFormat) {
-    bool retVal = Image::isSnormFormat(format);
-    EXPECT_EQ(expectedValue, retVal);
-}
-
-std::tuple<uint32_t, bool> paramsForSnormTests[] = {
-    std::make_tuple<uint32_t, bool>(CL_SNORM_INT8, true),
-    std::make_tuple<uint32_t, bool>(CL_SNORM_INT16, true),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_INT8, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_INT16, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_SHORT_565, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_SHORT_555, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_INT_101010, false),
-    std::make_tuple<uint32_t, bool>(CL_SIGNED_INT8, false),
-    std::make_tuple<uint32_t, bool>(CL_SIGNED_INT16, false),
-    std::make_tuple<uint32_t, bool>(CL_SIGNED_INT32, false),
-    std::make_tuple<uint32_t, bool>(CL_UNSIGNED_INT8, false),
-    std::make_tuple<uint32_t, bool>(CL_UNSIGNED_INT16, false),
-    std::make_tuple<uint32_t, bool>(CL_UNSIGNED_INT32, false),
-    std::make_tuple<uint32_t, bool>(CL_HALF_FLOAT, false),
-    std::make_tuple<uint32_t, bool>(CL_FLOAT, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_INT24, false),
-    std::make_tuple<uint32_t, bool>(CL_UNORM_INT_101010_2, false)};
+    SnormSurfaceFormatAccessFlagsTests,
+    ::testing::ValuesIn(flagsForTests));
 
 INSTANTIATE_TEST_CASE_P(
     ImageSnormTests,
-    IsSnormFormatTest,
+    SnormSurfaceFormatTests,
     ::testing::ValuesIn(paramsForSnormTests));

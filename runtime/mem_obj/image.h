@@ -117,8 +117,6 @@ class Image : public MemObj {
 
     static bool isDepthFormat(const cl_image_format &imageFormat);
 
-    static bool isSnormFormat(const cl_image_format &imageFormat);
-
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,
                         void *paramValue,

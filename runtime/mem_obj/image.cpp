@@ -966,9 +966,6 @@ const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, co
 #else
         return nullptr;
 #endif
-    } else if (isSnormFormat(*imageFormat)) {
-        surfaceFormatTable = snormSurfaceFormats;
-        numSurfaceFormats = numSnormSurfaceFormats;
     } else if ((flags & CL_MEM_READ_ONLY) == CL_MEM_READ_ONLY) {
         surfaceFormatTable = isDepthFormat ? readOnlyDepthSurfaceFormats : readOnlySurfaceFormats;
         numSurfaceFormats = isDepthFormat ? numReadOnlyDepthSurfaceFormats : numReadOnlySurfaceFormats;
@@ -1008,13 +1005,6 @@ bool Image::isImage2dOr2dArray(cl_mem_object_type imageType) {
 
 bool Image::isDepthFormat(const cl_image_format &imageFormat) {
     if (imageFormat.image_channel_order == CL_DEPTH || imageFormat.image_channel_order == CL_DEPTH_STENCIL) {
-        return true;
-    }
-    return false;
-}
-
-bool Image::isSnormFormat(const cl_image_format &imageFormat) {
-    if (imageFormat.image_channel_data_type == CL_SNORM_INT8 || imageFormat.image_channel_data_type == CL_SNORM_INT16) {
         return true;
     }
     return false;

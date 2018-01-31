@@ -98,12 +98,6 @@ const SurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FOR
     const SurfaceFormatInfo *surfaceFormatInfo = nullptr;
     size_t numSurfaceFormats = 0;
 
-    for (size_t i = 0; i < numSnormSurfaceFormats; i++) {
-        if (gmmFormat == snormSurfaceFormats[i].GMMSurfaceFormat) {
-            return &snormSurfaceFormats[i];
-        }
-    }
-
     if ((flags & CL_MEM_READ_ONLY) == CL_MEM_READ_ONLY) {
         surfaceFormatTable = readOnlySurfaceFormats;
         numSurfaceFormats = numReadOnlySurfaceFormats;

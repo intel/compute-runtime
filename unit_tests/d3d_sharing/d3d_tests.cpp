@@ -768,20 +768,6 @@ TYPED_TEST_P(D3DTests, givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFai
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TYPED_TEST_P(D3DTests, givenSnormFormatWhenLookingForSurfaceFormatThenReturnValidFormat) {
-    EXPECT_GT(numSnormSurfaceFormats, 0u);
-    for (size_t i = 0; i < numSnormSurfaceFormats; i++) {
-        if (snormSurfaceFormats[i].OCLImageFormat.image_channel_order == CL_RGBA ||
-            snormSurfaceFormats[i].OCLImageFormat.image_channel_order == CL_BGRA ||
-            snormSurfaceFormats[i].OCLImageFormat.image_channel_order == CL_RG ||
-            snormSurfaceFormats[i].OCLImageFormat.image_channel_order == CL_R) {
-            auto surfaceFormat = D3DSharing<TypeParam>::findSurfaceFormatInfo(snormSurfaceFormats[i].GMMSurfaceFormat, 0);
-            ASSERT_NE(nullptr, surfaceFormat);
-            EXPECT_EQ(&snormSurfaceFormats[i], surfaceFormat);
-        }
-    }
-}
-
 TYPED_TEST_P(D3DTests, givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat) {
     EXPECT_GT(numReadOnlySurfaceFormats, 0u);
     for (size_t i = 0; i < numReadOnlySurfaceFormats; i++) {
@@ -1261,7 +1247,6 @@ REGISTER_TYPED_TEST_CASE_P(D3DTests,
                            givenD3DTextureWithTheSameSubresourceWhenNextCreateIsCalledThenFail,
                            givenInvalidSubresourceWhenCreateTexture2dIsCalledThenFail,
                            givenInvalidSubresourceWhenCreateTexture3dIsCalledThenFail,
-                           givenSnormFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
                            givenReadonlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
                            givenWriteOnlyFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
                            givenReadWriteFormatWhenLookingForSurfaceFormatThenReturnValidFormat,
