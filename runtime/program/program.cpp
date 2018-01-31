@@ -92,6 +92,8 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get()) {
         internalOptions += "-cl-intel-has-buffer-offset-arg ";
     }
+
+    internalOptions += "-fpreserve-vec3-type ";
 }
 
 Program::~Program() {

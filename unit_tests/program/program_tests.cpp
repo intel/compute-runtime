@@ -1797,6 +1797,11 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenStatelessT
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(defaultSetting);
 }
 
+TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwyasHavePreserveVec3TypeInternalOptionSet) {
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-fpreserve-vec3-type ")));
+}
+
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32BitAddressess) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
     auto defaultSetting = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
