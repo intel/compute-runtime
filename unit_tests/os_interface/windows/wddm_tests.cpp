@@ -635,9 +635,11 @@ HWTEST_F(WddmWithMockGdiTest, makeResidentMultipleHandlesWithReturnBytesToTrim) 
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
-TEST_F(WddmWithMockGdiTest, makeNonResidentCallsEvict) {
+HWTEST_F(WddmWithMockGdiTest, makeNonResidentCallsEvict) {
     MockGdi gdi;
     WddmMock wddm(&gdi);
+
+    wddm.init<FamilyType>();
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 

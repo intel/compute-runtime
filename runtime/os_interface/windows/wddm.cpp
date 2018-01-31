@@ -23,6 +23,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "runtime/os_interface/windows/kmdaf_listener.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
@@ -69,6 +70,7 @@ Wddm::Wddm(Gdi *gdi) : initialized(false),
     node = GPUNODE_3D;
     gmmMemory = std::unique_ptr<GmmMemory>(GmmMemory::create());
     minAddress = 0;
+    kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
 }
 
 Wddm::Wddm() : Wddm(new Gdi()) {
@@ -289,6 +291,8 @@ bool Wddm::evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &siz
 
     sizeToTrim = Evict.NumBytesToTrim;
 
+    kmDafListener->notifyEvict(featureTable->ftrKmdDaf, adapter, device, handleList, numOfHandles, gdi->escape);
+
     return status == STATUS_SUCCESS;
 }
 
@@ -319,26 +323,9 @@ bool Wddm::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFur
         UNRECOVERABLE_IF(cantTrimFurther);
     }
 
+    kmDafListener->notifyMakeResident(featureTable->ftrKmdDaf, adapter, device, handles, count, gdi->escape);
+
     return success;
-}
-
-bool Wddm::evict(OsHandleStorage &osHandles) {
-    NTSTATUS status = STATUS_SUCCESS;
-    D3DKMT_EVICT Evict = {0};
-    auto sizeToTrim = 0uLL;
-
-    D3DKMT_HANDLE handles[max_fragments_count] = {0};
-    for (uint32_t allocationId = 0; allocationId < osHandles.fragmentCount; allocationId++) {
-        handles[allocationId] = osHandles.fragmentStorageData[allocationId].osHandleStorage->handle;
-        sizeToTrim += osHandles.fragmentStorageData[allocationId].fragmentSize;
-    }
-
-    Evict.AllocationList = handles;
-    Evict.hDevice = device;
-    Evict.NumAllocations = osHandles.fragmentCount;
-    Evict.NumBytesToTrim = sizeToTrim;
-
-    return status == STATUS_SUCCESS;
 }
 
 bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, uint64_t size, bool allocation32bit, bool use64kbPages) {
@@ -403,6 +390,8 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         return updateAuxTable(gpuPtr, gmm, true);
     }
 
+    kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, adapter, device, handle, MapGPUVA.VirtualAddress, gdi->escape);
+
     return status == STATUS_SUCCESS;
 }
 
@@ -410,11 +399,14 @@ bool Wddm::freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_FREEGPUVIRTUALADDRESS FreeGPUVA = {0};
     FreeGPUVA.hAdapter = adapter;
-    FreeGPUVA.BaseAddress = gpuPtr;
+    FreeGPUVA.BaseAddress = Gmm::decanonize(gpuPtr);
     FreeGPUVA.Size = size;
 
     status = gdi->freeGpuVirtualAddress(&FreeGPUVA);
     gpuPtr = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0);
+
+    kmDafListener->notifyUnmapGpuVA(featureTable->ftrKmdDaf, adapter, device, FreeGPUVA.BaseAddress, gdi->escape);
+
     return status == STATUS_SUCCESS;
 }
 
@@ -462,7 +454,10 @@ NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
             DEBUG_BREAK_IF(true);
             break;
         }
+
+        kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
     }
+
     return status;
 }
 
@@ -494,6 +489,8 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
         }
 
         alloc->handle = AllocationInfo.hAllocation;
+
+        kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
 
         success = true;
     }
@@ -556,12 +553,14 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             osHandles.fragmentStorageData[allocationIndex].osHandleStorage->handle = AllocationInfo[i].hAllocation;
             success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex], false, false);
             allocationIndex++;
-        }
 
-        if (!success) {
-            DBG_LOG(PrintDebugMessages, __FUNCTION__, "mapGpuVirtualAddress: ", success);
-            DEBUG_BREAK_IF(true);
-            break;
+            if (!success) {
+                DBG_LOG(PrintDebugMessages, __FUNCTION__, "mapGpuVirtualAddress: ", success);
+                DEBUG_BREAK_IF(true);
+                break;
+            }
+
+            kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, AllocationInfo[i].hAllocation, gdi->escape);
         }
 
         success = true;
@@ -673,6 +672,8 @@ void *Wddm::lockResource(WddmAllocation *wddmAllocation) {
     status = gdi->lock2(&lock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 
+    kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
+
     return lock2.pData;
 }
 
@@ -685,6 +686,8 @@ void Wddm::unlockResource(WddmAllocation *wddmAllocation) {
 
     status = gdi->unlock2(&unlock2);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
+
+    kmDafListener->notifyUnlock(featureTable->ftrKmdDaf, adapter, device, &wddmAllocation->handle, 1, gdi->escape);
 }
 
 D3DKMT_HANDLE Wddm::createContext() {

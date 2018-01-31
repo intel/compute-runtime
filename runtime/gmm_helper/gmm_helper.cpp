@@ -275,6 +275,10 @@ uint64_t Gmm::canonize(uint64_t address) {
     return ((int64_t)((address & 0xFFFFFFFFFFFF) << (64 - 48))) >> (64 - 48);
 }
 
+uint64_t Gmm::decanonize(uint64_t address) {
+    return (uint64_t)(address & 0xFFFFFFFFFFFF);
+}
+
 uint32_t Gmm::queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType) {
     if (gfxFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 0;

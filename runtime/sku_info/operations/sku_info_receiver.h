@@ -103,6 +103,8 @@ class SkuInfoReceiver {
         RECEIVE_FTR(DisplayEngineS3d);
         RECEIVE_FTR(VERing);
         RECEIVE_FTR(Wddm2GpuMmu);
+
+        RECEIVE_FTR(KmdDaf);
 #undef RECEIVE_FTR
     }
 

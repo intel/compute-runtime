@@ -89,6 +89,10 @@ add_subdirectory(accelerators)
 add_subdirectory(api)
 add_subdirectory(aub_mem_dump)
 
+if (WIN32)
+  add_subdirectory(os_interface/windows)
+endif(WIN32)
+
 set (RUNTIME_SRCS_BUILT_INS
   built_ins/built_ins_storage.cpp
   built_ins/built_ins.cpp
@@ -306,6 +310,7 @@ set (RUNTIME_SRCS
   ${RUNTIME_SRCS_INDIRECT_HEAP}
   ${RUNTIME_SRCS_INSTRUMENTATION}
   ${RUNTIME_SRCS_KERNEL}
+  ${RUNTIME_SRCS_KMDAF}
   ${RUNTIME_SRCS_MEMORY_MANAGER}
   ${RUNTIME_SRCS_GMM_HELPER}
   ${RUNTIME_SRCS_MEM_OBJ}

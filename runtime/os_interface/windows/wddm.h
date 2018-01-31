@@ -46,6 +46,7 @@ class LinearStream;
 class GmmPageTableMngr;
 struct FeatureTable;
 struct WorkaroundTable;
+struct KmDafListener;
 
 class Wddm {
   private:
@@ -73,14 +74,13 @@ class Wddm {
 
     MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
-    MOCKABLE_VIRTUAL bool evict(OsHandleStorage &osHandles);
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, uint64_t size, bool allocation32bit, bool use64kbPages);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
     MOCKABLE_VIRTUAL D3DKMT_HANDLE createContext();
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);
-    bool createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
+    MOCKABLE_VIRTUAL bool createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
     MOCKABLE_VIRTUAL bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
@@ -239,6 +239,8 @@ class Wddm {
 
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
     bool pageTableManagerInitialized = false;
+
+    std::unique_ptr<KmDafListener> kmDafListener;
 };
 
 } // namespace OCLRT

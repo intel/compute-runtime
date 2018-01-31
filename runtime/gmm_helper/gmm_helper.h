@@ -76,6 +76,7 @@ class Gmm {
     static bool allowTiling(const cl_image_desc &imageDesc);
 
     static uint64_t canonize(uint64_t address);
+    static uint64_t decanonize(uint64_t address);
 
     static GMM_CUBE_FACE_ENUM getCubeFaceIndex(uint32_t target);
     static uint32_t getRenderTileMode(uint32_t tileWalk);

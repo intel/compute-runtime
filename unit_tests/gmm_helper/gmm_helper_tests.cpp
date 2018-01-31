@@ -286,6 +286,16 @@ TEST_F(GmmTests, canonize) {
     EXPECT_EQ(Gmm::canonize(addr2), addrExpected2);
 }
 
+TEST_F(GmmTests, decanonize) {
+    uint64_t addr1 = 0x7777777777777777;
+    uint64_t addrExpected1 = 0x0000777777777777;
+    EXPECT_EQ(Gmm::decanonize(addr1), addrExpected1);
+
+    uint64_t addr2 = 0x7FFFFFFFFFFFFFFF;
+    uint64_t addrExpected2 = 0x0000FFFFFFFFFFFF;
+    EXPECT_EQ(Gmm::decanonize(addr2), addrExpected2);
+}
+
 TEST_F(GmmTests, returnRenderAlignment) {
     uint32_t tileModes[4][2] = {{0, 2}, {1, 3}, {2, 1}, {3, 0}}; // {given, expected}
     for (uint32_t i = 0; i < 4; i++) {

@@ -124,6 +124,8 @@ struct SkuInfoBaseReference {
         refFtrTable.ftrDisplayEngineS3d = true;
         refFtrTable.ftrVERing = true;
         refFtrTable.ftrWddm2GpuMmu = true;
+
+        refFtrTable.ftrKmdDaf = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

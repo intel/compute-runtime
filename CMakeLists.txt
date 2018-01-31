@@ -118,6 +118,13 @@ if(NOT GTPIN_HEADERS_DIR)
     endif()
 endif(NOT GTPIN_HEADERS_DIR)
 
+if(NOT KMDAF_HEADERS_DIR)
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/kmdaf/kmDaf.h")
+	    get_filename_component(KMDAF_HEADERS_DIR "../internal/kmdaf/" ABSOLUTE)
+        message(STATUS "KM-DAF headers dir: ${KMDAF_HEADERS_DIR}")
+    endif()
+endif(NOT KMDAF_HEADERS_DIR)
+
 if(NOT LIBDRM_DIR)
 	get_filename_component(LIBDRM_DIR "../libdrm/" ABSOLUTE)
 endif(NOT LIBDRM_DIR)
