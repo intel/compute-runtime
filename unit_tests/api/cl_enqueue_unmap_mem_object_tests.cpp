@@ -29,15 +29,36 @@ using namespace OCLRT;
 
 typedef api_tests clEnqueueUnmapMemObjTests;
 
-TEST_F(clEnqueueUnmapMemObjTests, validAddressShouldReturnSuccess) {
+TEST_F(clEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSuccess) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    cl_int retVal = CL_SUCCESS;
 
-    auto retVal = clEnqueueUnmapMemObject(
+    auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(
         pCommandQueue,
         buffer.get(),
-        buffer->getHostPtr(),
+        mappedPtr,
         0,
         nullptr,
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingThenReturnError) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    cl_int retVal = CL_SUCCESS;
+
+    auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(
+        pCommandQueue,
+        buffer.get(),
+        ptrOffset(mappedPtr, buffer->getSize() + 1),
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }

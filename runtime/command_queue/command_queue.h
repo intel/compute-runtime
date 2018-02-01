@@ -400,6 +400,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Event *virtualEvent;
 
   protected:
+    cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event);
+
     Context *context;
     Device *device;
 

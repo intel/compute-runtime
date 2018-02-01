@@ -246,7 +246,7 @@ class CommandQueueHw : public CommandQueue {
                                  cl_event *event) override {
         cl_int retVal;
         if (memObj->allowTiling() || memObj->peekSharingHandler()) {
-            retVal = memObj->unmapObj(this, mappedPtr, numEventsInWaitList, eventWaitList, event);
+            retVal = enqueueWriteMemObjForUnmap(memObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
         } else {
             cpuDataTransferHandler(memObj,
                                    CL_COMMAND_UNMAP_MEM_OBJECT,

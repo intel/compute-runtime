@@ -98,17 +98,16 @@ TEST_F(PipeTest, FailedAllocationInjection) {
     injectFailures(method);
 }
 
-TEST_F(PipeTest, givenPipeWhenUnmapIsCalledThenReturnError) {
+TEST_F(PipeTest, givenPipeWhenEnqueueWriteForUnmapIsCalledThenReturnError) {
+    struct MyCommandQueue : public CommandQueue {
+        using CommandQueue::enqueueWriteMemObjForUnmap;
+    } myCmdQ;
+
     int errCode = CL_SUCCESS;
-    auto pipe = Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, errCode);
+    std::unique_ptr<Pipe> pipe(Pipe::create(&context, CL_MEM_READ_ONLY, 1, 20, nullptr, errCode));
     ASSERT_NE(nullptr, pipe);
     EXPECT_EQ(CL_SUCCESS, errCode);
-    auto cmdQ = CommandQueue::create(&context, context.getDevice(0), 0, errCode);
-    EXPECT_EQ(CL_SUCCESS, errCode);
 
-    errCode = pipe->unmapObj(cmdQ, nullptr, 0, nullptr, nullptr);
+    errCode = myCmdQ.enqueueWriteMemObjForUnmap(pipe.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, errCode);
-
-    delete pipe;
-    delete cmdQ;
 }

@@ -415,44 +415,6 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
     return sharedImage;
 }
 
-cl_int Image::unmapObj(CommandQueue *cmdQ, void *ptr,
-                       cl_uint numEventsInWaitList,
-                       const cl_event *eventWaitList,
-                       cl_event *event) {
-    if (!allowTiling() && !peekSharingHandler()) {
-        return cmdQ->enqueueUnmapMemObject(this, ptr, numEventsInWaitList, eventWaitList, event);
-    }
-
-    if (ptr != getMappedPtr()) {
-        return CL_INVALID_VALUE;
-    }
-
-    cl_int retVal;
-
-    size_t Region[] = {mappedRegion[0] ? mappedRegion[0] : 1,
-                       +mappedRegion[1] ? mappedRegion[1] : 1,
-                       +mappedRegion[2] ? mappedRegion[2] : 1};
-
-    size_t rowPitch = getHostPtrRowPitch();
-    size_t slicePitch = getHostPtrSlicePitch();
-
-    retVal = cmdQ->enqueueWriteImage(this,
-                                     CL_FALSE, mappedOrigin, Region, rowPitch, slicePitch, getMappedPtr(),
-                                     numEventsInWaitList,
-                                     eventWaitList,
-                                     event);
-    bool mustCallFinish = true;
-    if (!(flags & CL_MEM_USE_HOST_PTR)) {
-        mustCallFinish = true;
-    } else {
-        mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(cmdQ->taskLevel, numEventsInWaitList, eventWaitList) != Event::eventNotReady);
-    }
-    if (mustCallFinish) {
-        cmdQ->finish(true);
-    }
-    return retVal;
-}
-
 cl_int Image::validate(Context *context,
                        cl_mem_flags flags,
                        const SurfaceFormatInfo *surfaceFormat,

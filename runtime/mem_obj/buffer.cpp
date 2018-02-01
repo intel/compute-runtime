@@ -346,15 +346,4 @@ void Buffer::setSurfaceState(Context *context,
     buffer->graphicsAllocation = nullptr;
     delete buffer;
 }
-
-cl_int Buffer::unmapObj(CommandQueue *cmdQ, void *ptr, cl_uint numEventsInWaitList,
-                        const cl_event *eventWaitList, cl_event *event) {
-    if (!peekSharingHandler()) {
-        return cmdQ->enqueueUnmapMemObject(this, ptr, numEventsInWaitList, eventWaitList, event);
-    }
-    auto writePtr = ptrOffset(getMappedPtr(), getMappedOffset());
-
-    return cmdQ->enqueueWriteBuffer(this, CL_TRUE, getMappedOffset(), getMappedSize(), writePtr,
-                                    numEventsInWaitList, eventWaitList, event);
-}
 } // namespace OCLRT

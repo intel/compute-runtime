@@ -84,10 +84,6 @@ MemObj::~MemObj() {
             destroyGraphicsAllocation(mcsAllocation, false);
         }
 
-        if (mappedPtr && !getCpuAddressForMapping()) {
-            memoryManager->freeSystemMemory(mappedPtr);
-        }
-
         if (associatedMemObject) {
             if (associatedMemObject->getGraphicsAllocation() != this->getGraphicsAllocation()) {
                 destroyGraphicsAllocation(graphicsAllocation, false);

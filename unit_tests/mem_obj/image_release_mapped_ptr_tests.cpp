@@ -20,8 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "runtime/command_queue/command_queue.h"
+#include "test.h"
+#include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -30,10 +30,11 @@
 
 using namespace OCLRT;
 
-class MockCommandQueue : public CommandQueue {
+template <typename Family>
+class MyMockCommandQueue : public CommandQueueHw<Family> {
 
   public:
-    MockCommandQueue(Context *context) : CommandQueue(context, nullptr, 0){};
+    MyMockCommandQueue(Context *context) : CommandQueueHw<Family>(context, nullptr, 0){};
 
     cl_int enqueueWriteImage(Image *dstImage, cl_bool blockingWrite,
                              const size_t *origin, const size_t *region,
@@ -66,11 +67,11 @@ class ImageUnmapTest : public ::testing::Test {
     std::unique_ptr<Image> image;
 };
 
-TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlockingMapImage) {
-    std::unique_ptr<MockCommandQueue> commandQueue(new MockCommandQueue(&context));
+HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlockingMapImage) {
+    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     void *ptr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     image->setAllocatedMappedPtr(ptr);
-    image->unmapObj(commandQueue.get(), ptr, 0, nullptr, nullptr);
+    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(ptr, commandQueue->passedPtr);
     EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
     EXPECT_EQ(1u, commandQueue->enqueueWriteImageCalled);
@@ -80,37 +81,37 @@ TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlockingMa
     EXPECT_EQ(nullptr, image->getMappedPtr());
 }
 
-TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
-    std::unique_ptr<MockCommandQueue> commandQueue(new MockCommandQueue(&context));
+HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
+    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(&context));
-    image->unmapObj(commandQueue.get(), nullptr, 0, nullptr, nullptr);
+    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 
-TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrThenFinishIsCalled) {
-    std::unique_ptr<MockCommandQueue> commandQueue(new MockCommandQueue(&context));
-    image->unmapObj(commandQueue.get(), nullptr, 0, nullptr, nullptr);
+HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrThenFinishIsCalled) {
+    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
+    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 
-TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithNotReadyEventsThenFinishIsNotCalled) {
-    std::unique_ptr<MockCommandQueue> commandQueue(new MockCommandQueue(&context));
+HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithNotReadyEventsThenFinishIsNotCalled) {
+    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(&context));
 
     MockEvent<UserEvent> mockEvent(&context);
     mockEvent.setStatus(Event::eventNotReady);
     cl_event clEvent = &mockEvent;
-    image->unmapObj(commandQueue.get(), nullptr, 1, &clEvent, nullptr);
+    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 1, &clEvent, nullptr);
     EXPECT_EQ(0u, commandQueue->finishCalled);
 }
 
-TEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutNotReadyEventsThenFinishIsCalled) {
-    std::unique_ptr<MockCommandQueue> commandQueue(new MockCommandQueue(&context));
+HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutNotReadyEventsThenFinishIsCalled) {
+    std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(&context));
     MockEvent<UserEvent> mockEvent(&context);
     mockEvent.setStatus(0);
     cl_event clEvent = &mockEvent;
-    image->unmapObj(commandQueue.get(), nullptr, 1, &clEvent, nullptr);
+    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 1, &clEvent, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 
@@ -127,7 +128,7 @@ TEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMe
     EXPECT_EQ(alignUp(ptr, MemoryConstants::pageSize), ptr);
     commandQueue->enqueueMapImage(clImage, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_EQ(ptr, image->getAllocatedMappedPtr());
-    image->unmapObj(commandQueue.get(), ptr, 0, nullptr, nullptr);
+    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     image->releaseAllocatedMappedPtr();
     EXPECT_EQ(nullptr, image->getMappedPtr());
     image.reset(nullptr);

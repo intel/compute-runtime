@@ -491,4 +491,37 @@ bool CommandQueue::sendPerfCountersConfig() {
     return getPerfCounters()->sendPmRegsCfgCommands(perfConfigurationData, &perfCountersRegsCfgHandle, &perfCountersRegsCfgPending);
 }
 
+cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
+    auto image = castToObject<Image>(memObj);
+    if (image) {
+        auto mappedRegion = image->getMappedRegion();
+        size_t region[] = {mappedRegion[0] ? mappedRegion[0] : 1,
+                           mappedRegion[1] ? mappedRegion[1] : 1,
+                           mappedRegion[2] ? mappedRegion[2] : 1};
+
+        auto retVal = enqueueWriteImage(image, CL_FALSE, image->getMappedOrigin(), region, image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                        mappedPtr, numEventsInWaitList, eventWaitList, event);
+        bool mustCallFinish = true;
+        if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
+            mustCallFinish = true;
+        } else {
+            mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList) != Event::eventNotReady);
+        }
+        if (mustCallFinish) {
+            finish(true);
+        }
+        return retVal;
+    }
+
+    auto buffer = castToObject<Buffer>(memObj);
+    if (buffer) {
+        auto writePtr = ptrOffset(mappedPtr, buffer->getMappedOffset());
+
+        return enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset(), buffer->getMappedSize(), writePtr,
+                                  numEventsInWaitList, eventWaitList, event);
+    }
+
+    return CL_INVALID_MEM_OBJECT;
+}
+
 } // namespace OCLRT

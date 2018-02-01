@@ -30,8 +30,8 @@
 namespace OCLRT {
 class MockCommandQueue : public CommandQueue {
   public:
-    using CommandQueue::indirectHeap;
     using CommandQueue::device;
+    using CommandQueue::indirectHeap;
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
@@ -81,6 +81,13 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
                                             event);
     }
 
+    cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size,
+                              const void *ptr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        EnqueueWriteBufferCounter++;
+        blockingWriteBuffer = blockingWrite == CL_TRUE;
+        return BaseClass::enqueueWriteBuffer(buffer, blockingWrite, offset, size, ptr, numEventsInWaitList, eventWaitList, event);
+    }
+
     void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) override {
         lastCommandType = commandType;
         for (auto &di : dispatchInfo) {
@@ -91,6 +98,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     size_t EnqueueWriteImageCounter = 0;
+    size_t EnqueueWriteBufferCounter = 0;
+    bool blockingWriteBuffer = false;
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

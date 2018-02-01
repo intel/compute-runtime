@@ -104,11 +104,6 @@ class MemObj : public BaseObject<_cl_mem> {
     Device *getAssociatedDevice() { return device; }
     bool isImageFromImage() const { return isImageFromImageCreated; }
 
-    virtual cl_int unmapObj(CommandQueue *cmdQ, void *ptr, cl_uint numEventsInWaitList,
-                            const cl_event *eventWaitList, cl_event *event) {
-        return CL_INVALID_MEM_OBJECT;
-    }
-
     void *setAndReturnMappedPtr(size_t offset);
     void *getCpuAddressForMapping();
     void *getCpuAddressForMemoryTransfer();

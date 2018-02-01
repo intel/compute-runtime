@@ -28,6 +28,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/helpers/options.h"
@@ -804,4 +805,54 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     delete buffer;
     alignedFree(ptr);
     DebugManager.flags.Force32bitAddressing.set(false);
+}
+
+struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {
+    void SetUp() override {
+        DeviceFixture::SetUp();
+    }
+    void TearDown() override {
+        DeviceFixture::TearDown();
+    }
+};
+
+HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseEnqueueWriteBuffer) {
+    MockContext context(pDevice);
+    MockCommandQueueHw<FamilyType> cmdQ(&context, pDevice, nullptr);
+
+    auto retVal = CL_SUCCESS;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_ALLOC_HOST_PTR, 123, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    buffer->setSharingHandler(new SharingHandler());
+    EXPECT_NE(nullptr, buffer->peekSharingHandler());
+
+    auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
+    retVal = clEnqueueUnmapMemObject(&cmdQ, buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(1u, cmdQ.EnqueueWriteBufferCounter);
+    EXPECT_TRUE(cmdQ.blockingWriteBuffer);
+}
+
+HWTEST_F(BufferUnmapTest, givenBufferWithoutSharingHandlerWhenUnmappingThenDontUseEnqueueWriteBuffer) {
+    MockContext context(pDevice);
+    MockCommandQueueHw<FamilyType> cmdQ(&context, pDevice, nullptr);
+
+    auto retVal = CL_SUCCESS;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_ALLOC_HOST_PTR, 123, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, buffer->peekSharingHandler());
+
+    auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(&cmdQ, buffer.get(), mappedPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
 }

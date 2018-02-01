@@ -193,8 +193,10 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
                             CL_MEM_READ_WRITE,
                             size,
                             storage, nullptr, allocation, true, false, false);
+        memObj->setMappedPtr(storage);
+    } else {
+        memObj->setAllocatedMappedPtr(storage);
     }
-    memObj->setMappedPtr(storage);
 
     makeMemObjUsed();
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());

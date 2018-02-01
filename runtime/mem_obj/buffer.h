@@ -104,9 +104,6 @@ class Buffer : public MemObj {
 
     bool isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitList, void *ptr, size_t size);
 
-    cl_int unmapObj(CommandQueue *cmdQ, void *ptr, cl_uint numEventsInWaitList,
-                    const cl_event *eventWaitList, cl_event *event) override;
-
   protected:
     Buffer(Context *context,
            cl_mem_flags flags,

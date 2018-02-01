@@ -45,7 +45,7 @@ void *CommandQueueHw<GfxFamily>::enqueueMapSharedBuffer(Buffer *buffer, cl_bool 
     auto memoryManager = device->getMemoryManager();
     if (!buffer->getMappedPtr()) {
         auto memory = memoryManager->allocateSystemMemory(buffer->getGraphicsAllocation()->getUnderlyingBufferSize(), 0);
-        buffer->setMappedPtr(memory);
+        buffer->setAllocatedMappedPtr(memory);
     }
 
     auto returnPtr = ptrOffset(buffer->getMappedPtr(), offset);
@@ -59,4 +59,4 @@ void *CommandQueueHw<GfxFamily>::enqueueMapSharedBuffer(Buffer *buffer, cl_bool 
     buffer->setMappedOffset(offset);
     return returnPtr;
 }
-}
+} // namespace OCLRT

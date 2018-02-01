@@ -2470,13 +2470,10 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                    "event", event);
 
     if (retVal == CL_SUCCESS) {
-
-        retVal = pMemObj->unmapObj(
-            pCommandQueue,
-            mappedPtr,
-            numEventsInWaitList,
-            eventWaitList,
-            event);
+        if (mappedPtr != pMemObj->getMappedPtr()) {
+            return CL_INVALID_VALUE;
+        }
+        retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
 
         if (retVal == CL_SUCCESS) {
             pMemObj->decMapCount();

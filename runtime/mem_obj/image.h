@@ -127,13 +127,11 @@ class Image : public MemObj {
     virtual void setMediaSurfaceRotation(void *memory) = 0;
     virtual void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) = 0;
 
-    cl_int unmapObj(CommandQueue *cmdQ, void *ptr,
-                    cl_uint numEventsInWaitList,
-                    const cl_event *eventWaitList,
-                    cl_event *event) override;
-
     void setMappedRegion(size_t *region) { memcpy_s(mappedRegion, 3 * sizeof(size_t), region, 3 * sizeof(size_t)); }
     void setMappedOrigin(size_t *origin) { memcpy_s(mappedOrigin, 3 * sizeof(size_t), origin, 3 * sizeof(size_t)); }
+
+    size_t *getMappedRegion() { return mappedRegion; }
+    size_t *getMappedOrigin() { return mappedOrigin; }
 
     const cl_image_desc &getImageDesc() const;
     const cl_image_format &getImageFormat() const;
