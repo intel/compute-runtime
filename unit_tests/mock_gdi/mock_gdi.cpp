@@ -31,6 +31,7 @@
 #include "runtime/os_interface/windows/os_time.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
+D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};
 
 #ifdef __cplusplus // If used by C++ code,
 extern "C" {       // we need to export the C interface
@@ -222,7 +223,14 @@ NTSTATUS __stdcall D3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *
 
 NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVA) {
     uint64_t maxSvmAddress = sizeof(size_t) == 8 ? 0x7fffffffffff : 0xffffffff;
-    if (mapGpuVA == nullptr || mapGpuVA->hPagingQueue != PAGINGQUEUE_HANDLE) {
+    if (mapGpuVA == nullptr) {
+        memset(&gLastCallMapGpuVaArg, 0, sizeof(gLastCallMapGpuVaArg));
+        return STATUS_INVALID_PARAMETER;
+    }
+
+    memcpy(&gLastCallMapGpuVaArg, mapGpuVA, sizeof(gLastCallMapGpuVaArg));
+
+    if (mapGpuVA->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     if (mapGpuVA->hAllocation != ALLOCATION_HANDLE && mapGpuVA->hAllocation != NT_ALLOCATION_HANDLE) {
@@ -408,4 +416,8 @@ D3DKMT_CREATEALLOCATION *getMockAllocation() {
 
 ADAPTER_INFO *getAdapterInfoAddress() {
     return &gAdapterInfo;
+}
+
+D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg() {
+    return &gLastCallMapGpuVaArg;
 }

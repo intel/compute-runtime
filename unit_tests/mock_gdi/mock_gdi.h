@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,3 +80,4 @@ D3DKMT_CREATEDEVICE GetMockCreateDeviceParams();
 void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params);
 D3DKMT_CREATEALLOCATION *getMockAllocation();
 ADAPTER_INFO *getAdapterInfoAddress();
+D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg();

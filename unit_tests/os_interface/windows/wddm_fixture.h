@@ -376,6 +376,7 @@ class WddmFixture {
     decltype(&SetMockCreateDeviceParams) setMockCreateDeviceParamsFcn;
     decltype(&getMockAllocation) getMockAllocationFcn;
     decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn;
+    decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn;
 
   public:
     virtual void SetUp() {
@@ -394,6 +395,7 @@ class WddmFixture {
             reinterpret_cast<decltype(&SetMockCreateDeviceParams)>(mockGdiDll->getProcAddress("SetMockCreateDeviceParams"));
         getMockAllocationFcn = reinterpret_cast<decltype(&getMockAllocation)>(mockGdiDll->getProcAddress("getMockAllocation"));
         getAdapterInfoAddressFcn = reinterpret_cast<decltype(&getAdapterInfoAddress)>(mockGdiDll->getProcAddress("getAdapterInfoAddress"));
+        getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
         wddm = Wddm::createWddm();
         mockWddm = static_cast<WddmMock *>(wddm);
         wddm->registryReader.reset(new RegistryReaderMock());

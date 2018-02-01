@@ -426,7 +426,7 @@ NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
 
     if (alloc == nullptr)
         return false;
-    size = alloc->getUnderlyingBufferSize();
+    size = alloc->getAlignedSize();
     if (size == 0)
         return false;
 
@@ -450,9 +450,7 @@ NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
     CreateAllocation.hDevice = device;
 
     while (status != STATUS_SUCCESS) {
-
         status = gdi->createAllocation(&CreateAllocation);
-
         if (status != STATUS_SUCCESS) {
             DEBUG_BREAK_IF(true);
             break;
@@ -460,7 +458,6 @@ NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
 
         alloc->handle = AllocationInfo.hAllocation;
         status = mapGpuVirtualAddress(alloc, alloc->getAlignedCpuPtr(), size, alloc->is32BitAllocation, false) == true ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
-
         if (status != STATUS_SUCCESS) {
             DEBUG_BREAK_IF(true);
             break;

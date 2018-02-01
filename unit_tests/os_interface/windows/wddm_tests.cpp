@@ -130,6 +130,36 @@ HWTEST_F(WddmTest, allocation) {
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
+HWTEST_F(WddmTest, givenAllocationSmallerUnderlyingThanAlignedSizeWhenCreatedThenWddmUseAligned) {
+    wddm->init<FamilyType>();
+    ASSERT_TRUE(wddm->isInitialized());
+
+    void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1000);
+    size_t underlyingSize = 0x2100;
+    size_t alignedSize = 0x3000;
+
+    size_t underlyingPages = underlyingSize / MemoryConstants::pageSize;
+    size_t alignedPages = alignedSize / MemoryConstants::pageSize;
+
+    WddmAllocation allocation(ptr, 0x2100, ptr, 0x3000, nullptr);
+    Gmm *gmm = getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize());
+    ASSERT_NE(nullptr, gmm);
+
+    allocation.gmm = gmm;
+    auto status = wddm->createAllocation(&allocation);
+
+    EXPECT_EQ(STATUS_SUCCESS, status);
+    EXPECT_NE(0, allocation.handle);
+
+    EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
+    EXPECT_NE(underlyingPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
+
+    auto ret = mockWddm->destroyAllocation(&allocation);
+    EXPECT_TRUE(ret);
+
+    releaseGmm(gmm);
+}
+
 HWTEST_F(WddmTest, createAllocation32bit) {
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());

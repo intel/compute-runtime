@@ -1239,6 +1239,54 @@ HWTEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
     EXPECT_FALSE(comapctionRequired);
 }
 
+HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerThanAllocSizeWhenBudgetEqualTwoAlignedAllocationThenEvictOnlyTwo) {
+    SetUpMm<FamilyType>();
+    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
+    gdi.setNonZeroNumBytesToTrimInEvict();
+    size_t underlyingSize = 0xF00;
+    size_t alignedSize = 0x1000;
+    size_t budget = 2 * alignedSize;
+
+    //trim budget should consider aligned size, not underlying, so if function considers underlying, it should evict three, not two
+    EXPECT_GT((3 * underlyingSize), budget);
+    EXPECT_LT((2 * underlyingSize), budget);
+    void *ptr1 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1000);
+    void *ptr2 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x3000);
+    void *ptr3 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x5000);
+
+    WddmAllocation allocation1(ptr1, underlyingSize, ptr1, alignedSize, nullptr);
+    WddmAllocation allocation2(ptr2, underlyingSize, ptr2, alignedSize, nullptr);
+    WddmAllocation allocation3(ptr3, underlyingSize, ptr3, alignedSize, nullptr);
+
+    allocation1.getResidencyData().resident = true;
+    allocation1.getResidencyData().lastFence = 0;
+
+    allocation2.getResidencyData().lastFence = 1;
+    allocation2.getResidencyData().resident = true;
+
+    allocation3.getResidencyData().lastFence = 1;
+    allocation3.getResidencyData().resident = true;
+
+    *wddm->getMonitoredFence().cpuAddress = 1;
+    wddm->getMonitoredFence().lastSubmittedFence = 1;
+    wddm->getMonitoredFence().currentFenceValue = 1;
+
+    mockWddm->makeNonResidentResult.called = 0;
+
+    mm->trimCandidateList.resize(0);
+
+    mm->addToTrimCandidateList(&allocation1);
+    mm->addToTrimCandidateList(&allocation2);
+    mm->addToTrimCandidateList(&allocation3);
+
+    bool status = mm->trimResidencyToBudget(budget);
+    EXPECT_TRUE(status);
+
+    EXPECT_FALSE(allocation1.getResidencyData().resident);
+    EXPECT_FALSE(allocation2.getResidencyData().resident);
+    EXPECT_TRUE(allocation3.getResidencyData().resident);
+}
+
 HWTEST_F(BufferWithWddmMemory, ValidHostPtr) {
     SetUpMm<FamilyType>();
     flags = CL_MEM_USE_HOST_PTR;

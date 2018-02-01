@@ -727,7 +727,7 @@ bool WddmMemoryManager::trimResidencyToBudget(uint64_t bytes) {
             if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {
                 wddm->evict(&wddmAllocation->handle, 1, sizeToTrim);
 
-                sizeEvicted = wddmAllocation->getUnderlyingBufferSize();
+                sizeEvicted = wddmAllocation->getAlignedSize();
             } else {
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
                     if (wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->lastFence <= wddm->getMonitoredFence().lastSubmittedFence) {
