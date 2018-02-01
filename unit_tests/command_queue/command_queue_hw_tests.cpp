@@ -415,10 +415,17 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
 
     std::set<void *> reusableHeaps;
     for (unsigned int i = 0; i < 5; ++i) {
-        void *mem = alignedMalloc(prealocatedHeapSize, 64);
+        auto allocSize = prealocatedHeapSize;
+
+        //make sure that one of those allocations is larger so ISH can be recycled.
+        if (i == 4) {
+            allocSize = optimalInstructionHeapSize;
+        }
+
+        void *mem = alignedMalloc(allocSize, 64);
         reusableHeaps.insert(mem);
-        memset(mem, 0, prealocatedHeapSize);
-        std::unique_ptr<GraphicsAllocation> reusableAlloc{new MockGraphicsAllocation(mem, prealocatedHeapSize)};
+        memset(mem, 0, allocSize);
+        std::unique_ptr<GraphicsAllocation> reusableAlloc{new MockGraphicsAllocation(mem, allocSize)};
         pCmdQ->getDevice().getMemoryManager()->storeAllocation(std::move(reusableAlloc), REUSABLE_ALLOCATION);
     }
 

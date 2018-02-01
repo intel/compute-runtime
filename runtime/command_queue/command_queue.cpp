@@ -238,10 +238,12 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
 
     if (!heapMemory) {
         size_t reservedSize = 0;
+        auto finalHeapSize = defaultHeapSize;
         if (heapType == IndirectHeap::INSTRUCTION) {
+            finalHeapSize = optimalInstructionHeapSize;
             reservedSize = getInstructionHeapReservedBlockSize();
         }
-        auto finalHeapSize = defaultHeapSize;
+
         minRequiredSize += reservedSize;
 
         finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);

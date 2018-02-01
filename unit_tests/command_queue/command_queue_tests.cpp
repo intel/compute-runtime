@@ -410,6 +410,8 @@ TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         EXPECT_EQ(64 * KB - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
+    } else if (this->GetParam() == IndirectHeap::INSTRUCTION) {
+        EXPECT_EQ(optimalInstructionHeapSize, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
     }
@@ -464,7 +466,12 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     CommandQueue cmdQ(&context, pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
-    auto allocation = memoryManager->allocateGraphicsMemory(128 * KB, 4096);
+    auto allocationSize = defaultHeapSize * 2;
+    if (this->GetParam() == IndirectHeap::INSTRUCTION) {
+        allocationSize = optimalInstructionHeapSize * 2;
+    }
+
+    auto allocation = memoryManager->allocateGraphicsMemory(allocationSize);
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
@@ -479,7 +486,7 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), 64 * KB - MemoryConstants::pageSize);
     } else {
-        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), 128 * KB);
+        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), allocationSize);
     }
 
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());

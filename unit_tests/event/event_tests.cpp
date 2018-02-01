@@ -480,9 +480,9 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
                                                      std::unique_ptr<KernelOperation>(kernelOperation), v, false, false, false, nullptr);
 
     EXPECT_LT(cmdQueueDsh.getMaxAvailableSpace(), dsh->getMaxAvailableSpace());
-    EXPECT_LT(cmdQueueIsh.getMaxAvailableSpace(), ish->getMaxAvailableSpace());
+    EXPECT_EQ(requestedSize, ish->getMaxAvailableSpace());
     EXPECT_LT(cmdQueueIoh.getMaxAvailableSpace(), ioh->getMaxAvailableSpace());
-    EXPECT_EQ(cmdQueueSsh.getMaxAvailableSpace(), ssh->getMaxAvailableSpace());
+    EXPECT_EQ(maxSshSize, ssh->getMaxAvailableSpace());
 
     cmdComputeKernel->submit(0, false);
 
