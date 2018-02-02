@@ -171,6 +171,45 @@ HWTEST_P(CreateImageSize, GivenImageTypeAndRegionWhenAskedForHostPtrSizeThenProp
     }
 }
 
+typedef ImageArraySizeTest CreateImageOffset;
+
+HWTEST_P(CreateImageOffset, GivenImageTypeAndRegionWhenAskedForHostPtrOffsetThenProperOffsetIsBeingReturned) {
+    size_t region[3] = {100, 1, 1};
+    size_t origin[3] = {0, 0, 0};
+    auto rowPitch = 1000;
+    auto slicePitch = 0;
+    auto pixelSize = 4;
+    size_t imageOffset;
+    auto imageType = GetParam();
+    switch (imageType) {
+    case CL_MEM_OBJECT_IMAGE1D:
+    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+        Image::calculateHostPtrOffset(&imageOffset, origin, region, rowPitch, slicePitch, imageType, pixelSize);
+        EXPECT_EQ(origin[0] * pixelSize, imageOffset);
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        region[1] = 200;
+        Image::calculateHostPtrOffset(&imageOffset, origin, region, rowPitch, slicePitch, imageType, pixelSize);
+        EXPECT_EQ(origin[1] * rowPitch + origin[0] * pixelSize, imageOffset);
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        slicePitch = 4000;
+        Image::calculateHostPtrOffset(&imageOffset, origin, region, rowPitch, slicePitch, imageType, pixelSize);
+        EXPECT_EQ(origin[1] * slicePitch + origin[0] * pixelSize, imageOffset);
+        break;
+    case CL_MEM_OBJECT_IMAGE3D:
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        region[2] = 300;
+        Image::calculateHostPtrOffset(&imageOffset, origin, region, rowPitch, slicePitch, imageType, pixelSize);
+        EXPECT_EQ(origin[2] * slicePitch + origin[1] * rowPitch + origin[0] * pixelSize, imageOffset);
+        break;
+    case CL_MEM_OBJECT_BUFFER:
+        Image::calculateHostPtrOffset(&imageOffset, origin, region, rowPitch, slicePitch, imageType, pixelSize);
+        EXPECT_EQ(0u, imageOffset);
+        break;
+    }
+}
+
 typedef ImageArraySizeTest CheckImageType;
 
 TEST_P(CheckImageType, GivenImageTypeWhenImageTypeIsCheckedThenProperValueIsReturned) {
@@ -204,3 +243,18 @@ INSTANTIATE_TEST_CASE_P(
     ImageArraySizeTest_Create,
     CreateImageSize,
     testing::ValuesIn(AllImageTypes));
+
+static cl_mem_object_type AllImageTypesWithBadOne[] = {
+    0, //negative scenario
+    CL_MEM_OBJECT_BUFFER,
+    CL_MEM_OBJECT_IMAGE1D,
+    CL_MEM_OBJECT_IMAGE1D_BUFFER,
+    CL_MEM_OBJECT_IMAGE2D,
+    CL_MEM_OBJECT_IMAGE1D_ARRAY,
+    CL_MEM_OBJECT_IMAGE3D,
+    CL_MEM_OBJECT_IMAGE2D_ARRAY};
+
+INSTANTIATE_TEST_CASE_P(
+    ImageArraySizeTest_Create,
+    CreateImageOffset,
+    testing::ValuesIn(AllImageTypesWithBadOne));

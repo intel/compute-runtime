@@ -51,6 +51,31 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
 
     MultiDispatchInfo di;
 
+    size_t hostOffset;
+    Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, srcImage->getImageDesc().image_type, srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+    auto isMemTransferNeeded = srcImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_READ_IMAGE);
+    if (!isMemTransferNeeded) {
+        NullSurface s;
+        Surface *surfaces[] = {&s};
+        enqueueHandler<CL_COMMAND_MARKER>(
+            surfaces,
+            blockingRead == CL_TRUE,
+            di,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_READ_IMAGE);
+        }
+
+        if (context->isProvidingPerformanceHints()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA, static_cast<cl_mem>(srcImage));
+        }
+
+        return CL_SUCCESS;
+    }
+
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
                                                                           this->getContext(), this->getDevice());
 
@@ -86,4 +111,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
 
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

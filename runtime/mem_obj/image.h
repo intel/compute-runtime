@@ -104,6 +104,8 @@ class Image : public MemObj {
 
     static size_t calculateHostPtrSize(size_t *region, size_t rowPitch, size_t slicePitch, size_t pixelSize, uint32_t imageType);
 
+    static void calculateHostPtrOffset(size_t *imageOffset, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, uint32_t imageType, size_t bytesPerPixel);
+
     static cl_int getImageParams(Context *context,
                                  cl_mem_flags flags,
                                  const SurfaceFormatInfo *surfaceFormat,

@@ -349,7 +349,8 @@ TEST_F(PerformanceHintEnqueueBufferTest, GivenNonBlockingWriteAndSharedMemWhenEn
 TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnqueueReadImageIsCallingThenContextProvidesHintsAboutAlignments) {
 
     size_t hostOrigin[] = {0, 0, 0};
-    uintptr_t addressForReadImage = (uintptr_t)address;
+    void *ptr = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    uintptr_t addressForReadImage = (uintptr_t)ptr;
     size_t sizeForReadImageInPixels = MemoryConstants::cacheLineSize;
     bool hintWithMisalignment = !(alignedAddress && alignedSize);
     if (!alignedAddress) {
@@ -374,6 +375,7 @@ TEST_P(PerformanceHintEnqueueReadImageTest, GivenHostPtrAndSizeAlignmentsWhenEnq
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForReadImage, sizeForReadImage, MemoryConstants::pageSize, MemoryConstants::pageSize);
     EXPECT_EQ(hintWithMisalignment, containsHint(expectedHint, userData));
+    alignedFree(ptr);
 }
 
 TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteWhenEnqueueWriteImageIsCallingThenContextProvidesProperHint) {
@@ -394,6 +396,50 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteWhenEnqueueWriteIma
         nullptr);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
+TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteImageSharesStorageWithDstPtrWhenEnqueueWriteImageIsCallingThenContextProvidesProperHint) {
+
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    void *ptr = image->getCpuAddressForMemoryTransfer();
+    pCmdQ->enqueueWriteImage(
+        image,
+        CL_FALSE,
+        hostOrigin,
+        region,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
+    EXPECT_TRUE(containsHint(expectedHint, userData));
+}
+
+TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWithDstPtrWhenEnqueueReadImageIsCallingThenContextProvidesProperHint) {
+
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    void *ptr = image->getCpuAddressForMemoryTransfer();
+    pCmdQ->enqueueReadImage(
+        image,
+        CL_FALSE,
+        hostOrigin,
+        region,
+        MemoryConstants::cacheLineSize,
+        MemoryConstants::cacheLineSize,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 

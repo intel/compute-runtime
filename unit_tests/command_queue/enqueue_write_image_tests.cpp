@@ -308,3 +308,242 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
 
     delete dstImage2;
 }
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image1dHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    retVal = pCmdOOQ->enqueueWriteImage(dstImage2.get(),
+                                        CL_FALSE,
+                                        origin,
+                                        region,
+                                        rowPitch,
+                                        slicePitch,
+                                        ptr,
+                                        0,
+                                        nullptr,
+                                        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image2dHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    retVal = pCmdQ->enqueueWriteImage(dstImage2.get(),
+                                      CL_FALSE,
+                                      origin,
+                                      region,
+                                      rowPitch,
+                                      slicePitch,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image3dHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    retVal = pCmdOOQ->enqueueWriteImage(dstImage2.get(),
+                                        CL_FALSE,
+                                        origin,
+                                        region,
+                                        rowPitch,
+                                        slicePitch,
+                                        ptr,
+                                        0,
+                                        nullptr,
+                                        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image1dArrayHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    size_t origin[] = {imageDesc.image_width / 2, imageDesc.image_height / 2, 0};
+    size_t region[] = {imageDesc.image_width - (imageDesc.image_width / 2), imageDesc.image_height - (imageDesc.image_height / 2), imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+    auto bytesPerPixel = 4;
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    auto pOffset = origin[2] * rowPitch + origin[1] * slicePitch + origin[0] * bytesPerPixel;
+    void *ptrStorage = ptrOffset(ptr, pOffset);
+    retVal = pCmdQ->enqueueWriteImage(dstImage2.get(),
+                                      CL_FALSE,
+                                      origin,
+                                      region,
+                                      rowPitch,
+                                      slicePitch,
+                                      ptrStorage,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image2dArrayHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    retVal = pCmdOOQ->enqueueWriteImage(dstImage2.get(),
+                                        CL_FALSE,
+                                        origin,
+                                        region,
+                                        rowPitch,
+                                        slicePitch,
+                                        ptr,
+                                        0,
+                                        nullptr,
+                                        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image2dHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    uint32_t taskLevelCmdQ = 17;
+    pCmdQ->taskLevel = taskLevelCmdQ;
+
+    uint32_t taskLevelEvent1 = 8;
+    uint32_t taskLevelEvent2 = 19;
+    Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
+    Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2};
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+    cl_event event = nullptr;
+
+    retVal = pCmdQ->enqueueWriteImage(dstImage2.get(),
+                                      CL_FALSE,
+                                      origin,
+                                      region,
+                                      rowPitch,
+                                      slicePitch,
+                                      ptr,
+                                      numEventsInWaitList,
+                                      eventWaitList,
+                                      &event);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(19u, pEvent->taskLevel);
+    EXPECT_EQ(19u, pCmdQ->taskLevel);
+    EXPECT_EQ(CL_COMMAND_WRITE_IMAGE, (const int)pEvent->getCommandType());
+
+    pEvent->release();
+}
+
+HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(Image3dHelper<>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+
+    uint32_t taskLevelCmdQ = 17;
+    pCmdOOQ->taskLevel = taskLevelCmdQ;
+
+    uint32_t taskLevelEvent1 = 8;
+    uint32_t taskLevelEvent2 = 19;
+    Event event1(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
+    Event event2(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
+
+    cl_event eventWaitList[] =
+        {
+            &event1,
+            &event2};
+    cl_uint numEventsInWaitList = sizeof(eventWaitList) / sizeof(eventWaitList[0]);
+    cl_event event = nullptr;
+
+    retVal = pCmdOOQ->enqueueWriteImage(dstImage2.get(),
+                                        CL_FALSE,
+                                        origin,
+                                        region,
+                                        rowPitch,
+                                        slicePitch,
+                                        ptr,
+                                        numEventsInWaitList,
+                                        eventWaitList,
+                                        &event);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, event);
+
+    auto pEvent = (Event *)event;
+    EXPECT_EQ(19u, pEvent->taskLevel);
+    EXPECT_EQ(19u, pCmdOOQ->taskLevel);
+    EXPECT_EQ(CL_COMMAND_WRITE_IMAGE, (const int)pEvent->getCommandType());
+
+    pEvent->release();
+}

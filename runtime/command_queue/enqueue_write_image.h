@@ -48,7 +48,30 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     cl_event *event) {
 
     MultiDispatchInfo di;
+    size_t hostOffset;
+    Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+    auto isMemTransferNeeded = dstImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_WRITE_IMAGE);
+    if (!isMemTransferNeeded) {
+        NullSurface s;
+        Surface *surfaces[] = {&s};
+        enqueueHandler<CL_COMMAND_MARKER>(
+            surfaces,
+            blockingWrite == CL_TRUE,
+            di,
+            numEventsInWaitList,
+            eventWaitList,
+            event);
+        if (event) {
+            auto pEvent = castToObjectOrAbort<Event>(*event);
+            pEvent->setCmdType(CL_COMMAND_WRITE_IMAGE);
+        }
 
+        if (context->isProvidingPerformanceHints()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA, static_cast<cl_mem>(dstImage));
+        }
+
+        return CL_SUCCESS;
+    }
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
                                                                           this->getContext(), this->getDevice());
 
@@ -80,4 +103,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

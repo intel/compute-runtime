@@ -617,6 +617,30 @@ size_t Image::calculateHostPtrSize(size_t *region, size_t rowPitch, size_t slice
     return sizeToReturn;
 }
 
+void Image::calculateHostPtrOffset(size_t *imageOffset, const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch, uint32_t imageType, size_t bytesPerPixel) {
+
+    size_t computedImageRowPitch = rowPitch ? rowPitch : region[0] * bytesPerPixel;
+    size_t computedImageSlicePitch = slicePitch ? slicePitch : region[1] * computedImageRowPitch * bytesPerPixel;
+    switch (imageType) {
+    case CL_MEM_OBJECT_IMAGE1D:
+    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+    case CL_MEM_OBJECT_IMAGE2D:
+        DEBUG_BREAK_IF(slicePitch != 0 && slicePitch < computedImageRowPitch * region[1]);
+    // FALLTHROUGH
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    case CL_MEM_OBJECT_IMAGE3D:
+        *imageOffset = origin[2] * computedImageSlicePitch + origin[1] * computedImageRowPitch + origin[0] * bytesPerPixel;
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        *imageOffset = origin[1] * computedImageSlicePitch + origin[0] * bytesPerPixel;
+        break;
+    default:
+        DEBUG_BREAK_IF("Unsupported cl_image_type");
+        *imageOffset = 0;
+        break;
+    }
+}
+
 // Called by clGetImageParamsINTEL to obtain image row pitch and slice pitch
 // Assumption: all parameters are already validated be calling function
 cl_int Image::getImageParams(Context *context,
