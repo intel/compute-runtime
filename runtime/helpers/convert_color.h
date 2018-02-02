@@ -27,6 +27,22 @@
 
 namespace OCLRT {
 
+inline int32_t selectNormalizingFactor(const cl_channel_type &channelType) {
+    if (channelType == CL_UNORM_INT8) {
+        return 0xFF;
+    }
+    if (channelType == CL_SNORM_INT8) {
+        return 0x7F;
+    }
+    if (channelType == CL_UNORM_INT16) {
+        return 0xFFFF;
+    }
+    if (channelType == CL_SNORM_INT16) {
+        return 0x7fFF;
+    }
+    return 0;
+}
+
 inline void convertFillColor(const void *fillColor,
                              int32_t *iFillColor,
                              const cl_image_format &oldImageFormat,
@@ -64,12 +80,13 @@ inline void convertFillColor(const void *fillColor,
     }
 
     if (newImageFormat.image_channel_data_type == CL_UNSIGNED_INT8) {
-        if (oldImageFormat.image_channel_data_type == CL_UNORM_INT8) {
+        auto normalizingFactor = selectNormalizingFactor(oldImageFormat.image_channel_data_type);
+        if (normalizingFactor > 0) {
             for (auto i = 0; i < 4; i++) {
                 if ((oldImageFormat.image_channel_order == CL_sRGBA || oldImageFormat.image_channel_order == CL_sBGRA) && i < 3) {
-                    iFillColor[i] = static_cast<int32_t>(0xFF * fFillColor[i] + 0.5f);
+                    iFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i] + 0.5f);
                 } else {
-                    iFillColor[i] = static_cast<int32_t>(0xFF * fFillColor[i]);
+                    iFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i]);
                 }
             }
         }
@@ -78,9 +95,10 @@ inline void convertFillColor(const void *fillColor,
             iFillColor[i] = iFillColor[i] & 0xFF;
         }
     } else if (newImageFormat.image_channel_data_type == CL_UNSIGNED_INT16) {
-        if (oldImageFormat.image_channel_data_type == CL_UNORM_INT16) {
+        auto normalizingFactor = selectNormalizingFactor(oldImageFormat.image_channel_data_type);
+        if (normalizingFactor > 0) {
             for (auto i = 0; i < 4; i++) {
-                iFillColor[i] = static_cast<int32_t>(0xFFFF * fFillColor[i]);
+                iFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i]);
             }
         } else if (oldImageFormat.image_channel_data_type == CL_HALF_FLOAT) {
             //float to half convert.
@@ -95,4 +113,4 @@ inline void convertFillColor(const void *fillColor,
         }
     }
 }
-}
+} // namespace OCLRT

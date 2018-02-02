@@ -300,3 +300,39 @@ TEST_F(EnqueueFillImageTest, sRGBConvert) {
     }
     EXPECT_EQ(255, iFillColor[3]);
 }
+
+TEST(ColorConvertTest, givenSnorm8FormatWhenConvertingThenUseNormalizingFactor) {
+    float fFillColor[4] = {0.3f, -0.3f, 0.0f, 1.0f};
+    int32_t iFillColor[4] = {};
+    int32_t expectedIFillColor[4] = {};
+
+    cl_image_format oldFormat = {CL_R, CL_SNORM_INT8};
+    cl_image_format newFormat = {CL_R, CL_UNSIGNED_INT8};
+    auto normalizingFactor = selectNormalizingFactor(oldFormat.image_channel_data_type);
+    for (size_t i = 0; i < 4; i++) {
+        expectedIFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i]);
+        expectedIFillColor[i] = expectedIFillColor[i] & 0xFF;
+    }
+
+    convertFillColor(static_cast<const void *>(fFillColor), iFillColor, oldFormat, newFormat);
+
+    EXPECT_TRUE(memcmp(expectedIFillColor, iFillColor, 4 * sizeof(int32_t)) == 0);
+}
+
+TEST(ColorConvertTest, givenSnorm16FormatWhenConvertingThenUseNormalizingFactor) {
+    float fFillColor[4] = {0.3f, -0.3f, 0.0f, 1.0f};
+    int32_t iFillColor[4] = {};
+    int32_t expectedIFillColor[4] = {};
+
+    cl_image_format oldFormat = {CL_R, CL_SNORM_INT16};
+    cl_image_format newFormat = {CL_R, CL_UNSIGNED_INT16};
+    auto normalizingFactor = selectNormalizingFactor(oldFormat.image_channel_data_type);
+    for (size_t i = 0; i < 4; i++) {
+        expectedIFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i]);
+        expectedIFillColor[i] = expectedIFillColor[i] & 0xFFFF;
+    }
+
+    convertFillColor(static_cast<const void *>(fFillColor), iFillColor, oldFormat, newFormat);
+
+    EXPECT_TRUE(memcmp(expectedIFillColor, iFillColor, 4 * sizeof(int32_t)) == 0);
+}

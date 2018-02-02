@@ -23,6 +23,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/helpers/convert_color.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "gtest/gtest.h"
 
@@ -736,3 +737,35 @@ TEST(validateAndCreateImage, givenValidImageParamsWhenValidateAndCreateImageIsCa
     EXPECT_NE(nullptr, image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
+
+std::tuple<uint32_t, int32_t> normalizingFactorValues[] = {
+    std::make_tuple(CL_SNORM_INT8, 0x7F),
+    std::make_tuple(CL_SNORM_INT16, 0x7fFF),
+    std::make_tuple(CL_UNORM_INT8, 0xFF),
+    std::make_tuple(CL_UNORM_INT16, 0xFFFF),
+    std::make_tuple(CL_UNORM_SHORT_565, 0),
+    std::make_tuple(CL_UNORM_SHORT_555, 0),
+    std::make_tuple(CL_UNORM_INT_101010, 0),
+    std::make_tuple(CL_SIGNED_INT8, 0),
+    std::make_tuple(CL_SIGNED_INT16, 0),
+    std::make_tuple(CL_SIGNED_INT32, 0),
+    std::make_tuple(CL_UNSIGNED_INT8, 0),
+    std::make_tuple(CL_UNSIGNED_INT16, 0),
+    std::make_tuple(CL_UNSIGNED_INT32, 0),
+    std::make_tuple(CL_HALF_FLOAT, 0),
+    std::make_tuple(CL_FLOAT, 0),
+    std::make_tuple(CL_UNORM_INT24, 0),
+    std::make_tuple(CL_UNORM_INT_101010_2, 0),
+};
+
+using NormalizingFactorTests = ::testing::TestWithParam<std::tuple<uint32_t, int32_t>>;
+
+TEST_P(NormalizingFactorTests, givenChannelTypeWhenAskingForFactorThenReturnValidValue) {
+    auto factor = selectNormalizingFactor(std::get<0>(GetParam()));
+    EXPECT_EQ(std::get<1>(GetParam()), factor);
+};
+
+INSTANTIATE_TEST_CASE_P(
+    NormalizingFactorTests,
+    NormalizingFactorTests,
+    ::testing::ValuesIn(normalizingFactorValues));
