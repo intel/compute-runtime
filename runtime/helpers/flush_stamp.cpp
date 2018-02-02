@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,11 +37,16 @@ FlushStampTracker::~FlushStampTracker() {
 }
 
 FlushStamp FlushStampTracker::peekStamp() const {
-    return flushStampSharedHandle->flushStamp.load();
+    if (flushStampSharedHandle->initialized) {
+        return flushStampSharedHandle->flushStamp;
+    } else {
+        return 0;
+    }
 }
 
 void FlushStampTracker::setStamp(FlushStamp stamp) {
-    flushStampSharedHandle->flushStamp.store(stamp);
+    flushStampSharedHandle->flushStamp = stamp;
+    flushStampSharedHandle->initialized = true;
 }
 
 void FlushStampTracker::replaceStampObject(FlushStampTrackingObj *stampObj) {
@@ -57,22 +62,15 @@ void FlushStampTracker::replaceStampObject(FlushStampTrackingObj *stampObj) {
 void FlushStampUpdateHelper::insert(FlushStampTrackingObj *stampObj) {
     if (stampObj) {
         flushStampsToUpdate.push_back(stampObj);
-        stampObj->incRefInternal();
     }
 }
 
 void FlushStampUpdateHelper::updateAll(FlushStamp &flushStamp) {
     for (const auto &stamp : flushStampsToUpdate) {
-        stamp->flushStamp.store(flushStamp);
+        stamp->flushStamp = flushStamp;
     }
 }
 
 size_t FlushStampUpdateHelper::size() const {
     return flushStampsToUpdate.size();
-}
-
-FlushStampUpdateHelper::~FlushStampUpdateHelper() {
-    for (const auto &stamp : flushStampsToUpdate) {
-        stamp->decRefInternal();
-    }
 }

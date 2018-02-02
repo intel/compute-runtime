@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,8 +92,8 @@ TEST(FlushStampUpdateHelperTest, manageRefCounts) {
         updater.insert(&obj1);
         updater.insert(&obj2);
 
-        EXPECT_EQ(2, obj1.getRefInternalCount());
-        EXPECT_EQ(2, obj2.getRefInternalCount());
+        EXPECT_EQ(1, obj1.getRefInternalCount());
+        EXPECT_EQ(1, obj2.getRefInternalCount());
     }
 
     EXPECT_EQ(1, obj1.getRefInternalCount());
@@ -113,9 +113,15 @@ TEST(FlushStampUpdateHelperTest, multipleInserts) {
         updater.insert(&obj1);
         EXPECT_EQ(2u, updater.size());
 
-        EXPECT_EQ(3, obj1.getRefInternalCount());
+        obj1.incRefInternal();
+        updater.insert(&obj1);
+        updater.insert(&obj1);
+        EXPECT_EQ(4u, updater.size());
+
+        EXPECT_EQ(2, obj1.getRefInternalCount());
     }
-    EXPECT_EQ(1, obj1.getRefInternalCount());
+    EXPECT_EQ(2, obj1.getRefInternalCount());
+    obj1.decRefInternal();
 }
 
 TEST(FlushStampUpdateHelperTest, ignoreNullptr) {

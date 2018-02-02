@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,8 +27,8 @@
 
 namespace OCLRT {
 struct FlushStampTrackingObj : public ReferenceTrackedObject<FlushStampTrackingObj> {
-    FlushStampTrackingObj() { flushStamp.store(0); }
-    std::atomic<FlushStamp> flushStamp;
+    FlushStamp flushStamp = 0;
+    std::atomic<bool> initialized{false};
 };
 
 class FlushStampTracker {
@@ -52,14 +52,11 @@ class FlushStampTracker {
 
 class FlushStampUpdateHelper {
   public:
-    ~FlushStampUpdateHelper();
     void insert(FlushStampTrackingObj *stampObj);
     void updateAll(FlushStamp &flushStamp);
     size_t size() const;
 
   private:
-    void *operator new(size_t);
-    void *operator new[](size_t);
     StackVec<FlushStampTrackingObj *, 64> flushStampsToUpdate;
 };
 } // namespace OCLRT
