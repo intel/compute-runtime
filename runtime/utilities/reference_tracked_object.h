@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +52,10 @@ class RefCounter {
         CT curr = --val;
         DEBUG_BREAK_IF(curr < 0);
         return (curr == 0);
+    }
+
+    CT decAndReturnCurrent() {
+        return --val;
     }
 
     bool peekIsZero() const {
@@ -144,8 +148,9 @@ class ReferenceTrackedObject {
 
     unique_ptr_if_unused<DerivedClass> decRefInternal() {
         auto customDeleter = tryGetCustomDeleter();
-        bool unused = refInternal.dec();
-        UNRECOVERABLE_IF(refInternal.peek() < 0);
+        auto current = refInternal.decAndReturnCurrent();
+        bool unused = (current == 0);
+        UNRECOVERABLE_IF(current < 0);
         return unique_ptr_if_unused<DerivedClass>(static_cast<DerivedClass *>(this), unused, customDeleter);
     }
 

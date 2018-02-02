@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,6 +43,11 @@ TEST(RefCounter, referenceCount) {
     rc.dec();
     ASSERT_EQ(0, rc.peek());
     ASSERT_TRUE(rc.peekIsZero());
+}
+
+TEST(RefCounter, givenReferenceTrackedObjectWhenDecAndReturnCurrentIsCalledThenMinusOneIsReturned) {
+    RefCounter<> rc;
+    EXPECT_EQ(-1, rc.decAndReturnCurrent());
 }
 
 TEST(unique_ptr_if_unused, InitializedWithDefaultConstructorAtQueryReturnsNullptr) {
