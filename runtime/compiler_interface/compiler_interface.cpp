@@ -31,7 +31,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_interface.inl"
 #include "runtime/program/program.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 
 #include <fstream>
 

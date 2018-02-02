@@ -22,6 +22,7 @@
 
 #pragma once
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/helpers/dispatch_info.h"
 
 using namespace OCLRT;
 

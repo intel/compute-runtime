@@ -20,8 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "block_kernel_manager.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/program/block_kernel_manager.h"
+#include "runtime/program/kernel_info.h"
 
 namespace OCLRT {
 

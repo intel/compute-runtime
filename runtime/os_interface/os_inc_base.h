@@ -21,9 +21,6 @@
  */
 
 #pragma once
-
-#include "runtime/os_interface/linux/linux_inc.h"
-#include "runtime/os_interface/windows/windows_inc.h"
 #include "runtime/os_interface/os_library.h"
 
 namespace Os {

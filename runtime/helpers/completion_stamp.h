@@ -22,11 +22,10 @@
 
 #pragma once
 #include "runtime/helpers/engine_node.h"
-#include "runtime/os_interface/os_inc.h"
 #include <cstdint>
 
 namespace OCLRT {
-
+typedef uint64_t FlushStamp;
 struct CompletionStamp {
     uint32_t taskCount;
     uint32_t taskLevel;

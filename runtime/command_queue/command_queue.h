@@ -24,8 +24,6 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/completion_stamp.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/event/user_event.h"
 #include "runtime/os_interface/performance_counters.h"
@@ -41,6 +39,7 @@ class Image;
 class IndirectHeap;
 class Kernel;
 class MemObj;
+struct CompletionStamp;
 
 enum class QueuePriority {
     LOW,

@@ -24,6 +24,7 @@
 #include "unit_tests/command_queue/enqueue_copy_buffer_rect_fixture.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/gen_common/reg_configs.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "test.h"
 
 using namespace OCLRT;

@@ -21,7 +21,7 @@
  */
 
 #pragma once
-
+#include <cstdint>
 namespace OCLRT {
 
 enum EngineType : uint32_t {

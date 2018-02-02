@@ -41,6 +41,7 @@
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/helpers/dispatch_info_builder.h"
+#include "os_inc.h"
 
 using namespace OCLRT;
 

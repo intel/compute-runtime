@@ -1285,19 +1285,19 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandIsFlushedThenFlushS
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto neoEvent = castToObject<Event>(event);
 
-    EXPECT_EQ(0, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(0, neoEvent->flushStamp->peekStamp());
-    EXPECT_EQ(0, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(0u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(0u, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(0u, pCmdQ->flushStamp->peekStamp());
 
     auto status = clWaitForEvents(1, &event);
 
     EXPECT_EQ(1, neoEvent->getRefInternalCount());
-    EXPECT_EQ(1, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(1, neoEvent->flushStamp->peekStamp());
-    EXPECT_EQ(1, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(1u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clFinish(pCmdQ);
-    EXPECT_EQ(1, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clReleaseEvent(event);
 }
@@ -1317,19 +1317,19 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenCommandWithEventIsFollowed
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     auto neoEvent = castToObject<Event>(event);
 
-    EXPECT_EQ(0, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(0, neoEvent->flushStamp->peekStamp());
-    EXPECT_EQ(0, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(0u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(0u, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(0u, pCmdQ->flushStamp->peekStamp());
 
     auto status = clWaitForEvents(1, &event);
 
     EXPECT_EQ(1, neoEvent->getRefInternalCount());
-    EXPECT_EQ(1, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(1, neoEvent->flushStamp->peekStamp());
-    EXPECT_EQ(1, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(1u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clFinish(pCmdQ);
-    EXPECT_EQ(1, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 
     status = clReleaseEvent(event);
 }
@@ -1343,12 +1343,12 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenClFlushIsCalledThenQueueFl
     size_t gws[3] = {1, 0, 0};
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_EQ(0, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(0, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(0u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(0u, pCmdQ->flushStamp->peekStamp());
 
     clFlush(pCmdQ);
-    EXPECT_EQ(1, mockCsr->flushStamp->peekStamp());
-    EXPECT_EQ(1, pCmdQ->flushStamp->peekStamp());
+    EXPECT_EQ(1u, mockCsr->flushStamp->peekStamp());
+    EXPECT_EQ(1u, pCmdQ->flushStamp->peekStamp());
 }
 
 HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenWaitForEventsIsCalledWithUnflushedTaskCountThenBatchedSubmissionsAreFlushed) {
@@ -1455,7 +1455,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenBlockingCallIsMadeThenEven
     cl_event event;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
     auto neoEvent = castToObject<Event>(event);
-    EXPECT_EQ(1, neoEvent->flushStamp->peekStamp());
+    EXPECT_EQ(1u, neoEvent->flushStamp->peekStamp());
     EXPECT_EQ(1, mockCsr->flushCalledCount);
 
     auto status = clReleaseEvent(event);

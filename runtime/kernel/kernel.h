@@ -26,6 +26,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/program/program.h"
+#include "runtime/program/kernel_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <vector>
 

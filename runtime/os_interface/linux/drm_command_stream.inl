@@ -169,7 +169,7 @@ MemoryManager *DrmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool ena
 template <typename GfxFamily>
 bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
     drm_i915_gem_wait wait = {};
-    wait.bo_handle = flushStamp;
+    wait.bo_handle = static_cast<uint32_t>(flushStamp);
     wait.timeout_ns = -1;
 
     drm->ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);

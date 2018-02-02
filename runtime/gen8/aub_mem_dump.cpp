@@ -23,7 +23,6 @@
 #include "config.h"
 #include "aub_mapper.h"
 #include "runtime/aub_mem_dump/aub_mem_dump.inl"
-#include "runtime/helpers/completion_stamp.h"
 
 namespace AubMemDump {
 

@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/os_inc.h"
+#include "os_inc.h"
 #include "runtime/utilities/perf_profiler.h"
 #include <runtime/utilities/stackvec.h>
 #include <atomic>

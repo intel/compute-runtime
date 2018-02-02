@@ -23,6 +23,7 @@
 #include "hw_cmds.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"

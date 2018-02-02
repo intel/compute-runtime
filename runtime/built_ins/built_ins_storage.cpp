@@ -22,6 +22,7 @@
 
 #include <cstdint>
 #include "runtime/built_ins/built_ins.h"
+#include "os_inc.h"
 
 namespace OCLRT {
 

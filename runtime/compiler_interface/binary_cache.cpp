@@ -27,7 +27,7 @@
 #include <runtime/helpers/file_io.h>
 #include <runtime/helpers/hash.h>
 #include <runtime/helpers/hw_info.h>
-#include <runtime/os_interface/os_inc.h>
+#include <runtime/os_interface/os_inc_base.h>
 #include <runtime/program/program.h>
 
 #include <cstring>

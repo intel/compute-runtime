@@ -37,6 +37,11 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
+FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
+    return flushStamp->peekStamp();
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &commandStream, void **patchLocation) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 

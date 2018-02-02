@@ -113,10 +113,8 @@ add_subdirectory(memory_manager)
 set (RUNTIME_SRCS_OS_INTERFACE
   os_interface/32bit_memory.h
   os_interface/os_library.h
-  os_interface/linux/linux_inc.h
-  os_interface/windows/windows_inc.h
   os_interface/device_factory.h
-  os_interface/os_inc.h
+  os_interface/os_inc_base.h
   os_interface/os_interface.h
   os_interface/os_time.h
   os_interface/os_time.cpp
@@ -169,6 +167,7 @@ if (WIN32)
     os_interface/windows/gdi_interface.cpp
     os_interface/windows/gdi_interface.h
     os_interface/windows/options.cpp
+    os_interface/windows/os_inc.h
     os_interface/windows/os_interface.cpp
     os_interface/windows/os_interface.h
     os_interface/windows/os_library.cpp
@@ -230,6 +229,7 @@ if (UNIX)
     os_interface/linux/hw_info_config.h
     os_interface/linux/linux_inc.cpp
     os_interface/linux/options.cpp
+    os_interface/linux/os_inc.h
     os_interface/linux/os_interface.cpp
     os_interface/linux/os_interface.h
     os_interface/linux/os_library.cpp

@@ -25,7 +25,7 @@
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
 
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"

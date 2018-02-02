@@ -21,12 +21,12 @@
  */
 
 #pragma once
-#include "kernel_info.h"
 #include "runtime/api/cl_types.h"
 #include <vector>
 
 namespace OCLRT {
 class GraphicsAllocation;
+struct KernelInfo;
 
 class BlockKernelManager {
   public:

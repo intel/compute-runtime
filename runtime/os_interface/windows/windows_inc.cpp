@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/windows_inc.h"
 #include "runtime/utilities/perf_profiler.h"
 namespace Os {
 const char *fileSeparator = "/";

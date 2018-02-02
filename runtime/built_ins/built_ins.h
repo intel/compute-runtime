@@ -25,7 +25,6 @@
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "runtime/program/program.h"
 #include "runtime/utilities/vec.h"
-#include "runtime/os_interface/os_inc.h"
 
 #include <array>
 #include <cstdint>

@@ -31,7 +31,7 @@
 #include "igfxfmid.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/debug_helpers.h"

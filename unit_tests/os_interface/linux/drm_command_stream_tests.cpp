@@ -98,7 +98,7 @@ TEST_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBo
     FlushStamp handleToWait = 123;
     drm_i915_gem_wait expectedWait = {};
     drm_i915_gem_wait calledWait = {};
-    expectedWait.bo_handle = handleToWait;
+    expectedWait.bo_handle = static_cast<uint32_t>(handleToWait);
     expectedWait.timeout_ns = -1;
 
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_)).Times(1).WillRepeatedly(copyIoctlParam(&calledWait));
@@ -205,7 +205,7 @@ TEST_F(DrmCommandStreamTest, Flush) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(boHandle, flushStamp);
+    EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
     EXPECT_EQ(cs.getBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
 }

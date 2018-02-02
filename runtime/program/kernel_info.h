@@ -27,7 +27,6 @@
 #include "kernel_arg_info.h"
 #include "patch_info.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/dispatch_info.h"
 #include <algorithm>
 #include <cstdint>
 #include <cmath>
@@ -41,6 +40,7 @@ class BuiltinDispatchInfoBuilder;
 class Device;
 class Kernel;
 struct KernelInfo;
+class DispatchInfo;
 struct KernelArgumentType;
 
 extern std::unordered_map<std::string, uint32_t> accessQualifierMap;

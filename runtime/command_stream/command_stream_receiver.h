@@ -26,7 +26,6 @@
 #include "runtime/command_stream/submissions_aggregator.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/flush_stamp.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include <cstddef>
 #include <cstdint>

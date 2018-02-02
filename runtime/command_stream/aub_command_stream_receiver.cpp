@@ -25,7 +25,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 #include <algorithm>
 #include <cstring>
 #include <sstream>

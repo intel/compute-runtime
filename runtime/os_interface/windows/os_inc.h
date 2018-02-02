@@ -21,20 +21,16 @@
  */
 
 #pragma once
+#define PATH_SEPARATOR '\\'
 
+namespace OCLRT {
+class PerfProfiler;
+extern __declspec(thread) PerfProfiler *gPerfProfiler;
+};
 // For now we need to keep this file clean of OS specific #includes.
 // Only issues to address portability should be covered here.
 
-#if defined(__linux__)
-#include <cstdint>
-
-#define PATH_SEPARATOR '/'
-
-#define __cdecl
-namespace OCLRT {
-class PerfProfiler;
-typedef int FlushStamp; // i915 gem object handle
-extern thread_local PerfProfiler *gPerfProfiler;
+namespace Os {
+// OS GDI name
+extern const char *gdiDllName;
 };
-
-#endif

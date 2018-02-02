@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 #include "gtest/gtest.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/helpers/test_files.h"

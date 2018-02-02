@@ -21,7 +21,7 @@
  */
 
 #include "drm_neo.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 #include "runtime/utilities/directory.h"
 #include "drm/i915_drm.h"
 

@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/helpers/completion_stamp.h"
 #include "runtime/utilities/reference_tracked_object.h"
 #include "runtime/utilities/stackvec.h"
 

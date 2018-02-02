@@ -46,7 +46,6 @@
 #include "runtime/mem_obj/pipe.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/os_inc.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "runtime/sampler/sampler.h"

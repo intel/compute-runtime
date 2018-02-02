@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/linux/linux_inc.h"
+#include "runtime/os_interface/linux/os_inc.h"
 #include "runtime/utilities/perf_profiler.h"
 namespace Os {
 const char *fileSeparator = "/";

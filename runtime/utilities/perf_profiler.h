@@ -22,7 +22,6 @@
 
 #pragma once
 #include "runtime/helpers/options.h"
-#include "runtime/os_interface/os_inc.h"
 #include "runtime/utilities/timer_util.h"
 #include <atomic>
 #include <fstream>

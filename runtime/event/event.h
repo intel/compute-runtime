@@ -32,7 +32,6 @@
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/os_interface/performance_counters.h"
-#include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/utilities/arrayref.h"
 

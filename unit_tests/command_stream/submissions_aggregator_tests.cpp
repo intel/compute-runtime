@@ -597,10 +597,10 @@ HWTEST_F(SubmissionsAggregatorTests, givenMultipleCmdBuffersWhenNotAggregatedDur
 
     mockCsr->flushBatchedSubmissions();
 
-    EXPECT_EQ(6, cmdQ1.flushStamp->peekStamp());
-    EXPECT_EQ(6, castToObject<Event>(event1)->flushStamp->peekStamp());
-    EXPECT_EQ(7, cmdQ2.flushStamp->peekStamp());
-    EXPECT_EQ(7, castToObject<Event>(event2)->flushStamp->peekStamp());
+    EXPECT_EQ(6u, cmdQ1.flushStamp->peekStamp());
+    EXPECT_EQ(6u, castToObject<Event>(event1)->flushStamp->peekStamp());
+    EXPECT_EQ(7u, cmdQ2.flushStamp->peekStamp());
+    EXPECT_EQ(7u, castToObject<Event>(event2)->flushStamp->peekStamp());
 
     castToObject<Event>(event1)->release();
     castToObject<Event>(event2)->release();

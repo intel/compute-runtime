@@ -22,7 +22,7 @@
 
 #include "global_environment.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/os_inc.h"
+#include "runtime/os_interface/os_inc_base.h"
 
 TestEnvironment::TestEnvironment(void)
     : libraryFrontEnd(nullptr), libraryIGC(nullptr),

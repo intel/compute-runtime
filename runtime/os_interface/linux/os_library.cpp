@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#if defined(__linux__)
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/os_library.h"
 #include "os_library.h"
@@ -66,4 +65,3 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
 }
 }
 }
-#endif
