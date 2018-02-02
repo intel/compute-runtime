@@ -96,7 +96,6 @@ The driver has the following functional delta compared to previously released dr
 ### Generic extensions
 * cl_khr_mipmap
 * cl_khr_mipmap_writes
-* cl_khr_priority_hints
 * cl_khr_throttle_hints
 * cl_khr_fp64
 ### Preview extensions
