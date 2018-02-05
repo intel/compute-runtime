@@ -18,12 +18,29 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(RUNTIME_SRCS_API
+set(RUNTIME_SRCS_PROGRAM
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/block_kernel_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/block_kernel_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/build.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/compile.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/create.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_info.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/heap_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/link.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/patch_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/print_formatter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/process_elf_binary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/process_gen_binary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/process_spir_binary.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/program.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/program.h
   PARENT_SCOPE
 )

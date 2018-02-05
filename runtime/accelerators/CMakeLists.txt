@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,14 +18,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We require cmake 3.2.0 or later
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 set (RUNTIME_SRCS_ACCELERATORS
-	${CMAKE_CURRENT_SOURCE_DIR}/intel_accelerator.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/intel_accelerator.h
-	${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.h
-	${CMAKE_CURRENT_SOURCE_DIR}/vebox_accelerator.h
-	PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/intel_accelerator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/intel_accelerator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/vebox_accelerator.h
+  PARENT_SCOPE
 )

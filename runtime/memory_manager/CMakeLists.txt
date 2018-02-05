@@ -18,12 +18,27 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(RUNTIME_SRCS_API
+set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/graphics_allocation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_defines.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/page_table.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.h
   PARENT_SCOPE
 )

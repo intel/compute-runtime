@@ -18,7 +18,6 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We require cmake 3.2.0 or later
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 include(ExternalProject)
 

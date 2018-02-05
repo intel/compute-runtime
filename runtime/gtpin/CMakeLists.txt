@@ -18,12 +18,24 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(RUNTIME_SRCS_API
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/cl_types.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch.h
-  PARENT_SCOPE
-)
+if(GTPIN_HEADERS_DIR)
+  set(RUNTIME_SRCS_GTPIN
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_callbacks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_helpers.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_helpers.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
+    PARENT_SCOPE
+  )
+else()
+  set(RUNTIME_SRCS_GTPIN
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_callback_stubs.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
+    PARENT_SCOPE
+  )
+endif()

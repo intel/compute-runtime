@@ -17,7 +17,6 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-cmake_minimum_required (VERSION 3.0)
 
 if (POLICY CMP0042)
   cmake_policy (SET CMP0042 NEW)
@@ -86,17 +85,9 @@ if(NOT (TARGET ${BUILTINS_BINARIES_LIB_NAME}))
   add_subdirectory("built_ins")
 endif(NOT (TARGET ${BUILTINS_BINARIES_LIB_NAME}))
 
-add_subdirectory(api)
 add_subdirectory(accelerators)
-
-set (RUNTIME_SRCS_AUB_MEM_DUMP
-  aub_mem_dump/aub_mem_dump.cpp
-  aub_mem_dump/aub_mem_dump.h
-  aub_mem_dump/aub_mem_dump.inl
-  aub_mem_dump/aub_header.h
-  aub_mem_dump/aub_services.h
-)
-
+add_subdirectory(api)
+add_subdirectory(aub_mem_dump)
 
 set (RUNTIME_SRCS_BUILT_INS
   built_ins/built_ins_storage.cpp
@@ -127,283 +118,37 @@ set (RUNTIME_SRCS_BUILT_IN_KERNELS
   built_ins/kernels/vebox_ve_dn_di_enhance_intel.igdrcl_built_in
 )
 
-set (RUNTIME_SRCS_COMMANDS
-  commands/bxml_generator_glue.h
-)
 
-set (RUNTIME_SRCS_COMMAND_QUEUE
-  command_queue/cpu_data_transfer_handler.h
-  command_queue/command_queue.cpp
-  command_queue/command_queue.h
-  command_queue/command_queue_hw.h
-  command_queue/command_queue_hw.inl
-  command_queue/dispatch_walker.h
-  command_queue/dispatch_walker_helper.h
-  command_queue/dispatch_walker_helper.inl
-  command_queue/enqueue_barrier.h
-  command_queue/enqueue_common.h
-  command_queue/enqueue_copy_buffer.h
-  command_queue/enqueue_copy_buffer_rect.h
-  command_queue/enqueue_copy_buffer_to_image.h
-  command_queue/enqueue_copy_image.h
-  command_queue/enqueue_copy_image_to_buffer.h
-  command_queue/enqueue_fill_buffer.h
-  command_queue/enqueue_fill_image.h
-  command_queue/enqueue_kernel.h
-  command_queue/enqueue_map_buffer.h
-  command_queue/enqueue_map_image.h
-  command_queue/enqueue_svm.h
-  command_queue/enqueue_marker.h
-  command_queue/enqueue_migrate_mem_objects.h
-  command_queue/enqueue_read_buffer.h
-  command_queue/enqueue_read_buffer_rect.h
-  command_queue/enqueue_read_image.h
-  command_queue/enqueue_write_buffer.h
-  command_queue/enqueue_write_buffer_rect.h
-  command_queue/enqueue_write_image.h
-  command_queue/finish.h
-  command_queue/flush.h
-  command_queue/local_id_gen.cpp
-  command_queue/local_id_gen_avx2.cpp
-  command_queue/local_id_gen_sse4.cpp
-  command_queue/local_id_gen.h
-  command_queue/local_id_gen.inl
-  command_queue/local_work_size.cpp
-)
+add_subdirectory(command_queue)
+add_subdirectory(command_stream)
+add_subdirectory(commands)
+add_subdirectory(compiler_interface)
+add_subdirectory(context)
+add_subdirectory(device)
+add_subdirectory(device_queue)
+add_subdirectory(event)
+add_subdirectory(execution_model)
+add_subdirectory(gen_common)
+add_subdirectory(gmm_helper)
 
-set (RUNTIME_SRCS_COMMAND_STREAM
-  command_stream/aub_command_stream_receiver.cpp
-  command_stream/aub_command_stream_receiver.h
-  command_stream/aub_command_stream_receiver_hw.h
-  command_stream/aub_command_stream_receiver_hw.inl
-  command_stream/command_stream_receiver.cpp
-  command_stream/command_stream_receiver.h
-  command_stream/command_stream_receiver_hw.h
-  command_stream/command_stream_receiver_hw.inl
-  command_stream/command_stream_receiver_with_aub_dump.h
-  command_stream/command_stream_receiver_with_aub_dump.inl
-  command_stream/create_command_stream_impl.cpp
-  command_stream/create_command_stream_impl.h
-  command_stream/csr_definitions.h
-  command_stream/device_command_stream.h
-  command_stream/linear_stream.cpp
-  command_stream/linear_stream.h
-  command_stream/submissions_aggregator.cpp
-  command_stream/submissions_aggregator.h
-  command_stream/tbx_command_stream_receiver.cpp
-  command_stream/tbx_command_stream_receiver.h
-  command_stream/tbx_command_stream_receiver_hw.h
-  command_stream/tbx_command_stream_receiver_hw.inl
-  command_stream/tbx_stream.cpp
-  command_stream/thread_arbitration_policy.h
-  command_stream/preemption.h
-  command_stream/preemption.cpp
-  command_stream/preemption.inl
-)
+set(RUNTIME_SRCS_GMM_HELPER ${RUNTIME_SRCS_GMM_HELPER_BASE})
+if(WIN32)
+  list(APPEND RUNTIME_SRCS_GMM_HELPER ${RUNTIME_SRCS_GMM_HELPER_WINDOWS})
+endif()
 
-set (RUNTIME_SRCS_COMPILER_INTERFACE
-  compiler_interface/binary_cache.cpp
-  compiler_interface/compiler_interface.cpp
-  compiler_interface/compiler_interface.h
-  compiler_interface/compiler_interface.inl
-  compiler_interface/create_main.cpp
-)
+add_subdirectory(gtpin)
+add_subdirectory(helpers)
 
-set (RUNTIME_SRCS_CONTEXT
-  context/context.cpp
-  context/context.h
-  context/context.inl
-  context/driver_diagnostics.cpp
-  context/driver_diagnostics.h
-)
+set(RUNTIME_SRCS_HELPERS ${RUNTIME_SRCS_HELPERS_BASE})
+if(WIN32)
+  list(APPEND RUNTIME_SRCS_HELPERS ${RUNTIME_SRCS_HELPERS_WINDOWS})
+endif()
 
-set (RUNTIME_SRCS_DEVICE
-  device/device.cpp
-  device/device.h
-  device/device_caps.cpp
-  device/device_info.cpp
-  device/device_info.h
-  device/device_info_map.h
-  device/device_vector.h
-)
-
-set (RUNTIME_SRCS_DEVICE_QUEUE
-  device_queue/device_queue.cpp
-  device_queue/device_queue.h
-  device_queue/device_queue_hw.h
-  device_queue/device_queue_hw.inl
-  device_queue/device_queue_hw_profiling.inl
-)
-
-set (RUNTIME_SRCS_EVENT
-  event/async_events_handler.h
-  event/async_events_handler.cpp
-  event/event.cpp
-  event/event.h
-  event/event_builder.cpp
-  event/event_builder.h
-  event/user_event.cpp
-  event/user_event.h
-  event/hw_timestamps.h
-  event/perf_counter.h
-)
-
-set (RUNTIME_SRCS_EXECUTION_MODEL
-  execution_model/device_enqueue.h
-)
-
-if(GTPIN_HEADERS_DIR)
-  set (RUNTIME_SRCS_GTPIN
-    gtpin/gtpin_callbacks.cpp
-    gtpin/gtpin_helpers.cpp
-    gtpin/gtpin_helpers.h
-    gtpin/gtpin_hw_helper.cpp
-    gtpin/gtpin_hw_helper.h
-    gtpin/gtpin_init.cpp
-    gtpin/gtpin_init.h
-    gtpin/gtpin_notify.h
-  )
-else(GTPIN_HEADERS_DIR)
-  set (RUNTIME_SRCS_GTPIN
-    gtpin/gtpin_callback_stubs.cpp
-    gtpin/gtpin_notify.h
-  )
-endif(GTPIN_HEADERS_DIR)
-
-set (RUNTIME_SRCS_HELPERS
-  helpers/abort.h
-  helpers/aligned_memory.h
-  helpers/array_count.h
-  helpers/base_object.cpp
-  helpers/base_object.h
-  helpers/base_object_allocator.cpp
-  helpers/basic_math.h
-  helpers/cache_policy.cpp
-  helpers/cache_policy.h
-  helpers/dirty_state_helpers.h
-  helpers/dirty_state_helpers.cpp
-  helpers/dispatch_info.h
-  helpers/dispatch_info.cpp
-  helpers/dispatch_info_builder.h
-  helpers/completion_stamp.h
-  helpers/debug_helpers.h
-  helpers/engine_node.h
-  helpers/error_mappers.h
-  helpers/file_io.cpp
-  helpers/file_io.h
-  helpers/flush_stamp.h
-  helpers/flush_stamp.cpp
-  helpers/get_info.h
-  helpers/hash.h
-  helpers/hw_helper.cpp
-  helpers/hw_helper.h
-  helpers/hw_helper.inl
-  helpers/hw_info.cpp
-  helpers/hw_info.h
-  helpers/kernel_commands.h
-  helpers/kernel_commands.inl
-  helpers/options.cpp
-  helpers/options.h
-  helpers/per_thread_data.cpp
-  helpers/per_thread_data.h
-  helpers/pipeline_select_helper.h
-  helpers/preamble.h
-  helpers/preamble.inl
-  helpers/ptr_math.h
-  helpers/queue_helpers.h
-  helpers/sampler_helpers.h
-  helpers/selectors.h
-  helpers/state_base_address.h
-  helpers/state_base_address.inl
-  helpers/stdio.h
-  helpers/string.h
-  helpers/string_helpers.h
-  helpers/surface_formats.cpp
-  helpers/surface_formats.h
-  helpers/task_information.cpp
-  helpers/task_information.h
-  helpers/uint16_avx2.h
-  helpers/uint16_sse4.h
-  helpers/wddm_helper.h
-  helpers/validators.cpp
-  helpers/validators.h
-)
-
-if (WIN32)
-  list (APPEND RUNTIME_SRCS_HELPERS
-    helpers/translationtable_callbacks.h
-  )
-endif(WIN32)
-
-set (RUNTIME_SRCS_INDIRECT_HEAP
-  indirect_heap/indirect_heap.cpp
-  indirect_heap/indirect_heap.h
-)
-
-set (RUNTIME_SRCS_INSTRUMENTATION
-  instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/instrumentation.cpp
-  instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/instrumentation.h
-)
-
-set (RUNTIME_SRCS_KERNEL
-  kernel/dynamic_kernel_info.h
-  kernel/kernel.cpp
-  kernel/kernel.h
-  kernel/kernel.inl
-)
-
-set (RUNTIME_SRCS_MEMORY_MANAGER
-  memory_manager/deferrable_deletion.h
-  memory_manager/deferred_deleter.cpp
-  memory_manager/deferred_deleter.h
-  memory_manager/graphics_allocation.h
-  memory_manager/graphics_allocation.cpp
-  memory_manager/host_ptr_defines.h
-  memory_manager/host_ptr_manager.h
-  memory_manager/host_ptr_manager.cpp
-  memory_manager/memory_manager.cpp
-  memory_manager/memory_manager.h
-  memory_manager/svm_memory_manager.cpp
-  memory_manager/svm_memory_manager.h
-  memory_manager/os_agnostic_memory_manager.cpp
-  memory_manager/os_agnostic_memory_manager.h
-  memory_manager/page_table.cpp
-  memory_manager/page_table.h
-  memory_manager/address_mapper.cpp
-  memory_manager/address_mapper.h
-  memory_manager/surface.h
-)
-
-set (RUNTIME_SRCS_GMM_HELPER
-  gmm_helper/gmm_helper.cpp
-  gmm_helper/gmm_helper.h
-  gmm_helper/gmm_lib.h
-  gmm_helper/resource_info.h
-  gmm_helper${BRANCH_DIR_SUFFIX}/gmm_utils.cpp
- )
-
-if (WIN32)
-  list (APPEND RUNTIME_SRCS_GMM_HELPER
-    gmm_helper/page_table_mngr.h
-    gmm_helper${BRANCH_DIR_SUFFIX}/gmm_memory.h
-    gmm_helper/gmm_memory_base.h
-  )
-endif(WIN32)
-
-set (RUNTIME_SRCS_MEM_OBJ
-  mem_obj/buffer.cpp
-  mem_obj/buffer.h
-  mem_obj/buffer.inl
-  mem_obj/image.cpp
-  mem_obj/image.h
-  mem_obj/image.inl
-  mem_obj/mem_obj.cpp
-  mem_obj/mem_obj.h
-  mem_obj/buffer_factory_init.inl
-  mem_obj/image_factory_init.inl
-  mem_obj/pipe.h
-  mem_obj/pipe.cpp
-)
+add_subdirectory(indirect_heap)
+add_subdirectory(instrumentation)
+add_subdirectory(kernel)
+add_subdirectory(mem_obj)
+add_subdirectory(memory_manager)
 
 set (RUNTIME_SRCS_OS_INTERFACE
   os_interface/32bit_memory.h
@@ -422,44 +167,9 @@ set (RUNTIME_SRCS_OS_INTERFACE
   os_interface/print.h
 )
 
-set (RUNTIME_SRCS_PLATFORM
-  platform/platform.cpp
-  platform/platform.h
-  platform/platform_info.h
-  platform/extensions.cpp
-  platform/extensions.h
-)
-
-set (RUNTIME_SRCS_PROGRAM
-  program/block_kernel_manager.cpp
-  program/block_kernel_manager.h
-  program/build.cpp
-  program/compile.cpp
-  program/create.cpp
-  program/get_info.cpp
-  program/heap_info.h
-  program/kernel_arg_info.h
-  program/kernel_info.cpp
-  program/kernel_info.h
-  program/link.cpp
-  program/patch_info.h
-  program/process_elf_binary.cpp
-  program/process_spir_binary.cpp
-  program/process_gen_binary.cpp
-  program/program.cpp
-  program/program.h
-  program/printf_handler.h
-  program/printf_handler.cpp
-  program/print_formatter.h
-  program/print_formatter.cpp
-)
-
-set (RUNTIME_SRCS_SAMPLER
-  sampler/sampler.cpp
-  sampler/sampler.h
-  sampler/sampler.inl
-  sampler/sampler_factory_init.inl
-)
+add_subdirectory(platform)
+add_subdirectory(program)
+add_subdirectory(sampler)
 
 list (APPEND RUNTIME_SRCS_SCHEDULER
   scheduler/scheduler_kernel.cpp
@@ -467,74 +177,23 @@ list (APPEND RUNTIME_SRCS_SCHEDULER
   scheduler/CMakeLists.txt
 )
 
-set (RUNTIME_SRCS_SKU_INFO
-  sku_info/sku_info_base.h
-  sku_info/operations/sku_info_transfer.h
-  sku_info/definitions${BRANCH_DIR_SUFFIX}/sku_info.h
-  sku_info/operations${BRANCH_DIR_SUFFIX}/sku_info_transfer.cpp
-)
+add_subdirectory(sharings)
+add_subdirectory(sku_info)
 
-if (WIN32)
-  list (APPEND RUNTIME_SRCS_SKU_INFO
-      sku_info/operations/sku_info_receiver.h
-      sku_info/operations${BRANCH_DIR_SUFFIX}/sku_info_receiver.cpp
-  )
-endif(WIN32)
+set(RUNTIME_SRCS_SKU_INFO ${RUNTIME_SRCS_SKU_INFO_BASE})
+if(WIN32)
+  list(APPEND RUNTIME_SRCS_SKU_INFO ${RUNTIME_SRCS_SKU_INFO_WINDOWS})
+endif()
 
-set (RUNTIME_SRCS_SHARINGS
-  sharings/sharing.h
-  sharings/sharing.cpp
-)
+add_subdirectory(tbx)
+add_subdirectory(utilities)
 
-set (RUNTIME_SRCS_TBX
-  tbx/tbx_proto.h
-  tbx/tbx_sockets.h
-  tbx/tbx_sockets_imp.cpp
-  tbx/tbx_sockets_imp.h
-)
-
-set (RUNTIME_SRCS_UTILITIES
-  utilities/api_intercept.h
-  utilities/arrayref.h
-  utilities/cpu_info.h
-  utilities/debug_file_reader.cpp
-  utilities/debug_file_reader.h
-  utilities/debug_settings_reader.cpp
-  utilities/debug_settings_reader.h
-  utilities/directory.h
-  utilities/heap_allocator.cpp
-  utilities/heap_allocator.h
-  utilities/iflist.h
-  utilities/idlist.h
-  utilities/stackvec.h
-  utilities/perf_profiler.cpp
-  utilities/perf_profiler.h
-  utilities/reference_tracked_object.h
-  utilities/tag_allocator.h
-  utilities/timer_util.h
-  utilities/vec.h
-)
-
-set (RUNTIME_SRCS_GEN_COMMON
-  gen_common/aub_mapper.h
-  gen_common/aub_mapper_base.h
-  gen_common/hw_cmds.h
-  gen_common/reg_configs.h
-)
-
-if (WIN32)
-  list (APPEND RUNTIME_SRCS_UTILITIES
-    utilities/windows/directory.cpp
-    utilities/windows/timer_util.cpp
-    utilities/windows/cpu_info.cpp
-  )
-else(WIN32)
-  list (APPEND RUNTIME_SRCS_UTILITIES
-    utilities/linux/directory.cpp
-    utilities/linux/timer_util.cpp
-    utilities/linux/cpu_info.cpp
-  )
-endif (WIN32)
+set(RUNTIME_SRCS_UTILITIES ${RUNTIME_SRCS_UTILITIES_BASE})
+if(WIN32)
+  list(APPEND RUNTIME_SRCS_UTILITIES ${RUNTIME_SRCS_UTILITIES_WINDOWS})
+else()
+  list(APPEND RUNTIME_SRCS_UTILITIES ${RUNTIME_SRCS_UTILITIES_LINUX})
+endif()
 
 if (WIN32)
   list (APPEND RUNTIME_SRCS_OS_INTERFACE
@@ -624,7 +283,7 @@ if (UNIX)
   )
 endif (UNIX)
 
-add_subdirectory("sharings")
+
 
 set (RUNTIME_SRCS
   ${RUNTIME_SRCS_API}
