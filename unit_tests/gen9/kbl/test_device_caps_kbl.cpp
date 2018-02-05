@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@ typedef Test<DeviceFixture> KblDeviceCaps;
 KBLTEST_F(KblDeviceCaps, reportsOcl21) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.1 ", caps.clCVersion);
+    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }
 
 KBLTEST_F(KblDeviceCaps, kmdNotifyMechanism) {

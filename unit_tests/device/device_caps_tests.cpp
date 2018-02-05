@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -120,7 +120,7 @@ TEST(Device_GetCaps, validate) {
 
     EXPECT_LE(128u, caps.maxReadImageArgs);
     EXPECT_LE(128u, caps.maxWriteImageArgs);
-    EXPECT_EQ(0u, caps.maxReadWriteImageArgs);
+    EXPECT_EQ(128u, caps.maxReadWriteImageArgs);
 
     EXPECT_LE(caps.maxReadImageArgs * sizeof(cl_mem), caps.maxParameterSize);
     EXPECT_LE(caps.maxWriteImageArgs * sizeof(cl_mem), caps.maxParameterSize);
@@ -260,7 +260,7 @@ TEST(Device_GetCaps, givenForceOclVersion21WhenCapsAreCreatedThenDeviceReportsOp
         auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
         const auto &caps = device->getDeviceInfo();
         EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-        EXPECT_STREQ("OpenCL C 2.1 ", caps.clCVersion);
+        EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
         DebugManager.flags.ForceOCLVersion.set(0);
     }
 }

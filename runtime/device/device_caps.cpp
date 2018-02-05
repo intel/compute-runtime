@@ -89,7 +89,7 @@ void Device::initializeCaps() {
     switch (enabledClVersion) {
     case 21:
         deviceInfo.clVersion = "OpenCL 2.1 NEO ";
-        deviceInfo.clCVersion = "OpenCL C 2.1 ";
+        deviceInfo.clCVersion = "OpenCL C 2.0 ";
         deviceInfo.ilVersion = spirvVersion;
         addressing32bitAllowed = false;
         break;
@@ -176,7 +176,7 @@ void Device::initializeCaps() {
     deviceInfo.nativeVectorWidthHalf = 8;
     deviceInfo.maxReadImageArgs = 128;
     deviceInfo.maxWriteImageArgs = 128;
-    deviceInfo.maxReadWriteImageArgs = 0;
+    deviceInfo.maxReadWriteImageArgs = 128;
     deviceInfo.maxParameterSize = 1024;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
