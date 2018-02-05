@@ -30,6 +30,8 @@
 #include <cerrno>
 #include <string>
 
+struct GT_SYSTEM_INFO;
+
 namespace OCLRT {
 
 #define I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT (-1)
@@ -38,6 +40,16 @@ namespace OCLRT {
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
 class DeviceFactory;
+struct HardwareInfo;
+
+struct DeviceDescriptor {
+    unsigned short deviceId;
+    const HardwareInfo *pHwInfo;
+    void (*setupGtSystemInfo)(GT_SYSTEM_INFO *);
+    GTTYPE eGtType;
+};
+
+extern const DeviceDescriptor deviceDescriptorTable[];
 
 class Drm {
     friend DeviceFactory;

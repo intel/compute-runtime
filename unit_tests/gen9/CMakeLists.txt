@@ -57,6 +57,10 @@ if(TESTS_SKL)
       ${CMAKE_CURRENT_SOURCE_DIR}/skl/linux/hw_info_config_tests.cpp
       PARENT_SCOPE
     )
+
+    list(APPEND IGDRCL_SRCS_linux_dll_tests_gen9
+      ${CMAKE_CURRENT_SOURCE_DIR}/skl/linux/dll/device_id_tests.cpp
+    )
   endif(NOT MSVC)
 endif()
 
@@ -83,6 +87,10 @@ if(TESTS_CFL)
       ${CMAKE_CURRENT_SOURCE_DIR}/cfl/linux/hw_info_config_tests.cpp
       PARENT_SCOPE
   )
+
+  list(APPEND IGDRCL_SRCS_linux_dll_tests_gen9
+      ${CMAKE_CURRENT_SOURCE_DIR}/cfl/linux/dll/device_id_tests.cpp
+  )
   endif(NOT MSVC)
 endif()
 
@@ -96,6 +104,10 @@ if(TESTS_BXT)
     set(IGDRCL_SRCS_tests_gen9_bxt_linux
       ${CMAKE_CURRENT_SOURCE_DIR}/bxt/linux/hw_info_config_tests.cpp
       PARENT_SCOPE
+    )
+
+    list(APPEND IGDRCL_SRCS_linux_dll_tests_gen9
+      ${CMAKE_CURRENT_SOURCE_DIR}/bxt/linux/dll/device_id_tests.cpp
     )
   endif(NOT MSVC)
 endif()
@@ -111,6 +123,10 @@ if(TESTS_KBL)
       ${CMAKE_CURRENT_SOURCE_DIR}/kbl/linux/hw_info_config_tests.cpp
       PARENT_SCOPE
     )
+
+    list(APPEND IGDRCL_SRCS_linux_dll_tests_gen9
+      ${CMAKE_CURRENT_SOURCE_DIR}/kbl/linux/dll/device_id_tests.cpp
+    )
   endif(NOT MSVC)
 endif()
 
@@ -118,6 +134,11 @@ if(MSVC)
   set(IGDRCL_SRCS_tests_gen9_windows
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_mapper_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface_tests.cpp"
+    PARENT_SCOPE
+  )
+ else()
+  set(IGDRCL_SRCS_linux_dll_tests_gen9
+    ${IGDRCL_SRCS_linux_dll_tests_gen9}
     PARENT_SCOPE
   )
 endif(MSVC)

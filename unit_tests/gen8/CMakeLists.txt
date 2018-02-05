@@ -44,11 +44,20 @@ if(NOT MSVC)
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_mapper_tests.cpp"
     PARENT_SCOPE
   )
+  
+  list(APPEND IGDRCL_SRCS_linux_dll_tests_gen8
+      ${CMAKE_CURRENT_SOURCE_DIR}/linux/dll/device_id_tests.cpp
+  )
 endif(NOT MSVC)
 
 if(MSVC)
   set(IGDRCL_SRCS_tests_gen8_windows
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_mapper_tests.cpp"
+    PARENT_SCOPE
+  )
+else()
+  set(IGDRCL_SRCS_linux_dll_tests_gen8
+    ${IGDRCL_SRCS_linux_dll_tests_gen8}
     PARENT_SCOPE
   )
 endif(MSVC)

@@ -170,6 +170,7 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
     if(NOT MSVC)
       list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
       source_group("gen${GEN_NUM}\\linux" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
+      list (APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SRCS_linux_dll_tests_gen${GEN_NUM}})
     else(NOT MSVC)
       list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
       source_group("gen${GEN_NUM}\\windows" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
@@ -266,6 +267,7 @@ else()
     ${KHRONOS_HEADERS_DIR}
     ${IGDRCL__IGC_INCLUDE_DIR}
     ${THIRD_PARTY_DIR}
+    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
   )
   target_include_directories(igdrcl_linux_dll_tests PRIVATE
     ${GTEST_INCLUDE_DIR}
@@ -276,6 +278,7 @@ else()
     ${KHRONOS_HEADERS_DIR}
     ${IGDRCL__IGC_INCLUDE_DIR}
     ${THIRD_PARTY_DIR}
+    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
   )
 endif(MSVC)
 

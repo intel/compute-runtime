@@ -34,12 +34,7 @@
 
 namespace OCLRT {
 
-static struct DeviceDescriptor {
-    unsigned short deviceId;
-    const HardwareInfo *pHwInfo;
-    void (*setupGtSystemInfo)(GT_SYSTEM_INFO *);
-    GTTYPE eGtType;
-} const DeviceDescriptorTable[] = {
+const DeviceDescriptor deviceDescriptorTable[] = {
 #define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupGtSystemInfo, gtType},
 #include "devices.m"
 #undef DEVICE
@@ -177,7 +172,7 @@ Drm *Drm::create(int32_t deviceOrdinal) {
 
     const DeviceDescriptor *device = nullptr;
     GTTYPE eGtType = GTTYPE_UNDEFINED;
-    for (auto &d : DeviceDescriptorTable) {
+    for (auto &d : deviceDescriptorTable) {
         if (drmObject->deviceId == d.deviceId) {
             device = &d;
             eGtType = d.eGtType;

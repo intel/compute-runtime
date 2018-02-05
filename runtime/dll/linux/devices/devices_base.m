@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,6 +80,20 @@ DEVICE( IKBL_GT3_HALO_DEVICE_F0_ID,          KBL_2x3x8,  GTTYPE_GT3 )
 DEVICE( IKBL_GT3_SERV_DEVICE_F0_ID,          KBL_2x3x8,  GTTYPE_GT3 )
 DEVICE( IKBL_GT4_SERV_DEVICE_F0_ID,          KBL_3x3x8,  GTTYPE_GT4 )
 DEVICE( IKBL_GT4_WRK_DEVICE_F0_ID,           KBL_3x3x8,  GTTYPE_GT4 )
+#endif
+#ifdef SUPPORT_CFL
+DEVICE( ICFL_GT1_DT_DEVICE_F0_ID,            CFL_1x2x6,  GTTYPE_GT1 )
+DEVICE( ICFL_GT1_S61_DT_DEVICE_F0_ID,        CFL_1x2x6,  GTTYPE_GT1 )
+DEVICE( ICFL_GT1_S41_DT_DEVICE_F0_ID,        CFL_1x2x6,  GTTYPE_GT1 )
+DEVICE( ICFL_GT2_DT_DEVICE_F0_ID,            CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT2_S62_DT_DEVICE_F0_ID,        CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT2_HALO_DEVICE_F0_ID,          CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT2_SERV_DEVICE_F0_ID,          CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT2_HALO_WS_DEVICE_F0_ID,       CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT2_S42_DT_DEVICE_F0_ID,        CFL_1x3x6,  GTTYPE_GT2 )
+DEVICE( ICFL_GT3_ULT_15W_DEVICE_F0_ID,       CFL_2x3x8,  GTTYPE_GT3 )
+DEVICE( ICFL_GT3_ULT_15W_42EU_DEVICE_F0_ID,  CFL_2x3x8,  GTTYPE_GT3 )
+DEVICE( ICFL_GT3_ULT_DEVICE_F0_ID,           CFL_2x3x8,  GTTYPE_GT3 )
 #endif
 #ifdef SUPPORT_BXT
 DEVICE(IBXT_P_3x6_DEVICE_ID,                BXT_1x3x6,  GTTYPE_GTA)   //18EU APL
