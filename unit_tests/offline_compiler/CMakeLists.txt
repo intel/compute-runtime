@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -17,8 +17,6 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 
 project(cloc_tests)
 
@@ -63,19 +61,13 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${CLOC_SRCS_LIB}
 )
 
-list(APPEND HW_SRC_INCLUDES ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
-
 link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
-target_include_directories(cloc_tests BEFORE PRIVATE ${HW_SRC_INCLUDES})
 target_include_directories(cloc_tests PRIVATE
   ${CLOC_INCLUDES}
-  ${KHRONOS_HEADERS_DIR}
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
   ${GMM_INCLUDE_PATHS}
-  ${IGDRCL__IGC_INCLUDE_DIR}
-  ${THIRD_PARTY_DIR}
 )
 target_compile_definitions(cloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 

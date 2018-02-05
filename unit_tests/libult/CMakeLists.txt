@@ -17,7 +17,6 @@
 # OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-list (APPEND HW_SRC_INCLUDES ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
 
 set(OPTIONAL_RUNTIME_GENX_FILES
   hw_info.cpp
@@ -95,8 +94,8 @@ target_include_directories(igdrcl_libult_cs PRIVATE
   ${GMM_INCLUDE_PATHS}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
 )
-target_include_directories(igdrcl_libult BEFORE PRIVATE ${HW_SRC_INCLUDES})
-target_include_directories(igdrcl_libult_cs BEFORE PRIVATE ${HW_SRC_INCLUDES})
+target_include_directories(igdrcl_libult BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
+target_include_directories(igdrcl_libult_cs BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
 
 # if(HAVE_INSTRUMENTATION)
 # target_include_directories(igdrcl_libult PRIVATE $<TARGET_PROPERTY:instrumentation_umd,INTERFACE_INCLUDE_DIRECTORIES>)

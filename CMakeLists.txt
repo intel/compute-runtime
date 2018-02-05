@@ -494,6 +494,8 @@ include_directories(${IGDRCL_BUILD_DIR})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/${BRANCH_DIR_SUFFIX})
 
+set(HW_SRC_INCLUDE_PATH ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
+
 if(HAVE_INSTRUMENTATION)
   set(${IGDRCL__INSTRUMENTATION_DIR_SUFFIX} ${BRANCH_DIR_SUFFIX})
   include_directories($<TARGET_PROPERTY:instrumentation_umd,INTERFACE_INCLUDE_DIRECTORIES>)

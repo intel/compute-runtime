@@ -34,46 +34,6 @@ project (neo)
 # Support for Windows Universal Drivers
 ENABLE_WUD()
 
-if(WIN32)
-  set(GEN_OS_SRC
-    windows/command_stream_receiver.cpp
-    windows/translationtable_callbacks.cpp
-    windows/wddm_engine_mapper.cpp
-    windows/wddm.cpp
-  )
-else(WIN32)
-  set(GEN_OS_SRC
-    linux/command_stream_receiver.cpp
-    linux/drm_engine_mapper.cpp
-  )
-endif(WIN32)
-
-set(RUNTIME_SRCS_GENX
-  aub_command_stream_receiver.cpp
-  aub_mapper.h
-  aub_mem_dump.cpp
-  command_queue.cpp
-  device_enqueue.h
-  device_queue.cpp
-  command_stream_receiver_hw.cpp
-  hw_cmds.h
-  hw_cmds_generated.h
-  hw_helper.cpp
-  hw_info.cpp
-  hw_info.h
-  buffer.cpp
-  image.cpp
-  kernel_commands.cpp
-  preamble.cpp
-  preemption.cpp
-  reg_configs.h
-  sampler.cpp
-  scheduler_definitions.h
-  scheduler_igdrcl_built_in.inl
-  state_base_address.cpp
-  tbx_command_stream_receiver.cpp
-  ${GEN_OS_SRC}
-)
 if(NOT (TARGET ${BIKSIM_LIB_NAME}))
   add_subdirectory(builtin_kernels_simulation)
 endif(NOT (TARGET ${BIKSIM_LIB_NAME}))
@@ -118,7 +78,6 @@ set (RUNTIME_SRCS_BUILT_IN_KERNELS
   built_ins/kernels/vebox_ve_dn_enhance_intel.igdrcl_built_in
   built_ins/kernels/vebox_ve_dn_di_enhance_intel.igdrcl_built_in
 )
-
 
 add_subdirectory(command_queue)
 add_subdirectory(command_stream)
@@ -284,7 +243,7 @@ if (UNIX)
   )
 endif (UNIX)
 
-
+include(enable_gens.cmake)
 
 set (RUNTIME_SRCS
   ${RUNTIME_SRCS_API}
@@ -302,6 +261,7 @@ set (RUNTIME_SRCS
   ${RUNTIME_SRCS_EVENT}
   ${RUNTIME_SRCS_EXECUTION_MODEL}
   ${RUNTIME_SRCS_GEN_COMMON}
+  ${RUNTIME_SRCS_GENX}
   ${RUNTIME_SRCS_GTPIN}
   ${RUNTIME_SRCS_HELPERS}
   ${RUNTIME_SRCS_INDIRECT_HEAP}
@@ -334,61 +294,6 @@ endif (MSVC)
 if(NEO_DRIVER_VERSION)
 	set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
 endif(NEO_DRIVER_VERSION)
-
-list (APPEND HW_SRC_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/gen_common)
-
-# Include/enable each GEN
-# Reverse order so that GEN N+1 includes GEN N
-foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
-  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    # Add GEN-specific files
-    set(RUNTIME_SRCS_GEN${GEN_NUM} ${RUNTIME_SRCS_GEN${GEN_NUM}_SPECIFIC})
-
-    # Add default GEN files
-    foreach(SRC_IT ${RUNTIME_SRCS_GENX})
-      list (APPEND RUNTIME_SRCS_GEN${GEN_NUM} gen${GEN_NUM}/${SRC_IT})
-    endforeach(SRC_IT)
-
-    # Get all supported platforms for this GEN
-    GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_NUM} SUPPORTED_GENX_PLATFORMS)
-
-    # Add platform-specific files
-    foreach(PLATFORM_IT ${SUPPORTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list(APPEND RUNTIME_SRCS_GEN${GEN_NUM} gen${GEN_NUM}/hw_cmds_${PLATFORM_IT_LOWER}.h)
-      list(APPEND RUNTIME_SRCS_GEN${GEN_NUM} gen${GEN_NUM}/hw_info_${PLATFORM_IT_LOWER}.cpp)
-      list(APPEND RUNTIME_SRCS_GEN${GEN_NUM} ${RUNTIME_SRCS_GEN${GEN_NUM}_${PLATFORM_IT}})
-      if(UNIX)
-        list(APPEND RUNTIME_SRCS_GEN${GEN_NUM} gen${GEN_NUM}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-      endif(UNIX)
-
-      # Enable platform
-      list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/enable_${PLATFORM_IT_LOWER}.cpp)
-      if(UNIX)
-        list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/linux/enable_${PLATFORM_IT_LOWER}.cpp)
-      endif(UNIX)
-    endforeach(PLATFORM_IT)
-
-    list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/enable_family_full.cpp)
-
-    if(GTPIN_HEADERS_DIR)
-      list(APPEND GEN${GEN_NUM}_SRC_LINK gen${GEN_NUM}/gtpin_setup_gen${GEN_NUM}.cpp)
-    endif(GTPIN_HEADERS_DIR)
-
-    # Append this GEN's sources to the list of all sources
-    foreach(SRC_IT ${RUNTIME_SRCS_GEN${GEN_NUM}})
-      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_IT}")
-        list(APPEND RUNTIME_SRCS ${SRC_IT})
-      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${SRC_IT}")
-    endforeach(SRC_IT)
-
-    # Set-up gen sources for the dll
-    list(APPEND HW_SRC_LINK ${GEN${GEN_NUM}_SRC_LINK})
-
-    source_group("gen${GEN_NUM}" FILES ${RUNTIME_SRCS_GEN${GEN_NUM}} ${GEN${GEN_NUM}_SRC_LINK} )
-  endif(${GENX_HAS_PLATFORMS})
-endforeach(GEN_NUM)
 
 add_library(${NEO_STATIC_LIB_NAME} STATIC $<TARGET_OBJECTS:${BIKSIM_LIB_NAME}>
   ${RUNTIME_SRCS}
@@ -475,7 +380,7 @@ set_property(TARGET ${NEO_STATIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS 
 
 set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
 
-target_include_directories(${NEO_STATIC_LIB_NAME} BEFORE PRIVATE ${HW_SRC_INCLUDES})
+target_include_directories(${NEO_STATIC_LIB_NAME} BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
 
 if(${GENERATE_EXECUTABLE})
 	set (RUNTIME_SRCS_DLL
@@ -514,20 +419,20 @@ if(${GENERATE_EXECUTABLE})
 		endforeach(GEN_NUM)
 	endif(GTPIN_HEADERS_DIR)
 
-	add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
-	  ${RUNTIME_SRCS_DLL}
-	  $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
-	  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
-	  $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
-	  $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
-	)
+add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
+  ${RUNTIME_SRCS_DLL}
+  $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
+  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
+  $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
+  $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
+)
 
-	target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
-	  ${CMAKE_CURRENT_BINARY_DIR}
-	  ${HW_SRC_INCLUDES}
-	)
+target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${HW_SRC_INCLUDE_PATH}
+)
 
-	target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME})
+target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME})
 
 	if (WIN32)
 	  target_include_directories(${NEO_DYNAMIC_LIB_NAME} PUBLIC
@@ -587,9 +492,7 @@ if (WIN32)
   source_group("source files\\kernel" FILES ${RUNTIME_SRCS_KERNEL})
   source_group("source files\\memory_manager" FILES ${RUNTIME_SRCS_MEMORY_MANAGER})
   source_group("source files\\gmm_helper" FILES ${RUNTIME_SRCS_GMM_HELPER})
-  if(GTPIN_HEADERS_DIR)
-    source_group("source files\\gtpin" FILES ${RUNTIME_SRCS_GTPIN})
-  endif(GTPIN_HEADERS_DIR)
+  source_group("source files\\gtpin" FILES ${RUNTIME_SRCS_GTPIN})
   source_group("source files\\mem_obj" FILES ${RUNTIME_SRCS_MEM_OBJ})
   source_group("source files\\os_interface" FILES ${RUNTIME_SRCS_OS_INTERFACE})
   source_group("source files\\platform" FILES ${RUNTIME_SRCS_PLATFORM})
@@ -617,4 +520,3 @@ if (UNIX)
     )
   endif(NOT (TARGET clang-tidy))
 endif(UNIX)
-
