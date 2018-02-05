@@ -45,8 +45,10 @@ FlushStamp FlushStampTracker::peekStamp() const {
 }
 
 void FlushStampTracker::setStamp(FlushStamp stamp) {
-    flushStampSharedHandle->flushStamp = stamp;
-    flushStampSharedHandle->initialized = true;
+    if (stamp != 0) {
+        flushStampSharedHandle->flushStamp = stamp;
+        flushStampSharedHandle->initialized = true;
+    }
 }
 
 void FlushStampTracker::replaceStampObject(FlushStampTrackingObj *stampObj) {
@@ -68,6 +70,7 @@ void FlushStampUpdateHelper::insert(FlushStampTrackingObj *stampObj) {
 void FlushStampUpdateHelper::updateAll(FlushStamp &flushStamp) {
     for (const auto &stamp : flushStampsToUpdate) {
         stamp->flushStamp = flushStamp;
+        stamp->initialized = true;
     }
 }
 

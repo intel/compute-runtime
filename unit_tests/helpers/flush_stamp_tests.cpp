@@ -129,3 +129,23 @@ TEST(FlushStampUpdateHelperTest, ignoreNullptr) {
     updater.insert(nullptr);
     EXPECT_EQ(0u, updater.size());
 }
+
+TEST(FlushStampUpdateHelperTest, givenUninitializedFlushStampWhenUpdateAllIsCalledThenItIsUpdated) {
+    FlushStampUpdateHelper updater;
+    FlushStampTrackingObj obj1;
+    updater.insert(&obj1);
+
+    FlushStamp flushStampToUpdate = 2;
+
+    updater.updateAll(flushStampToUpdate);
+
+    EXPECT_EQ(flushStampToUpdate, obj1.flushStamp);
+    EXPECT_TRUE(obj1.initialized);
+}
+
+TEST(FlushStampUpdateHelperTest, givenFlushStampWhenSetStampWithZeroIsCalledThenFlushStampIsNotInitialized) {
+    FlushStamp zeroStamp = 0;
+    FlushStampTracker tracker(true);
+    tracker.setStamp(zeroStamp);
+    EXPECT_FALSE(tracker.getStampReference()->initialized);
+}
