@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#include <cstdint>
+#include "runtime/helpers/translationtable_callbacks.h"
+#include "runtime/helpers/hw_helper.h"
+#include "test.h"
 
-namespace OCLRT {
+using namespace OCLRT;
 
-template <typename GfxFamily>
-struct TTCallbacks {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+typedef ::testing::Test Gen9TTCallbacksTests;
 
-    static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
-    static void appendLriParams(MI_LOAD_REGISTER_IMM *lri);
-};
+GEN9TEST_F(Gen9TTCallbacksTests, givenLriWhenAppendCalledThenDoNothing) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
-} // namespace OCLRT
+    auto lri = MI_LOAD_REGISTER_IMM::sInit();
+    auto lriBefore = lri;
+    TTCallbacks<FamilyType>::appendLriParams(&lri);
+
+    EXPECT_TRUE(memcmp(&lri, &lriBefore, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
+}

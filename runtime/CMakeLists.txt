@@ -37,6 +37,7 @@ ENABLE_WUD()
 if(WIN32)
   set(GEN_OS_SRC
     windows/command_stream_receiver.cpp
+    windows/translationtable_callbacks.cpp
     windows/wddm_engine_mapper.cpp
     windows/wddm.cpp
   )

@@ -53,6 +53,7 @@ endif(NOT MSVC)
 if(MSVC)
   set(IGDRCL_SRCS_tests_gen8_windows
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_mapper_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/windows/translationtable_callbacks_tests.cpp"
     PARENT_SCOPE
   )
 else()

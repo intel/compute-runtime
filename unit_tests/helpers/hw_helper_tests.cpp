@@ -165,3 +165,24 @@ TEST(DwordBuilderTest, setMaskedBitsWithDifferentBitValue) {
     dword = DwordBuilder::build(3, true, true, 0);
     EXPECT_EQ(expectedDword, dword);
 }
+
+using LriHelperTests = ::testing::Test;
+
+HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStream) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
+
+    LinearStream stream(buffer.get(), 128);
+    uint32_t address = 0x8888;
+    uint32_t data = 0x1234;
+
+    auto expectedLri = MI_LOAD_REGISTER_IMM::sInit();
+    expectedLri.setRegisterOffset(address);
+    expectedLri.setDataDword(data);
+
+    auto lri = LriHelper<FamilyType>::program(&stream, address, data);
+
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
+    EXPECT_EQ(lri, stream.getBase());
+    EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
+}

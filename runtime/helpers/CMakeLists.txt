@@ -83,5 +83,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
 )
 set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.inl
   PARENT_SCOPE
 )

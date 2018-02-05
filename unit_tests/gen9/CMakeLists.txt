@@ -134,6 +134,7 @@ if(MSVC)
   set(IGDRCL_SRCS_tests_gen9_windows
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_mapper_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/os_interface_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/windows/translationtable_callbacks_tests.cpp"
     PARENT_SCOPE
   )
  else()

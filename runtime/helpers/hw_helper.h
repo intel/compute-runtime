@@ -101,12 +101,14 @@ struct DwordBuilder {
 
 template <typename GfxFamily>
 struct LriHelper {
-    static void program(LinearStream *cmdStream, uint32_t address, uint32_t value) {
-        typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    static MI_LOAD_REGISTER_IMM *program(LinearStream *cmdStream, uint32_t address, uint32_t value) {
         auto lri = (MI_LOAD_REGISTER_IMM *)cmdStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
         *lri = MI_LOAD_REGISTER_IMM::sInit();
         lri->setRegisterOffset(address);
         lri->setDataDword(value);
+        return lri;
     }
 };
 } // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +20,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "runtime/helpers/translationtable_callbacks.h"
+#include "runtime/command_stream/linear_stream.h"
+#include "runtime/helpers/hw_helper.h"
 #include <cstdint>
 
 namespace OCLRT {
-
 template <typename GfxFamily>
-struct TTCallbacks {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset) {
 
-    static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
-    static void appendLriParams(MI_LOAD_REGISTER_IMM *lri);
+    auto cmdStream = reinterpret_cast<LinearStream *>(queueHandle);
+
+    auto lri1 = LriHelper<GfxFamily>::program(cmdStream,
+                                              static_cast<uint32_t>(regOffset & 0xFFFFFFFF),
+                                              static_cast<uint32_t>(l3GfxAddress & 0xFFFFFFFF));
+    appendLriParams(lri1);
+
+    auto lri2 = LriHelper<GfxFamily>::program(cmdStream,
+                                              static_cast<uint32_t>(regOffset >> 32),
+                                              static_cast<uint32_t>(l3GfxAddress >> 32));
+    appendLriParams(lri2);
+
+    return 1;
 };
 
+template <typename GfxFamily>
+void TTCallbacks<GfxFamily>::appendLriParams(MI_LOAD_REGISTER_IMM *lri) {}
 } // namespace OCLRT
