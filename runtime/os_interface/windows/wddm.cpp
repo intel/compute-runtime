@@ -68,6 +68,7 @@ Wddm::Wddm(Gdi *gdi) : initialized(false),
     adapterLuid.LowPart = 0;
     maximumApplicationAddress = 0;
     node = GPUNODE_3D;
+    preemptionMode = PreemptionMode::Disabled;
     gmmMemory = std::unique_ptr<GmmMemory>(GmmMemory::create());
     minAddress = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
@@ -173,7 +174,7 @@ bool Wddm::createDevice() {
     if (adapter) {
         CreateDevice.hAdapter = adapter;
         CreateDevice.Flags.LegacyMode = FALSE;
-        if (static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get()) != PreemptionMode::Disabled) {
+        if (preemptionMode >= PreemptionMode::MidBatch) {
             CreateDevice.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
         }
 

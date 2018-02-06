@@ -23,6 +23,7 @@
 #pragma once
 
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "runtime/command_stream/preemption.h"
 
 #include "test.h"
 
@@ -40,6 +41,8 @@ class WddmPreemptionTests : public WddmTest {
   public:
     void SetUp() override {
         WddmTest::SetUp();
+        const HardwareInfo hwInfo = *platformDevices[0];
+        memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
     }
 
@@ -57,11 +60,14 @@ class WddmPreemptionTests : public WddmTest {
         auto regReader = new RegistryReaderMock();
         mockWddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
+        PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
+        mockWddm->setPreemptionMode(preemptionMode);
         mockWddm->init<GfxFamily>();
     }
 
     WddmMock *mockWddm = nullptr;
     DebugManagerStateRestore *dbgRestorer = nullptr;
+    HardwareInfo hwInfoTest;
 };
 
 class WddmGmmMockGdiFixture : public GmmFixture, public WddmFixture {

@@ -32,6 +32,7 @@
 #include "runtime/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hw_info.h"
 #include "gmm_memory.h"
 #include <memory>
 #include <atomic>
@@ -187,6 +188,10 @@ class Wddm {
         this->node = node;
     }
 
+    void setPreemptionMode(PreemptionMode mode) {
+        this->preemptionMode = mode;
+    }
+
     void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
     void initPageTableManagerRegisters(LinearStream &stream);
     bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
@@ -219,6 +224,7 @@ class Wddm {
     void *trimCallbackHandle;
     uintptr_t maximumApplicationAddress;
     GPUNODE_ORDINAL node;
+    PreemptionMode preemptionMode;
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress;
 

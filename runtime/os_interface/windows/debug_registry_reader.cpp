@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,7 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
                                    (LPBYTE)&value,
                                    &size);
         RegCloseKey(Key);
+        value = ERROR_SUCCESS == success ? value : defaultValue;
     }
 
     return value;

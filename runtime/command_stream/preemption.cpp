@@ -137,4 +137,10 @@ bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const Linear
     return (0 == memcmp(ih.getBase(), sip.getBinary(), sip.getBinarySize()));
 }
 
+PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {
+    return DebugManager.flags.ForcePreemptionMode.get() == 0
+               ? hwInfo.capabilityTable.defaultPreemptionMode
+               : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
+}
+
 } // namespace OCLRT

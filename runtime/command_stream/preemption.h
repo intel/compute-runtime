@@ -63,5 +63,7 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static void applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, const Device &device);
+
+    static PreemptionMode getDefaultPreemptionMode(const HardwareInfo &hwInfo);
 };
 } // namespace OCLRT

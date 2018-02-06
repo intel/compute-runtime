@@ -22,6 +22,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "hw_cmds.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
@@ -78,9 +79,7 @@ Device::Device(const HardwareInfo &hwInfo,
       osTime(nullptr), slmWindowStartAddress(nullptr) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
-    preemptionMode = DebugManager.flags.ForcePreemptionMode.get() == 0
-                         ? hwInfo.capabilityTable.defaultPreemptionMode
-                         : (PreemptionMode)DebugManager.flags.ForcePreemptionMode.get();
+    preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
 }
 
 Device::~Device() {

@@ -26,6 +26,7 @@
 #pragma warning(disable : 4005)
 #include "hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
 #include "runtime/os_interface/windows/wddm.h"
@@ -56,6 +57,8 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     GPUNODE_ORDINAL nodeOrdinal = GPUNODE_3D;
     UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(hwInfoIn.capabilityTable.defaultEngineType, nodeOrdinal));
     this->wddm->setNode(nodeOrdinal);
+    PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoIn);
+    this->wddm->setPreemptionMode(preemptionMode);
     this->osInterface = std::unique_ptr<OSInterface>(new OSInterface());
     this->osInterface.get()->get()->setWddm(this->wddm);
     commandBufferHeader = new COMMAND_BUFFER_HEADER;
