@@ -65,9 +65,9 @@ To install OpenCL driver please use deb package generated during build
 
 ## Supported Platforms
 
-Intel Core Processors supporting Gen8 graphics devices - OpenCL 2.0  
-Intel Core Processors supporting Gen9 graphics devices - OpenCL 2.1  
-Intel Atom Processors supporting Gen9 graphics devices - OpenCL 1.2  
+Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.0  
+Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
+Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
 
 ## How to provide feedback
 
