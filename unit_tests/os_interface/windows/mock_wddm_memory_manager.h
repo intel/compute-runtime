@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     using BaseClass::addToTrimCandidateList;
     using BaseClass::checkTrimCandidateListCompaction;
     using BaseClass::compactTrimCandidateList;
+    using BaseClass::createWddmAllocation;
     using BaseClass::lastPeriodicTrimFenceValue;
     using BaseClass::removeFromTrimCandidateList;
     using BaseClass::trimCandidateList;

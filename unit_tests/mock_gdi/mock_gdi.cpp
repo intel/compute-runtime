@@ -32,6 +32,8 @@
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};
+uint32_t gMapGpuVaFailConfigCount = 0;
+uint32_t gMapGpuVaFailConfigMax = 0;
 
 #ifdef __cplusplus // If used by C++ code,
 extern "C" {       // we need to export the C interface
@@ -255,6 +257,13 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
         mapGpuVA->VirtualAddress = mapGpuVA->BaseAddress;
     }
 
+    if (gMapGpuVaFailConfigMax != 0) {
+        if (gMapGpuVaFailConfigMax > gMapGpuVaFailConfigCount) {
+            gMapGpuVaFailConfigCount++;
+            return STATUS_UNSUCCESSFUL;
+        }
+    }
+
     mapGpuVA->PagingFenceValue = 1;
     return STATUS_PENDING;
 }
@@ -420,4 +429,9 @@ ADAPTER_INFO *getAdapterInfoAddress() {
 
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg() {
     return &gLastCallMapGpuVaArg;
+}
+
+void setMapGpuVaFailConfig(uint32_t count, uint32_t max) {
+    gMapGpuVaFailConfigCount = count;
+    gMapGpuVaFailConfigMax = max;
 }

@@ -571,6 +571,69 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestricti
     mm->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuVaFailThenFailToCreateAllocation) {
+    SetUpMm<FamilyType>();
+    void *ptr = reinterpret_cast<void *>(0x1000);
+    size_t size = 0x1000;
+    std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
+
+    WddmMock *mockedWddm = new WddmMock;
+    EXPECT_TRUE(mockedWddm->init<FamilyType>());
+
+    MockWddmMemoryManager mockMemoryManager(mockedWddm);
+    mockMemoryManager.setDeferredDeleter(nullptr);
+
+    setMapGpuVaFailConfigFcn(0, 1);
+
+    WddmAllocation allocation(ptr, size, nullptr);
+    allocation.gmm = gmm.get();
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    EXPECT_FALSE(ret);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMapGpuVaFailSecondAfterDrainSuccessThenCreateAllocation) {
+    SetUpMm<FamilyType>();
+    void *ptr = reinterpret_cast<void *>(0x1000);
+    size_t size = 0x1000;
+    std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
+
+    WddmMock *mockedWddm = new WddmMock;
+    EXPECT_TRUE(mockedWddm->init<FamilyType>());
+
+    MockDeferredDeleter *deleter = new MockDeferredDeleter;
+    MockWddmMemoryManager mockMemoryManager(mockedWddm);
+    mockMemoryManager.setDeferredDeleter(deleter);
+
+    setMapGpuVaFailConfigFcn(0, 1);
+
+    WddmAllocation allocation(ptr, size, nullptr);
+    allocation.gmm = gmm.get();
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), allocation.getGpuAddress());
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAndMapGpuVaFailSecondAfterDrainFailThenFailToCreateAllocation) {
+    SetUpMm<FamilyType>();
+    void *ptr = reinterpret_cast<void *>(0x1000);
+    size_t size = 0x1000;
+    std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
+
+    WddmMock *mockedWddm = new WddmMock;
+    EXPECT_TRUE(mockedWddm->init<FamilyType>());
+
+    MockDeferredDeleter *deleter = new MockDeferredDeleter;
+    MockWddmMemoryManager mockMemoryManager(mockedWddm);
+    mockMemoryManager.setDeferredDeleter(deleter);
+
+    setMapGpuVaFailConfigFcn(0, 2);
+
+    WddmAllocation allocation(ptr, size, nullptr);
+    allocation.gmm = gmm.get();
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    EXPECT_FALSE(ret);
+}
+
 HWTEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
@@ -1599,11 +1662,15 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWh
     ImageInfo imgInfo;
     imgInfo.imgDesc = &imgDesc;
     wddm->createAllocationStatus = STATUS_SUCCESS;
+    wddm->mapGpuVaStatus = true;
+    wddm->callBaseMapGpuVa = false;
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
+    EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
     auto allocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
+    EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
     memoryManager.freeGraphicsMemory(allocation);
 }
 

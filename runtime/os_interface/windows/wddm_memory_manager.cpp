@@ -59,7 +59,6 @@ WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, Wddm *wddm) : MemoryM
 }
 
 void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification) {
-
     WddmMemoryManager *wddmMemMngr = (WddmMemoryManager *)trimNotification->Context;
     DEBUG_BREAK_IF(wddmMemMngr == nullptr);
 
@@ -73,17 +72,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     }
     WddmAllocation allocation(nullptr, imgInfo.size, nullptr);
     allocation.gmm = gmm;
-    auto status = wddm->createAllocation(&allocation);
-    if (status == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
-        deferredDeleter->drain(true);
-        status = wddm->createAllocation(&allocation);
-    }
-    allocation.setGpuAddress(allocation.gpuPtr);
-    if (status == STATUS_SUCCESS) {
+    auto status = WddmMemoryManager::createWddmAllocation(&allocation);
+    if (status) {
         auto *wddmAllocation = new WddmAllocation(allocation);
         return wddmAllocation;
+    } else {
+        return nullptr;
     }
-    return nullptr;
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) {
@@ -108,7 +103,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
         wddmAllocation->setAlignedCpuPtr(cpuPtr);
         // 64kb map is not needed
-        wddm->mapGpuVirtualAddress(wddmAllocation, cpuPtr, sizeAligned, false, false);
+        auto status = wddm->mapGpuVirtualAddress(wddmAllocation, cpuPtr, sizeAligned, false, false);
+        DEBUG_BREAK_IF(!status);
         wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, (uint64_t)wddmAllocation->gpuPtr);
 
         return wddmAllocation;
@@ -136,8 +132,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
 
     while (success) {
         allocation.gmm = gmm;
-        success = wddm->createAllocation(&allocation) == STATUS_SUCCESS;
 
+        bool success = createWddmAllocation(&allocation);
         if (!success)
             break;
 
@@ -173,8 +169,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
 
         Gmm *gmm = Gmm::create(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
-        if (wddm->createAllocation(allocation) == STATUS_SUCCESS) {
-            allocation->setGpuAddress(allocation->gpuPtr);
+        if (createWddmAllocation(allocation)) {
             return allocation;
         }
         freeGraphicsMemory(allocation);
@@ -208,24 +203,21 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
         cpuPtrAllocated = true;
     }
 
-    WddmAllocation allocation((void *)ptrAligned, sizeAligned, (void *)ptrAligned, sizeAligned, nullptr);
+    WddmAllocation allocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), sizeAligned, nullptr);
     allocation.cpuPtrAllocated = cpuPtrAllocated;
     allocation.is32BitAllocation = true;
+    allocation.allocationOffset = offset;
 
     gmm = Gmm::create(ptrAligned, sizeAligned, false);
 
     while (success) {
         allocation.gmm = gmm;
-        success = wddm->createAllocation(&allocation) == STATUS_SUCCESS;
 
+        success = createWddmAllocation(&allocation);
         if (!success)
             break;
 
-        allocation.setGpuAddress(allocation.gpuPtr);
-        allocation.allocationOffset = offset;
-
         auto *wddmAllocation = new WddmAllocation(allocation);
-
         graphicsAllocation = wddmAllocation;
         graphicsAllocation->is32BitAllocation = true;
         graphicsAllocation->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
@@ -265,8 +257,8 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation.is32BitAllocation = true;
         allocation.gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
     }
-    wddm->mapGpuVirtualAddress(&allocation, ptr, size, is32BitAllocation, false);
-
+    auto status = wddm->mapGpuVirtualAddress(&allocation, ptr, size, is32BitAllocation, false);
+    DEBUG_BREAK_IF(!status);
     allocation.setGpuAddress(allocation.gpuPtr);
 
     return new WddmAllocation(allocation);
@@ -774,6 +766,27 @@ bool WddmMemoryManager::mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) {
 
 AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
+}
+
+bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation) {
+    auto wddmSuccess = wddm->createAllocation(allocation);
+    if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
+        deferredDeleter->drain(true);
+        wddmSuccess = wddm->createAllocation(allocation);
+    }
+    if (wddmSuccess == STATUS_SUCCESS) {
+        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->getAlignedSize(), allocation->is32BitAllocation, false);
+        if (!mapSuccess && deferredDeleter) {
+            deferredDeleter->drain(true);
+            mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->getAlignedSize(), allocation->is32BitAllocation, false);
+        }
+        if (!mapSuccess) {
+            wddm->destroyAllocations(&allocation->handle, 1, 0, allocation->resourceHandle);
+            wddmSuccess = STATUS_UNSUCCESSFUL;
+        }
+        allocation->setGpuAddress(allocation->gpuPtr);
+    }
+    return (wddmSuccess == STATUS_SUCCESS);
 }
 
 } // namespace OCLRT

@@ -442,22 +442,14 @@ NTSTATUS Wddm::createAllocation(WddmAllocation *alloc) {
     CreateAllocation.pAllocationInfo = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    while (status != STATUS_SUCCESS) {
-        status = gdi->createAllocation(&CreateAllocation);
-        if (status != STATUS_SUCCESS) {
-            DEBUG_BREAK_IF(true);
-            break;
-        }
-
-        alloc->handle = AllocationInfo.hAllocation;
-        status = mapGpuVirtualAddress(alloc, alloc->getAlignedCpuPtr(), size, alloc->is32BitAllocation, false) == true ? STATUS_SUCCESS : STATUS_UNSUCCESSFUL;
-        if (status != STATUS_SUCCESS) {
-            DEBUG_BREAK_IF(true);
-            break;
-        }
-
-        kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
+    status = gdi->createAllocation(&CreateAllocation);
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF(true);
+        return status;
     }
+
+    alloc->handle = AllocationInfo.hAllocation;
+    kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
 
     return status;
 }
@@ -481,7 +473,6 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
     CreateAllocation.hDevice = device;
 
     while (!success) {
-
         status = gdi->createAllocation(&CreateAllocation);
 
         if (status != STATUS_SUCCESS) {
@@ -538,7 +529,6 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     CreateAllocation.hDevice = device;
 
     while (!success) {
-
         status = gdi->createAllocation(&CreateAllocation);
 
         if (status != STATUS_SUCCESS) {

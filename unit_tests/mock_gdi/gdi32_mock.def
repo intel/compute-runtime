@@ -72,3 +72,4 @@ SetMockCreateDeviceParams
 getMockAllocation
 getAdapterInfoAddress
 getLastCallMapGpuVaArg
+setMapGpuVaFailConfig

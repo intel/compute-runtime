@@ -81,3 +81,4 @@ void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params);
 D3DKMT_CREATEALLOCATION *getMockAllocation();
 ADAPTER_INFO *getAdapterInfoAddress();
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg();
+void setMapGpuVaFailConfig(uint32_t count, uint32_t max);

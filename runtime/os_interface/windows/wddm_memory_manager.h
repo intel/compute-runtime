@@ -109,6 +109,7 @@ class WddmMemoryManager : public MemoryManager {
     static bool validateAllocation(WddmAllocation *alloc);
     bool checkTrimCandidateListCompaction();
     void checkTrimCandidateCount();
+    bool createWddmAllocation(WddmAllocation *allocation);
     ResidencyContainer trimCandidateList;
     std::mutex trimCandidateListMutex;
     std::atomic<bool> residencyLock;

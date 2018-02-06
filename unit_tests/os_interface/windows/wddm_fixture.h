@@ -66,6 +66,7 @@ class WddmMock : public Wddm {
     using Wddm::device;
     using Wddm::gdi;
     using Wddm::getSystemInfo;
+    using Wddm::pagingQueue;
 
     WddmMock() : makeResidentResult(),
                  makeNonResidentResult(),
@@ -126,7 +127,12 @@ class WddmMock : public Wddm {
     bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages) override {
         mapGpuVirtualAddressResult.called++;
         mapGpuVirtualAddressResult.cpuPtrPassed = cpuPtr;
-        return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, size, gpuPtr, allocation32Bit, use64kbPages);
+        if (callBaseMapGpuVa) {
+            return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, size, gpuPtr, allocation32Bit, use64kbPages);
+        } else {
+            gpuPtr = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
+            return mapGpuVaStatus;
+        }
     }
     bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override {
         freeGpuVirtualAddresResult.called++;
@@ -135,12 +141,14 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocation(WddmAllocation *alloc) override {
         createAllocationResult.called++;
         if (callBaseDestroyAllocations) {
-            createAllocationResult.success = Wddm::createAllocation(alloc) == STATUS_SUCCESS;
+            createAllocationStatus = Wddm::createAllocation(alloc);
+            createAllocationResult.success = createAllocationStatus == STATUS_SUCCESS;
         } else {
             createAllocationResult.success = true;
+            alloc->handle = ALLOCATION_HANDLE;
             return createAllocationStatus;
         }
-        return STATUS_SUCCESS;
+        return createAllocationStatus;
     }
     bool createAllocation64k(WddmAllocation *alloc) override {
         createAllocationResult.called++;
@@ -310,8 +318,10 @@ class WddmMock : public Wddm {
     CallResult releaseReservedAddressResult;
     CallResult reserveValidAddressRangeResult;
     NTSTATUS createAllocationStatus;
+    bool mapGpuVaStatus;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
+    bool callBaseMapGpuVa = true;
     std::set<void *> reservedAddresses;
     uintptr_t virtualAllocAddress;
 };
@@ -377,6 +387,7 @@ class WddmFixture {
     decltype(&getMockAllocation) getMockAllocationFcn;
     decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn;
     decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn;
+    decltype(&setMapGpuVaFailConfig) setMapGpuVaFailConfigFcn = nullptr;
 
   public:
     virtual void SetUp() {
@@ -396,6 +407,8 @@ class WddmFixture {
         getMockAllocationFcn = reinterpret_cast<decltype(&getMockAllocation)>(mockGdiDll->getProcAddress("getMockAllocation"));
         getAdapterInfoAddressFcn = reinterpret_cast<decltype(&getAdapterInfoAddress)>(mockGdiDll->getProcAddress("getAdapterInfoAddress"));
         getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
+        setMapGpuVaFailConfigFcn = reinterpret_cast<decltype(&setMapGpuVaFailConfig)>(mockGdiDll->getProcAddress("setMapGpuVaFailConfig"));
+        setMapGpuVaFailConfigFcn(0, 0);
         wddm = Wddm::createWddm();
         mockWddm = static_cast<WddmMock *>(wddm);
         wddm->registryReader.reset(new RegistryReaderMock());
@@ -415,6 +428,9 @@ class WddmFixture {
             delete wddm;
         }
         if (mockGdiDll != nullptr) {
+            if (setMapGpuVaFailConfigFcn != nullptr) {
+                setMapGpuVaFailConfigFcn(0, 0);
+            }
             delete mockGdiDll;
         }
     }

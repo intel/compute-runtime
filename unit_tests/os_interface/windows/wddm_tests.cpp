@@ -151,10 +151,13 @@ HWTEST_F(WddmTest, givenAllocationSmallerUnderlyingThanAlignedSizeWhenCreatedThe
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_NE(0, allocation.handle);
 
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    EXPECT_TRUE(ret);
+
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
     EXPECT_NE(underlyingPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
 
-    auto ret = mockWddm->destroyAllocation(&allocation);
+    ret = mockWddm->destroyAllocation(&allocation);
     EXPECT_TRUE(ret);
 
     releaseGmm(gmm);
@@ -186,6 +189,9 @@ HWTEST_F(WddmTest, createAllocation32bit) {
 
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
+
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, wddmMock->mapGpuVirtualAddressResult.called);
 
@@ -276,8 +282,12 @@ HWTEST_F(WddmTest, givenNullAllocationWhenCreateThenAllocateAndMap) {
     allocation.gmm = gmm;
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
-    EXPECT_TRUE(allocation.gpuPtr != 0);
-    EXPECT_TRUE(allocation.gpuPtr == Gmm::canonize(allocation.gpuPtr));
+
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    EXPECT_TRUE(ret);
+
+    EXPECT_NE(0u, allocation.gpuPtr);
+    EXPECT_EQ(allocation.gpuPtr, Gmm::canonize(allocation.gpuPtr));
 
     releaseGmm(gmm);
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
