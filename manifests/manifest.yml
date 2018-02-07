@@ -45,6 +45,12 @@ components:
     repository: https://github.com/KhronosGroup/OpenCL-Headers.git
     revision: f039db6764d52388658ef15c30b2237bbda49803
     type: git
+  kmdaf:
+    branch: kmdaf
+    clean_on_sync: true
+    dest_dir: kmdaf
+    revision: d95d0ef3971a18967ddbce9f38f5841fe65101f0
+    type: git
   libdrm:
     branch: libdrm-2.4.84
     clean_on_sync: true

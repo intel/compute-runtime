@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/kmdaf/kmdaf_listener.h"
+#include "runtime/os_interface/windows/kmdaf_listener.h"
 #include "kmdaf.h"
 
 namespace OCLRT {

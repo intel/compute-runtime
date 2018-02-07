@@ -21,22 +21,23 @@ cmake_minimum_required (VERSION 3.0)
 
 if(KMDAF_HEADERS_DIR)
   set (RUNTIME_SRCS_KMDAF
-    os_interface/windows/kmdaf_listener.cpp
-    os_interface/windows/kmdaf_listener.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
   )
 else(KMDAF_HEADERS_DIR)
   set (RUNTIME_SRCS_KMDAF
-    os_interface/windows/kmdaf_listener_stub.cpp
-    os_interface/windows/kmdaf_listener.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener_stub.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
   )
 endif(KMDAF_HEADERS_DIR)
 
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_KMDAF})
+
 if(KMDAF_HEADERS_DIR)
-  target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
+  target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
     ${KMDAF_HEADERS_DIR}
   )
 endif(KMDAF_HEADERS_DIR)
 
 source_group("source files\\os_interface" FILES ${RUNTIME_SRCS_KMDAF})
 
-set(RUNTIME_SRCS_KMDAF "${RUNTIME_SRCS_KMDAF}" PARENT_SCOPE)
