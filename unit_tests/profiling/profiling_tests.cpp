@@ -722,7 +722,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueBlockedWithProflingPer
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
 }
 
-HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersNoEventWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsPresentInCS) {
+HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCountersNoEventWHENWalkerIsDispatchedTHENPipeControlWithTimeStampIsNotPresentInCS) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::MI_REPORT_PERF_COUNT MI_REPORT_PERF_COUNT;
@@ -771,7 +771,7 @@ HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCount
     ASSERT_NE(nullptr, pAfterPC);
     EXPECT_EQ(1u, pAfterPC->getCommandStreamerStallEnable());
 
-    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pBeforePC->getPostSyncOperation());
+    EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_NO_WRITE, pBeforePC->getPostSyncOperation());
 
     // expect MI_REPORT_PERF_COUNT after WALKER
     auto itorAfterReportPerf = find<MI_REPORT_PERF_COUNT *>(itorGPGPUWalkerCmd, cmdList.end());

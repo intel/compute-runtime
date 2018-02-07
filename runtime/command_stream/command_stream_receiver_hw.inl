@@ -267,30 +267,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
-        //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
-        addPipeControlWA(commandStreamCSR, false);
-
-        auto pCmd = addPipeControlCmd(commandStreamCSR);
-
-        pCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-        if (DebugManager.flags.FlushAllCaches.get()) {
-            pCmd->setDcFlushEnable(true);
-            pCmd->setRenderTargetCacheFlushEnable(true);
-            pCmd->setInstructionCacheInvalidateEnable(true);
-            pCmd->setTextureCacheInvalidationEnable(true);
-            pCmd->setPipeControlFlushEnable(true);
-            pCmd->setVfCacheInvalidationEnable(true);
-            pCmd->setConstantCacheInvalidationEnable(true);
-            pCmd->setStateCacheInvalidationEnable(true);
-        }
-
-        auto address = (uint64_t)this->getTagAddress();
-        pCmd->setAddressHigh(address >> 32);
-        pCmd->setAddress(address & (0xffffffff));
-        pCmd->setImmediateData(this->taskCount);
-
+        addPipeControl(commandStreamCSR, false);
         this->taskLevel = taskLevel;
-        this->latestSentTaskCount = std::max(this->taskCount, (uint32_t)this->latestSentTaskCount);
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
     }
 
