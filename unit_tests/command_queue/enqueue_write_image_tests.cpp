@@ -547,3 +547,29 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostP
 
     pEvent->release();
 }
+HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<Image> dstImage2(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    auto imageDesc = dstImage2->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
+
+    size_t rowPitch = dstImage2->getHostPtrRowPitch();
+    size_t slicePitch = dstImage2->getHostPtrSlicePitch();
+    retVal = pCmdQ->enqueueWriteImage(dstImage2.get(),
+                                      CL_FALSE,
+                                      origin,
+                                      region,
+                                      rowPitch,
+                                      slicePitch,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}

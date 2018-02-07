@@ -48,10 +48,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     cl_event *event) {
 
     MultiDispatchInfo dispatchInfo;
-    size_t bufferOffset;
-    size_t hostOffset;
-    computeOffsetsValueForRectCommands(&bufferOffset, &hostOffset, bufferOrigin, hostOrigin, region, bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch);
-    auto isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, CL_COMMAND_WRITE_BUFFER_RECT);
+    auto isMemTransferNeeded = true;
+    if (buffer->isMemObjZeroCopy()) {
+        size_t bufferOffset;
+        size_t hostOffset;
+        computeOffsetsValueForRectCommands(&bufferOffset, &hostOffset, bufferOrigin, hostOrigin, region, bufferRowPitch, bufferSlicePitch, hostRowPitch, hostSlicePitch);
+        isMemTransferNeeded = buffer->checkIfMemoryTransferIsRequired(bufferOffset, hostOffset, ptr, CL_COMMAND_WRITE_BUFFER_RECT);
+    }
     if (!isMemTransferNeeded) {
         NullSurface s;
         Surface *surfaces[] = {&s};

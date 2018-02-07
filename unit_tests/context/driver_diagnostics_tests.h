@@ -203,15 +203,18 @@ struct PerformanceHintEnqueueImageTest : public PerformanceHintEnqueueTest {
         PerformanceHintEnqueueTest::SetUp();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
         image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
+        zeroCopyImage.reset(ImageHelper<Image1dDefaults>::create(context));
     }
 
     void TearDown() override {
         delete image;
+        zeroCopyImage.reset(nullptr);
         alignedFree(address);
         PerformanceHintEnqueueTest::TearDown();
     }
     void *address;
     Image *image;
+    std::unique_ptr<Image> zeroCopyImage;
 };
 
 struct PerformanceHintEnqueueReadImageTest : public PerformanceHintEnqueueImageTest,

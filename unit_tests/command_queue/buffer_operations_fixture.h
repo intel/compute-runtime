@@ -40,11 +40,14 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext;
-        srcBuffer = BufferHelper<BufferUseHostPtr<>>::create();
+
+        zeroCopyBuffer.reset(BufferHelper<>::create());
+        srcBuffer.reset(BufferHelper<BufferUseHostPtr<>>::create());
     }
 
     void TearDown() override {
-        delete srcBuffer;
+        srcBuffer.reset(nullptr);
+        zeroCopyBuffer.reset(nullptr);
         delete BufferDefaults::context;
         CommandEnqueueFixture::TearDown();
     }
@@ -54,7 +57,7 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     void enqueueWriteBuffer(cl_bool blocking = EnqueueWriteBufferTraits::blocking) {
         auto retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(
             pCmdQ,
-            srcBuffer,
+            srcBuffer.get(),
             blocking);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -65,7 +68,7 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     void enqueueWriteBuffer(bool Blocking, void *InputData, int size) {
         auto retVal = EnqueueWriteBufferHelper<>::enqueueWriteBuffer(
             pCmdQ,
-            srcBuffer,
+            srcBuffer.get(),
             Blocking,
             0,
             size,
@@ -73,6 +76,7 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
-    Buffer *srcBuffer;
+    std::unique_ptr<Buffer> srcBuffer;
+    std::unique_ptr<Buffer> zeroCopyBuffer;
 };
-}
+} // namespace OCLRT

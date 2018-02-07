@@ -62,7 +62,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, returnSuccess) {
 
     retVal = clEnqueueWriteBufferRect(
         pCmdQ,
-        buffer,
+        buffer.get(),
         CL_TRUE,
         srcOrigin,
         dstOrigin,
@@ -162,7 +162,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, 2D_addsIndirectData) {
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcPtr = hostPtr;
-    dc.dstMemObj = buffer;
+    dc.dstMemObj = buffer.get();
     dc.srcOffset = {0, 0, 0};
     dc.dstOffset = {0, 0, 0};
     dc.size = {50, 50, 1};
@@ -343,7 +343,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWhenWr
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {50, 50, 1};
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -369,7 +369,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWhe
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {50, 50, 1};
     retVal = pCmdOOQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -407,7 +407,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrWithEv
     size_t region[] = {50, 50, 1};
     void *ptr = buffer->getCpuAddressForMemoryTransfer();
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -454,7 +454,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenOutOfOrderQueueAndDstPtrEqualSrcPtrWit
     size_t region[] = {50, 50, 1};
     void *ptr = buffer->getCpuAddressForMemoryTransfer();
     retVal = pCmdOOQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -486,7 +486,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndRowPitchEqualZeroAndDst
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {50, 50, 1};
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -511,7 +511,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndSlicePitchEqualZeroAndD
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {50, 50, 1};
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -538,7 +538,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointTh
     size_t hostOffset = (bufferOrigin[2] - hostOrigin[2]) * slicePitch + (bufferOrigin[1] - hostOrigin[1]) * rowPitch + (bufferOrigin[0] - hostOrigin[0]);
     auto hostStorage = ptrOffset(ptr, hostOffset);
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,
@@ -563,7 +563,32 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDi
     size_t hostOrigin[] = {10, 10, 0};
     size_t region[] = {50, 50, 1};
     retVal = pCmdQ->enqueueWriteBufferRect(
-        buffer,
+        buffer.get(),
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNonZeroCopyBufferWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    retVal = pCmdQ->enqueueWriteBufferRect(
+        nonZeroCopyBuffer.get(),
         CL_FALSE,
         bufferOrigin,
         hostOrigin,

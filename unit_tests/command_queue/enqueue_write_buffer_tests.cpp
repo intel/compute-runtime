@@ -51,7 +51,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, null_user_pointer) {
 
     auto retVal = clEnqueueWriteBuffer(
         pCmdQ,
-        srcBuffer,
+        srcBuffer.get(),
         false,
         0,
         sizeof(data),
@@ -152,7 +152,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, addsIndirectData) {
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcPtr = EnqueueWriteBufferTraits::hostPtr;
-    dc.dstMemObj = srcBuffer;
+    dc.dstMemObj = srcBuffer.get();
     dc.dstOffset = {EnqueueWriteBufferTraits::offset, 0, 0};
     dc.size = {srcBuffer->getSize(), 0, 0};
     builder.buildDispatchInfos(multiDispatchInfo, dc);
@@ -326,14 +326,14 @@ HWTEST_F(EnqueueWriteBufferTypeTest, MediaVFEState) {
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 }
-HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
+HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferTrueWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
-    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    void *ptr = zeroCopyBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer,
+    retVal = pCmdOOQ->enqueueWriteBuffer(zeroCopyBuffer.get(),
                                          CL_FALSE,
                                          0,
                                          MemoryConstants::cacheLineSize,
@@ -345,14 +345,14 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPt
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
+HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrZeroCopyBufferWhenWriteBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer,
+    retVal = pCmdOOQ->enqueueWriteBuffer(zeroCopyBuffer.get(),
                                          CL_FALSE,
                                          0,
                                          MemoryConstants::cacheLineSize,
@@ -364,13 +364,13 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstP
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
-    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    void *ptr = zeroCopyBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer,
+    retVal = pCmdQ->enqueueWriteBuffer(zeroCopyBuffer.get(),
                                        CL_FALSE,
                                        0,
                                        MemoryConstants::cacheLineSize,
@@ -382,13 +382,13 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopies
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
-    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    void *ptr = zeroCopyBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer,
+    retVal = pCmdQ->enqueueWriteBuffer(zeroCopyBuffer.get(),
                                        CL_FALSE,
                                        0,
                                        MemoryConstants::cacheLineSize,
@@ -399,4 +399,40 @@ HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopie
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                       CL_FALSE,
+                                       0,
+                                       MemoryConstants::cacheLineSize,
+                                       ptr,
+                                       0,
+                                       nullptr,
+                                       nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+HWTEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrNonZeroCopyBufferEqualSrcPtrWhenWriteBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
+                                       CL_FALSE,
+                                       0,
+                                       MemoryConstants::cacheLineSize,
+                                       ptr,
+                                       0,
+                                       nullptr,
+                                       nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
 }

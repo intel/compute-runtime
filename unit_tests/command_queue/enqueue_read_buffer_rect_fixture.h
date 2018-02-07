@@ -45,22 +45,27 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::SetUp();
         contextMemoryManager = context.getMemoryManager();
         context.setMemoryManager(pCmdQ->getDevice().getMemoryManager());
+        BufferDefaults::context = new MockContext;
 
         //For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;
-        buffer = Buffer::create(
+        buffer.reset(Buffer::create(
             &context,
             CL_MEM_READ_WRITE,
             slicePitch * rowPitch,
             nullptr,
-            retVal);
-        ASSERT_NE(nullptr, buffer);
+            retVal));
+        ASSERT_NE(nullptr, buffer.get());
+
+        nonZeroCopyBuffer.reset(BufferHelper<BufferUseHostPtr<>>::create());
     }
 
     void TearDown() override {
-        delete buffer;
+        nonZeroCopyBuffer.reset(nullptr);
+        buffer.reset(nullptr);
+        delete BufferDefaults::context;
         ::alignedFree(hostPtr);
 
         context.setMemoryManager(contextMemoryManager);
@@ -78,7 +83,7 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
         size_t hostOrigin[] = {0, 0, 0};
         size_t region[] = {50, 50, 1};
         auto retVal = pCmdQ->enqueueReadBufferRect(
-            buffer,
+            buffer.get(),
             blocking, //non-blocking
             bufferOrigin,
             hostOrigin,
@@ -97,11 +102,12 @@ struct EnqueueReadBufferRectTest : public CommandEnqueueFixture,
     }
 
     MockContext context;
-    Buffer *buffer;
+    std::unique_ptr<Buffer> buffer;
+    std::unique_ptr<Buffer> nonZeroCopyBuffer;
     void *hostPtr;
     MemoryManager *contextMemoryManager;
 
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;
 };
-}
+} // namespace OCLRT

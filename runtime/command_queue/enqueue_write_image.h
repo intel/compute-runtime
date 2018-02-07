@@ -48,9 +48,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     cl_event *event) {
 
     MultiDispatchInfo di;
-    size_t hostOffset;
-    Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
-    auto isMemTransferNeeded = dstImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_WRITE_IMAGE);
+    auto isMemTransferNeeded = true;
+    if (dstImage->isMemObjZeroCopy()) {
+        size_t hostOffset;
+        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, dstImage->getImageDesc().image_type, dstImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+        isMemTransferNeeded = dstImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_WRITE_IMAGE);
+    }
     if (!isMemTransferNeeded) {
         NullSurface s;
         Surface *surfaces[] = {&s};

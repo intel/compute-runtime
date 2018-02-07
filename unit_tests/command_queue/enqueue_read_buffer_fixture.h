@@ -39,11 +39,13 @@ struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext;
-        srcBuffer = BufferHelper<>::create();
+        srcBuffer.reset(BufferHelper<>::create());
+        nonZeroCopyBuffer.reset(BufferHelper<BufferUseHostPtr<>>::create());
     }
 
     void TearDown() override {
-        delete srcBuffer;
+        srcBuffer.reset(nullptr);
+        nonZeroCopyBuffer.reset(nullptr);
         delete BufferDefaults::context;
         CommandEnqueueFixture::TearDown();
     }
@@ -53,13 +55,14 @@ struct EnqueueReadBufferTypeTest : public CommandEnqueueFixture,
     void enqueueReadBuffer(cl_bool blocking = CL_TRUE) {
         auto retVal = EnqueueReadBufferHelper<>::enqueueReadBuffer(
             pCmdQ,
-            srcBuffer,
+            srcBuffer.get(),
             blocking);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    Buffer *srcBuffer;
+    std::unique_ptr<Buffer> srcBuffer;
+    std::unique_ptr<Buffer> nonZeroCopyBuffer;
 };
-}
+} // namespace OCLRT

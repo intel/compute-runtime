@@ -62,7 +62,7 @@ HWTEST_F(AsyncGPUoperations, MapBufferAfterWriteBuffer) {
     while (!ThreadStarted)
         ;
 
-    auto retPtr = EnqueueMapBufferHelper<>::enqueueMapBuffer(pCmdQ, srcBuffer);
+    auto retPtr = EnqueueMapBufferHelper<>::enqueueMapBuffer(pCmdQ, srcBuffer.get());
     EXPECT_NE(nullptr, retPtr);
 
     char *outputPtr = static_cast<char *>(retPtr);

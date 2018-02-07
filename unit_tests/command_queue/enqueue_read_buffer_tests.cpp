@@ -52,7 +52,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, null_user_pointer) {
 
     auto retVal = clEnqueueReadBuffer(
         pCmdQ,
-        srcBuffer,
+        srcBuffer.get(),
         false,
         0,
         sizeof(data),
@@ -157,7 +157,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.dstPtr = EnqueueReadBufferTraits::hostPtr;
-    dc.srcMemObj = srcBuffer;
+    dc.srcMemObj = srcBuffer.get();
     dc.srcOffset = {EnqueueReadBufferTraits::offset, 0, 0};
     dc.size = {srcBuffer->getSize(), 0, 0};
     builder.buildDispatchInfos(multiDispatchInfo, dc);
@@ -362,7 +362,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, blockingRequiresPipeControlAfterWalkerWithDC
 HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3ON) {
     void *ptr = (void *)0x1040;
 
-    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer,
+    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                              CL_FALSE,
                                              0,
                                              MemoryConstants::cacheLineSize,
@@ -379,7 +379,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenAlignedPointerAndAlignedSizeWhenReadBuf
 HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenReadBufferIsCalledThenRecordedL3IndexIsL3Off) {
     void *ptr = (void *)0x1039;
 
-    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer,
+    cl_int retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                              CL_FALSE,
                                              0,
                                              MemoryConstants::cacheLineSize,
@@ -395,7 +395,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
 
     void *ptr2 = (void *)0x1040;
 
-    retVal = pCmdQ->enqueueReadBuffer(srcBuffer,
+    retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                       CL_FALSE,
                                       0,
                                       MemoryConstants::cacheLineSize,
@@ -408,14 +408,14 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenNotAlignedPointerAndAlignedSizeWhenRead
     EXPECT_FALSE(csr.disableL3Cache);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer,
+    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer.get(),
                                         CL_FALSE,
                                         0,
                                         MemoryConstants::cacheLineSize,
@@ -427,14 +427,14 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithEnabledSupportCpuCopiesAndDstPtr
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelNotIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer,
+    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer.get(),
                                         CL_FALSE,
                                         0,
                                         MemoryConstants::cacheLineSize,
@@ -446,13 +446,13 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenOOQWithDisabledSupportCpuCopiesAndDstPt
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdQ->enqueueReadBuffer(srcBuffer,
+    retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                       CL_FALSE,
                                       0,
                                       MemoryConstants::cacheLineSize,
@@ -464,13 +464,13 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesA
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
-HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
     EXPECT_EQ(retVal, CL_SUCCESS);
-    retVal = pCmdQ->enqueueReadBuffer(srcBuffer,
+    retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
                                       CL_FALSE,
                                       0,
                                       MemoryConstants::cacheLineSize,
@@ -481,4 +481,40 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopies
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
+}
+HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndNonZeroCopyBufferWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueReadBuffer(nonZeroCopyBuffer.get(),
+                                      CL_FALSE,
+                                      0,
+                                      MemoryConstants::cacheLineSize,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrAndNonZeroCopyWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
+    cl_int retVal = CL_SUCCESS;
+    void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    retVal = pCmdQ->enqueueReadBuffer(nonZeroCopyBuffer.get(),
+                                      CL_FALSE,
+                                      0,
+                                      MemoryConstants::cacheLineSize,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
 }

@@ -27,6 +27,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 
@@ -47,22 +48,28 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
 
         contextMemoryManager = context.getMemoryManager();
         context.setMemoryManager(pCmdQ->getDevice().getMemoryManager());
+        BufferDefaults::context = new MockContext;
 
         //For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;
-        buffer = Buffer::create(
+        buffer.reset(Buffer::create(
             &context,
             CL_MEM_READ_WRITE,
             slicePitch * rowPitch,
             nullptr,
-            retVal);
-        ASSERT_NE(nullptr, buffer);
+            retVal));
+
+        nonZeroCopyBuffer.reset(BufferHelper<BufferUseHostPtr<>>::create());
+
+        ASSERT_NE(nullptr, buffer.get());
     }
 
     void TearDown() override {
-        delete buffer;
+        buffer.reset(nullptr);
+        nonZeroCopyBuffer.reset(nullptr);
+        delete BufferDefaults::context;
         ::alignedFree(hostPtr);
 
         context.setMemoryManager(contextMemoryManager);
@@ -80,7 +87,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
         size_t hostOrigin[] = {0, 0, 0};
         size_t region[] = {50, 50, 1};
         auto retVal = pCmdQ->enqueueWriteBufferRect(
-            buffer,
+            buffer.get(),
             blocking,
             bufferOrigin,
             hostOrigin,
@@ -99,7 +106,9 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     }
 
     MockContext context;
-    Buffer *buffer;
+    std::unique_ptr<Buffer> buffer;
+    std::unique_ptr<Buffer> nonZeroCopyBuffer;
+
     void *hostPtr;
 
     MemoryManager *contextMemoryManager;
@@ -107,4 +116,4 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;
 };
-}
+} // namespace OCLRT

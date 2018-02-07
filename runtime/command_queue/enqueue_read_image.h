@@ -50,10 +50,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     cl_event *event) {
 
     MultiDispatchInfo di;
-
-    size_t hostOffset;
-    Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, srcImage->getImageDesc().image_type, srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
-    auto isMemTransferNeeded = srcImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_READ_IMAGE);
+    auto isMemTransferNeeded = true;
+    if (srcImage->isMemObjZeroCopy()) {
+        size_t hostOffset;
+        Image::calculateHostPtrOffset(&hostOffset, origin, region, inputRowPitch, inputSlicePitch, srcImage->getImageDesc().image_type, srcImage->getSurfaceFormatInfo().ImageElementSizeInBytes);
+        isMemTransferNeeded = srcImage->checkIfMemoryTransferIsRequired(hostOffset, 0, ptr, CL_COMMAND_READ_IMAGE);
+    }
     if (!isMemTransferNeeded) {
         NullSurface s;
         Surface *surfaces[] = {&s};

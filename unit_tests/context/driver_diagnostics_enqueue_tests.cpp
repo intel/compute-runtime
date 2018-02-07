@@ -404,9 +404,9 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteImageSharesStorageW
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
 
-    void *ptr = image->getCpuAddressForMemoryTransfer();
+    void *ptr = zeroCopyImage->getCpuAddressForMemoryTransfer();
     pCmdQ->enqueueWriteImage(
-        image,
+        zeroCopyImage.get(),
         CL_FALSE,
         hostOrigin,
         region,
@@ -417,7 +417,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingWriteImageSharesStorageW
         nullptr,
         nullptr);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_WRITE_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(zeroCopyImage.get()));
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -426,9 +426,9 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWi
     size_t hostOrigin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
 
-    void *ptr = image->getCpuAddressForMemoryTransfer();
+    void *ptr = zeroCopyImage->getCpuAddressForMemoryTransfer();
     pCmdQ->enqueueReadImage(
-        image,
+        zeroCopyImage.get(),
         CL_FALSE,
         hostOrigin,
         region,
@@ -439,7 +439,7 @@ TEST_F(PerformanceHintEnqueueImageTest, GivenNonBlockingReadImageSharesStorageWi
         nullptr,
         nullptr);
 
-    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_READ_IMAGE_DOESNT_REQUIRES_COPY_DATA], static_cast<cl_mem>(zeroCopyImage.get()));
     EXPECT_TRUE(containsHint(expectedHint, userData));
 }
 
@@ -471,19 +471,19 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCal
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
 
     Image *image;
-    bool zeroCopyImage;
+    bool isZeroCopyImage;
 
-    zeroCopyImage = GetParam();
+    isZeroCopyImage = GetParam();
 
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
 
-    if (zeroCopyImage) {
+    if (isZeroCopyImage) {
         image = ImageHelper<ImageReadOnly<Image1dDefaults>>::create(context);
     } else {
         image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
     }
-    EXPECT_EQ(zeroCopyImage, image->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
     pCmdQ->enqueueMapImage(
         image,
         CL_FALSE,
@@ -498,10 +498,10 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCall
         retVal);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(image));
-    EXPECT_EQ(zeroCopyImage, containsHint(expectedHint, userData));
+    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(image));
-    EXPECT_EQ(!zeroCopyImage, containsHint(expectedHint, userData));
+    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
 
     delete image;
 }
@@ -535,29 +535,29 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithImageThenContextProvidesProperHint) {
 
     Image *image;
-    bool zeroCopyImage;
+    bool isZeroCopyImage;
 
-    zeroCopyImage = GetParam();
+    isZeroCopyImage = GetParam();
 
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
 
-    if (zeroCopyImage) {
+    if (isZeroCopyImage) {
         image = ImageHelper<ImageReadOnly<Image1dDefaults>>::create(context);
     } else {
         image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
     }
-    EXPECT_EQ(zeroCopyImage, image->isMemObjZeroCopy());
+    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
 
     void *mapPtr = pCmdQ->enqueueMapImage(image, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
 
     pCmdQ->enqueueUnmapMemObject(image, mapPtr, 0, nullptr, nullptr);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(image));
-    EXPECT_EQ(!zeroCopyImage, containsHint(expectedHint, userData));
+    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
-    EXPECT_EQ(zeroCopyImage, containsHint(expectedHint, userData));
+    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
 
     delete image;
 }
