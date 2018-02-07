@@ -312,8 +312,15 @@ endif()
 
 if(MSVC)
 	if(NOT WDK_DIR)
-		get_filename_component(WDK_DIR "../wdk" ABSOLUTE)
+		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wdk")
+			get_filename_component(WDK_DIR "../wdk" ABSOLUTE)
+		endif()
 	endif(NOT WDK_DIR)
+	if(WDK_DIR)
+		if(IS_DIRECTORY "${WDK_DIR}/Win15")
+			get_filename_component(WDK_DIR "${WDK_DIR}/Win15" ABSOLUTE)
+		endif()
+	endif()
 	message(STATUS "WDK Directory: ${WDK_DIR}")
 else()
 	find_package(PkgConfig)
@@ -336,7 +343,7 @@ macro(ENABLE_WUD)
 		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
 		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
 		add_definitions(-DUNICODE -D_UNICODE)
-		link_directories("${WDK_DIR}/Win15/Lib/${WindowsTargetPlatformVersion}/um/${NEO_ARCH}/")
+		link_directories("${WDK_DIR}/Lib/${WindowsTargetPlatformVersion}/um/${NEO_ARCH}/")
 	endif(MSVC)
 endmacro(ENABLE_WUD)
 
@@ -356,27 +363,31 @@ if(OCL_RUNTIME_PROFILING)
 endif()
 
 if(MSVC)
-	# Get WDK version from ${WDK_DIR}/Win15/WDKVersion.txt
-	file(READ "${WDK_DIR}/Win15/WDKVersion.txt" WindowsTargetPlatformVersion)
-	string(REPLACE " " ";" WindowsTargetPlatformVersion ${WindowsTargetPlatformVersion})
-	list(LENGTH WindowsTargetPlatformVersion versionListLength)
-	if(NOT versionListLength EQUAL 3)
-		MESSAGE(ERROR "Error reading content of WDKVersion.txt file")
-	endif(NOT versionListLength EQUAL 3)
-	list(GET WindowsTargetPlatformVersion 2 WindowsTargetPlatformVersion)
+	if(NOT WDK_VERSION)
+		# Get WDK version from ${WDK_DIR}/WDKVersion.txt
+		file(READ "${WDK_DIR}/WDKVersion.txt" WindowsTargetPlatformVersion)
+		string(REPLACE " " ";" WindowsTargetPlatformVersion ${WindowsTargetPlatformVersion})
+		list(LENGTH WindowsTargetPlatformVersion versionListLength)
+		if(NOT versionListLength EQUAL 3)
+			message(ERROR "Error reading content of WDKVersion.txt file")
+		endif(NOT versionListLength EQUAL 3)
+		list(GET WindowsTargetPlatformVersion 2 WindowsTargetPlatformVersion)
+	else()
+		set(WindowsTargetPlatformVersion ${WDK_VERSION})
+	endif()
 
 	message(STATUS "WDK Version is ${WindowsTargetPlatformVersion}")
 
 	set(WDK_INCLUDE_PATHS
-			"${WDK_DIR}/Win15/Include/${WindowsTargetPlatformVersion}/um"
-			"${WDK_DIR}/Win15/Include/${WindowsTargetPlatformVersion}/shared"
-			"${WDK_DIR}/Win15/Include/${WindowsTargetPlatformVersion}/km"
-			)
+			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
+			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
+			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
+	)
 	# Force to treat warnings as errors
 	if(NOT CMAKE_CXX_FLAGS MATCHES "/WX")
 		 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 	endif()
-	MESSAGE(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
+	message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 else()
 	if(IGDRCL_GCOV)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage --coverage")
