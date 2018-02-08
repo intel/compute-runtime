@@ -18,57 +18,44 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-if(KMDAF_HEADERS_DIR)
-  set(KMDAF_FILE_SUFFIX "")
-else()
-  set(KMDAF_FILE_SUFFIX "_stub")
-endif()
-
-set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
-  ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS}
+set(RUNTIME_SRCS_OS_INTERFACE_LINUX
+  ${RUNTIME_SRCS_OS_INTERFACE_LINUX}
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/d3d10_11_sharing_functions.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/d3d9_sharing_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_registry_reader.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/deferrable_deletion_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener${KMDAF_FILE_SUFFIX}.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/kmdaf_listener.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_32bit_memory.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_allocation.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_mapper.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_socket.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_32bit_memory.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_allocation.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_device_command_stream.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
   PARENT_SCOPE
 )

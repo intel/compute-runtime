@@ -66,21 +66,14 @@ add_subdirectory(instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX})
 add_subdirectory(kernel)
 add_subdirectory(mem_obj)
 add_subdirectory(memory_manager)
+add_subdirectory(os_interface)
 
-set (RUNTIME_SRCS_OS_INTERFACE
-  os_interface/32bit_memory.h
-  os_interface/os_library.h
-  os_interface/device_factory.h
-  os_interface/os_inc_base.h
-  os_interface/os_interface.h
-  os_interface/os_time.h
-  os_interface/os_time.cpp
-  os_interface/debug_settings_manager.cpp
-  os_interface/debug_settings_manager.h
-  os_interface/performance_counters.cpp
-  os_interface/performance_counters.h
-  os_interface/print.h
-)
+set(RUNTIME_SRCS_OS_INTERFACE ${RUNTIME_SRCS_OS_INTERFACE_BASE})
+if(WIN32)
+  list(APPEND RUNTIME_SRCS_OS_INTERFACE ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS})
+else()
+  list(APPEND RUNTIME_SRCS_OS_INTERFACE ${RUNTIME_SRCS_OS_INTERFACE_LINUX})
+endif()
 
 add_subdirectory(platform)
 add_subdirectory(program)
@@ -105,94 +98,11 @@ else()
 endif()
 
 if (WIN32)
-  list (APPEND RUNTIME_SRCS_OS_INTERFACE
-    os_interface/windows/api.cpp
-    os_interface/windows/d3d_sharing_functions.h
-    os_interface/windows/d3d9_sharing_functions.cpp
-    os_interface/windows/d3d10_11_sharing_functions.cpp
-    os_interface/windows/debug_registry_reader.cpp
-    os_interface/windows/deferrable_deletion_win.cpp
-    os_interface/windows/deferrable_deletion_win.h
-    os_interface/windows/device_command_stream.inl
-    os_interface/windows/device_factory.cpp
-    os_interface/windows/gdi_interface.cpp
-    os_interface/windows/gdi_interface.h
-    os_interface/windows/options.cpp
-    os_interface/windows/os_inc.h
-    os_interface/windows/os_interface.cpp
-    os_interface/windows/os_interface.h
-    os_interface/windows/os_library.cpp
-    os_interface/windows/os_library.h
-    os_interface/windows/os_time.cpp
-    os_interface/windows/os_time.h
-    os_interface/windows/registry_reader.h
-    os_interface/windows/thk_wrapper.h
-    os_interface/windows/wddm.cpp
-    os_interface/windows/wddm.h
-    os_interface/windows/wddm.inl
-    os_interface/windows/wddm_32bit_memory.cpp
-    os_interface/windows/wddm_allocation.h
-    os_interface/windows/wddm_device_command_stream.inl
-    os_interface/windows/wddm_device_command_stream.h
-    os_interface/windows/wddm_engine_mapper.h
-    os_interface/windows/wddm_engine_mapper.inl
-    os_interface/windows/wddm_memory_manager.cpp
-    os_interface/windows/wddm_memory_manager.h
-    os_interface/windows/windows_defs.h
-    os_interface/windows/windows_inc.cpp
-    os_interface/windows/windows_wrapper.h
-    os_interface/windows/performance_counters_win.cpp
-    os_interface/windows/performance_counters_win.h
-    os_interface/windows/print.cpp
-    os_interface/windows/driver_info.h
-    os_interface/windows/driver_info.cpp
-  )
-
   if ("${IGDRCL_OPTION__BITS}" STREQUAL "32" )
     set (CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
   endif ("${IGDRCL_OPTION__BITS}" STREQUAL "32")
 endif (WIN32)
 
-if (UNIX)
-  list (APPEND RUNTIME_SRCS_OS_INTERFACE
-    os_interface/linux/api.cpp
-    os_interface/linux/d3d_sharing_functions.h
-    os_interface/linux/debug_env_reader.cpp
-    os_interface/linux/device_command_stream.inl
-    os_interface/linux/device_factory.cpp
-    os_interface/linux/drm_32bit_memory.cpp
-    os_interface/linux/drm_allocation.h
-    os_interface/linux/drm_buffer_object.cpp
-    os_interface/linux/drm_buffer_object.h
-    os_interface/linux/drm_command_stream.inl
-    os_interface/linux/drm_command_stream.h
-    os_interface/linux/drm_engine_mapper.h
-    os_interface/linux/drm_engine_mapper.inl
-    os_interface/linux/drm_null_device.h
-    os_interface/linux/drm_gem_close_worker.cpp
-    os_interface/linux/drm_gem_close_worker.h
-    os_interface/linux/drm_memory_manager.cpp
-    os_interface/linux/drm_memory_manager.h
-    os_interface/linux/drm_neo.cpp
-    os_interface/linux/drm_neo.h
-    os_interface/linux/drm_neo_create.cpp
-    os_interface/linux/hw_info_config.cpp
-    os_interface/linux/hw_info_config.h
-    os_interface/linux/linux_inc.cpp
-    os_interface/linux/options.cpp
-    os_interface/linux/os_inc.h
-    os_interface/linux/os_interface.cpp
-    os_interface/linux/os_interface.h
-    os_interface/linux/os_library.cpp
-    os_interface/linux/os_library.h
-    os_interface/linux/os_time.cpp
-    os_interface/linux/os_time.h
-    os_interface/linux/performance_counters_linux.cpp
-    os_interface/linux/performance_counters_linux.h
-    os_interface/linux/print.cpp
-    os_interface/linux/driver_info.cpp
-  )
-endif (UNIX)
 
 include(enable_gens.cmake)
 
@@ -250,10 +160,6 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC $<TARGET_OBJECTS:${BIKSIM_LIB_NAME}>
   ${RUNTIME_SRCS}
 )
 
-if (WIN32)
-  add_subdirectory(os_interface/windows)
-endif(WIN32)
-
 target_link_libraries(${NEO_STATIC_LIB_NAME} elflib)
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
@@ -270,9 +176,14 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
 
 if(GTPIN_HEADERS_DIR)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
-	${GTPIN_HEADERS_DIR}
+    ${GTPIN_HEADERS_DIR}
   )
 endif(GTPIN_HEADERS_DIR)
+if(KMDAF_HEADERS_DIR)
+  target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
+    ${KMDAF_HEADERS_DIR}
+  )
+endif()
 
 if (WIN32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
@@ -327,34 +238,16 @@ set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
 target_include_directories(${NEO_STATIC_LIB_NAME} BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
 
 if(${GENERATE_EXECUTABLE})
-	set (RUNTIME_SRCS_DLL
-	  dll/options.cpp
-	  dll/create_command_stream.cpp
-	  dll/create_deferred_deleter.cpp
-	  dll/create_tbx_sockets.cpp
-	  helpers/abort.cpp
-	  helpers/debug_helpers.cpp
-	  gmm_helper/resource_info.cpp
-	  program/evaluate_unhandled_token.cpp
-	  "${DEF_FILE}"
-	)
+  add_subdirectory(dll)
 
-	list (APPEND RUNTIME_SRCS_DLL ${HW_SRC_LINK})
-
-	if (UNIX)
-		list (APPEND RUNTIME_SRCS_DLL dll/linux/drm_neo_create.cpp)
-	endif (UNIX)
-
-	if (WIN32)
-	  list (APPEND RUNTIME_SRCS_DLL os_interface/windows/wddm_create.cpp)
-	  list (APPEND RUNTIME_SRCS_DLL gmm_helper/page_table_mngr.cpp)
-	  list (APPEND RUNTIME_SRCS_DLL gmm_helper/gmm_memory.cpp)
-	endif (WIN32)
-
-	list (APPEND RUNTIME_SRCS_DLL api/api.cpp)
+  set(RUNTIME_SRCS_DLL ${RUNTIME_SRCS_DLL_BASE})
+  if(WIN32)
+    list(APPEND RUNTIME_SRCS_DLL ${RUNTIME_SRCS_DLL_WINDOWS})
+  else()
+    list(APPEND RUNTIME_SRCS_DLL ${RUNTIME_SRCS_DLL_LINUX})
+  endif()
 
 	if(GTPIN_HEADERS_DIR)
-		list (APPEND RUNTIME_SRCS_DLL gtpin/gtpin_init.cpp)
 		foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
 		  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
 		  if(${GENX_HAS_PLATFORMS})
@@ -445,7 +338,8 @@ if (WIN32)
   source_group("source files\\gmm_helper" FILES ${RUNTIME_SRCS_GMM_HELPER})
   source_group("source files\\gtpin" FILES ${RUNTIME_SRCS_GTPIN})
   source_group("source files\\mem_obj" FILES ${RUNTIME_SRCS_MEM_OBJ})
-  source_group("source files\\os_interface" FILES ${RUNTIME_SRCS_OS_INTERFACE})
+  source_group("source files\\os_interface" FILES ${RUNTIME_SRCS_OS_INTERFACE_BASE})
+  source_group("source files\\os_interface\\windows" FILES ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS})
   source_group("source files\\platform" FILES ${RUNTIME_SRCS_PLATFORM})
   source_group("source files\\program" FILES ${RUNTIME_SRCS_PROGRAM})
   source_group("source files\\sampler" FILES ${RUNTIME_SRCS_SAMPLER})
