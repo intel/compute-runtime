@@ -188,7 +188,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
 
         size_t sshUsed = blockedCommandsData->ssh->getUsed();
 
-        size_t expectedSizeSSH = pKernel->getNumberOfSurfaceStates() * sizeof(RENDER_SURFACE_STATE) + pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE);
+        size_t expectedSizeSSH = pKernel->getNumberOfBindingTableStates() * sizeof(RENDER_SURFACE_STATE) + pKernel->getKernelInfo().patchInfo.bindingTableState->Count * sizeof(BINDING_TABLE_STATE);
 
         if ((pKernel->requiresSshForBuffers()) || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
             EXPECT_EQ(expectedSizeSSH, sshUsed);

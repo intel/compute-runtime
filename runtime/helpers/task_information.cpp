@@ -26,6 +26,7 @@
 #include "runtime/command_queue/enqueue_common.h"
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -75,6 +76,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
+
+    gtpinNotifyPreFlushTask(&cmdQ);
 
     completionStamp = csr.flushTask(queueCommandStream,
                                     offset,
@@ -267,6 +270,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
+    gtpinNotifyPreFlushTask(&commandQueue);
+
     completionStamp = commandStreamReceiver.flushTask(queueCommandStream,
                                                       offset,
                                                       *dsh,
@@ -275,12 +280,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       ssh,
                                                       taskLevel,
                                                       dispatchFlags);
-
-    commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
-
     for (auto &surface : surfaces) {
         surface->setCompletionStamp(completionStamp, nullptr, nullptr);
     }
+    commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
 
     if (printfHandler) {
         printfHandler.get()->printEnqueueOutput();
@@ -308,6 +311,8 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(cmdQ.getDevice(), nullptr);
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
+
+    gtpinNotifyPreFlushTask(&cmdQ);
 
     completionStamp = csr.flushTask(queueCommandStream,
                                     offset,

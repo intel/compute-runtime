@@ -359,7 +359,6 @@ cl_int CL_API_CALL clReleaseContext(cl_context context) {
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->release();
-        gtpinNotifyContextDestroy(context);
         return CL_SUCCESS;
     }
 
@@ -1294,7 +1293,6 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
     Program *pProgram = nullptr;
     cl_kernel kernel = nullptr;
     cl_int retVal = CL_SUCCESS;
-
     DBG_LOG_INPUTS("clProgram", clProgram, "kernelName", kernelName);
 
     do {
@@ -1350,6 +1348,9 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                     program,
                     *kernelInfo,
                     nullptr);
+                if (kernels[ordinal] != nullptr) {
+                    gtpinNotifyKernelCreate(kernels[ordinal]);
+                }
             }
         }
 
@@ -2559,6 +2560,11 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
         return retVal;
     }
 
+    auto pKernel = castToObjectOrAbort<Kernel>(kernel);
+    TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
+
+    gtpinNotifyKernelSubmit(kernel, pCommandQueue);
+
     retVal = pCommandQueue->enqueueKernel(
         kernel,
         workDim,
@@ -3766,6 +3772,9 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
 
     if (errcodeRet) {
         *errcodeRet = retVal;
+    }
+    if (pClonedKernel != nullptr) {
+        gtpinNotifyKernelCreate(pClonedKernel);
     }
 
     return pClonedKernel;

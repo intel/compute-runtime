@@ -24,6 +24,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/os_interface/os_interface.h"
@@ -192,6 +193,7 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
         }
     }
     if (*getTagAddress() >= taskCountToWait) {
+        gtpinNotifyTaskCompletion(taskCountToWait);
         return true;
     }
     return false;

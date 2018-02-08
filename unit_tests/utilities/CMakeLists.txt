@@ -31,6 +31,7 @@ set(IGDRCL_SRCS_tests_utilities
     "${CMAKE_CURRENT_SOURCE_DIR}/timer_util_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/cpuinfo_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/vec_tests.cpp"
     PARENT_SCOPE
 )

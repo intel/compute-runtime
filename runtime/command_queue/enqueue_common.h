@@ -27,6 +27,7 @@
 #include "runtime/command_queue/dispatch_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event_builder.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/mem_obj/buffer.h"
@@ -548,6 +549,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.outOfOrderExecutionAllowed = (!eventBuilder.getEvent() && !multiDispatchInfo.begin()->getKernel()->isUsingSharedObjArgs()) || this->isOOQEnabled();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
+
+    gtpinNotifyPreFlushTask(this);
 
     CompletionStamp completionStamp = commandStreamReceiver.flushTask(
         commandStream,

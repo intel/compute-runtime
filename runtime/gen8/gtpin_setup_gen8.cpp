@@ -22,6 +22,7 @@
 
 #include "gtpin_ocl_interface.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
+#include "runtime/gtpin/gtpin_hw_helper.inl"
 
 namespace OCLRT {
 

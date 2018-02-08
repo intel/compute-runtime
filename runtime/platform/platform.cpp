@@ -25,6 +25,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "CL/cl_ext.h"
 #include "runtime/device/device.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/options.h"
@@ -191,6 +192,8 @@ void Platform::shutdown() {
 
     DeviceFactory::releaseDevices();
     std::string().swap(compilerExtensions);
+
+    gtpinNotifyPlatformShutdown();
 }
 
 Device *Platform::getDevice(size_t deviceOrdinal) {

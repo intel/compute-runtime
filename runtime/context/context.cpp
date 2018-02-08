@@ -25,6 +25,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/platform/platform.h"
@@ -71,6 +72,7 @@ Context::~Context() {
     if (memoryManager && memoryManager->isAsyncDeleterEnabled()) {
         memoryManager->getDeferredDeleter()->removeClient();
     }
+    gtpinNotifyContextDestroy((cl_context)this);
 }
 
 DeviceQueue *Context::getDefaultDeviceQueue() {

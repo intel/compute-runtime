@@ -214,7 +214,7 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenBlocksSurface
 
             Kernel *blockKernel = Kernel::create(pKernel->getProgram(), *pBlockInfo, nullptr);
             blockSSH = alignUp(blockSSH, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-            if (blockKernel->getNumberOfSurfaceStates() > 0) {
+            if (blockKernel->getNumberOfBindingTableStates() > 0) {
                 ASSERT_NE(nullptr, pBlockInfo->patchInfo.bindingTableState);
                 auto dstBlockBti = ptrOffset(blockSSH, pBlockInfo->patchInfo.bindingTableState->Offset);
                 EXPECT_EQ(0U, reinterpret_cast<uintptr_t>(dstBlockBti) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE);
@@ -222,7 +222,7 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenBlocksSurface
 
                 auto srcBlockBti = ptrOffset(pBlockInfo->heapInfo.pSsh, pBlockInfo->patchInfo.bindingTableState->Offset);
                 auto srcBindingTable = reinterpret_cast<BINDING_TABLE_STATE *>(srcBlockBti);
-                for (uint32_t i = 0; i < blockKernel->getNumberOfSurfaceStates(); ++i) {
+                for (uint32_t i = 0; i < blockKernel->getNumberOfBindingTableStates(); ++i) {
                     uint32_t dstSurfaceStatePointer = dstBindingTable[i].getSurfaceStatePointer();
                     uint32_t srcSurfaceStatePointer = srcBindingTable[i].getSurfaceStatePointer();
                     auto *dstSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(ssh->getBase(), dstSurfaceStatePointer));

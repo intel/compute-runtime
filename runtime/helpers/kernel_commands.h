@@ -76,16 +76,20 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel);
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
-                                                   const void *srcKernelSsh, size_t srcKernelSshSize);
+                                                   const void *srcKernelSsh, size_t srcKernelSshSize,
+                                                   size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo) {
         return pushBindingTableAndSurfaceStates(dstHeap, srcKernelInfo, srcKernelInfo.heapInfo.pSsh,
-                                                srcKernelInfo.heapInfo.pKernelHeader->SurfaceStateHeapSize);
+                                                srcKernelInfo.heapInfo.pKernelHeader->SurfaceStateHeapSize,
+                                                (srcKernelInfo.patchInfo.bindingTableState != nullptr) ? srcKernelInfo.patchInfo.bindingTableState->Count : 0,
+                                                (srcKernelInfo.patchInfo.bindingTableState != nullptr) ? srcKernelInfo.patchInfo.bindingTableState->Offset : 0);
     }
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
         return pushBindingTableAndSurfaceStates(dstHeap, srcKernel.getKernelInfo(),
-                                                srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize());
+                                                srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
+                                                srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
     }
 
     static size_t sendIndirectState(

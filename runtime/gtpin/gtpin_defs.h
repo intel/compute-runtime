@@ -20,30 +20,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "config.h"
 #include "gtpin_ocl_interface.h"
-#include "runtime/gtpin/gtpin_hw_helper.h"
-#include "runtime/gtpin/gtpin_hw_helper.inl"
+#include "CL/cl.h"
+#include "runtime/command_queue/command_queue.h"
+#include "runtime/kernel/kernel.h"
 
 namespace OCLRT {
 
-extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+struct GTPinKernelExec {
+    Kernel *pKernel;
+    cl_mem gtpinResource;
+    CommandQueue *pCommandQueue;
+    gtpin::command_buffer_handle_t commandBuffer;
+    uint32_t taskCount;
+    bool isTaskCountValid;
+    bool isResourceResident;
 
-typedef SKLFamily Family;
-static const auto gfxFamily = IGFX_GEN9_CORE;
-
-template <>
-uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
-    return gtpin::GTPIN_GEN_9;
-}
-
-template class GTPinHwHelperHw<Family>;
-
-struct GTPinEnableGen9 {
-    GTPinEnableGen9() {
-        gtpinHwHelperFactory[gfxFamily] = &GTPinHwHelperHw<Family>::get();
+    GTPinKernelExec() {
+        pKernel = nullptr;
+        gtpinResource = nullptr;
+        pCommandQueue = nullptr;
+        commandBuffer = nullptr;
+        taskCount = 0;
+        isTaskCountValid = false;
+        isResourceResident = false;
     }
 };
+typedef struct GTPinKernelExec gtpinkexec_t;
 
-static GTPinEnableGen9 gtpinEnable;
-
-} // namespace OCLRT
+} // OCLRT

@@ -265,7 +265,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
-                                                                         const void *srcKernelSsh, size_t srcKernelSshSize) {
+                                                                         const void *srcKernelSsh, size_t srcKernelSshSize,
+                                                                         size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
@@ -274,9 +275,8 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
         // according to compiler, kernel does not reference BTIs to stateful surfaces, so there's nothing to patch
         return 0;
     }
-    size_t sshSize = srcKernelInfo.heapInfo.pKernelHeader->SurfaceStateHeapSize;
-    DEBUG_BREAK_IF(!((sshSize <= srcKernelSshSize) && (srcKernelSsh != nullptr)));
-    uint32_t localBtiOffset = srcKernelInfo.patchInfo.bindingTableState->Offset;
+    size_t sshSize = srcKernelSshSize;
+    DEBUG_BREAK_IF(srcKernelSsh == nullptr);
 
     auto srcSurfaceState = srcKernelSsh;
     // Align the heap and allocate space for new ssh data
@@ -289,21 +289,21 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
         // nothing to patch, we're at the start of heap (which is assumed to be the surface state base address)
         // we need to simply copy the ssh (including BTIs from compiler)
         memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, sshSize);
-        return localBtiOffset;
+        return offsetOfBindingTable;
     }
 
     // We can copy-over the surface states, but BTIs will need to be patched
-    memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, localBtiOffset);
+    memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, offsetOfBindingTable);
 
     uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getBase()));
 
     // march over BTIs and offset the pointers based on surface state base address
-    auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, localBtiOffset));
+    auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
     DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
-    auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, localBtiOffset));
+    auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, offsetOfBindingTable));
     BINDING_TABLE_STATE bti;
     bti.init(); // init whole DWORD - i.e. not just the SurfaceStatePointer bits
-    for (uint32_t i = 0, e = srcKernelInfo.patchInfo.bindingTableState->Count; i != e; ++i) {
+    for (uint32_t i = 0, e = (uint32_t)numberOfBindingTableStates; i != e; ++i) {
         uint32_t localSurfaceStateOffset = srcBtiTableBase[i].getSurfaceStatePointer();
         uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
         bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits

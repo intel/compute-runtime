@@ -26,9 +26,11 @@ if(GTPIN_HEADERS_DIR)
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_defs.h
     PARENT_SCOPE
   )
 else()

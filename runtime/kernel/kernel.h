@@ -156,9 +156,15 @@ class Kernel : public BaseObject<_cl_kernel> {
     size_t getKernelHeapSize() const;
     size_t getSurfaceStateHeapSize() const;
     size_t getDynamicStateHeapSize() const;
-    size_t getNumberOfSurfaceStates() const;
+    size_t getNumberOfBindingTableStates() const;
+    size_t getBindingTableOffset() const {
+        return localBindingTableOffset;
+    }
+
+    void resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset);
 
     void substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize);
+    bool isKernelHeapSubstituted() const;
     uint64_t getKernelId() const;
     void setKernelId(uint64_t newKernelId);
 
@@ -434,6 +440,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     std::vector<KernelArgHandler> kernelArgHandlers;
     std::vector<GraphicsAllocation *> kernelSvmGfxAllocations;
 
+    size_t numberOfBindingTableStates;
+    size_t localBindingTableOffset;
     char *pSshLocal;
     uint32_t sshLocalSize;
 

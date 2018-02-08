@@ -486,7 +486,7 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
         // Initialize binding table state pointers with pattern
-        EXPECT_EQ(numSurfaces, pKernel->getNumberOfSurfaceStates());
+        EXPECT_EQ(numSurfaces, pKernel->getNumberOfBindingTableStates());
 
         const size_t localWorkSizes[3]{256, 1, 1};
 
@@ -566,7 +566,7 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiri
     auto usedBefore = ssh.getUsed();
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfSurfaceStates();
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
@@ -613,10 +613,13 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForNoSurfaces) {
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     // Initialize binding table state pointers with pattern
-    auto numSurfaceStates = pKernel->getNumberOfSurfaceStates();
+    auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
-    auto dstBindingTablePointer = KernelCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernel);
+    auto dstBindingTablePointer = KernelCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernelInfo);
+    EXPECT_EQ(0u, dstBindingTablePointer);
+
+    dstBindingTablePointer = KernelCommandsHelper<FamilyType>::pushBindingTableAndSurfaceStates(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     SPatchBindingTableState bindingTableState;

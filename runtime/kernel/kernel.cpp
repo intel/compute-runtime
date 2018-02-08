@@ -30,6 +30,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/execution_model/device_enqueue.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -94,6 +95,8 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Devic
       context(nullptr),
       device(deviceArg),
       kernelInfo(kernelInfoArg),
+      numberOfBindingTableStates(0),
+      localBindingTableOffset(0),
       pSshLocal(nullptr),
       sshLocalSize(0),
       crossThreadData(nullptr),
@@ -245,6 +248,8 @@ cl_int Kernel::initialize() {
             // copy the ssh into our local copy
             memcpy_s(pSshLocal, sshLocalSize, heapInfo.pSsh, sshLocalSize);
         }
+        numberOfBindingTableStates = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Count : 0;
+        localBindingTableOffset = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Offset : 0;
 
         // patch crossthread data and ssh with inline surfaces, if necessary
         privateSurfaceSize = patchInfo.pAllocateStatelessPrivateSurface
@@ -690,6 +695,11 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     *pKernelHeap = newKernelHeap;
     SKernelBinaryHeaderCommon *pHeader = const_cast<SKernelBinaryHeaderCommon *>(pKernelInfo->heapInfo.pKernelHeader);
     pHeader->KernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
+    pKernelInfo->isKernelHeapSubstituted = true;
+}
+
+bool Kernel::isKernelHeapSubstituted() const {
+    return kernelInfo.isKernelHeapSubstituted;
 }
 
 uint64_t Kernel::getKernelId() const {
@@ -721,16 +731,20 @@ const void *Kernel::getDynamicStateHeap() const {
 
 size_t Kernel::getSurfaceStateHeapSize() const {
     return kernelInfo.usesSsh
-               ? kernelInfo.heapInfo.pKernelHeader->SurfaceStateHeapSize
+               ? sshLocalSize
                : 0;
 }
 
-size_t Kernel::getNumberOfSurfaceStates() const {
-    const auto &patchInfo = kernelInfo.patchInfo;
-    if (patchInfo.bindingTableState == nullptr) {
-        return 0;
-    }
-    return patchInfo.bindingTableState->Count;
+size_t Kernel::getNumberOfBindingTableStates() const {
+    return numberOfBindingTableStates;
+}
+
+void Kernel::resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset) {
+    delete[] pSshLocal;
+    pSshLocal = reinterpret_cast<char *>(pNewSsh);
+    sshLocalSize = static_cast<uint32_t>(newSshSize);
+    numberOfBindingTableStates = newBindingTableCount;
+    localBindingTableOffset = newBindingTableOffset;
 }
 
 uint32_t Kernel::getScratchSizeValueToProgramMediaVfeState(int scratchSize) {
@@ -927,6 +941,8 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     }
 
     makeArgsResident(commandStreamReceiver);
+
+    gtpinNotifyMakeResident(this, &commandStreamReceiver);
 }
 
 void Kernel::getResidency(std::vector<Surface *> &dst) {
@@ -964,6 +980,8 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
             }
         }
     }
+
+    gtpinNotifyUpdateResidencyList(this, &dst);
 }
 
 bool Kernel::requiresCoherency() {

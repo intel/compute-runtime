@@ -23,6 +23,7 @@
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/device/device.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
@@ -377,6 +378,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         engineType};
 
     this->taskLevel += levelClosed ? 1 : 0;
+
+    gtpinNotifyFlushTask(completionStamp.taskCount);
+
     return completionStamp;
 }
 

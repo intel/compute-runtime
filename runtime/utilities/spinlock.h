@@ -20,30 +20,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtpin_ocl_interface.h"
-#include "runtime/gtpin/gtpin_hw_helper.h"
-#include "runtime/gtpin/gtpin_hw_helper.inl"
+#pragma once
+
+#include <atomic>
 
 namespace OCLRT {
 
-extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
-
-typedef SKLFamily Family;
-static const auto gfxFamily = IGFX_GEN9_CORE;
-
-template <>
-uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
-    return gtpin::GTPIN_GEN_9;
-}
-
-template class GTPinHwHelperHw<Family>;
-
-struct GTPinEnableGen9 {
-    GTPinEnableGen9() {
-        gtpinHwHelperFactory[gfxFamily] = &GTPinHwHelperHw<Family>::get();
+class SpinLock {
+  public:
+    void enter(std::atomic_flag &spinLock) {
+        while (spinLock.test_and_set(std::memory_order_acquire)) {
+        };
+    }
+    void leave(std::atomic_flag &spinLock) {
+        spinLock.clear(std::memory_order_release);
     }
 };
 
-static GTPinEnableGen9 gtpinEnable;
-
-} // namespace OCLRT
+} // OCLRT

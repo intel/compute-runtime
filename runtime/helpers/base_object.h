@@ -107,6 +107,12 @@ class TakeOwnershipWrapper {
         : obj(obj) {
         this->locked = obj.takeOwnership(true);
     }
+    TakeOwnershipWrapper(T &obj, bool lockImmediately)
+        : obj(obj) {
+        if (lockImmediately) {
+            this->locked = obj.takeOwnership(true);
+        }
+    }
     ~TakeOwnershipWrapper() {
         if (locked) {
             obj.releaseOwnership();

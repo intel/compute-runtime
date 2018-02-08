@@ -324,6 +324,20 @@ TEST(BaseObjectTest, takeOwnership) {
     EXPECT_FALSE(buffer.hasOwnership());
 }
 
+TEST(BaseObjectTest, takeOwnershipWrapper) {
+    MockBuffer buffer;
+    {
+        TakeOwnershipWrapper<Buffer> bufferOwnership(buffer, false);
+        EXPECT_FALSE(buffer.hasOwnership());
+    }
+    {
+        TakeOwnershipWrapper<Buffer> bufferOwnership(buffer, true);
+        EXPECT_TRUE(buffer.hasOwnership());
+        bufferOwnership.unlock();
+        EXPECT_FALSE(buffer.hasOwnership());
+    }
+}
+
 TYPED_TEST(BaseObjectTests, getCond) {
     TypeParam *object = new TypeParam;
 
