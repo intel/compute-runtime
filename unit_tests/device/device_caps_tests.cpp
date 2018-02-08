@@ -213,7 +213,7 @@ TEST(DeviceGetCapsSimple, givenDeviceWhenEUCountIsZeroThenmaxWgsIsDefault) {
 TEST(Device_GetCaps, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {
     DebugManagerStateRestore dbgRestorer;
     {
-        DebugManager.flags.ForcePreemptionMode.set(0);
+        DebugManager.flags.ForcePreemptionMode.set(-1);
         auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
         EXPECT_TRUE(device->getHardwareInfo().capabilityTable.defaultPreemptionMode ==
                     device->getPreemptionMode());

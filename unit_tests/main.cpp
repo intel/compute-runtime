@@ -159,7 +159,7 @@ std::string getRunPath(char *argv0) {
 }
 
 extern int preemptionModeFromDebugManager;
-int preemptionModeFromDebugManager = -1;
+int preemptionModeFromDebugManager = -2;
 
 int main(int argc, char **argv) {
     int retVal = 0;

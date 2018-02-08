@@ -310,7 +310,7 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 }
 
 TEST(PreemptionTest, defaultMode) {
-    EXPECT_EQ(0, preemptionModeFromDebugManager);
+    EXPECT_EQ(-1, preemptionModeFromDebugManager);
 }
 
 TEST(PreemptionTest, whenPreemptionModeIsNotMidThreadThenInstructionHeapSipKernelReservedSizeIsEmpty) {

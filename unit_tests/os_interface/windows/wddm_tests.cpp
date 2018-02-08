@@ -577,7 +577,7 @@ HWTEST_F(WddmTest, dontCallCreateContextBeforeConfigureDeviceAddressSpace) {
 }
 
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
-    DebugManager.flags.ForcePreemptionMode.set(0); // dont force
+    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 1u;
     createAndInitWddm<FamilyType>(1u);
@@ -585,7 +585,7 @@ HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhen
 }
 
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(0); // dont force
+    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
     createAndInitWddm<FamilyType>(1u);
@@ -593,7 +593,7 @@ HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhe
 }
 
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(0); // dont force
+    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 0u;
     createAndInitWddm<FamilyType>(0u);
@@ -601,7 +601,7 @@ HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhen
 }
 
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(0); // dont force
+    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
     createAndInitWddm<FamilyType>(0u);

@@ -138,7 +138,7 @@ bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const Linear
 }
 
 PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {
-    return DebugManager.flags.ForcePreemptionMode.get() == 0
+    return DebugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode
                : static_cast<PreemptionMode>(DebugManager.flags.ForcePreemptionMode.get());
 }

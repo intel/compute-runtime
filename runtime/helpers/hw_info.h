@@ -31,10 +31,11 @@ namespace OCLRT {
 
 enum class PreemptionMode : uint32_t {
     // Keep in sync with ForcePreemptionMode debug variable
+    Initial = 0,
     Disabled = 1,
     MidBatch,
     ThreadGroup,
-    MidThread
+    MidThread,
 };
 
 struct WhitelistedRegisters {

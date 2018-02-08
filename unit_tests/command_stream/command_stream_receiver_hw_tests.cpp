@@ -166,6 +166,7 @@ struct UltCommandStreamReceiverTest
 
         auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<GfxFamily>();
         commandStreamReceiver.isPreambleSent = true;
+        commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.overrideMediaVFEStateDirty(false);
         commandStreamReceiver.latestSentStatelessMocsConfig = CacheSettings::l3CacheOn;
         commandStreamReceiver.lastSentL3Config = L3Config;
@@ -373,6 +374,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredTh
     waTable = const_cast<WorkaroundTable *>(pDevice->getWaTable());
 
     commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.setSamplerCacheFlushRequired(CommandStreamReceiver::SamplerCacheFlushState::samplerCacheFlushNotRequired);
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
@@ -761,9 +763,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
+    size_t sizeNeededForPreemption = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.lastPreemptionMode);
     size_t sizeNeeded = sizeNeededForPreamble +
                         sizeNeededForStateBaseAddress +
                         sizeNeededForPipeControl +
+                        sizeNeededForPreemption +
                         sizeof(MI_BATCH_BUFFER_END);
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
@@ -794,9 +798,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
+    size_t sizeNeededForPreemption = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.lastPreemptionMode);
     size_t sizeNeeded = sizeNeededForPreamble +
                         sizeNeededForStateBaseAddress +
                         sizeNeededForPipeControl +
+                        sizeNeededForPreemption +
                         sizeof(MI_BATCH_BUFFER_END);
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
@@ -1958,6 +1964,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     // Force a PIPE_CONTROL through a taskLevel transition
     taskLevel = commandStreamReceiver.peekTaskLevel() + 1;
     commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.lastMediaSamplerConfig = 0;
     commandStreamReceiver.lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
 

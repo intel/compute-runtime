@@ -386,7 +386,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     bool oldMemsetAllocationsFlag = MemoryManagement::memsetNewAllocations;
     MemoryManagement::memsetNewAllocations = true;
 
-    DebugManager.flags.ForcePreemptionMode.set(0); // allow default preemption mode
+    DebugManager.flags.ForcePreemptionMode.set(-1); // allow default preemption mode
     auto deviceWithDefaultPreemptionMode = std::unique_ptr<MockDevice>(DeviceHelper<>::create(nullptr));
     this->pDevice->setPreemptionMode(deviceWithDefaultPreemptionMode->getPreemptionMode());
     this->pDevice->getCommandStreamReceiver().setPreemptionCsrAllocation(deviceWithDefaultPreemptionMode->getPreemptionAllocation());
