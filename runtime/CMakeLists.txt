@@ -38,47 +38,10 @@ if(NOT (TARGET ${BIKSIM_LIB_NAME}))
   add_subdirectory(builtin_kernels_simulation)
 endif(NOT (TARGET ${BIKSIM_LIB_NAME}))
 
-if(NOT (TARGET ${SCHEDULER_BINARY_LIB_NAME}))
-  add_subdirectory("scheduler")
-endif(NOT (TARGET ${SCHEDULER_BINARY_LIB_NAME}))
-
-if(NOT (TARGET ${BUILTINS_BINARIES_LIB_NAME}))
-  add_subdirectory("built_ins")
-endif(NOT (TARGET ${BUILTINS_BINARIES_LIB_NAME}))
-
 add_subdirectory(accelerators)
 add_subdirectory(api)
 add_subdirectory(aub_mem_dump)
-
-set (RUNTIME_SRCS_BUILT_INS
-  built_ins/built_ins_storage.cpp
-  built_ins/built_ins.cpp
-  built_ins/built_ins.h
-  built_ins/sip.cpp
-  built_ins/sip.h
-  built_ins/vme_dispatch_builder.h
-)
-
-set (RUNTIME_SRCS_BUILT_IN_KERNELS
-  built_ins/kernels/copy_buffer_rect.igdrcl_built_in
-  built_ins/kernels/copy_buffer_to_buffer.igdrcl_built_in
-  built_ins/kernels/copy_buffer_to_image3d.igdrcl_built_in
-  built_ins/kernels/copy_image3d_to_buffer.igdrcl_built_in
-  built_ins/kernels/copy_image_to_image1d.igdrcl_built_in
-  built_ins/kernels/copy_image_to_image2d.igdrcl_built_in
-  built_ins/kernels/copy_image_to_image3d.igdrcl_built_in
-  built_ins/kernels/fill_buffer.igdrcl_built_in
-  built_ins/kernels/fill_image1d.igdrcl_built_in
-  built_ins/kernels/fill_image2d.igdrcl_built_in
-  built_ins/kernels/fill_image3d.igdrcl_built_in
-  built_ins/kernels/vme_block_motion_estimate_intel.igdrcl_built_in
-  built_ins/kernels/vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in
-  built_ins/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in
-  built_ins/kernels/vebox_ve_enhance_intel.igdrcl_built_in
-  built_ins/kernels/vebox_ve_dn_enhance_intel.igdrcl_built_in
-  built_ins/kernels/vebox_ve_dn_di_enhance_intel.igdrcl_built_in
-)
-
+add_subdirectory(built_ins)
 add_subdirectory(command_queue)
 add_subdirectory(command_stream)
 add_subdirectory(commands)
@@ -128,13 +91,7 @@ set (RUNTIME_SRCS_OS_INTERFACE
 add_subdirectory(platform)
 add_subdirectory(program)
 add_subdirectory(sampler)
-
-list (APPEND RUNTIME_SRCS_SCHEDULER
-  scheduler/scheduler_kernel.cpp
-  scheduler/scheduler_kernel.h
-  scheduler/CMakeLists.txt
-)
-
+add_subdirectory(scheduler)
 add_subdirectory(sharings)
 add_subdirectory(sku_info)
 
