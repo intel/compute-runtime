@@ -137,6 +137,43 @@ TEST_F(CommandStreamReceiverTest, createAllocationAndHandleResidency) {
     EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
 }
 
+TEST_F(CommandStreamReceiverTest, givenCommandStreamerWhenAllocationIsNotAddedToListThenCallerMustFreeAllocation) {
+    void *hostPtr = reinterpret_cast<void *>(0x1212341);
+    auto size = 17262u;
+
+    GraphicsAllocation *graphicsAllocation = commandStreamReceiver->createAllocationAndHandleResidency(hostPtr, size, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(hostPtr, graphicsAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, graphicsAllocation->getUnderlyingBufferSize());
+
+    commandStreamReceiver->getMemoryManager()->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamerWhenPtrAndSizeMeetL3CriteriaThenCsrEnableL3) {
+    void *hostPtr = reinterpret_cast<void *>(0xF000);
+    auto size = 0x2000u;
+
+    GraphicsAllocation *graphicsAllocation = commandStreamReceiver->createAllocationAndHandleResidency(hostPtr, size);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_FALSE(csr.disableL3Cache);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCommandStreamerWhenPtrAndSizeDoNotMeetL3CriteriaThenCsrDisableL3) {
+    void *hostPtr = reinterpret_cast<void *>(0xF001);
+    auto size = 0x2001u;
+
+    GraphicsAllocation *graphicsAllocation = commandStreamReceiver->createAllocationAndHandleResidency(hostPtr, size);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_TRUE(csr.disableL3Cache);
+}
+
 TEST_F(CommandStreamReceiverTest, memoryManagerHasAccessToCSR) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
     EXPECT_EQ(commandStreamReceiver, memoryManager->csr);

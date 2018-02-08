@@ -80,12 +80,12 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     memoryManager->csr = commandStreamReceiver;
 }
 
-OCLRT::FailMemoryManager::FailMemoryManager() : MemoryManager(false) {
+OCLRT::FailMemoryManager::FailMemoryManager() : MockMemoryManager() {
     agnostic = nullptr;
     fail = 0;
 }
 
-OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MemoryManager(false) {
+OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MockMemoryManager() {
     allocations.reserve(fail);
     agnostic = new OsAgnosticMemoryManager(false);
     this->fail = fail;

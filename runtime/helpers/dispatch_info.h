@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -87,9 +87,6 @@ struct MultiDispatchInfo {
         for (MemObj *redescribedSurface : redescribedSurfaces) {
             redescribedSurface->release();
         }
-        for (Surface *usedSurface : usedSurfaces) {
-            delete usedSurface;
-        }
     }
 
     MultiDispatchInfo() {
@@ -152,25 +149,8 @@ struct MultiDispatchInfo {
         redescribedSurfaces.push_back(memObj.release());
     }
 
-    StackVec<Surface *, 2> &getUsedSurfaces() {
-        return usedSurfaces;
-    }
-
-    void pushUsedSurface(std::unique_ptr<Surface> surface) {
-        usedSurfaces.push_back(surface.release());
-    }
-
-    HostPtrSurface *getHostPtrSurface() {
-        HostPtrSurface *hpt = nullptr;
-        for (Surface *usedSurface : usedSurfaces) {
-            hpt = reinterpret_cast<HostPtrSurface *>(usedSurface);
-        }
-        return hpt;
-    }
-
   protected:
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
-    StackVec<Surface *, 2> usedSurfaces;
 };
-}
+} // namespace OCLRT

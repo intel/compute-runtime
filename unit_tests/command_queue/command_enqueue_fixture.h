@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,8 +21,10 @@
  */
 
 #pragma once
+#include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
@@ -78,4 +80,36 @@ struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
         CommandStreamFixture::TearDown();
     }
 };
-}
+
+struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBaseFixture {
+    void SetUp() override {
+        CommandEnqueueBaseFixture::SetUp();
+        failMemManager.reset(new FailMemoryManager());
+
+        BufferDefaults::context = context;
+        Image2dDefaults::context = context;
+        buffer.reset(BufferHelper<>::create());
+        image.reset(ImageHelper<Image2dDefaults>::create());
+        ptr = static_cast<void *>(array);
+        oldMemManager = pDevice->getMemoryManager();
+        pDevice->getCommandStreamReceiver().setMemoryManager(failMemManager.get());
+    }
+
+    void TearDown() override {
+        pDevice->getCommandStreamReceiver().setMemoryManager(oldMemManager);
+        buffer.reset(nullptr);
+        image.reset(nullptr);
+        BufferDefaults::context = nullptr;
+        Image2dDefaults::context = nullptr;
+        CommandEnqueueBaseFixture::TearDown();
+    }
+
+    std::unique_ptr<Buffer> buffer;
+    std::unique_ptr<Image> image;
+    std::unique_ptr<FailMemoryManager> failMemManager;
+    char array[MemoryConstants::cacheLineSize];
+    void *ptr;
+    MemoryManager *oldMemManager;
+};
+
+} // namespace OCLRT

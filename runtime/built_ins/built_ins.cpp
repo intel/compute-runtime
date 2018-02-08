@@ -427,18 +427,6 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferRect> : public BuiltinDispatchI
         kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         kernelNoSplit3DBuilder.bake(multiDispatchInfo);
 
-        // Store source and destination surfaces for residency purposes
-        if (operationParams.srcMemObj) {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.srcMemObj)));
-        } else {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new HostPtrSurface(operationParams.srcPtr, hostPtrSize)));
-        }
-        if (operationParams.dstMemObj) {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.dstMemObj)));
-        } else {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new HostPtrSurface(operationParams.dstPtr, hostPtrSize)));
-        }
-
         return true;
     }
 
@@ -601,14 +589,6 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d> : public BuiltinDisp
         kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         kernelNoSplit3DBuilder.bake(multiDispatchInfo);
 
-        // Store source and destination surfaces for residency purposes
-        if (operationParams.srcMemObj) {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.srcMemObj)));
-        } else {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<HostPtrSurface>(new HostPtrSurface(operationParams.srcPtr, hostPtrSize)));
-        }
-        multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.dstMemObj)));
-
         return true;
     }
 
@@ -695,14 +675,6 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDisp
         kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         kernelNoSplit3DBuilder.bake(multiDispatchInfo);
 
-        // Store source and destination surfaces for residency purposes
-        multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.srcMemObj)));
-        if (operationParams.dstMemObj) {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(operationParams.dstMemObj)));
-        } else {
-            multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new HostPtrSurface(operationParams.dstPtr, hostPtrSize)));
-        }
-
         return true;
     }
 
@@ -768,10 +740,6 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImageToImage3d> : public BuiltinDispa
         kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         kernelNoSplit3DBuilder.bake(multiDispatchInfo);
 
-        // Store source and destination surfaces for residency purposes
-        multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(srcImage)));
-        multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(dstImage)));
-
         return true;
     }
 
@@ -829,9 +797,6 @@ class BuiltInOp<HWFamily, EBuiltInOps::FillImage3d> : public BuiltinDispatchInfo
         // Set-up work sizes
         kernelNoSplit3DBuilder.setDispatchGeometry(operationParams.size, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
         kernelNoSplit3DBuilder.bake(multiDispatchInfo);
-
-        // Store destination surface for residency purposes
-        multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(image)));
 
         return true;
     }

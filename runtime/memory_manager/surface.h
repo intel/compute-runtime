@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,34 +49,47 @@ class NullSurface : public Surface {
 
 class HostPtrSurface : public Surface {
   public:
-    HostPtrSurface(void *ptr, size_t size) : memory_pointer(ptr), surface_size(size) {
+    HostPtrSurface(void *ptr, size_t size) : memoryPointer(ptr), surfaceSize(size) {
+        DEBUG_BREAK_IF(!ptr);
+        gfxAllocation = nullptr;
+    }
+
+    HostPtrSurface(void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
         DEBUG_BREAK_IF(!ptr);
     }
     ~HostPtrSurface() override = default;
 
     void makeResident(CommandStreamReceiver &csr) override {
-        allocation = csr.createAllocationAndHandleResidency(memory_pointer, surface_size);
-        DEBUG_BREAK_IF(!allocation);
+        DEBUG_BREAK_IF(!gfxAllocation);
+        csr.makeResidentHostPtrAllocation(gfxAllocation);
     }
     void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override {
-        DEBUG_BREAK_IF(!allocation);
-        allocation->taskCount = cs.taskCount;
+        DEBUG_BREAK_IF(!gfxAllocation);
+        gfxAllocation->taskCount = cs.taskCount;
     }
     Surface *duplicate() override {
-        return new HostPtrSurface(this->memory_pointer, this->surface_size);
+        return new HostPtrSurface(this->memoryPointer, this->surfaceSize, this->gfxAllocation);
     };
 
     void *getMemoryPointer() const {
-        return memory_pointer;
+        return memoryPointer;
     }
     size_t getSurfaceSize() const {
-        return surface_size;
+        return surfaceSize;
+    }
+
+    void setAllocation(GraphicsAllocation *allocation) {
+        this->gfxAllocation = allocation;
+    }
+
+    GraphicsAllocation *getAllocation() {
+        return gfxAllocation;
     }
 
   protected:
-    GraphicsAllocation *allocation;
-    void *memory_pointer;
-    size_t surface_size;
+    void *memoryPointer;
+    size_t surfaceSize;
+    GraphicsAllocation *gfxAllocation;
 };
 
 class MemObjSurface : public Surface {
@@ -123,4 +136,4 @@ class GeneralSurface : public Surface {
   protected:
     GraphicsAllocation *gfxAllocation;
 };
-}
+} // namespace OCLRT

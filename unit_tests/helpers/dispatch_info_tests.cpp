@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -174,22 +174,7 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoEmpty) {
     EXPECT_EQ(0u, multiDispatchInfo.getRequiredScratchSize());
     EXPECT_FALSE(multiDispatchInfo.usesSlm());
     EXPECT_FALSE(multiDispatchInfo.usesStatelessPrintfSurface());
-    EXPECT_EQ(nullptr, multiDispatchInfo.getHostPtrSurface());
     EXPECT_EQ(0u, multiDispatchInfo.getRedescribedSurfaces().size());
-}
-
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithHostPtrSurface) {
-    MultiDispatchInfo multiDispatchInfo;
-
-    auto ptr = new char[10];
-    HostPtrSurface *hps = new HostPtrSurface(ptr, 10);
-    multiDispatchInfo.pushUsedSurface(std::unique_ptr<HostPtrSurface>(hps));
-
-    EXPECT_NE(nullptr, multiDispatchInfo.getHostPtrSurface());
-    EXPECT_EQ(ptr, multiDispatchInfo.getHostPtrSurface()->getMemoryPointer());
-    EXPECT_EQ(10u, multiDispatchInfo.getHostPtrSurface()->getSurfaceSize());
-
-    delete[] ptr;
 }
 
 TEST_F(DispatchInfoTest, MultiDispatchInfoWithRedescribedSurfaces) {
@@ -202,22 +187,6 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithRedescribedSurfaces) {
     multiDispatchInfo.pushRedescribedMemObj(std::unique_ptr<MemObj>(imageRedescribed));
 
     EXPECT_EQ(1u, multiDispatchInfo.getRedescribedSurfaces().size());
-}
-
-TEST_F(DispatchInfoTest, MultiDispatchInfoWithUsedSurfaces) {
-    MultiDispatchInfo multiDispatchInfo;
-
-    auto ptr = new char[10];
-    multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new HostPtrSurface(ptr, 10)));
-
-    auto image = Image2dHelper<>::create(pContext);
-    ASSERT_NE(nullptr, image);
-    multiDispatchInfo.pushUsedSurface(std::unique_ptr<Surface>(new MemObjSurface(image)));
-
-    EXPECT_EQ(2u, multiDispatchInfo.getUsedSurfaces().size());
-
-    image->release();
-    delete[] ptr;
 }
 
 TEST_F(DispatchInfoTest, MultiDispatchInfoWithNoGeometry) {

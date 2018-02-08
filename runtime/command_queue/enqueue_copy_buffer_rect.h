@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,6 +52,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
                                                                           this->getContext(), this->getDevice());
     builder.takeOwnership(this->context);
 
+    MemObjSurface srcBufferSurf(srcBuffer);
+    MemObjSurface dstBufferSurf(dstBuffer);
+    Surface *surfaces[] = {&srcBufferSurf, &dstBufferSurf};
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcMemObj = srcBuffer;
     dc.dstMemObj = dstBuffer;
@@ -65,8 +69,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     builder.buildDispatchInfos(dispatchInfo, dc);
 
     enqueueHandler<CL_COMMAND_COPY_BUFFER_RECT>(
-        dispatchInfo.getUsedSurfaces().begin(),
-        dispatchInfo.getUsedSurfaces().size(),
+        surfaces,
         false,
         dispatchInfo,
         numEventsInWaitList,
@@ -77,4 +80,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
 
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

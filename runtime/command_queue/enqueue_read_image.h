@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -83,9 +83,27 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
 
     builder.takeOwnership(this->context);
 
+    size_t hostPtrSize = calculateHostPtrSizeForImage(const_cast<size_t *>(region), inputRowPitch, inputSlicePitch, srcImage);
+    void *dstPtr = ptr;
+
+    MemObjSurface srcImgSurf(srcImage);
+    HostPtrSurface hostPtrSurf(dstPtr, hostPtrSize);
+    Surface *surfaces[] = {&srcImgSurf, &hostPtrSurf};
+
+    if (region[0] != 0 &&
+        region[1] != 0 &&
+        region[2] != 0) {
+        bool status = createAllocationForHostSurface(hostPtrSurf);
+        if (!status) {
+            builder.releaseOwnership();
+            return CL_OUT_OF_RESOURCES;
+        }
+        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+    }
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcMemObj = srcImage;
-    dc.dstPtr = ptr;
+    dc.dstPtr = dstPtr;
     dc.srcOffset = origin;
     dc.size = region;
     dc.srcRowPitch = inputRowPitch;
@@ -93,8 +111,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_READ_IMAGE>(
-        di.getUsedSurfaces().begin(),
-        di.getUsedSurfaces().size(),
+        surfaces,
         blockingRead == CL_TRUE,
         di,
         numEventsInWaitList,
@@ -104,10 +121,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     builder.releaseOwnership();
 
     if (context->isProvidingPerformanceHints()) {
-        HostPtrSurface *hps = di.getHostPtrSurface();
-        DEBUG_BREAK_IF(!((hps != nullptr) && (hps->getMemoryPointer() == ptr)));
-        if (!isL3Capable(hps->getMemoryPointer(), hps->getSurfaceSize())) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, hps->getMemoryPointer(), hps->getSurfaceSize(), MemoryConstants::pageSize, MemoryConstants::pageSize);
+        if (!isL3Capable(ptr, hostPtrSize)) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_IMAGE_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, ptr, hostPtrSize, MemoryConstants::pageSize, MemoryConstants::pageSize);
         }
     }
 

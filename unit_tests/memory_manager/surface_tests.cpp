@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ Surface *Create<NullSurface>(char *data, MockBuffer *buffer, GraphicsAllocation 
 
 template <>
 Surface *Create<HostPtrSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
-    return new HostPtrSurface(data, 10);
+    return new HostPtrSurface(data, 10, gfxAllocation);
 }
 
 template <>
@@ -56,7 +56,7 @@ template <>
 Surface *Create<GeneralSurface>(char *data, MockBuffer *buffer, GraphicsAllocation *gfxAllocation) {
     return new GeneralSurface(gfxAllocation);
 }
-}
+} // namespace createSurface
 
 template <typename T>
 class SurfaceTest : public ::testing::Test {
@@ -73,7 +73,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
 
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp);
 
-    auto mm = csr->createMemoryManager(false);
+    auto memManager = csr->createMemoryManager(false);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,
@@ -94,7 +94,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     delete duplicatedSurface;
     delete surface;
     delete csr;
-    delete mm;
+    delete memManager;
 }
 
 class CoherentMemObjSurface : public SurfaceTest<MemObjSurface> {

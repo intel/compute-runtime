@@ -30,6 +30,7 @@
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/built_ins/built_ins.h"
@@ -666,5 +667,27 @@ void CommandQueueHw<GfxFamily>::computeOffsetsValueForRectCommands(size_t *buffe
     size_t computedHostSlicePitch = hostSlicePitch ? hostSlicePitch : region[1] * computedHostRowPitch;
     *bufferOffset = bufferOrigin[2] * computedBufferSlicePitch + bufferOrigin[1] * computedBufferRowPitch + bufferOrigin[0];
     *hostOffset = hostOrigin[2] * computedHostSlicePitch + hostOrigin[1] * computedHostRowPitch + hostOrigin[0];
+}
+
+template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &surface) {
+    auto memoryManager = device->getCommandStreamReceiver().getMemoryManager();
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), surface.getMemoryPointer());
+    if (allocation == nullptr) {
+        return false;
+    }
+    allocation->taskCount = Event::eventNotReady;
+    surface.setAllocation(allocation);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    return true;
+}
+
+template <typename GfxFamily>
+size_t CommandQueueHw<GfxFamily>::calculateHostPtrSizeForImage(size_t *region, size_t rowPitch, size_t slicePitch, Image *image) {
+    auto bytesPerPixel = image->getSurfaceFormatInfo().ImageElementSizeInBytes;
+    auto dstRowPitch = rowPitch ? rowPitch : region[0] * bytesPerPixel;
+    auto dstSlicePitch = slicePitch ? slicePitch : ((image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 1 : region[1]) * dstRowPitch);
+
+    return Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, image->getImageDesc().image_type);
 }
 } // namespace OCLRT

@@ -98,6 +98,13 @@ GraphicsAllocation *CommandStreamReceiver::createAllocationAndHandleResidency(co
     return graphicsAllocation;
 }
 
+void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation) {
+    makeResident(*gfxAllocation);
+    if (!gfxAllocation->isL3Capable()) {
+        setDisableL3Cache(true);
+    }
+}
+
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
 
     auto address = getTagAddress();
@@ -160,7 +167,6 @@ void CommandStreamReceiver::cleanupResources() {
         memoryManager->freeGraphicsMemory(scratchAllocation);
         scratchAllocation = nullptr;
     }
-
 
     if (commandStream.getBase()) {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());

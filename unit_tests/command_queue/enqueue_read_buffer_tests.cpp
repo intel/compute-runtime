@@ -518,3 +518,19 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesA
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
 }
+
+using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+
+HWTEST_F(NegativeFailAllocationTest, givenEnqueueReadBufferWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    cl_int retVal = CL_SUCCESS;
+    retVal = pCmdQ->enqueueReadBuffer(buffer.get(),
+                                      CL_FALSE,
+                                      0,
+                                      MemoryConstants::cacheLineSize,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}

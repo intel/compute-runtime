@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -96,16 +96,27 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
                                                                           this->getContext(), this->getDevice());
     builder.takeOwnership(this->context);
 
+    void *dstPtr = ptr;
+
+    MemObjSurface bufferSurf(buffer);
+    HostPtrSurface hostPtrSurf(dstPtr, size);
+    Surface *surfaces[] = {&bufferSurf, &hostPtrSurf};
+
+    if (size != 0) {
+        bool status = createAllocationForHostSurface(hostPtrSurf);
+        if (!status) {
+            builder.releaseOwnership();
+            return CL_OUT_OF_RESOURCES;
+        }
+        dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+    }
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
-    dc.dstPtr = ptr;
+    dc.dstPtr = dstPtr;
     dc.srcMemObj = buffer;
     dc.srcOffset = {offset, 0, 0};
     dc.size = {size, 0, 0};
     builder.buildDispatchInfos(dispatchInfo, dc);
-
-    MemObjSurface s1(buffer);
-    HostPtrSurface s2(ptr, size);
-    Surface *surfaces[] = {&s1, &s2};
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer), ptr);

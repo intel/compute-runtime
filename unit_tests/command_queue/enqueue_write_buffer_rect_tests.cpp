@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -605,4 +605,32 @@ HWTEST_F(EnqueueWriteBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNon
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+
+using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+
+HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteBufferRectWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    cl_int retVal = CL_SUCCESS;
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {0, 0, 0};
+    size_t region[] = {50, 50, 1};
+    constexpr size_t rowPitch = 100;
+    constexpr size_t slicePitch = 100 * 100;
+
+    retVal = pCmdQ->enqueueWriteBufferRect(
+        buffer.get(),
+        CL_FALSE,
+        bufferOrigin,
+        hostOrigin,
+        region,
+        rowPitch,
+        slicePitch,
+        rowPitch,
+        slicePitch,
+        ptr,
+        0,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }

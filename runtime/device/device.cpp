@@ -80,9 +80,9 @@ Device::Device(const HardwareInfo &hwInfo,
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-    deviceEngineType = DebugManager.flags.NodeOrdinal.get() == -1
-                           ? hwInfo.capabilityTable.defaultEngineType
-                           : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+    engineType = DebugManager.flags.NodeOrdinal.get() == -1
+                     ? hwInfo.capabilityTable.defaultEngineType
+                     : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 }
 
 Device::~Device() {

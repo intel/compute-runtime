@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,8 +80,26 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
 
     builder.takeOwnership(this->context);
 
+    size_t hostPtrSize = calculateHostPtrSizeForImage(const_cast<size_t *>(region), inputRowPitch, inputSlicePitch, dstImage);
+    void *srcPtr = const_cast<void *>(ptr);
+
+    MemObjSurface dstImgSurf(dstImage);
+    HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize);
+    Surface *surfaces[] = {&dstImgSurf, &hostPtrSurf};
+
+    if (region[0] != 0 &&
+        region[1] != 0 &&
+        region[2] != 0) {
+        bool status = createAllocationForHostSurface(hostPtrSurf);
+        if (!status) {
+            builder.releaseOwnership();
+            return CL_OUT_OF_RESOURCES;
+        }
+        srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
+    }
+
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
-    dc.srcPtr = const_cast<void *>(ptr);
+    dc.srcPtr = srcPtr;
     dc.dstMemObj = dstImage;
     dc.dstOffset = origin;
     dc.size = region;
@@ -90,8 +108,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_WRITE_IMAGE>(
-        di.getUsedSurfaces().begin(),
-        di.getUsedSurfaces().size(),
+        surfaces,
         blockingWrite == CL_TRUE,
         di,
         numEventsInWaitList,

@@ -26,6 +26,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 namespace OCLRT {
 class OSTime;
@@ -102,7 +103,7 @@ class MockDevice : public Device {
     WorkaroundTable mockWaTable = {};
 };
 
-class FailMemoryManager : public MemoryManager {
+class FailMemoryManager : public MockMemoryManager {
   public:
     FailMemoryManager();
     FailMemoryManager(int32_t fail);
@@ -113,7 +114,6 @@ class FailMemoryManager : public MemoryManager {
             }
             delete agnostic;
         }
-        applyCommonCleanup();
     };
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
         if (fail <= 0) {

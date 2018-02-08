@@ -71,6 +71,7 @@ class CommandStreamReceiver {
     void makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency);
     virtual void processResidency(ResidencyContainer *allocationsForResidency) {}
     virtual void processEviction();
+    void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
 
     virtual void addPipeControl(LinearStream &commandStream, bool dcFlush) = 0;
 
@@ -122,6 +123,10 @@ class CommandStreamReceiver {
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
   protected:
+    void setDisableL3Cache(bool val) {
+        disableL3Cache = val;
+    }
+
     // taskCount - # of tasks submitted
     uint32_t taskCount = 0;
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
@@ -159,7 +164,7 @@ class CommandStreamReceiver {
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
     DispatchMode dispatchMode = ImmediateDispatch;
-    bool disableL3Cache = 0;
+    bool disableL3Cache = false;
     uint32_t requiredScratchSize = 0;
     uint64_t totalMemoryUsed = 0u;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;

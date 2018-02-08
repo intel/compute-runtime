@@ -588,3 +588,29 @@ HWTEST_F(EnqueueReadImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorag
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
+
+using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
+
+HWTEST_F(NegativeFailAllocationTest, givenEnqueueWriteImageWhenHostPtrAllocationCreationFailsThenReturnOutOfResource) {
+    cl_int retVal = CL_SUCCESS;
+    auto imageDesc = image->getImageDesc();
+
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
+
+    size_t rowPitch = image->getHostPtrRowPitch();
+    size_t slicePitch = image->getHostPtrSlicePitch();
+
+    retVal = pCmdQ->enqueueWriteImage(image.get(),
+                                      CL_FALSE,
+                                      origin,
+                                      region,
+                                      rowPitch,
+                                      slicePitch,
+                                      ptr,
+                                      0,
+                                      nullptr,
+                                      nullptr);
+
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
+}
