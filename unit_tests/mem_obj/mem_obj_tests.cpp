@@ -63,15 +63,38 @@ TEST(MemObj, GivenMemObjWhenInititalizedFromHostPtrThenInitializeFields) {
     EXPECT_EQ(0u, memObj.getMappedOffset());
 }
 
-TEST(MemObj, GivenMemObjectWhenAskedForTransferDataThenNullPtrIsReturned) {
-    char buffer[64];
+TEST(MemObj, givenMemObjectWhenAskedForTransferToHostPtrThenDoNothing) {
+    const size_t size = 64;
+    uint8_t hostPtr[size] = {};
+    uint8_t expectedHostPtr[size] = {};
     MockContext context;
-    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
+    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(hostPtr, sizeof(hostPtr));
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
-                  sizeof(buffer), buffer, buffer, mockAllocation, true, false, false);
+                  size, hostPtr, hostPtr, mockAllocation, true, false, false);
 
-    auto ptr = memObj.transferDataToHostPtr();
-    EXPECT_EQ(nullptr, ptr);
+    memset(memObj.getCpuAddress(), 123, size);
+    memset(hostPtr, 0, size);
+
+    EXPECT_THROW(memObj.transferDataToHostPtr({{size, 0, 0}}, {{0, 0, 0}}), std::exception);
+
+    EXPECT_TRUE(memcmp(hostPtr, expectedHostPtr, size) == 0);
+}
+
+TEST(MemObj, givenMemObjectWhenAskedForTransferFromHostPtrThenDoNothing) {
+    const size_t size = 64;
+    uint8_t hostPtr[size] = {};
+    uint8_t expectedBufferPtr[size] = {};
+    MockContext context;
+    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(hostPtr, sizeof(hostPtr));
+    MemObj memObj(&context, CL_MEM_OBJECT_PIPE, CL_MEM_USE_HOST_PTR,
+                  size, hostPtr, hostPtr, mockAllocation, true, false, false);
+
+    memset(memObj.getCpuAddress(), 123, size);
+    memset(expectedBufferPtr, 123, size);
+
+    EXPECT_THROW(memObj.transferDataFromHostPtr({{size, 0, 0}}, {{0, 0, 0}}), std::exception);
+
+    EXPECT_TRUE(memcmp(memObj.getCpuAddress(), expectedBufferPtr, size) == 0);
 }
 
 TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrIsDifferentThanAllocatedMappedPtr) {

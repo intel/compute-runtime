@@ -247,11 +247,6 @@ bool MemObj::isMemObjWithHostPtrSVM() const {
     return isHostPtrSVM;
 }
 
-void MemObj::transferDataFromHostPtrToMemoryStorage() {
-    size_t dataBytesToTransfer = std::min(size, hostPtrMinSize);
-    memcpy_s(memoryStorage, size, hostPtr, dataBytesToTransfer);
-}
-
 GraphicsAllocation *MemObj::getGraphicsAllocation() {
     return graphicsAllocation;
 }

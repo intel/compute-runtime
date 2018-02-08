@@ -731,6 +731,10 @@ cl_mem CL_API_CALL clCreateImage(cl_context context,
                 break;
             }
         }
+        if ((flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) && !hostPtr) {
+            retVal = CL_INVALID_HOST_PTR;
+            break;
+        }
         image = Image::validateAndCreateImage(pContext, flags, imageFormat, imageDesc, hostPtr, retVal);
 
     } while (false);

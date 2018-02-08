@@ -29,7 +29,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     "${CMAKE_CURRENT_SOURCE_DIR}/destructor_callback_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbufer_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image_copy_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/image_transfer_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_format_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_redescribe_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_release_mapped_ptr_tests.cpp"

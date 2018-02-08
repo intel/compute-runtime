@@ -1,0 +1,144 @@
+/*
+ * Copyright (c) 2018, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "gtest/gtest.h"
+
+using namespace OCLRT;
+
+class ImageHostPtrTransferTests : public testing::Test {
+
+  public:
+    void SetUp() override {
+        device.reset(Device::create<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+    }
+
+    template <typename ImageTraits>
+    void createImageAndSetTestParams() {
+        image.reset(ImageHelper<ImageUseHostPtr<ImageTraits>>::create(context.get()));
+
+        imgDesc = &image->getImageDesc();
+        copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
+        copyRegion = copyOrigin;
+
+        hostPtrSlicePitch = image->getHostPtrSlicePitch();
+        hostPtrRowPitch = image->getHostPtrRowPitch();
+        imageSlicePitch = image->getImageDesc().image_slice_pitch;
+        imageRowPitch = image->getImageDesc().image_row_pitch;
+        pixelSize = image->getSurfaceFormatInfo().ImageElementSizeInBytes;
+    }
+
+    void setExpectedData(uint8_t *dstPtr, size_t slicePitch, size_t rowPitch) {
+        for (size_t slice = copyOrigin[2]; slice < (copyOrigin[2] + copyRegion[2]); slice++) {
+            auto sliceOffset = ptrOffset(dstPtr, slicePitch * slice);
+            for (size_t height = copyOrigin[1]; height < (copyOrigin[1] + copyRegion[1]); height++) {
+                auto rowOffset = ptrOffset(sliceOffset, rowPitch * height);
+                memset(ptrOffset(rowOffset, copyOrigin[0] * pixelSize), 123, copyRegion[0] * pixelSize);
+            }
+        }
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<Image> image;
+
+    std::array<size_t, 3> copyRegion;
+    std::array<size_t, 3> copyOrigin;
+
+    const cl_image_desc *imgDesc = nullptr;
+    size_t hostPtrSlicePitch, hostPtrRowPitch, imageSlicePitch, imageRowPitch, pixelSize;
+};
+
+TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    createImageAndSetTestParams<Image3dDefaults>();
+    EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
+    EXPECT_NE(hostPtrRowPitch, imageRowPitch);
+    EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
+
+    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_depth]);
+    memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_depth);
+
+    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch);
+
+    image->transferDataToHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_depth) == 0);
+}
+
+TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    createImageAndSetTestParams<Image3dDefaults>();
+    EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
+    EXPECT_NE(hostPtrRowPitch, imageRowPitch);
+    EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
+
+    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_depth]);
+    memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_depth);
+    memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_depth);
+
+    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch);
+
+    image->transferDataFromHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_depth) == 0);
+}
+
+TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    createImageAndSetTestParams<Image2dArrayDefaults>();
+    EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
+    EXPECT_NE(hostPtrRowPitch, imageRowPitch);
+    EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
+
+    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_depth]);
+    memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_depth);
+
+    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch);
+
+    image->transferDataToHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_depth) == 0);
+}
+
+TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    createImageAndSetTestParams<Image2dArrayDefaults>();
+    EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
+    EXPECT_NE(hostPtrRowPitch, imageRowPitch);
+    EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
+
+    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_depth]);
+    memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_depth);
+    memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_depth);
+    memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_depth);
+
+    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch);
+
+    image->transferDataFromHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_depth) == 0);
+}

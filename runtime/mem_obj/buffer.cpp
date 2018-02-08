@@ -291,10 +291,19 @@ bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,
     return true;
 }
 
-void *Buffer::transferDataToHostPtr() {
-    DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memoryStorage);
-    memcpy_s(hostPtr, size, memoryStorage, size);
-    return hostPtr;
+void Buffer::transferData(void *dst, void *src, size_t copySize, size_t copyOffset) {
+    DBG_LOG(LogMemoryObject, __FUNCTION__, " hostPtr: ", hostPtr, ", size: ", copySize, ", offset: ", copyOffset, ", memoryStorage: ", memoryStorage);
+    auto dstPtr = ptrOffset(dst, copyOffset);
+    auto srcPtr = ptrOffset(src, copyOffset);
+    memcpy_s(dstPtr, copySize, srcPtr, copySize);
+}
+
+void Buffer::transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+    transferData(hostPtr, memoryStorage, copySize[0], copyOffset[0]);
+}
+
+void Buffer::transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+    transferData(memoryStorage, hostPtr, copySize[0], copyOffset[0]);
 }
 
 size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch) {

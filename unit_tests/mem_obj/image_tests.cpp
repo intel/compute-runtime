@@ -472,22 +472,6 @@ TEST_P(CreateImageNoHostPtr, completionStamp) {
     delete image;
 }
 
-TEST_P(CreateImageNoHostPtr, withUseHostPtrReturnsError) {
-    auto image = createImageWithFlags(flags | CL_MEM_USE_HOST_PTR);
-
-    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
-    EXPECT_EQ(nullptr, image);
-
-    delete image;
-}
-
-TEST_P(CreateImageNoHostPtr, withCopyHostPtrReturnsError) {
-    auto image = createImageWithFlags(flags | CL_MEM_COPY_HOST_PTR);
-
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-    EXPECT_EQ(nullptr, image);
-}
-
 TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
     auto image = createImageWithFlags(flags);
 
@@ -785,7 +769,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferedFromHostPtrToMemSto
     memset(memoryStorage, 0, memoryStorageSize);
     memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
 
-    imageNonZeroCopy->transferDataFromHostPtrToMemoryStorage();
+    auto &imgDesc = imageNonZeroCopy->getImageDesc();
+    imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
+                                              {{0, 0, 0}});
 
     void *foundData = memchr(memoryStorage, 2, memoryStorageSize);
     EXPECT_EQ(0, foundData);
@@ -818,7 +804,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferedFr
     memset(memoryStorage, 0, memoryStorageSize);
     memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
 
-    imageNonZeroCopy->transferDataFromHostPtrToMemoryStorage();
+    auto &imgDesc = imageNonZeroCopy->getImageDesc();
+    imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
+                                              {{0, 0, 0}});
 
     void *foundData = memchr(memoryStorage, 2, memoryStorageSize);
     EXPECT_EQ(0, foundData);
@@ -874,7 +862,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
         unsigned char *internalRow = static_cast<unsigned char *>(memoryStorage);
 
         if (run == 1) {
-            imageNonZeroCopy->transferDataFromHostPtrToMemoryStorage();
+            auto &imgDesc = imageNonZeroCopy->getImageDesc();
+            imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
+                                                      {{0, 0, 0}});
         }
 
         for (size_t arrayIndex = 0; arrayIndex < imageCount; ++arrayIndex) {
@@ -893,7 +883,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
         }
     }
 
-    imageNonZeroCopy->transferDataToHostPtr();
+    auto &imgDesc = imageNonZeroCopy->getImageDesc();
+    imageNonZeroCopy->transferDataToHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
+                                            {{0, 0, 0}});
 
     row = static_cast<uint32_t *>(unalignedHostPtr);
 

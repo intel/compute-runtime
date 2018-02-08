@@ -138,12 +138,13 @@ class Image : public MemObj {
     const cl_image_desc &getImageDesc() const;
     const cl_image_format &getImageFormat() const;
     const SurfaceFormatInfo &getSurfaceFormatInfo() const;
-    void *transferDataToHostPtr() override;
+
+    void transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
+    void transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
 
     Image *redescribe();
     Image *redescribeFillImage();
     ImageCreatFunc createFunction;
-    void transferDataFromHostPtrToMemoryStorage() override;
 
     uint32_t getQPitch() { return qPitch; }
     void setQPitch(uint32_t qPitch) { this->qPitch = qPitch; }
@@ -151,7 +152,7 @@ class Image : public MemObj {
     void setHostPtrRowPitch(size_t pitch) { this->hostPtrRowPitch = pitch; }
     size_t getHostPtrSlicePitch() { return hostPtrSlicePitch; }
     void setHostPtrSlicePitch(size_t pitch) { this->hostPtrSlicePitch = pitch; }
-    size_t getImageCount() { return imageCount; }
+    size_t getImageCount() const { return imageCount; }
     void setImageCount(size_t imageCount) { this->imageCount = imageCount; }
     bool allowTiling() const override { return this->isTiledImage; }
     void setImageRowPitch(size_t rowPitch) { imageDesc.image_row_pitch = rowPitch; }
@@ -176,7 +177,6 @@ class Image : public MemObj {
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
-    static void transferData(void *src, size_t srcRowPitch, size_t srcSlicePitch, void *dest, size_t destRowPitch, size_t destSlicePitch, cl_image_desc *imageDesc, size_t pixelSize, size_t imageCount);
 
     const bool isTiledImage;
 
@@ -196,6 +196,10 @@ class Image : public MemObj {
           const SurfaceOffsets *surfaceOffsets = nullptr);
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
+
+    void transferData(void *dst, size_t dstRowPitch, size_t dstSlicePitch,
+                      void *src, size_t srcRowPitch, size_t srcSlicePitch,
+                      std::array<size_t, 3> &copyRegion, std::array<size_t, 3> &copyOrigin);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

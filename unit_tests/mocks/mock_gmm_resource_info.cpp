@@ -67,6 +67,9 @@ void MockGmmResourceInfo::setupDefaultActions() {
             reqOffsetInfo.Render.XOffset = 32;
             reqOffsetInfo.Render.Offset = 64;
         }
+        if (reqOffsetInfo.Slice == 1) {
+            reqOffsetInfo.Render.YOffset = mockResourceCreateParams.BaseHeight;
+        }
 
         return GMM_SUCCESS;
     }));

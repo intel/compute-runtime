@@ -165,6 +165,30 @@ TEST_F(clCreateImageTest, NotNullHostPtrAndRowPitchIsNotMultipleOfElementSizeRet
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
+TEST_F(clCreateImageTest, givenNullHostPtrWhenCopyHostPtrFlagPassedThenReturnError) {
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
+TEST_F(clCreateImageTest, givenNullHostPtrWhenUseHostPtrFlagPassedThenReturnError) {
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+    ASSERT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_EQ(nullptr, image);
+}
+
 TEST_F(clCreateImageTest, NullHostPtrAndRowPitchIsNotZeroReturnsError) {
     imageDesc.image_row_pitch = 4;
     auto image = clCreateImage(

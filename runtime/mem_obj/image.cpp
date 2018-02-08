@@ -81,23 +81,25 @@ Image::Image(Context *context,
         setSurfaceOffsets(0, 0, 0, 0);
 }
 
-void Image::transferData(void *src, size_t srcRowPitch, size_t srcSlicePitch, void *dest, size_t destRowPitch, size_t destSlicePitch, cl_image_desc *imageDesc, size_t pixelSize, size_t imageCount) {
-    size_t imageHeight = getValidParam(imageDesc->image_height);
-    size_t imageDepth = getValidParam(imageDesc->image_depth);
-    size_t lineWidth = getValidParam(imageDesc->image_width) * pixelSize;
+void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
+                         void *src, size_t srcRowPitch, size_t srcSlicePitch,
+                         std::array<size_t, 3> &copyRegion, std::array<size_t, 3> &copyOrigin) {
+
+    size_t pixelSize = surfaceFormatInfo.ImageElementSizeInBytes;
+    size_t lineWidth = copyRegion[0] * pixelSize;
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
-    for (size_t count = 0; count < imageCount; count++) {
-        for (size_t depth = 0; depth < imageDepth; ++depth) {
-            auto currentImage = std::max(depth, count);
-            auto srcPtr = ptrOffset(src, srcSlicePitch * currentImage);
-            auto destPtr = ptrOffset(dest, destSlicePitch * currentImage);
 
-            for (size_t height = 0; height < imageHeight; ++height) {
-                memcpy_s(destPtr, lineWidth, srcPtr, lineWidth);
-                srcPtr = ptrOffset(srcPtr, srcRowPitch);
-                destPtr = ptrOffset(destPtr, destRowPitch);
-            }
+    for (size_t slice = copyOrigin[2]; slice < (copyOrigin[2] + copyRegion[2]); slice++) {
+        auto srcSliceOffset = ptrOffset(src, srcSlicePitch * slice);
+        auto dstSliceOffset = ptrOffset(dest, destSlicePitch * slice);
+
+        for (size_t height = copyOrigin[1]; height < (copyOrigin[1] + copyRegion[1]); height++) {
+            auto srcRowOffset = ptrOffset(srcSliceOffset, srcRowPitch * height);
+            auto dstRowOffset = ptrOffset(dstSliceOffset, destRowPitch * height);
+
+            memcpy_s(ptrOffset(dstRowOffset, copyOrigin[0] * pixelSize), lineWidth,
+                     ptrOffset(srcRowOffset, copyOrigin[0] * pixelSize), lineWidth);
         }
     }
 }
@@ -212,39 +214,35 @@ Image *Image::create(Context *context,
         } else {
             gmm = new Gmm();
             gmm->queryImageParams(imgInfo, hwInfo);
+
+            errcodeRet = CL_OUT_OF_HOST_MEMORY;
             if (flags & CL_MEM_USE_HOST_PTR) {
-                errcodeRet = CL_INVALID_HOST_PTR;
-                if (hostPtr) {
-                    size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
-                    auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
-                    auto alignedSizeRequiredForAllocation = alignSizeWholePage(const_cast<void *>(hostPtr), imgInfo.size);
+                size_t pointerPassedSize = hostPtrRowPitch * imageHeight * imageDepth * imageCount;
+                auto alignedSizePassedPointer = alignSizeWholePage(const_cast<void *>(hostPtr), pointerPassedSize);
+                auto alignedSizeRequiredForAllocation = alignSizeWholePage(const_cast<void *>(hostPtr), imgInfo.size);
 
-                    // Passed pointer doesn't have enough memory, copy is needed
-                    copyRequired = (alignedSizeRequiredForAllocation > alignedSizePassedPointer) |
-                                   (imgInfo.rowPitch != hostPtrRowPitch) |
-                                   (imgInfo.slicePitch != hostPtrSlicePitch) |
-                                   ((reinterpret_cast<uintptr_t>(hostPtr) & (MemoryConstants::cacheLineSize - 1)) != 0) |
-                                   isTilingAllowed;
+                // Passed pointer doesn't have enough memory, copy is needed
+                copyRequired = (alignedSizeRequiredForAllocation > alignedSizePassedPointer) |
+                               (imgInfo.rowPitch != hostPtrRowPitch) |
+                               (imgInfo.slicePitch != hostPtrSlicePitch) |
+                               ((reinterpret_cast<uintptr_t>(hostPtr) & (MemoryConstants::cacheLineSize - 1)) != 0) |
+                               isTilingAllowed;
 
-                    if (copyRequired && !context->isSharedContext) {
-                        errcodeRet = CL_OUT_OF_HOST_MEMORY;
-                        memory = memoryManager->allocateGraphicsMemoryForImage(imgInfo, gmm);
-                        zeroCopy = false;
-                        transferNeeded = true;
-                    } else {
-                        // To avoid having two pointers in a MemObj we cast off the const here
-                        // However, in USE_HOST_PTR cases we shouldn't be modifying the memory
-                        memory = memoryManager->allocateGraphicsMemory(imgInfo.size, hostPtr);
-                        memory->gmm = gmm;
-                        zeroCopy = true;
-                    }
+                if (copyRequired && !context->isSharedContext) {
+                    memory = memoryManager->allocateGraphicsMemoryForImage(imgInfo, gmm);
+                    zeroCopy = false;
+                    transferNeeded = true;
+                } else {
+                    memory = memoryManager->allocateGraphicsMemory(imgInfo.size, hostPtr);
+                    memory->gmm = gmm;
+                    zeroCopy = true;
                 }
             } else {
-                errcodeRet = CL_OUT_OF_HOST_MEMORY;
                 memory = memoryManager->allocateGraphicsMemoryForImage(imgInfo, gmm);
                 zeroCopy = true;
             }
         }
+        transferNeeded |= !!(flags & CL_MEM_COPY_HOST_PTR);
 
         switch (imageDesc->image_type) {
         case CL_MEM_OBJECT_IMAGE3D:
@@ -286,19 +284,6 @@ Image *Image::create(Context *context,
 
         DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", memory->getUnderlyingBufferSize(), "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 
-        if (!isTilingAllowed) {
-            errcodeRet = CL_INVALID_VALUE;
-            if (flags & CL_MEM_COPY_HOST_PTR || transferNeeded) {
-                if (hostPtr) {
-                    Image::transferData((void *)hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
-                                        memory->getUnderlyingBuffer(), imgInfo.rowPitch, imgInfo.slicePitch,
-                                        (cl_image_desc *)imageDesc, surfaceFormat->ImageElementSizeInBytes, imageCount);
-                } else {
-                    memoryManager->freeGraphicsMemory(memory);
-                    break;
-                }
-            }
-        }
         if (parentImage) {
             imageDescriptor.image_height = imageHeight;
             imageDescriptor.image_width = imageWidth;
@@ -341,39 +326,33 @@ Image *Image::create(Context *context,
         }
         errcodeRet = CL_SUCCESS;
 
-        if (isTilingAllowed) {
-            if (flags & CL_MEM_COPY_HOST_PTR || transferNeeded) {
-                if (!hostPtr) {
-                    errcodeRet = CL_INVALID_VALUE;
-                    image->release();
-                    image = nullptr;
-                    memory = nullptr;
-                    break;
-                }
-                auto cmdQ = context->getSpecialQueue();
+        if (transferNeeded) {
+            std::array<size_t, 3> copyOrigin = {{0, 0, 0}};
+            std::array<size_t, 3> copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
 
-                size_t Origin[] = {0, 0, 0};
-                size_t Region[] = {imageWidth, imageHeight, imageDepth};
-                if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-                    Region[2] = imageDesc->image_array_size;
-                }
+            if (isTilingAllowed) {
+                auto cmdQ = context->getSpecialQueue();
 
                 if (IsNV12Image(&image->getImageFormat())) {
                     errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch);
                 } else {
-                    errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, Origin, Region,
+                    errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
                                                          hostPtrRowPitch, hostPtrSlicePitch,
                                                          hostPtr, 0, nullptr, nullptr);
                 }
-                if (errcodeRet != CL_SUCCESS) {
-                    image->release();
-                    image = nullptr;
-                    memory = nullptr;
-                    break;
-                }
+            } else {
+                image->transferData(memory->getUnderlyingBuffer(), imgInfo.rowPitch, imgInfo.slicePitch,
+                                    const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
+                                    copyRegion, copyOrigin);
             }
         }
 
+        if (errcodeRet != CL_SUCCESS) {
+            image->release();
+            image = nullptr;
+            memory = nullptr;
+            break;
+        }
     } while (false);
 
     return image;
@@ -860,16 +839,16 @@ Image *Image::redescribe() {
     return image;
 }
 
-void *Image::transferDataToHostPtr() {
-    Image::transferData(graphicsAllocation->getUnderlyingBuffer(), imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
-                        hostPtr, hostPtrRowPitch, hostPtrSlicePitch, &imageDesc, surfaceFormatInfo.ImageElementSizeInBytes, imageCount);
-    return hostPtr;
+void Image::transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+    transferData(hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
+                 graphicsAllocation->getUnderlyingBuffer(), imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
+                 copySize, copyOffset);
 }
 
-void Image::transferDataFromHostPtrToMemoryStorage() {
-    Image::transferData(hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
-                        memoryStorage, imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
-                        &imageDesc, surfaceFormatInfo.ImageElementSizeInBytes, imageCount);
+void Image::transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+    transferData(memoryStorage, imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
+                 hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
+                 copySize, copyOffset);
 }
 
 cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {

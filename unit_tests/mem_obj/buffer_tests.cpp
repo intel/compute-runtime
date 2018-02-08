@@ -856,3 +856,50 @@ HWTEST_F(BufferUnmapTest, givenBufferWithoutSharingHandlerWhenUnmappingThenDontU
 
     EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
 }
+
+using BufferTransferTests = BufferUnmapTest;
+
+TEST_F(BufferTransferTests, givenBufferWhenTransferToHostPtrCalledThenCopyRequestedSizeAndOffsetOnly) {
+    MockContext context(pDevice);
+    auto retVal = CL_SUCCESS;
+    const size_t bufferSize = 100;
+    size_t copyOffset = 20;
+    size_t copySize = 10;
+    size_t ignoredParam = 123;
+
+    uint8_t hostPtr[bufferSize] = {};
+    uint8_t expectedHostPtr[bufferSize] = {};
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, bufferSize, hostPtr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto srcPtr = buffer->getCpuAddress();
+    EXPECT_NE(srcPtr, hostPtr);
+    memset(srcPtr, 123, bufferSize);
+    memset(ptrOffset(expectedHostPtr, copyOffset), 123, copySize);
+
+    buffer->transferDataToHostPtr({{copySize, ignoredParam, ignoredParam}}, {{copyOffset, ignoredParam, ignoredParam}});
+
+    EXPECT_TRUE(memcmp(hostPtr, expectedHostPtr, copySize) == 0);
+}
+
+TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequestedSizeAndOffsetOnly) {
+    MockContext context(pDevice);
+    auto retVal = CL_SUCCESS;
+    const size_t bufferSize = 100;
+    size_t copyOffset = 20;
+    size_t copySize = 10;
+    size_t ignoredParam = 123;
+
+    uint8_t hostPtr[bufferSize] = {};
+    uint8_t expectedBufferMemory[bufferSize] = {};
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_USE_HOST_PTR, bufferSize, hostPtr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(buffer->getCpuAddress(), hostPtr);
+    memset(hostPtr, 123, bufferSize);
+    memset(ptrOffset(expectedBufferMemory, copyOffset), 123, copySize);
+
+    buffer->transferDataFromHostPtr({{copySize, ignoredParam, ignoredParam}}, {{copyOffset, ignoredParam, ignoredParam}});
+
+    EXPECT_TRUE(memcmp(expectedBufferMemory, buffer->getCpuAddress(), copySize) == 0);
+}

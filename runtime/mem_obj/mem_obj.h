@@ -28,6 +28,7 @@
 #include <atomic>
 #include <cstdint>
 #include <vector>
+#include <array>
 
 namespace OCLRT {
 class GraphicsAllocation;
@@ -88,8 +89,9 @@ class MemObj : public BaseObject<_cl_mem> {
     void decMapCount();
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
-    virtual void *transferDataToHostPtr() { return nullptr; };
-    virtual void transferDataFromHostPtrToMemoryStorage();
+    virtual void transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) { UNRECOVERABLE_IF(true); };
+    virtual void transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) { UNRECOVERABLE_IF(true); };
+
     GraphicsAllocation *getGraphicsAllocation();
     GraphicsAllocation *getMcsAllocation() { return mcsAllocation; }
     void setMcsAllocation(GraphicsAllocation *alloc) { mcsAllocation = alloc; }
