@@ -325,7 +325,9 @@ Image *Image::create(Context *context,
             image->setParentSharingHandler(parentBuffer->getSharingHandler());
         }
         errcodeRet = CL_SUCCESS;
-
+        if (context->isProvidingPerformanceHints() && image->isMemObjZeroCopy()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_IMAGE_MEETS_ALIGNMENT_RESTRICTIONS, static_cast<cl_mem>(image));
+        }
         if (transferNeeded) {
             std::array<size_t, 3> copyOrigin = {{0, 0, 0}};
             std::array<size_t, 3> copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
