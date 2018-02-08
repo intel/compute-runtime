@@ -108,6 +108,7 @@ TEST_F(PipeTest, givenPipeWhenEnqueueWriteForUnmapIsCalledThenReturnError) {
     ASSERT_NE(nullptr, pipe);
     EXPECT_EQ(CL_SUCCESS, errCode);
 
-    errCode = myCmdQ.enqueueWriteMemObjForUnmap(pipe.get(), nullptr, 0, nullptr, nullptr);
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    errCode = myCmdQ.enqueueWriteMemObjForUnmap(pipe.get(), nullptr, eventsRequest);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, errCode);
 }

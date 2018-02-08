@@ -127,27 +127,6 @@ TEST_F(EnqueueUnmapMemObjTest, returnedEventHasGreaterThanOrEqualTaskLevelThanPa
     delete pEvent;
 }
 
-TEST_F(EnqueueUnmapMemObjTest, nullAddressShouldReturnInvalidAddress) {
-    auto retVal = pCmdQ->enqueueUnmapMemObject(
-        buffer,
-        nullptr,
-        0,
-        nullptr,
-        nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-}
-
-TEST_F(EnqueueUnmapMemObjTest, invalidAddressShouldReturnInvalidAddress) {
-    auto inavlidAddr = 0xcdcdcdcdcd;
-    auto retVal = pCmdQ->enqueueUnmapMemObject(
-        buffer,
-        reinterpret_cast<void *>(inavlidAddr),
-        0,
-        nullptr,
-        nullptr);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-}
-
 HWTEST_F(EnqueueUnmapMemObjTest, UnmapEventProperties) {
     cl_event eventReturned = NULL;
 

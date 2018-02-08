@@ -50,16 +50,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
          buffer->isReadWriteOnCpuAllowed(blockingWrite, numEventsInWaitList, const_cast<void *>(ptr), size)) &&
         context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {
         if (!isMemTransferNeeded) {
-            cpuDataTransferHandler(buffer,
-                                   CL_COMMAND_MARKER,
-                                   CL_TRUE,
-                                   offset,
-                                   size,
-                                   const_cast<void *>(ptr),
-                                   numEventsInWaitList,
-                                   eventWaitList,
-                                   event,
-                                   retVal);
+            TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, true, &offset, &size, const_cast<void *>(ptr), nullptr, nullptr);
+            EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+            cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+
             if (event) {
                 auto pEvent = castToObjectOrAbort<Event>(*event);
                 pEvent->setCmdType(CL_COMMAND_WRITE_BUFFER);
@@ -70,16 +64,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBuffer(
             }
             return retVal;
         }
-        cpuDataTransferHandler(buffer,
-                               CL_COMMAND_WRITE_BUFFER,
-                               CL_TRUE,
-                               offset,
-                               size,
-                               const_cast<void *>(ptr),
-                               numEventsInWaitList,
-                               eventWaitList,
-                               event,
-                               retVal);
+        TransferProperties transferProperties(buffer, CL_COMMAND_WRITE_BUFFER, true, &offset, &size, const_cast<void *>(ptr), nullptr, nullptr);
+        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+        cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+
         return retVal;
     }
     MultiDispatchInfo dispatchInfo;

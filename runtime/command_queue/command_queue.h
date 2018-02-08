@@ -35,6 +35,7 @@ class Buffer;
 class LinearStream;
 class Context;
 class Device;
+class EventBuilder;
 class Image;
 class IndirectHeap;
 class Kernel;
@@ -111,25 +112,20 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return CL_SUCCESS;
     }
 
-    virtual void *enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
-                                   cl_map_flags mapFlags, size_t offset,
-                                   size_t size, cl_uint numEventsInWaitList,
-                                   const cl_event *eventWaitList, cl_event *event,
-                                   cl_int &errcodeRet) {
-        errcodeRet = CL_SUCCESS;
-        return CL_SUCCESS;
-    }
+    MOCKABLE_VIRTUAL void *enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
+                                            cl_map_flags mapFlags, size_t offset,
+                                            size_t size, cl_uint numEventsInWaitList,
+                                            const cl_event *eventWaitList, cl_event *event,
+                                            cl_int &errcodeRet);
 
-    virtual void *enqueueMapImage(cl_mem image, cl_bool blockingMap,
-                                  cl_map_flags mapFlags, const size_t *origin,
-                                  const size_t *region, size_t *imageRowPitch,
-                                  size_t *imageSlicePitch,
-                                  cl_uint numEventsInWaitList,
-                                  const cl_event *eventWaitList, cl_event *event,
-                                  cl_int &errcodeRet) {
-        errcodeRet = CL_SUCCESS;
-        return CL_SUCCESS;
-    }
+    MOCKABLE_VIRTUAL void *enqueueMapImage(Image *image, cl_bool blockingMap,
+                                           cl_map_flags mapFlags, const size_t *origin,
+                                           const size_t *region, size_t *imageRowPitch,
+                                           size_t *imageSlicePitch, cl_uint numEventsInWaitList,
+                                           const cl_event *eventWaitList, cl_event *event, cl_int &errcodeRet);
+
+    MOCKABLE_VIRTUAL cl_int enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList,
+                                                  const cl_event *eventWaitList, cl_event *event);
 
     virtual cl_int enqueueSVMMap(cl_bool blockingMap, cl_map_flags mapFlags,
                                  void *svmPtr, size_t size,
@@ -227,13 +223,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return CL_SUCCESS;
     }
 
-    virtual cl_int enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr,
-                                         cl_uint numEventsInWaitList,
-                                         const cl_event *eventWaitList,
-                                         cl_event *event) {
-        return CL_SUCCESS;
-    }
-
     virtual cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite,
                                       size_t offset, size_t cb, const void *ptr,
                                       cl_uint numEventsInWaitList,
@@ -308,6 +297,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                        const cl_event *eventWaitList,
                                        cl_event *oclEvent,
                                        cl_uint cmdType);
+
+    void *cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal);
 
     virtual cl_int finish(bool dcFlush) { return CL_SUCCESS; }
 
@@ -390,6 +381,12 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         return throttle;
     }
 
+    void enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList,
+                                         size_t numEventsInWaitlist,
+                                         MapOperationType opType,
+                                         MemObj *memObj,
+                                         EventBuilder &externalEventBuilder);
+
     // taskCount of last task
     uint32_t taskCount;
 
@@ -404,7 +401,13 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Event *virtualEvent;
 
   protected:
-    cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event);
+    void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
+    cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
+
+    void *enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
+    cl_int enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest);
+
+    virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType){};
 
     Context *context;
     Device *device;

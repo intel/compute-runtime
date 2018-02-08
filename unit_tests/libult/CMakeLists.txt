@@ -93,6 +93,7 @@ target_include_directories(igdrcl_libult PRIVATE
 target_include_directories(igdrcl_libult_cs PRIVATE
   ${GMM_INCLUDE_PATHS}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
+  ${KHRONOS_HEADERS_DIR}
 )
 target_include_directories(igdrcl_libult BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
 target_include_directories(igdrcl_libult_cs BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})

@@ -94,6 +94,31 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalledThenReturnDifferentPointers) {
+    std::unique_ptr<Image> img(Image2dHelper<Image2dDefaults>::create(context));
+    auto mapFlags = CL_MAP_READ;
+    const size_t origin1[3] = {0, 0, 0};
+    const size_t origin2[3] = {2, 2, 0};
+    const size_t region[3] = {1, 1, 1};
+
+    auto ptr1 = pCmdQ->enqueueMapImage(img.get(), true, mapFlags, origin1,
+                                       region, nullptr, nullptr, 0,
+                                       nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto ptr2 = pCmdQ->enqueueMapImage(img.get(), true, mapFlags, origin2,
+                                       region, nullptr, nullptr, 0,
+                                       nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(ptr1, ptr2);
+    EXPECT_NE(nullptr, img->getAllocatedMappedPtr());
+
+    size_t mapOffset = img->getSurfaceFormatInfo().ImageElementSizeInBytes * origin2[0] +
+                       img->getHostPtrRowPitch() * origin2[1];
+    EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
+}
+
 template <typename GfxFamily>
 struct mockedImage : public ImageHw<GfxFamily> {
     using ImageHw<GfxFamily>::ImageHw;
@@ -360,8 +385,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     EXPECT_EQ(ptr, zero_copy_image->getCpuAddressForMemoryTransfer());
 
     auto eventObject = castToObject<Event>(eventReturned);
-    //this is CPU path , event is manually set to completed state so task count equalizies to CSR = 100
-    EXPECT_EQ(100u, eventObject->peekTaskCount());
+    EXPECT_EQ(pCmdQ->taskCount, eventObject->peekTaskCount());
     EXPECT_TRUE(eventObject->updateStatusAndCheckCompletion());
 
     retVal = clEnqueueUnmapMemObject(

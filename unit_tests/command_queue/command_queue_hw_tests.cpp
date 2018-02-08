@@ -105,7 +105,7 @@ struct OOQueueHwTest : public DeviceFixture,
     }
 };
 
-HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesCreateVirtualEvent) {
+HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationCreatesVirtualEvent) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
@@ -113,11 +113,11 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesCreateVirtua
     pHwQ->virtualEvent = nullptr;
 
     MockEventBuilder eventBuilder;
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  &buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          &buffer,
+                                          eventBuilder);
 
     ASSERT_NE(nullptr, pHwQ->virtualEvent);
     pHwQ->virtualEvent->decRefInternal();
@@ -133,11 +133,11 @@ HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCom
     auto currentRefCount = buffer.getRefInternalCount();
 
     MockEventBuilder eventBuilder;
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  &buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          &buffer,
+                                          eventBuilder);
 
     EXPECT_EQ(currentRefCount + 1, buffer.getRefInternalCount());
 
@@ -147,7 +147,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedMapBufferCallWhenMemObjectIsPassedToCom
     EXPECT_EQ(currentRefCount, buffer.getRefInternalCount());
 }
 
-HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingAddMapUnmapToWaitlistEventsDependenciesThenVirtualEventIncrementsCommandQueueInternalRefCount) {
+HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingEnqueueBlockedMapUnmapOperationThenVirtualEventIncrementsCommandQueueInternalRefCount) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
@@ -157,11 +157,11 @@ HWTEST_F(CommandQueueHwTest, givenNoReturnEventWhenCallingAddMapUnmapToWaitlistE
     auto initialRefCountInternal = pHwQ->getRefInternalCount();
 
     MockEventBuilder eventBuilder;
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  &buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          &buffer,
+                                          eventBuilder);
 
     ASSERT_NE(nullptr, pHwQ->virtualEvent);
 
@@ -183,11 +183,11 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDoesntAddDependenciesInt
     pHwQ->virtualEvent = nullptr;
 
     MockEventBuilder eventBuilder(returnEvent);
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(&eventWaitList,
-                                                  1,
-                                                  MAP,
-                                                  buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(&eventWaitList,
+                                          1,
+                                          MAP,
+                                          buffer,
+                                          eventBuilder);
 
     EXPECT_EQ(returnEvent, pHwQ->virtualEvent);
 
@@ -205,11 +205,11 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenT
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
 
     MockEventBuilder eventBuilder;
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          buffer,
+                                          eventBuilder);
 
     EXPECT_NE(nullptr, pHwQ->virtualEvent);
     pHwQ->virtualEvent->setStatus(CL_COMPLETE);
@@ -218,7 +218,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenT
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesInjectedCommand) {
+HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationInjectedCommand) {
 
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
     Event *returnEvent = new Event(pHwQ, CL_COMMAND_MAP_BUFFER, 0, 0);
@@ -226,11 +226,11 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesInjectedComm
     pHwQ->virtualEvent = nullptr;
 
     MockEventBuilder eventBuilder(returnEvent);
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          buffer,
+                                          eventBuilder);
     eventBuilder.finalizeAndRelease();
 
     EXPECT_EQ(returnEvent, pHwQ->virtualEvent);
@@ -243,7 +243,7 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesInjectedComm
     buffer->decRefInternal();
 }
 
-HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesPreviousEventHasNotInjectedChild) {
+HWTEST_F(CommandQueueHwTest, enqueueBlockedMapUnmapOperationPreviousEventHasNotInjectedChild) {
 
     auto buffer = new MockBuffer;
     CommandQueueHw<FamilyType> *pHwQ = reinterpret_cast<CommandQueueHw<FamilyType> *>(pCmdQ);
@@ -257,11 +257,11 @@ HWTEST_F(CommandQueueHwTest, addMapUnmapToWaitlistEventsDependenciesPreviousEven
     pHwQ->virtualEvent->incRefInternal();
 
     MockEventBuilder eventBuilder(returnEvent);
-    pHwQ->addMapUnmapToWaitlistEventsDependencies(nullptr,
-                                                  0,
-                                                  MAP,
-                                                  buffer,
-                                                  eventBuilder);
+    pHwQ->enqueueBlockedMapUnmapOperation(nullptr,
+                                          0,
+                                          MAP,
+                                          buffer,
+                                          eventBuilder);
 
     EXPECT_EQ(returnEvent, pHwQ->virtualEvent);
     ASSERT_EQ(nullptr, event.peekChildEvents());
@@ -775,7 +775,11 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
     cl_event returnEvent = nullptr;
     auto retVal = CL_SUCCESS;
     cmdQHw->taskLevel = Event::eventNotReady;
-    cmdQHw->cpuDataTransferHandler(nullptr, CL_COMMAND_READ_BUFFER, false, 0, 4096u, nullptr, 0, nullptr, &returnEvent, retVal);
+    size_t offset = 0;
+    size_t size = 4096u;
+    TransferProperties transferProperties(nullptr, CL_COMMAND_READ_BUFFER, false, &offset, &size, nullptr, nullptr, nullptr);
+    EventsRequest eventsRequest(0, nullptr, &returnEvent);
+    cmdQHw->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(Event::eventNotReady, castToObject<Event>(returnEvent)->peekTaskCount());
     clReleaseEvent(returnEvent);

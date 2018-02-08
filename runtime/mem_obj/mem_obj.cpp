@@ -215,20 +215,15 @@ CompletionStamp MemObj::getCompletionStamp() const {
 }
 
 void *MemObj::getMappedPtr() const {
-    if (allocatedMappedPtr) {
-        return allocatedMappedPtr;
-    }
     return mappedPtr;
 }
 
 void MemObj::setMappedPtr(void *mappedPtr) {
     TakeOwnershipWrapper<MemObj> memObjectOwnership(*this);
-    DEBUG_BREAK_IF(allocatedMappedPtr);
     this->mappedPtr = mappedPtr;
 }
 
 void MemObj::setAllocatedMappedPtr(void *allocatedMappedPtr) {
-    DEBUG_BREAK_IF(mappedPtr);
     this->allocatedMappedPtr = allocatedMappedPtr;
 }
 
@@ -297,7 +292,6 @@ void *MemObj::setAndReturnMappedPtr(size_t offset) {
     DEBUG_BREAK_IF(!ptrToReturn);
 
     setMappedPtr(ptrToReturn);
-    incMapCount();
 
     return ptrToReturn;
 }

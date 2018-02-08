@@ -98,7 +98,7 @@ class MemObj : public BaseObject<_cl_mem> {
     bool writeMemObjFlagsInvalid();
     bool mapMemObjFlagsInvalid(cl_map_flags mapFlags);
 
-    virtual bool allowTiling() { return false; }
+    virtual bool allowTiling() const { return false; }
 
     CommandQueue *getAssociatedCommandQueue() { return cmdQueuePtr; }
     Device *getAssociatedDevice() { return device; }
@@ -109,7 +109,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void *getCpuAddressForMemoryTransfer();
 
     std::shared_ptr<SharingHandler> &getSharingHandler() { return sharingHandler; }
-    SharingHandler *peekSharingHandler() { return sharingHandler.get(); }
+    SharingHandler *peekSharingHandler() const { return sharingHandler.get(); }
     void setSharingHandler(SharingHandler *sharingHandler) { this->sharingHandler.reset(sharingHandler); }
     void setParentSharingHandler(std::shared_ptr<SharingHandler> &handler) { sharingHandler = handler; }
     unsigned int acquireCount = 0;
@@ -118,6 +118,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void waitForCsrCompletion();
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
     bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
+    bool mappingOnCpuAllowed() const { return !allowTiling() && !peekSharingHandler(); }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

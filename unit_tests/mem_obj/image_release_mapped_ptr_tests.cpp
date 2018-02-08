@@ -71,14 +71,11 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     void *ptr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     image->setAllocatedMappedPtr(ptr);
+    image->setMappedPtr(ptr);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(ptr, commandQueue->passedPtr);
     EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
     EXPECT_EQ(1u, commandQueue->enqueueWriteImageCalled);
-    EXPECT_EQ(ptr, image->getMappedPtr());
-    EXPECT_EQ(ptr, image->getAllocatedMappedPtr());
-    image->releaseAllocatedMappedPtr();
-    EXPECT_EQ(nullptr, image->getMappedPtr());
 }
 
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
@@ -121,15 +118,11 @@ TEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMe
     size_t region[] = {0, 0, 0};
     std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
     std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(&context, device.get(), nullptr, retVal));
-    cl_mem clImage = (cl_mem)(image.get());
-    commandQueue->enqueueMapImage(clImage, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
+    commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_NE(nullptr, image->getAllocatedMappedPtr());
     void *ptr = image->getAllocatedMappedPtr();
     EXPECT_EQ(alignUp(ptr, MemoryConstants::pageSize), ptr);
-    commandQueue->enqueueMapImage(clImage, CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
+    commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
     EXPECT_EQ(ptr, image->getAllocatedMappedPtr());
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
-    image->releaseAllocatedMappedPtr();
-    EXPECT_EQ(nullptr, image->getMappedPtr());
-    image.reset(nullptr);
 }

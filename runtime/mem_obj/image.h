@@ -153,7 +153,7 @@ class Image : public MemObj {
     void setHostPtrSlicePitch(size_t pitch) { this->hostPtrSlicePitch = pitch; }
     size_t getImageCount() { return imageCount; }
     void setImageCount(size_t imageCount) { this->imageCount = imageCount; }
-    bool allowTiling() override { return this->isTiledImage; }
+    bool allowTiling() const override { return this->isTiledImage; }
     void setImageRowPitch(size_t rowPitch) { imageDesc.image_row_pitch = rowPitch; }
     void setImageSlicePitch(size_t slicePitch) { imageDesc.image_slice_pitch = slicePitch; }
     void setSurfaceOffsets(uint32_t offset, uint32_t xOffset, uint32_t yOffset, uint32_t yOffsetForUVPlane) {

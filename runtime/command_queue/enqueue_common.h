@@ -651,41 +651,6 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 }
 
 template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::addMapUnmapToWaitlistEventsDependencies(const cl_event *eventWaitList,
-                                                                        size_t numEventsInWaitlist,
-                                                                        MapOperationType opType,
-                                                                        MemObj *memObj,
-                                                                        EventBuilder &externalEventBuilder) {
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
-
-    EventBuilder internalEventBuilder;
-    EventBuilder *eventBuilder;
-    // check if event will be exposed externally
-    if (externalEventBuilder.getEvent()) {
-        externalEventBuilder.getEvent()->incRefInternal();
-        eventBuilder = &externalEventBuilder;
-    } else {
-        // it will be an internal event
-        internalEventBuilder.create<VirtualEvent>(this, context);
-        eventBuilder = &internalEventBuilder;
-    }
-
-    //store task data in event
-    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, commandStreamReceiver, *this));
-    eventBuilder->getEvent()->setCommand(std::move(cmd));
-
-    //bind output event with input events
-    eventBuilder->addParentEvents(ArrayRef<const cl_event>(eventWaitList, numEventsInWaitlist));
-    eventBuilder->addParentEvent(this->virtualEvent);
-    eventBuilder->finalize();
-
-    if (this->virtualEvent) {
-        this->virtualEvent->setCurrentCmdQVirtualEvent(false);
-        this->virtualEvent->decRefInternal();
-    }
-    this->virtualEvent = eventBuilder->getEvent();
-}
-template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                                    size_t *hostOffset,
                                                                    const size_t *bufferOrigin,

@@ -27,6 +27,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/event/event.h"
+#include "runtime/event/event_builder.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/get_info.h"
@@ -493,21 +494,16 @@ bool CommandQueue::sendPerfCountersConfig() {
     return getPerfCounters()->sendPmRegsCfgCommands(perfConfigurationData, &perfCountersRegsCfgHandle, &perfCountersRegsCfgPending);
 }
 
-cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
+cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest) {
     auto image = castToObject<Image>(memObj);
     if (image) {
-        auto mappedRegion = image->getMappedRegion();
-        size_t region[] = {mappedRegion[0] ? mappedRegion[0] : 1,
-                           mappedRegion[1] ? mappedRegion[1] : 1,
-                           mappedRegion[2] ? mappedRegion[2] : 1};
-
-        auto retVal = enqueueWriteImage(image, CL_FALSE, image->getMappedOrigin(), region, image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                        mappedPtr, numEventsInWaitList, eventWaitList, event);
+        auto retVal = enqueueWriteImage(image, CL_FALSE, image->getMappedOrigin(), image->getMappedRegion(), image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                        mappedPtr, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         bool mustCallFinish = true;
         if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
             mustCallFinish = true;
         } else {
-            mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList) != Event::eventNotReady);
+            mustCallFinish = (CommandQueue::getTaskLevelFromWaitList(this->taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList) != Event::eventNotReady);
         }
         if (mustCallFinish) {
             finish(true);
@@ -520,10 +516,161 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
         auto writePtr = ptrOffset(mappedPtr, buffer->getMappedOffset());
 
         return enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset(), buffer->getMappedSize(), writePtr,
-                                  numEventsInWaitList, eventWaitList, event);
+                                  eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
     return CL_INVALID_MEM_OBJECT;
+}
+
+void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
+    auto memoryManager = device->getMemoryManager();
+
+    auto memObj = transferProperties.memObj;
+    auto offset = transferProperties.offset;
+    auto size = transferProperties.size;
+    void *returnPtr = nullptr;
+    void *baseMapPtr = nullptr;
+
+    if (memObj->getFlags() & CL_MEM_USE_HOST_PTR) {
+        baseMapPtr = memObj->getHostPtr();
+    } else {
+        TakeOwnershipWrapper<MemObj> memObjOwnership(*transferProperties.memObj);
+        if (!memObj->getAllocatedMappedPtr()) {
+            auto memory = memoryManager->allocateSystemMemory(memObj->getSize(), MemoryConstants::pageSize);
+            memObj->setAllocatedMappedPtr(memory);
+        }
+        baseMapPtr = memObj->getAllocatedMappedPtr();
+    }
+
+    auto buffer = castToObject<Buffer>(memObj);
+    if (buffer) {
+        returnPtr = ptrOffset(baseMapPtr, *offset);
+        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, *offset, *size, returnPtr,
+                                       eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+
+        buffer->setMappedSize(*size);
+        buffer->setMappedOffset(*offset);
+    } else {
+        auto image = castToObject<Image>(memObj);
+        size_t slicePitch = image->getHostPtrSlicePitch();
+        size_t rowPitch = image->getHostPtrRowPitch();
+
+        GetInfoHelper::set(transferProperties.retSlicePitch, slicePitch);
+        GetInfoHelper::set(transferProperties.retRowPitch, rowPitch);
+
+        size_t mapOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * offset[0] +
+                           rowPitch * offset[1] +
+                           slicePitch * offset[2];
+        returnPtr = ptrOffset(baseMapPtr, mapOffset);
+
+        size_t mappedRegion[3] = {size[0] ? size[0] : 1,
+                                  size[1] ? size[1] : 1,
+                                  size[2] ? size[2] : 1};
+
+        errcodeRet = enqueueReadImage(image, transferProperties.blocking, offset, mappedRegion, rowPitch, slicePitch, returnPtr,
+                                      eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+
+        image->setMappedOrigin((size_t *)offset);
+        image->setMappedRegion((size_t *)mappedRegion);
+    }
+
+    if (errcodeRet == CL_SUCCESS) {
+        memObj->incMapCount();
+        memObj->setMappedPtr(returnPtr);
+    } else {
+        returnPtr = nullptr;
+    }
+    return returnPtr;
+}
+
+void *CommandQueue::enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
+    if (transferProperties.memObj->mappingOnCpuAllowed()) {
+        return cpuDataTransferHandler(transferProperties, eventsRequest, errcodeRet);
+    } else {
+        return enqueueReadMemObjForMap(transferProperties, eventsRequest, errcodeRet);
+    }
+}
+
+cl_int CommandQueue::enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest) {
+    cl_int retVal;
+    if (transferProperties.memObj->mappingOnCpuAllowed()) {
+        cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+    } else {
+        retVal = enqueueWriteMemObjForUnmap(transferProperties.memObj, transferProperties.ptr, eventsRequest);
+    }
+    return retVal;
+}
+
+void *CommandQueue::enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
+                                     cl_map_flags mapFlags, size_t offset,
+                                     size_t size, cl_uint numEventsInWaitList,
+                                     const cl_event *eventWaitList, cl_event *event,
+                                     cl_int &errcodeRet) {
+
+    TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, blockingMap != CL_FALSE, &offset, &size, nullptr, nullptr, nullptr);
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
+}
+
+void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
+                                    cl_map_flags mapFlags, const size_t *origin,
+                                    const size_t *region, size_t *imageRowPitch,
+                                    size_t *imageSlicePitch,
+                                    cl_uint numEventsInWaitList,
+                                    const cl_event *eventWaitList, cl_event *event,
+                                    cl_int &errcodeRet) {
+
+    TransferProperties transferProperties(image, CL_COMMAND_MAP_IMAGE, blockingMap != CL_FALSE,
+                                          const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr,
+                                          imageRowPitch, imageSlicePitch);
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
+}
+
+cl_int CommandQueue::enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
+
+    TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, false,
+                                          nullptr, nullptr, mappedPtr, nullptr, nullptr);
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    return enqueueUnmapMemObject(transferProperties, eventsRequest);
+}
+
+void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList,
+                                                   size_t numEventsInWaitlist,
+                                                   MapOperationType opType,
+                                                   MemObj *memObj,
+                                                   EventBuilder &externalEventBuilder) {
+    auto &commandStreamReceiver = device->getCommandStreamReceiver();
+
+    EventBuilder internalEventBuilder;
+    EventBuilder *eventBuilder;
+    // check if event will be exposed externally
+    if (externalEventBuilder.getEvent()) {
+        externalEventBuilder.getEvent()->incRefInternal();
+        eventBuilder = &externalEventBuilder;
+    } else {
+        // it will be an internal event
+        internalEventBuilder.create<VirtualEvent>(this, context);
+        eventBuilder = &internalEventBuilder;
+    }
+
+    //store task data in event
+    auto cmd = std::unique_ptr<Command>(new CommandMapUnmap(opType, *memObj, commandStreamReceiver, *this));
+    eventBuilder->getEvent()->setCommand(std::move(cmd));
+
+    //bind output event with input events
+    eventBuilder->addParentEvents(ArrayRef<const cl_event>(eventWaitList, numEventsInWaitlist));
+    eventBuilder->addParentEvent(this->virtualEvent);
+    eventBuilder->finalize();
+
+    if (this->virtualEvent) {
+        this->virtualEvent->setCurrentCmdQVirtualEvent(false);
+        this->virtualEvent->decRefInternal();
+    }
+    this->virtualEvent = eventBuilder->getEvent();
 }
 
 } // namespace OCLRT

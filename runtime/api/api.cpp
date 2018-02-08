@@ -2324,6 +2324,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
                                      cl_event *event,
                                      cl_int *errcodeRet) {
     void *retPtr = nullptr;
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     cl_int retVal;
     API_ENTER(&retVal);
     DBG_LOG_INPUTS("commandQueue", commandQueue, "buffer", buffer, "blockingMap", blockingMap,
@@ -2363,9 +2364,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
 
     } while (false);
 
-    if (errcodeRet) {
-        *errcodeRet = retVal;
-    }
+    err.set(retVal);
     DBG_LOG_INPUTS("retPtr", retPtr);
     return retPtr;
 }
@@ -2383,12 +2382,9 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                                     cl_event *event,
                                     cl_int *errcodeRet) {
 
-    CommandQueue *pCommandQueue = nullptr;
-    Image *pImage = nullptr;
-
-    auto retVal = validateObjects(
-        WithCastToInternal(commandQueue, &pCommandQueue),
-        WithCastToInternal(image, &pImage));
+    void *retPtr = nullptr;
+    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
+    cl_int retVal;
 
     API_ENTER(&retVal);
 
@@ -2405,25 +2401,31 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
                    "event", event);
-    void *retPtr = nullptr;
-    ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
-    if (retVal == CL_SUCCESS) {
+    do {
+        Image *pImage = nullptr;
+        CommandQueue *pCommandQueue = nullptr;
+        retVal = validateObjects(
+            WithCastToInternal(commandQueue, &pCommandQueue),
+            WithCastToInternal(image, &pImage));
+
+        if (retVal != CL_SUCCESS) {
+            break;
+        }
 
         if (pImage->mapMemObjFlagsInvalid(mapFlags)) {
             retVal = CL_INVALID_OPERATION;
-            err.set(retVal);
-            return retPtr;
+            break;
         }
         if (IsPackedYuvImage(&pImage->getImageFormat())) {
             retVal = validateYuvOperation(origin, region);
             if (retVal != CL_SUCCESS) {
-                err.set(retVal);
-                return retPtr;
+                break;
             }
         }
+
         retPtr = pCommandQueue->enqueueMapImage(
-            image,
+            pImage,
             blockingMap,
             mapFlags,
             origin,
@@ -2435,10 +2437,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             event,
             retVal);
 
-        if (retPtr != nullptr) {
-            pImage->incMapCount();
-        }
-    }
+    } while (false);
 
     err.set(retVal);
     DBG_LOG_INPUTS("retPtr", retPtr);
@@ -2469,14 +2468,11 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                    "event", event);
 
     if (retVal == CL_SUCCESS) {
-        if (mappedPtr != pMemObj->getMappedPtr()) {
+        if (!mappedPtr || mappedPtr != pMemObj->getMappedPtr()) {
             return CL_INVALID_VALUE;
         }
-        retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
 
-        if (retVal == CL_SUCCESS) {
-            pMemObj->decMapCount();
-        }
+        retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
     }
 
     return retVal;

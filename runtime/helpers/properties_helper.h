@@ -22,13 +22,44 @@
 
 #pragma once
 
-#include "runtime/helpers/hw_helper.h"
+#include "runtime/api/cl_types.h"
 
 namespace OCLRT {
+class MemObj;
+
 enum class QueueThrottle {
     LOW,
     MEDIUM,
     HIGH
+};
+
+struct EventsRequest {
+    EventsRequest() = delete;
+
+    EventsRequest(cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *outEvent)
+        : numEventsInWaitList(numEventsInWaitList), eventWaitList(eventWaitList), outEvent(outEvent){};
+
+    cl_uint numEventsInWaitList;
+    const cl_event *eventWaitList;
+    cl_event *outEvent;
+};
+
+struct TransferProperties {
+    TransferProperties() = delete;
+
+    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offset, size_t *size,
+                       void *ptr, size_t *retRowPitch, size_t *retSlicePitch)
+        : memObj(memObj), cmdType(cmdType), blocking(blocking), offset(offset), size(size),
+          ptr(ptr), retRowPitch(retRowPitch), retSlicePitch(retSlicePitch){};
+
+    MemObj *memObj;
+    cl_command_type cmdType;
+    bool blocking;
+    size_t *offset;
+    size_t *size;
+    void *ptr;
+    size_t *retRowPitch;
+    size_t *retSlicePitch;
 };
 
 } // namespace OCLRT

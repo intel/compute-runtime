@@ -136,26 +136,6 @@ class CommandQueueHw : public CommandQueue {
                          const cl_event *eventWaitList,
                          cl_event *event) override;
 
-    void *enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap, cl_map_flags mapFlags,
-                           size_t offset, size_t size, cl_uint numEventsInWaitList,
-                           const cl_event *eventWaitList, cl_event *event, cl_int &errcodeRet) override;
-
-    void *enqueueMapSharedBuffer(Buffer *buffer, cl_bool blockingMap, cl_map_flags mapFlags,
-                                 size_t offset, size_t size, cl_uint numEventsInWaitList,
-                                 const cl_event *eventWaitList, cl_event *event, cl_int &errcodeRet);
-
-    void *enqueueMapImage(cl_mem image,
-                          cl_bool blockingMap,
-                          cl_map_flags mapFlags,
-                          const size_t *origin,
-                          const size_t *region,
-                          size_t *imageRowPitch,
-                          size_t *imageSlicePitch,
-                          cl_uint numEventsInWaitList,
-                          const cl_event *eventWaitList,
-                          cl_event *event,
-                          cl_int &errcodeRet) override;
-
     cl_int enqueueSVMMap(cl_bool blockingMap,
                          cl_map_flags mapFlags,
                          void *svmPtr,
@@ -248,29 +228,6 @@ class CommandQueueHw : public CommandQueue {
                             cl_uint numEventsInWaitList,
                             const cl_event *eventWaitList,
                             cl_event *event) override;
-
-    cl_int enqueueUnmapMemObject(MemObj *memObj,
-                                 void *mappedPtr,
-                                 cl_uint numEventsInWaitList,
-                                 const cl_event *eventWaitList,
-                                 cl_event *event) override {
-        cl_int retVal;
-        if (memObj->allowTiling() || memObj->peekSharingHandler()) {
-            retVal = enqueueWriteMemObjForUnmap(memObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
-        } else {
-            cpuDataTransferHandler(memObj,
-                                   CL_COMMAND_UNMAP_MEM_OBJECT,
-                                   CL_FALSE,
-                                   0,
-                                   0,
-                                   mappedPtr,
-                                   numEventsInWaitList,
-                                   eventWaitList,
-                                   event,
-                                   retVal);
-        }
-        return retVal;
-    }
 
     cl_int enqueueWriteBuffer(Buffer *buffer,
                               cl_bool blockingWrite,
@@ -381,29 +338,12 @@ class CommandQueueHw : public CommandQueue {
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
 
-    void addMapUnmapToWaitlistEventsDependencies(const cl_event *eventWaitList,
-                                                 size_t numEventsInWaitlist,
-                                                 MapOperationType opType,
-                                                 MemObj *memObj,
-                                                 EventBuilder &externalEventBuilder);
-
-    void *cpuDataTransferHandler(MemObj *memObj,
-                                 cl_command_type cmdType,
-                                 cl_bool blocking,
-                                 size_t offset,
-                                 size_t size,
-                                 void *ptr,
-                                 cl_uint numEventsInWaitList,
-                                 const cl_event *eventWaitList,
-                                 cl_event *event,
-                                 cl_int &retVal);
-
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo);
 
   private:
     bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
-    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType);
+    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueue, unsigned int commandType) override;
     void forceDispatchScheduler(OCLRT::MultiDispatchInfo &multiDispatchInfo);
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,

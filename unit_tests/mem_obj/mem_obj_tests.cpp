@@ -74,7 +74,7 @@ TEST(MemObj, GivenMemObjectWhenAskedForTransferDataThenNullPtrIsReturned) {
     EXPECT_EQ(nullptr, ptr);
 }
 
-TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrReturnsAllocatedMappedPtr) {
+TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrIsDifferentThanAllocatedMappedPtr) {
     void *mockPtr = (void *)0x01234;
     MockContext context;
 
@@ -85,26 +85,8 @@ TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrReturnsAlloca
     EXPECT_EQ(nullptr, memObj.getMappedPtr());
     memObj.setAllocatedMappedPtr(mockPtr);
     EXPECT_EQ(mockPtr, memObj.getAllocatedMappedPtr());
-    EXPECT_EQ(mockPtr, memObj.getMappedPtr());
+    EXPECT_NE(mockPtr, memObj.getMappedPtr());
     memObj.setAllocatedMappedPtr(nullptr);
-}
-
-TEST(MemObj, givenMemObjWhenAllocatedMappedPtrAndMappedPtrAreSetThenGetMappedPtrReturnsAllocatedMappedPtr) {
-    void *mockPtr = (void *)0x01234;
-    void *mockAllocatedPtr = (void *)0x01235;
-    EXPECT_NE(mockPtr, mockAllocatedPtr);
-
-    MockContext context;
-
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
-                  1, nullptr, nullptr, nullptr, true, false, false);
-
-    memObj.setAllocatedMappedPtr(mockAllocatedPtr);
-    memObj.setMappedPtr(mockPtr);
-    EXPECT_EQ(mockAllocatedPtr, memObj.getAllocatedMappedPtr());
-    EXPECT_EQ(mockAllocatedPtr, memObj.getMappedPtr());
-    memObj.setAllocatedMappedPtr(nullptr);
-    memObj.setMappedPtr(nullptr);
 }
 
 TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
@@ -264,4 +246,31 @@ TEST(MemObj, givenMemObjAndPointerToDiffrentStorageAndProperCommandWhenCheckIfMe
     void *ptr = (void *)0x1234;
     bool isMemTransferNeeded = memObj.checkIfMemoryTransferIsRequired(0, 0, ptr, CL_COMMAND_WRITE_BUFFER);
     EXPECT_TRUE(isMemTransferNeeded);
+}
+
+TEST(MemObj, givenSharingHandlerWhenAskedForCpuMappingThenReturnFalse) {
+    MemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+    memObj.setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(memObj.mappingOnCpuAllowed());
+}
+
+TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
+    struct MyMemObj : public MemObj {
+        using MemObj::MemObj;
+        bool allowTiling() const override { return true; }
+    };
+    MyMemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                    MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+
+    EXPECT_FALSE(memObj.mappingOnCpuAllowed());
+}
+
+TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
+    MemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+
+    EXPECT_FALSE(memObj.allowTiling());
+    EXPECT_FALSE(memObj.peekSharingHandler());
+    EXPECT_TRUE(memObj.mappingOnCpuAllowed());
 }

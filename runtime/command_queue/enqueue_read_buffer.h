@@ -51,16 +51,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
          buffer->isReadWriteOnCpuAllowed(blockingRead, numEventsInWaitList, ptr, size)) &&
         context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {
         if (!isMemTransferNeeded) {
-            cpuDataTransferHandler(buffer,
-                                   CL_COMMAND_MARKER,
-                                   CL_TRUE,
-                                   offset,
-                                   size,
-                                   ptr,
-                                   numEventsInWaitList,
-                                   eventWaitList,
-                                   event,
-                                   retVal);
+            TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, true, &offset, &size, ptr, nullptr, nullptr);
+            EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+            cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
             if (event) {
                 auto pEvent = castToObjectOrAbort<Event>(*event);
                 pEvent->setCmdType(CL_COMMAND_READ_BUFFER);
@@ -71,16 +64,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             }
             return retVal;
         }
-        cpuDataTransferHandler(buffer,
-                               CL_COMMAND_READ_BUFFER,
-                               CL_TRUE,
-                               offset,
-                               size,
-                               ptr,
-                               numEventsInWaitList,
-                               eventWaitList,
-                               event,
-                               retVal);
+        TransferProperties transferProperties(buffer, CL_COMMAND_READ_BUFFER, true, &offset, &size, ptr, nullptr, nullptr);
+        EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+        cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
+
         return retVal;
     }
     MultiDispatchInfo dispatchInfo;

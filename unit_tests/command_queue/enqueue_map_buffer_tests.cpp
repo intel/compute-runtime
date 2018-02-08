@@ -84,6 +84,19 @@ TEST_F(EnqueueMapBufferTest, checkPointer) {
     }
 }
 
+TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedThenReturnHostPtr) {
+    auto hostPtr = buffer->getHostPtr();
+    EXPECT_NE(nullptr, hostPtr);
+    auto mapFlags = CL_MAP_READ;
+    auto size = 2;
+    auto offset = 2;
+    cl_int retVal;
+    auto ptr = pCmdQ->enqueueMapBuffer(buffer, true, mapFlags, offset, size,
+                                       0, nullptr, nullptr, retVal);
+
+    EXPECT_EQ(ptr, ptrOffset(hostPtr, offset));
+}
+
 TEST_F(EnqueueMapBufferTest, checkRetVal) {
     auto mapFlags = CL_MAP_READ;
     auto size = 0;

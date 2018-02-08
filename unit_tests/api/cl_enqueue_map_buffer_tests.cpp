@@ -93,7 +93,7 @@ TEST_F(clEnqueueMapBufferTests, validInputs_returnsSuccess) {
         nullptr,
         &eventReturned,
         &retVal);
-    EXPECT_EQ(nullptr, ptrResult);
+    EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(buffer);

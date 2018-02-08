@@ -20,7 +20,7 @@
 
 set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
@@ -38,8 +38,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_fill_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_fill_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_map_buffer.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_map_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_svm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_marker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_migrate_mem_objects.h

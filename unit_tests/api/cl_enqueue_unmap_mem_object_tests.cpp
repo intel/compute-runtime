@@ -62,3 +62,20 @@ TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingThenReturnErro
         nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
+
+TEST_F(clEnqueueUnmapMemObjTests, givenNullAddressWhenUnmappingThenReturnError) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    cl_int retVal = CL_SUCCESS;
+
+    clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(
+        pCommandQueue,
+        buffer.get(),
+        nullptr,
+        0,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
