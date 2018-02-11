@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "common/compiler_support.h"
 #include "elf/reader.h"
 #include "elf/writer.h"
 #include "program.h"
@@ -95,7 +96,7 @@ cl_int Program::processElfBinary(
             switch (pSectionHeader->Type) {
             case CLElfLib::SH_TYPE_SPIRV:
                 isSpirV = true;
-            // FALLTHROUGH
+                CPP_ATTRIBUTE_FALLTHROUGH;
             case CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY:
                 pElfReader->getSectionData(i, pSectionData, sectionDataSize);
                 if (pSectionData && sectionDataSize) {

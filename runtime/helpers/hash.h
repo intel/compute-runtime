@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "common/compiler_support.h"
 #include "runtime/helpers/aligned_memory.h"
 #include <cstdint>
 
@@ -51,11 +52,11 @@ class Hash {
         case 3:
             value = static_cast<uint32_t>(*reinterpret_cast<const unsigned char *>(data++));
             value <<= 8;
-        // FALLTHROUGH
+            CPP_ATTRIBUTE_FALLTHROUGH;
         case 2:
             value |= static_cast<uint32_t>(*reinterpret_cast<const unsigned char *>(data++));
             value <<= 8;
-        // FALLTHROUGH
+            CPP_ATTRIBUTE_FALLTHROUGH;
         case 1:
             value |= static_cast<uint32_t>(*reinterpret_cast<const unsigned char *>(data++));
             value <<= 8;
