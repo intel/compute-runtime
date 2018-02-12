@@ -24,6 +24,6 @@
 
 namespace OCLRT {
 
-constexpr uintptr_t windowsMinAddress = 0x200000;
+constexpr uintptr_t windowsMinAddress = 0x4000;
 
 } // namespace OCLRT

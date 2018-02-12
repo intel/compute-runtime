@@ -37,6 +37,18 @@
 
 using namespace OCLRT;
 
+HWTEST_F(WddmTestSingle, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAddress) {
+    uintptr_t expectedAddress = 0x4000;
+    EXPECT_EQ(expectedAddress, OCLRT::windowsMinAddress);
+    Wddm *wddm = Wddm::createWddm();
+
+    bool status = wddm->init<FamilyType>();
+    EXPECT_TRUE(status);
+    EXPECT_TRUE(wddm->isInitialized());
+    EXPECT_EQ(expectedAddress, wddm->getWddmMinAddress());
+    delete wddm;
+}
+
 HWTEST_F(WddmTestSingle, creation) {
     Wddm *wddm = Wddm::createWddm();
 
