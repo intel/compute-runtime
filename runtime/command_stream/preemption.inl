@@ -23,6 +23,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/command_queue/dispatch_walker_helper.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
 
@@ -68,6 +69,65 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, co
             pCmd->setDataDword(GPGPU_WALKER_COOKIE_VALUE_AFTER_WALKER);
         }
     }
+}
+
+template <typename GfxFamily>
+void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, const Device &device,
+                                       const GraphicsAllocation *preemptionCsr) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return;
+    }
+
+    UNRECOVERABLE_IF(nullptr == preemptionCsr);
+    using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
+    using STATE_SIP = typename GfxFamily::STATE_SIP;
+
+    auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
+    csr->init();
+    csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
+
+    auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
+    sip->init();
+    sip->setSystemInstructionPointer(0);
+}
+
+template <typename GfxFamily>
+void PreemptionHelper::programCmdStream(LinearStream &cmdStream,
+                                        PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
+                                        GraphicsAllocation *preemptionCsr,
+                                        const LinearStream &ih, const Device &device) {
+    if (oldPreemptionMode == newPreemptionMode) {
+        DEBUG_BREAK_IF((newPreemptionMode == PreemptionMode::MidThread) && (false == isValidInstructionHeapForMidThreadPreemption(ih, device)));
+        return;
+    }
+
+    uint32_t regVal = 0;
+    if (newPreemptionMode == PreemptionMode::MidThread) {
+        regVal = PreemptionConfig<GfxFamily>::midThreadVal | PreemptionConfig<GfxFamily>::mask;
+    } else if (newPreemptionMode == PreemptionMode::ThreadGroup) {
+        regVal = PreemptionConfig<GfxFamily>::threadGroupVal | PreemptionConfig<GfxFamily>::mask;
+    } else {
+        regVal = PreemptionConfig<GfxFamily>::cmdLevelVal | PreemptionConfig<GfxFamily>::mask;
+    }
+
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal);
+}
+
+template <typename GfxFamily>
+size_t PreemptionHelper::getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode) {
+    if (newPreemptionMode == oldPreemptionMode) {
+        return 0;
+    }
+    return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+}
+
+template <typename GfxFamily>
+size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
+    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
+        return 0;
+    }
+
+    return sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS) + sizeof(typename GfxFamily::STATE_SIP);
 }
 
 } // namespace OCLRT

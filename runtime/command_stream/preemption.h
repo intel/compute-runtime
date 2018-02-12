@@ -66,4 +66,17 @@ class PreemptionHelper {
 
     static PreemptionMode getDefaultPreemptionMode(const HardwareInfo &hwInfo);
 };
+
+template <typename GfxFamily>
+struct PreemptionConfig {
+    static const uint32_t mmioAddress;
+    static const uint32_t maskVal;
+    static const uint32_t maskShift;
+    static const uint32_t mask;
+
+    static const uint32_t threadGroupVal;
+    static const uint32_t cmdLevelVal;
+    static const uint32_t midThreadVal;
+};
+
 } // namespace OCLRT

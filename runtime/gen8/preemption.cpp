@@ -27,12 +27,17 @@ namespace OCLRT {
 
 typedef BDWFamily GfxFamily;
 
-namespace PreemptionBDW {
-static constexpr uint32_t mmioAddress = 0x2248;
+template <>
+struct PreemptionConfig<GfxFamily> {
+    static constexpr uint32_t mmioAddress = 0x2248;
+    static constexpr uint32_t maskVal = 0;
+    static constexpr uint32_t maskShift = 0;
+    static constexpr uint32_t mask = 0;
 
-static constexpr uint32_t threadGroupVal = 0;
-static constexpr uint32_t cmdLevelVal = (1 << 2);
-}; // namespace PreemptionBDW
+    static constexpr uint32_t threadGroupVal = 0;
+    static constexpr uint32_t cmdLevelVal = (1 << 2);
+    static constexpr uint32_t midThreadVal = 0;
+};
 
 template <>
 void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
@@ -43,20 +48,12 @@ void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream, Pree
 
     uint32_t regVal = 0;
     if (newPreemptionMode == PreemptionMode::ThreadGroup) {
-        regVal = PreemptionBDW::threadGroupVal;
+        regVal = PreemptionConfig<GfxFamily>::threadGroupVal;
     } else {
-        regVal = PreemptionBDW::cmdLevelVal;
+        regVal = PreemptionConfig<GfxFamily>::cmdLevelVal;
     }
 
-    LriHelper<GfxFamily>::program(&cmdStream, PreemptionBDW::mmioAddress, regVal);
-}
-
-template <>
-size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode) {
-    if (newPreemptionMode == oldPreemptionMode) {
-        return 0;
-    }
-    return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    LriHelper<GfxFamily>::program(&cmdStream, PreemptionConfig<GfxFamily>::mmioAddress, regVal);
 }
 
 template <>
@@ -69,6 +66,7 @@ void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStrea
                                                   const GraphicsAllocation *preemptionCsr) {
 }
 
+template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
 template size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(LinearStream *pCommandStream, const Device &device);
 template void PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(LinearStream *pCommandStream, const Device &device);
