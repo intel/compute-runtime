@@ -80,6 +80,9 @@ Device::Device(const HardwareInfo &hwInfo,
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
+    deviceEngineType = DebugManager.flags.NodeOrdinal.get() == -1
+                           ? hwInfo.capabilityTable.defaultEngineType
+                           : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 }
 
 Device::~Device() {
@@ -178,10 +181,6 @@ const HardwareInfo *Device::getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn) {
 }
 
 const HardwareInfo &Device::getHardwareInfo() const { return hwInfo; }
-
-EngineType Device::getEngineType() const {
-    return hwInfo.capabilityTable.defaultEngineType;
-}
 
 const WorkaroundTable *Device::getWaTable() const { return hwInfo.pWaTable; }
 

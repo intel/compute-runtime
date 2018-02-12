@@ -71,9 +71,6 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         HwHelper &hwHelper = HwHelper::get(adapterInfo->GfxPlatform.eRenderCoreFamily);
 
         hwHelper.adjustDefaultEngineType(&tempHwInfos[devNum]);
-        tempHwInfos[devNum].capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
-                                                                    ? tempHwInfos[devNum].capabilityTable.defaultEngineType
-                                                                    : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 
         hwHelper.setCapabilityCoherencyFlag(&tempHwInfos[devNum], tempHwInfos[devNum].capabilityTable.ftrSupportsCoherency);
 

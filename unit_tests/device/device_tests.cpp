@@ -118,6 +118,19 @@ TEST_F(DeviceTest, getEngineTypeDefault) {
     EXPECT_EQ(defaultEngineType, actualEngineType);
 }
 
+TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUseDebugNotDefaul) {
+    EngineType expectedEngine = EngineType::ENGINE_VCS;
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(expectedEngine));
+    auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
+
+    EngineType actualEngineType = pTestDevice->getEngineType();
+    EngineType defaultEngineType = hwInfoHelper.capabilityTable.defaultEngineType;
+
+    EXPECT_NE(defaultEngineType, actualEngineType);
+    EXPECT_EQ(expectedEngine, actualEngineType);
+}
+
 struct SmallMockDevice : public Device {
     SmallMockDevice(const HardwareInfo &hwInfo, bool isRootDevice = true)
         : Device(hwInfo, isRootDevice) {}

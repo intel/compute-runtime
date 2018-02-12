@@ -167,10 +167,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     hwHelper.setCapabilityCoherencyFlag(const_cast<const HardwareInfo *>(outHwInfo), platformCoherency);
     outHwInfo->capabilityTable.ftrSupportsCoherency = (platformCoherency && drm->peekCoherencyDisablePatchActive());
 
-    outHwInfo->capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
-                                                       ? outHwInfo->capabilityTable.defaultEngineType
-                                                       : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
-
     outHwInfo->capabilityTable.instrumentationEnabled = false;
     outHwInfo->capabilityTable.ftrCompression = false;
 

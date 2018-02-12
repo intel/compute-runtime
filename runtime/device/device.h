@@ -81,7 +81,9 @@ class Device : public BaseObject<_cl_device_id> {
     const DeviceInfo &getDeviceInfo() const;
     DeviceInfo *getMutableDeviceInfo();
     MOCKABLE_VIRTUAL const WorkaroundTable *getWaTable() const;
-    EngineType getEngineType() const;
+    EngineType getEngineType() const {
+        return deviceEngineType;
+    }
 
     void *getSLMWindowStartAddress();
     void prepareSLMWindow();
@@ -164,6 +166,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::string exposedBuiltinKernels = "";
 
     PreemptionMode preemptionMode;
+    EngineType deviceEngineType;
 };
 
 template <cl_device_info Param>
