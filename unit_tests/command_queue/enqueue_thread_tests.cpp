@@ -525,8 +525,8 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
 
     pMyCmdQ->flushWaitList(0, nullptr, 0);
 
-    EXPECT_EQ(pMyDevice->takeOwnershipCount, 1u);
-    EXPECT_EQ(pMyDevice->releaseOwnershipCount, 1u);
+    EXPECT_EQ(pMyDevice->takeOwnershipCount, 0u);
+    EXPECT_EQ(pMyDevice->releaseOwnershipCount, 0u);
 
     delete pMyCmdQ;
 

@@ -409,46 +409,7 @@ void CommandQueue::flushWaitList(
         while ((isQBlocked = isQueueBlocked()))
             ;
     }
-
-    TakeOwnershipWrapper<Device> deviceOwnership(*device);
     device->getCommandStreamReceiver().flushBatchedSubmissions();
-
-    if (!isQBlocked) {
-        auto taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
-        auto &commandStream = getCS();
-        auto &commandStreamReceiver = device->getCommandStreamReceiver();
-
-        bool flushTask = false;
-
-        for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
-            Event *event = (Event *)eventWaitList[eventId];
-            if (event->peekTaskCount() > commandStreamReceiver.peekLatestSentTaskCount()) {
-                flushTask = true;
-                break;
-            }
-        }
-
-        if (flushTask) {
-            DispatchFlags dispatchFlags;
-            dispatchFlags.GSBA32BitRequired = ndRangeKernel;
-            dispatchFlags.lowPriority = priority == QueuePriority::LOW;
-            dispatchFlags.throttle = throttle;
-            dispatchFlags.implicitFlush = true;
-            dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, nullptr);
-
-            DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
-
-            commandStreamReceiver.flushTask(
-                commandStream,
-                commandStream.getUsed(),
-                getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0),
-                getIndirectHeap(IndirectHeap::INSTRUCTION, 0),
-                getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0),
-                getIndirectHeap(IndirectHeap::SURFACE_STATE, 0),
-                taskLevel + 1,
-                dispatchFlags);
-        }
-    }
 }
 
 bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration) {

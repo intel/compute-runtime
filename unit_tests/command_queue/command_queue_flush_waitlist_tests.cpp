@@ -82,31 +82,3 @@ HWTEST_F(CommandQueueSimpleTest, flushWaitlistDoesNotFlushSingleEventWhenTaskCou
 
     pDevice->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
 }
-
-TEST_F(CommandQueueSimpleTest, flushWaitlistFlushesSingleEventWhenTaskCountIsNotYetSent) {
-    MockCommandQueue commandQueue(pContext, pDevice, 0);
-
-    // Event has 2 taskLevel and 2 taskCount
-    MockEvent<Event> event(&commandQueue, CL_COMMAND_NDRANGE_KERNEL, 1, 2);
-    cl_event clEvent = &event;
-
-    auto &csr = pDevice->getCommandStreamReceiver();
-    auto *gfxAllocation = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
-    LinearStream stream(gfxAllocation);
-
-    // Update latestSentTaskCount to == 1
-    DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = true;
-    dispatchFlags.dcFlush = true;
-
-    csr.flushTask(stream, 0, stream, stream, stream, stream, 0, dispatchFlags);
-
-    EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
-
-    commandQueue.flushWaitList(1, &clEvent, true);
-
-    EXPECT_EQ(1u + 1u, csr.peekTaskLevel()); // event's plus one
-    EXPECT_EQ(2u, csr.peekTaskCount());
-
-    pDevice->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
-}

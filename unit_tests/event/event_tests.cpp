@@ -1229,20 +1229,6 @@ TEST_F(EventTest, GivenCL_SUBMITTEDWhenpeekIsSubmittedThenTrue) {
     EXPECT_EQ(true, executionStatus);
 }
 
-TEST_F(EventTest, GivenNotCompletedEventWhenQueryingExecutionStatusAfterFlushThenCsrGetsFlushedWithProperTaskLevel) {
-    cl_int ret;
-    *pDevice->getTagAddress() = 2;
-    Event ev(this->pCmdQ, CL_COMMAND_COPY_BUFFER, 3, 3);
-    auto &csr = this->pCmdQ->getDevice().getCommandStreamReceiver();
-    EXPECT_GT(3u, csr.peekTaskLevel());
-    ret = clFlush(this->pCmdQ);
-    ASSERT_EQ(CL_SUCCESS, ret);
-    cl_int execState;
-    ret = clGetEventInfo(&ev, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(execState), &execState, nullptr);
-    ASSERT_EQ(CL_SUCCESS, ret);
-    EXPECT_EQ(4u, csr.peekTaskLevel());
-}
-
 TEST_F(EventTest, GivenCompletedEventWhenQueryingExecutionStatusAfterFlushThenCsrIsNotFlushed) {
     cl_int ret;
     *pDevice->getTagAddress() = 3;
