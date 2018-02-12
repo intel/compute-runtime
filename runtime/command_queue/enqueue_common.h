@@ -538,7 +538,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.implicitFlush = implicitFlush;
     dispatchFlags.flushStampReference = this->flushStamp->getStampReference();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
-    dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || this->isOOQEnabled();
+    dispatchFlags.outOfOrderExecutionAllowed = (!eventBuilder.getEvent() && !multiDispatchInfo.begin()->getKernel()->isUsingSharedObjArgs()) || this->isOOQEnabled();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

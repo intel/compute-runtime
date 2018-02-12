@@ -180,6 +180,8 @@ class MockKernel : public Kernel {
 
     // Make protected members from base class publicly accessible in mock class
     using Kernel::kernelArgHandlers;
+
+    void setUsingSharedArgs(bool usingSharedArgValue) { this->usingSharedObjArgs = usingSharedArgValue; }
 };
 
 //class below have enough internals to service Enqueue operation.
