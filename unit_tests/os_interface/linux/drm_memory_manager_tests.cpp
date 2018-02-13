@@ -135,6 +135,9 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         this->mock = nullptr;
         MemoryManagementFixture::TearDown();
     }
+
+  protected:
+    DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
 };
 
 typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
@@ -781,9 +784,8 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64B
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHostPtrAndAllocUserptrFailsThenFails) {
     mock->ioctl_expected = 1;
 
-    DrmMockCustom::IoctlResExt ioctlToPass = {0, -1};
-
-    mock->ioctl_res_ext = &ioctlToPass;
+    this->ioctlResExt = {0, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
 
     auto size = 10u;
     void *host_ptr = (void *)0x1000;
@@ -795,9 +797,8 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAllocUserptrFailsThenFails) {
     mock->ioctl_expected = 1;
 
-    DrmMockCustom::IoctlResExt ioctlToPass = {0, -1};
-
-    mock->ioctl_res_ext = &ioctlToPass;
+    this->ioctlResExt = {0, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
 
     auto size = 10u;
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr);
@@ -1469,8 +1470,9 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsR
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAllocUserptrFailsThenReturnsNullptr) {
     mock->ioctl_expected = 7;
-    DrmMockCustom::IoctlResExt ioctlToFail = {2, -1};
-    mock->ioctl_res_ext = &ioctlToFail;
+
+    this->ioctlResExt = {2, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
 
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
