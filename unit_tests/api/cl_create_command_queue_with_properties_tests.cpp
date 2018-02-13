@@ -193,9 +193,9 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCase) {
     EXPECT_NE(retVal, CL_SUCCESS);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCaseINTEL) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCaseKHR) {
     cl_int retVal = CL_SUCCESS;
-    auto cmdQ = clCreateCommandQueueWithPropertiesINTEL(
+    auto cmdQ = clCreateCommandQueueWithPropertiesKHR(
         nullptr,
         nullptr,
         0,

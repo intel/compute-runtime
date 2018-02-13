@@ -2760,10 +2760,10 @@ clSetPerformanceConfigurationINTEL(
     return perfCounters->sendPerfConfiguration(count, offsets, values);
 }
 
-cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesINTEL(cl_context context,
-                                                                     cl_device_id device,
-                                                                     const cl_queue_properties_intel *properties,
-                                                                     cl_int *errcodeRet) {
+cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context context,
+                                                                   cl_device_id device,
+                                                                   const cl_queue_properties_khr *properties,
+                                                                   cl_int *errcodeRet) {
     return clCreateCommandQueueWithProperties(context, device, properties, errcodeRet);
 }
 
@@ -2938,7 +2938,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
 
     // SPIR-V support through the cl_khr_il_program extension
     RETURN_FUNC_PTR_IF_EXIST(clCreateProgramWithILKHR);
-    RETURN_FUNC_PTR_IF_EXIST(clCreateCommandQueueWithPropertiesINTEL);
+    RETURN_FUNC_PTR_IF_EXIST(clCreateCommandQueueWithPropertiesKHR);
 
     return nullptr;
 }

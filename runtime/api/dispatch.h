@@ -59,7 +59,7 @@ typedef void *ID3D11Texture3D;
 typedef void *HANDLE;
 #endif
 
-typedef cl_bitfield cl_queue_properties_intel;
+typedef cl_bitfield cl_queue_properties_khr;
 typedef void(CL_CALLBACK *ctxt_logging_fn)(const char *, const void *, size_t, void *);
 typedef void(CL_CALLBACK *prog_logging_fn)(cl_program, void *);
 typedef void(CL_CALLBACK *evnt_logging_fn)(cl_event, cl_int, void *);
@@ -1277,7 +1277,7 @@ struct SCRTDispatchTable {
     void *placeholder12;
     void *placeholder13;
 
-    // VAMedia sharing extension
+// VAMedia sharing extension
 #ifdef LIBVA
     INTELpfn_clCreateFromVA_APIMediaSurfaceINTEL clCreateFromVA_APIMediaSurfaceINTEL;
     INTELpfn_clGetDeviceIDsFromVA_APIMediaAdapterINTEL clGetDeviceIDsFromVA_APIMediaAdapterINTEL;

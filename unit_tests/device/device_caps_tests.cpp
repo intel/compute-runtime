@@ -512,6 +512,13 @@ TEST(Device_GetCaps, deviceReportsPriorityHintsExtension) {
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_priority_hints")));
 }
 
+TEST(Device_GetCaps, deviceReportsCreateCommandQueueExtension) {
+    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_create_command_queue")));
+}
+
 TEST(Device_GetCaps, deviceReportsThrottleHintsExtension) {
     auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();

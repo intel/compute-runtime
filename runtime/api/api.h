@@ -838,10 +838,10 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(
     const cl_queue_properties *properties,
     cl_int *errcodeRet);
 
-cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesINTEL(
+cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(
     cl_context context,
     cl_device_id device,
-    const cl_queue_properties_intel *properties,
+    const cl_queue_properties_khr *properties,
     cl_int *errcodeRet);
 
 cl_sampler CL_API_CALL clCreateSamplerWithProperties(
