@@ -24,6 +24,7 @@
 #include "gtest/gtest.h"
 
 using namespace OCLRT::Math;
+using namespace OCLRT;
 
 TEST(NextPowerOfTwo, aFewCases) {
     EXPECT_EQ(1u, nextPowerOfTwo(1));
@@ -165,4 +166,25 @@ TEST(l3configsGenerator, givenInputValuesWhenPassedToL3ConfigThenRawValueIsProdu
     config2.RawValue = 0x80000140u;
     EXPECT_EQ(0x40u, config2.bits.AllL3WayAssignement);
     EXPECT_EQ(0x20u, config2.bits.UrbAllocation);
+}
+
+struct ElementCountsTestData {
+    size_t x, y, z;
+    size_t result;
+};
+
+ElementCountsTestData elementCountInputData[] = {
+    {1, 2, 3, 6},
+    {0, 0, 1, 1},
+    {0, 1, 0, 1},
+    {1, 0, 0, 1},
+    {5, 0, 10, 50},
+    {0, 0, 30, 30},
+};
+
+typedef ::testing::TestWithParam<ElementCountsTestData> ComputeTotalElementsCount;
+
+TEST_P(ComputeTotalElementsCount, givenVariousInputVectorsWhenComputeTotalElementsCountIsUsedThenProperProductIsComputed) {
+    Vec3<size_t> inputData(GetParam().x, GetParam().y, GetParam().z);
+    EXPECT_EQ(GetParam().result, computeTotalElementsCount(inputData));
 }

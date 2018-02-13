@@ -245,7 +245,7 @@ void Device::initializeCaps() {
         //default value if systemInfo not provided
         deviceInfo.maxWorkGroupSize = 128;
     }
-    DEBUG_BREAK_IF(deviceInfo.maxWorkGroupSize > 256);
+    DEBUG_BREAK_IF(!DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() && deviceInfo.maxWorkGroupSize > 256);
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
     deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(deviceInfo.maxWorkGroupSize / simdSizeUsed);

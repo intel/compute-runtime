@@ -671,10 +671,12 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
         nullptr,
         blockQueue);
 
+    Vec3<size_t> localWorkgroupSize(workGroupSize);
+
     auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
     auto expectedSizeISH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(kernel);
-    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel);
+    auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());

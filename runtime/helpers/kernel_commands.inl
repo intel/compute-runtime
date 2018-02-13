@@ -112,7 +112,7 @@ size_t getSizeRequired(const MultiDispatchInfo &multiDispatchInfo, SizeGetterT &
     auto it = multiDispatchInfo.begin();
     for (auto e = multiDispatchInfo.end(); it != e; ++it) {
         totalSize = alignUp(totalSize, MemoryConstants::pageSize);
-        totalSize += getSize(it->getKernel(), std::forward<ArgsT>(args)...);
+        totalSize += getSize(*it, std::forward<ArgsT>(args)...);
     }
     return totalSize;
 }
@@ -120,25 +120,25 @@ size_t getSizeRequired(const MultiDispatchInfo &multiDispatchInfo, SizeGetterT &
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const Kernel *k) { return getSizeRequiredDSH(*k); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredDSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const Kernel *k) { return getSizeRequiredIH(*k); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(
-    const MultiDispatchInfo &multiDispatchInfo, size_t localWorkSize) {
-    return getSizeRequired(multiDispatchInfo, [localWorkSize](Kernel *k) { return getSizeRequiredIOH(*k, localWorkSize); });
+    const MultiDispatchInfo &multiDispatchInfo) {
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIOH(*dispatchInfo.getKernel(), Math::computeTotalElementsCount(dispatchInfo.getLocalWorkgroupSize())); });
 }
 
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
     const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const Kernel *k) { return getSizeRequiredSSH(*k); });
+    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredSSH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>
@@ -185,13 +185,13 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     // # of threads in thread group should be based on LWS.
     pInterfaceDescriptor->setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
-    DEBUG_BREAK_IF((sizeCrossThreadData % sizeof(GRF))  != 0);
+    DEBUG_BREAK_IF((sizeCrossThreadData % sizeof(GRF)) != 0);
     auto numGrfCrossThreadData = static_cast<uint32_t>(sizeCrossThreadData / sizeof(GRF));
     DEBUG_BREAK_IF(numGrfCrossThreadData == 0);
     pInterfaceDescriptor->setCrossThreadConstantDataReadLength(numGrfCrossThreadData);
     pInterfaceDescriptor->setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 
-    DEBUG_BREAK_IF((sizePerThreadData % sizeof(GRF))  != 0);
+    DEBUG_BREAK_IF((sizePerThreadData % sizeof(GRF)) != 0);
     auto numGrfPerThreadData = static_cast<uint32_t>(sizePerThreadData / sizeof(GRF));
 
     // at least 1 GRF of perThreadData for each thread in a thread group when sizeCrossThreadData != 0
@@ -299,7 +299,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
 
     // march over BTIs and offset the pointers based on surface state base address
     auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, localBtiOffset));
-    DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE  != 0);
+    DEBUG_BREAK_IF(reinterpret_cast<uintptr_t>(dstBtiTableBase) % INTERFACE_DESCRIPTOR_DATA::BINDINGTABLEPOINTER_ALIGN_SIZE != 0);
     auto *srcBtiTableBase = reinterpret_cast<const BINDING_TABLE_STATE *>(ptrOffset(srcSurfaceState, localBtiOffset));
     BINDING_TABLE_STATE bti;
     bti.init(); // init whole DWORD - i.e. not just the SurfaceStatePointer bits
@@ -308,7 +308,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
         uint32_t offsetedSurfaceStateOffset = localSurfaceStateOffset + surfaceStatesOffset;
         bti.setSurfaceStatePointer(offsetedSurfaceStateOffset); // patch just the SurfaceStatePointer bits
         dstBtiTableBase[i] = bti;
-        DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE)  != 0);
+        DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
     }
 
     return ptrDiff(dstBtiTableBase, dstHeap.getBase());

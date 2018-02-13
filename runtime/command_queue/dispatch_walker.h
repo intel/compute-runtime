@@ -455,6 +455,14 @@ void dispatchWalker(
     OCLRT::IndirectHeap *dsh = nullptr, *ish = nullptr, *ioh = nullptr, *ssh = nullptr;
     bool executionModelKernel = multiDispatchInfo.begin()->getKernel()->isParentKernel;
 
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        // Compute local workgroup sizes
+        if (dispatchInfo.getLocalWorkgroupSize().x == 0) {
+            const auto lws = generateWorkgroupSize(dispatchInfo);
+            const_cast<DispatchInfo &>(dispatchInfo).setLWS(lws);
+        }
+    }
+
     // Allocate command stream and indirect heaps
     size_t cmdQInstructionHeapReservedBlockSize = 0;
     if (blockQueue) {
@@ -541,7 +549,7 @@ void dispatchWalker(
         Vec3<size_t> swgs = dispatchInfo.getStartOfWorkgroups();
 
         // Compute local workgroup sizes
-        Vec3<size_t> lws = (dispatchInfo.getLocalWorkgroupSize().x > 0) ? dispatchInfo.getLocalWorkgroupSize() : generateWorkgroupSize(dispatchInfo);
+        Vec3<size_t> lws = dispatchInfo.getLocalWorkgroupSize();
         Vec3<size_t> elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
 
         // Compute number of work groups

@@ -22,8 +22,10 @@
 
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/utilities/vec.h"
 #include <cstdint>
 #include <cmath>
+#include <algorithm>
 #include <stdio.h>
 
 #define KB 1024uLL
@@ -153,5 +155,14 @@ inline bool isDivisableByPowerOfTwoDivisor(uint32_t number, uint32_t divisor) {
     else
         return false;
 }
+
+inline size_t computeTotalElementsCount(const Vec3<size_t> &inputVector) {
+    size_t minElementCount = 1;
+    auto xDim = std::max(minElementCount, inputVector.x);
+    auto yDim = std::max(minElementCount, inputVector.y);
+    auto zDim = std::max(minElementCount, inputVector.z);
+    return xDim * yDim * zDim;
+}
+
 } // namespace Math
 } // namespace OCLRT

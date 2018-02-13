@@ -118,8 +118,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static size_t getTotalSizeRequiredIH(
         const MultiDispatchInfo &multiDispatchInfo);
     static size_t getTotalSizeRequiredIOH(
-        const MultiDispatchInfo &multiDispatchInfo,
-        size_t localWorkSize = 256);
+        const MultiDispatchInfo &multiDispatchInfo);
     static size_t getTotalSizeRequiredSSH(
         const MultiDispatchInfo &multiDispatchInfo);
 
