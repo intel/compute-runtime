@@ -25,6 +25,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/sharings/sharing.h"
+#include "runtime/helpers/properties_helper.h"
 #include <atomic>
 #include <cstdint>
 #include <vector>
@@ -74,16 +75,19 @@ class MemObj : public BaseObject<_cl_mem> {
     cl_mem_flags getFlags() const;
     void setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ);
     CompletionStamp getCompletionStamp() const;
-    void *getAllocatedMappedPtr() const;
-    void *getMappedPtr() const;
-    void setMappedPtr(void *mappedPtr);
-    MOCKABLE_VIRTUAL void setAllocatedMappedPtr(void *allocatedMappedPtr);
-    size_t getMappedSize() { return mappedSize; }
-    void setMappedSize(size_t size) { mappedSize = size; }
-    size_t getMappedOffset() { return mappedOffset; }
-    void setMappedOffset(size_t offset) { mappedOffset = offset; }
+
+    void setMapInfo(void *mappedPtr, size_t *size, size_t *offset);
+    void *getBasePtrForMap();
+
+    void *getMappedPtr() const { return mapInfo.ptr; };
+    MOCKABLE_VIRTUAL void setAllocatedMapPtr(void *allocatedMapPtr);
+    void *getAllocatedMapPtr() const { return allocatedMapPtr; }
+
+    MapInfo::SizeArray getMappedSize() const { return mapInfo.size; }
+    MapInfo::OffsetArray getMappedOffset() const { return mapInfo.offset; }
+
     void setHostPtrMinSize(size_t size);
-    void releaseAllocatedMappedPtr();
+    void releaseAllocatedMapPtr();
 
     void incMapCount();
     void decMapCount();
@@ -106,7 +110,6 @@ class MemObj : public BaseObject<_cl_mem> {
     Device *getAssociatedDevice() { return device; }
     bool isImageFromImage() const { return isImageFromImageCreated; }
 
-    void *setAndReturnMappedPtr(size_t offset);
     void *getCpuAddressForMapping();
     void *getCpuAddressForMemoryTransfer();
 
@@ -125,6 +128,10 @@ class MemObj : public BaseObject<_cl_mem> {
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 
+    void setMappedPtr(void *mappedPtr);
+    virtual void setMappedSize(size_t *size) { mapInfo.size[0] = *size; }
+    virtual void setMappedOffset(size_t *offset) { mapInfo.offset[0] = *offset; }
+
     Context *context;
     cl_mem_object_type memObjectType;
     cl_mem_flags flags;
@@ -132,10 +139,8 @@ class MemObj : public BaseObject<_cl_mem> {
     size_t hostPtrMinSize = 0;
     void *memoryStorage;
     void *hostPtr;
-    void *allocatedMappedPtr = nullptr;
-    void *mappedPtr = nullptr;
-    size_t mappedSize = 0;
-    size_t mappedOffset = 0;
+    void *allocatedMapPtr = nullptr;
+    MapInfo mapInfo;
     size_t offset = 0;
     MemObj *associatedMemObject = nullptr;
     std::atomic<uint32_t> mapCount{0};

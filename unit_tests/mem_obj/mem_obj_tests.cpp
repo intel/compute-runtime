@@ -22,6 +22,7 @@
 
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/properties_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -59,8 +60,12 @@ TEST(MemObj, GivenMemObjWhenInititalizedFromHostPtrThenInitializeFields) {
     EXPECT_EQ(size, memObj.getSize());
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), memObj.getFlags());
     EXPECT_EQ(nullptr, memObj.getMappedPtr());
-    EXPECT_EQ(0u, memObj.getMappedSize());
-    EXPECT_EQ(0u, memObj.getMappedOffset());
+    EXPECT_EQ(0u, memObj.getMappedSize()[0]);
+    EXPECT_EQ(0u, memObj.getMappedSize()[1]);
+    EXPECT_EQ(0u, memObj.getMappedSize()[2]);
+    EXPECT_EQ(0u, memObj.getMappedOffset()[0]);
+    EXPECT_EQ(0u, memObj.getMappedOffset()[1]);
+    EXPECT_EQ(0u, memObj.getMappedOffset()[2]);
 }
 
 TEST(MemObj, givenMemObjectWhenAskedForTransferToHostPtrThenDoNothing) {
@@ -104,12 +109,33 @@ TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrIsDifferentTh
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
                   1, nullptr, nullptr, nullptr, true, false, false);
 
-    EXPECT_EQ(nullptr, memObj.getAllocatedMappedPtr());
+    EXPECT_EQ(nullptr, memObj.getAllocatedMapPtr());
     EXPECT_EQ(nullptr, memObj.getMappedPtr());
-    memObj.setAllocatedMappedPtr(mockPtr);
-    EXPECT_EQ(mockPtr, memObj.getAllocatedMappedPtr());
+    memObj.setAllocatedMapPtr(mockPtr);
+    EXPECT_EQ(mockPtr, memObj.getAllocatedMapPtr());
     EXPECT_NE(mockPtr, memObj.getMappedPtr());
-    memObj.setAllocatedMappedPtr(nullptr);
+    memObj.setAllocatedMapPtr(nullptr);
+}
+
+TEST(MemObj, givenHostPtrAndUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnHostPtr) {
+    uint8_t hostPtr = 0;
+    MockContext context;
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, &hostPtr, nullptr, true, false, false);
+
+    EXPECT_EQ(&hostPtr, memObj.getBasePtrForMap());
+}
+
+TEST(MemObj, givenHostPtrWithoutUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnAllocatedPtr) {
+    uint8_t hostPtr = 0;
+    MockContext context;
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  1, nullptr, &hostPtr, nullptr, true, false, false);
+
+    EXPECT_NE(&hostPtr, memObj.getBasePtrForMap());
+    EXPECT_EQ(memObj.getAllocatedMapPtr(), memObj.getBasePtrForMap());
 }
 
 TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
@@ -120,11 +146,11 @@ TEST(MemObj, givenMemObjWhenReleaseAllocatedPtrIsCalledTwiceThenItDoesntCrash) {
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
                   1, nullptr, nullptr, nullptr, true, false, false);
 
-    memObj.setAllocatedMappedPtr(allocatedPtr);
-    memObj.releaseAllocatedMappedPtr();
-    EXPECT_EQ(nullptr, memObj.getAllocatedMappedPtr());
-    memObj.releaseAllocatedMappedPtr();
-    EXPECT_EQ(nullptr, memObj.getAllocatedMappedPtr());
+    memObj.setAllocatedMapPtr(allocatedPtr);
+    memObj.releaseAllocatedMapPtr();
+    EXPECT_EQ(nullptr, memObj.getAllocatedMapPtr());
+    memObj.releaseAllocatedMapPtr();
+    EXPECT_EQ(nullptr, memObj.getAllocatedMapPtr());
 }
 
 TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAllocationIsAddedToMemoryManagerAllocationList) {

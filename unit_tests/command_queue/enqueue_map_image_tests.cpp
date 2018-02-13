@@ -74,7 +74,7 @@ TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     }
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
 
     auto ptr1 = pCmdQ->enqueueMapImage(
         image, true, mapFlags, origin,
@@ -112,7 +112,7 @@ TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalle
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_NE(ptr1, ptr2);
-    EXPECT_NE(nullptr, img->getAllocatedMappedPtr());
+    EXPECT_NE(nullptr, img->getAllocatedMapPtr());
 
     size_t mapOffset = img->getSurfaceFormatInfo().ImageElementSizeInBytes * origin2[0] +
                        img->getHostPtrRowPitch() * origin2[1];
@@ -122,9 +122,9 @@ TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalle
 template <typename GfxFamily>
 struct mockedImage : public ImageHw<GfxFamily> {
     using ImageHw<GfxFamily>::ImageHw;
-    void setAllocatedMappedPtr(void *allocatedMappedPtr) override {
+    void setAllocatedMapPtr(void *allocatedMapPtr) override {
         ownershipTaken = this->hasOwnership();
-        MemObj::setAllocatedMappedPtr(allocatedMappedPtr);
+        MemObj::setAllocatedMapPtr(allocatedMapPtr);
     }
     bool ownershipTaken = false;
 };
@@ -154,7 +154,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
 
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
 
     pCmdQ->enqueueMapImage(
         &mockImage, true, mapFlags, origin,
@@ -166,7 +166,7 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
 TEST_F(EnqueueMapImageTest, checkPointer) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     auto ptr = pCmdQ->enqueueMapImage(
@@ -198,7 +198,7 @@ TEST_F(EnqueueMapImageTest, checkPointer) {
 TEST_F(EnqueueMapImageTest, checkRetVal) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     auto ptr = pCmdQ->enqueueMapImage(
@@ -232,7 +232,7 @@ TEST_F(EnqueueMapImageTest, MapImageWaitEvent) {
     uint32_t tagHW = 0;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     size_t GWS = 1;
@@ -305,7 +305,7 @@ HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
     cl_event eventReturned = nullptr;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     uint32_t forceTaskCount = 100;
@@ -351,7 +351,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     cl_event eventReturned = nullptr;
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {1, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     uint32_t forceTaskCount = 100;
@@ -403,7 +403,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
 TEST_F(EnqueueMapImageTest, GivenNonZeroCopyImageWhenMappedWithOffsetThenCorrectPointerIsReturned) {
     auto mapFlags = CL_MAP_WRITE;
     const size_t origin[3] = {1, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
 
@@ -461,7 +461,7 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenMapAndUnmapOnNonTiledImageI
     pCmdQ->taskLevel = 1;
 
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {1, 0, 0};
+    size_t region[] = {1, 1, 1};
     void *data = clEnqueueMapImage(pCmdQ, image, CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, data);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -475,10 +475,58 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenMapAndUnmapOnNonTiledImageI
     delete image;
 }
 
+HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    size_t origin[] = {2, 1, 1};
+    size_t region[] = {2, 1, 1};
+    void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    EXPECT_EQ(origin[0], image->getMappedOffset()[0]);
+    EXPECT_EQ(origin[1], image->getMappedOffset()[1]);
+    EXPECT_EQ(origin[2], image->getMappedOffset()[2]);
+
+    EXPECT_EQ(region[0], image->getMappedSize()[0]);
+    EXPECT_EQ(region[1], image->getMappedSize()[1]);
+    EXPECT_EQ(region[2], image->getMappedSize()[2]);
+
+    auto offset = image->calculateOffset(image->getImageDesc().image_row_pitch, image->getImageDesc().image_slice_pitch, origin);
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), offset);
+
+    EXPECT_EQ(mappedPtr, expectedPtr);
+}
+
+HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    ASSERT_NE(nullptr, image);
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    size_t origin[] = {2, 1, 1};
+    size_t region[] = {2, 1, 1};
+    void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    EXPECT_EQ(origin[0], image->getMappedOffset()[0]);
+    EXPECT_EQ(origin[1], image->getMappedOffset()[1]);
+    EXPECT_EQ(origin[2], image->getMappedOffset()[2]);
+
+    EXPECT_EQ(region[0], image->getMappedSize()[0]);
+    EXPECT_EQ(region[1], image->getMappedSize()[1]);
+    EXPECT_EQ(region[2], image->getMappedSize()[2]);
+
+    auto offset = image->calculateOffset(image->getImageDesc().image_row_pitch, image->getImageDesc().image_slice_pitch, origin);
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), offset);
+
+    EXPECT_EQ(mappedPtr, expectedPtr);
+}
+
 TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith2DImageIsEnqueuedAndEventAsynchrounouslyCompletedThenEnqueueFinishesWithoutStall) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
 
@@ -517,7 +565,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith2DImageIs
 TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIsEnqueuedAndEventAsynchrounouslyCompletedThenEnqueueFinishesWithoutStall) {
     auto mapFlags = CL_MAP_READ;
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
 

@@ -161,7 +161,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     if (hasAllocatedMappedPtr) {
         auto allocatedPtr = alignedMalloc(size, MemoryConstants::pageSize);
-        memObj->setAllocatedMappedPtr(allocatedPtr);
+        memObj->setAllocatedMapPtr(allocatedPtr);
     }
 
     auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
@@ -189,13 +189,15 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     if (!hasAllocatedMappedPtr) {
         delete memObj;
         allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize);
+        size_t origin[3] = {0, 0, 0};
+        size_t region[3] = {1, 1, 1};
         memObj = new MemObj(&context, CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
                             storage, nullptr, allocation, true, false, false);
-        memObj->setMappedPtr(storage);
+        memObj->setMapInfo(storage, region, origin);
     } else {
-        memObj->setAllocatedMappedPtr(storage);
+        memObj->setAllocatedMapPtr(storage);
     }
 
     makeMemObjUsed();

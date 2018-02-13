@@ -70,8 +70,10 @@ class ImageUnmapTest : public ::testing::Test {
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlockingMapImage) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     void *ptr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    image->setAllocatedMappedPtr(ptr);
-    image->setMappedPtr(ptr);
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+    image->setAllocatedMapPtr(ptr);
+    image->setMapInfo(ptr, region, origin);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(ptr, commandQueue->passedPtr);
     EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
@@ -119,10 +121,10 @@ TEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMe
     std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
     std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(&context, device.get(), nullptr, retVal));
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
-    EXPECT_NE(nullptr, image->getAllocatedMappedPtr());
-    void *ptr = image->getAllocatedMappedPtr();
+    EXPECT_NE(nullptr, image->getAllocatedMapPtr());
+    void *ptr = image->getAllocatedMapPtr();
     EXPECT_EQ(alignUp(ptr, MemoryConstants::pageSize), ptr);
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);
-    EXPECT_EQ(ptr, image->getAllocatedMappedPtr());
+    EXPECT_EQ(ptr, image->getAllocatedMapPtr());
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
 }

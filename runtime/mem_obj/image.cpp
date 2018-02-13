@@ -1188,4 +1188,8 @@ bool Image::hasAlphaChannel(const cl_image_format *imageFormat) {
            (channelOrder == CL_sRGBx) ||
            (channelOrder == CL_ABGR);
 }
+
+size_t Image::calculateOffset(size_t rowPitch, size_t slicePitch, size_t *origin) const {
+    return getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + rowPitch * origin[1] + slicePitch * origin[2];
+}
 } // namespace OCLRT

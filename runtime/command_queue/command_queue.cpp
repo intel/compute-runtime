@@ -458,8 +458,9 @@ bool CommandQueue::sendPerfCountersConfig() {
 cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest) {
     auto image = castToObject<Image>(memObj);
     if (image) {
-        auto retVal = enqueueWriteImage(image, CL_FALSE, image->getMappedOrigin(), image->getMappedRegion(), image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
-                                        mappedPtr, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+        auto retVal = enqueueWriteImage(image, CL_FALSE, &image->getMappedOffset()[0], &image->getMappedSize()[0],
+                                        image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr,
+                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         bool mustCallFinish = true;
         if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
             mustCallFinish = true;
@@ -474,9 +475,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
 
     auto buffer = castToObject<Buffer>(memObj);
     if (buffer) {
-        auto writePtr = ptrOffset(mappedPtr, buffer->getMappedOffset());
-
-        return enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset(), buffer->getMappedSize(), writePtr,
+        return enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset()[0], buffer->getMappedSize()[0], mappedPtr,
                                   eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
@@ -484,60 +483,31 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
 }
 
 void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
-    auto memoryManager = device->getMemoryManager();
-
-    auto memObj = transferProperties.memObj;
-    auto offset = transferProperties.offset;
-    auto size = transferProperties.size;
+    void *baseMapPtr = transferProperties.memObj->getBasePtrForMap();
     void *returnPtr = nullptr;
-    void *baseMapPtr = nullptr;
 
-    if (memObj->getFlags() & CL_MEM_USE_HOST_PTR) {
-        baseMapPtr = memObj->getHostPtr();
-    } else {
-        TakeOwnershipWrapper<MemObj> memObjOwnership(*transferProperties.memObj);
-        if (!memObj->getAllocatedMappedPtr()) {
-            auto memory = memoryManager->allocateSystemMemory(memObj->getSize(), MemoryConstants::pageSize);
-            memObj->setAllocatedMappedPtr(memory);
-        }
-        baseMapPtr = memObj->getAllocatedMappedPtr();
-    }
-
-    auto buffer = castToObject<Buffer>(memObj);
+    auto buffer = castToObject<Buffer>(transferProperties.memObj);
     if (buffer) {
-        returnPtr = ptrOffset(baseMapPtr, *offset);
-        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, *offset, *size, returnPtr,
+        returnPtr = ptrOffset(baseMapPtr, *transferProperties.offsetPtr);
+        errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, *transferProperties.offsetPtr, *transferProperties.sizePtr, returnPtr,
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
-
-        buffer->setMappedSize(*size);
-        buffer->setMappedOffset(*offset);
     } else {
-        auto image = castToObject<Image>(memObj);
+        auto image = castToObject<Image>(transferProperties.memObj);
         size_t slicePitch = image->getHostPtrSlicePitch();
         size_t rowPitch = image->getHostPtrRowPitch();
 
-        GetInfoHelper::set(transferProperties.retSlicePitch, slicePitch);
-        GetInfoHelper::set(transferProperties.retRowPitch, rowPitch);
+        GetInfoHelper::set(transferProperties.retSlicePitchPtr, slicePitch);
+        GetInfoHelper::set(transferProperties.retRowPitchPtr, rowPitch);
 
-        size_t mapOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * offset[0] +
-                           rowPitch * offset[1] +
-                           slicePitch * offset[2];
-        returnPtr = ptrOffset(baseMapPtr, mapOffset);
+        returnPtr = ptrOffset(baseMapPtr, image->calculateOffset(rowPitch, slicePitch, transferProperties.offsetPtr));
 
-        size_t mappedRegion[3] = {size[0] ? size[0] : 1,
-                                  size[1] ? size[1] : 1,
-                                  size[2] ? size[2] : 1};
-
-        errcodeRet = enqueueReadImage(image, transferProperties.blocking, offset, mappedRegion, rowPitch, slicePitch, returnPtr,
-                                      eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
-
-        image->setMappedOrigin((size_t *)offset);
-        image->setMappedRegion((size_t *)mappedRegion);
+        errcodeRet = enqueueReadImage(image, transferProperties.blocking, transferProperties.offsetPtr, transferProperties.sizePtr,
+                                      rowPitch, slicePitch, returnPtr, eventsRequest.numEventsInWaitList,
+                                      eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
     if (errcodeRet == CL_SUCCESS) {
-        memObj->incMapCount();
-        memObj->setMappedPtr(returnPtr);
+        transferProperties.memObj->setMapInfo(returnPtr, transferProperties.sizePtr, transferProperties.offsetPtr);
     } else {
         returnPtr = nullptr;
     }

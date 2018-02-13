@@ -72,7 +72,7 @@ TEST_F(clEnqueueMapImageTests, returnsSuccess) {
     EXPECT_NE(nullptr, image);
 
     const size_t origin[3] = {0, 0, 0};
-    const size_t region[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
     clEnqueueMapImage(
@@ -89,6 +89,37 @@ TEST_F(clEnqueueMapImageTests, returnsSuccess) {
         nullptr,
         &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueMapImageTests, givenAnyZeroRegionParamWhenMapImageCalledThenReturnError) {
+    auto image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    const size_t origin[3] = {0, 0, 0};
+
+    std::array<size_t, 3> region = {{0, 1, 1}};
+    auto ptr = clEnqueueMapImage(pCommandQueue, image, CL_TRUE, CL_MAP_READ, origin, &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
+    region = {{1, 0, 1}};
+    ptr = clEnqueueMapImage(pCommandQueue, image, CL_TRUE, CL_MAP_READ, origin, &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
+    region = {{1, 1, 0}};
+    ptr = clEnqueueMapImage(pCommandQueue, image, CL_TRUE, CL_MAP_READ, origin, &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
+    region = {{0, 0, 0}};
+    ptr = clEnqueueMapImage(pCommandQueue, image, CL_TRUE, CL_MAP_READ, origin, &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, ptr);
+
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -135,7 +166,7 @@ TEST_F(clEnqueueMapImageYUVTests, returnSuccess) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     clEnqueueMapImage(
         pCommandQueue,
         image,

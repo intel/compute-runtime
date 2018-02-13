@@ -129,12 +129,6 @@ class Image : public MemObj {
     virtual void setMediaSurfaceRotation(void *memory) = 0;
     virtual void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) = 0;
 
-    void setMappedRegion(size_t *region) { memcpy_s(mappedRegion, 3 * sizeof(size_t), region, 3 * sizeof(size_t)); }
-    void setMappedOrigin(size_t *origin) { memcpy_s(mappedOrigin, 3 * sizeof(size_t), origin, 3 * sizeof(size_t)); }
-
-    size_t *getMappedRegion() { return mappedRegion; }
-    size_t *getMappedOrigin() { return mappedOrigin; }
-
     const cl_image_desc &getImageDesc() const;
     const cl_image_format &getImageFormat() const;
     const SurfaceFormatInfo &getSurfaceFormatInfo() const;
@@ -177,6 +171,7 @@ class Image : public MemObj {
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
+    size_t calculateOffset(size_t rowPitch, size_t slicePitch, size_t *origin) const;
 
     const bool isTiledImage;
 
@@ -195,6 +190,9 @@ class Image : public MemObj {
           const SurfaceFormatInfo *surfaceFormatInfo = nullptr,
           const SurfaceOffsets *surfaceOffsets = nullptr);
 
+    void setMappedOffset(size_t *offset) override { mapInfo.offset = {{offset[0], offset[1], offset[2]}}; }
+    void setMappedSize(size_t *size) override { mapInfo.size = {{size[0], size[1], size[2]}}; }
+
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 
     void transferData(void *dst, size_t dstRowPitch, size_t dstSlicePitch,
@@ -211,8 +209,6 @@ class Image : public MemObj {
     size_t imageCount = 0;
     uint32_t cubeFaceIndex;
     cl_uint mediaPlaneType;
-    size_t mappedOrigin[3];
-    size_t mappedRegion[3];
     SurfaceOffsets surfaceOffsets;
     int mipLevel = 0;
 

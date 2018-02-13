@@ -991,3 +991,17 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
     EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
+
+TEST(ImageTest, givenImageWhenAskedForPtrOffsetThenReturnCorrectValue) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+
+    size_t origin[3] = {4, 5, 6};
+    size_t rowPitch = 7;
+    size_t slicePitch = 8;
+
+    auto retOffset = image->calculateOffset(rowPitch, slicePitch, origin);
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + rowPitch * origin[1] + slicePitch * origin[2];
+
+    EXPECT_EQ(expectedOffset, retOffset);
+}

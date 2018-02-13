@@ -23,6 +23,7 @@
 #pragma once
 
 #include "runtime/api/cl_types.h"
+#include <array>
 
 namespace OCLRT {
 class MemObj;
@@ -47,19 +48,28 @@ struct EventsRequest {
 struct TransferProperties {
     TransferProperties() = delete;
 
-    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offset, size_t *size,
-                       void *ptr, size_t *retRowPitch, size_t *retSlicePitch)
-        : memObj(memObj), cmdType(cmdType), blocking(blocking), offset(offset), size(size),
-          ptr(ptr), retRowPitch(retRowPitch), retSlicePitch(retSlicePitch){};
+    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offsetPtr, size_t *sizePtr,
+                       void *ptr, size_t *retRowPitchPtr, size_t *retSlicePitchPtr)
+        : memObj(memObj), cmdType(cmdType), blocking(blocking), offsetPtr(offsetPtr), sizePtr(sizePtr),
+          ptr(ptr), retRowPitchPtr(retRowPitchPtr), retSlicePitchPtr(retSlicePitchPtr){};
 
     MemObj *memObj;
     cl_command_type cmdType;
     bool blocking;
-    size_t *offset;
-    size_t *size;
+    size_t *offsetPtr;
+    size_t *sizePtr;
     void *ptr;
-    size_t *retRowPitch;
-    size_t *retSlicePitch;
+    size_t *retRowPitchPtr;
+    size_t *retSlicePitchPtr;
+};
+
+struct MapInfo {
+    using SizeArray = std::array<size_t, 3>;
+    using OffsetArray = std::array<size_t, 3>;
+
+    void *ptr = nullptr;
+    SizeArray size = {{0, 0, 0}};
+    OffsetArray offset = {{0, 0, 0}};
 };
 
 } // namespace OCLRT

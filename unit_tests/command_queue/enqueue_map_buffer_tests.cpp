@@ -570,3 +570,52 @@ TEST_F(EnqueueMapBufferTest, GivenZeroCopyBufferWhenMapBufferWithoutEventsThenCo
 
     clReleaseMemObject(buffer);
 }
+
+TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
+    std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 10, nullptr, retVal));
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+
+    size_t mapSize = 3;
+    size_t mapOffset = 2;
+
+    auto mappedPtr = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, mapOffset, mapSize, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    EXPECT_EQ(mapOffset, buffer->getMappedOffset()[0]);
+    EXPECT_EQ(0u, buffer->getMappedOffset()[1]);
+    EXPECT_EQ(0u, buffer->getMappedOffset()[2]);
+
+    EXPECT_EQ(mapSize, buffer->getMappedSize()[0]);
+    EXPECT_EQ(0u, buffer->getMappedSize()[1]);
+    EXPECT_EQ(0u, buffer->getMappedSize()[2]);
+
+    auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
+
+    EXPECT_EQ(mappedPtr, expectedPtr);
+}
+
+TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSetAllMapParams) {
+    uint8_t hostPtr[10] = {};
+    std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 10, hostPtr, retVal));
+    EXPECT_NE(nullptr, buffer);
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
+
+    size_t mapSize = 3;
+    size_t mapOffset = 2;
+
+    auto mappedPtr = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, mapOffset, mapSize, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, mappedPtr);
+
+    EXPECT_EQ(mapOffset, buffer->getMappedOffset()[0]);
+    EXPECT_EQ(0u, buffer->getMappedOffset()[1]);
+    EXPECT_EQ(0u, buffer->getMappedOffset()[2]);
+
+    EXPECT_EQ(mapSize, buffer->getMappedSize()[0]);
+    EXPECT_EQ(0u, buffer->getMappedSize()[1]);
+    EXPECT_EQ(0u, buffer->getMappedSize()[2]);
+
+    auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
+
+    EXPECT_EQ(mappedPtr, expectedPtr);
+}

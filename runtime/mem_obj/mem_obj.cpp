@@ -56,10 +56,10 @@ MemObj::MemObj(Context *context,
 
 MemObj::~MemObj() {
     bool needWait = false;
-    if (allocatedMappedPtr != nullptr) {
+    if (allocatedMapPtr != nullptr) {
         needWait = true;
     }
-    if (mappedPtr && !getCpuAddressForMapping()) {
+    if (mapInfo.ptr && !getCpuAddressForMapping()) {
         needWait = true;
     }
     if (!destructorCallbacks.empty()) {
@@ -79,7 +79,7 @@ MemObj::~MemObj() {
             graphicsAllocation = nullptr;
         }
 
-        releaseAllocatedMappedPtr();
+        releaseAllocatedMapPtr();
         if (mcsAllocation) {
             destroyGraphicsAllocation(mcsAllocation, false);
         }
@@ -214,17 +214,12 @@ CompletionStamp MemObj::getCompletionStamp() const {
     return completionStamp;
 }
 
-void *MemObj::getMappedPtr() const {
-    return mappedPtr;
-}
-
 void MemObj::setMappedPtr(void *mappedPtr) {
-    TakeOwnershipWrapper<MemObj> memObjectOwnership(*this);
-    this->mappedPtr = mappedPtr;
+    mapInfo.ptr = mappedPtr;
 }
 
-void MemObj::setAllocatedMappedPtr(void *allocatedMappedPtr) {
-    this->allocatedMappedPtr = allocatedMappedPtr;
+void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {
+    this->allocatedMapPtr = allocatedMapPtr;
 }
 
 void MemObj::incMapCount() {
@@ -280,16 +275,6 @@ void MemObj::setHostPtrMinSize(size_t size) {
     hostPtrMinSize = size;
 }
 
-void *MemObj::setAndReturnMappedPtr(size_t offset) {
-    void *ptrToReturn = nullptr;
-
-    ptrToReturn = ptrOffset(getCpuAddressForMapping(), offset);
-    DEBUG_BREAK_IF(!ptrToReturn);
-
-    setMappedPtr(ptrToReturn);
-
-    return ptrToReturn;
-}
 void *MemObj::getCpuAddressForMapping() {
     void *ptrToReturn = nullptr;
     if ((this->flags & CL_MEM_USE_HOST_PTR)) {
@@ -308,15 +293,12 @@ void *MemObj::getCpuAddressForMemoryTransfer() {
     }
     return ptrToReturn;
 }
-void MemObj::releaseAllocatedMappedPtr() {
-    if (allocatedMappedPtr) {
+void MemObj::releaseAllocatedMapPtr() {
+    if (allocatedMapPtr) {
         DEBUG_BREAK_IF((flags & CL_MEM_USE_HOST_PTR));
-        memoryManager->freeSystemMemory(allocatedMappedPtr);
+        memoryManager->freeSystemMemory(allocatedMapPtr);
     }
-    allocatedMappedPtr = nullptr;
-}
-void *MemObj::getAllocatedMappedPtr() const {
-    return allocatedMappedPtr;
+    allocatedMapPtr = nullptr;
 }
 
 void MemObj::waitForCsrCompletion() {
@@ -344,5 +326,26 @@ bool MemObj::checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t of
                                   cmdType == CL_COMMAND_WRITE_BUFFER_RECT || cmdType == CL_COMMAND_READ_BUFFER_RECT ||
                                   cmdType == CL_COMMAND_WRITE_IMAGE || cmdType == CL_COMMAND_READ_IMAGE));
     return isMemTransferNeeded;
+}
+
+void *MemObj::getBasePtrForMap() {
+    if (getFlags() & CL_MEM_USE_HOST_PTR) {
+        return getHostPtr();
+    } else {
+        TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
+        if (!getAllocatedMapPtr()) {
+            auto memory = memoryManager->allocateSystemMemory(getSize(), MemoryConstants::pageSize);
+            setAllocatedMapPtr(memory);
+        }
+        return getAllocatedMapPtr();
+    }
+}
+
+void MemObj::setMapInfo(void *mappedPtr, size_t *size, size_t *offset) {
+    TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
+    setMappedPtr(mappedPtr);
+    setMappedSize(size);
+    setMappedOffset(offset);
+    incMapCount();
 }
 } // namespace OCLRT

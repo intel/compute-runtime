@@ -2428,6 +2428,11 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             }
         }
 
+        if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
+
         retPtr = pCommandQueue->enqueueMapImage(
             pImage,
             blockingMap,
