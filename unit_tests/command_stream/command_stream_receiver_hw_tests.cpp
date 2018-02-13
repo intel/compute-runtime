@@ -2895,6 +2895,93 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTwoTasks
     EXPECT_NE(nullptr, ppcAfterChange);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushIsNotRequiredThenItIsNotSet) {
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    parseCommands<FamilyType>(commandStream);
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
+    EXPECT_FALSE(pipeControl->getDcFlushEnable());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenCommandAreSubmittedThenDcFlushIsAdded) {
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.outOfOrderExecutionAllowed = true;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    parseCommands<FamilyType>(commandStream);
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
+
+    mockCsr->flushBatchedSubmissions();
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushIsRequiredThenPipeControlIsNotRegistredForNooping) {
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.dcFlush = true;
+    dispatchFlags.outOfOrderExecutionAllowed = true;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    //validate if we recorded ppc positions
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    EXPECT_EQ(nullptr, cmdBuffer->pipeControlLocation);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSetToFalseWhenTwoTasksArePassedWithTheSameLevelThenThereIsPipeControlBetweenThemAfterFlush) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);

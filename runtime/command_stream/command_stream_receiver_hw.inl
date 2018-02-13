@@ -125,14 +125,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
             //for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
+            //if we guard with ppc, flush dc as well to speed up completion latency
+            if (dispatchFlags.guardCommandBufferWithPipeControl) {
+                dispatchFlags.dcFlush = true;
+            }
         }
 
-        //if we guard with ppc, flush dc as well to speed up completion latency
-        if (dispatchFlags.guardCommandBufferWithPipeControl) {
-            dispatchFlags.dcFlush = true;
-        }
-
-        if (dispatchFlags.outOfOrderExecutionAllowed) {
+        if (dispatchFlags.outOfOrderExecutionAllowed && !dispatchFlags.dcFlush) {
             currentPipeControlForNooping = ptrOffset(commandStreamTask.getBase(), commandStreamTask.getUsed());
         }
 
@@ -383,6 +382,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         return;
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
+    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     Device *device = this->getMemoryManager()->device;
     TakeOwnershipWrapper<Device> deviceOwnership(*device);
     EngineType engineType = device->getEngineType();
@@ -392,7 +392,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
         auto pipeControlLocationSize = getRequiredPipeControlSize();
-        void *currentPipeControlForNooping = nullptr;
+        void *currentPipeControl = nullptr;
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
@@ -405,15 +405,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
 
-            currentPipeControlForNooping = primaryCmdBuffer->pipeControlLocation;
+            currentPipeControl = primaryCmdBuffer->pipeControlLocation;
 
             while (nextCommandBuffer && nextCommandBuffer->inspectionId == primaryCmdBuffer->inspectionId) {
                 //noop pipe control
-                if (currentPipeControlForNooping) {
-                    memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
+                if (currentPipeControl) {
+                    memset(currentPipeControl, 0, pipeControlLocationSize);
                 }
                 //obtain next candidate for nooping
-                currentPipeControlForNooping = nextCommandBuffer->pipeControlLocation;
+                currentPipeControl = nextCommandBuffer->pipeControlLocation;
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer();
@@ -427,6 +427,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             surfacesForSubmit.reserve(resourcePackage.size() + 1);
             for (auto &surface : resourcePackage) {
                 surfacesForSubmit.push_back(surface);
+            }
+
+            //make sure we flush DC
+            if (currentPipeControl) {
+                ((PIPE_CONTROL *)currentPipeControl)->setDcFlushEnable(true);
             }
 
             auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit);
