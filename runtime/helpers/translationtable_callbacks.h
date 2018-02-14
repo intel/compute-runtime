@@ -30,7 +30,6 @@ struct TTCallbacks {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
     static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
-    static void appendLriParams(MI_LOAD_REGISTER_IMM *lri);
 };
 
 } // namespace OCLRT

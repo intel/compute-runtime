@@ -66,6 +66,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override;
+    const HardwareInfo &peekHwInfo() const { return hwInfo; }
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags, const LinearStream &ih);

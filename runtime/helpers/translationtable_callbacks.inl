@@ -28,22 +28,7 @@
 namespace OCLRT {
 template <typename GfxFamily>
 int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset) {
-
-    auto cmdStream = reinterpret_cast<LinearStream *>(queueHandle);
-
-    auto lri1 = LriHelper<GfxFamily>::program(cmdStream,
-                                              static_cast<uint32_t>(regOffset & 0xFFFFFFFF),
-                                              static_cast<uint32_t>(l3GfxAddress & 0xFFFFFFFF));
-    appendLriParams(lri1);
-
-    auto lri2 = LriHelper<GfxFamily>::program(cmdStream,
-                                              static_cast<uint32_t>(regOffset >> 32),
-                                              static_cast<uint32_t>(l3GfxAddress >> 32));
-    appendLriParams(lri2);
-
-    return 1;
+    return 0;
 };
 
-template <typename GfxFamily>
-void TTCallbacks<GfxFamily>::appendLriParams(MI_LOAD_REGISTER_IMM *lri) {}
 } // namespace OCLRT

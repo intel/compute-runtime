@@ -501,6 +501,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::getCS;
+    using WddmCommandStreamReceiver<GfxFamily>::pageTableManagerInitialized;
 
     void overrideDispatchPolicy(CommandStreamReceiver::DispatchMode overrideValue) {
         this->dispatchMode = overrideValue;
@@ -662,15 +663,15 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(graphicsAllocation);
 
-    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&csrCS, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
-    EXPECT_CALL(*mockMngr, initContextTRTableRegister(&csrCS, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
+    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
+    EXPECT_CALL(*mockMngr, initContextTRTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
 
     DispatchFlags dispatchFlags;
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_TRUE(myMockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_TRUE(mockWddmCsr.pageTableManagerInitialized);
 
     // flush again to check if PT manager was initialized once
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
@@ -692,12 +693,12 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(graphicsAllocation);
 
-    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
     DispatchFlags dispatchFlags;
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_FALSE(myMockWddm->peekIsPageTableManagerInitialized());
+    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
     memManager->freeGraphicsMemory(graphicsAllocation);
 }

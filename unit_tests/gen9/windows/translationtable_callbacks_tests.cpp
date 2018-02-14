@@ -21,19 +21,12 @@
  */
 
 #include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/helpers/hw_helper.h"
 #include "test.h"
 
 using namespace OCLRT;
 
 typedef ::testing::Test Gen9TTCallbacksTests;
 
-GEN9TEST_F(Gen9TTCallbacksTests, givenLriWhenAppendCalledThenDoNothing) {
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-
-    auto lri = MI_LOAD_REGISTER_IMM::sInit();
-    auto lriBefore = lri;
-    TTCallbacks<FamilyType>::appendLriParams(&lri);
-
-    EXPECT_TRUE(memcmp(&lri, &lriBefore, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
+GEN9TEST_F(Gen9TTCallbacksTests, notSupported) {
+    EXPECT_EQ(0, TTCallbacks<FamilyType>::writeL3Address(nullptr, 1, 2));
 }

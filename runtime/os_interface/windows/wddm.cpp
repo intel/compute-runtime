@@ -870,15 +870,6 @@ void Wddm::releaseReservedAddress(void *reservedAddress) {
     }
 }
 
-void Wddm::initPageTableManagerRegisters(LinearStream &stream) {
-    if (pageTableManager.get() && !pageTableManagerInitialized) {
-        pageTableManager->initContextTRTableRegister(&stream, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-        pageTableManager->initContextAuxTableRegister(&stream, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
-
-        pageTableManagerInitialized = true;
-    }
-}
-
 bool Wddm::updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map) {
     if (pageTableManager.get()) {
         GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};

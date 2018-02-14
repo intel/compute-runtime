@@ -58,5 +58,6 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;
+    bool pageTableManagerInitialized = false;
 };
 } // namespace OCLRT

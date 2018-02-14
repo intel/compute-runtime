@@ -192,8 +192,8 @@ class Wddm {
         this->preemptionMode = mode;
     }
 
+    GmmPageTableMngr *getPageTableManager() const { return pageTableManager.get(); }
     void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
-    void initPageTableManagerRegisters(LinearStream &stream);
     bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
 
     uintptr_t getWddmMinAddress() {
@@ -244,7 +244,6 @@ class Wddm {
     static GetSystemInfoFcn getSystemInfo;
 
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
-    bool pageTableManagerInitialized = false;
 
     std::unique_ptr<KmDafListener> kmDafListener;
 };

@@ -297,9 +297,6 @@ class WddmMock : public Wddm {
         return gmmMemory.get();
     }
 
-    GmmPageTableMngr *getPageTableManager() const { return pageTableManager.get(); }
-    bool peekIsPageTableManagerInitialized() const { return pageTableManagerInitialized; }
-
     MakeResidentCall makeResidentResult;
     CallResult makeNonResidentResult;
     CallResult mapGpuVirtualAddressResult;

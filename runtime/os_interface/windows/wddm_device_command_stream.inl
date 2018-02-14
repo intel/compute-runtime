@@ -201,6 +201,11 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::initPageTableManagerRegisters(LinearStream &csr) {
-    this->wddm->initPageTableManagerRegisters(csr);
+    if (wddm->getPageTableManager() && !pageTableManagerInitialized) {
+        wddm->getPageTableManager()->initContextTRTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+        wddm->getPageTableManager()->initContextAuxTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
+
+        pageTableManagerInitialized = true;
+    }
 }
 } // namespace OCLRT

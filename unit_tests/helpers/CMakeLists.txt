@@ -58,12 +58,6 @@ set(IGDRCL_SRCS_tests_helpers
     "${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp"
 )
 
-if (WIN32)
-  list(APPEND IGDRCL_SRCS_tests_helpers
-    "${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks_tests.cpp"
-  )
-endif(WIN32)
-
 set(IGDRCL_SRCS_tests_helpers
   "${IGDRCL_SRCS_tests_helpers}"
   PARENT_SCOPE
