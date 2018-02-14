@@ -11,7 +11,7 @@ motivation and intentions wrt OpenCL support in the open source.
 
 ## License
 
-The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MIT.
+The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MIT License.
 
 You may obtain a copy of the License at:
 
