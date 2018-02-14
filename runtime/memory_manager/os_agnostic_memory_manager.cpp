@@ -31,8 +31,6 @@
 
 namespace OCLRT {
 
-bool overrideCommandStreamReceiverCreation = false;
-
 OsAgnosticMemoryManager::~OsAgnosticMemoryManager() {
     applyCommonCleanup();
 }

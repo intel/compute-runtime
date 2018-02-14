@@ -24,14 +24,11 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
 using namespace OCLRT;
-
-namespace OCLRT {
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
-}
 
 struct CreateCommandStreamReceiverTest : public ::testing::TestWithParam<CommandStreamReceiverType> {
     void SetUp() override {

@@ -66,6 +66,7 @@ add_library (igdrcl_libult OBJECT
 )
 add_library (igdrcl_libult_cs OBJECT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_command_stream.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_command_stream.h
 )
 
 if(MSVC)

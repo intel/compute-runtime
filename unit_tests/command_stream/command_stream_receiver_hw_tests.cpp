@@ -48,6 +48,7 @@
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "test.h"
 #include "gtest/gtest.h"
 #include "runtime/utilities/linux/debug_env_reader.h"
@@ -1540,10 +1541,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWithSlmWhenPrevi
 
     L3Config = PreambleHelper<FamilyType>::getL3Config(*platformDevices[0], true);
     EXPECT_EQ(L3Config, (uint32_t)cmdMILoad->getDataDword());
-}
-
-namespace OCLRT {
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {

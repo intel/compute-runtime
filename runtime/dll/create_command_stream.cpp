@@ -38,33 +38,7 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
 }
 
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
-    bool result;
-    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
-    if (csr) {
-        auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
-        auto hwInfoConst = *platformDevices;
-
-        for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-            if (hardwarePrefix[j] == nullptr)
-                continue;
-            if (strcmp(hardwarePrefix[j], productFamily.c_str()) == 0) {
-                hwInfoConst = hardwareInfoTable[j];
-                break;
-            }
-        }
-
-        *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
-        hardwareInfoSetupGt[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo));
-
-        numDevicesReturned = 1;
-        return true;
-    }
-    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned);
-    if (result) {
-        DEBUG_BREAK_IF(hwInfo == nullptr);
-        // For now only one device should be present
-        DEBUG_BREAK_IF(numDevicesReturned != 1);
-    }
-    return result;
+    return getDevicesImpl(hwInfo, numDevicesReturned);
 }
+
 } // namespace OCLRT

@@ -33,6 +33,9 @@ namespace OCLRT {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 bool getDevicesResult = true;
 
+bool overrideCommandStreamReceiverCreation = false;
+bool overrideDeviceWithNullHardwareInfo = true;
+
 CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     assert(nullptr != pHwInfo->pPlatform);
@@ -50,8 +53,11 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
 }
 
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
-    *hwInfo = nullptr;
-    numDevicesReturned = 0;
-    return getDevicesResult;
+    if (overrideDeviceWithNullHardwareInfo) {
+        *hwInfo = nullptr;
+        numDevicesReturned = 0;
+        return getDevicesResult;
+    }
+    return getDevicesImpl(hwInfo, numDevicesReturned);
 }
 }

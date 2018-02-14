@@ -20,11 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
-extern CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo);
-extern bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned);
+extern bool overrideCommandStreamReceiverCreation;
+extern bool overrideDeviceWithNullHardwareInfo;
+
+extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
+extern bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned);
 }

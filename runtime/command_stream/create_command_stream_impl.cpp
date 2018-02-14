@@ -23,6 +23,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "runtime/os_interface/device_factory.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 
@@ -38,26 +39,25 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr) {
-        if (csr >= CSR_TYPES_NUM)
-            return nullptr;
-
-        Gmm::initContext(pHwInfo->pPlatform,
-                         pHwInfo->pSkuTable,
-                         pHwInfo->pWaTable,
-                         pHwInfo->pSysInfo);
-
         switch (csr) {
         case CSR_AUB:
+            Gmm::initContext(pHwInfo->pPlatform,
+                             pHwInfo->pSkuTable,
+                             pHwInfo->pWaTable,
+                             pHwInfo->pSysInfo);
             commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true);
             initialHardwareTag = -1;
             break;
         case CSR_TBX:
+            Gmm::initContext(pHwInfo->pPlatform,
+                             pHwInfo->pSkuTable,
+                             pHwInfo->pWaTable,
+                             pHwInfo->pSysInfo);
             commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo);
             break;
-        case CSR_HW_WITH_AUB: {
+        case CSR_HW_WITH_AUB:
             commandStreamReceiver = funcCreate(*pHwInfo, true);
             break;
-        }
         default:
             break;
         }
@@ -65,6 +65,41 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
         commandStreamReceiver = funcCreate(*pHwInfo, false);
     }
     return commandStreamReceiver;
+}
+
+bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
+    bool result;
+    int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
+    if (csr) {
+        switch (csr) {
+        case CSR_AUB:
+        case CSR_TBX: {
+            auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
+            auto hwInfoConst = *platformDevices;
+            for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+                if (hardwarePrefix[j] == nullptr)
+                    continue;
+                if (strcmp(hardwarePrefix[j], productFamily.c_str()) == 0) {
+                    hwInfoConst = hardwareInfoTable[j];
+                    break;
+                }
+            }
+            *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
+            hardwareInfoSetupGt[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo));
+            numDevicesReturned = 1;
+            return true;
+        }
+        case CSR_HW_WITH_AUB:
+            return DeviceFactory::getDevices(hwInfo, numDevicesReturned);
+        default:
+            return false;
+        }
+    }
+    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned);
+    DEBUG_BREAK_IF(result && (hwInfo == nullptr));
+    // For now only one device should be present
+    DEBUG_BREAK_IF(result && (numDevicesReturned != 1));
+    return result;
 }
 
 } // namespace OCLRT

@@ -27,7 +27,6 @@
 
 namespace OCLRT {
 
-extern bool overrideCommandStreamReceiverCreation;
 constexpr size_t bigAllocation = 1 * MB;
 constexpr uintptr_t dummyAddress = 0xFFFFF000u;
 class MemoryAllocation : public GraphicsAllocation {
