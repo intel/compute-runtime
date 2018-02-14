@@ -33,7 +33,8 @@ if(TR_DEPRECATED)
 endif(TR_DEPRECATED)
 
 if(NOT CMAKE_BUILD_TYPE)
-	set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type: [Release, ReleaseInternal, Debug]")
+	message(STATUS "CMAKE_BUILD_TYPE not specified, using Release")
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type: [Release, ReleaseInternal, Debug]" FORCE)
 endif()
 
 set(CMAKE_C_FLAGS_RELEASEINTERNAL ${CMAKE_C_FLAGS_RELEASE})
