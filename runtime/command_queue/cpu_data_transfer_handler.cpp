@@ -94,22 +94,12 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         switch (transferProperties.cmdType) {
         case CL_COMMAND_MAP_BUFFER:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
-                }
                 transferProperties.memObj->transferDataToHostPtr({{transferProperties.memObj->getSize(), 0, 0}}, {{0, 0, 0}});
                 eventCompleted = true;
-            } else {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
-                }
             }
             break;
         case CL_COMMAND_MAP_IMAGE:
             if (!image->isMemObjZeroCopy()) {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
-                }
                 auto &imgDesc = image->getImageDesc();
                 std::array<size_t, 3> copySize = {{getValidParam(imgDesc.image_width),
                                                    getValidParam(imgDesc.image_height),
@@ -119,18 +109,12 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                 GetInfoHelper::set(transferProperties.retRowPitchPtr, image->getHostPtrRowPitch());
                 eventCompleted = true;
             } else {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
-                }
                 GetInfoHelper::set(transferProperties.retSlicePitchPtr, image->getImageDesc().image_slice_pitch);
                 GetInfoHelper::set(transferProperties.retRowPitchPtr, image->getImageDesc().image_row_pitch);
             }
             break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA, transferProperties.ptr, static_cast<cl_mem>(transferProperties.memObj));
-                }
                 std::array<size_t, 3> copySize = {{transferProperties.memObj->getSize(), 0, 0}};
                 if (image) {
                     auto imgDesc = image->getImageDesc();
@@ -140,24 +124,14 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                 }
                 transferProperties.memObj->transferDataFromHostPtr(copySize, {{0, 0, 0}});
                 eventCompleted = true;
-            } else {
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA, transferProperties.ptr);
-                }
             }
             transferProperties.memObj->decMapCount();
             break;
         case CL_COMMAND_READ_BUFFER:
-            if (context->isProvidingPerformanceHints()) {
-                context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj), transferProperties.ptr);
-            }
             memcpy_s(transferProperties.ptr, *transferProperties.sizePtr, ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), *transferProperties.offsetPtr), *transferProperties.sizePtr);
             eventCompleted = true;
             break;
         case CL_COMMAND_WRITE_BUFFER:
-            if (context->isProvidingPerformanceHints()) {
-                context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj), transferProperties.ptr);
-            }
             memcpy_s(ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), *transferProperties.offsetPtr), *transferProperties.sizePtr, transferProperties.ptr, *transferProperties.sizePtr);
             eventCompleted = true;
             break;
@@ -166,7 +140,6 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         default:
             err.set(CL_INVALID_OPERATION);
         }
-
         if (eventBuilder.getEvent()) {
             eventBuilder.getEvent()->setEndTimeStamp();
             eventBuilder.getEvent()->updateTaskCount(this->taskCount);
@@ -176,6 +149,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                 eventBuilder.getEvent()->updateExecutionStatus();
             }
         }
+    }
+
+    if (context->isProvidingPerformanceHints()) {
+        providePerformanceHint(transferProperties);
     }
 
     if (transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE) {
@@ -191,5 +168,36 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     return returnPtr; // only map returns pointer
+}
+
+void CommandQueue::providePerformanceHint(TransferProperties &transferProperties) {
+    switch (transferProperties.cmdType) {
+    case CL_COMMAND_MAP_BUFFER:
+        if (!transferProperties.memObj->isMemObjZeroCopy()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
+            break;
+        }
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
+        break;
+    case CL_COMMAND_MAP_IMAGE:
+        if (!transferProperties.memObj->isMemObjZeroCopy()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
+            break;
+        }
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj));
+        break;
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+        if (!transferProperties.memObj->isMemObjZeroCopy()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA, transferProperties.ptr, static_cast<cl_mem>(transferProperties.memObj));
+            break;
+        }
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA, transferProperties.ptr);
+        break;
+    case CL_COMMAND_READ_BUFFER:
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_READ_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj), transferProperties.ptr);
+        break;
+    case CL_COMMAND_WRITE_BUFFER:
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_ENQUEUE_WRITE_BUFFER_REQUIRES_COPY_DATA, static_cast<cl_mem>(transferProperties.memObj), transferProperties.ptr);
+    }
 }
 } // namespace OCLRT

@@ -429,6 +429,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
+
+  private:
+    void providePerformanceHint(TransferProperties &transferProperties);
 };
 
 typedef CommandQueue *(*CommandQueueCreateFunc)(

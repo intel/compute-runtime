@@ -467,6 +467,35 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapBufferIsCal
     alignedFree(address);
     delete buffer;
 }
+TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapBufferIsCallingThenContextProvidesProperHint) {
+
+    void *address;
+    bool zeroCopyBuffer = GetParam();
+    UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
+    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+    if (!zeroCopyBuffer) {
+        sizeForBuffer++;
+    }
+
+    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
+
+    EXPECT_EQ(buffer->isMemObjZeroCopy(), zeroCopyBuffer);
+
+    pCmdQ->enqueueMapBuffer(buffer.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
+    EXPECT_TRUE(pCmdQ->isQueueBlocked());
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_FALSE(pCmdQ->isQueueBlocked());
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(buffer.get()));
+    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_BUFFER_REQUIRES_COPY_DATA], static_cast<cl_mem>(buffer.get()));
+    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+
+    alignedFree(address);
+}
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
 
@@ -506,6 +535,44 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueMapImageIsCall
     delete image;
 }
 
+TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagAndBlockingEventWhenEnqueueMapImageIsCallingThenContextProvidesProperHint) {
+
+    auto image = std::unique_ptr<Image>(ImageHelper<ImageReadOnly<Image1dDefaults>>::create(context));
+    bool isZeroCopyImage = GetParam();
+
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+
+    if (!isZeroCopyImage) {
+        image.reset(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    }
+    EXPECT_EQ(isZeroCopyImage, image->isMemObjZeroCopy());
+
+    UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
+    void *mapPtr = pCmdQ->enqueueMapImage(
+        image.get(),
+        CL_FALSE,
+        0,
+        origin,
+        region,
+        nullptr,
+        nullptr,
+        1,
+        &blockedEvent,
+        nullptr,
+        retVal);
+    EXPECT_TRUE(pCmdQ->isQueueBlocked());
+    userEvent.setStatus(CL_COMPLETE);
+    pCmdQ->enqueueUnmapMemObject(image.get(), mapPtr, 0, nullptr, nullptr);
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_DOESNT_REQUIRE_COPY_DATA], static_cast<cl_mem>(image.get()));
+    EXPECT_EQ(isZeroCopyImage, containsHint(expectedHint, userData));
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_MAP_IMAGE_REQUIRES_COPY_DATA], static_cast<cl_mem>(image.get()));
+    EXPECT_EQ(!isZeroCopyImage, containsHint(expectedHint, userData));
+}
+
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
 
     Buffer *buffer;
@@ -530,6 +597,37 @@ TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCalling
 
     alignedFree(address);
     delete buffer;
+}
+
+TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyAndBlockedEventFlagWhenEnqueueUnmapIsCallingWithBufferThenContextProvidesProperHint) {
+
+    void *address;
+    bool zeroCopyBuffer = GetParam();
+    UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
+    size_t sizeForBuffer = MemoryConstants::cacheLineSize;
+    if (!zeroCopyBuffer) {
+        sizeForBuffer++;
+    }
+
+    address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_USE_HOST_PTR, sizeForBuffer, address, retVal));
+    EXPECT_EQ(buffer->isMemObjZeroCopy(), zeroCopyBuffer);
+
+    void *mapPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_FALSE, 0, 0, MemoryConstants::cacheLineSize, 1, &blockedEvent, nullptr, retVal);
+    EXPECT_TRUE(pCmdQ->isQueueBlocked());
+
+    pCmdQ->enqueueUnmapMemObject(buffer.get(), mapPtr, 0, nullptr, nullptr);
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_FALSE(pCmdQ->isQueueBlocked());
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_REQUIRES_COPY_DATA], mapPtr, static_cast<cl_mem>(buffer.get()));
+    EXPECT_EQ(!zeroCopyBuffer, containsHint(expectedHint, userData));
+
+    snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_ENQUEUE_UNMAP_MEM_OBJ_DOESNT_REQUIRE_COPY_DATA], mapPtr);
+    EXPECT_EQ(zeroCopyBuffer, containsHint(expectedHint, userData));
+
+    alignedFree(address);
 }
 
 TEST_P(PerformanceHintEnqueueMapTest, GivenZeroCopyFlagWhenEnqueueUnmapIsCallingWithImageThenContextProvidesProperHint) {
