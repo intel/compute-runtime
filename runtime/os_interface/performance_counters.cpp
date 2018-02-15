@@ -27,6 +27,10 @@
 #include "runtime/os_interface/os_time.h"
 
 namespace OCLRT {
+decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE] = {
+    nullptr,
+};
+
 PerformanceCounters::PerformanceCounters(OSTime *osTime) {
     this->osTime = osTime;
     DEBUG_BREAK_IF(osTime == nullptr);
@@ -66,6 +70,10 @@ void PerformanceCounters::shutdown() {
 void PerformanceCounters::initialize(const HardwareInfo *hwInfo) {
     useMIRPC = !(hwInfo->pWaTable->waDoNotUseMIReportPerfCount);
     gfxFamily = hwInfo->pPlatform->eRenderCoreFamily;
+
+    if (getPerfCountersQueryDataFactory[gfxFamily] != nullptr) {
+        getPerfCountersQueryDataFunc = getPerfCountersQueryDataFactory[gfxFamily];
+    }
 }
 void PerformanceCounters::enableImpl() {
     hwMetricsEnabled = hwMetricsEnableFunc(cbData, true);
