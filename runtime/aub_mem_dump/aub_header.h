@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,19 +71,21 @@ struct AubPpgttContextCreate {
 };
 static_assert(44 == sizeof(AubPpgttContextCreate), "Invalid size for AubPpgttContextCreate");
 
-struct AubBinaryDump {
+struct AubCaptureBinaryDumpHD {
     AubCmdHdr Header;
-    char OutputFile[40];
-    uint32_t Height;
-    uint32_t Width;
     uint64_t BaseAddr;
+    uint64_t Width;
+    uint64_t Height;
+    uint64_t Pitch;
     uint32_t SurfaceType : 4,
-        Pitch : 28;
-    uint32_t GttType : 2,
-        Reserved_31_2 : 30;
+        GttType : 2,
+        Reserved_31_6 : 26;
     uint32_t DirectoryHandle;
+    uint32_t ReservedDW1;
+    uint32_t ReservedDW2;
+    char OutputFile[4];
 };
-static_assert(72 == sizeof(AubBinaryDump), "Invalid size for AubBinaryDump");
+static_assert(56 == sizeof(AubCaptureBinaryDumpHD), "Invalid size for AubCaptureBinaryDumpHD");
 
 #ifndef WIN32
 #pragma pack()
