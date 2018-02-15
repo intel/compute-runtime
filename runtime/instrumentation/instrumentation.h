@@ -111,21 +111,21 @@ typedef struct {
 } InstrReportDataMonitor;
 
 typedef struct {
-    InstrReportDataMonitor gp;
-    InstrReportDataUser user;
-    InstrReportDataOa oa;
+    InstrReportDataMonitor Gp;
+    InstrReportDataUser User;
+    InstrReportDataOa Oa;
 } InstrReportData;
 
 typedef struct {
-    uint32_t dmaFenceIdBegin;
-    uint32_t dmaFenceIdEnd;
-    uint32_t coreFreqBegin;
-    uint32_t coreFreqEnd;
-    InstrReportData reportBegin;
-    InstrReportData reportEnd;
-    uint32_t oaStatus;
-    uint32_t oaHead;
-    uint32_t oaTail;
+    uint32_t DMAFenceIdBegin;
+    uint32_t DMAFenceIdEnd;
+    uint32_t CoreFreqBegin;
+    uint32_t CoreFreqEnd;
+    InstrReportData HwPerfReportBegin;
+    InstrReportData HwPerfReportEnd;
+    uint32_t OaStatus;
+    uint32_t OaHead;
+    uint32_t OaTail;
 } HwPerfCounters;
 
 typedef struct {

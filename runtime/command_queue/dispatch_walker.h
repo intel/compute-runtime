@@ -219,8 +219,8 @@ void dispatchPerfCountersNoopidRegisterCommands(
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
-    uint64_t address = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.dmaFenceIdBegin))
-                             : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.dmaFenceIdEnd));
+    uint64_t address = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.DMAFenceIdBegin))
+                             : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.DMAFenceIdEnd));
 
     auto pNoopIdRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pNoopIdRegister = MI_STORE_REGISTER_MEM::sInit();
@@ -237,8 +237,8 @@ void dispatchPerfCountersReadFreqRegisterCommands(
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
-    uint64_t address = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.coreFreqBegin))
-                             : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.coreFreqEnd));
+    uint64_t address = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.CoreFreqBegin))
+                             : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.CoreFreqEnd));
 
     auto pCoreFreqRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pCoreFreqRegister = MI_STORE_REGISTER_MEM::sInit();
@@ -255,8 +255,8 @@ void dispatchPerfCountersGeneralPurposeCounterCommands(
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     uint64_t address = 0;
-    const uint64_t baseAddress = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportBegin.gp))
-                                       : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportEnd.gp));
+    const uint64_t baseAddress = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportBegin.Gp))
+                                       : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.Gp));
 
     // Read General Purpose counters
     for (uint16_t i = 0; i < OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT; i++) {
@@ -280,8 +280,8 @@ void dispatchPerfCountersUserCounterCommands(
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
 
     uint64_t address = 0;
-    const uint64_t baseAddr = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportBegin.user))
-                                    : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportEnd.user));
+    const uint64_t baseAddr = start ? reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportBegin.User))
+                                    : reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.User));
     uint32_t cmdNum = 0;
     uint32_t regAddr = 0;
     auto configData = commandQueue.getPerfCountersConfigData();
@@ -324,21 +324,21 @@ void dispatchPerfCountersOABufferStateCommands(
     auto pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_STATUS);
-    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.oaStatus));
+    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaStatus));
     pOaRegister->setMemoryAddress(address);
 
     //OA Head
     pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_HEAD_PTR);
-    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.oaHead));
+    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaHead));
     pOaRegister->setMemoryAddress(address);
 
     //OA Tail
     pOaRegister = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
     *pOaRegister = MI_STORE_REGISTER_MEM::sInit();
     pOaRegister->setRegisterAddress(INSTR_GFX_OFFSETS::INSTR_OA_TAIL_PTR);
-    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.oaTail));
+    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.OaTail));
     pOaRegister->setMemoryAddress(address);
 }
 
@@ -372,7 +372,7 @@ void dispatchPerfCountersCommandsStart(
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
     *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();
     pReportPerfCount->setReportId(currentReportId);
-    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportBegin.oa));
+    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportBegin.Oa));
     pReportPerfCount->setMemoryAddress(address);
 
     //Timestamp: Global Start
@@ -423,7 +423,7 @@ void dispatchPerfCountersCommandsEnd(
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
     *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();
     pReportPerfCount->setReportId(currentReportId);
-    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.reportEnd.oa));
+    address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.Oa));
     pReportPerfCount->setMemoryAddress(address);
 
     dispatchPerfCountersGeneralPurposeCounterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, false);
