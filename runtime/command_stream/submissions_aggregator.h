@@ -57,7 +57,8 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     void *batchBufferEndLocation = nullptr;
     uint32_t inspectionId = 0;
     uint32_t taskCount = 0u;
-    void *pipeControlLocation = nullptr;
+    void *pipeControlThatMayBeErasedLocation = nullptr;
+    void *epiloguePipeControlLocation = nullptr;
     std::unique_ptr<FlushStampTracker> flushStamp;
 };
 

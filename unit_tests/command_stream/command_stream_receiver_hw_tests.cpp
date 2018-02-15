@@ -2856,14 +2856,14 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTwoTasks
 
     //validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    EXPECT_NE(nullptr, firstCmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
     auto secondCmdBuffer = firstCmdBuffer->next;
-    EXPECT_NE(nullptr, secondCmdBuffer->pipeControlLocation);
-    EXPECT_NE(firstCmdBuffer->pipeControlLocation, secondCmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(firstCmdBuffer->pipeControlThatMayBeErasedLocation, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 
-    auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(firstCmdBuffer->pipeControlLocation);
+    auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(firstCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, ppc);
-    auto ppc2 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(secondCmdBuffer->pipeControlLocation);
+    auto ppc2 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(secondCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, ppc2);
 
     //flush needs to bump the taskLevel
@@ -2952,6 +2952,36 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenCommandA
     EXPECT_TRUE(pipeControl->getDcFlushEnable());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWithOutOfOrderModeFisabledWhenCommandAreSubmittedThenDcFlushIsAdded) {
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.outOfOrderExecutionAllowed = false;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    parseCommands<FamilyType>(commandStream);
+    auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    auto pipeControl = genCmdCast<typename FamilyType::PIPE_CONTROL *>(*itorPipeControl);
+
+    mockCsr->flushBatchedSubmissions();
+    EXPECT_TRUE(pipeControl->getDcFlushEnable());
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushIsRequiredThenPipeControlIsNotRegistredForNooping) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -2977,9 +3007,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushI
                        taskLevel,
                        dispatchFlags);
 
-    //validate if we recorded ppc positions
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    EXPECT_EQ(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSetToFalseWhenTwoTasksArePassedWithTheSameLevelThenThereIsPipeControlBetweenThemAfterFlush) {
@@ -3023,9 +3053,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSe
 
     //validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlLocation);
+    EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
     auto secondCmdBuffer = firstCmdBuffer->next;
-    EXPECT_EQ(nullptr, secondCmdBuffer->pipeControlLocation);
+    EXPECT_EQ(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 
     mockCsr->flushBatchedSubmissions();
 
@@ -3079,9 +3109,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeCont
 
     //validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto ppc1Location = firstCmdBuffer->pipeControlLocation;
+    auto ppc1Location = firstCmdBuffer->pipeControlThatMayBeErasedLocation;
 
-    firstCmdBuffer->pipeControlLocation = nullptr;
+    firstCmdBuffer->pipeControlThatMayBeErasedLocation = nullptr;
 
     auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(ppc1Location);
     EXPECT_NE(nullptr, ppc);
@@ -3153,12 +3183,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenThreeTas
     auto secondCmdBuffer = firstCmdBuffer->next;
     auto thirdCmdBuffer = firstCmdBuffer->next->next;
 
-    EXPECT_NE(nullptr, thirdCmdBuffer->pipeControlLocation);
-    EXPECT_NE(firstCmdBuffer->pipeControlLocation, thirdCmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, thirdCmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(firstCmdBuffer->pipeControlThatMayBeErasedLocation, thirdCmdBuffer->pipeControlThatMayBeErasedLocation);
 
-    auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(firstCmdBuffer->pipeControlLocation);
-    auto ppc2 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(secondCmdBuffer->pipeControlLocation);
-    auto ppc3 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(thirdCmdBuffer->pipeControlLocation);
+    auto ppc = genCmdCast<typename FamilyType::PIPE_CONTROL *>(firstCmdBuffer->pipeControlThatMayBeErasedLocation);
+    auto ppc2 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(secondCmdBuffer->pipeControlThatMayBeErasedLocation);
+    auto ppc3 = genCmdCast<typename FamilyType::PIPE_CONTROL *>(thirdCmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, ppc2);
     EXPECT_NE(nullptr, ppc3);
 

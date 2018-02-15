@@ -533,6 +533,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     LinearStream cs(commandBuffer);
 
     DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
     mockCsr->flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 

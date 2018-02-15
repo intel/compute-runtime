@@ -1416,7 +1416,7 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelIsMadeTh
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_NE(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     clReleaseCommandQueue(ooq);
 }
@@ -1438,7 +1438,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_NE(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     clReleaseCommandQueue(inOrderQueue);
 }
@@ -1461,7 +1461,8 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_EQ(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 
     clReleaseCommandQueue(inOrderQueue);
 }
@@ -1485,7 +1486,8 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_EQ(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 
     clReleaseCommandQueue(inOrderQueue);
     clReleaseEvent(event);
@@ -1510,7 +1512,8 @@ HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturnin
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_NE(nullptr, cmdBuffer->pipeControlLocation);
+    EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_EQ(cmdBuffer->epiloguePipeControlLocation, cmdBuffer->pipeControlThatMayBeErasedLocation);
 
     clReleaseCommandQueue(inOrderQueue);
     clReleaseEvent(event);

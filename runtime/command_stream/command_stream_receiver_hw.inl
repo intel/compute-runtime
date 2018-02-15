@@ -118,6 +118,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto levelClosed = false;
     void *currentPipeControlForNooping = nullptr;
+    void *epiloguePipeControlLocation = nullptr;
     Device *device = this->getMemoryManager()->device;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
@@ -131,8 +132,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             }
         }
 
+        epiloguePipeControlLocation = ptrOffset(commandStreamTask.getBase(), commandStreamTask.getUsed());
+
         if (dispatchFlags.outOfOrderExecutionAllowed && !dispatchFlags.dcFlush) {
-            currentPipeControlForNooping = ptrOffset(commandStreamTask.getBase(), commandStreamTask.getUsed());
+            currentPipeControlForNooping = epiloguePipeControlLocation;
         }
 
         //Some architectures (SKL) requires to have pipe control prior to pipe control with tag write, add it here
@@ -343,7 +346,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             commandBuffer->batchBufferEndLocation = bbEndLocation;
             commandBuffer->taskCount = this->taskCount + 1;
             commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);
-            commandBuffer->pipeControlLocation = currentPipeControlForNooping;
+            commandBuffer->pipeControlThatMayBeErasedLocation = currentPipeControlForNooping;
+            commandBuffer->epiloguePipeControlLocation = epiloguePipeControlLocation;
             this->submissionAggregator->recordCommandBuffer(commandBuffer);
         }
     } else {
@@ -392,7 +396,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
         auto pipeControlLocationSize = getRequiredPipeControlSize();
-        void *currentPipeControl = nullptr;
+        void *currentPipeControlForNooping = nullptr;
+        void *epiloguePipeControlLocation = nullptr;
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
@@ -405,15 +410,18 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
 
-            currentPipeControl = primaryCmdBuffer->pipeControlLocation;
+            currentPipeControlForNooping = primaryCmdBuffer->pipeControlThatMayBeErasedLocation;
+            epiloguePipeControlLocation = primaryCmdBuffer->epiloguePipeControlLocation;
 
             while (nextCommandBuffer && nextCommandBuffer->inspectionId == primaryCmdBuffer->inspectionId) {
                 //noop pipe control
-                if (currentPipeControl) {
-                    memset(currentPipeControl, 0, pipeControlLocationSize);
+                if (currentPipeControlForNooping) {
+                    memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
                 }
                 //obtain next candidate for nooping
-                currentPipeControl = nextCommandBuffer->pipeControlLocation;
+                currentPipeControlForNooping = nextCommandBuffer->pipeControlThatMayBeErasedLocation;
+                //track epilogue pipe control
+                epiloguePipeControlLocation = nextCommandBuffer->epiloguePipeControlLocation;
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer();
@@ -430,9 +438,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             }
 
             //make sure we flush DC
-            if (currentPipeControl) {
-                ((PIPE_CONTROL *)currentPipeControl)->setDcFlushEnable(true);
-            }
+            ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
 
             auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit);
 

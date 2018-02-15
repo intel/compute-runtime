@@ -1004,6 +1004,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     submittedCommandBuffer.getSpace(4);
 
     DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
     tCsr->flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
