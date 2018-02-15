@@ -105,7 +105,7 @@ if(WIN32)
 endif()
 
 add_subdirectory(indirect_heap)
-add_subdirectory(instrumentation)
+add_subdirectory(instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX})
 add_subdirectory(kernel)
 add_subdirectory(mem_obj)
 add_subdirectory(memory_manager)
