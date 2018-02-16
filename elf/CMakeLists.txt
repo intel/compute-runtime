@@ -33,6 +33,6 @@ add_library(elflib STATIC
 target_include_directories(elflib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(elflib PRIVATE ${IGDRCL_SOURCE_DIR})
 
+set_vs_props(elflib)
 set_target_properties(elflib PROPERTIES FOLDER "elflib")
-
 set_target_properties(elflib PROPERTIES POSITION_INDEPENDENT_CODE ON)

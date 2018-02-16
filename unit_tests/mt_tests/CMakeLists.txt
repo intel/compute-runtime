@@ -149,6 +149,7 @@ source_group("source files\\os_interface" FILES ${IGDRCL_SRCS_mt_tests_os_interf
 source_group("source files\\platform" FILES ${IGDRCL_SRCS_mt_tests_platform})
 source_group("source files\\utilities" FILES ${IGDRCL_SRCS_mt_tests_utilities})
 
+set_vs_props(igdrcl_mt_tests)
 set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER "opencl runtime")
 set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${TSAN_FLAGS})
 if(NOT MSVC)

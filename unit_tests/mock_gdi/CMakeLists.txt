@@ -49,6 +49,7 @@ target_include_directories(mock_gdi PRIVATE
 	${KHRONOS_HEADERS_DIR}
 )
 
+set_vs_props(mock_gdi)
 set_target_properties(
     mock_gdi
     PROPERTIES DEBUG_OUTPUT_NAME "gdi32_mock"

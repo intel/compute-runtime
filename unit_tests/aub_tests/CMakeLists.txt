@@ -33,6 +33,7 @@ add_executable(igdrcl_aub_tests
     $<TARGET_OBJECTS:igdrcl_libult_cs>
 )
 
+set_vs_props(igdrcl_aub_tests)
 set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER "opencl runtime")
 
 add_custom_target(run_aub_tests)

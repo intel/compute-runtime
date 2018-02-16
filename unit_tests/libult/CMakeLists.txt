@@ -98,6 +98,8 @@ target_include_directories(igdrcl_libult_cs BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH
 # target_include_directories(igdrcl_libult PRIVATE $<TARGET_PROPERTY:instrumentation_umd,INTERFACE_INCLUDE_DIRECTORIES>)
 # endif()
 
+set_vs_props(igdrcl_libult)
+set_vs_props(igdrcl_libult_cs)
 set_target_properties (igdrcl_libult PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties (igdrcl_libult_cs PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_definitions(igdrcl_libult PUBLIC ${IGDRCL_LIB_FLAGS_DEFINITIONS} ${TESTED_GEN_FLAGS_DEFINITONS})

@@ -24,6 +24,7 @@ add_library(${BUILTINS_SOURCES_LIB_NAME} OBJECT
   register_ext_vme_source.cpp
 )
 
+set_vs_props(${BUILTINS_SOURCES_LIB_NAME})
 set_target_properties(${BUILTINS_SOURCES_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(${BUILTINS_SOURCES_LIB_NAME} PROPERTIES FOLDER "built_ins")
 

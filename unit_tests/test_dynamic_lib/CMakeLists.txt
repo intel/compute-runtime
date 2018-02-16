@@ -30,6 +30,8 @@ endif(WIN32)
 
 add_library(test_dynamic_lib SHARED test_dynamic_lib_${OS_SUFFIX}.cpp)
 
+
+set_vs_props(test_dynamic_lib)
 set_target_properties(test_dynamic_lib PROPERTIES FOLDER "test mocks")
 set_property(TARGET test_dynamic_lib APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 

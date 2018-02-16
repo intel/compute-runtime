@@ -68,6 +68,12 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+macro(set_vs_props TARGET_NAME)
+	if(MSVC AND VS_PROPS)
+		set_target_properties(${TARGET_NAME} PROPERTIES VS_PRE_DEFAULT_PROPS ${VS_PROPS})
+	endif()
+endmacro(set_vs_props)
+
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
 if(MSVC)
@@ -91,6 +97,10 @@ set(GMOCK_INCLUDE_DIR "${GMOCK_SRC_DIR}/include")
 message(STATUS "Google Test source dir: ${GTEST_SRC_DIR}")
 message(STATUS "Google Mock source dir: ${GMOCK_SRC_DIR}")
 add_subdirectory(${GMOCK_SRC_DIR} ${IGDRCL_BINARY_DIR}/gmock)
+set_vs_props(gtest)
+set_vs_props(gmock)
+set_vs_props(gtest_main)
+set_vs_props(gmock_main)
 set_target_properties(gtest PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 set_target_properties(gmock PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 
