@@ -385,6 +385,7 @@ class WddmFixture {
     decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn;
     decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn;
     decltype(&setMapGpuVaFailConfig) setMapGpuVaFailConfigFcn = nullptr;
+    decltype(&getCreateContextData) getCreateContextDataFcn;
 
   public:
     virtual void SetUp() {
@@ -406,6 +407,7 @@ class WddmFixture {
         getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
         setMapGpuVaFailConfigFcn = reinterpret_cast<decltype(&setMapGpuVaFailConfig)>(mockGdiDll->getProcAddress("setMapGpuVaFailConfig"));
         setMapGpuVaFailConfigFcn(0, 0);
+        getCreateContextDataFcn = reinterpret_cast<decltype(&getCreateContextData)>(mockGdiDll->getProcAddress("getCreateContextData"));
         wddm = Wddm::createWddm();
         mockWddm = static_cast<WddmMock *>(wddm);
         wddm->registryReader.reset(new RegistryReaderMock());

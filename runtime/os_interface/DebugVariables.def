@@ -51,6 +51,7 @@ DECLARE_DEBUG_VARIABLE(bool, Force32bitAddressing, false, "Forces 32 bit address
 DECLARE_DEBUG_VARIABLE(bool, DisableStatelessToStatefulOptimization, false, "Disables stateless to stateful optimization for buffers")
 DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, 0, "disables concurrent block kernel execution")
 DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocator is used")
+DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, false, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, 0, "Set command stream receiver")
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, "127.0.0.1", "TCP-IP address of TBX server")

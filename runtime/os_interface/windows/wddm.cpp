@@ -692,6 +692,7 @@ D3DKMT_HANDLE Wddm::createContext() {
     PrivateData.GpuVAContext = TRUE;
     PrivateData.pHwContextId = &hwContextId;
     PrivateData.IsMediaUsage = false;
+    PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();

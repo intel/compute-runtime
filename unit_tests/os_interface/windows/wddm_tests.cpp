@@ -587,6 +587,26 @@ HWTEST_F(WddmTest, dontCallCreateContextBeforeConfigureDeviceAddressSpace) {
     delete mockWddm;
 }
 
+HWTEST_F(WddmTest, givenUseNoRingFlushesKmdModeDebugFlagToFalseWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToFalse) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseNoRingFlushesKmdMode.set(false);
+    std::unique_ptr<WddmMock> mockWddm(new WddmMock());
+    mockWddm->init<FamilyType>();
+    auto createContextParams = this->getCreateContextDataFcn();
+    auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
+    EXPECT_FALSE(!!privateData->NoRingFlushes);
+}
+
+HWTEST_F(WddmTest, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToTrue) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.UseNoRingFlushesKmdMode.set(true);
+    std::unique_ptr<WddmMock> mockWddm(new WddmMock());
+    mockWddm->init<FamilyType>();
+    auto createContextParams = this->getCreateContextDataFcn();
+    auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
+    EXPECT_TRUE(!!privateData->NoRingFlushes);
+}
+
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;

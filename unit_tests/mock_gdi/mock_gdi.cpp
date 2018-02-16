@@ -133,9 +133,18 @@ NTSTATUS __stdcall D3DKMTDestroyPagingQueue(IN OUT D3DDDI_DESTROYPAGINGQUEUE *de
     return STATUS_SUCCESS;
 }
 
+static D3DKMT_CREATECONTEXTVIRTUAL createContextData = {0};
+static CREATECONTEXT_PVTDATA createContextPrivateData = {{0}};
+
 NTSTATUS __stdcall D3DKMTCreateContextVirtual(IN D3DKMT_CREATECONTEXTVIRTUAL *createContext) {
     if (createContext == nullptr || createContext->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
+    }
+
+    createContextData = *createContext;
+    if (createContext->pPrivateDriverData) {
+        createContextPrivateData = *((CREATECONTEXT_PVTDATA *)createContext->pPrivateDriverData);
+        createContextData.pPrivateDriverData = &createContextPrivateData;
     }
 
     if ((createContext->PrivateDriverDataSize != 0 && createContext->pPrivateDriverData == nullptr) ||
@@ -434,4 +443,8 @@ D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg() {
 void setMapGpuVaFailConfig(uint32_t count, uint32_t max) {
     gMapGpuVaFailConfigCount = count;
     gMapGpuVaFailConfigMax = max;
+}
+
+D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData() {
+    return &createContextData;
 }

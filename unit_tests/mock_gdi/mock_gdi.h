@@ -82,3 +82,4 @@ D3DKMT_CREATEALLOCATION *getMockAllocation();
 ADAPTER_INFO *getAdapterInfoAddress();
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg();
 void setMapGpuVaFailConfig(uint32_t count, uint32_t max);
+D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData();
