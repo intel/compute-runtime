@@ -23,9 +23,9 @@
 #include "runtime/sharings/va/enable_va.h"
 #include "runtime/sharings/va/va_sharing_functions.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "gtest/gtest.h"
-#include "variable_backup.h"
 
 using namespace OCLRT;
 

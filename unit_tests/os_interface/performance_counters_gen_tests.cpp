@@ -23,7 +23,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/performance_counters.h"
 #include "unit_tests/mocks/mock_ostime.h"
-#include "unit_tests/sharings/va/variable_backup.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "test.h"
 

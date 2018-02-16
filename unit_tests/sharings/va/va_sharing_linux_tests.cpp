@@ -22,7 +22,7 @@
 
 #include "runtime/sharings/va/va_sharing_functions.h"
 #include "gtest/gtest.h"
-#include "variable_backup.h"
+#include "unit_tests/helpers/variable_backup.h"
 
 #include <functional>
 #include <memory>
