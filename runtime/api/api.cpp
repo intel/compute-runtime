@@ -77,19 +77,23 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         }
 
         // if the platforms are non-nullptr, we need to fill in the platform IDs
-        if (platforms != nullptr) {
+        while (platforms != nullptr) {
             auto pPlatform = platform();
             bool ret = pPlatform->initialize(numPlatformDevices, platformDevices);
             DEBUG_BREAK_IF(ret != true);
-            ((void)(ret));
+            if (!ret) {
+                retVal = CL_INVALID_VALUE;
+                break;
+            }
 
             // we only have one platform so we can program that directly
             platforms[0] = pPlatform;
+            break;
         }
 
         // we only have a single platform at this time, so return 1 if num_platforms
         // is non-nullptr
-        if (numPlatforms) {
+        if (numPlatforms && retVal == CL_SUCCESS) {
             *numPlatforms = 1;
         }
     } while (false);

@@ -23,8 +23,13 @@
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/helpers/variable_backup.h"
 
 using namespace OCLRT;
+
+namespace OCLRT {
+extern bool getDevicesResult;
+}; // namespace OCLRT
 
 typedef api_tests clGetPlatformIDsTests;
 
@@ -56,5 +61,22 @@ TEST_F(clGetPlatformIDsTests, NoPlatformListReturnsError) {
     retVal = clGetPlatformIDs(0, &platform, nullptr);
 
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST(clGetPlatformIDsNegativeTests, WhenInitFailedThenErrorIsReturned) {
+    VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult);
+    bkp = false;
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(0u, numPlatforms);
+    EXPECT_EQ(nullptr, platformRet);
+
+    platform()->shutdown();
 }
 } // namespace ULT
