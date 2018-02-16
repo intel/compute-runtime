@@ -234,7 +234,7 @@ if(MSVC)
   target_link_libraries (igdrcl_tests gtest gmock Ws2_32.lib)
 else()
   add_executable(igdrcl_linux
-    "main_linux.cpp"
+    ${IGDRCL_SRCS_linux_tests}
     $<TARGET_OBJECTS:igdrcl_libult_cs>
     ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp

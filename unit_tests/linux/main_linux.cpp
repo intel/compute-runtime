@@ -28,13 +28,15 @@
 using namespace OCLRT;
 
 int main(int argc, char **argv) {
-    bool useDefaultListener = true;
+    bool useDefaultListener = false;
 
     ::testing::InitGoogleTest(&argc, argv);
 
     for (int i = 1; i < argc; ++i) {
         if (!strcmp("--disable_default_listener", argv[i])) {
             useDefaultListener = false;
+        } else if (!strcmp("--enable_default_listener", argv[i])) {
+            useDefaultListener = true;
         }
     }
 

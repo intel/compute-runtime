@@ -23,12 +23,16 @@ cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 project(igdrcl_linux_dll_tests)
 
 if(UNIX)
-    set(IGDRCL_SRCS_linux_dll_tests 
-        "${IGDRCL_SRCS_linux_dll_tests}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/main_linux_dll.cpp"
-        "${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device_tests.cpp"
-				"${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp"
-				"${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h"
-        "${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp"
-    PARENT_SCOPE)
+	set(IGDRCL_SRCS_linux_dll_tests 
+		"${IGDRCL_SRCS_linux_dll_tests}"
+		"${CMAKE_CURRENT_SOURCE_DIR}/main_linux_dll.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/drm_null_device_tests.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.cpp"
+		"${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h"
+		"${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp"
+	PARENT_SCOPE)
+
+	set(IGDRCL_SRCS_linux_tests
+		"${CMAKE_CURRENT_SOURCE_DIR}/main_linux.cpp"
+	PARENT_SCOPE)
 endif()
