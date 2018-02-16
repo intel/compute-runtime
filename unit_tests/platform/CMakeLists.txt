@@ -22,6 +22,7 @@ set(IGDRCL_SRCS_tests_platform
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
     "${CMAKE_CURRENT_SOURCE_DIR}/platform_icd_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/platform_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/platform_negative_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/platform_tests_mt.cpp"
     PARENT_SCOPE
 )

@@ -117,9 +117,11 @@ bool Platform::initialize(size_t numDevices,
         return true;
     }
 
-    state = StateIniting;
+    state = OCLRT::getDevices(&hwInfo, numDevicesReturned) ? StateIniting : StateNone;
 
-    OCLRT::getDevices(&hwInfo, numDevicesReturned);
+    if (state == StateNone) {
+        return false;
+    }
 
     hwInfoConst = (hwInfo != nullptr) ? const_cast<const HardwareInfo **>(&hwInfo) : devices;
     numDevicesReturned = (hwInfo != nullptr) ? numDevicesReturned : numDevices;
