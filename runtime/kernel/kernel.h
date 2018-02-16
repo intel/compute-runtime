@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -274,9 +274,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isVmeKernel() { return kernelInfo.isVmeWorkload; };
 
     //residency for kernel surfaces
-    void makeResident(CommandStreamReceiver &commandStreamReceiver);
+    MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
     void updateWithCompletionStamp(CommandStreamReceiver &commandStreamReceiver, CompletionStamp *completionStamp);
-    void getResidency(std::vector<Surface *> &dst);
+    MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
     bool requiresCoherency();
     void resetSharedObjectsPatchAddresses();
     bool isUsingSharedObjArgs() { return usingSharedObjArgs; }

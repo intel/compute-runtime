@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -51,6 +51,16 @@ template void Kernel::patchReflectionSurface<true>(DeviceQueue *, PrintfHandler 
 
 bool MockKernel::isPatched() const {
     return true;
+}
+
+void MockKernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
+    makeResidentCalls++;
+    Kernel::makeResident(commandStreamReceiver);
+}
+
+void MockKernel::getResidency(std::vector<Surface *> &dst) {
+    getResidencyCalls++;
+    Kernel::getResidency(dst);
 }
 
 } // namespace OCLRT

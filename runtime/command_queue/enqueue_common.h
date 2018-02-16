@@ -489,10 +489,16 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     auto mediaSamplerRequired = false;
+    Kernel *kernel = nullptr;
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.getKernel()->makeResident(commandStreamReceiver);
-        requiresCoherency |= dispatchInfo.getKernel()->requiresCoherency();
-        mediaSamplerRequired |= dispatchInfo.getKernel()->isVmeKernel();
+        if (kernel != dispatchInfo.getKernel()) {
+            kernel = dispatchInfo.getKernel();
+        } else {
+            continue;
+        }
+        kernel->makeResident(commandStreamReceiver);
+        requiresCoherency |= kernel->requiresCoherency();
+        mediaSamplerRequired |= kernel->isVmeKernel();
     }
 
     if (mediaSamplerRequired) {
@@ -617,11 +623,17 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     } else {
         //store task data in event
         std::vector<Surface *> allSurfaces;
+        Kernel *kernel = nullptr;
         for (auto &dispatchInfo : multiDispatchInfo) {
-            dispatchInfo.getKernel()->getResidency(allSurfaces);
-            for (auto &surface : CreateRange(surfaces, surfaceCount)) {
-                allSurfaces.push_back(surface->duplicate());
+            if (kernel != dispatchInfo.getKernel()) {
+                kernel = dispatchInfo.getKernel();
+            } else {
+                continue;
             }
+            kernel->getResidency(allSurfaces);
+        }
+        for (auto &surface : CreateRange(surfaces, surfaceCount)) {
+            allSurfaces.push_back(surface->duplicate());
         }
 
         auto kernelOperation = std::unique_ptr<KernelOperation>(blockedCommandsData); // marking ownership

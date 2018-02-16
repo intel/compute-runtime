@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -182,6 +182,12 @@ class MockKernel : public Kernel {
     using Kernel::kernelArgHandlers;
 
     void setUsingSharedArgs(bool usingSharedArgValue) { this->usingSharedObjArgs = usingSharedArgValue; }
+
+    void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
+    void getResidency(std::vector<Surface *> &dst) override;
+
+    uint32_t makeResidentCalls = 0;
+    uint32_t getResidencyCalls = 0;
 };
 
 //class below have enough internals to service Enqueue operation.

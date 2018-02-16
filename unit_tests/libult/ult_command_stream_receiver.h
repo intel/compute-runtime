@@ -43,14 +43,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::dispatchMode;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
+    using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
+    using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
     using BaseClass::CommandStreamReceiver::lastSentThreadAribtrationPolicy;
+    using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
-    using BaseClass::CommandStreamReceiver::lastMediaSamplerConfig;
-    using BaseClass::CommandStreamReceiver::lastPreemptionMode;
-    using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
 
@@ -65,6 +65,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         tempTagLocation = new GraphicsAllocation(nullptr, 0);
         this->tagAllocation = tempTagLocation;
         this->tagAddress = reinterpret_cast<uint32_t *>(tempTagLocation->getUnderlyingBuffer());
+        this->storeMakeResidentAllocations = false;
     }
 
     virtual MemoryManager *createMemoryManager(bool enable64kbPages) override {
@@ -81,6 +82,23 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
     using SamplerCacheFlushState = CommandStreamReceiver::SamplerCacheFlushState;
     SamplerCacheFlushState peekSamplerCacheFlushRequired() const { return this->samplerCacheFlushRequired; }
+
+    void makeResident(GraphicsAllocation &gfxAllocation) override {
+        if (storeMakeResidentAllocations) {
+            std::map<GraphicsAllocation *, uint32_t>::iterator it = makeResidentAllocations.find(&gfxAllocation);
+            if (it == makeResidentAllocations.end()) {
+                std::pair<std::map<GraphicsAllocation *, uint32_t>::iterator, bool> result;
+                result = makeResidentAllocations.insert(std::pair<GraphicsAllocation *, uint32_t>(&gfxAllocation, 1));
+                DEBUG_BREAK_IF(!result.second);
+            } else {
+                makeResidentAllocations[&gfxAllocation]++;
+            }
+        }
+        BaseClass::makeResident(gfxAllocation);
+    }
+
+    std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
+    bool storeMakeResidentAllocations;
 
   protected:
     using BaseClass::CommandStreamReceiver::memoryManager;

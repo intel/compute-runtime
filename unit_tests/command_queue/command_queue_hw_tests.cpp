@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,6 +30,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -989,4 +990,86 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     //new virtual event is actually responsible for command delivery
     EXPECT_EQ(virtualEventTaskLevel + 1, cmdQHw->taskLevel);
     EXPECT_EQ(virtualEventTaskLevel + 1, mockCSR->lastTaskLevelToFlushTask);
+}
+
+HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenNoBlockedThenKernelMakeResidentCalledOnce) {
+    KernelInfo kernelInfo;
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    auto mockProgram = mockKernelWithInternals.mockProgram;
+    mockProgram->setAllowNonUniform(true);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    size_t offset = 0;
+    size_t gws = 63;
+    size_t lws = 16;
+
+    cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_EQ(1u, mockKernel->makeResidentCalls);
+
+    std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
+    for (; it != csr.makeResidentAllocations.end(); it++) {
+        EXPECT_EQ(1u, it->second);
+    }
+}
+
+HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernelGetResidencyCalledOnce) {
+    UserEvent userEvent(context);
+    KernelInfo kernelInfo;
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+    auto mockProgram = mockKernelWithInternals.mockProgram;
+    mockProgram->setAllowNonUniform(true);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    size_t offset = 0;
+    size_t gws = 63;
+    size_t lws = 16;
+
+    cl_event blockedEvent = &userEvent;
+
+    cl_int status = pCmdQ->enqueueKernel(mockKernel, 1, &offset, &gws, &lws, 1, &blockedEvent, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+    EXPECT_EQ(1u, mockKernel->getResidencyCalls);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
+    for (; it != csr.makeResidentAllocations.end(); it++) {
+        EXPECT_EQ(1u, it->second);
+    }
+}
+
+HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
+    UserEvent userEvent(context);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    BufferDefaults::context = context;
+    std::unique_ptr<Buffer> buffer(BufferHelper<>::create());
+    GraphicsAllocation *bufferAllocation = buffer->getGraphicsAllocation();
+    char array[3 * MemoryConstants::cacheLineSize];
+    char *ptr = &array[MemoryConstants::cacheLineSize];
+    ptr = alignUp(ptr, MemoryConstants::cacheLineSize);
+    ptr -= 1;
+
+    cl_event blockedEvent = &userEvent;
+
+    cl_int status = pCmdQ->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, MemoryConstants::cacheLineSize, ptr, 1, &blockedEvent, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    std::map<GraphicsAllocation *, uint32_t>::iterator it = csr.makeResidentAllocations.begin();
+    for (; it != csr.makeResidentAllocations.end(); it++) {
+        uint32_t expected = 1u;
+        //Buffer surface will be added three times (for each kernel from split and as a base range of enqueueReadBuffer call)
+        if (it->first == bufferAllocation) {
+            expected = 3u;
+        }
+        EXPECT_EQ(expected, it->second);
+    }
 }
