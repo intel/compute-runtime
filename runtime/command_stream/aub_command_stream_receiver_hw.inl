@@ -418,18 +418,28 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         stream.addComment(str.str().c_str());
     }
 
+    if (cpuAddress == nullptr) {
+        DEBUG_BREAK_IF(gfxAllocation.isLocked());
+        cpuAddress = this->getMemoryManager()->lockResource(&gfxAllocation);
+        gfxAllocation.setLocked(true);
+    }
+
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
         static const size_t pageSize = 4096;
         auto vmAddr = (static_cast<uintptr_t>(gpuAddress) + offset) & ~(pageSize - 1);
         auto pAddr = physAddress & ~(pageSize - 1);
 
         AUB::reserveAddressPPGTT(stream, vmAddr, pageSize, pAddr);
-
         AUB::addMemoryWrite(stream, physAddress,
                             reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(cpuAddress) + offset),
                             size, AubMemDump::AddressSpaceValues::TraceNonlocal);
     };
     ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
+
+    if (gfxAllocation.isLocked()) {
+        this->getMemoryManager()->unlockResource(&gfxAllocation);
+        gfxAllocation.setLocked(false);
+    }
 
     if (!!(allocType & GraphicsAllocation::ALLOCATION_TYPE_BUFFER) ||
         !!(allocType & GraphicsAllocation::ALLOCATION_TYPE_IMAGE))

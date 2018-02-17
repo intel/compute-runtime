@@ -27,6 +27,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_gmm.h"
 
 using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
@@ -301,5 +302,72 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
 
     memoryManager->freeGraphicsMemoryImpl(commandBuffer);
+    aubCsr->setMemoryManager(nullptr);
+}
+
+class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryManager {
+  public:
+    GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
+        auto imageAllocation = OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(imgInfo, gmm);
+        cpuPtr = imageAllocation->getUnderlyingBuffer();
+        imageAllocation->setCpuPtrAndGpuAddress(nullptr, imageAllocation->getGpuAddress());
+        return imageAllocation;
+    };
+    void freeGraphicsMemoryImpl(GraphicsAllocation *imageAllocation) override {
+        imageAllocation->setCpuPtrAndGpuAddress(lockResourceParam.retCpuPtr, imageAllocation->getGpuAddress());
+        OsAgnosticMemoryManager::freeGraphicsMemoryImpl(imageAllocation);
+    };
+    void *lockResource(GraphicsAllocation *imageAllocation) override {
+        lockResourceParam.wasCalled = true;
+        lockResourceParam.inImageAllocation = imageAllocation;
+        lockResourceParam.retCpuPtr = cpuPtr;
+        return lockResourceParam.retCpuPtr;
+    };
+    void unlockResource(GraphicsAllocation *imageAllocation) override {
+        unlockResourceParam.wasCalled = true;
+        unlockResourceParam.inImageAllocation = imageAllocation;
+    };
+
+    struct LockResourceParam {
+        bool wasCalled = false;
+        GraphicsAllocation *inImageAllocation = nullptr;
+        void *retCpuPtr = nullptr;
+    } lockResourceParam;
+    struct UnlockResourceParam {
+        bool wasCalled = false;
+        GraphicsAllocation *inImageAllocation = nullptr;
+    } unlockResourceParam;
+
+  protected:
+    void *cpuPtr = nullptr;
+};
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<OsAgnosticMemoryManagerForImagesWithNoHostPtr> memoryManager(new OsAgnosticMemoryManagerForImagesWithNoHostPtr);
+    aubCsr->setMemoryManager(memoryManager.get());
+
+    cl_image_desc imgDesc = {};
+    imgDesc.image_width = 512;
+    imgDesc.image_height = 1;
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    auto queryGmm = MockGmm::queryImgParams(imgInfo);
+
+    auto imageAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
+    ASSERT_NE(nullptr, imageAllocation);
+
+    EXPECT_TRUE(aubCsr->writeMemory(*imageAllocation));
+
+    EXPECT_TRUE(memoryManager->lockResourceParam.wasCalled);
+    EXPECT_EQ(imageAllocation, memoryManager->lockResourceParam.inImageAllocation);
+    EXPECT_NE(nullptr, memoryManager->lockResourceParam.retCpuPtr);
+
+    EXPECT_TRUE(memoryManager->unlockResourceParam.wasCalled);
+    EXPECT_EQ(imageAllocation, memoryManager->unlockResourceParam.inImageAllocation);
+
+    queryGmm.release();
+    memoryManager->freeGraphicsMemoryImpl(imageAllocation);
     aubCsr->setMemoryManager(nullptr);
 }
