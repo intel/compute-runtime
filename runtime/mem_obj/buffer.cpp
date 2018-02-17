@@ -298,11 +298,11 @@ void Buffer::transferData(void *dst, void *src, size_t copySize, size_t copyOffs
     memcpy_s(dstPtr, copySize, srcPtr, copySize);
 }
 
-void Buffer::transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+void Buffer::transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) {
     transferData(hostPtr, memoryStorage, copySize[0], copyOffset[0]);
 }
 
-void Buffer::transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+void Buffer::transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) {
     transferData(memoryStorage, hostPtr, copySize[0], copyOffset[0]);
 }
 

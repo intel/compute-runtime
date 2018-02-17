@@ -43,6 +43,7 @@ set(IGDRCL_SRCS_tests_mem_obj
     "${CMAKE_CURRENT_SOURCE_DIR}/image_array_size_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image2d_from_buffer_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/image_tiled_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/map_operations_handler_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_destruction_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/nv12_image_tests.cpp"

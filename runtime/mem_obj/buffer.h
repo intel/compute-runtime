@@ -100,8 +100,8 @@ class Buffer : public MemObj {
 
     static size_t calculateHostPtrSize(const size_t *origin, const size_t *region, size_t rowPitch, size_t slicePitch);
 
-    void transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
-    void transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
+    void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
+    void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
 
     bool isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitList, void *ptr, size_t size);
 

@@ -770,8 +770,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyImageWhenDataTransferedFromHostPtrToMemSto
     memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
 
     auto &imgDesc = imageNonZeroCopy->getImageDesc();
-    imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
-                                              {{0, 0, 0}});
+    MemObjOffsetArray copyOffset = {{0, 0, 0}};
+    MemObjSizeArray copySize = {{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}};
+    imageNonZeroCopy->transferDataFromHostPtr(copySize, copyOffset);
 
     void *foundData = memchr(memoryStorage, 2, memoryStorageSize);
     EXPECT_EQ(0, foundData);
@@ -805,8 +806,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchImageWhenDataIsTransferedFr
     memset((char *)unalignedHostPtr + imageSize, 2, 100 - 4);
 
     auto &imgDesc = imageNonZeroCopy->getImageDesc();
-    imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
-                                              {{0, 0, 0}});
+    MemObjOffsetArray copyOffset = {{0, 0, 0}};
+    MemObjSizeArray copySize = {{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}};
+    imageNonZeroCopy->transferDataFromHostPtr(copySize, copyOffset);
 
     void *foundData = memchr(memoryStorage, 2, memoryStorageSize);
     EXPECT_EQ(0, foundData);
@@ -863,8 +865,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
 
         if (run == 1) {
             auto &imgDesc = imageNonZeroCopy->getImageDesc();
-            imageNonZeroCopy->transferDataFromHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
-                                                      {{0, 0, 0}});
+            MemObjOffsetArray copyOffset = {{0, 0, 0}};
+            MemObjSizeArray copySize = {{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}};
+            imageNonZeroCopy->transferDataFromHostPtr(copySize, copyOffset);
         }
 
         for (size_t arrayIndex = 0; arrayIndex < imageCount; ++arrayIndex) {
@@ -884,8 +887,9 @@ TEST_F(ImageTransfer, GivenNonZeroCopyNonZeroRowPitchWithExtraBytes1DArrayImageW
     }
 
     auto &imgDesc = imageNonZeroCopy->getImageDesc();
-    imageNonZeroCopy->transferDataToHostPtr({{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}},
-                                            {{0, 0, 0}});
+    MemObjOffsetArray copyOffset = {{0, 0, 0}};
+    MemObjSizeArray copySize = {{imgDesc.image_width, imgDesc.image_height, imgDesc.image_depth}};
+    imageNonZeroCopy->transferDataToHostPtr(copySize, copyOffset);
 
     row = static_cast<uint32_t *>(unalignedHostPtr);
 
@@ -997,7 +1001,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectVal
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
-    size_t origin[3] = {4, 5, 6};
+    MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
     size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
@@ -1011,10 +1015,9 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     DebugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
-
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    size_t origin[3] = {4, 5, 6};
+    MemObjOffsetArray origin = {{4, 5, 6}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
     size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
@@ -1022,4 +1025,35 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
                             image->getImageDesc().image_slice_pitch * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
+}
+
+TEST(ImageTest, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorrectValue) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    MemObjSizeArray region = {{4, 5, 6}};
+
+    auto retLength = image->calculateMappedPtrLength(region);
+    size_t expectedLength = image->getSurfaceFormatInfo().ImageElementSizeInBytes * region[0] +
+                            image->getHostPtrRowPitch() * region[1] + image->getHostPtrSlicePitch() * region[2];
+
+    EXPECT_EQ(expectedLength, retLength);
+}
+
+TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLinearImages.set(true);
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    MemObjSizeArray region = {{4, 5, 6}};
+
+    auto retLength = image->calculateMappedPtrLength(region);
+    size_t expectedLength = image->getSurfaceFormatInfo().ImageElementSizeInBytes * region[0] +
+                            image->getImageDesc().image_row_pitch * region[1] +
+                            image->getImageDesc().image_slice_pitch * region[2];
+
+    EXPECT_EQ(expectedLength, retLength);
 }

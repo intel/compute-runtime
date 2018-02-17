@@ -633,7 +633,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperation) {
     auto &csr = pDevice->getCommandStreamReceiver();
     auto buffer = new MockBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, csr, *pCmdQ)));
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -653,7 +655,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsMapOperationNonZeroCopyBuffer) 
     auto &csr = pDevice->getCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, csr, *pCmdQ)));
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, *buffer, size, offset, false, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -738,7 +742,9 @@ TEST_F(InternalsEventTest, GIVENProfilingWHENMapOperationTHENTimesSet) {
     auto &csr = pDevice->getCommandStreamReceiver();
     UnalignedBuffer buffer;
 
-    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, csr, *pCmdQ)));
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event->setCommand(std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -762,7 +768,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperation) {
     auto &csr = pDevice->getCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, csr, *pCmdQ)));
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -783,7 +791,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsUnMapOperationNonZeroCopyBuffer
     auto &csr = pDevice->getCommandStreamReceiver();
     auto buffer = new UnalignedBuffer;
 
-    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, csr, *pCmdQ)));
+    MemObjSizeArray size = {{1, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    event.setCommand(std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, *buffer, size, offset, false, csr, *pCmdQ)));
 
     auto taskLevelBefore = csr.peekTaskLevel();
 
@@ -939,7 +949,9 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     MockCsr<FamilyType> csr(executionStamp);
     csr.setMemoryManager(pDevice->getMemoryManager());
 
-    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, csr, *pCmdQ));
+    MemObjSizeArray size = {{4, 1, 1}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    auto commandMap = std::unique_ptr<Command>(new CommandMapUnmap(MAP, buffer, size, offset, false, csr, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
     EXPECT_EQ(-1, csr.flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);
@@ -957,7 +969,8 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     csr.flushTaskStamp = -1;
     buffer.dataTransferedStamp = -1;
     buffer.swapCopyDirection();
-    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, csr, *pCmdQ));
+
+    auto commandUnMap = std::unique_ptr<Command>(new CommandMapUnmap(UNMAP, buffer, size, offset, false, csr, *pCmdQ));
     EXPECT_EQ(0, executionStamp);
     EXPECT_EQ(-1, csr.flushTaskStamp);
     EXPECT_EQ(-1, buffer.dataTransferedStamp);

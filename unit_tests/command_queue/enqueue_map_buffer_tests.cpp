@@ -273,10 +273,11 @@ TEST_F(EnqueueMapBufferTest, MapBufferReturnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCalledThenSynchronizationIsNotMadeUntilWaitForEvents) {
+TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWhenItIsCalledThenSynchronizationIsNotMadeUntilWaitForEvents) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
-    cl_event eventReturned = nullptr;
+    cl_event mapEventReturned = nullptr;
+    cl_event unmapEventReturned = nullptr;
     *pTagMemory = 0;
     MockKernelWithInternals kernel(*pDevice);
     size_t GWS = 1;
@@ -316,7 +317,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCa
         8,
         0,
         nullptr,
-        &eventReturned,
+        &mapEventReturned,
         &retVal);
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -327,20 +328,21 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCa
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
-    auto neoEvent = castToObject<Event>(eventReturned);
+    auto neoEvent = castToObject<Event>(mapEventReturned);
     //if task count of csr is higher then event task count with proper dc flushing then we are fine
     EXPECT_EQ(1u, neoEvent->getCompletionStamp());
     //this can't be completed as task count is not reached yet
     EXPECT_FALSE(neoEvent->updateStatusAndCheckCompletion());
+    EXPECT_TRUE(CL_COMMAND_MAP_BUFFER == neoEvent->getCommandType());
 
     auto callbackCalled = 0u;
 
     *pTagMemory += 4;
 
-    clSetEventCallback(eventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)&callbackCalled);
+    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)&callbackCalled);
 
     //wait for events needs to flush DC as event requires this.
-    retVal = clWaitForEvents(1, &eventReturned);
+    retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     //wait for event do not sent flushTask
@@ -357,13 +359,105 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferOnZeroCopyBufferWhenItIsCa
         ptrResult,
         0,
         nullptr,
-        nullptr);
+        &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+
+    auto unmapEvent = castToObject<Event>(unmapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
+    retVal = clWaitForEvents(1, &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    clReleaseEvent(eventReturned);
+    clReleaseEvent(mapEventReturned);
+    clReleaseEvent(unmapEventReturned);
+}
+
+TEST_F(EnqueueMapBufferTest, givenNonReadOnlyBufferWhenMappedOnGpuThenSetValidEventCmds) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    cl_event mapEventReturned = nullptr;
+    cl_event unmapEventReturned = nullptr;
+    *pTagMemory = 5;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
+    buffer->setSharingHandler(new SharingHandler());
+    buffer->forceDisallowCPUCopy = true;
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer.get());
+
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    EXPECT_EQ(0u, commandStreamReceiver.peekTaskCount());
+
+    auto ptrResult = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_WRITE, 0, 8, 0,
+                                        nullptr, &mapEventReturned, &retVal);
+    EXPECT_NE(nullptr, ptrResult);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+
+    auto mapEvent = castToObject<Event>(mapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_MAP_BUFFER == mapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &mapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(pCmdQ, buffer.get(), ptrResult, 0, nullptr, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, commandStreamReceiver.peekTaskCount());
+
+    auto unmapEvent = castToObject<Event>(unmapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseEvent(mapEventReturned);
+    clReleaseEvent(unmapEventReturned);
+}
+
+TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEventCmds) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    cl_event mapEventReturned = nullptr;
+    cl_event unmapEventReturned = nullptr;
+    *pTagMemory = 5;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(BufferDefaults::context, CL_MEM_READ_WRITE, 20, nullptr, retVal));
+    buffer->setSharingHandler(new SharingHandler());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer.get());
+
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    EXPECT_EQ(0u, commandStreamReceiver.peekTaskCount());
+
+    auto ptrResult = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, 0, 8, 0,
+                                        nullptr, &mapEventReturned, &retVal);
+    EXPECT_NE(nullptr, ptrResult);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+
+    auto mapEvent = castToObject<Event>(mapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_MAP_BUFFER == mapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &mapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(pCmdQ, buffer.get(), ptrResult, 0, nullptr, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+
+    auto unmapEvent = castToObject<Event>(unmapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseEvent(mapEventReturned);
+    clReleaseEvent(unmapEventReturned);
 }
 
 TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThenEventIsSignaledAsCompleted) {
@@ -582,13 +676,18 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithoutUseHostPtrFlagWhenMappedOnCpuThen
     auto mappedPtr = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, mapOffset, mapSize, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
 
-    EXPECT_EQ(mapOffset, buffer->getMappedOffset()[0]);
-    EXPECT_EQ(0u, buffer->getMappedOffset()[1]);
-    EXPECT_EQ(0u, buffer->getMappedOffset()[2]);
+    MapInfo mappedInfo;
+    auto success = buffer->findMappedPtr(mappedPtr, mappedInfo);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, mappedInfo.ptr);
 
-    EXPECT_EQ(mapSize, buffer->getMappedSize()[0]);
-    EXPECT_EQ(0u, buffer->getMappedSize()[1]);
-    EXPECT_EQ(0u, buffer->getMappedSize()[2]);
+    EXPECT_EQ(mapOffset, mappedInfo.offset[0]);
+    EXPECT_EQ(0u, mappedInfo.offset[1]);
+    EXPECT_EQ(0u, mappedInfo.offset[2]);
+
+    EXPECT_EQ(mapSize, mappedInfo.size[0]);
+    EXPECT_EQ(0u, mappedInfo.size[1]);
+    EXPECT_EQ(0u, mappedInfo.size[2]);
 
     auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
 
@@ -607,13 +706,18 @@ TEST_F(EnqueueMapBufferTest, givenBufferWithUseHostPtrFlagWhenMappedOnCpuThenSet
     auto mappedPtr = clEnqueueMapBuffer(pCmdQ, buffer.get(), CL_FALSE, CL_MAP_READ, mapOffset, mapSize, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
 
-    EXPECT_EQ(mapOffset, buffer->getMappedOffset()[0]);
-    EXPECT_EQ(0u, buffer->getMappedOffset()[1]);
-    EXPECT_EQ(0u, buffer->getMappedOffset()[2]);
+    MapInfo mappedInfo;
+    auto success = buffer->findMappedPtr(mappedPtr, mappedInfo);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, mappedInfo.ptr);
 
-    EXPECT_EQ(mapSize, buffer->getMappedSize()[0]);
-    EXPECT_EQ(0u, buffer->getMappedSize()[1]);
-    EXPECT_EQ(0u, buffer->getMappedSize()[2]);
+    EXPECT_EQ(mapOffset, mappedInfo.offset[0]);
+    EXPECT_EQ(0u, mappedInfo.offset[1]);
+    EXPECT_EQ(0u, mappedInfo.offset[2]);
+
+    EXPECT_EQ(mapSize, mappedInfo.size[0]);
+    EXPECT_EQ(0u, mappedInfo.size[1]);
+    EXPECT_EQ(0u, mappedInfo.size[2]);
 
     auto expectedPtr = ptrOffset(buffer->getCpuAddressForMapping(), mapOffset);
 

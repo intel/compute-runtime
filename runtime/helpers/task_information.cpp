@@ -27,7 +27,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
@@ -46,8 +46,9 @@ KernelOperation::~KernelOperation() {
     alignedFree(commandStream->getBase());
 }
 
-CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, CommandStreamReceiver &csr, CommandQueue &cmdQ)
-    : memObj(memObj), csr(csr), cmdQ(cmdQ), op(op) {
+CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
+                                 CommandStreamReceiver &csr, CommandQueue &cmdQ)
+    : memObj(memObj), copySize(copySize), copyOffset(copyOffset), readOnly(readOnly), csr(csr), cmdQ(cmdQ), op(op) {
     memObj.incRefInternal();
 }
 
@@ -91,21 +92,11 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
 
     if (!memObj.isMemObjZeroCopy()) {
-        std::array<size_t, 3> copySize = {{memObj.getSize(), 0, 0}};
-
-        auto image = castToObject<Image>(&memObj);
-        if (image) {
-            auto &imgDesc = image->getImageDesc();
-            copySize = {{getValidParam(imgDesc.image_width),
-                         getValidParam(imgDesc.image_height),
-                         getValidParam((std::max(imgDesc.image_depth, imgDesc.image_array_size)))}};
-        }
-
         if (op == MAP) {
-            memObj.transferDataToHostPtr(copySize, {{0, 0, 0}});
-        } else {
+            memObj.transferDataToHostPtr(copySize, copyOffset);
+        } else if (!readOnly) {
             DEBUG_BREAK_IF(op != UNMAP);
-            memObj.transferDataFromHostPtr(copySize, {{0, 0, 0}});
+            memObj.transferDataFromHostPtr(copySize, copyOffset);
         }
     }
 

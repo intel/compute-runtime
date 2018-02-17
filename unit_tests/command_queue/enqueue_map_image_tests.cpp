@@ -225,12 +225,13 @@ TEST_F(EnqueueMapImageTest, checkRetVal) {
     EXPECT_EQ(imageSlicePitch, imageSlicePitchRef);
 }
 
-TEST_F(EnqueueMapImageTest, MapImageWaitEvent) {
+TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEventAndIncraseTaskCountFromWriteImage) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
-    cl_event eventReturned = nullptr;
+    cl_event mapEventReturned = nullptr;
+    cl_event unmapEventReturned = nullptr;
     uint32_t tagHW = 0;
-    auto mapFlags = CL_MAP_READ;
+    auto mapFlags = CL_MAP_WRITE;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
@@ -268,18 +269,20 @@ TEST_F(EnqueueMapImageTest, MapImageWaitEvent) {
         &imageSlicePitch,
         0,
         nullptr,
-        &eventReturned,
+        &mapEventReturned,
         retVal);
 
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    auto mapEvent = castToObject<Event>(mapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_MAP_IMAGE == mapEvent->getCommandType());
 
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(3u, taskCount);
 
-    clSetEventCallback(eventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)pTagMemory);
+    clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::SignalEv2, (void *)pTagMemory);
 
-    retVal = clWaitForEvents(1, &eventReturned);
+    retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(4u, *pTagMemory);
     taskCount = commandStreamReceiver.peekTaskCount();
@@ -292,13 +295,60 @@ TEST_F(EnqueueMapImageTest, MapImageWaitEvent) {
         ptr,
         0,
         nullptr,
-        nullptr);
+        &unmapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
+    auto unmapEvent = castToObject<Event>(unmapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &unmapEventReturned);
 
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(4u, taskCount);
 
-    clReleaseEvent(eventReturned);
+    clReleaseEvent(mapEventReturned);
+    clReleaseEvent(unmapEventReturned);
+}
+
+TEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAndDontIncraseTaskCountFromWriteImage) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableAsyncEventsHandler.set(false);
+    cl_event mapEventReturned = nullptr;
+    cl_event unmapEventReturned = nullptr;
+    auto mapFlags = CL_MAP_READ;
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    *pTagMemory = 5;
+
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+
+    EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
+
+    auto ptr = pCmdQ->enqueueMapImage(image, false, mapFlags, origin, region, nullptr, nullptr, 0,
+                                      nullptr, &mapEventReturned, retVal);
+
+    EXPECT_NE(nullptr, ptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, commandStreamReceiver.peekTaskCount());
+
+    auto mapEvent = castToObject<Event>(mapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_MAP_IMAGE == mapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &mapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(pCmdQ, image, ptr, 0, nullptr, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(2u, commandStreamReceiver.peekTaskCount());
+
+    auto unmapEvent = castToObject<Event>(unmapEventReturned);
+    EXPECT_TRUE(CL_COMMAND_UNMAP_MEM_OBJECT == unmapEvent->getCommandType());
+
+    retVal = clWaitForEvents(1, &unmapEventReturned);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    clReleaseEvent(mapEventReturned);
+    clReleaseEvent(unmapEventReturned);
 }
 
 HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
@@ -448,8 +498,8 @@ TEST_F(EnqueueMapImageTest, GivenNonZeroCopyImageWhenMappedWithOffsetThenCorrect
     delete nonZeroCopyImage;
 }
 
-HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenMapAndUnmapOnNonTiledImageIsCalledThenMakeGpuCopy) {
-    auto image = ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context);
+HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenNonReadOnlyMapAndUnmapOnNonTiledImageIsCalledThenMakeGpuCopy) {
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
     ASSERT_NE(nullptr, image);
     image->setSharingHandler(new SharingHandler());
     EXPECT_FALSE(image->allowTiling());
@@ -462,17 +512,40 @@ HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenMapAndUnmapOnNonTiledImageI
 
     size_t origin[] = {0, 0, 0};
     size_t region[] = {1, 1, 1};
-    void *data = clEnqueueMapImage(pCmdQ, image, CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    void *data = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_WRITE, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, data);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(2u, pCmdQ->taskCount);
     EXPECT_EQ(2u, pCmdQ->taskLevel);
 
-    retVal = clEnqueueUnmapMemObject(pCmdQ, image, data, 0, NULL, NULL);
+    retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), data, 0, NULL, NULL);
     EXPECT_EQ(3u, pCmdQ->taskCount);
     EXPECT_EQ(3u, pCmdQ->taskLevel);
+}
 
-    delete image;
+HWTEST_F(EnqueueMapImageTest, givenSharingHandlerWhenReadOnlyMapAndUnmapOnNonTiledImageIsCalledThenMakeGpuCopy) {
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    ASSERT_NE(nullptr, image);
+    image->setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(image->allowTiling());
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.taskCount = 1;
+    csr.taskLevel = 1;
+    pCmdQ->taskCount = 1;
+    pCmdQ->taskLevel = 1;
+
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
+    void *data = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
+    EXPECT_NE(nullptr, data);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(2u, pCmdQ->taskCount);
+    EXPECT_EQ(2u, pCmdQ->taskLevel);
+
+    retVal = clEnqueueUnmapMemObject(pCmdQ, image.get(), data, 0, NULL, NULL);
+    EXPECT_EQ(2u, pCmdQ->taskCount);
+    EXPECT_EQ(2u, pCmdQ->taskLevel);
 }
 
 HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThenSetAllMapProperties) {
@@ -485,15 +558,20 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThen
     void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
 
-    EXPECT_EQ(origin[0], image->getMappedOffset()[0]);
-    EXPECT_EQ(origin[1], image->getMappedOffset()[1]);
-    EXPECT_EQ(origin[2], image->getMappedOffset()[2]);
+    MapInfo mappedInfo;
+    auto success = image->findMappedPtr(mappedPtr, mappedInfo);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, mappedInfo.ptr);
 
-    EXPECT_EQ(region[0], image->getMappedSize()[0]);
-    EXPECT_EQ(region[1], image->getMappedSize()[1]);
-    EXPECT_EQ(region[2], image->getMappedSize()[2]);
+    EXPECT_EQ(origin[0], mappedInfo.offset[0]);
+    EXPECT_EQ(origin[1], mappedInfo.offset[1]);
+    EXPECT_EQ(origin[2], mappedInfo.offset[2]);
 
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(origin));
+    EXPECT_EQ(region[0], mappedInfo.size[0]);
+    EXPECT_EQ(region[1], mappedInfo.size[1]);
+    EXPECT_EQ(region[2], mappedInfo.size[2]);
+
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }
@@ -508,15 +586,20 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSet
     void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
 
-    EXPECT_EQ(origin[0], image->getMappedOffset()[0]);
-    EXPECT_EQ(origin[1], image->getMappedOffset()[1]);
-    EXPECT_EQ(origin[2], image->getMappedOffset()[2]);
+    MapInfo mappedInfo;
+    auto success = image->findMappedPtr(mappedPtr, mappedInfo);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, mappedInfo.ptr);
 
-    EXPECT_EQ(region[0], image->getMappedSize()[0]);
-    EXPECT_EQ(region[1], image->getMappedSize()[1]);
-    EXPECT_EQ(region[2], image->getMappedSize()[2]);
+    EXPECT_EQ(origin[0], mappedInfo.offset[0]);
+    EXPECT_EQ(origin[1], mappedInfo.offset[1]);
+    EXPECT_EQ(origin[2], mappedInfo.offset[2]);
 
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(origin));
+    EXPECT_EQ(region[0], mappedInfo.size[0]);
+    EXPECT_EQ(region[1], mappedInfo.size[1]);
+    EXPECT_EQ(region[2], mappedInfo.size[2]);
+
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(mappedInfo.offset));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }

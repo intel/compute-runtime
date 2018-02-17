@@ -51,7 +51,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
          buffer->isReadWriteOnCpuAllowed(blockingRead, numEventsInWaitList, ptr, size)) &&
         context->getDevice(0)->getDeviceInfo().cpuCopyAllowed) {
         if (!isMemTransferNeeded) {
-            TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, true, &offset, &size, ptr);
+            TransferProperties transferProperties(buffer, CL_COMMAND_MARKER, 0, true, &offset, &size, ptr);
             EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
             cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
             if (event) {
@@ -64,7 +64,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadBuffer(
             }
             return retVal;
         }
-        TransferProperties transferProperties(buffer, CL_COMMAND_READ_BUFFER, true, &offset, &size, ptr);
+        TransferProperties transferProperties(buffer, CL_COMMAND_READ_BUFFER, 0, true, &offset, &size, ptr);
         EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
         cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
 

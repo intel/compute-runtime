@@ -25,6 +25,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/utilities/iflist.h"
 #include "runtime/helpers//completion_stamp.h"
+#include "runtime/helpers/properties_helper.h"
 
 #include <memory>
 #include <vector>
@@ -59,12 +60,16 @@ class Command : public IFNode<Command> {
 
 class CommandMapUnmap : public Command {
   public:
-    CommandMapUnmap(MapOperationType op, MemObj &memObj, CommandStreamReceiver &csr, CommandQueue &cmdQ);
+    CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
+                    CommandStreamReceiver &csr, CommandQueue &cmdQ);
     ~CommandMapUnmap() override;
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
   private:
     MemObj &memObj;
+    MemObjSizeArray copySize;
+    MemObjOffsetArray copyOffset;
+    bool readOnly;
     CommandStreamReceiver &csr;
     CommandQueue &cmdQ;
     MapOperationType op;

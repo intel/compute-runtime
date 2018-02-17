@@ -133,8 +133,8 @@ class Image : public MemObj {
     const cl_image_format &getImageFormat() const;
     const SurfaceFormatInfo &getSurfaceFormatInfo() const;
 
-    void transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
-    void transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) override;
+    void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
+    void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) override;
 
     Image *redescribe();
     Image *redescribeFillImage();
@@ -171,7 +171,7 @@ class Image : public MemObj {
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
-    size_t calculateOffsetForMapping(size_t *origin) const override;
+    size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
     const bool isTiledImage;
 
@@ -189,9 +189,6 @@ class Image : public MemObj {
           int mipLevel,
           const SurfaceFormatInfo *surfaceFormatInfo = nullptr,
           const SurfaceOffsets *surfaceOffsets = nullptr);
-
-    void setMappedOffset(size_t *offset) override { mapInfo.offset = {{offset[0], offset[1], offset[2]}}; }
-    void setMappedSize(size_t *size) override { mapInfo.size = {{size[0], size[1], size[2]}}; }
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
 

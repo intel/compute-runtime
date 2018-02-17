@@ -46,8 +46,9 @@ TEST_F(clEnqueueUnmapMemObjTests, givenValidAddressWhenUnmappingThenReturnSucces
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingThenReturnError) {
+TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnCpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    EXPECT_TRUE(buffer->mappingOnCpuAllowed());
     cl_int retVal = CL_SUCCESS;
 
     auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
@@ -63,17 +64,19 @@ TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingThenReturnErro
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clEnqueueUnmapMemObjTests, givenNullAddressWhenUnmappingThenReturnError) {
+TEST_F(clEnqueueUnmapMemObjTests, givenInvalidAddressWhenUnmappingOnGpuThenReturnError) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
+    buffer->setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(buffer->mappingOnCpuAllowed());
     cl_int retVal = CL_SUCCESS;
 
-    clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    auto mappedPtr = clEnqueueMapBuffer(pCommandQueue, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clEnqueueUnmapMemObject(
         pCommandQueue,
         buffer.get(),
-        nullptr,
+        ptrOffset(mappedPtr, buffer->getSize() + 1),
         0,
         nullptr,
         nullptr);

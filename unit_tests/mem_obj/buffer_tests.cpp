@@ -44,6 +44,28 @@ TEST(Buffer, FromCL_nullptr_returnsNullPtr) {
     EXPECT_EQ(nullptr, castToObject<Buffer>(nullptr));
 }
 
+TEST(Buffer, giveBufferWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
+    MockContext ctx;
+    cl_int retVal;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
+
+    MemObjOffsetArray offset = {{4, 5, 6}};
+
+    auto retOffset = buffer->calculateOffsetForMapping(offset);
+    EXPECT_EQ(offset[0], retOffset);
+}
+
+TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
+    MockContext ctx;
+    cl_int retVal;
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, 0, 1, nullptr, retVal));
+
+    MemObjSizeArray size = {{4, 5, 6}};
+
+    auto retOffset = buffer->calculateMappedPtrLength(size);
+    EXPECT_EQ(size[0], retOffset);
+}
+
 class BufferTest : public DeviceFixture,
                    public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:
@@ -827,7 +849,7 @@ HWTEST_F(BufferUnmapTest, givenBufferWithSharingHandlerWhenUnmappingThenUseEnque
     buffer->setSharingHandler(new SharingHandler());
     EXPECT_NE(nullptr, buffer->peekSharingHandler());
 
-    auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_READ, 0, 1, 0, nullptr, nullptr, &retVal);
+    auto mappedPtr = clEnqueueMapBuffer(&cmdQ, buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 1, 0, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, cmdQ.EnqueueWriteBufferCounter);
@@ -863,9 +885,9 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferToHostPtrCalledThenCopyReques
     MockContext context(pDevice);
     auto retVal = CL_SUCCESS;
     const size_t bufferSize = 100;
-    size_t copyOffset = 20;
-    size_t copySize = 10;
     size_t ignoredParam = 123;
+    MemObjOffsetArray copyOffset = {{20, ignoredParam, ignoredParam}};
+    MemObjSizeArray copySize = {{10, ignoredParam, ignoredParam}};
 
     uint8_t hostPtr[bufferSize] = {};
     uint8_t expectedHostPtr[bufferSize] = {};
@@ -875,20 +897,20 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferToHostPtrCalledThenCopyReques
     auto srcPtr = buffer->getCpuAddress();
     EXPECT_NE(srcPtr, hostPtr);
     memset(srcPtr, 123, bufferSize);
-    memset(ptrOffset(expectedHostPtr, copyOffset), 123, copySize);
+    memset(ptrOffset(expectedHostPtr, copyOffset[0]), 123, copySize[0]);
 
-    buffer->transferDataToHostPtr({{copySize, ignoredParam, ignoredParam}}, {{copyOffset, ignoredParam, ignoredParam}});
+    buffer->transferDataToHostPtr(copySize, copyOffset);
 
-    EXPECT_TRUE(memcmp(hostPtr, expectedHostPtr, copySize) == 0);
+    EXPECT_TRUE(memcmp(hostPtr, expectedHostPtr, copySize[0]) == 0);
 }
 
 TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequestedSizeAndOffsetOnly) {
     MockContext context(pDevice);
     auto retVal = CL_SUCCESS;
     const size_t bufferSize = 100;
-    size_t copyOffset = 20;
-    size_t copySize = 10;
     size_t ignoredParam = 123;
+    MemObjOffsetArray copyOffset = {{20, ignoredParam, ignoredParam}};
+    MemObjSizeArray copySize = {{10, ignoredParam, ignoredParam}};
 
     uint8_t hostPtr[bufferSize] = {};
     uint8_t expectedBufferMemory[bufferSize] = {};
@@ -897,9 +919,9 @@ TEST_F(BufferTransferTests, givenBufferWhenTransferFromHostPtrCalledThenCopyRequ
 
     EXPECT_NE(buffer->getCpuAddress(), hostPtr);
     memset(hostPtr, 123, bufferSize);
-    memset(ptrOffset(expectedBufferMemory, copyOffset), 123, copySize);
+    memset(ptrOffset(expectedBufferMemory, copyOffset[0]), 123, copySize[0]);
 
-    buffer->transferDataFromHostPtr({{copySize, ignoredParam, ignoredParam}}, {{copyOffset, ignoredParam, ignoredParam}});
+    buffer->transferDataFromHostPtr(copySize, copyOffset);
 
-    EXPECT_TRUE(memcmp(expectedBufferMemory, buffer->getCpuAddress(), copySize) == 0);
+    EXPECT_TRUE(memcmp(expectedBufferMemory, buffer->getCpuAddress(), copySize[0]) == 0);
 }

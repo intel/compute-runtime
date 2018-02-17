@@ -385,6 +385,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                          size_t numEventsInWaitlist,
                                          MapOperationType opType,
                                          MemObj *memObj,
+                                         MemObjSizeArray &copySize,
+                                         MemObjOffsetArray &copyOffset,
+                                         bool readOnly,
                                          EventBuilder &externalEventBuilder);
 
     // taskCount of last task

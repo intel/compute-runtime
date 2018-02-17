@@ -59,13 +59,6 @@ TEST(MemObj, GivenMemObjWhenInititalizedFromHostPtrThenInitializeFields) {
     EXPECT_EQ(&buffer, memObj.getHostPtr());
     EXPECT_EQ(size, memObj.getSize());
     EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), memObj.getFlags());
-    EXPECT_EQ(nullptr, memObj.getMappedPtr());
-    EXPECT_EQ(0u, memObj.getMappedSize()[0]);
-    EXPECT_EQ(0u, memObj.getMappedSize()[1]);
-    EXPECT_EQ(0u, memObj.getMappedSize()[2]);
-    EXPECT_EQ(0u, memObj.getMappedOffset()[0]);
-    EXPECT_EQ(0u, memObj.getMappedOffset()[1]);
-    EXPECT_EQ(0u, memObj.getMappedOffset()[2]);
 }
 
 TEST(MemObj, givenMemObjectWhenAskedForTransferToHostPtrThenDoNothing) {
@@ -80,7 +73,9 @@ TEST(MemObj, givenMemObjectWhenAskedForTransferToHostPtrThenDoNothing) {
     memset(memObj.getCpuAddress(), 123, size);
     memset(hostPtr, 0, size);
 
-    EXPECT_THROW(memObj.transferDataToHostPtr({{size, 0, 0}}, {{0, 0, 0}}), std::exception);
+    MemObjOffsetArray copyOffset = {{0, 0, 0}};
+    MemObjSizeArray copySize = {{size, 0, 0}};
+    EXPECT_THROW(memObj.transferDataToHostPtr(copySize, copyOffset), std::exception);
 
     EXPECT_TRUE(memcmp(hostPtr, expectedHostPtr, size) == 0);
 }
@@ -97,24 +92,11 @@ TEST(MemObj, givenMemObjectWhenAskedForTransferFromHostPtrThenDoNothing) {
     memset(memObj.getCpuAddress(), 123, size);
     memset(expectedBufferPtr, 123, size);
 
-    EXPECT_THROW(memObj.transferDataFromHostPtr({{size, 0, 0}}, {{0, 0, 0}}), std::exception);
+    MemObjOffsetArray copyOffset = {{0, 0, 0}};
+    MemObjSizeArray copySize = {{size, 0, 0}};
+    EXPECT_THROW(memObj.transferDataFromHostPtr(copySize, copyOffset), std::exception);
 
     EXPECT_TRUE(memcmp(memObj.getCpuAddress(), expectedBufferPtr, size) == 0);
-}
-
-TEST(MemObj, givenMemObjWhenAllocatedMappedPtrIsSetThenGetMappedPtrIsDifferentThanAllocatedMappedPtr) {
-    void *mockPtr = (void *)0x01234;
-    MockContext context;
-
-    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
-                  1, nullptr, nullptr, nullptr, true, false, false);
-
-    EXPECT_EQ(nullptr, memObj.getAllocatedMapPtr());
-    EXPECT_EQ(nullptr, memObj.getMappedPtr());
-    memObj.setAllocatedMapPtr(mockPtr);
-    EXPECT_EQ(mockPtr, memObj.getAllocatedMapPtr());
-    EXPECT_NE(mockPtr, memObj.getMappedPtr());
-    memObj.setAllocatedMapPtr(nullptr);
 }
 
 TEST(MemObj, givenHostPtrAndUseHostPtrFlagWhenAskingForBaseMapPtrThenReturnHostPtr) {

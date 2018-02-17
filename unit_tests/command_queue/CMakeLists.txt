@@ -98,6 +98,8 @@ set(IGDRCL_SRCS_tests_command_queue
     "${CMAKE_CURRENT_SOURCE_DIR}/local_id_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/local_work_size_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/multi_dispatch_info_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/multiple_map_buffer_tests.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/multiple_map_image_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/oom_buffer_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/oom_image_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/oom_tests.cpp"

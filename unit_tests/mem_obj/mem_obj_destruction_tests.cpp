@@ -189,13 +189,14 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     if (!hasAllocatedMappedPtr) {
         delete memObj;
         allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize);
-        size_t origin[3] = {0, 0, 0};
-        size_t region[3] = {1, 1, 1};
+        MemObjOffsetArray origin = {{0, 0, 0}};
+        MemObjSizeArray region = {{1, 1, 1}};
+        cl_map_flags mapFlags = CL_MAP_READ;
         memObj = new MemObj(&context, CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
                             storage, nullptr, allocation, true, false, false);
-        memObj->setMapInfo(storage, region, origin);
+        memObj->addMappedPtr(storage, 1, mapFlags, region, origin);
     } else {
         memObj->setAllocatedMapPtr(storage);
     }

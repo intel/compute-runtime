@@ -70,10 +70,11 @@ class ImageUnmapTest : public ::testing::Test {
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlockingMapImage) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     void *ptr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
-    size_t origin[3] = {0, 0, 0};
-    size_t region[3] = {1, 1, 1};
+    MemObjOffsetArray origin = {{0, 0, 0}};
+    MemObjSizeArray region = {{1, 1, 1}};
     image->setAllocatedMapPtr(ptr);
-    image->setMapInfo(ptr, region, origin);
+    cl_map_flags mapFlags = CL_MAP_WRITE;
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(ptr, commandQueue->passedPtr);
     EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
@@ -83,13 +84,23 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWithoutEventsThenFinishIsCalled) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(&context));
-    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 0, nullptr, nullptr);
+    auto ptr = image->getBasePtrForMap();
+    MemObjOffsetArray origin = {{0, 0, 0}};
+    MemObjSizeArray region = {{1, 1, 1}};
+    cl_map_flags mapFlags = CL_MAP_WRITE;
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
+    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 
 HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrThenFinishIsCalled) {
     std::unique_ptr<MyMockCommandQueue<FamilyType>> commandQueue(new MyMockCommandQueue<FamilyType>(&context));
-    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 0, nullptr, nullptr);
+    auto ptr = image->getBasePtrForMap();
+    MemObjOffsetArray origin = {{0, 0, 0}};
+    MemObjSizeArray region = {{1, 1, 1}};
+    cl_map_flags mapFlags = CL_MAP_WRITE;
+    image->addMappedPtr(ptr, 2, mapFlags, region, origin);
+    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 
@@ -110,7 +121,12 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
     MockEvent<UserEvent> mockEvent(&context);
     mockEvent.setStatus(0);
     cl_event clEvent = &mockEvent;
-    commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 1, &clEvent, nullptr);
+    auto ptr = image->getBasePtrForMap();
+    MemObjOffsetArray origin = {{0, 0, 0}};
+    MemObjSizeArray region = {{1, 1, 1}};
+    cl_map_flags mapFlags = CL_MAP_WRITE;
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
+    commandQueue->enqueueUnmapMemObject(image.get(), ptr, 1, &clEvent, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
 

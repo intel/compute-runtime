@@ -842,13 +842,13 @@ Image *Image::redescribe() {
     return image;
 }
 
-void Image::transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+void Image::transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) {
     transferData(hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
                  graphicsAllocation->getUnderlyingBuffer(), imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
                  copySize, copyOffset);
 }
 
-void Image::transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) {
+void Image::transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) {
     transferData(memoryStorage, imageDesc.image_row_pitch, imageDesc.image_slice_pitch,
                  hostPtr, hostPtrRowPitch, hostPtrSlicePitch,
                  copySize, copyOffset);
@@ -1189,7 +1189,7 @@ bool Image::hasAlphaChannel(const cl_image_format *imageFormat) {
            (channelOrder == CL_ABGR);
 }
 
-size_t Image::calculateOffsetForMapping(size_t *origin) const {
+size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     size_t rowPitch = mappingOnCpuAllowed() ? imageDesc.image_row_pitch : getHostPtrRowPitch();
     size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
 

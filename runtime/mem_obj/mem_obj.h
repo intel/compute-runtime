@@ -25,11 +25,10 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/sharings/sharing.h"
-#include "runtime/helpers/properties_helper.h"
+#include "runtime/mem_obj/map_operations_handler.h"
 #include <atomic>
 #include <cstdint>
 #include <vector>
-#include <array>
 
 namespace OCLRT {
 class GraphicsAllocation;
@@ -76,25 +75,21 @@ class MemObj : public BaseObject<_cl_mem> {
     void setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ);
     CompletionStamp getCompletionStamp() const;
 
-    void setMapInfo(void *mappedPtr, size_t *size, size_t *offset);
+    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset);
+    bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
+    void removeMappedPtr(void *mappedPtr) { return mapOperationsHandler.remove(mappedPtr); }
     void *getBasePtrForMap();
 
-    void *getMappedPtr() const { return mapInfo.ptr; };
     MOCKABLE_VIRTUAL void setAllocatedMapPtr(void *allocatedMapPtr);
     void *getAllocatedMapPtr() const { return allocatedMapPtr; }
-
-    MapInfo::SizeArray getMappedSize() const { return mapInfo.size; }
-    MapInfo::OffsetArray getMappedOffset() const { return mapInfo.offset; }
 
     void setHostPtrMinSize(size_t size);
     void releaseAllocatedMapPtr();
 
-    void incMapCount();
-    void decMapCount();
     bool isMemObjZeroCopy() const;
     bool isMemObjWithHostPtrSVM() const;
-    virtual void transferDataToHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) { UNRECOVERABLE_IF(true); };
-    virtual void transferDataFromHostPtr(std::array<size_t, 3> copySize, std::array<size_t, 3> copyOffset) { UNRECOVERABLE_IF(true); };
+    virtual void transferDataToHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
+    virtual void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
 
     GraphicsAllocation *getGraphicsAllocation();
     GraphicsAllocation *getMcsAllocation() { return mcsAllocation; }
@@ -124,15 +119,12 @@ class MemObj : public BaseObject<_cl_mem> {
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
     bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
     bool mappingOnCpuAllowed() const { return !allowTiling() && !peekSharingHandler(); }
-    virtual size_t calculateOffsetForMapping(size_t *offset) const { return *offset; }
+    virtual size_t calculateOffsetForMapping(const MemObjOffsetArray &offset) const { return offset[0]; }
+    size_t calculateMappedPtrLength(const MemObjSizeArray &size) const { return calculateOffsetForMapping(size); }
     cl_mem_object_type peekClMemObjType() const { return memObjectType; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
-
-    void setMappedPtr(void *mappedPtr);
-    virtual void setMappedSize(size_t *size) { mapInfo.size[0] = *size; }
-    virtual void setMappedOffset(size_t *offset) { mapInfo.offset[0] = *offset; }
 
     Context *context;
     cl_mem_object_type memObjectType;
@@ -142,10 +134,9 @@ class MemObj : public BaseObject<_cl_mem> {
     void *memoryStorage;
     void *hostPtr;
     void *allocatedMapPtr = nullptr;
-    MapInfo mapInfo;
+    MapOperationsHandler mapOperationsHandler;
     size_t offset = 0;
     MemObj *associatedMemObject = nullptr;
-    std::atomic<uint32_t> mapCount{0};
     cl_uint refCount = 0;
     CompletionStamp completionStamp;
     CommandQueue *cmdQueuePtr = nullptr;

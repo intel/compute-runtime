@@ -45,27 +45,32 @@ struct EventsRequest {
     cl_event *outEvent;
 };
 
+using MemObjSizeArray = std::array<size_t, 3>;
+using MemObjOffsetArray = std::array<size_t, 3>;
+
 struct TransferProperties {
     TransferProperties() = delete;
 
-    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offsetPtr, size_t *sizePtr, void *ptr)
-        : memObj(memObj), cmdType(cmdType), blocking(blocking), offsetPtr(offsetPtr), sizePtr(sizePtr), ptr(ptr){};
+    TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking, size_t *offsetPtr, size_t *sizePtr,
+                       void *ptr);
 
     MemObj *memObj;
     cl_command_type cmdType;
+    cl_map_flags mapFlags;
     bool blocking;
-    size_t *offsetPtr;
-    size_t *sizePtr;
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    MemObjSizeArray size = {{0, 0, 0}};
     void *ptr;
 };
 
 struct MapInfo {
-    using SizeArray = std::array<size_t, 3>;
-    using OffsetArray = std::array<size_t, 3>;
+    MapInfo() = default;
+    MapInfo(void *ptr, size_t ptrLength, MemObjSizeArray size, MemObjOffsetArray offset) : ptr(ptr), ptrLength(ptrLength), size(size), offset(offset) {}
 
     void *ptr = nullptr;
-    SizeArray size = {{0, 0, 0}};
-    OffsetArray offset = {{0, 0, 0}};
+    size_t ptrLength = 0;
+    MemObjSizeArray size = {{0, 0, 0}};
+    MemObjOffsetArray offset = {{0, 0, 0}};
+    bool readOnly = false;
 };
-
 } // namespace OCLRT

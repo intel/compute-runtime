@@ -30,12 +30,30 @@
 
 namespace OCLRT {
 void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) {
+    MapInfo unmapInfo;
     void *returnPtr = nullptr;
     EventBuilder eventBuilder;
     bool eventCompleted = false;
+    bool mapOperation = transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE;
+    auto image = castToObject<Image>(transferProperties.memObj);
     ErrorCodeHelper err(&retVal, CL_SUCCESS);
 
-    auto image = castToObject<Image>(transferProperties.memObj);
+    if (mapOperation) {
+        returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
+                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset));
+
+        if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
+                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset)) {
+            err.set(CL_INVALID_OPERATION);
+            return nullptr;
+        }
+    } else if (transferProperties.cmdType == CL_COMMAND_UNMAP_MEM_OBJECT) {
+        if (!transferProperties.memObj->findMappedPtr(transferProperties.ptr, unmapInfo)) {
+            err.set(CL_INVALID_VALUE);
+            return nullptr;
+        }
+        transferProperties.memObj->removeMappedPtr(unmapInfo.ptr);
+    }
 
     if (eventsRequest.outEvent) {
         eventBuilder.create<Event>(this, transferProperties.cmdType, Event::eventNotReady, Event::eventNotReady);
@@ -62,10 +80,14 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
          transferProperties.cmdType == CL_COMMAND_MAP_IMAGE ||
          transferProperties.cmdType == CL_COMMAND_UNMAP_MEM_OBJECT)) {
 
+        // Pass size and offset only. Unblocked command will call transferData(size, offset) method
         enqueueBlockedMapUnmapOperation(eventsRequest.eventWaitList,
                                         static_cast<size_t>(eventsRequest.numEventsInWaitList),
-                                        transferProperties.cmdType == CL_COMMAND_UNMAP_MEM_OBJECT ? UNMAP : MAP,
+                                        mapOperation ? MAP : UNMAP,
                                         transferProperties.memObj,
+                                        mapOperation ? transferProperties.size : unmapInfo.size,
+                                        mapOperation ? transferProperties.offset : unmapInfo.offset,
+                                        mapOperation ? transferProperties.mapFlags == CL_MAP_READ : unmapInfo.readOnly,
                                         eventBuilder);
     }
 
@@ -94,40 +116,30 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         switch (transferProperties.cmdType) {
         case CL_COMMAND_MAP_BUFFER:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                transferProperties.memObj->transferDataToHostPtr({{transferProperties.memObj->getSize(), 0, 0}}, {{0, 0, 0}});
+                transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
                 eventCompleted = true;
             }
             break;
         case CL_COMMAND_MAP_IMAGE:
             if (!image->isMemObjZeroCopy()) {
-                auto &imgDesc = image->getImageDesc();
-                std::array<size_t, 3> copySize = {{getValidParam(imgDesc.image_width),
-                                                   getValidParam(imgDesc.image_height),
-                                                   getValidParam((std::max(imgDesc.image_depth, imgDesc.image_array_size)))}};
-                image->transferDataToHostPtr(copySize, {{0, 0, 0}});
+                image->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
                 eventCompleted = true;
             }
             break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {
-                std::array<size_t, 3> copySize = {{transferProperties.memObj->getSize(), 0, 0}};
-                if (image) {
-                    auto imgDesc = image->getImageDesc();
-                    copySize = {{getValidParam(imgDesc.image_width),
-                                 getValidParam(imgDesc.image_height),
-                                 getValidParam((std::max(imgDesc.image_depth, imgDesc.image_array_size)))}};
+                if (!unmapInfo.readOnly) {
+                    transferProperties.memObj->transferDataFromHostPtr(unmapInfo.size, unmapInfo.offset);
                 }
-                transferProperties.memObj->transferDataFromHostPtr(copySize, {{0, 0, 0}});
                 eventCompleted = true;
             }
-            transferProperties.memObj->decMapCount();
             break;
         case CL_COMMAND_READ_BUFFER:
-            memcpy_s(transferProperties.ptr, *transferProperties.sizePtr, ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), *transferProperties.offsetPtr), *transferProperties.sizePtr);
+            memcpy_s(transferProperties.ptr, transferProperties.size[0], ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), transferProperties.offset[0]), transferProperties.size[0]);
             eventCompleted = true;
             break;
         case CL_COMMAND_WRITE_BUFFER:
-            memcpy_s(ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), *transferProperties.offsetPtr), *transferProperties.sizePtr, transferProperties.ptr, *transferProperties.sizePtr);
+            memcpy_s(ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), transferProperties.offset[0]), transferProperties.size[0], transferProperties.ptr, transferProperties.size[0]);
             eventCompleted = true;
             break;
         case CL_COMMAND_MARKER:
@@ -148,12 +160,6 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     if (context->isProvidingPerformanceHints()) {
         providePerformanceHint(transferProperties);
-    }
-
-    if (transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE) {
-        returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
-                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offsetPtr));
-        transferProperties.memObj->setMapInfo(returnPtr, transferProperties.sizePtr, transferProperties.offsetPtr);
     }
 
     return returnPtr; // only map returns pointer

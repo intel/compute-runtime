@@ -59,7 +59,7 @@ MemObj::~MemObj() {
     if (allocatedMapPtr != nullptr) {
         needWait = true;
     }
-    if (mapInfo.ptr && !getCpuAddressForMapping()) {
+    if (mapOperationsHandler.size() > 0 && !getCpuAddressForMapping()) {
         needWait = true;
     }
     if (!destructorCallbacks.empty()) {
@@ -112,6 +112,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
     void *srcParam = nullptr;
     cl_bool usesSVMPointer;
     cl_uint refCnt = 0;
+    cl_uint mapCount = 0;
     cl_mem clAssociatedMemObject = static_cast<cl_mem>(this->associatedMemObject);
     cl_context ctx = nullptr;
 
@@ -160,6 +161,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
 
     case CL_MEM_MAP_COUNT:
         srcParamSize = sizeof(mapCount);
+        mapCount = static_cast<cl_uint>(mapOperationsHandler.size());
         srcParam = &mapCount;
         break;
 
@@ -214,21 +216,9 @@ CompletionStamp MemObj::getCompletionStamp() const {
     return completionStamp;
 }
 
-void MemObj::setMappedPtr(void *mappedPtr) {
-    mapInfo.ptr = mappedPtr;
-}
-
 void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {
     this->allocatedMapPtr = allocatedMapPtr;
 }
-
-void MemObj::incMapCount() {
-    this->mapCount++;
-};
-
-void MemObj::decMapCount() {
-    this->mapCount--;
-};
 
 cl_mem_flags MemObj::getFlags() const {
     return flags;
@@ -341,11 +331,7 @@ void *MemObj::getBasePtrForMap() {
     }
 }
 
-void MemObj::setMapInfo(void *mappedPtr, size_t *size, size_t *offset) {
-    TakeOwnershipWrapper<MemObj> memObjOwnership(*this);
-    setMappedPtr(mappedPtr);
-    setMappedSize(size);
-    setMappedOffset(offset);
-    incMapCount();
+bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset) {
+    return mapOperationsHandler.add(ptr, ptrLength, mapFlags, size, offset);
 }
 } // namespace OCLRT

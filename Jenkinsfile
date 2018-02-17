@@ -2,4 +2,4 @@
 neoDependenciesRev='735095-769'
 strategy='EQUAL'
 allowedF=42
-allowedCD=340
+allowedCD=338
