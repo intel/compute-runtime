@@ -105,12 +105,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                                                    getValidParam(imgDesc.image_height),
                                                    getValidParam((std::max(imgDesc.image_depth, imgDesc.image_array_size)))}};
                 image->transferDataToHostPtr(copySize, {{0, 0, 0}});
-                GetInfoHelper::set(transferProperties.retSlicePitchPtr, image->getHostPtrSlicePitch());
-                GetInfoHelper::set(transferProperties.retRowPitchPtr, image->getHostPtrRowPitch());
                 eventCompleted = true;
-            } else {
-                GetInfoHelper::set(transferProperties.retSlicePitchPtr, image->getImageDesc().image_slice_pitch);
-                GetInfoHelper::set(transferProperties.retRowPitchPtr, image->getImageDesc().image_row_pitch);
             }
             break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:

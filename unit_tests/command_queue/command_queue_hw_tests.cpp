@@ -778,7 +778,7 @@ HWTEST_F(CommandQueueHwTest, givenCommandQueueThatIsBlockedAndUsesCpuCopyWhenEve
     cmdQHw->taskLevel = Event::eventNotReady;
     size_t offset = 0;
     size_t size = 4096u;
-    TransferProperties transferProperties(nullptr, CL_COMMAND_READ_BUFFER, false, &offset, &size, nullptr, nullptr, nullptr);
+    TransferProperties transferProperties(nullptr, CL_COMMAND_READ_BUFFER, false, &offset, &size, nullptr);
     EventsRequest eventsRequest(0, nullptr, &returnEvent);
     cmdQHw->cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);

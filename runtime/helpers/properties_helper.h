@@ -48,10 +48,8 @@ struct EventsRequest {
 struct TransferProperties {
     TransferProperties() = delete;
 
-    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offsetPtr, size_t *sizePtr,
-                       void *ptr, size_t *retRowPitchPtr, size_t *retSlicePitchPtr)
-        : memObj(memObj), cmdType(cmdType), blocking(blocking), offsetPtr(offsetPtr), sizePtr(sizePtr),
-          ptr(ptr), retRowPitchPtr(retRowPitchPtr), retSlicePitchPtr(retSlicePitchPtr){};
+    TransferProperties(MemObj *memObj, cl_command_type cmdType, bool blocking, size_t *offsetPtr, size_t *sizePtr, void *ptr)
+        : memObj(memObj), cmdType(cmdType), blocking(blocking), offsetPtr(offsetPtr), sizePtr(sizePtr), ptr(ptr){};
 
     MemObj *memObj;
     cl_command_type cmdType;
@@ -59,8 +57,6 @@ struct TransferProperties {
     size_t *offsetPtr;
     size_t *sizePtr;
     void *ptr;
-    size_t *retRowPitchPtr;
-    size_t *retSlicePitchPtr;
 };
 
 struct MapInfo {

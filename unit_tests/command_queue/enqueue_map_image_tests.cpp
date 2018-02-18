@@ -606,6 +606,112 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIs
     delete image1D;
 }
 
+TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingCpuMapIsCalledThenReturnRowPitchAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    struct MyMockUserEvent : public UserEvent {
+        MyMockUserEvent() : UserEvent(nullptr) {}
+        void updateExecutionStatus() override {
+            setStatus(CL_COMPLETE);
+        }
+    };
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    MyMockUserEvent blockingEvent;
+    cl_event blockingClEvent = &blockingEvent;
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           1, &blockingClEvent, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(0u, retImageRowPitch);
+    EXPECT_NE(0u, retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnCpuThenReturnImageRowAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+    EXPECT_TRUE(image->isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(image->getImageDesc().image_row_pitch, retImageRowPitch);
+    EXPECT_EQ(image->getImageDesc().image_slice_pitch, retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnCpuThenReturnHostRowAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+    EXPECT_FALSE(image->isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnGpuThenReturnHostRowAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    image->setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+    EXPECT_TRUE(image->isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnGpuThenReturnHostRowAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    image->setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+    EXPECT_FALSE(image->isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+}
+
 struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
                                  public MemoryManagementFixture,
                                  public ::testing::Test {

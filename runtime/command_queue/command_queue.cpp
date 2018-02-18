@@ -494,16 +494,11 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
     } else {
         auto image = castToObject<Image>(transferProperties.memObj);
-        size_t slicePitch = image->getHostPtrSlicePitch();
-        size_t rowPitch = image->getHostPtrRowPitch();
 
-        GetInfoHelper::set(transferProperties.retSlicePitchPtr, slicePitch);
-        GetInfoHelper::set(transferProperties.retRowPitchPtr, rowPitch);
-
-        returnPtr = ptrOffset(baseMapPtr, image->calculateOffset(rowPitch, slicePitch, transferProperties.offsetPtr));
+        returnPtr = ptrOffset(baseMapPtr, image->calculateOffset(image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), transferProperties.offsetPtr));
 
         errcodeRet = enqueueReadImage(image, transferProperties.blocking, transferProperties.offsetPtr, transferProperties.sizePtr,
-                                      rowPitch, slicePitch, returnPtr, eventsRequest.numEventsInWaitList,
+                                      image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), returnPtr, eventsRequest.numEventsInWaitList,
                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
@@ -539,7 +534,7 @@ void *CommandQueue::enqueueMapBuffer(Buffer *buffer, cl_bool blockingMap,
                                      const cl_event *eventWaitList, cl_event *event,
                                      cl_int &errcodeRet) {
 
-    TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, blockingMap != CL_FALSE, &offset, &size, nullptr, nullptr, nullptr);
+    TransferProperties transferProperties(buffer, CL_COMMAND_MAP_BUFFER, blockingMap != CL_FALSE, &offset, &size, nullptr);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
@@ -554,17 +549,23 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
                                     cl_int &errcodeRet) {
 
     TransferProperties transferProperties(image, CL_COMMAND_MAP_IMAGE, blockingMap != CL_FALSE,
-                                          const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr,
-                                          imageRowPitch, imageSlicePitch);
+                                          const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+
+    if (image->isMemObjZeroCopy() && image->mappingOnCpuAllowed()) {
+        GetInfoHelper::set(imageSlicePitch, image->getImageDesc().image_slice_pitch);
+        GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_row_pitch);
+    } else {
+        GetInfoHelper::set(imageSlicePitch, image->getHostPtrSlicePitch());
+        GetInfoHelper::set(imageRowPitch, image->getHostPtrRowPitch());
+    }
 
     return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
 }
 
 cl_int CommandQueue::enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
 
-    TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, false,
-                                          nullptr, nullptr, mappedPtr, nullptr, nullptr);
+    TransferProperties transferProperties(memObj, CL_COMMAND_UNMAP_MEM_OBJECT, false, nullptr, nullptr, mappedPtr);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
     return enqueueUnmapMemObject(transferProperties, eventsRequest);
