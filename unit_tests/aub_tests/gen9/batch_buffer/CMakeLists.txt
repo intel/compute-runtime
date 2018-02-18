@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,12 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
-project(igdrcl_aub_tests)
-
-if(TESTS_GEN9)
-  add_subdirectory(batch_buffer)
-  add_subdirectory(execution_model)
-  add_subdirectory(skl)
-endif(TESTS_GEN9)
+target_sources(igdrcl_aub_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_batch_buffer_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_batch_buffer_tests.cpp
+)

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017 - 2018, Intel Corporation
+* Copyright (c) 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -19,24 +19,12 @@
 * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 * OTHER DEALINGS IN THE SOFTWARE.
 */
+
 #pragma once
-#include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/device/device.h"
-#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/options.h"
-#include "runtime/helpers/ptr_math.h"
-#include "aub_mapper.h"
-#include "test.h"
-
-namespace Os {
-extern const char *fileSeparator;
-}
-
-extern std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName);
+#include "unit_tests/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>
-void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
+void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType engineType, uint64_t gpuBatchBufferAddr) {
     typedef typename OCLRT::AUBFamilyMapper<FamilyType>::AUB AUB;
     const auto &csTraits = OCLRT::AUBCommandStreamReceiverHw<FamilyType>::getCsTraits(engineType);
     auto mmioBase = csTraits.mmioBase;
@@ -47,6 +35,7 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     filePath.append(Os::fileSeparator);
     std::string baseName("simple");
     baseName.append(csTraits.name);
+    baseName.append("WithBatchBuffer");
     baseName.append(".aub");
     filePath.append(getAubFileName(pDevice, baseName));
 
@@ -67,6 +56,40 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
 
     aubFile.writeMMIO(mmioBase + 0x2080, ggttGlobalHardwareStatusPage);
 
+    using MI_NOOP = typename FamilyType::MI_NOOP;
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
+
+    // create a user mode batch buffer
+    auto physBatchBuffer = physAddress;
+    const auto sizeBatchBuffer = 0x1000;
+    auto gpuBatchBuffer = static_cast<uintptr_t>(gpuBatchBufferAddr);
+    physAddress += sizeBatchBuffer;
+    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer);
+    uint8_t batchBuffer[sizeBatchBuffer];
+
+    auto noop = MI_NOOP::sInit();
+    uint32_t noopId = 0xbaadd;
+
+    {
+        auto pBatchBuffer = (void *)batchBuffer;
+        *(MI_NOOP *)pBatchBuffer = noop;
+        pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_NOOP));
+        *(MI_NOOP *)pBatchBuffer = noop;
+        pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_NOOP));
+        *(MI_NOOP *)pBatchBuffer = noop;
+        pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_NOOP));
+        noop.TheStructure.Common.IdentificationNumberRegisterWriteEnable = true;
+        noop.TheStructure.Common.IdentificationNumber = noopId++;
+        *(MI_NOOP *)pBatchBuffer = noop;
+        pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_NOOP));
+        *(MI_BATCH_BUFFER_END *)pBatchBuffer = MI_BATCH_BUFFER_END::sInit();
+        pBatchBuffer = ptrOffset(pBatchBuffer, sizeof(MI_BATCH_BUFFER_END));
+        auto sizeBufferUsed = ptrDiff(pBatchBuffer, batchBuffer);
+
+        AUB::addMemoryWrite(aubFile, physBatchBuffer, batchBuffer, sizeBufferUsed, AubMemDump::AddressSpaceValues::TraceNonlocal, AubMemDump::DataTypeHintValues::TraceBatchBuffer);
+    }
+
     const size_t sizeRing = 0x4 * 0x1000;
     const size_t alignRing = 0x1000;
     size_t sizeCommands = 0;
@@ -79,14 +102,12 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     ASSERT_NE(static_cast<uint64_t>(-1), rRing);
     EXPECT_EQ(rRing, physRing);
 
-    uint32_t noopId = 0xbaadd;
     auto cur = (uint32_t *)pRing;
-
-    using MI_NOOP = typename FamilyType::MI_NOOP;
-    auto noop = MI_NOOP::sInit();
-    *cur++ = noop.TheStructure.RawData[0];
-    *cur++ = noop.TheStructure.RawData[0];
-    *cur++ = noop.TheStructure.RawData[0];
+    auto bbs = MI_BATCH_BUFFER_START::sInit();
+    bbs.setBatchBufferStartAddressGraphicsaddress472(gpuBatchBuffer);
+    bbs.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    *(MI_BATCH_BUFFER_START *)cur = bbs;
+    cur = ptrOffset(cur, sizeof(MI_BATCH_BUFFER_START));
     noop.TheStructure.Common.IdentificationNumberRegisterWriteEnable = true;
     noop.TheStructure.Common.IdentificationNumber = noopId;
     *cur++ = noop.TheStructure.RawData[0];
@@ -124,10 +145,20 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     contextDescriptor.sData.LogicalRingCtxAddress = (uintptr_t)pLRCABase / 4096;
     contextDescriptor.sData.ContextID = 0;
 
+    // Submit our exec-list
     aubFile.writeMMIO(mmioBase + 0x2230, 0);
     aubFile.writeMMIO(mmioBase + 0x2230, 0);
     aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
     aubFile.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
+
+    // Poll until HW complete
+    using AubMemDump::CmdServicesMemTraceRegisterPoll;
+    aubFile.registerPoll(
+        mmioBase + 0x2234, //EXECLIST_STATUS
+        0x100,
+        0x100,
+        false,
+        CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
 
     alignedFree(pRing);
     alignedFree(pLRCABase);

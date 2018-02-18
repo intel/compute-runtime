@@ -29,8 +29,12 @@ using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
 using OCLRT::EngineType;
 
-namespace Os {
-extern const char *fileSeparator;
+std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName) {
+    const auto pGtSystemInfo = pDevice->getHardwareInfo().pSysInfo;
+    std::stringstream strfilename;
+    strfilename << pDevice->getProductAbbrev() << "_" << pGtSystemInfo->SliceCount << "x" << pGtSystemInfo->SubSliceCount << "x" << pGtSystemInfo->MaxEuPerSubSlice << "_" << baseName;
+
+    return strfilename.str();
 }
 
 typedef Test<DeviceFixture> AubMemDumpTests;

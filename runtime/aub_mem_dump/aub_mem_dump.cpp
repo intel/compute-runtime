@@ -53,18 +53,18 @@ const uint64_t PageTableTraits<48>::physicalMemory = 0; // 1ull <<addressingBits
 
 const uint64_t PageTableTraits<48>::numPTEntries  = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS);
 const uint64_t PageTableTraits<48>::sizePT        = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS) * sizeof(uint64_t);
-const uint64_t PageTableTraits<48>::ptBaseAddress = BIT(38);
+const uint64_t PageTableTraits<48>::ptBaseAddress = BIT(37);
 
 const uint64_t PageTableTraits<48>::numPDEntries  = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS - PageTableTraits<48>::NUM_PTE_BITS);
 const uint64_t PageTableTraits<48>::sizePD        = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS - PageTableTraits<48>::NUM_PTE_BITS) * sizeof(uint64_t);
-const uint64_t PageTableTraits<48>::pdBaseAddress = BIT(37);
+const uint64_t PageTableTraits<48>::pdBaseAddress = BIT(36);
 
 const uint64_t PageTableTraits<48>::numPDPEntries  = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS - PageTableTraits<48>::NUM_PTE_BITS - PageTableTraits<48>::NUM_PDE_BITS);
 const uint64_t PageTableTraits<48>::sizePDP        = BIT(PageTableTraits<48>::addressingBits - PageTableTraits<48>::NUM_OFFSET_BITS - PageTableTraits<48>::NUM_PTE_BITS - PageTableTraits<48>::NUM_PDE_BITS) * sizeof(uint64_t);
-const uint64_t PageTableTraits<48>::pdpBaseAddress = BIT(36);
+const uint64_t PageTableTraits<48>::pdpBaseAddress = BIT(35);
 const uint64_t PageTableTraits<48>::numPML4Entries  = BIT(NUM_PML4_BITS);
 const uint64_t PageTableTraits<48>::sizePML4        = BIT(NUM_PML4_BITS) * sizeof(uint64_t);
-const uint64_t PageTableTraits<48>::pml4BaseAddress = BIT(35);
+const uint64_t PageTableTraits<48>::pml4BaseAddress = BIT(34);
 // clang-format on
 
 void LrcaHelper::setRingTail(void *pLRCIn, uint32_t ringTail) const {
