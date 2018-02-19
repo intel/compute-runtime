@@ -120,19 +120,14 @@ LONG WINAPI UltExceptionFilter(
 #endif
 
 void initializeTestHelpers() {
-    if (!MockGmmStatus::initialized) {
-        const HardwareInfo *hwinfo = *platformDevices;
-        MockGmmStatus::initialized = Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
-                                                      hwinfo->pWaTable, hwinfo->pSysInfo);
-        ASSERT_TRUE(MockGmmStatus::initialized);
-    }
+    const HardwareInfo *hwinfo = *platformDevices;
+    auto initialized = Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
+                                        hwinfo->pWaTable, hwinfo->pSysInfo);
+    ASSERT_TRUE(initialized);
 }
 
 void cleanTestHelpers() {
-    if (!MockGmmStatus::initialized) {
-        Gmm::destroyContext();
-        MockGmmStatus::initialized = false;
-    }
+    Gmm::destroyContext();
 }
 
 std::string getHardwarePrefix() {

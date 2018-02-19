@@ -30,8 +30,6 @@
 
 using namespace OCLRT;
 
-bool MockGmmStatus::initialized = false;
-
 MockDevice::MockDevice(const HardwareInfo &hwInfo, bool isRootDevice)
     : Device(hwInfo, isRootDevice) {
     memoryManager = new OsAgnosticMemoryManager;

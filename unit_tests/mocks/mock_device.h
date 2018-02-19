@@ -33,11 +33,6 @@ class OSTime;
 class MemoryManager;
 class MockMemoryManager;
 
-namespace MockGmmStatus {
-//avoid multiple gmm context initializations - it slows down global ULTs execution
-extern bool initialized;
-}; // namespace MockGmmStatus
-
 class MockDevice : public Device {
   public:
     using Device::commandStreamReceiver;
