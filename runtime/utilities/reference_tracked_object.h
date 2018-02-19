@@ -188,6 +188,6 @@ class ReferenceTrackedObject {
 };
 template <typename DerivedClass>
 inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
-    UNRECOVERABLE_IF(refInternal.peek() > 1);
+    DEBUG_BREAK_IF(refInternal.peek() > 1);
 }
 }
