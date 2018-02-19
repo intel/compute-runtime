@@ -26,6 +26,7 @@
 #include "sku_info.h"
 
 #include "runtime/helpers/engine_node.h"
+#include <cstddef>
 
 namespace OCLRT {
 
@@ -68,6 +69,11 @@ struct RuntimeCapabilityTable {
     bool ftr64KBpages;
 
     EngineType defaultEngineType;
+};
+
+struct HardwareCapabilities {
+    size_t image3DMaxWidth;
+    size_t image3DMaxHeight;
 };
 
 struct HardwareInfo {

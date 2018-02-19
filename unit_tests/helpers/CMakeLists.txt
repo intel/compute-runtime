@@ -36,6 +36,7 @@ set(IGDRCL_SRCS_tests_helpers
     "${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/gtest_helpers.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_default_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h"

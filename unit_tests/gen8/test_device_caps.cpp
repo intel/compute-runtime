@@ -64,6 +64,13 @@ GEN8TEST_F(Gen8DeviceCaps, compression) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
 }
 
+GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
+    const auto &caps = pDevice->getDeviceInfo();
+    EXPECT_EQ(2048u, caps.image3DMaxWidth);
+    EXPECT_EQ(2048u, caps.image3DMaxDepth);
+    EXPECT_EQ(2048u, caps.image3DMaxHeight);
+}
+
 BDWTEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.profilingTimerResolution);

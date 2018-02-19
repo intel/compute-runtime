@@ -39,3 +39,5 @@ class HwHelperTest : public testing::Test {
     GT_SYSTEM_INFO testSysInfo;
     HardwareInfo hwInfo;
 };
+
+void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper);

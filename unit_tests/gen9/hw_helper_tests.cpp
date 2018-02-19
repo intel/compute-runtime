@@ -57,3 +57,10 @@ GEN9TEST_F(HwHelperTestSkl, adjustDefaultEngineType) {
     helper.adjustDefaultEngineType(&hwInfo);
     EXPECT_EQ(engineType, hwInfo.capabilityTable.defaultEngineType);
 }
+
+GEN9TEST_F(HwHelperTestSkl, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCalledThenDefaultImplementationIsUsed) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    // Test default method implementation
+    testDefaultImplementationOfSetupHardwareCapabilities(helper);
+}

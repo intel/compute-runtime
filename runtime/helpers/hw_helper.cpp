@@ -57,4 +57,7 @@ bool HwHelper::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
 void HwHelper::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
+void HwHelper::setupHardwareCapabilities(HardwareCapabilities *caps) {
+}
+
 } // namespace OCLRT

@@ -123,6 +123,24 @@ HWTEST_F(HwHelperTest, adjustDefaultEngineTypeDummy) {
     helper.adjustDefaultEngineType(&hwInfo);
 }
 
+HWTEST_F(HwHelperTest, setupHardwareCapabilitiesDummy) {
+    auto helper = HwHelper::get(renderCoreFamily);
+    HardwareCapabilities hwCaps;
+    hwCaps.image3DMaxHeight = 123u;
+    hwCaps.image3DMaxWidth = 456u;
+    helper.setupHardwareCapabilities(&hwCaps);
+
+    EXPECT_EQ(123u, hwCaps.image3DMaxHeight);
+    EXPECT_EQ(456u, hwCaps.image3DMaxWidth);
+
+    hwCaps.image3DMaxHeight = 789u;
+    hwCaps.image3DMaxWidth = 987u;
+    helper.setupHardwareCapabilities(&hwCaps);
+
+    EXPECT_EQ(789u, hwCaps.image3DMaxHeight);
+    EXPECT_EQ(987u, hwCaps.image3DMaxWidth);
+}
+
 TEST(DwordBuilderTest, setNonMaskedBits) {
     uint32_t dword = 0;
 

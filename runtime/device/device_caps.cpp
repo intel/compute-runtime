@@ -24,6 +24,7 @@
 #include <algorithm>
 #include "runtime/device/device.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/sharings/sharing_factory.h"
@@ -75,6 +76,10 @@ void Device::initializeCaps() {
         name.assign(driverInfo.get()->getDeviceName(tempName).c_str());
         driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
     }
+
+    HardwareCapabilities hwCaps = {0};
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&hwCaps);
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
@@ -301,8 +306,8 @@ void Device::initializeCaps() {
     deviceInfo.imageSupport = CL_TRUE;
     deviceInfo.image2DMaxWidth = 16384;
     deviceInfo.image2DMaxHeight = 16384;
-    deviceInfo.image3DMaxWidth = 16384;
-    deviceInfo.image3DMaxHeight = 16384;
+    deviceInfo.image3DMaxWidth = hwCaps.image3DMaxWidth;
+    deviceInfo.image3DMaxHeight = hwCaps.image3DMaxHeight;
     deviceInfo.image3DMaxDepth = 2048;
     deviceInfo.imageMaxArraySize = 2048;
 

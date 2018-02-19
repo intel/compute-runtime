@@ -28,6 +28,8 @@
 #include <type_traits>
 
 namespace OCLRT {
+struct HardwareCapabilities;
+
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
@@ -39,6 +41,7 @@ class HwHelper {
     virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag);
     virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable);
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo);
+    virtual void setupHardwareCapabilities(HardwareCapabilities *caps);
 
   protected:
     HwHelper(){};
@@ -81,6 +84,8 @@ class HwHelperHw : public HwHelper {
     bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) override;
 
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
+
+    void setupHardwareCapabilities(HardwareCapabilities *caps) override;
 
   private:
     HwHelperHw(){};

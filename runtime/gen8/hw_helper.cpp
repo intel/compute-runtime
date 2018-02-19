@@ -36,5 +36,11 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
     return false;
 }
 
+template <>
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
+    caps->image3DMaxHeight = 2048;
+    caps->image3DMaxWidth = 2048;
+}
+
 template class HwHelperHw<Family>;
 } // namespace OCLRT

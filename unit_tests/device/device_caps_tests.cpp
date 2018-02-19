@@ -189,15 +189,27 @@ TEST(Device_GetCaps, validate) {
     EXPECT_EQ(1u, caps.imageSupport);
     EXPECT_EQ(16384u, caps.image2DMaxWidth);
     EXPECT_EQ(16384u, caps.image2DMaxHeight);
-    EXPECT_EQ(16384u, caps.image3DMaxWidth);
-    EXPECT_EQ(2048u, caps.image3DMaxDepth);
-    EXPECT_EQ(16384u, caps.image3DMaxHeight);
     EXPECT_EQ(2048u, caps.imageMaxArraySize);
     if (device->getHardwareInfo().capabilityTable.clVersionSupport == 12 && is32BitOsAllocatorAvailable) {
         EXPECT_TRUE(caps.force32BitAddressess);
     } else {
         //EXPECT_FALSE(caps.force32BitAddressess);
     }
+}
+
+TEST(Device_GetCaps, validateImage3DDimensions) {
+    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    if (device->getHardwareInfo().pPlatform->eRenderCoreFamily > IGFX_GEN8_CORE) {
+        EXPECT_EQ(16384u, caps.image3DMaxWidth);
+        EXPECT_EQ(16384u, caps.image3DMaxHeight);
+    } else {
+        EXPECT_EQ(2048u, caps.image3DMaxWidth);
+        EXPECT_EQ(2048u, caps.image3DMaxHeight);
+    }
+
+    EXPECT_EQ(2048u, caps.image3DMaxDepth);
 }
 
 TEST(DeviceGetCapsSimple, givenDeviceWhenEUCountIsZeroThenmaxWgsIsDefault) {

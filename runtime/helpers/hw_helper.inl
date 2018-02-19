@@ -21,6 +21,7 @@
  */
 
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
 template <typename Family>
@@ -31,4 +32,11 @@ void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo,
 template <typename Family>
 void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
+
+template <typename Family>
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
+    caps->image3DMaxHeight = 16384;
+    caps->image3DMaxWidth = 16384;
+}
+
 } // namespace OCLRT
