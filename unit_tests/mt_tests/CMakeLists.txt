@@ -98,6 +98,7 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
 target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gtest gmock)
+target_link_libraries(igdrcl_mt_tests igdrcl_mocks)
 
 target_include_directories(igdrcl_mt_tests PRIVATE
   ${GTEST_INCLUDE_DIR}

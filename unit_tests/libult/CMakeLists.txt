@@ -51,11 +51,6 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
 endforeach(GEN_NUM)
 
 list (APPEND IGDRCL_SRCS_LIB_ULT
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferred_deleter.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_device.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_device.h
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_memory_manager.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_memory_manager.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp

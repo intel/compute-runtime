@@ -208,6 +208,7 @@ add_executable(igdrcl_tests
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
 )
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_tests igdrcl_mocks)
 
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
 

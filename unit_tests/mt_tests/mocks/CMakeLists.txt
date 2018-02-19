@@ -26,10 +26,7 @@ set(IGDRCL_SRCS_mt_tests_mocks
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_context.h"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferrable_deletion.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferrable_deletion.h"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferred_deleter.h"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_device.h"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_kernel.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_kernel.h"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_memory_manager.h"
     PARENT_SCOPE
 )

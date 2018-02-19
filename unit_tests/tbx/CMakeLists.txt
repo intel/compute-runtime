@@ -46,7 +46,7 @@ elseif(WIN32)
 		${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
 		${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
 	 )
-	target_link_libraries(igdrcl_tbx_tests Ws2_32)
+	target_link_libraries(igdrcl_tbx_tests Ws2_32 igdrcl_mocks)
 endif(UNIX)
 
 target_include_directories(igdrcl_tbx_tests PRIVATE
