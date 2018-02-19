@@ -21,6 +21,7 @@
  */
 
 #include "CL/cl.h"
+#include <cstdint>
 
 namespace OCLRT {
 
