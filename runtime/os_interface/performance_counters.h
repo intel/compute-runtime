@@ -60,7 +60,6 @@ class PerformanceCounters {
   protected:
     PerformanceCounters(OSTime *osTime);
     virtual bool verifyPmRegsCfg(InstrPmRegsCfg *pCfg, uint32_t *pLastPmRegsCfgHandle, bool *pLastPmRegsCfgPending);
-    size_t querySize();
     virtual void enableImpl();
     void shutdownImpl();
     MOCKABLE_VIRTUAL uint32_t getReportId() {

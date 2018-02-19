@@ -30,6 +30,9 @@ namespace OCLRT {
 decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE] = {
     nullptr,
 };
+size_t perfCountersQuerySize[IGFX_MAX_CORE] = {
+    0,
+};
 
 PerformanceCounters::PerformanceCounters(OSTime *osTime) {
     this->osTime = osTime;
@@ -73,6 +76,8 @@ void PerformanceCounters::initialize(const HardwareInfo *hwInfo) {
 
     if (getPerfCountersQueryDataFactory[gfxFamily] != nullptr) {
         getPerfCountersQueryDataFunc = getPerfCountersQueryDataFactory[gfxFamily];
+    } else {
+        perfCountersQuerySize[gfxFamily] = sizeof(GTDI_QUERY);
     }
 }
 void PerformanceCounters::enableImpl() {
@@ -146,7 +151,7 @@ bool PerformanceCounters::sendPmRegsCfgCommands(InstrPmRegsCfg *pCfg, uint32_t *
     return false;
 }
 bool PerformanceCounters::processEventReport(size_t inputParamSize, void *inputParam, size_t *outputParamSize, HwPerfCounter *pPrivateData, InstrPmRegsCfg *countersConfiguration, bool isEventComplete) {
-    size_t outputSize = querySize();
+    size_t outputSize = perfCountersQuerySize[gfxFamily];
     if (outputParamSize) {
         *outputParamSize = outputSize;
     }
@@ -183,9 +188,6 @@ int PerformanceCounters::sendPerfConfiguration(uint32_t count, uint32_t *pOffset
     return ret ? CL_SUCCESS : CL_PROFILING_INFO_NOT_AVAILABLE;
 }
 
-size_t PerformanceCounters::querySize() {
-    return sizeof(GTDI_QUERY);
-}
 uint32_t PerformanceCounters::getCurrentReportId() {
     return (osInterface->getHwContextId() << 12) | getReportId();
 }

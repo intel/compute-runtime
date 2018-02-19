@@ -34,6 +34,7 @@ struct PerformanceCountersGenTest : public ::testing::Test {
 
 namespace OCLRT {
 extern decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE];
+extern size_t perfCountersQuerySize[IGFX_MAX_CORE];
 }
 
 class MockPerformanceCountersGen : public PerformanceCounters {
@@ -47,7 +48,9 @@ class MockPerformanceCountersGen : public PerformanceCounters {
 };
 
 HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithoutGenSpecificThenDefaultFunctionIsUsed) {
-    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[platformDevices[0]->pPlatform->eRenderCoreFamily]);
+    auto gfxCore = platformDevices[0]->pPlatform->eRenderCoreFamily;
+
+    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[gfxCore]);
 
     MockOSTime osTime;
     std::unique_ptr<MockPerformanceCountersGen> counters(new MockPerformanceCountersGen(&osTime));
@@ -55,6 +58,9 @@ HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithoutGenS
 
     counters->initialize(platformDevices[0]);
     EXPECT_EQ(counters->getFn(), &instrGetPerfCountersQueryData);
+
+    size_t expected = sizeof(GTDI_QUERY);
+    EXPECT_EQ(expected, perfCountersQuerySize[gfxCore]);
 }
 
 HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithGenSpecificThenGenFunctionIsUsed) {
