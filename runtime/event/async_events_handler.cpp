@@ -60,7 +60,7 @@ Event *AsyncEventsHandler::processList() {
 
     for (auto event : list) {
         event->updateExecutionStatus();
-        if (event->peekHasCallbacks()) {
+        if (event->peekHasCallbacks() || (event->isExternallySynchronized() && (event->peekExecutionStatus() > CL_COMPLETE))) {
             pendingList.push_back(event);
             if (event->peekTaskCount() < lowestTaskCount) {
                 sleepCandidate = event;

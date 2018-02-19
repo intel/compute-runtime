@@ -1355,6 +1355,20 @@ TEST_F(EventTest, addChildForEventUncompleted) {
     }
 }
 
+TEST(Event, whenCreatingRegularEventsThenExternalSynchronizationIsNotRequired) {
+    Event *event = new Event(nullptr, 0, 0, 0);
+    EXPECT_FALSE(event->isExternallySynchronized());
+    event->release();
+
+    UserEvent *userEvent = new UserEvent();
+    EXPECT_FALSE(userEvent->isExternallySynchronized());
+    userEvent->release();
+
+    VirtualEvent *virtualEvent = new VirtualEvent();
+    EXPECT_FALSE(virtualEvent->isExternallySynchronized());
+    virtualEvent->release();
+}
+
 TEST_F(EventTest, addChildForEventCompleted) {
     VirtualEvent virtualEvent;
     {

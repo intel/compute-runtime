@@ -133,6 +133,41 @@ TEST_F(AsyncEventsHandlerTests, givenNotCalledCallbacksWhenListIsProcessedThenDo
     expect(CL_COMPLETE, 1, 1, true);
 }
 
+TEST_F(AsyncEventsHandlerTests, givenExternallSynchronizedEventWhenListIsProcessedAndEventIsNotInCompleteStateThenDontUnregister) {
+    struct ExternallySynchronizedEvent : Event {
+        ExternallySynchronizedEvent(int numUpdatesBeforeCompletion)
+            : Event(nullptr, 0, 0, 0), numUpdatesBeforeCompletion(numUpdatesBeforeCompletion) {
+        }
+
+        void updateExecutionStatus() override {
+            ++updateCount;
+            if (updateCount == numUpdatesBeforeCompletion) {
+                transitionExecutionStatus(CL_COMPLETE);
+            }
+        }
+
+        bool isExternallySynchronized() const override {
+            return true;
+        }
+
+        int updateCount = 0;
+        int numUpdatesBeforeCompletion = 1;
+    };
+
+    constexpr int numUpdatesBeforeCompletion = 5;
+    auto *event = new ExternallySynchronizedEvent(numUpdatesBeforeCompletion);
+
+    handler->registerEvent(event);
+    for (int i = 0; i < numUpdatesBeforeCompletion * 2; ++i) {
+        handler->process();
+    }
+
+    EXPECT_EQ(CL_COMPLETE, event->peekExecutionStatus());
+    EXPECT_EQ(numUpdatesBeforeCompletion, event->updateCount);
+
+    event->release();
+}
+
 TEST_F(AsyncEventsHandlerTests, givenDoubleRegisteredEventWhenListIsProcessedAndNoCallbacksToProcessThenUnregister) {
     event1->setTaskStamp(Event::eventNotReady - 1, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);

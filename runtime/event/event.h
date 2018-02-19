@@ -308,6 +308,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     std::vector<Event *> &getParentEvents() { return this->parentEvents; }
 
+    virtual bool isExternallySynchronized() const {
+        return false;
+    }
+
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
           uint32_t taskLevel, uint32_t taskCount);
