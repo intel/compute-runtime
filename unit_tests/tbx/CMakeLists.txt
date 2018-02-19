@@ -32,7 +32,7 @@ add_executable(igdrcl_tbx_tests
     $<TARGET_OBJECTS:igdrcl_libult>
 )
 add_dependencies(igdrcl_tbx_tests gtest gmock)
-target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} gtest gmock)
+target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} gtest gmock igdrcl_mocks)
 target_compile_definitions(igdrcl_tbx_tests PRIVATE MOCKABLE_VIRTUAL=virtual)
 if(UNIX)
   target_link_libraries(igdrcl_tbx_tests dl pthread)

@@ -253,8 +253,8 @@ else()
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   )
-  target_link_libraries(igdrcl_linux gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread)
-  target_link_libraries(igdrcl_linux_dll_tests gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread)
+  target_link_libraries(igdrcl_linux gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread igdrcl_mocks)
+  target_link_libraries(igdrcl_linux_dll_tests gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread igdrcl_mocks)
   target_link_libraries(igdrcl_tests dl pthread gtest gmock)
 
   set_property(TARGET igdrcl_linux_dll_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
