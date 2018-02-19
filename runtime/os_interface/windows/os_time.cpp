@@ -85,11 +85,9 @@ bool OSTimeWin::getCpuGpuTime(TimeStampData *pGpuCpuTime) {
 
 bool OSTimeWin::getCpuTime(uint64_t *timeStamp) {
     uint64_t time;
-    uint64_t frequency;
-    QueryPerformanceCounter((LARGE_INTEGER *)&time);
-    QueryPerformanceFrequency((LARGE_INTEGER *)&frequency);
+    this->QueryPerfomanceCounterFnc((LARGE_INTEGER *)&time);
 
-    *timeStamp = time * NSEC_PER_SEC / frequency;
+    *timeStamp = static_cast<uint64_t>((static_cast<double>(time) * NSEC_PER_SEC / frequency.QuadPart));
     return true;
 };
 
@@ -126,7 +124,7 @@ double OSTimeWin::getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) co
 
 uint64_t OSTimeWin::getCpuRawTimestamp() {
     LARGE_INTEGER cpuRawTimestamp = {};
-    QueryPerformanceCounter(&cpuRawTimestamp);
+    this->QueryPerfomanceCounterFnc(&cpuRawTimestamp);
     return cpuRawTimestamp.QuadPart;
 }
 } // namespace OCLRT

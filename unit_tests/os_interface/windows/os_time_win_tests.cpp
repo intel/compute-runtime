@@ -25,6 +25,15 @@
 #include <memory>
 
 using namespace OCLRT;
+
+LARGE_INTEGER valueToSet = {0};
+
+BOOL WINAPI QueryPerformanceCounterMock(
+    _Out_ LARGE_INTEGER *lpPerformanceCount) {
+    *lpPerformanceCount = valueToSet;
+    return true;
+};
+
 struct OSTimeWinTest : public ::testing::Test {
   public:
     virtual void SetUp() override {
@@ -55,4 +64,16 @@ TEST_F(OSTimeWinTest, givenNonZeroFrequencyWhenGetHostTimerFuncIsCalledThenRetur
 TEST_F(OSTimeWinTest, givenOsTimeWinWhenGetCpuRawTimestampIsCalledThenReturnsNonZero) {
     auto retVal = osTime->getCpuRawTimestamp();
     EXPECT_NE(0ull, retVal);
+}
+
+TEST_F(OSTimeWinTest, givenHighValueOfCpuTimestampWhenItIsObtainedThenItHasProperValue) {
+    osTime->overrideQueryPerformanceCounterFunction(QueryPerformanceCounterMock);
+    LARGE_INTEGER frequency = {0};
+    frequency.QuadPart = 190457;
+    osTime->setFrequency(frequency);
+    valueToSet.QuadPart = 700894514854;
+    uint64_t timeStamp = 0;
+    uint64_t expectedTimestamp = static_cast<uint64_t>((static_cast<double>(valueToSet.QuadPart) * static_cast<double>(NSEC_PER_SEC) / static_cast<double>(frequency.QuadPart)));
+    osTime->getCpuTime(&timeStamp);
+    EXPECT_EQ(expectedTimestamp, timeStamp);
 }

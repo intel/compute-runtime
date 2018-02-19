@@ -42,6 +42,7 @@ class OSTimeWin : public OSTime {
     Wddm *wddm;
     LARGE_INTEGER frequency;
     OSTimeWin() {}
+    decltype(&QueryPerformanceCounter) QueryPerfomanceCounterFnc = QueryPerformanceCounter;
 };
 
 typedef enum GTDI_ESCAPE_FUNCTION_ENUM {
