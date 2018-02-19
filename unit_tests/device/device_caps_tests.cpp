@@ -182,6 +182,10 @@ TEST(Device_GetCaps, validate) {
     EXPECT_EQ(static_cast<cl_command_queue_properties>(CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
               caps.queueOnDeviceProperties);
 
+    EXPECT_EQ(64u, caps.preferredGlobalAtomicAlignment);
+    EXPECT_EQ(64u, caps.preferredLocalAtomicAlignment);
+    EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
+
     EXPECT_EQ(1u, caps.imageSupport);
     EXPECT_EQ(16384u, caps.image2DMaxWidth);
     EXPECT_EQ(16384u, caps.image2DMaxHeight);
