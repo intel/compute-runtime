@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "unit_tests/mocks/mock_cif.h"
 
 #include "cif/builtins/memory/buffer/buffer.h"
+#include "cif/export/library_api.h"
 
 namespace OCLRT {
 

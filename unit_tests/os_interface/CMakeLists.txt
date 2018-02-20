@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@ set(IGDRCL_SRCS_tests_os_interface_windows
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/device_os_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/driver_info_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/gdi_interface_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_cif.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_kmdaf_listener.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_gdi_interface.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_os_time_win.h"
@@ -76,7 +75,6 @@ set(IGDRCL_SRCS_tests_os_interface_linux
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/device_factory_tests.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/hw_info_config_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/hw_info_config_tests.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_cif.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_os_time_linux.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/linux/os_time_test.cpp"

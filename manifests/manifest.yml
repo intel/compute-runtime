@@ -36,7 +36,7 @@ components:
   internal:
     branch: master
     dest_dir: internal
-    revision: be0777fe75ceb8c91b4124f17bc191edc2a740f4
+    revision: 33a66c68ab6350cfe6edf14e8174f8405048356f
     type: git
   khronos:
     branch: master

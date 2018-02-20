@@ -24,16 +24,6 @@ set(IGDRCL_SRCS_cloc
   ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
 )
 
-# Setting up our local list of test files
-if(MSVC)
-  set(IGDRCL_SRCS_offline_compiler_tests_windows
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/mock_cif.cpp
-  )
-elseif(UNIX)
-  set(IGDRCL_SRCS_offline_compiler_tests_linux
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/mock_cif.cpp
-  )
-endif()
 link_directories(${GMM_LIB_PATHS})
 
 set(IGDRCL_SRCS_offline_compiler_mock

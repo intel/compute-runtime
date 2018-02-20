@@ -121,7 +121,6 @@ set(IGDRCL_SRCS_tests
   ${IGDRCL_SRCS_tests_kernel}
   ${IGDRCL_SRCS_tests_mem_obj}
   ${IGDRCL_SRCS_tests_memory_manager}
-  ${IGDRCL_SRCS_tests_mocks}
   ${IGDRCL_SRCS_tests_os_interface}
   ${IGDRCL_SRCS_tests_platform}
   ${IGDRCL_SRCS_tests_preamble}
@@ -353,7 +352,6 @@ source_group("source files\\instrumentation" FILES ${IGDRCL_SRCS_tests_instrumen
 source_group("source files\\kernel" FILES ${IGDRCL_SRCS_tests_kernel})
 source_group("source files\\mem_obj" FILES ${IGDRCL_SRCS_tests_mem_obj})
 source_group("source files\\memory_manager" FILES ${IGDRCL_SRCS_tests_memory_manager})
-source_group("source files\\mocks" FILES ${IGDRCL_SRCS_tests_mocks})
 source_group("source files\\os_interface" FILES ${IGDRCL_SRCS_tests_os_interface})
 source_group("source files\\platform" FILES ${IGDRCL_SRCS_tests_platform})
 source_group("source files\\preamble" FILES ${IGDRCL_SRCS_tests_preamble})

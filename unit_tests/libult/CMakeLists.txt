@@ -54,6 +54,8 @@ list (APPEND IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
 )
 
 add_library (igdrcl_libult OBJECT

@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/mocks/mock_gfx_family.h"
+#include "unit_tests/libult/mock_gfx_family.h"
 #include "runtime/helpers/hw_helper.inl"
 
 namespace OCLRT {

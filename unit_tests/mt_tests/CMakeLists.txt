@@ -46,7 +46,6 @@ set(IGDRCL_SRCS_mt_tests_local
   ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_cif.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_compilers.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
@@ -72,16 +71,10 @@ set(IGDRCL_SRCS_mt_tests
 
 if(MSVC)
   list(APPEND IGDRCL_SRCS_mt_tests
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/mock_cif.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
-  )
-else(MSVC)
-  list(APPEND IGDRCL_SRCS_mt_tests
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/mock_cif.cpp
-    
   )
 endif(MSVC)
 

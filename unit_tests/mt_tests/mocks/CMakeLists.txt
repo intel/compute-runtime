@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -22,8 +22,6 @@ set(IGDRCL_SRCS_mt_tests_mocks
     #local files
     "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
     #necessary dependencies from igdrcl_tests
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_context.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_context.h"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferrable_deletion.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferrable_deletion.h"
     "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_kernel.cpp"

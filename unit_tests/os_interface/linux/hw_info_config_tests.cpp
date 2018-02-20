@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,7 @@
 #include "runtime/os_interface/linux/os_interface.h"
 
 #include "unit_tests/os_interface/linux/hw_info_config_tests.h"
-#include "unit_tests/mocks/mock_gfx_family.h"
+#include "unit_tests/libult/mock_gfx_family.h"
 
 #include <cstring>
 

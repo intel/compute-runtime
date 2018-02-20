@@ -68,11 +68,6 @@ target_sources(igdrcl_aub_tests PUBLIC
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_context.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_cif.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_compilers.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_device.h
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_kernel.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
@@ -87,15 +82,12 @@ if(MSVC)
     target_sources(igdrcl_aub_tests PUBLIC
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/options.cpp
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
-        ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/mock_cif.cpp
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
-        ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
         ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
     )
 else(MSVC)
     target_sources(igdrcl_aub_tests PUBLIC
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
-        ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/mock_cif.cpp
     )
 endif(MSVC)
 
@@ -103,6 +95,7 @@ add_subdirectory(gen9)
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
+target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gtest gmock)
 
 link_directories(${GMM_LIB_PATHS})

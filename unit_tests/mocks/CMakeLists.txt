@@ -36,16 +36,21 @@ set(IGDRCL_SRCS_tests_mocks
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_csr.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferrable_deletion.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_device_queue.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/mock_instrumentation.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_program.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/mock_program.cpp"
@@ -64,24 +69,17 @@ if (WIN32)
   )
 endif()
 
-set(IGDRCL_SRCS_tests_mocks "${IGDRCL_SRCS_tests_mocks}" PARENT_SCOPE)
-
-add_library(igdrcl_mocks STATIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/mock_deferred_deleter.h"
-)
+add_library(igdrcl_mocks STATIC ${IGDRCL_SRCS_tests_mocks})
 
 add_dependencies(igdrcl_mocks gtest gmock)
+
 target_include_directories(igdrcl_mocks PRIVATE 
     ${GTEST_INCLUDE_DIR}
     ${GMOCK_INCLUDE_DIR}
+    $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>
 )
-target_include_directories(igdrcl_mocks PRIVATE $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual)
+target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual CIF_HEADERS_ONLY_BUILD)
+
 set_target_properties(igdrcl_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(igdrcl_mocks PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 set_target_properties(igdrcl_mocks PROPERTIES FOLDER "test mocks")
