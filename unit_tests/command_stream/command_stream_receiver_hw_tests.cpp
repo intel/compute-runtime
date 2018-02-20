@@ -173,7 +173,8 @@ struct UltCommandStreamReceiverTest
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
-        commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+        commandStreamReceiver.requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
+        commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
         commandStreamReceiver.lastSentCoherencyRequest = 0;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
     }
@@ -1968,7 +1969,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.lastMediaSamplerConfig = 0;
-    commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
 
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeeded = 2 * sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MEDIA_VFE_STATE) +
