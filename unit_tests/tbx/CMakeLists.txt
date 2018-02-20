@@ -27,12 +27,12 @@ add_executable(igdrcl_tbx_tests
     "${IGDRCL_SOURCE_DIR}/runtime/dll/create_command_stream.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp"
     $<TARGET_OBJECTS:igdrcl_libult>
 )
-add_dependencies(igdrcl_tbx_tests gtest gmock)
-target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} gtest gmock igdrcl_mocks)
+
+target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gtest gmock igdrcl_mocks)
+
 target_compile_definitions(igdrcl_tbx_tests PRIVATE MOCKABLE_VIRTUAL=virtual)
 if(UNIX)
   target_link_libraries(igdrcl_tbx_tests dl pthread)
@@ -43,10 +43,8 @@ elseif(WIN32)
 	target_sources(igdrcl_tbx_tests PUBLIC
 		${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
 		${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
-		${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
-		${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
 	 )
-	target_link_libraries(igdrcl_tbx_tests Ws2_32 igdrcl_mocks)
+	target_link_libraries(igdrcl_tbx_tests Ws2_32)
 endif(UNIX)
 
 target_include_directories(igdrcl_tbx_tests PRIVATE

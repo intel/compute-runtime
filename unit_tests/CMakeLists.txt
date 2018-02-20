@@ -238,8 +238,6 @@ else()
     $<TARGET_OBJECTS:igdrcl_libult_cs>
     ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferred_deleter.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   )
   add_executable(igdrcl_linux_dll_tests
@@ -248,12 +246,10 @@ else()
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferred_deleter.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   )
-  target_link_libraries(igdrcl_linux gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread igdrcl_mocks)
-  target_link_libraries(igdrcl_linux_dll_tests gtest gmock ${NEO_MOCKABLE_LIB_NAME} dl pthread igdrcl_mocks)
+  target_link_libraries(igdrcl_linux ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks dl pthread gtest gmock)
+  target_link_libraries(igdrcl_linux_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks dl pthread gtest gmock)
   target_link_libraries(igdrcl_tests dl pthread gtest gmock)
 
   set_property(TARGET igdrcl_linux_dll_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
