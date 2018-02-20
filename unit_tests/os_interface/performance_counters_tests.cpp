@@ -287,32 +287,31 @@ INSTANTIATE_TEST_CASE_P(
 
 struct PerformanceCountersProcessEventTest : public PerformanceCountersTest,
                                              public ::testing::WithParamInterface<bool> {
+
     void SetUp() override {
         PerformanceCountersTest::SetUp();
         createPerfCounters();
         performanceCountersBase->initialize(platformDevices[0]);
-        pPrivateData = new HwPerfCounter();
+        privateData.reset(new HwPerfCounter());
         eventComplete = true;
         outputParamSize = 0;
-        inputParam = (void *)(new GTDI_QUERY());
+        inputParam.reset(new GTDI_QUERY());
         inputParamSize = sizeof(GTDI_QUERY);
     }
     void TearDown() override {
-        delete static_cast<GTDI_QUERY *>(inputParam);
-        delete pPrivateData;
         performanceCountersBase->shutdown();
         PerformanceCountersTest::TearDown();
     }
-    void *inputParam;
+    std::unique_ptr<GTDI_QUERY> inputParam;
     size_t inputParamSize;
     size_t outputParamSize;
-    HwPerfCounter *pPrivateData;
+    std::unique_ptr<HwPerfCounter> privateData;
     bool eventComplete;
 };
 
 TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     eventComplete = GetParam();
-    auto retVal = performanceCountersBase->processEventReport(inputParamSize, nullptr, &outputParamSize, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(inputParamSize, nullptr, &outputParamSize, privateData.get(),
                                                               nullptr, eventComplete);
 
     EXPECT_FALSE(retVal);
@@ -322,7 +321,7 @@ TEST_P(PerformanceCountersProcessEventTest, givenNullptrInputParamWhenProcessEve
 TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEventPerfCountersIsCalledAndEventIsCompletedThenReturnsTrue) {
     eventComplete = GetParam();
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->processEventReport(inputParamSize, inputParam, &outputParamSize, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(inputParamSize, inputParam.get(), &outputParamSize, privateData.get(),
                                                               nullptr, eventComplete);
 
     if (eventComplete) {
@@ -338,7 +337,7 @@ TEST_P(PerformanceCountersProcessEventTest, givenCorrectInputParamWhenProcessEve
 
 TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProcessEventPerfCountersIsCalledThenReturnsFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->processEventReport(inputParamSize - 1, inputParam, &outputParamSize, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(inputParamSize - 1, inputParam.get(), &outputParamSize, privateData.get(),
                                                               nullptr, eventComplete);
 
     EXPECT_FALSE(retVal);
@@ -348,7 +347,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenInvalidInputParamSizeWhenProces
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProcessEventPerfCountersIsCalledThenDoesNotReturnsOutputSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->processEventReport(inputParamSize, inputParam, nullptr, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(inputParamSize, inputParam.get(), nullptr, privateData.get(),
                                                               nullptr, eventComplete);
 
     EXPECT_TRUE(retVal);
@@ -358,7 +357,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrOutputParamSizeWhenProce
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcessEventPerfCountersIsCalledThenQueryProperSize) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->processEventReport(0, nullptr, &outputParamSize, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(0, nullptr, &outputParamSize, privateData.get(),
                                                               nullptr, eventComplete);
 
     EXPECT_TRUE(retVal);
@@ -368,7 +367,7 @@ TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeWhenProcess
 
 TEST_F(PerformanceCountersProcessEventTest, givenNullptrInputZeroSizeAndNullptrOutputSizeWhenProcessEventPerfCountersIsCalledThenReturnFalse) {
     EXPECT_EQ(0ull, outputParamSize);
-    auto retVal = performanceCountersBase->processEventReport(0, nullptr, nullptr, pPrivateData,
+    auto retVal = performanceCountersBase->processEventReport(0, nullptr, nullptr, privateData.get(),
                                                               nullptr, eventComplete);
 
     EXPECT_FALSE(retVal);
