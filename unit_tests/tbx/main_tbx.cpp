@@ -42,12 +42,12 @@ TEST(CSRTests, getDevices) {
     ASSERT_NE(nullptr, hwInfo);
     ASSERT_NE(nullptr, hwInfo->pSysInfo);
 
-    EXPECT_GT(hwInfo->pSysInfo->EUCount, 0u);
-    EXPECT_GT(hwInfo->pSysInfo->ThreadCount, 0u);
-    EXPECT_GT(hwInfo->pSysInfo->SliceCount, 0u);
-    EXPECT_GT(hwInfo->pSysInfo->SubSliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo->EUCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo->ThreadCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo->SliceCount, 0u);
+    EXPECT_GT_VAL(hwInfo->pSysInfo->SubSliceCount, 0u);
     EXPECT_GT_VAL(hwInfo->pSysInfo->L3CacheSizeInKb, 0u);
-    EXPECT_EQ(hwInfo->pSysInfo->CsrSizeInMb, 8u);
+    EXPECT_EQ_VAL(hwInfo->pSysInfo->CsrSizeInMb, 8u);
     EXPECT_FALSE(hwInfo->pSysInfo->IsDynamicallyPopulated);
 }
 
