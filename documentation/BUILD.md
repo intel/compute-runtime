@@ -4,13 +4,15 @@
 
 *Instructions assume clean Ubuntu* 16.04.3 LTS installation.*
 
-1. Download & install required dependencies 
+1. Download & install required dependencies
 
 Example:
 
 ```shell
 sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev 
 ```
+
+See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md) for other requirements and dependencies, when building and installing NEO.
 
 2. Create workspace folder and download sources:
 ```
@@ -73,4 +75,3 @@ sudo dpkg -i intel-opencl-1.0-0.x86_64-igdrcl.deb
 ```
 
 ___(*) Other names and brands my be claimed as property of others.___
-
