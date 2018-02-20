@@ -21,7 +21,7 @@
  */
 
 #include "unit_tests/fixtures/media_kernel_fixture.h"
-#include "runtime/helpers/preamble.inl"
+#include "runtime/helpers/preamble.h"
 #include "test.h"
 
 using namespace OCLRT;

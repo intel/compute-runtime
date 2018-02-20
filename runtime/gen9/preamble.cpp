@@ -64,5 +64,30 @@ void PreambleHelper<SKLFamily>::setupPipeControlInFrontOfCommand(void *pCmd, con
     }
 }
 
-template struct PreambleHelper<SKLFamily>;
+template <>
+uint32_t PreambleHelper<SKLFamily>::getDefaultThreadArbitrationPolicy() {
+    return ThreadArbitrationPolicy::RoundRobin;
 }
+
+template <>
+void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
+    UNRECOVERABLE_IF(requiredThreadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent);
+
+    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = PIPE_CONTROL::sInit();
+    pipeControl->setCommandStreamerStallEnable(true);
+
+    auto pCmd = pCommandStream->getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+
+    pCmd->setRegisterOffset(DebugControlReg2::address);
+    pCmd->setDataDword(DebugControlReg2::getRegData(requiredThreadArbitrationPolicy));
+}
+
+template <>
+size_t PreambleHelper<SKLFamily>::getAdditionalCommandsSize(const Device &device) {
+    return PreemptionHelper::getRequiredPreambleSize<SKLFamily>(device) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+}
+
+template struct PreambleHelper<SKLFamily>;
+} // namespace OCLRT

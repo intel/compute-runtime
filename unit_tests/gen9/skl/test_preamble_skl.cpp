@@ -80,7 +80,7 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
     PreambleHelper<SKLFamily>::programPreamble(&linearStream, MockDevice(**platformDevices), l3Config,
-                                               ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin,
+                                               ThreadArbitrationPolicy::RoundRobin,
                                                nullptr);
 
     parseCommands<SKLFamily>(cs);
@@ -97,6 +97,10 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
 
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL),
               PreambleHelper<SKLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+}
+
+SKLTEST_F(ThreadArbitration, defaultArbitrationPolicy) {
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, PreambleHelper<SKLFamily>::getDefaultThreadArbitrationPolicy());
 }
 
 GEN9TEST_F(PreambleVfeState, WaOff) {

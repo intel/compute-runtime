@@ -36,10 +36,14 @@ class LinearStream;
 
 template <typename GfxFamily>
 struct PreambleHelper {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
     static constexpr size_t getScratchSpaceOffsetFor64bit() { return 4096; }
 
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired);
+    static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
     static void programPreemption(LinearStream *pCommandStream, const Device &device, GraphicsAllocation *preemptionCsr);
     static void setupPipeControlInFrontOfCommand(void *pCmd, const HardwareInfo *hwInfo, bool isVfeCommand);
@@ -47,7 +51,7 @@ struct PreambleHelper {
     static void programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
-    static uint32_t getAdditionalCommandsSize(const Device &device);
+    static size_t getAdditionalCommandsSize(const Device &device);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
 };
@@ -73,4 +77,5 @@ template <typename GfxFamily>
 struct L3CNTLRegisterOffset {
     static const uint32_t registerOffset;
 };
+
 } // namespace OCLRT

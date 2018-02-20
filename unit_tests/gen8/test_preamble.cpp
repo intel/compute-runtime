@@ -67,27 +67,16 @@ BDWTEST_F(Gen8L3Config, checkSLM) {
 }
 
 typedef PreambleFixture ThreadArbitrationGen8;
-BDWTEST_F(ThreadArbitrationGen8, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsNotPresent) {
+BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenDoNothing) {
     typedef BDWFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     LinearStream &cs = linearStream;
-    uint32_t l3Config = PreambleHelper<BDWFamily>::getL3Config(**platformDevices, true);
 
-    PreambleHelper<BDWFamily>::programPreamble(&linearStream, MockDevice(**platformDevices), l3Config,
-                                               ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin,
-                                               nullptr);
+    PreambleHelper<BDWFamily>::programThreadArbitration(&cs, ThreadArbitrationPolicy::RoundRobin);
 
-    parseCommands<BDWFamily>(cs);
-
-    auto itorLRI = reverse_find<MI_LOAD_REGISTER_IMM *>(cmdList.rbegin(), cmdList.rend());
-    ASSERT_NE(cmdList.rend(), itorLRI);
-
-    //we expect l3 programming here
-    const auto &lri = *reinterpret_cast<MI_LOAD_REGISTER_IMM *>(*itorLRI);
-    auto RegisterOffset = L3CNTLRegisterOffset<BDWFamily>::registerOffset;
-    EXPECT_EQ(RegisterOffset, lri.getRegisterOffset());
-    EXPECT_EQ(1u, lri.getDataDword() & 1);
+    EXPECT_EQ(0u, cs.getUsed());
 
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(MockDevice(**platformDevices)));
+    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getDefaultThreadArbitrationPolicy());
 }
 
 typedef PreambleFixture Gen8UrbEntryAllocationSize;

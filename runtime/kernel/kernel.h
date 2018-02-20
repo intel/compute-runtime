@@ -25,6 +25,7 @@
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/preamble.h"
 #include "runtime/program/program.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -337,11 +338,12 @@ class Kernel : public BaseObject<_cl_kernel> {
     const bool isParentKernel;
     const bool isSchedulerKernel;
 
+    template <typename GfxFamily>
     uint32_t getThreadArbitrationPolicy() {
         if (kernelInfo.patchInfo.executionEnvironment->SubgroupIndependentForwardProgressRequired) {
-            return ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
+            return PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
         } else {
-            return ThreadArbitrationPolicy::threadArbitrationPolicyAgeBased;
+            return ThreadArbitrationPolicy::AgeBased;
         }
     }
     bool checkIfIsParentKernelAndBlocksUsesPrintf() {

@@ -39,12 +39,12 @@ HWTEST_F(PreambleTest, PreemptionIsTakenIntoAccountWhenProgrammingPreamble) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
 
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    uint32_t cmdSizePreambleMidThread = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    uint32_t cmdSizePreemptionMidThread = static_cast<uint32_t>(PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice));
+    auto cmdSizePreambleMidThread = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
 
     mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    uint32_t cmdSizePreambleDisabled = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
-    uint32_t cmdSizePreemptionDisabled = static_cast<uint32_t>(PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice));
+    auto cmdSizePreambleDisabled = PreambleHelper<FamilyType>::getAdditionalCommandsSize(*mockDevice);
+    auto cmdSizePreemptionDisabled = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
 
     EXPECT_LE(cmdSizePreemptionMidThread, cmdSizePreambleMidThread);
     EXPECT_LE(cmdSizePreemptionDisabled, cmdSizePreambleDisabled);
@@ -64,7 +64,7 @@ HWTEST_F(PreambleTest, PreemptionIsTakenIntoAccountWhenProgrammingPreamble) {
     MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
 
     PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin, &csrSurface);
+                                                ThreadArbitrationPolicy::RoundRobin, &csrSurface);
 
     PreemptionHelper::programPreamble<FamilyType>(preemptionStream, *mockDevice, &csrSurface);
 

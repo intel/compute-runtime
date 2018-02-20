@@ -41,7 +41,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return new CommandStreamReceiverHw<GfxFamily>(hwInfoIn);
     }
 
-    CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {}
+    CommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
 

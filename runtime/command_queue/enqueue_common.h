@@ -532,7 +532,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     }
 
-    commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.begin()->getKernel()->getThreadArbitrationPolicy());
+    commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.begin()->getKernel()->getThreadArbitrationPolicy<GfxFamily>());
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;

@@ -23,8 +23,8 @@
 #include <stdint.h>
 namespace OCLRT {
 namespace ThreadArbitrationPolicy {
-const uint32_t threadArbirtrationPolicyRoundRobin = 0x100u;
-const uint32_t threadArbitrationPolicyAgeBased = 0x0u;
-const uint32_t threadArbitrationPolicyNotPresent = 0xffffffffu;
-}
-}
+const uint32_t AgeBased = 0x0u;
+const uint32_t RoundRobin = 0x1u;
+const uint32_t NotPresent = 0xffffffffu;
+} // namespace ThreadArbitrationPolicy
+} // namespace OCLRT

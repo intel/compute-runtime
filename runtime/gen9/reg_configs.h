@@ -22,6 +22,8 @@
 
 #pragma once
 #include "runtime/helpers/preamble.h"
+#include "runtime/command_stream/thread_arbitration_policy.h"
+
 namespace OCLRT {
 struct SKLFamily;
 template <>
@@ -40,4 +42,12 @@ struct L3CNTLREGConfig<IGFX_BROXTON> {
     static const uint32_t valueForSLM = 0x60000121u;
     static const uint32_t valueForNoSLM = 0x80000140u;
 };
-}
+
+namespace DebugControlReg2 {
+constexpr uint32_t address = 0xE404;
+constexpr uint32_t getRegData(const uint32_t &policy) {
+    return policy == ThreadArbitrationPolicy::RoundRobin ? 0x100 : 0x0;
+};
+} // namespace DebugControlReg2
+
+} // namespace OCLRT

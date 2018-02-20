@@ -47,7 +47,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
-    using BaseClass::CommandStreamReceiver::lastSentThreadAribtrationPolicy;
+    using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
+    using BaseClass::CommandStreamReceiver::lastSentThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;

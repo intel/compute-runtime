@@ -38,6 +38,11 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {
+    requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
+}
+
+template <typename GfxFamily>
 FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
     return flushStamp->peekStamp();
 }
@@ -171,6 +176,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (DebugManager.flags.ForceSLML3Config.get()) {
         dispatchFlags.useSLM = true;
     }
+    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        requestThreadArbitrationPolicy(static_cast<uint32_t>(DebugManager.flags.OverrideThreadArbitrationPolicy.get()));
+    }
 
     auto newL3Config = PreambleHelper<GfxFamily>::getL3Config(peekHwInfo(), dispatchFlags.useSLM);
 
@@ -208,9 +216,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
     }
 
-    if (this->lastSentThreadAribtrationPolicy != this->requiredThreadArbitrationPolicy) {
+    if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, this->requiredThreadArbitrationPolicy);
-        this->lastSentThreadAribtrationPolicy = this->requiredThreadArbitrationPolicy;
+        this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
     }
 
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.GSBA32BitRequired) && force32BitAllocations);
@@ -581,7 +589,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &cs
         PreambleHelper<GfxFamily>::programPreamble(&csr, *memoryManager->device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionCsrAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
-        this->lastSentThreadAribtrationPolicy = this->requiredThreadArbitrationPolicy;
+        this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;
     }
 }
 

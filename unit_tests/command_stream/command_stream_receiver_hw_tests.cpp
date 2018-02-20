@@ -131,10 +131,9 @@ struct UltCommandStreamReceiverTest
                               bool requiresCoherency = false,
                               bool lowPriority = false) {
 
-        DispatchFlags dispatchFlags;
-        dispatchFlags.blocking = block;
-        dispatchFlags.requiresCoherency = requiresCoherency;
-        dispatchFlags.lowPriority = lowPriority;
+        flushTaskFlags.blocking = block;
+        flushTaskFlags.requiresCoherency = requiresCoherency;
+        flushTaskFlags.lowPriority = lowPriority;
 
         return commandStreamReceiver.flushTask(
             commandStream,
@@ -144,7 +143,7 @@ struct UltCommandStreamReceiverTest
             ioh,
             ssh,
             taskLevel,
-            dispatchFlags);
+            flushTaskFlags);
     }
 
     template <typename GfxFamily>
@@ -174,7 +173,7 @@ struct UltCommandStreamReceiverTest
         configureCSRHeapStatesToNonDirty<GfxFamily>();
         commandStreamReceiver.taskLevel = taskLevel;
 
-        commandStreamReceiver.lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
+        commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
         commandStreamReceiver.lastSentCoherencyRequest = 0;
         commandStreamReceiver.lastMediaSamplerConfig = 0;
     }
@@ -184,6 +183,7 @@ struct UltCommandStreamReceiverTest
         return reinterpret_cast<UltCommandStreamReceiver<GfxFamily> &>(pDevice->getCommandStreamReceiver());
     }
 
+    DispatchFlags flushTaskFlags = {};
     uint32_t taskLevel = 42;
     LinearStream commandStream;
     LinearStream dsh;
@@ -252,6 +252,19 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, shouldSeeCommandsOnFirstFlush) {
     flushTask(commandStreamReceiver);
 
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
+    DebugManagerStateRestore restore;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+    commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::AgeBased;
+
+    DebugManager.flags.OverrideThreadArbitrationPolicy.set(ThreadArbitrationPolicy::RoundRobin);
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_EQ(ThreadArbitrationPolicy::RoundRobin, commandStreamReceiver.lastSentThreadArbitrationPolicy);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, taskCountShouldBeUpdated) {
@@ -832,23 +845,15 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo)) +
-                        sizeof(STATE_BASE_ADDRESS) +
-                        sizeof(PIPE_CONTROL) +
-                        sizeof(PIPELINE_SELECT) +
-                        commandStreamReceiver.getRequiredPipeControlSize() +
-                        sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags);
 
-    sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
-
-    DispatchFlags flags;
-    csrCS.getSpace(csrCS.getAvailableSpace() - commandStreamReceiver.getRequiredCmdStreamSizeAligned(flags));
+    csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeeded);
     auto expectedBase = csrCS.getBase();
 
     // This case handles when we have *just* enough space
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
 
-    flushTask(commandStreamReceiver);
+    flushTask(commandStreamReceiver, flushTaskFlags.blocking, 0, flushTaskFlags.requiresCoherency, flushTaskFlags.lowPriority);
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
@@ -1465,7 +1470,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousNOSL
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected) {
     MockCsrHw<FamilyType> commandStreamReceiver(*platformDevices[0]);
-    EXPECT_EQ(ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin, commandStreamReceiver.peekThreadArbitrationPolicy());
+    EXPECT_EQ(PreambleHelper<FamilyType>::getDefaultThreadArbitrationPolicy(), commandStreamReceiver.peekThreadArbitrationPolicy());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {
@@ -1484,7 +1489,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML
     // Mark Pramble as sent, override L3Config to SLM config
     commandStreamReceiver->isPreambleSent = true;
     commandStreamReceiver->lastSentL3Config = L3Config;
-    commandStreamReceiver->lastSentThreadAribtrationPolicy = kernel.mockKernel->getThreadArbitrationPolicy();
+    commandStreamReceiver->lastSentThreadArbitrationPolicy = kernel.mockKernel->getThreadArbitrationPolicy<FamilyType>();
 
     ((MockKernel *)kernel)->setTotalSLMSize(1024);
 
@@ -1963,7 +1968,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.lastMediaSamplerConfig = 0;
-    commandStreamReceiver.lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
+    commandStreamReceiver.lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
 
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeeded = 2 * sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MEDIA_VFE_STATE) +

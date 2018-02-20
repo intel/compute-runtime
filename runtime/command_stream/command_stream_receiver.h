@@ -153,8 +153,8 @@ class CommandStreamReceiver {
 
     LinearStream commandStream;
 
-    uint32_t requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::threadArbirtrationPolicyRoundRobin;
-    uint32_t lastSentThreadAribtrationPolicy = ThreadArbitrationPolicy::threadArbitrationPolicyNotPresent;
+    uint32_t requiredThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobin;
+    uint32_t lastSentThreadArbitrationPolicy = ThreadArbitrationPolicy::NotPresent;
 
     GraphicsAllocation *scratchAllocation = nullptr;
     GraphicsAllocation *preemptionCsrAllocation = nullptr;

@@ -30,15 +30,6 @@ void PreambleHelper<BDWFamily>::setupPipeControlInFrontOfCommand(void *pCmd, con
 }
 
 template <>
-void PreambleHelper<BDWFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t threadArbitrationPolicy) {
-}
-
-template <>
-uint32_t PreambleHelper<BDWFamily>::getAdditionalCommandsSize(const Device &device) {
-    return 0;
-}
-
-template <>
 uint32_t PreambleHelper<BDWFamily>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
     uint32_t l3Config = 0;
 
@@ -61,6 +52,5 @@ void PreambleHelper<BDWFamily>::programPipelineSelect(LinearStream *pCommandStre
     pCmd->setPipelineSelection(PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU);
 }
 
-// Explicitly instantiate PreambleHelper for BDW device family
 template struct PreambleHelper<BDWFamily>;
 } // namespace OCLRT

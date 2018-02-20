@@ -34,21 +34,11 @@ namespace OCLRT {
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy) {
-    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
+}
 
-    // Add a PIPE_CONTROL w/ CS_stall
-    auto pPipeControl = (PIPE_CONTROL *)pCommandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControl = PIPE_CONTROL::sInit();
-    pPipeControl->setCommandStreamerStallEnable(true);
-    setupPipeControlInFrontOfCommand(pPipeControl, nullptr, false);
-
-    auto pCmd = (MI_LOAD_REGISTER_IMM *)pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
-    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
-
-    pCmd->setRegisterOffset(0xE404);
-    auto data = requiredThreadArbitrationPolicy;
-    pCmd->setDataDword(data);
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy() {
+    return 0;
 }
 
 template <typename GfxFamily>
@@ -56,17 +46,12 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 }
 
 template <typename GfxFamily>
-uint32_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
-    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    size_t requiredSize = sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
-    requiredSize += PreemptionHelper::getRequiredPreambleSize<GfxFamily>(device);
-    return static_cast<uint32_t>(requiredSize);
+size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
+    return 0;
 }
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress) {
-    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     typedef typename GfxFamily::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     // Add a PIPE_CONTROL w/ CS_stall
@@ -90,7 +75,6 @@ void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, co
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t l3Config) {
-    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     auto pCmd = (MI_LOAD_REGISTER_IMM *)pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM));
     *pCmd = MI_LOAD_REGISTER_IMM::sInit();
 
@@ -116,5 +100,4 @@ template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
     return 0x782;
 }
-
 } // namespace OCLRT
