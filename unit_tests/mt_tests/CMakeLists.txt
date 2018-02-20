@@ -30,7 +30,6 @@ add_subdirectory(fixtures)
 add_subdirectory(helpers)
 add_subdirectory(indirect_heap)
 add_subdirectory(memory_manager)
-add_subdirectory(mocks)
 add_subdirectory(os_interface)
 add_subdirectory(platform)
 add_subdirectory(utilities)
@@ -46,8 +45,6 @@ set(IGDRCL_SRCS_mt_tests_local
   ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_compilers.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_resource_info.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
 )
 
@@ -63,7 +60,6 @@ set(IGDRCL_SRCS_mt_tests
   ${IGDRCL_SRCS_mt_tests_indirect_heap}
   ${IGDRCL_SRCS_mt_tests_local}
   ${IGDRCL_SRCS_mt_tests_memory_manager}
-  ${IGDRCL_SRCS_mt_tests_mocks}
   ${IGDRCL_SRCS_mt_tests_os_interface}
   ${IGDRCL_SRCS_mt_tests_platform}
   ${IGDRCL_SRCS_mt_tests_utilities}
@@ -73,8 +69,6 @@ if(MSVC)
   list(APPEND IGDRCL_SRCS_mt_tests
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_gmm_page_table_mngr.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
   )
 endif(MSVC)
 
@@ -137,7 +131,6 @@ source_group("source files\\fixtures" FILES ${IGDRCL_SRCS_mt_tests_fixtures})
 source_group("source files\\helpers" FILES ${IGDRCL_SRCS_mt_tests_helpers})
 source_group("source files\\indirect_heap" FILES ${IGDRCL_SRCS_mt_tests_indirect_heap})
 source_group("source files\\memory_manager" FILES ${IGDRCL_SRCS_mt_tests_memory_manager})
-source_group("source files\\mocks" FILES ${IGDRCL_SRCS_mt_tests_mocks})
 source_group("source files\\os_interface" FILES ${IGDRCL_SRCS_mt_tests_os_interface})
 source_group("source files\\platform" FILES ${IGDRCL_SRCS_mt_tests_platform})
 source_group("source files\\utilities" FILES ${IGDRCL_SRCS_mt_tests_utilities})

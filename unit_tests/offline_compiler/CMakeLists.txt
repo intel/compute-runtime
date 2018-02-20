@@ -41,9 +41,6 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${IGDRCL_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/memory_manager/deferred_deleter.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_cif.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_compilers.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/mock_deferred_deleter.cpp
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
   ${IGDRCL_SRCS_offline_compiler_tests_linux}
@@ -52,7 +49,9 @@ set(IGDRCL_SRCS_offline_compiler_tests
 )
 
 link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
 add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
+
 target_include_directories(cloc_tests PRIVATE
   ${CLOC_INCLUDES}
   ${GTEST_INCLUDE_DIR}
@@ -71,7 +70,8 @@ endif(CIF_BASE_DIR)
 
 add_definitions(${CLOC_LIB_FLAGS_DEFINITIONS})
 
-target_link_libraries(cloc_tests gtest elflib)
+target_link_libraries(cloc_tests igdrcl_mocks gtest elflib)
+
 if(UNIX)
   target_link_libraries(cloc_tests dl pthread)
   target_include_directories(cloc_tests PRIVATE
