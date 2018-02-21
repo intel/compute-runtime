@@ -23,6 +23,7 @@
 #include "instrumentation.h"
 
 namespace OCLRT {
+const bool haveInstrumentation = false;
 
 bool instrAutoSamplingStart(
     InstrEscCbData cbData,

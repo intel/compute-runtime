@@ -46,6 +46,8 @@ constexpr unsigned int INSTR_PM_REGS_CFG_INVALID = 0;
 constexpr unsigned int INSTR_READ_REGS_CFG_TAG = 0xFFFFFFFE;
 constexpr unsigned int INSTR_MAX_READ_REGS = 16;
 
+extern const bool haveInstrumentation;
+
 typedef enum {
     INSTR_AS_MODE_OFF,
     INSTR_AS_MODE_EVENT,

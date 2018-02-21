@@ -84,7 +84,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidBatchPreempt));
 
         // Instrumentation
-        tempHwInfos[devNum].capabilityTable.instrumentationEnabled = false; // Intentionally disable, after enabling use adapterInfo->Caps.InstrumentationIsEnabled
+        tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation && (adapterInfo->Caps.InstrumentationIsEnabled != 0);
 
         tempHwInfos[devNum].capabilityTable.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
                                                                   ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
