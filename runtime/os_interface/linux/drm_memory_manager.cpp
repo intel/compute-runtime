@@ -49,13 +49,13 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
     }
 
     if (forcePinAllowed) {
-        auto mem = alignedMallocWrapper(MemoryConstants::pageSize, MemoryConstants::pageSize);
+        auto mem = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
         DEBUG_BREAK_IF(mem == nullptr);
 
         pinBB = allocUserptr(reinterpret_cast<uintptr_t>(mem), MemoryConstants::pageSize, 0, true);
 
         if (!pinBB) {
-            alignedFreeWrapper(mem);
+            alignedFree(mem);
         } else {
             pinBB->isAllocated = true;
         }
