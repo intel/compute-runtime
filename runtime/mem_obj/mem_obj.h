@@ -124,6 +124,8 @@ class MemObj : public BaseObject<_cl_mem> {
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
     bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
     bool mappingOnCpuAllowed() const { return !allowTiling() && !peekSharingHandler(); }
+    virtual size_t calculateOffsetForMapping(size_t *offset) const { return *offset; }
+    cl_mem_object_type peekClMemObjType() const { return memObjectType; }
 
   protected:
     void getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);

@@ -493,8 +493,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThen
     EXPECT_EQ(region[1], image->getMappedSize()[1]);
     EXPECT_EQ(region[2], image->getMappedSize()[2]);
 
-    auto offset = image->calculateOffset(image->getImageDesc().image_row_pitch, image->getImageDesc().image_slice_pitch, origin);
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), offset);
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(origin));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }
@@ -517,8 +516,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSet
     EXPECT_EQ(region[1], image->getMappedSize()[1]);
     EXPECT_EQ(region[2], image->getMappedSize()[2]);
 
-    auto offset = image->calculateOffset(image->getImageDesc().image_row_pitch, image->getImageDesc().image_slice_pitch, origin);
-    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), offset);
+    auto expectedPtr = ptrOffset(image->getCpuAddressForMapping(), image->calculateOffsetForMapping(origin));
 
     EXPECT_EQ(mappedPtr, expectedPtr);
 }

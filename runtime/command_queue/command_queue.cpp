@@ -457,11 +457,16 @@ bool CommandQueue::sendPerfCountersConfig() {
 }
 
 cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest) {
-    auto image = castToObject<Image>(memObj);
-    if (image) {
-        auto retVal = enqueueWriteImage(image, CL_FALSE, &image->getMappedOffset()[0], &image->getMappedSize()[0],
-                                        image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr,
-                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+    cl_int retVal;
+    if (memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
+        auto buffer = castToObject<Buffer>(memObj);
+        retVal = enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset()[0], buffer->getMappedSize()[0], mappedPtr,
+                                    eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
+    } else {
+        auto image = castToObject<Image>(memObj);
+        retVal = enqueueWriteImage(image, CL_FALSE, &image->getMappedOffset()[0], &image->getMappedSize()[0],
+                                   image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr,
+                                   eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
         bool mustCallFinish = true;
         if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
             mustCallFinish = true;
@@ -471,32 +476,21 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
         if (mustCallFinish) {
             finish(true);
         }
-        return retVal;
     }
 
-    auto buffer = castToObject<Buffer>(memObj);
-    if (buffer) {
-        return enqueueWriteBuffer(buffer, CL_TRUE, buffer->getMappedOffset()[0], buffer->getMappedSize()[0], mappedPtr,
-                                  eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
-    }
-
-    return CL_INVALID_MEM_OBJECT;
+    return retVal;
 }
 
 void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet) {
-    void *baseMapPtr = transferProperties.memObj->getBasePtrForMap();
-    void *returnPtr = nullptr;
+    void *returnPtr = ptrOffset(transferProperties.memObj->getBasePtrForMap(),
+                                transferProperties.memObj->calculateOffsetForMapping(transferProperties.offsetPtr));
 
-    auto buffer = castToObject<Buffer>(transferProperties.memObj);
-    if (buffer) {
-        returnPtr = ptrOffset(baseMapPtr, *transferProperties.offsetPtr);
+    if (transferProperties.memObj->peekClMemObjType() == CL_MEM_OBJECT_BUFFER) {
+        auto buffer = castToObject<Buffer>(transferProperties.memObj);
         errcodeRet = enqueueReadBuffer(buffer, transferProperties.blocking, *transferProperties.offsetPtr, *transferProperties.sizePtr, returnPtr,
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
     } else {
         auto image = castToObject<Image>(transferProperties.memObj);
-
-        returnPtr = ptrOffset(baseMapPtr, image->calculateOffset(image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), transferProperties.offsetPtr));
-
         errcodeRet = enqueueReadImage(image, transferProperties.blocking, transferProperties.offsetPtr, transferProperties.sizePtr,
                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), returnPtr, eventsRequest.numEventsInWaitList,
                                       eventsRequest.eventWaitList, eventsRequest.outEvent);

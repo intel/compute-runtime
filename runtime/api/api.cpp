@@ -2482,6 +2482,9 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                    "event", event);
 
     if (retVal == CL_SUCCESS) {
+        if (pMemObj->peekClMemObjType() == CL_MEM_OBJECT_PIPE) {
+            return CL_INVALID_MEM_OBJECT;
+        }
         if (!mappedPtr || mappedPtr != pMemObj->getMappedPtr()) {
             return CL_INVALID_VALUE;
         }

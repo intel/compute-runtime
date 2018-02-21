@@ -992,16 +992,34 @@ TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPr
     EXPECT_FALSE(myMemoryManager->capturedImgInfo.preferRenderCompression);
 }
 
-TEST(ImageTest, givenImageWhenAskedForPtrOffsetThenReturnCorrectValue) {
+TEST(ImageTest, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectValue) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    size_t origin[3] = {4, 5, 6};
+
+    auto retOffset = image->calculateOffsetForMapping(origin);
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+                            image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
+
+    EXPECT_EQ(expectedOffset, retOffset);
+}
+
+TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectValue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceLinearImages.set(true);
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
 
-    size_t origin[3] = {4, 5, 6};
-    size_t rowPitch = 7;
-    size_t slicePitch = 8;
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    auto retOffset = image->calculateOffset(rowPitch, slicePitch, origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + rowPitch * origin[1] + slicePitch * origin[2];
+    size_t origin[3] = {4, 5, 6};
+
+    auto retOffset = image->calculateOffsetForMapping(origin);
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+                            image->getImageDesc().image_row_pitch * origin[1] +
+                            image->getImageDesc().image_slice_pitch * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }

@@ -142,9 +142,9 @@ class Image : public MemObj {
 
     uint32_t getQPitch() { return qPitch; }
     void setQPitch(uint32_t qPitch) { this->qPitch = qPitch; }
-    size_t getHostPtrRowPitch() { return hostPtrRowPitch; }
+    size_t getHostPtrRowPitch() const { return hostPtrRowPitch; }
     void setHostPtrRowPitch(size_t pitch) { this->hostPtrRowPitch = pitch; }
-    size_t getHostPtrSlicePitch() { return hostPtrSlicePitch; }
+    size_t getHostPtrSlicePitch() const { return hostPtrSlicePitch; }
     void setHostPtrSlicePitch(size_t pitch) { this->hostPtrSlicePitch = pitch; }
     size_t getImageCount() const { return imageCount; }
     void setImageCount(size_t imageCount) { this->imageCount = imageCount; }
@@ -171,7 +171,7 @@ class Image : public MemObj {
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
-    size_t calculateOffset(size_t rowPitch, size_t slicePitch, size_t *origin) const;
+    size_t calculateOffsetForMapping(size_t *origin) const override;
 
     const bool isTiledImage;
 

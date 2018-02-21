@@ -1189,7 +1189,10 @@ bool Image::hasAlphaChannel(const cl_image_format *imageFormat) {
            (channelOrder == CL_ABGR);
 }
 
-size_t Image::calculateOffset(size_t rowPitch, size_t slicePitch, size_t *origin) const {
+size_t Image::calculateOffsetForMapping(size_t *origin) const {
+    size_t rowPitch = mappingOnCpuAllowed() ? imageDesc.image_row_pitch : getHostPtrRowPitch();
+    size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
+
     return getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + rowPitch * origin[1] + slicePitch * origin[2];
 }
 } // namespace OCLRT

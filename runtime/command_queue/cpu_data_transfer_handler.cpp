@@ -151,14 +151,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     if (transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE) {
-        size_t mapPtrOffset;
-        if (image) {
-            mapPtrOffset = image->calculateOffset(image->getImageDesc().image_row_pitch, image->getImageDesc().image_slice_pitch,
-                                                  transferProperties.offsetPtr);
-        } else {
-            mapPtrOffset = *transferProperties.offsetPtr;
-        }
-        returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(), mapPtrOffset);
+        returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
+                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offsetPtr));
         transferProperties.memObj->setMapInfo(returnPtr, transferProperties.sizePtr, transferProperties.offsetPtr);
     }
 
