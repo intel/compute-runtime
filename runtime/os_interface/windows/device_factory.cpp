@@ -30,6 +30,7 @@
 #include "runtime/device/device.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sku_info/operations/sku_info_receiver.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 
@@ -82,6 +83,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidThreadLevelPreempt),
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuThreadGroupLevelPreempt),
                                                       static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidBatchPreempt));
+        tempHwInfos->capabilityTable.requiredPreemptionSurfaceSize = tempHwInfos->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
 
         // Instrumentation
         tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation && (adapterInfo->Caps.InstrumentationIsEnabled != 0);

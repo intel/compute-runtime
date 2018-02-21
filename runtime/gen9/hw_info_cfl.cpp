@@ -23,6 +23,7 @@
 #include "hw_info_cfl.h"
 #include "hw_cmds.h"
 #include "runtime/helpers/engine_node.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 
@@ -59,11 +60,12 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     {true, false},
     &isSimulationCFL,
     true,
-    true,                  // forceStatelessCompilationFor32Bit
-    false,                 // EnableKmdNotify
-    30000,                 // delayKmdNotifyMicroseconds
-    true,                  // ftr64KBpages
-    EngineType::ENGINE_RCS // defaultEngineType
+    true,                     // forceStatelessCompilationFor32Bit
+    false,                    // EnableKmdNotify
+    30000,                    // delayKmdNotifyMicroseconds
+    true,                     // ftr64KBpages
+    EngineType::ENGINE_RCS,   // defaultEngineType
+    MemoryConstants::pageSize //requiredPreemptionSurfaceSize
 };
 
 const HardwareInfo CFL_1x2x6::hwInfo = {

@@ -23,6 +23,7 @@
 #include "hw_info_glk.h"
 #include "hw_cmds.h"
 #include "runtime/helpers/engine_node.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 
@@ -59,11 +60,12 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     {true, false},
     &isSimulationGLK,
     true,
-    false,                 // forceStatelessCompilationFor32Bit
-    true,                  // EnableKmdNotify
-    30000,                 // delayKmdNotifyMicroseconds
-    false,                 // ftr64KBpages
-    EngineType::ENGINE_RCS // defaultEngineType
+    false,                    // forceStatelessCompilationFor32Bit
+    true,                     // EnableKmdNotify
+    30000,                    // delayKmdNotifyMicroseconds
+    false,                    // ftr64KBpages
+    EngineType::ENGINE_RCS,   // defaultEngineType
+    MemoryConstants::pageSize //requiredPreemptionSurfaceSize
 };
 
 const HardwareInfo GLK_1x3x6::hwInfo = {

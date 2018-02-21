@@ -23,6 +23,7 @@
 #include "hw_info_bxt.h"
 #include "hw_cmds.h"
 #include "runtime/helpers/engine_node.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 
@@ -64,11 +65,12 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     {true, false},
     &isSimulationBXT,
     true,
-    false,                 // forceStatelessCompilationFor32Bit
-    false,                 // EnableKmdNotify
-    30000,                 // delayKmdNotifyMicroseconds
-    false,                 // ftr64KBpages
-    EngineType::ENGINE_RCS // defaultEngineType
+    false,                    // forceStatelessCompilationFor32Bit
+    false,                    // EnableKmdNotify
+    30000,                    // delayKmdNotifyMicroseconds
+    false,                    // ftr64KBpages
+    EngineType::ENGINE_RCS,   // defaultEngineType
+    MemoryConstants::pageSize //requiredPreemptionSurfaceSize
 };
 
 const HardwareInfo BXT_1x2x6::hwInfo = {

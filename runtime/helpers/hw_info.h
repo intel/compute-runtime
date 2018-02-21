@@ -69,6 +69,8 @@ struct RuntimeCapabilityTable {
     bool ftr64KBpages;
 
     EngineType defaultEngineType;
+
+    size_t requiredPreemptionSurfaceSize;
 };
 
 struct HardwareCapabilities {

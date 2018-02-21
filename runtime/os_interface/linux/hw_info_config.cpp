@@ -28,6 +28,7 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/cpu_info.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 #include <cstring>
 
@@ -180,6 +181,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                   static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidThreadLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuThreadGroupLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidBatchPreempt) && preemption);
+    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
 
     outHwInfo->capabilityTable.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
                                                      ? !!DebugManager.flags.OverrideEnableKmdNotify.get()

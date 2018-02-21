@@ -24,6 +24,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_library.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
@@ -130,5 +131,15 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
     int32_t actualEngineType = static_cast<int32_t>(hwInfoOverriden->capabilityTable.defaultEngineType);
     EXPECT_EQ(debugEngineType, actualEngineType);
 
+    DeviceFactory::releaseDevices();
+}
+
+TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSurfaceSizeIsSettedProperly) {
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    ASSERT_TRUE(success);
+
+    EXPECT_EQ(hwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
     DeviceFactory::releaseDevices();
 }
