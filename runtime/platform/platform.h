@@ -66,7 +66,7 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();
-    void createAsyncEventsHandler(AsyncEventsHandler *handler);
+    std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
 
   protected:
     enum {

@@ -261,19 +261,20 @@ TEST_F(AsyncEventsHandlerTests, callToWakeupAndDeletedWhenDestructed) {
 TEST_F(AsyncEventsHandlerTests, givenReadyEventWhenCallbackIsAddedThenDontOpenThread) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
     auto myHandler = new MockHandler(true);
-    platform()->createAsyncEventsHandler(myHandler);
+    auto oldHandler = platform()->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(myHandler));
     event1->setTaskStamp(0, 0);
     event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
 
     EXPECT_EQ(platform()->getAsyncEventsHandler(), myHandler);
     EXPECT_FALSE(event1->peekHasCallbacks());
     EXPECT_FALSE(myHandler->openThreadCalled);
+    platform()->setAsyncEventsHandler(std::move(oldHandler));
 }
 
 TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegister) {
     DebugManager.flags.EnableAsyncEventsHandler.set(true);
     auto myHandler = new MockHandler(true);
-    platform()->createAsyncEventsHandler(myHandler);
+    auto oldHandler = platform()->setAsyncEventsHandler(std::unique_ptr<MockHandler>(myHandler));
 
     UserEvent userEvent;
     userEvent.addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
@@ -282,6 +283,8 @@ TEST_F(AsyncEventsHandlerTests, givenUserEventWhenCallbackIsAddedThenDontRegiste
     EXPECT_TRUE(handler->peekIsRegisterListEmpty());
     EXPECT_TRUE(userEvent.peekHasCallbacks());
     userEvent.decRefInternal();
+
+    platform()->setAsyncEventsHandler(std::move(oldHandler));
 }
 
 TEST_F(AsyncEventsHandlerTests, givenRegistredEventsWhenProcessIsCalledThenReturnCandidateWithLowestTaskCount) {

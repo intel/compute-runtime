@@ -45,7 +45,7 @@ Platform *platform() { return &platformImpl; }
 
 Platform::Platform() {
     devices.reserve(64);
-    createAsyncEventsHandler(new AsyncEventsHandler());
+    setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(new AsyncEventsHandler()));
 }
 
 Platform::~Platform() {
@@ -238,8 +238,9 @@ AsyncEventsHandler *Platform::getAsyncEventsHandler() {
     return asyncEventsHandler.get();
 }
 
-void Platform::createAsyncEventsHandler(AsyncEventsHandler *handler) {
-    asyncEventsHandler.reset(handler);
+std::unique_ptr<AsyncEventsHandler> Platform::setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler) {
+    asyncEventsHandler.swap(handler);
+    return handler;
 }
 
 } // namespace OCLRT

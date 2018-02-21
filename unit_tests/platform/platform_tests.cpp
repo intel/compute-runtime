@@ -109,7 +109,7 @@ TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {
 
     MockHandler *mockAsyncHandler = new MockHandler;
 
-    platform->createAsyncEventsHandler(mockAsyncHandler);
+    auto oldHandler = platform->setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(mockAsyncHandler));
     EXPECT_EQ(mockAsyncHandler, platform->getAsyncEventsHandler());
 
     mockAsyncHandler->openThread();
