@@ -43,7 +43,15 @@ std::string getRunPath(char *argv0) {
 
     auto pos = res.rfind(fSeparator);
     if (pos != std::string::npos)
-        return res.substr(0, pos);
+        res = res.substr(0, pos);
+
+    if (res == "." || pos == std::string::npos) {
+#if defined(__linux__)
+        res = getcwd(nullptr, 0);
+#else
+        res = _getcwd(nullptr, 0);
+#endif
+    }
 
     return res;
 }
@@ -95,6 +103,18 @@ int main(int argc, char **argv) {
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;
+
+#ifdef WIN32
+#include <direct.h>
+    if (_chdir(devicePrefix.c_str())) {
+        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#elif defined(__linux__)
+#include <unistd.h>
+    if (chdir(devicePrefix.c_str()) != 0) {
+        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#endif
 
     if (useDefaultListener == false) {
         ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();

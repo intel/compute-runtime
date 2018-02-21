@@ -272,11 +272,13 @@ int main(int argc, char **argv) {
 
 #ifdef WIN32
 #include <direct.h>
-    _chdir(hardwarePrefix[productFamily]);
+    if (_chdir(hardwarePrefix[productFamily])) {
+        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
+    }
 #elif defined(__linux__)
 #include <unistd.h>
     if (chdir(hardwarePrefix[productFamily]) != 0) {
-        std::cout << "chdir failed! Ignoring." << std::endl;
+        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
 
