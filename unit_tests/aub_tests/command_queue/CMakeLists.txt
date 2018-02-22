@@ -33,5 +33,4 @@ target_sources(igdrcl_aub_tests PUBLIC
     "${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_buffer_aub_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_buffer_rect_aub_tests.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image_aub_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/run_kernel_aub_tests.cpp"
 )

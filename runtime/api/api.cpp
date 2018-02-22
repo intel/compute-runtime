@@ -23,9 +23,7 @@
 #include "config.h"
 #include "api.h"
 #include "CL/cl.h"
-#include "public/cl_vebox_intel.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
-#include "runtime/accelerators/vebox_accelerator.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -2815,14 +2813,6 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
         switch (acceleratorType) {
         case CL_ACCELERATOR_TYPE_MOTION_ESTIMATION_INTEL:
             accelerator = VmeAccelerator::create(
-                pContext,
-                acceleratorType,
-                descriptorSize,
-                descriptor,
-                retVal);
-            break;
-        case CL_ACCELERATOR_TYPE_VE_INTEL:
-            accelerator = VeboxAccelerator::create(
                 pContext,
                 acceleratorType,
                 descriptorSize,

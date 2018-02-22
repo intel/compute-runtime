@@ -326,12 +326,7 @@ void KernelInfo::storeKernelArgument(
     storeKernelArgPatchInfo(argNum, 0, 0, 0, offsetSurfaceState);
     kernelArgInfo[argNum].samplerArgumentType = pSamplerArgument->Type;
 
-    if (this->name == "ve_enhance_intel" ||
-        this->name == "ve_dn_enhance_intel" ||
-        this->name == "ve_dn_di_enhance_intel") {
-        kernelArgInfo[argNum].isAccelerator = true;
-        kernelArgInfo[argNum].samplerArgumentType = iOpenCL::SAMPLER_OBJECT_VE;
-    } else if (pSamplerArgument->Type != iOpenCL::SAMPLER_OBJECT_TEXTURE) {
+    if (pSamplerArgument->Type != iOpenCL::SAMPLER_OBJECT_TEXTURE) {
         DEBUG_BREAK_IF(pSamplerArgument->Type != iOpenCL::SAMPLER_OBJECT_VME &&
                        pSamplerArgument->Type != iOpenCL::SAMPLER_OBJECT_VE &&
                        pSamplerArgument->Type != iOpenCL::SAMPLER_OBJECT_VD);

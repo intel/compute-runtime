@@ -44,9 +44,6 @@ set(RUNTIME_SRCS_BUILT_IN_KERNELS
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_motion_estimate_intel.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vebox_ve_enhance_intel.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vebox_ve_dn_enhance_intel.igdrcl_built_in
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vebox_ve_dn_di_enhance_intel.igdrcl_built_in
   PARENT_SCOPE
 )
 

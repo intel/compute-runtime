@@ -27,7 +27,6 @@
 #include "unit_tests/aub_tests/fixtures/run_kernel_fixture.h"
 #include "CL/cl_ext.h"
 #include "CL/cl.h"
-#include "public/cl_vebox_intel.h"
 
 using namespace OCLRT;
 

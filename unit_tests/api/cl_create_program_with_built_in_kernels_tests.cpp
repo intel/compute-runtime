@@ -88,17 +88,11 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernels) {
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
 
     const char *kernelNamesString = {
-        "ve_dn_di_enhance_intel;"
         "block_advanced_motion_estimate_bidirectional_check_intel;"
         "block_motion_estimate_intel;"
-        "block_advanced_motion_estimate_check_intel;"
-        "ve_enhance_intel;"
-        "ve_dn_enhance_intel;"};
+        "block_advanced_motion_estimate_check_intel;"};
 
     const char *kernelNames[] = {
-        "ve_enhance_intel",
-        "ve_dn_enhance_intel",
-        "ve_dn_di_enhance_intel",
         "block_motion_estimate_intel",
         "block_advanced_motion_estimate_check_intel",
         "block_advanced_motion_estimate_bidirectional_check_intel",
@@ -129,35 +123,6 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, mediaKernels) {
 
     retVal = clReleaseProgram(program);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    CompilerInterface::shutdown();
-}
-
-TEST_F(clCreateProgramWithBuiltInKernelsTests, badMediaKernels) {
-    cl_int retVal = CL_SUCCESS;
-    auto pDev = castToObject<Device>(*devices);
-    overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
-
-    cl_program program = clCreateProgramWithBuiltInKernels(
-        pContext,                   // context
-        1,                          // num_devices
-        devices,                    // device_list
-        "ve_enhance_intel;badName", // kernel_names
-        &retVal);
-
-    restoreBuiltInBinaryName(pDev);
-    EXPECT_EQ(nullptr, program);
-    EXPECT_EQ(CL_INVALID_VALUE, retVal);
-
-    cl_kernel vebox_kernel = clCreateKernel(
-        program,
-        "ve_enhance_intel",
-        &retVal);
-    ASSERT_EQ(CL_INVALID_PROGRAM, retVal);
-    ASSERT_EQ(nullptr, vebox_kernel);
-
-    retVal = clReleaseProgram(program);
-    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     CompilerInterface::shutdown();
 }

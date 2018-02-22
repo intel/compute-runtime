@@ -22,9 +22,7 @@
 
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
-#include "runtime/accelerators/vebox_accelerator.h"
 #include "runtime/context/context.h"
-#include "public/cl_vebox_intel.h"
 #include "unit_tests/api/cl_api_tests.h"
 
 using namespace OCLRT;

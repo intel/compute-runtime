@@ -22,9 +22,7 @@
 
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
-#include "runtime/accelerators/vebox_accelerator.h"
 #include "runtime/context/context.h"
-#include "public/cl_vebox_intel.h"
 #include "unit_tests/api/cl_api_tests.h"
 
 using namespace OCLRT;
@@ -34,25 +32,6 @@ namespace ULT {
 struct IntelAcceleratorTest : public api_tests {
   public:
     IntelAcceleratorTest() {}
-
-    void SetUp() override {
-        api_tests::SetUp();
-    }
-
-    void TearDown() override {
-        api_tests::TearDown();
-    }
-
-  protected:
-    cl_accelerator_intel accelerator = nullptr;
-    cl_motion_estimation_desc_intel desc;
-    cl_int retVal = 0xEEEEEEEEu;
-    cl_int result = -1;
-};
-
-struct IntelVeboxAcceleratorTest : public api_tests {
-  public:
-    IntelVeboxAcceleratorTest() {}
 
     void SetUp() override {
         api_tests::SetUp();
@@ -151,35 +130,6 @@ struct IntelAcceleratorGetInfoTest : IntelAcceleratorTestWithValidDescriptor {
     size_t param_value_size_ret = 0;
 };
 
-struct IntelVeboxAcceleratorGetInfoTest : IntelVeboxAcceleratorTest {
-
-    IntelVeboxAcceleratorGetInfoTest() {}
-
-    void SetUp() override {
-        IntelVeboxAcceleratorTest::SetUp();
-
-        accelerator = clCreateAcceleratorINTEL(
-            pContext,
-            CL_ACCELERATOR_TYPE_VE_INTEL,
-            sizeof(cl_motion_estimation_desc_intel),
-            &desc,
-            &retVal);
-
-        ASSERT_NE(nullptr, accelerator);
-        ASSERT_EQ(CL_SUCCESS, retVal);
-    }
-
-    void TearDown() override {
-        result = clReleaseAcceleratorINTEL(accelerator);
-        ASSERT_EQ(CL_SUCCESS, result);
-
-        IntelVeboxAcceleratorTest::TearDown();
-    }
-
-  protected:
-    size_t param_value_size_ret = 0;
-};
-
 TEST_F(IntelAcceleratorTest, GivenNullAcceleratorThenFailApiGetInfo) {
     result = clGetAcceleratorInfoINTEL(
         nullptr, 0,
@@ -268,18 +218,6 @@ TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountWithShortReturnExpectFa
 }
 
 TEST_F(IntelAcceleratorGetInfoTest, GetInfoReferenceCountSizeQueryExpectPass) {
-    result = clGetAcceleratorInfoINTEL(
-        accelerator,
-        CL_ACCELERATOR_REFERENCE_COUNT_INTEL,
-        0,
-        nullptr,
-        &param_value_size_ret);
-
-    EXPECT_EQ(CL_SUCCESS, result);
-    EXPECT_EQ(sizeof(cl_uint), param_value_size_ret);
-}
-
-TEST_F(IntelVeboxAcceleratorGetInfoTest, GetVeboxInfoReferenceCountSizeQueryExpectPass) {
     result = clGetAcceleratorInfoINTEL(
         accelerator,
         CL_ACCELERATOR_REFERENCE_COUNT_INTEL,

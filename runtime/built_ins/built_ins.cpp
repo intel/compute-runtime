@@ -167,26 +167,10 @@ static const char *blockAdvancedMotionEstimateBidirectionalCheckIntelSrc = {
 #include "kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel_frontend.igdrcl_built_in"
 };
 
-// VEBOX:
-static const char *veEnhanceIntelSrc = {
-#include "kernels/vebox_ve_enhance_intel.igdrcl_built_in"
-};
-
-static const char *veDnEnhanceIntelSrc = {
-#include "kernels/vebox_ve_dn_enhance_intel.igdrcl_built_in"
-};
-
-static const char *veDnDiEnhanceIntelSrc = {
-#include "kernels/vebox_ve_dn_di_enhance_intel.igdrcl_built_in"
-};
-
 static const std::tuple<const char *, const char *> mediaBuiltIns[] = {
     std::make_tuple("block_motion_estimate_intel", blockMotionEstimateIntelSrc),
     std::make_tuple("block_advanced_motion_estimate_check_intel", blockAdvancedMotionEstimateCheckIntelSrc),
     std::make_tuple("block_advanced_motion_estimate_bidirectional_check_intel", blockAdvancedMotionEstimateBidirectionalCheckIntelSrc),
-    std::make_tuple("ve_enhance_intel", veEnhanceIntelSrc),
-    std::make_tuple("ve_dn_enhance_intel", veDnEnhanceIntelSrc),
-    std::make_tuple("ve_dn_di_enhance_intel", veDnDiEnhanceIntelSrc),
 };
 
 // Unlike other built-ins media kernels are not stored in BuiltIns object.

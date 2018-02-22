@@ -23,7 +23,6 @@
 #include "kernel.h"
 #include "runtime/accelerators/intel_accelerator.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
-#include "runtime/accelerators/vebox_accelerator.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"

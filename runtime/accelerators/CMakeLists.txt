@@ -24,6 +24,5 @@ set (RUNTIME_SRCS_ACCELERATORS
   ${CMAKE_CURRENT_SOURCE_DIR}/intel_accelerator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/intel_motion_estimation.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/vebox_accelerator.h
   PARENT_SCOPE
 )
