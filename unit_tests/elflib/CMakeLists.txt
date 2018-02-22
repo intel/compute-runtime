@@ -53,7 +53,6 @@ add_custom_command(
 add_dependencies(run_unit_tests run_elflib_tests)
 
 # The following filters are added to the VS IDE representation
-set_vs_props(elflib_tests)
 set_target_properties(elflib_tests PROPERTIES FOLDER "elflib")
 set_target_properties(run_elflib_tests PROPERTIES FOLDER "elflib")
 source_group("source files" FILES ${CLELFLIB_UNIT_TESTS_SRCS})

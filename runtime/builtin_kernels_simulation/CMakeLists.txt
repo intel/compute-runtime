@@ -68,7 +68,5 @@ target_include_directories(${BIKSIM_LIB_NAME} PRIVATE
   ${IGDRCL__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
 )
-
-set_vs_props(${BIKSIM_LIB_NAME})
 set_target_properties(${BIKSIM_LIB_NAME} PROPERTIES FOLDER "built_ins")
 target_compile_definitions(${BIKSIM_LIB_NAME} PUBLIC ${SUPPORTED_GEN_FLAGS_DEFINITONS} ${DEFAULT_GEN_PLATFORMS_DEFITIONS})

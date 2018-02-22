@@ -45,8 +45,6 @@ else()
   target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PUBLIC ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux)
 endif()
 
-set_vs_props(${SHARINGS_ENABLE_LIB_NAME})
-
 add_subdirectory(d3d)
 add_subdirectory(va)
 

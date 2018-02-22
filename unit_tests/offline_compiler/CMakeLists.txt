@@ -89,7 +89,6 @@ source_group("source files" FILES ${IGDRCL_SRCS_offline_compiler_tests})
 source_group("source files\\windows" FILES ${IGDRCL_SRCS_offline_compiler_tests_windows})
 source_group("source files\\mock" FILES ${IGDRCL_SRCS_offline_compiler_mock})
 
-set_vs_props(cloc_tests)
 set_target_properties(cloc_tests PROPERTIES FOLDER "offline_compiler")
 set_property(TARGET cloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 

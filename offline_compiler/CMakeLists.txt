@@ -113,7 +113,6 @@ endif(UNIX)
 target_link_libraries(cloc elflib)
 
 source_group("source files" FILES ${CLOC_SRCS})
-set_vs_props(cloc)
 set_target_properties(cloc PROPERTIES FOLDER "offline_compiler")
 set_property(TARGET cloc APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 

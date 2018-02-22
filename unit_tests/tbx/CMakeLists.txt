@@ -67,6 +67,5 @@ add_custom_command(
 )
 add_dependencies(run_unit_tests run_tbx_tests)
 
-set_vs_props(igdrcl_tbx_tests)
 set_target_properties(igdrcl_tbx_tests PROPERTIES FOLDER "opencl runtime")
 set_target_properties(run_tbx_tests PROPERTIES FOLDER "opencl runtime")
