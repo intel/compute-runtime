@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,6 +62,7 @@ SettingsFileReader::SettingsFileReader(const char *filePath) {
                     settingStringMap.insert(pair<string, string>(key, tempStringValue));
             }
 
+            ss.str(string()); // for reset string inside stringstream
             ss.clear();
             key.clear();
         }
@@ -96,4 +97,4 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
 
     return returnValue;
 }
-};
+}; // namespace OCLRT

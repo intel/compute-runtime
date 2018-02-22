@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -127,6 +127,21 @@ TEST(SettingsFileReader, GetStringSettingFromFile) {
     }
 #include "unit_tests/helpers/TestDebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
+}
+
+TEST(SettingsFileReader, givenDebugFileSettingInWhichStringIsFollowedByIntegerWhenItIsParsedThenProperValuesAreObtained) {
+    std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::stringTestPath));
+    ASSERT_NE(nullptr, reader.get());
+
+    int32_t retValue = 0;
+    int32_t returnedIntValue = reader->getSetting("IntTestKey", retValue);
+
+    EXPECT_EQ(1, returnedIntValue);
+
+    string retValueString;
+    string returnedStringValue = reader->getSetting("StringTestKey", retValueString);
+
+    EXPECT_STREQ(returnedStringValue.c_str(), "TestValue");
 }
 
 TEST(SettingsFileReader, GetSettingWhenNotInFile) {
