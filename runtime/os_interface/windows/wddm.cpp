@@ -696,6 +696,11 @@ D3DKMT_HANDLE Wddm::createContext() {
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
+
+    if (preemptionMode >= PreemptionMode::MidBatch) {
+        CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
+    }
+
     CreateContext.PrivateDriverDataSize = sizeof(PrivateData);
     CreateContext.NodeOrdinal = node;
     CreateContext.pPrivateDriverData = &PrivateData;
