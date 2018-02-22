@@ -90,6 +90,7 @@ else(MSVC)
     )
 endif(MSVC)
 
+add_subdirectory(gen8)
 add_subdirectory(gen9)
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/aub_tests/aub_tests_configuration.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -111,3 +112,42 @@ INSTANTIATE_TEST_CASE_P(AUBReadBuffer_simple,
                             1 * sizeof(cl_float),
                             2 * sizeof(cl_float),
                             3 * sizeof(cl_float)));
+
+HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
+    if (!GetAubTestsConfig<FamilyType>().testCanonicalAddress) {
+        return;
+    }
+
+    MockContext context;
+
+    cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
+    cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    GraphicsAllocation *srcAlocation = new GraphicsAllocation(srcMemory, 0xFFFF800400001000, 0xFFFF800400001000, sizeof(srcMemory));
+
+    std::unique_ptr<Buffer> srcBuffer(Buffer::createBufferHw(&context,
+                                                             CL_MEM_USE_HOST_PTR,
+                                                             sizeof(srcMemory),
+                                                             srcAlocation->getUnderlyingBuffer(),
+                                                             srcMemory,
+                                                             srcAlocation,
+                                                             false,
+                                                             false,
+                                                             false));
+    ASSERT_NE(nullptr, srcBuffer);
+
+    srcBuffer->forceDisallowCPUCopy = true;
+    auto retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                           CL_TRUE,
+                                           0,
+                                           sizeof(dstMemory),
+                                           dstMemory,
+                                           0,
+                                           nullptr,
+                                           nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    GraphicsAllocation *dstAllocation = pCommandStreamReceiver->createAllocationAndHandleResidency(dstMemory, sizeof(dstMemory));
+    cl_float *dstGpuAddress = reinterpret_cast<cl_float *>(dstAllocation->getGpuAddress());
+
+    AUBCommandStreamFixture::expectMemory<FamilyType>(dstGpuAddress, srcMemory, sizeof(dstMemory));
+}

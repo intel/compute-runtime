@@ -18,11 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-if(TESTS_GEN9)
-  add_subdirectory(batch_buffer)
-  add_subdirectory(execution_model)
-  add_subdirectory(skl)
+if(TESTS_GEN8)
   target_sources(igdrcl_aub_tests PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   )
-endif(TESTS_GEN9)
+endif(TESTS_GEN8)

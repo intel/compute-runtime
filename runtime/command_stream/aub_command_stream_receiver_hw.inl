@@ -26,6 +26,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include <cstring>
 
 namespace OCLRT {
@@ -405,7 +406,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfx
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-    auto gpuAddress = gfxAllocation.getGpuAddress();
+    auto gpuAddress = Gmm::decanonize(gfxAllocation.getGpuAddress());
     auto size = gfxAllocation.getUnderlyingBufferSize();
     auto allocType = gfxAllocation.getAllocationType();
 
