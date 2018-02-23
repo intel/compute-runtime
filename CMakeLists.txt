@@ -249,29 +249,33 @@ else(ARTIFACTS_DIR)
 	endif()
 	set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 
-	if(IGC_DIR)
-		get_filename_component(IGC_DIR "${IGC_DIR}" ABSOLUTE)
-	else(IGC_DIR)
-		get_filename_component(IGC_DIR_tmp "${CMAKE_SOURCE_DIR}/../igc" ABSOLUTE)
-		if(IS_DIRECTORY "${IGC_DIR_tmp}")
-			set(IGC_DIR "${IGC_DIR_tmp}")
+# Intel Graphics Compiler detection
+	if(NOT IGC__IGC_TARGETS)
+		if(IGC_DIR)
+			get_filename_component(IGC_DIR "${IGC_DIR}" ABSOLUTE)
+		else(IGC_DIR)
+			get_filename_component(IGC_DIR_tmp "${CMAKE_SOURCE_DIR}/../igc" ABSOLUTE)
+			if(IS_DIRECTORY "${IGC_DIR_tmp}")
+				set(IGC_DIR "${IGC_DIR_tmp}")
+			endif()
 		endif()
-	endif()
-	message(STATUS "IGC source dir is: ${IGC_DIR}")
-	get_filename_component(IGC_PATH "${IGDRCL_BUILD_DIR}/igc" ABSOLUTE)
-	if(IS_DIRECTORY ${IGC_DIR})
+		if(NOT IS_DIRECTORY "${IGC_DIR}")
+			message(FATAL_ERROR "Intel Graphics Compiler not found!")
+		endif()
+
+		message(STATUS "IGC source dir is: ${IGC_DIR}")
+
 		set(IGC_OPTION__LIBRARY_NAME "igdccl")
-		set(IGC_OPTION__OUTPUT_DIR "${IGC_PATH}")
+		set(IGC_OPTION__OUTPUT_DIR "${IGDRCL_BUILD_DIR}/igc")
 		set(IGC_OPTION__INCLUDE_IGC_COMPILER_TOOLS OFF)
 		add_subdirectory("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
-
-		set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
-
-		foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
-			list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
-		endforeach(TARGET_tmp)
-		message(STATUS "IGC Includes: ${IGDRCL__IGC_INCLUDE_DIR}")
 	endif()
+
+	set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
+	foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+		list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
+	endforeach(TARGET_tmp)
+	message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
 
   if(INSTRUMENTATION_SOURCE_DIR)
     get_filename_component(INSTRUMENTATION_SOURCE_DIR "${INSTRUMENTATION_SOURCE_DIR}" ABSOLUTE)
@@ -289,11 +293,6 @@ else(ARTIFACTS_DIR)
 endif(ARTIFACTS_DIR)
 
 add_definitions(-DGMM_OCL)
-
-if(IGC_PATH)
-	get_filename_component(IGC_PATH "${IGC_PATH}" ABSOLUTE)
-	message(STATUS "IGC binaries path: ${IGC_PATH}")
-endif(IGC_PATH)
 
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
