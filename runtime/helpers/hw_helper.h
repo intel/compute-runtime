@@ -33,15 +33,15 @@ struct HardwareCapabilities;
 class HwHelper {
   public:
     static HwHelper &get(GFXCORE_FAMILY gfxCore);
-    virtual uint32_t getBindingTableStateSurfaceStatePointer(void *pBindingTable, uint32_t index);
-    virtual size_t getBindingTableStateSize() const;
-    virtual uint32_t getBindingTableStateAlignement() const;
-    virtual size_t getInterfaceDescriptorDataSize() const;
-    virtual size_t getMaxBarrierRegisterPerSlice() const;
-    virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag);
-    virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable);
-    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo);
-    virtual void setupHardwareCapabilities(HardwareCapabilities *caps);
+    virtual uint32_t getBindingTableStateSurfaceStatePointer(void *pBindingTable, uint32_t index) = 0;
+    virtual size_t getBindingTableStateSize() const = 0;
+    virtual uint32_t getBindingTableStateAlignement() const = 0;
+    virtual size_t getInterfaceDescriptorDataSize() const = 0;
+    virtual size_t getMaxBarrierRegisterPerSlice() const = 0;
+    virtual void setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) = 0;
+    virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) = 0;
+    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
+    virtual void setupHardwareCapabilities(HardwareCapabilities *caps) = 0;
 
   protected:
     HwHelper(){};

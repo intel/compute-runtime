@@ -28,36 +28,4 @@ HwHelper *hwHelperFactory[IGFX_MAX_CORE] = {};
 HwHelper &HwHelper::get(GFXCORE_FAMILY gfxCore) {
     return *hwHelperFactory[gfxCore];
 }
-
-uint32_t HwHelper::getBindingTableStateSurfaceStatePointer(void *pBindingTable, uint32_t index) {
-    return 0;
-}
-size_t HwHelper::getBindingTableStateSize() const {
-    return 0;
-}
-uint32_t HwHelper::getBindingTableStateAlignement() const {
-    return 0;
-}
-
-size_t HwHelper::getInterfaceDescriptorDataSize() const {
-    return 0;
-}
-
-size_t HwHelper::getMaxBarrierRegisterPerSlice() const {
-    return 0;
-}
-
-void HwHelper::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
-}
-
-bool HwHelper::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
-    return false;
-}
-
-void HwHelper::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
-}
-
-void HwHelper::setupHardwareCapabilities(HardwareCapabilities *caps) {
-}
-
 } // namespace OCLRT

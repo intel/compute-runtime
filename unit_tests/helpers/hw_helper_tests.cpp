@@ -37,39 +37,9 @@ void HwHelperTest::SetUp() {
 void HwHelperTest::TearDown() {
 }
 
-HWTEST_F(HwHelperTest, getReturnsValidHwHelper) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
-}
-
 HWTEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
-}
-
-HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerOnHwHelperReturnsZero) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getBindingTableStateSurfaceStatePointer(nullptr, 0));
-}
-
-HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsZero) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getBindingTableStateSize());
-}
-
-HWTEST_F(HwHelperTest, getBindingTableStateAlignement) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getBindingTableStateAlignement());
-}
-
-HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsZero) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getInterfaceDescriptorDataSize());
-}
-
-HWTEST_F(HwHelperTest, getMaxBarriersPerSliceReturnsZero) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(0u, helper.getMaxBarrierRegisterPerSlice());
 }
 
 HWTEST_F(HwHelperTest, getBindingTableStateSurfaceStatePointerReturnsCorrectPointer) {
@@ -103,42 +73,6 @@ HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsCorrectSize) {
     auto &helper = HwHelper::get(renderCoreFamily);
 
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), helper.getInterfaceDescriptorDataSize());
-}
-
-HWTEST_F(HwHelperTest, setCapabilityCoherencyFlagDummy) {
-    bool coherency = false;
-
-    auto helper = HwHelper::get(renderCoreFamily);
-    helper.setCapabilityCoherencyFlag(&hwInfo, coherency);
-}
-
-HWTEST_F(HwHelperTest, setupPreemptionRegistersDummy) {
-    bool preemption = false;
-    auto helper = HwHelper::get(renderCoreFamily);
-    helper.setupPreemptionRegisters(&hwInfo, preemption);
-}
-
-HWTEST_F(HwHelperTest, adjustDefaultEngineTypeDummy) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hwInfo);
-}
-
-HWTEST_F(HwHelperTest, setupHardwareCapabilitiesDummy) {
-    auto helper = HwHelper::get(renderCoreFamily);
-    HardwareCapabilities hwCaps;
-    hwCaps.image3DMaxHeight = 123u;
-    hwCaps.image3DMaxWidth = 456u;
-    helper.setupHardwareCapabilities(&hwCaps);
-
-    EXPECT_EQ(123u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(456u, hwCaps.image3DMaxWidth);
-
-    hwCaps.image3DMaxHeight = 789u;
-    hwCaps.image3DMaxWidth = 987u;
-    helper.setupHardwareCapabilities(&hwCaps);
-
-    EXPECT_EQ(789u, hwCaps.image3DMaxHeight);
-    EXPECT_EQ(987u, hwCaps.image3DMaxWidth);
 }
 
 TEST(DwordBuilderTest, setNonMaskedBits) {
