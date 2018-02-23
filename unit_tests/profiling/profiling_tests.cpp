@@ -94,7 +94,7 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfilingAndForWorkloadWithKernelW
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
-    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 4 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
+    uint64_t requiredSize = 2 * sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM) + sizeof(GPGPU_WALKER) + KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
 
     auto &commandStreamNDRangeKernel = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, true, false, nullptr);
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(true, false, *pCmdQ, nullptr);
@@ -199,7 +199,7 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueWithProfolingWHENWalkerIsDispatchedTHE
 }
 
 /*
-#   Two additional MI_STORE_REGISTER_MEM are expected before and after GPGPU_WALKER.
+#   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
 */
 
 HWTEST_F(ProfilingTests, GIVENCommandQueueWithProflingWHENWalkerIsDispatchedTHENMiStoreRegisterMemIsPresentInCS) {
@@ -235,9 +235,6 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueWithProflingWHENWalkerIsDispatchedTHEN
     auto itorBeforeMI = reverse_find<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
     ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pBeforeMI->getRegisterAddress());
-    ++itorBeforeMI;
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
     EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
@@ -249,8 +246,7 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueWithProflingWHENWalkerIsDispatchedTHEN
     EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
     ++itorAfterMI;
     pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
-    ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pAfterMI->getRegisterAddress());
+    EXPECT_EQ(nullptr, pAfterMI);
 
     clReleaseEvent(event);
 }
@@ -312,7 +308,7 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueBlockedWithProfilingWHENWalkerIsDispat
 }
 
 /*
-#   Two additional MI_STORE_REGISTER_MEM are expected before and after GPGPU_WALKER.
+#   One additional MI_STORE_REGISTER_MEM is expected before and after GPGPU_WALKER.
 #   If queue is blocked commands should be added to event
 */
 
@@ -355,9 +351,6 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueBlockedWithProfilingWHENWalkerIsDispat
     auto itorBeforeMI = reverse_find<MI_STORE_REGISTER_MEM *>(rItorGPGPUWalkerCmd, cmdList.rbegin());
     ASSERT_NE(cmdList.rbegin(), itorBeforeMI);
     auto pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
-    ASSERT_NE(nullptr, pBeforeMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pBeforeMI->getRegisterAddress());
-    ++itorBeforeMI;
     pBeforeMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorBeforeMI);
     ASSERT_NE(nullptr, pBeforeMI);
     EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pBeforeMI->getRegisterAddress());
@@ -368,10 +361,7 @@ HWTEST_F(ProfilingTests, GIVENCommandQueueBlockedWithProfilingWHENWalkerIsDispat
     ASSERT_NE(nullptr, pAfterMI);
     EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW, pAfterMI->getRegisterAddress());
     ++itorAfterMI;
-    pAfterMI = genCmdCast<MI_STORE_REGISTER_MEM *>(*itorAfterMI);
-    ASSERT_NE(nullptr, pAfterMI);
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pAfterMI->getRegisterAddress());
-
+    EXPECT_EQ(itorAfterMI, cmdList.end());
     clReleaseEvent(event);
     ((UserEvent *)ue)->release();
 }

@@ -171,13 +171,6 @@ void dispatchProfilingCommandsStart(
     *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
-
-    //hi part
-    TimeStampAddress += sizeof(uint32_t);
-    auto pMICmdHigh = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdHigh = MI_STORE_REGISTER_MEM::sInit();
-    pMICmdHigh->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH);
-    pMICmdHigh->setMemoryAddress(TimeStampAddress);
 }
 
 template <typename GfxFamily>
@@ -201,13 +194,6 @@ void dispatchProfilingCommandsEnd(
     *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(TimeStampAddress);
-
-    //hi part
-    TimeStampAddress += sizeof(uint32_t);
-    auto pMICmdHi = (MI_STORE_REGISTER_MEM *)commandStream->getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdHi = MI_STORE_REGISTER_MEM::sInit();
-    pMICmdHi->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH);
-    pMICmdHi->setMemoryAddress(TimeStampAddress);
 }
 
 template <typename GfxFamily>
@@ -870,7 +856,7 @@ struct EnqueueOperation {
                       sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
         size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
         if (reserveProfilingCmdsSpace) {
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         }
         if (reservePerfCounters) {
             //start cmds
