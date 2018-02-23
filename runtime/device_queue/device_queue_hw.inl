@@ -455,7 +455,7 @@ size_t DeviceQueueHw<GfxFamily>::getExecutionModelCleanupSectionSize() {
 template <typename GfxFamily>
 size_t DeviceQueueHw<GfxFamily>::getProfilingEndCmdsSize() {
     size_t size = 0;
-    size += sizeof(PIPE_CONTROL) + 2 * sizeof(MI_STORE_REGISTER_MEM);
+    size += sizeof(PIPE_CONTROL) + sizeof(MI_STORE_REGISTER_MEM);
     size += sizeof(MI_LOAD_REGISTER_IMM);
     return size;
 }

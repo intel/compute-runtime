@@ -22,4 +22,3 @@
 
 #pragma once
 static const unsigned int GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
-static const unsigned int GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH = 0x23AC;

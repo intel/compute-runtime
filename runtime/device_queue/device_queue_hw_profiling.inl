@@ -34,12 +34,5 @@ void DeviceQueueHw<GfxFamily>::addProfilingEndCmds(uint64_t timestampAddress) {
     *pMICmdLow = MI_STORE_REGISTER_MEM::sInit();
     pMICmdLow->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW);
     pMICmdLow->setMemoryAddress(timestampAddress);
-
-    //hi part
-    timestampAddress += sizeof(uint32_t);
-    auto pMICmdHigh = (MI_STORE_REGISTER_MEM *)slbCS.getSpace(sizeof(MI_STORE_REGISTER_MEM));
-    *pMICmdHigh = MI_STORE_REGISTER_MEM::sInit();
-    pMICmdHigh->setRegisterAddress(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH);
-    pMICmdHigh->setMemoryAddress(timestampAddress);
 }
 } // namespace OCLRT

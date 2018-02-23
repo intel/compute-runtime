@@ -101,12 +101,7 @@ GEN9TEST_F(Gen9DeviceQueueSlb, addProfilingEndcmds) {
     EXPECT_EQ(timestampAddress, pMICmdLow->getMemoryAddress());
 
     storeRegMemItor++;
-    ASSERT_NE(hwParser.cmdList.end(), storeRegMemItor);
-
-    MI_STORE_REGISTER_MEM *pMICmdHigh = (MI_STORE_REGISTER_MEM *)*storeRegMemItor;
-
-    EXPECT_EQ(GP_THREAD_TIME_REG_ADDRESS_OFFSET_HIGH, pMICmdHigh->getRegisterAddress());
-    EXPECT_EQ(timestampAddress + (uint64_t)sizeof(uint32_t), pMICmdHigh->getMemoryAddress());
+    EXPECT_EQ(hwParser.cmdList.end(), storeRegMemItor);
 
     delete mockDeviceQueueHw;
 }
