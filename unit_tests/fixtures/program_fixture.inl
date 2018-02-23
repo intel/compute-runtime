@@ -41,7 +41,6 @@ void ProgramFixture::CreateProgramFromBinary(cl_context context,
     testFile.append(pContext->getDevice(0)->getProductAbbrev());
     testFile.append(".bin");
     testFile.append(options);
-    ASSERT_EQ(true, fileExists(testFile));
 
     knownSourceSize = loadDataFromFile(
         testFile.c_str(),
