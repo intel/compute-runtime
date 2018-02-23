@@ -46,6 +46,8 @@ constexpr int ALU_REGISTER_R_SRCA = 0x20;
 constexpr int ALU_REGISTER_R_SRCB = 0x21;
 constexpr int ALU_REGISTER_R_ACCU = 0x31;
 
+constexpr unsigned int GP_THREAD_TIME_REG_ADDRESS_OFFSET_LOW = 0x23A8;
+
 template <typename GfxFamily>
 void applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode);
 

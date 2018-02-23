@@ -22,7 +22,6 @@
 
 #pragma once
 #include "runtime/context/context.h"
-#include "runtime/gen9/gen9_cmd_def.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/dispatch_walker_helper.h"
