@@ -28,12 +28,6 @@ endif (POLICY CMP0063)
 
 project (neo)
 
-#set (CMAKE_CXX_VISIBILITY_PRESET default)
-#set (CMAKE_VISIBILITY_INLINES_HIDDEN 1)
-
-# Support for Windows Universal Drivers
-ENABLE_WUD()
-
 if(NOT (TARGET ${BIKSIM_LIB_NAME}))
   add_subdirectory(builtin_kernels_simulation)
 endif(NOT (TARGET ${BIKSIM_LIB_NAME}))

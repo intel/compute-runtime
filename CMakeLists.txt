@@ -348,22 +348,6 @@ else()
   endif()
 endif()
 
-# Support for WUD
-macro(ENABLE_WUD)
-	if(MSVC)
-		set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
-		set(LINKER_FLAGS "")
-		foreach(IT kernel32.lib;user32.lib;gdi32.lib;advapi32.lib;ole32.lib;)
-			set(LINKER_FLAGS "${LINKER_FLAGS} /NODEFAULTLIB:${IT}")
-		endforeach()
-		set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
-		set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
-		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
-		add_definitions(-DUNICODE -D_UNICODE)
-		link_directories("${WDK_DIR}/Lib/${WindowsTargetPlatformVersion}/um/${NEO_ARCH}/")
-	endif(MSVC)
-endmacro(ENABLE_WUD)
-
 # Miscs options
 option(IGDRCL_GCOV "generate gcov report" OFF)
 option(HAVE_TBX_SERVER "Compile TBX server from TbxAccess library" OFF)
@@ -405,6 +389,18 @@ if(MSVC)
 		 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 	endif()
 	message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
+
+# Support for WUD
+	set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
+	set(LINKER_FLAGS "")
+	foreach(IT kernel32.lib;user32.lib;gdi32.lib;advapi32.lib;ole32.lib;)
+		set(LINKER_FLAGS "${LINKER_FLAGS} /NODEFAULTLIB:${IT}")
+	endforeach()
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINKER_FLAGS}")
+	set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${LINKER_FLAGS}")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LINKER_FLAGS}")
+	add_definitions(-DUNICODE -D_UNICODE)
+	link_directories("${WDK_DIR}/Lib/${WindowsTargetPlatformVersion}/um/${NEO_ARCH}/")
 else()
 	if(IGDRCL_GCOV)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage --coverage")
@@ -569,7 +565,7 @@ endmacro(generate_runtime_lib)
 
 set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
 set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
-set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll (when WUD-crosscompilation is disabled)
+set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll
 set(NEO_DLL_NAME_BASE "igdrcl")
 
 set(BIKSIM_LIB_NAME "biksim")
