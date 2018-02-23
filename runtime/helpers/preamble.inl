@@ -54,11 +54,7 @@ template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress) {
     typedef typename GfxFamily::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
-    // Add a PIPE_CONTROL w/ CS_stall
-    auto pPipeControl = (PIPE_CONTROL *)pCommandStream->getSpace(sizeof(PIPE_CONTROL));
-    *pPipeControl = PIPE_CONTROL::sInit();
-    pPipeControl->setCommandStreamerStallEnable(true);
-    setupPipeControlInFrontOfCommand(pPipeControl, &hwInfo, true);
+    addPipeControlBeforeVfeCmd(pCommandStream, &hwInfo);
 
     auto pMediaVfeState = (MEDIA_VFE_STATE *)pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE));
     *pMediaVfeState = MEDIA_VFE_STATE::sInit();

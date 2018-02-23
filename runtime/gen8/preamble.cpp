@@ -25,8 +25,11 @@
 namespace OCLRT {
 
 template <>
-void PreambleHelper<BDWFamily>::setupPipeControlInFrontOfCommand(void *pCmd, const HardwareInfo *hwInfo, bool isVfeCommand) {
-    ((BDWFamily::PIPE_CONTROL *)pCmd)->setDcFlushEnable(true);
+void PreambleHelper<BDWFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
+    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = PIPE_CONTROL::sInit();
+    pipeControl->setCommandStreamerStallEnable(true);
+    pipeControl->setDcFlushEnable(true);
 }
 
 template <>

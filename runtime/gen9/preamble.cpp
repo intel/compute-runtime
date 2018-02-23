@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,12 +55,14 @@ void PreambleHelper<SKLFamily>::programPipelineSelect(LinearStream *pCommandStre
 }
 
 template <>
-void PreambleHelper<SKLFamily>::setupPipeControlInFrontOfCommand(void *pCmd, const HardwareInfo *hwInfo, bool isVfeCommand) {
-    auto pPipeControl = (SKLFamily::PIPE_CONTROL *)pCmd;
-    if (isVfeCommand && hwInfo->pWaTable->waSendMIFLUSHBeforeVFE) {
-        pPipeControl->setRenderTargetCacheFlushEnable(true);
-        pPipeControl->setDepthCacheFlushEnable(true);
-        pPipeControl->setDcFlushEnable(true);
+void PreambleHelper<SKLFamily>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo) {
+    auto pipeControl = pCommandStream->getSpaceForCmd<PIPE_CONTROL>();
+    *pipeControl = PIPE_CONTROL::sInit();
+    pipeControl->setCommandStreamerStallEnable(true);
+    if (hwInfo->pWaTable->waSendMIFLUSHBeforeVFE) {
+        pipeControl->setRenderTargetCacheFlushEnable(true);
+        pipeControl->setDepthCacheFlushEnable(true);
+        pipeControl->setDcFlushEnable(true);
     }
 }
 
