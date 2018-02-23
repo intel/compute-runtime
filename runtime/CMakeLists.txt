@@ -302,9 +302,6 @@ target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC DEFAULT_PLATFORM=${DEFA
 
 link_directories(${GMM_LIB_PATHS})
 
-if(NOT GMMUMD_LIB_NAME)
-  set(GMMUMD_LIB_NAME "gmm_umd" CACHE STRING "name of gmm static library")
-endif()
 target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
 
 if(WIN32)
