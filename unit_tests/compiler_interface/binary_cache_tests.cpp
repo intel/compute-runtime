@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -226,7 +226,7 @@ TEST_F(BinaryCacheHashTests, testUnique) {
     TranslationArgs args;
     HardwareInfo hwInfo;
 
-    std::list<std::string> hashes;
+    std::set<std::string> hashes;
 
     PLATFORM p1 = {(PRODUCT_FAMILY)1};
     PLATFORM p2 = {(PRODUCT_FAMILY)2};
@@ -262,6 +262,11 @@ TEST_F(BinaryCacheHashTests, testUnique) {
         //        std::string("--some --different --options")
     }};
 
+    std::unique_ptr<char> buf1(new char[bufSize]);
+    std::unique_ptr<char> buf2(new char[bufSize]);
+    std::unique_ptr<char> buf3(new char[bufSize]);
+    std::unique_ptr<char> buf4(new char[bufSize]);
+
     for (auto platform : platforms) {
         hwInfo.pPlatform = platform;
 
@@ -272,25 +277,18 @@ TEST_F(BinaryCacheHashTests, testUnique) {
                 hwInfo.pWaTable = wa;
 
                 for (size_t i1 = 0; i1 < input.size(); i1++) {
-                    std::unique_ptr<char> buf1(new char[bufSize]);
                     strcpy_s(buf1.get(), bufSize, input[i1].c_str());
                     args.pInput = buf1.get();
                     args.InputSize = static_cast<uint32_t>(strlen(buf1.get()));
-
                     for (size_t i2 = 0; i2 < options.size(); i2++) {
-                        std::unique_ptr<char> buf2(new char[bufSize]);
                         strcpy_s(buf2.get(), bufSize, options[i2].c_str());
                         args.pOptions = buf2.get();
                         args.OptionsSize = static_cast<uint32_t>(strlen(buf2.get()));
-
                         for (size_t i3 = 0; i3 < internalOptions.size(); i3++) {
-                            std::unique_ptr<char> buf3(new char[bufSize]);
                             strcpy_s(buf3.get(), bufSize, internalOptions[i3].c_str());
                             args.pInternalOptions = buf3.get();
                             args.InternalOptionsSize = static_cast<uint32_t>(strlen(buf3.get()));
-
                             for (size_t i4 = 0; i4 < tracingOptions.size(); i4++) {
-                                std::unique_ptr<char> buf4(new char[bufSize]);
                                 strcpy_s(buf4.get(), bufSize, tracingOptions[i4].c_str());
                                 args.pTracingOptions = buf4.get();
                                 args.TracingOptionsCount = static_cast<uint32_t>(strlen(buf4.get()));
@@ -298,15 +296,11 @@ TEST_F(BinaryCacheHashTests, testUnique) {
                                 string hash = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
                                                                        ArrayRef<const char>(args.pOptions, args.OptionsSize),
                                                                        ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
-                                for (auto &in : hashes) {
-                                    EXPECT_STRNE(in.c_str(), hash.c_str()) << "failed: " << i1 << ":" << i2 << ":" << i3 << ":" << i4;
-                                }
-                                hashes.push_back(hash);
 
-                                string hash2 = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
-                                                                        ArrayRef<const char>(args.pOptions, args.OptionsSize),
-                                                                        ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
-                                EXPECT_STREQ(hash.c_str(), hash2.c_str());
+                                if (hashes.find(hash) != hashes.end()) {
+                                    FAIL() << "failed: " << i1 << ":" << i2 << ":" << i3 << ":" << i4;
+                                }
+                                hashes.emplace(hash);
                             }
                         }
                     }
@@ -314,6 +308,15 @@ TEST_F(BinaryCacheHashTests, testUnique) {
             }
         }
     }
+
+    string hash = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
+                                           ArrayRef<const char>(args.pOptions, args.OptionsSize),
+                                           ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+
+    string hash2 = cache->getCachedFileName(hwInfo, ArrayRef<const char>(args.pInput, args.InputSize),
+                                            ArrayRef<const char>(args.pOptions, args.OptionsSize),
+                                            ArrayRef<const char>(args.pInternalOptions, args.InternalOptionsSize));
+    EXPECT_STREQ(hash.c_str(), hash2.c_str());
 }
 
 TEST_F(BinaryCacheTests, doNotCacheEmpty) {
