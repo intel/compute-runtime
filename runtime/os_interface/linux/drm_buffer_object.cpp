@@ -162,8 +162,6 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.buffer_count = idx;
     execbuf.batch_start_offset = static_cast<uint32_t>(startOffset);
     execbuf.batch_len = alignUp(used, 8);
-    execbuf.cliprects_ptr = reinterpret_cast<uintptr_t>(nullptr);
-    execbuf.num_cliprects = 0;
     execbuf.flags = flags;
 
     if (drm->peekCoherencyDisablePatchActive() && !requiresCoherency) {
@@ -171,10 +169,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     }
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
-    } else {
-        execbuf.rsvd1 = 0 & I915_EXEC_CONTEXT_ID_MASK;
     }
-    execbuf.rsvd2 = 0;
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret != 0) {
@@ -199,18 +194,11 @@ int BufferObject::pin(BufferObject *boToPin) {
     memset(&execbuf, 0, sizeof(execbuf));
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObject);
     execbuf.buffer_count = 2;
-    execbuf.batch_start_offset = static_cast<uint32_t>(0);
     execbuf.batch_len = alignUp(static_cast<uint32_t>(sizeof(uint32_t)), 8);
-    execbuf.cliprects_ptr = reinterpret_cast<uintptr_t>(nullptr);
-    execbuf.num_cliprects = 0;
-    execbuf.flags = 0x0;
 
     if (drm->peekCoherencyDisablePatchActive()) {
         execbuf.flags = execbuf.flags | I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
     }
-
-    execbuf.rsvd1 = 0 & I915_EXEC_CONTEXT_ID_MASK;
-    execbuf.rsvd2 = 0;
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret != 0) {
