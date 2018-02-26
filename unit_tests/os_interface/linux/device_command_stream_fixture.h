@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,7 @@
 #include <iostream>
 #include "drm/i915_drm.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/os_interface/linux/drm_memory_manager.h"
 
 #define RENDER_DEVICE_NAME_MATCHER ::testing::StrEq("/dev/dri/renderD128")
 
@@ -100,6 +101,17 @@ class DrmMockCustom : public Drm {
     //DRM_IOCTL_I915_GEM_USERPTR
     __u32 returnHandle = 0;
     __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
+    //DRM_IOCTL_I915_GEM_MMAP
+    __u32 mmapHandle = 0;
+    __u32 mmapPad = 0;
+    __u64 mmapOffset = 0;
+    __u64 mmapSize = 0;
+    __u64 mmapAddrPtr = 0x7F4000001000;
+    __u64 mmapFlags = 0;
+    //DRM_IOCTL_I915_GEM_SET_DOMAIN
+    __u32 setDomainHandle = 0;
+    __u32 setDomainReadDomains = 0;
+    __u32 setDomainWriteDomain = 0;
 
     int ioctl(unsigned long request, void *arg) override {
         auto ext = ioctl_res_ext.load();
@@ -137,6 +149,21 @@ class DrmMockCustom : public Drm {
             auto aperture = (drm_i915_gem_get_aperture *)arg;
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
+        }
+        if (request == DRM_IOCTL_I915_GEM_MMAP) {
+            auto mmapParams = (drm_i915_gem_mmap *)arg;
+            mmapHandle = mmapParams->handle;
+            mmapPad = mmapParams->pad;
+            mmapOffset = mmapParams->offset;
+            mmapSize = mmapParams->size;
+            mmapFlags = mmapParams->flags;
+            mmapParams->addr_ptr = mmapAddrPtr;
+        }
+        if (request == DRM_IOCTL_I915_GEM_SET_DOMAIN) {
+            auto setDomainParams = (drm_i915_gem_set_domain *)arg;
+            setDomainHandle = setDomainParams->handle;
+            setDomainReadDomains = setDomainParams->read_domains;
+            setDomainWriteDomain = setDomainParams->write_domain;
         }
 
         if (ext->no != -1 && ext->no == ioctl_cnt.load()) {

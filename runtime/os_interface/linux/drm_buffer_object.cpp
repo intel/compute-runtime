@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,6 +53,7 @@ BufferObject::BufferObject(Drm *drm, int handle, bool isAllocated) : drm(drm), r
 
     this->size = 0;
     this->address = nullptr;
+    this->lockedAddress = nullptr;
     this->offset64 = 0;
 }
 
@@ -126,7 +127,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     this->stride = set_tiling.stride;
 
     return set_tiling.tiling_mode == mode;
-};
+}
 
 void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject) {
     execObject.handle = this->handle;

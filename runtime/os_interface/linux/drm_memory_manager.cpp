@@ -245,7 +245,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
 
     bo->setUnmapSize(imgInfo.size);
 
-    auto allocation = new DrmAllocation(bo, gpuRange, imgInfo.size);
+    auto allocation = new DrmAllocation(bo, nullptr, (uint64_t)gpuRange, imgInfo.size);
     bo->setAllocationType(MMAP_ALLOCATOR);
     allocation->gmm = gmm;
     return allocation;
@@ -444,7 +444,7 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 
     search->wait(-1);
     unreference(search);
-};
+}
 
 uint64_t DrmMemoryManager::getSystemSharedMemory() {
     uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
@@ -500,5 +500,78 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
 BufferObject *DrmMemoryManager::getPinBB() const {
     return pinBB;
+}
+
+bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable) {
+    DEBUG_BREAK_IF(writeEnable); //unsupported path (for CPU writes call SW_FINISH ioctl in unlockResource)
+
+    auto bo = static_cast<DrmAllocation *>(&graphicsAllocation)->getBO();
+    if (bo == nullptr)
+        return false;
+
+    // move a buffer object to the CPU read, and possibly write domain, including waiting on flushes to occur
+    struct drm_i915_gem_set_domain set_domain;
+    memset(&set_domain, 0, sizeof(set_domain));
+    set_domain.handle = bo->peekHandle();
+    set_domain.read_domains = I915_GEM_DOMAIN_CPU;
+    set_domain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
+    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN,
+                          &set_domain);
+    if (ret != 0)
+        return false;
+
+    return true;
+}
+
+void *DrmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
+    if (graphicsAllocation == nullptr)
+        return nullptr;
+
+    auto cpuPtr = graphicsAllocation->getUnderlyingBuffer();
+    if (cpuPtr != nullptr) {
+        auto success = setDomainCpu(*graphicsAllocation, false);
+        DEBUG_BREAK_IF(!success);
+        (void)success;
+        return cpuPtr;
+    }
+
+    auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
+    if (bo == nullptr)
+        return nullptr;
+
+    struct drm_i915_gem_mmap mmap_arg;
+    memset(&mmap_arg, 0, sizeof(mmap_arg));
+    mmap_arg.handle = bo->peekHandle();
+    mmap_arg.size = bo->peekSize();
+    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_MMAP,
+                          &mmap_arg);
+    if (ret != 0)
+        return nullptr;
+
+    bo->setLockedAddress(reinterpret_cast<void *>(mmap_arg.addr_ptr));
+
+    auto success = setDomainCpu(*graphicsAllocation, false);
+    DEBUG_BREAK_IF(!success);
+    (void)success;
+
+    return bo->peekLockedAddress();
+}
+
+void DrmMemoryManager::unlockResource(GraphicsAllocation *graphicsAllocation) {
+    if (graphicsAllocation == nullptr)
+        return;
+
+    auto cpuPtr = graphicsAllocation->getUnderlyingBuffer();
+    if (cpuPtr != nullptr) {
+        return;
+    }
+
+    auto bo = static_cast<DrmAllocation *>(graphicsAllocation)->getBO();
+    if (bo == nullptr)
+        return;
+
+    munmapFunction(bo->peekLockedAddress(), bo->peekSize());
+
+    bo->setLockedAddress(nullptr);
 }
 } // namespace OCLRT

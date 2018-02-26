@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,13 +69,15 @@ class BufferObject {
     }
     uint32_t getRefCount() const;
 
-    bool peekIsAllocated() { return isAllocated; }
-    size_t peekSize() { return size; }
-    int peekHandle() { return handle; }
-    void *peekAddress() { return address; }
+    bool peekIsAllocated() const { return isAllocated; }
+    size_t peekSize() const { return size; }
+    int peekHandle() const { return handle; }
+    void *peekAddress() const { return address; }
     void setAddress(void *address) { this->address = address; }
+    void *peekLockedAddress() const { return lockedAddress; }
+    void setLockedAddress(void *cpuAddress) { this->lockedAddress = cpuAddress; }
     void setUnmapSize(uint64_t unmapSize) { this->unmapSize = unmapSize; }
-    uint64_t peekUnmapSize() { return unmapSize; }
+    uint64_t peekUnmapSize() const { return unmapSize; }
     void swapResidencyVector(ResidencyVector *residencyVect) {
         std::swap(this->residency, *residencyVect);
     }
@@ -83,7 +85,7 @@ class BufferObject {
         execObjectsStorage = storage;
     }
     ResidencyVector *getResidency() { return &residency; }
-    StorageAllocatorType peekAllocationType() { return storageAllocatorType; }
+    StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
     void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
 
   protected:
@@ -110,6 +112,7 @@ class BufferObject {
     uint64_t offset64; // last-seen GPU offset
     size_t size;
     void *address; // GPU side virtual address
+    void *lockedAddress; // CPU side virtual address
 
     bool isAllocated = false;
     uint64_t unmapSize = 0;

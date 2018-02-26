@@ -57,8 +57,8 @@ class DrmMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
-    void *lockResource(GraphicsAllocation *graphicsAllocation) override { return nullptr; };
-    void unlockResource(GraphicsAllocation *graphicsAllocation) override{};
+    void *lockResource(GraphicsAllocation *graphicsAllocation) override;
+    void unlockResource(GraphicsAllocation *graphicsAllocation) override;
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
@@ -80,6 +80,7 @@ class DrmMemoryManager : public MemoryManager {
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
     BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin);
+    bool setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable);
 
     Drm *drm;
     BufferObject *pinBB;

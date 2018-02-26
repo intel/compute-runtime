@@ -78,6 +78,9 @@ int closeMock(int) {
 
 class TestedDrmMemoryManager : public DrmMemoryManager {
   public:
+    using DrmMemoryManager::allocUserptr;
+    using DrmMemoryManager::setDomainCpu;
+
     TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
@@ -103,10 +106,8 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         DrmMemoryManager::unreference(bo);
     }
 
-    BufferObject *allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin) {
-        return DrmMemoryManager::allocUserptr(address, size, flags, softpin);
-    }
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
+
     Allocator32bit *getDrmInternal32BitAllocator() { return internal32bitAllocator.get(); }
 };
 
@@ -1001,6 +1002,9 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     queryGmm.release();
 
     ASSERT_NE(nullptr, imageGraphicsAllocation);
+    EXPECT_NE(0u, imageGraphicsAllocation->getGpuAddress());
+    EXPECT_EQ(nullptr, imageGraphicsAllocation->getUnderlyingBuffer());
+
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
                 GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
 
@@ -1369,16 +1373,159 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHand
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockCalledThenDoNothing) {
-    mock->ioctl_expected = 3;
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
+    mock->ioctl_expected = 4;
     auto allocation = memoryManager->allocateGraphicsMemory(1, 1);
     ASSERT_NE(nullptr, allocation);
 
     auto ptr = memoryManager->lockResource(allocation);
-    EXPECT_EQ(nullptr, ptr);
+    EXPECT_NE(nullptr, ptr);
+
     memoryManager->unlockResource(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithCpuPtrThenReturnCpuPtrAndSetCpuDomain) {
+    mock->ioctl_expected = 4;
+    auto allocation = memoryManager->allocateGraphicsMemory(1, 1);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
+
+    auto ptr = memoryManager->lockResource(allocation);
+    EXPECT_EQ(allocation->getUnderlyingBuffer(), ptr);
+
+    //check DRM_IOCTL_I915_GEM_SET_DOMAIN input params
+    auto drmAllocation = (DrmAllocation *)allocation;
+    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->setDomainHandle);
+    EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainReadDomains);
+    EXPECT_EQ(0u, mock->setDomainWriteDomain);
+
+    memoryManager->unlockResource(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutCpuPtrThenReturnLockedPtrAndSetCpuDomain) {
+    mock->ioctl_expected = 6;
+    cl_image_desc imgDesc = {};
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imgDesc.image_width = 512;
+    imgDesc.image_height = 512;
+    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
+    imgInfo.imgDesc = &imgDesc;
+    imgInfo.size = 4096u;
+    imgInfo.rowPitch = 512u;
+
+    auto queryGmm = MockGmm::queryImgParams(imgInfo);
+    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
+    queryGmm.release();
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
+
+    auto ptr = memoryManager->lockResource(allocation);
+    EXPECT_NE(nullptr, ptr);
+
+    auto drmAllocation = (DrmAllocation *)allocation;
+    EXPECT_NE(nullptr, drmAllocation->getBO()->peekLockedAddress());
+
+    //check DRM_IOCTL_I915_GEM_MMAP input params
+    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->mmapHandle);
+    EXPECT_EQ(0u, mock->mmapPad);
+    EXPECT_EQ(0u, mock->mmapOffset);
+    EXPECT_EQ(drmAllocation->getBO()->peekSize(), mock->mmapSize);
+    EXPECT_EQ(0u, mock->mmapFlags);
+
+    //check DRM_IOCTL_I915_GEM_SET_DOMAIN input params
+    EXPECT_EQ((uint32_t)drmAllocation->getBO()->peekHandle(), mock->setDomainHandle);
+    EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainReadDomains);
+    EXPECT_EQ(0u, mock->setDomainWriteDomain);
+
+    memoryManager->unlockResource(allocation);
+    EXPECT_EQ(nullptr, drmAllocation->getBO()->peekLockedAddress());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnNullAllocationThenReturnNullPtr) {
+    GraphicsAllocation *allocation = nullptr;
+
+    auto ptr = memoryManager->lockResource(allocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager->unlockResource(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAllocationWithoutBufferObjectThenReturnNullPtr) {
+    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u);
+    EXPECT_EQ(nullptr, drmAllocation.getBO());
+
+    auto ptr = memoryManager->lockResource(&drmAllocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager->unlockResource(&drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFailsOnIoctlMmapThenReturnNullPtr) {
+    mock->ioctl_expected = 1;
+    this->ioctlResExt = {0, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+
+    DrmMockCustom drmMock;
+    struct BufferObjectMock : public BufferObject {
+        BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
+    };
+    BufferObjectMock bo(&drmMock);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    EXPECT_NE(nullptr, drmAllocation.getBO());
+
+    auto ptr = memoryManager->lockResource(&drmAllocation);
+    EXPECT_EQ(nullptr, ptr);
+
+    memoryManager->unlockResource(&drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
+    DrmAllocation drmAllocation(nullptr, nullptr, 0u, 0u);
+    EXPECT_EQ(nullptr, drmAllocation.getBO());
+
+    auto success = memoryManager->setDomainCpu(drmAllocation, false);
+    EXPECT_FALSE(success);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFailsOnIoctlSetDomainThenReturnFalse) {
+    mock->ioctl_expected = 1;
+    this->ioctlResExt = {0, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+
+    DrmMockCustom drmMock;
+    struct BufferObjectMock : public BufferObject {
+        BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
+    };
+    BufferObjectMock bo(&drmMock);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    EXPECT_NE(nullptr, drmAllocation.getBO());
+
+    auto success = memoryManager->setDomainCpu(drmAllocation, false);
+    EXPECT_FALSE(success);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationThenReturnSetWriteDomain) {
+    mock->ioctl_expected = 1;
+
+    DrmMockCustom drmMock;
+    struct BufferObjectMock : public BufferObject {
+        BufferObjectMock(Drm *drm) : BufferObject(drm, 1, true) {}
+    };
+    BufferObjectMock bo(&drmMock);
+    DrmAllocation drmAllocation(&bo, nullptr, 0u, 0u);
+    EXPECT_NE(nullptr, drmAllocation.getBO());
+
+    auto success = memoryManager->setDomainCpu(drmAllocation, true);
+    EXPECT_TRUE(success);
+
+    //check DRM_IOCTL_I915_GEM_SET_DOMAIN input params
+    EXPECT_EQ((uint32_t)drmAllocation.getBO()->peekHandle(), mock->setDomainHandle);
+    EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainReadDomains);
+    EXPECT_EQ((uint32_t)I915_GEM_DOMAIN_CPU, mock->setDomainWriteDomain);
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
