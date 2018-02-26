@@ -404,6 +404,9 @@ if(${GENERATE_EXECUTABLE})
 	  set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
 		APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl.exports"
 	  )
+	  set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
+		APPEND_STRING PROPERTY LINK_FLAGS " -Wl,-Bsymbolic"
+	  )
 	endif (UNIX)
 
 	set_target_properties(${NEO_DYNAMIC_LIB_NAME} PROPERTIES
