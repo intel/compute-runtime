@@ -66,7 +66,6 @@ if(UNIX)
       message(STATUS "Taking ICD library from ${ICD_LIB_DIR}")
     else()
       get_filename_component(IGDRCL_PARENT_DIR ${IGDRCL_SOURCE_DIR} DIRECTORY)
-      message(WARNING "Missing Khronos ICD library. Generated package (.rpm, .deb, .tar.xz) may be incomple.\nPlease download Khronos ICD loader to ${IGDRCL_PARENT_DIR} and build it, or point directory containing library libOpenCL.so using ICD_LIB_DIR.")
     endif()
   endif()
 
