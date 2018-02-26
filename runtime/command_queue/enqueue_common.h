@@ -536,7 +536,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
-    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler);
+    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler) || multiDispatchInfo.begin()->getKernel()->isUsingSharedObjArgs();
     dispatchFlags.useSLM = slmUsed;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.GSBA32BitRequired = commandType == CL_COMMAND_NDRANGE_KERNEL;

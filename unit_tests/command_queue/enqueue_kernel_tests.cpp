@@ -1467,6 +1467,19 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
     clReleaseCommandQueue(inOrderQueue);
 }
 
+HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlHasDcFlushSet) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+    mockKernel.mockKernel->setUsingSharedArgs(true);
+    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
+}
+
 HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeThenPipeControlPositionIsNotRecorded) {
     const cl_queue_properties props[] = {0};
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
