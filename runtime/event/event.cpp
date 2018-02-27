@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "public/cl_ext_private.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -195,23 +196,21 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
         srcSize = sizeof(cl_ulong);
         break;
 
-#if defined(CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL)
-        case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
-            if (!perfCountersEnabled) {
-                return CL_INVALID_VALUE;
-            }
-            if (!cmdQueue->getPerfCounters()->processEventReport(paramValueSize,
-                                                                 paramValue,
-                                                                 paramValueSizeRet,
-                                                                 getHwPerfCounter(),
-                                                                 perfConfigurationData,
-                                                                 updateStatusAndCheckCompletion())) {
-                return CL_PROFILING_INFO_NOT_AVAILABLE;
-            }
-            return CL_SUCCESS;
-#endif
-        default:
+    case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
+        if (!perfCountersEnabled) {
             return CL_INVALID_VALUE;
+        }
+        if (!cmdQueue->getPerfCounters()->processEventReport(paramValueSize,
+                                                             paramValue,
+                                                             paramValueSizeRet,
+                                                             getHwPerfCounter(),
+                                                             perfConfigurationData,
+                                                             updateStatusAndCheckCompletion())) {
+            return CL_PROFILING_INFO_NOT_AVAILABLE;
+        }
+        return CL_SUCCESS;
+    default:
+        return CL_INVALID_VALUE;
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,3 +42,9 @@
 #define CL_KERNEL_BINARY_PROGRAM_INTEL 0x407D
 #define CL_KERNEL_BINARIES_INTEL 0x4102
 #define CL_KERNEL_BINARY_SIZES_INTEL 0x4103
+
+/***************************************
+ * * event properties for performance counter *
+ * ****************************************/
+/* performance counter */
+#define CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL 0x407F

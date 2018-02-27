@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "cl_api_tests.h"
+#include "public/cl_ext_private.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
 #include "runtime/event/user_event.h"
+#include "unit_tests/api/cl_api_tests.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "test.h"
 
@@ -288,7 +289,6 @@ TEST_F(clEventProfilingWithPerfCountersTests, clGetEventProfilingInfoGetPerfCoun
     bool Result = pEvent->isPerfCountersEnabled();
     EXPECT_FALSE(Result);
 
-#if defined(CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL)
     cl_event event = (cl_event)pEvent;
     cl_ulong param_value = 0;
     size_t param_value_size_ret;
@@ -315,7 +315,6 @@ TEST_F(clEventProfilingWithPerfCountersTests, clGetEventProfilingInfoGetPerfCoun
                                      &param_value,
                                      &param_value_size_ret);
     EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, retVal);
-#endif
 
     delete pEvent;
     delete pCommandQueue;
