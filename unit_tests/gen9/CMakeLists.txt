@@ -93,7 +93,7 @@ if(TESTS_CFL)
   )
 
   list(APPEND IGDRCL_SRCS_linux_dll_tests_gen9
-      ${CMAKE_CURRENT_SOURCE_DIR}/cfl/linux/dll/device_id_tests.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/cfl/linux/dll/${BRANCH_DIR_SUFFIX}/device_id_tests.cpp
   )
   endif(NOT MSVC)
 endif()
