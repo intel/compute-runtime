@@ -153,12 +153,9 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
                                     size_t paramValueSize,
                                     void *paramValue,
                                     size_t *paramValueSizeRet) {
-    if (paramValueSize < sizeof(cl_ulong) && paramValue)
-        return CL_INVALID_VALUE;
-
-    if (paramValueSizeRet) {
-        *paramValueSizeRet = sizeof(cl_ulong);
-    }
+    cl_int retVal;
+    const void *src = nullptr;
+    size_t srcSize = 0;
 
     // CL_PROFILING_INFO_NOT_AVAILABLE if event refers to the clEnqueueSVMFree command
     if (isUserEvent() != CL_FALSE ||         // or is a user event object.
@@ -169,30 +166,35 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     }
 
     // if paramValue is NULL, it is ignored
-    if (paramValue) {
-        switch (paramName) {
-        case CL_PROFILING_COMMAND_QUEUED:
-            *((uint64_t *)paramValue) = queueTimeStamp.CPUTimeinNS;
-            return CL_SUCCESS;
+    switch (paramName) {
+    case CL_PROFILING_COMMAND_QUEUED:
+        src = &queueTimeStamp.CPUTimeinNS;
+        srcSize = sizeof(cl_ulong);
+        break;
 
-        case CL_PROFILING_COMMAND_SUBMIT:
-            *((uint64_t *)paramValue) = submitTimeStamp.CPUTimeinNS;
-            return CL_SUCCESS;
+    case CL_PROFILING_COMMAND_SUBMIT:
+        src = &submitTimeStamp.CPUTimeinNS;
+        srcSize = sizeof(cl_ulong);
+        break;
 
-        case CL_PROFILING_COMMAND_START:
-            calcProfilingData();
-            *((uint64_t *)paramValue) = startTimeStamp;
-            return CL_SUCCESS;
+    case CL_PROFILING_COMMAND_START:
+        calcProfilingData();
+        src = &startTimeStamp;
+        srcSize = sizeof(cl_ulong);
+        break;
 
-        case CL_PROFILING_COMMAND_END:
-            calcProfilingData();
-            *((uint64_t *)paramValue) = endTimeStamp;
-            return CL_SUCCESS;
+    case CL_PROFILING_COMMAND_END:
+        calcProfilingData();
+        src = &endTimeStamp;
+        srcSize = sizeof(cl_ulong);
+        break;
 
-        case CL_PROFILING_COMMAND_COMPLETE:
-            calcProfilingData();
-            *((uint64_t *)paramValue) = completeTimeStamp;
-            return CL_SUCCESS;
+    case CL_PROFILING_COMMAND_COMPLETE:
+        calcProfilingData();
+        src = &completeTimeStamp;
+        srcSize = sizeof(cl_ulong);
+        break;
+
 #if defined(CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL)
         case CL_PROFILING_COMMAND_PERFCOUNTERS_INTEL:
             if (!perfCountersEnabled) {
@@ -210,9 +212,15 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
 #endif
         default:
             return CL_INVALID_VALUE;
-        }
     }
-    return CL_SUCCESS;
+
+    retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
+
+    if (paramValueSizeRet) {
+        *paramValueSizeRet = srcSize;
+    }
+
+    return retVal;
 } // namespace OCLRT
 
 uint32_t Event::getCompletionStamp() const {

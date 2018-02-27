@@ -373,10 +373,16 @@ HWTEST_F(ProfilingTests, givenNonKernelEnqueueWhenNonBlockedEnqueueThenSetCpuPat
     pCmdQ->finish(false);
 
     uint64_t queued, submit, start, end;
-    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
-    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
-    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
-    eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+    cl_int retVal;
+
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_QUEUED, sizeof(uint64_t), &queued, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_SUBMIT, sizeof(uint64_t), &submit, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_START, sizeof(uint64_t), &start, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = eventObj->getEventProfilingInfo(CL_PROFILING_COMMAND_END, sizeof(uint64_t), &end, 0);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_LT(0u, queued);
     EXPECT_LT(queued, submit);
