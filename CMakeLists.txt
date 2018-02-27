@@ -20,7 +20,8 @@
 
 cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 include(ExternalProject)
-
+# Include needed macros
+include(common_macros.cmake)
 # Set the configuration type
 set(CMAKE_CONFIGURATION_TYPES
 	${CMAKE_BUILD_TYPE}

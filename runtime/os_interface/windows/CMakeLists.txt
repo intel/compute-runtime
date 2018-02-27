@@ -25,7 +25,6 @@ else()
 endif()
 
 set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
-  ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS}
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d10_11_sharing_functions.cpp
@@ -70,5 +69,10 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
-  PARENT_SCOPE
 )
+
+if(WIN32)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS})
+endif()
+
+add_subdirectories()

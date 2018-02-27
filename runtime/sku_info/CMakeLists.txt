@@ -24,11 +24,15 @@ set(RUNTIME_SRCS_SKU_INFO_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/operations/sku_info_transfer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}/sku_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/operations${BRANCH_DIR_SUFFIX}/sku_info_transfer.cpp
-  PARENT_SCOPE
 )
 
 set(RUNTIME_SRCS_SKU_INFO_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/operations/sku_info_receiver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/operations${BRANCH_DIR_SUFFIX}/sku_info_receiver.cpp
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SKU_INFO_BASE})
+
+if(WIN32)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SKU_INFO_WINDOWS})
+endif()

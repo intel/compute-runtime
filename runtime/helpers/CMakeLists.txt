@@ -80,10 +80,13 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/validators.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/validators.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_helper.h
-  PARENT_SCOPE
 )
 set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.inl
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_BASE})
+if(WIN32)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_WINDOWS})
+endif()

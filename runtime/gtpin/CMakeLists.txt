@@ -31,13 +31,13 @@ if(GTPIN_HEADERS_DIR)
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_defs.h
-    PARENT_SCOPE
   )
 else()
   set(RUNTIME_SRCS_GTPIN
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_callback_stubs.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
-    PARENT_SCOPE
   )
 endif()
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_GTPIN})

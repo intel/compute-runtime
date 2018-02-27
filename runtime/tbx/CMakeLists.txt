@@ -24,5 +24,6 @@ set(RUNTIME_SRCS_TBX
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_sockets.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_sockets_imp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_sockets_imp.h
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_TBX})

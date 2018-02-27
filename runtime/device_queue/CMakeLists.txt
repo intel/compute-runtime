@@ -25,5 +25,6 @@ set(RUNTIME_SRCS_DEVICE_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/device_queue_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_queue_hw.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/device_queue_hw_profiling.inl
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DEVICE_QUEUE})

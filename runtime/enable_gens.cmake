@@ -107,3 +107,5 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
     source_group("gen${GEN_NUM}\\windows" FILES ${RUNTIME_SRCS_GEN${GEN_NUM}_WINDOWS})
   endif()
 endforeach()
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_GENX})

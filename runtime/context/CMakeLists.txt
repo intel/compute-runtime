@@ -25,5 +25,6 @@ set(RUNTIME_SRCS_CONTEXT
   ${CMAKE_CURRENT_SOURCE_DIR}/context.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics.h
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_CONTEXT})

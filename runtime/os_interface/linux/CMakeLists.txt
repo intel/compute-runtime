@@ -19,7 +19,6 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(RUNTIME_SRCS_OS_INTERFACE_LINUX
-  ${RUNTIME_SRCS_OS_INTERFACE_LINUX}
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
@@ -57,5 +56,10 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
-  PARENT_SCOPE
 )
+
+if(UNIX)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_OS_INTERFACE_LINUX})
+endif()
+
+add_subdirectories()

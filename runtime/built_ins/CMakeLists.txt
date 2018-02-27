@@ -26,8 +26,9 @@ set(RUNTIME_SRCS_BUILT_INS
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vme_dispatch_builder.h
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_INS})
 
 set(RUNTIME_SRCS_BUILT_IN_KERNELS
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect.igdrcl_built_in
@@ -44,8 +45,9 @@ set(RUNTIME_SRCS_BUILT_IN_KERNELS
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_motion_estimate_intel.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_check_intel.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/vme_block_advanced_motion_estimate_bidirectional_check_intel.igdrcl_built_in
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_IN_KERNELS})
 
 if(NOT (TARGET ${BUILTINS_BINARIES_LIB_NAME}))
   include(builtins_binary.cmake)

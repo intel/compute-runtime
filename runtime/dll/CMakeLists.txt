@@ -39,17 +39,21 @@ set(RUNTIME_SRCS_DLL_BASE
   ${DEF_FILE}
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}
-  PARENT_SCOPE
 )
 
 set(RUNTIME_SRCS_DLL_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
-  PARENT_SCOPE
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm_create.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
-  PARENT_SCOPE
 )
+
+target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_BASE})
+if(WIN32)
+  target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_WINDOWS})
+else()
+  target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_LINUX})
+endif()

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017-2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,17 +19,16 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(WIN32)
-	list (APPEND RUNTIME_SRCS_SHARINGS
-		"${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-		"${CMAKE_CURRENT_SOURCE_DIR}/cl_d3d_api.h"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing.h"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_buffer.h"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_texture.h"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_texture.cpp"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_surface.h"
-		"${CMAKE_CURRENT_SOURCE_DIR}/d3d_surface.cpp"
-	)
-
-	set(RUNTIME_SRCS_SHARINGS "${RUNTIME_SRCS_SHARINGS}" PARENT_SCOPE)
+  set(RUNTIME_SRCS_SHARINGS_D3D
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_d3d_api.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_buffer.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_surface.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_surface.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_texture.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/d3d_texture.h
+  )
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS_D3D})
 endif()
