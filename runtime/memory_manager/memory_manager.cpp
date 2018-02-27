@@ -152,6 +152,10 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const voi
     return graphicsAllocation;
 }
 
+GraphicsAllocation *MemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
+    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), MemoryType::INTERNAL_ALLOCATION);
+}
+
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {
     hostPtrManager.releaseHandleStorage(graphicsAllocation->fragmentsStorage);
     cleanOsHandles(graphicsAllocation->fragmentsStorage);

@@ -124,11 +124,11 @@ class WddmMock : public Wddm {
         makeNonResidentResult.called++;
         return makeNonResidentResult.success = Wddm::evict(handles, num, sizeToTrim);
     }
-    bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages) override {
+    bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32Bit, bool use64kbPages, bool useHeap1) override {
         mapGpuVirtualAddressResult.called++;
         mapGpuVirtualAddressResult.cpuPtrPassed = cpuPtr;
         if (callBaseMapGpuVa) {
-            return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, size, gpuPtr, allocation32Bit, use64kbPages);
+            return mapGpuVirtualAddressResult.success = Wddm::mapGpuVirtualAddressImpl(gmm, handle, cpuPtr, size, gpuPtr, allocation32Bit, use64kbPages, useHeap1);
         } else {
             gpuPtr = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
             return mapGpuVaStatus;

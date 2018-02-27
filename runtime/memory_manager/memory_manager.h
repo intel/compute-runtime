@@ -56,6 +56,11 @@ enum allocationType {
     REUSABLE_ALLOCATION
 };
 
+enum MemoryType {
+    EXTERNAL_ALLOCATION,
+    INTERNAL_ALLOCATION
+};
+
 struct AlignedMallocRestrictions {
     uintptr_t minAddress;
 };
@@ -97,7 +102,7 @@ class MemoryManager {
     }
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
-    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr) = 0;
+    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
@@ -110,6 +115,8 @@ class MemoryManager {
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) = 0;
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
+
+    virtual GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize);
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; };
 
@@ -172,7 +179,7 @@ class MemoryManager {
 
     GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
         if (force32bitAllocations && is64bit) {
-            return allocate32BitGraphicsMemory(size, ptr);
+            return allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
         } else {
             if (ptr) {
                 return allocateGraphicsMemory(size, ptr, forcePin);

@@ -162,7 +162,7 @@ HWTEST_F(WddmTest, givenAllocationSmallerUnderlyingThanAlignedSizeWhenCreatedThe
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_NE(0, allocation.handle);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false, false);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
@@ -201,7 +201,7 @@ HWTEST_F(WddmTest, createAllocation32bit) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false, false);
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, wddmMock->mapGpuVirtualAddressResult.called);
@@ -265,7 +265,7 @@ HWTEST_F(WddmTest, mapAndFreeGpuVa) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false, false);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 
@@ -294,7 +294,7 @@ HWTEST_F(WddmTest, givenNullAllocationWhenCreateThenAllocateAndMap) {
     auto status = wddm->createAllocation(&allocation);
     EXPECT_EQ(STATUS_SUCCESS, status);
 
-    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false);
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), allocation.is32BitAllocation, false, false);
     EXPECT_TRUE(ret);
 
     EXPECT_NE(0u, allocation.gpuPtr);
@@ -321,7 +321,7 @@ HWTEST_F(WddmTest, makeResidentNonResident) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false);
+    auto error = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getUnderlyingBufferSize(), false, false, false);
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr != 0);
 

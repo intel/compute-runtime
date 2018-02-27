@@ -591,7 +591,7 @@ TEST_F(DrmMemoryManagerTest, testProfilingAllocatorCleanup) {
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32BitDrmAllocationIsBeingReturned) {
     mock->ioctl_expected = 3;
     auto size = 10u;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
     EXPECT_GE(allocation->getUnderlyingBufferSize(), size);
@@ -789,7 +789,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
 
     auto size = 10u;
     void *host_ptr = (void *)0x1000;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
 }
@@ -801,7 +801,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
     mock->ioctl_res_ext = &ioctlResExt;
 
     auto size = 10u;
-    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr);
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
 }
@@ -1394,7 +1394,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAllocatorWithHeapAllocatorWhenLargerFragm
     size_t pages3size = 3 * MemoryConstants::pageSize;
 
     void *host_ptr = (void *)0x1000;
-    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(pages3size, host_ptr);
+    DrmAllocation *graphicsAlloaction = memoryManager->allocate32BitGraphicsMemory(pages3size, host_ptr, MemoryType::EXTERNAL_ALLOCATION);
 
     auto bo = graphicsAlloaction->getBO();
     EXPECT_EQ(allocationSize, bo->peekUnmapSize());

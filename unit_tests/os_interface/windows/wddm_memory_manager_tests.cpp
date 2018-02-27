@@ -49,11 +49,11 @@ TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);
 
-    std::unique_ptr<WddmMemoryManager> mm = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(false, wddm));
+    std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(false, wddm));
 
-    ASSERT_NE(nullptr, mm->allocator32Bit.get());
+    ASSERT_NE(nullptr, memoryManager->allocator32Bit.get());
 
-    EXPECT_EQ(base, mm->allocator32Bit->getBase());
+    EXPECT_EQ(base, memoryManager->allocator32Bit->getBase());
 }
 
 TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
@@ -69,14 +69,14 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabled
 
 HWTEST_F(WddmMemoryManagerTest, AllocateAndFree) {
     SetUpMm<FamilyType>();
-    auto *ptr = mm->allocateGraphicsMemory(0x1000);
+    auto *ptr = memoryManager->allocateGraphicsMemory(0x1000);
     EXPECT_NE(nullptr, ptr);
-    mm->freeGraphicsMemory(ptr);
+    memoryManager->freeGraphicsMemory(ptr);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPaddingSupportThenFalseIsReturned) {
     SetUpMm<FamilyType>();
-    EXPECT_FALSE(mm->peekVirtualPaddingSupport());
+    EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
 HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
@@ -85,23 +85,23 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
     void *ptr = alignedMalloc(3 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
 
-    auto *gpuAllocation = mm->allocateGraphicsMemory(0x1000, ptr);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000, ptr);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(ptr, gpuAllocation->getUnderlyingBuffer());
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
     alignedFree(ptr);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenResourceHandleIsZero) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = mm->allocateGraphicsMemory(0x1000, MemoryConstants::pageSize);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000, MemoryConstants::pageSize);
 
     auto wddmAllocation = static_cast<WddmAllocation *>(gpuAllocation);
 
     EXPECT_EQ(0u, wddmAllocation->resourceHandle);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
@@ -113,13 +113,13 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(RESOURCE_HANDLE, wddmAlloc->resourceHandle);
     EXPECT_EQ(ALLOCATION_HANDLE, wddmAlloc->handle);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
@@ -130,29 +130,29 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCa
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromNTHandle((void *)1);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle((void *)1);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(NT_RESOURCE_HANDLE, wddmAlloc->resourceHandle);
     EXPECT_EQ(NT_ALLOCATION_HANDLE, wddmAlloc->handle);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
     SetUpMm<FamilyType>();
-    auto alloc = mm->allocateGraphicsMemory(1);
+    auto alloc = memoryManager->allocateGraphicsMemory(1);
 
-    auto ptr = mm->lockResource(alloc);
+    auto ptr = memoryManager->lockResource(alloc);
     EXPECT_NE(nullptr, ptr);
     EXPECT_EQ(1u, mockWddm->lockResult.called);
     EXPECT_TRUE(mockWddm->lockResult.success);
 
-    mm->unlockResource(alloc);
+    memoryManager->unlockResource(alloc);
     EXPECT_EQ(1u, mockWddm->unlockResult.called);
     EXPECT_TRUE(mockWddm->unlockResult.success);
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 }
 
 HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsTrue) {
@@ -164,18 +164,18 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllo
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    mm->setForce32BitAllocations(true);
+    memoryManager->setForce32BitAllocations(true);
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, true);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, true);
     ASSERT_NE(nullptr, gpuAllocation);
     if (is64bit) {
         EXPECT_TRUE(gpuAllocation->is32BitAllocation);
 
-        uint64_t base = mm->allocator32Bit->getBase();
+        uint64_t base = memoryManager->allocator32Bit->getBase();
         EXPECT_EQ(Gmm::canonize(base), gpuAllocation->gpuBaseAddress);
     }
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsFalse) {
@@ -187,9 +187,9 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32B
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    mm->setForce32BitAllocations(true);
+    memoryManager->setForce32BitAllocations(true);
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     ASSERT_NE(nullptr, gpuAllocation);
 
     EXPECT_FALSE(gpuAllocation->is32BitAllocation);
@@ -198,7 +198,7 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32B
         EXPECT_EQ(base, gpuAllocation->gpuBaseAddress);
     }
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandleIsCalledThenDestroyResourceHandle) {
@@ -210,7 +210,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHan
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto gpuAllocation = (WddmAllocation *)mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_NE(nullptr, gpuAllocation);
     auto expectedDestroyHandle = gpuAllocation->resourceHandle;
     EXPECT_NE(0u, expectedDestroyHandle);
@@ -218,7 +218,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHan
     auto lastDestroyed = getMockLastDestroyedResHandleFcn();
     EXPECT_EQ(0u, lastDestroyed);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
     lastDestroyed = getMockLastDestroyedResHandleFcn();
     EXPECT_EQ(lastDestroyed, expectedDestroyHandle);
 }
@@ -232,10 +232,10 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShar
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, size, false));
     auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(size, gpuAllocation->getUnderlyingBufferSize());
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFailsThenReturnNull) {
@@ -249,14 +249,14 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
 
     mockWddm->failOpenSharedHandle = true;
 
-    auto *gpuAllocation = mm->createGraphicsAllocationFromSharedHandle(osHandle, false);
+    auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_EQ(nullptr, gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(mm);
+    context.setMemoryManager(memoryManager);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -284,7 +284,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(mm);
+    context.setMemoryManager(memoryManager);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -315,7 +315,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(mm);
+    context.setMemoryManager(memoryManager);
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -351,11 +351,11 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
 
     size_t baseOffset = 1024;
     // misalligned buffer spanning accross 3 pages
-    auto *gpuAllocation = mm->allocateGraphicsMemory(2 * 4096, (char *)ptr + baseOffset);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(2 * 4096, (char *)ptr + baseOffset);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ((char *)ptr + baseOffset, gpuAllocation->getUnderlyingBuffer());
 
-    auto &hostPtrManager = mm->hostPtrManager;
+    auto &hostPtrManager = memoryManager->hostPtrManager;
 
     auto fragment = hostPtrManager.getFragment(ptr);
     ASSERT_NE(nullptr, fragment);
@@ -369,7 +369,7 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
 
     // offseted by one page, still in boundary
     void *offsetedPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 4096);
-    auto *gpuAllocation2 = mm->allocateGraphicsMemory(0x1000, offsetedPtr);
+    auto *gpuAllocation2 = memoryManager->allocateGraphicsMemory(0x1000, offsetedPtr);
     // Should be same cpu ptr and gpu ptr
     EXPECT_EQ(offsetedPtr, gpuAllocation2->getUnderlyingBuffer());
 
@@ -381,14 +381,14 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
     EXPECT_EQ(alloc.getUnderlyingBufferSize(), allocOffseted.getUnderlyingBufferSize());
     EXPECT_EQ(alloc.getAlignedCpuPtr(), allocOffseted.getAlignedCpuPtr());
 
-    mm->freeGraphicsMemory(gpuAllocation2);
+    memoryManager->freeGraphicsMemory(gpuAllocation2);
 
     auto fragment4 = hostPtrManager.getFragment(ptr);
     ASSERT_NE(nullptr, fragment4);
 
     EXPECT_TRUE(fragment4->refCount == 1);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 
     fragment4 = hostPtrManager.getFragment(ptr);
     EXPECT_EQ(nullptr, fragment4);
@@ -402,19 +402,19 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
     bool success = false;
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
-    auto *gpuAllocation = mm->allocateGraphicsMemory(3 * 4096, ptr);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(3 * 4096, ptr);
     // Should be same cpu ptr and gpu ptr
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_EQ(ptr, gpuAllocation->getUnderlyingBuffer());
 
-    auto &hostPtrManager = mm->hostPtrManager;
+    auto &hostPtrManager = memoryManager->hostPtrManager;
 
     auto fragment = hostPtrManager.getFragment(ptr);
     ASSERT_NE(nullptr, fragment);
     EXPECT_TRUE(fragment->refCount == 1);
     EXPECT_NE(fragment->osInternalStorage->handle, 0);
     EXPECT_NE(fragment->osInternalStorage->gmm, nullptr);
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
     alignedFree(ptr);
 }
 
@@ -424,10 +424,10 @@ HWTEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGm
     bool success = false;
     uint32_t size = 4096;
     void *ptr = (void *)4096;
-    auto *gpuAllocation = mm->allocate32BitGraphicsMemory(size, ptr);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_EQ(ptr, (void *)gpuAllocation->gmm->resourceParams.pExistingSysMem);
     EXPECT_EQ(size, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
@@ -436,21 +436,21 @@ HWTEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMem
     bool success = false;
     uint32_t size = 0x1001;
     void *ptr = (void *)0x1001;
-    auto *gpuAllocation = mm->allocate32BitGraphicsMemory(size, ptr);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_EQ((void *)0x1000, (void *)gpuAllocation->gmm->resourceParams.pExistingSysMem);
     EXPECT_EQ(0x2000, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
     SetUpMm<FamilyType>();
-    int64_t mem = mm->getSystemSharedMemory();
+    int64_t mem = memoryManager->getSystemSharedMemory();
     EXPECT_EQ(mem, 4249540608);
 }
 
 HWTEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
     SetUpMm<FamilyType>();
-    uint64_t maxAddr = mm->getMaxApplicationAddress();
+    uint64_t maxAddr = memoryManager->getMaxApplicationAddress();
     if (is32bit) {
         EXPECT_EQ(maxAddr, MemoryConstants::max32BitAppAddress);
     } else {
@@ -460,14 +460,14 @@ HWTEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
 
 HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = mm->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, MemoryType::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_LE(Gmm::canonize(wddm->getHeap32Base()), gpuAllocation->getGpuAddress());
     EXPECT_GT(Gmm::canonize(wddm->getHeap32Base()) + wddm->getHeap32Size() - 1, gpuAllocation->getGpuAddress());
 
     EXPECT_EQ(0u, gpuAllocation->fragmentsStorage.fragmentCount);
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoTripleAlloc) {
@@ -475,7 +475,7 @@ HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotD
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = (void *)0x12500;
 
-    auto *gpuAllocation = mm->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr, MemoryType::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -490,19 +490,19 @@ HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotD
     uint64_t offset = ptrDiff(misalignedPtr, alignedPtr);
 
     EXPECT_EQ(offset, gpuAllocation->allocationOffset);
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = mm->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, MemoryType::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
     uint64_t cannonizedAddress = Gmm::canonize(wddm->getHeap32Base());
     EXPECT_EQ(cannonizedAddress, gpuAllocation->gpuBaseAddress);
 
-    mm->freeGraphicsMemory(gpuAllocation);
+    memoryManager->freeGraphicsMemory(gpuAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
@@ -529,7 +529,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
     storage.fragmentStorageData[2].osHandleStorage->gmm = Gmm::create(pSysMem, 4096u, false);
     storage.fragmentStorageData[2].residency = new ResidencyData;
 
-    mm->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage);
 
     auto destroyWithResourceHandleCalled = 0u;
     D3DKMT_DESTROYALLOCATION2 *ptrToDestroyAlloc2 = nullptr;
@@ -547,12 +547,12 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
 
 HWTEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
     SetUpMm<FamilyType>();
-    mm->freeGraphicsMemory(nullptr);
+    memoryManager->freeGraphicsMemory(nullptr);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenValueIsReturned) {
     SetUpMm<FamilyType>();
-    AlignedMallocRestrictions *mallocRestrictions = mm->getAlignedMallocRestrictions();
+    AlignedMallocRestrictions *mallocRestrictions = memoryManager->getAlignedMallocRestrictions();
     ASSERT_NE(nullptr, mallocRestrictions);
     EXPECT_EQ(OCLRT::windowsMinAddress, mallocRestrictions->minAddress);
 }
@@ -564,11 +564,11 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestricti
     size_t size = 0x1000;
     void *expectReserve = reinterpret_cast<void *>(mockWddm->virtualAllocAddress);
 
-    WddmAllocation *allocation = static_cast<WddmAllocation *>(mm->allocateGraphicsMemory(size, cpuPtr));
+    WddmAllocation *allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(size, cpuPtr));
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectReserve, allocation->getReservedAddress());
     EXPECT_EQ(expectReserve, reinterpret_cast<void *>(allocation->gpuPtr));
-    mm->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuVaFailThenFailToCreateAllocation) {
@@ -587,7 +587,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGp
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
 }
 
@@ -608,7 +608,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstM
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_TRUE(ret);
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), allocation.getGpuAddress());
 }
@@ -630,44 +630,83 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstA
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation);
+    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
+    SetUpMm<FamilyType>();
+    auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
+    ASSERT_NE(nullptr, wddmAllocation);
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base));
+    EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
+    EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+
+    EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
+    EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
+
+    EXPECT_TRUE(wddmAllocation->cpuPtrAllocated);
+    EXPECT_TRUE(wddmAllocation->is32BitAllocation);
+    memoryManager->freeGraphicsMemory(wddmAllocation);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
+    SetUpMm<FamilyType>();
+    auto ptr = (void *)0x1000000;
+    auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, 4096u);
+    ASSERT_NE(nullptr, wddmAllocation);
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base));
+    EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
+    EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+
+    EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
+    EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
+
+    EXPECT_FALSE(wddmAllocation->cpuPtrAllocated);
+    EXPECT_TRUE(wddmAllocation->is32BitAllocation);
+    memoryManager->freeGraphicsMemory(wddmAllocation);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
 
-    mm->addToTrimCandidateList(&allocation);
+    memoryManager->addToTrimCandidateList(&allocation);
 
-    EXPECT_NE(0u, mm->trimCandidateList.size());
+    EXPECT_NE(0u, memoryManager->trimCandidateList.size());
     EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition());
 
     size_t position = allocation.getTrimCandidateListPosition();
-    ASSERT_LT(position, mm->trimCandidateList.size());
+    ASSERT_LT(position, memoryManager->trimCandidateList.size());
 
-    EXPECT_EQ(&allocation, mm->trimCandidateList[position]);
+    EXPECT_EQ(&allocation, memoryManager->trimCandidateList[position]);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListDoesNotInsertAllocationAlreadyOnTheList) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation);
+    memoryManager->addToTrimCandidateList(&allocation);
 
     EXPECT_NE(trimListUnusedPosition, allocation.getTrimCandidateListPosition());
 
     size_t position = allocation.getTrimCandidateListPosition();
-    ASSERT_LT(position, mm->trimCandidateList.size());
+    ASSERT_LT(position, memoryManager->trimCandidateList.size());
 
-    EXPECT_EQ(&allocation, mm->trimCandidateList[position]);
+    EXPECT_EQ(&allocation, memoryManager->trimCandidateList[position]);
 
-    size_t previousSize = mm->trimCandidateList.size();
-    mm->addToTrimCandidateList(&allocation);
+    size_t previousSize = memoryManager->trimCandidateList.size();
+    memoryManager->addToTrimCandidateList(&allocation);
 
-    EXPECT_EQ(previousSize, mm->trimCandidateList.size());
+    EXPECT_EQ(previousSize, memoryManager->trimCandidateList.size());
     EXPECT_EQ(position, allocation.getTrimCandidateListPosition());
 }
 
@@ -675,8 +714,8 @@ HWTEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListAssignsUnuse
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
 
-    mm->addToTrimCandidateList(&allocation);
-    mm->removeFromTrimCandidateList(&allocation);
+    memoryManager->addToTrimCandidateList(&allocation);
+    memoryManager->removeFromTrimCandidateList(&allocation);
 
     EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition());
 }
@@ -685,13 +724,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesAlloc
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
 
-    mm->addToTrimCandidateList(&allocation);
+    memoryManager->addToTrimCandidateList(&allocation);
     size_t position = allocation.getTrimCandidateListPosition();
 
-    mm->removeFromTrimCandidateList(&allocation);
+    memoryManager->removeFromTrimCandidateList(&allocation);
 
-    if (mm->trimCandidateList.size() > position) {
-        EXPECT_NE(&allocation, mm->trimCandidateList[position]);
+    if (memoryManager->trimCandidateList.size() > position) {
+        EXPECT_NE(&allocation, memoryManager->trimCandidateList[position]);
     }
 }
 
@@ -699,45 +738,45 @@ HWTEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastA
     SetUpMm<FamilyType>();
     WddmAllocation allocation;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation);
+    memoryManager->addToTrimCandidateList(&allocation);
 
-    mm->removeFromTrimCandidateList(&allocation);
+    memoryManager->removeFromTrimCandidateList(&allocation);
 
-    EXPECT_EQ(0u, mm->trimCandidateList.size());
+    EXPECT_EQ(0u, memoryManager->trimCandidateList.size());
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastAllocationAndAllPreviousEmptyEntries) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation1);
 
-    mm->trimCandidateList.push_back(nullptr);
-    mm->trimCandidateList.push_back(nullptr);
-    mm->trimCandidateList.push_back(nullptr);
+    memoryManager->trimCandidateList.push_back(nullptr);
+    memoryManager->trimCandidateList.push_back(nullptr);
+    memoryManager->trimCandidateList.push_back(nullptr);
 
-    mm->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation2);
 
-    EXPECT_EQ(5u, mm->trimCandidateList.size());
+    EXPECT_EQ(5u, memoryManager->trimCandidateList.size());
 
-    mm->removeFromTrimCandidateList(&allocation2);
+    memoryManager->removeFromTrimCandidateList(&allocation2);
 
-    EXPECT_EQ(1u, mm->trimCandidateList.size());
+    EXPECT_EQ(1u, memoryManager->trimCandidateList.size());
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, successiveAddingToTrimCandidateListAssignsNewPositions) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3;
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    EXPECT_EQ(3u, mm->trimCandidateList.size());
+    EXPECT_EQ(3u, memoryManager->trimCandidateList.size());
     EXPECT_NE(allocation1.getTrimCandidateListPosition(), allocation2.getTrimCandidateListPosition());
     EXPECT_NE(allocation2.getTrimCandidateListPosition(), allocation3.getTrimCandidateListPosition());
 }
@@ -746,13 +785,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, DISABLED_removingNotLastAllocationFromT
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3;
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    mm->removeFromTrimCandidateList(&allocation2);
+    memoryManager->removeFromTrimCandidateList(&allocation2);
 
-    EXPECT_EQ(2u, mm->trimCandidateList.size());
+    EXPECT_EQ(2u, memoryManager->trimCandidateList.size());
 
     EXPECT_EQ(2u, allocation3.getTrimCandidateListPosition());
     EXPECT_NE(allocation2.getTrimCandidateListPosition(), allocation3.getTrimCandidateListPosition());
@@ -762,44 +801,44 @@ HWTEST_F(WddmMemoryManagerResidencyTest, removingNotLastAllocationFromTrimCandid
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3;
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
     size_t position2 = allocation2.getTrimCandidateListPosition();
     size_t position3 = allocation3.getTrimCandidateListPosition();
 
-    mm->removeFromTrimCandidateList(&allocation2);
+    memoryManager->removeFromTrimCandidateList(&allocation2);
 
-    EXPECT_EQ(3u, mm->trimCandidateList.size());
+    EXPECT_EQ(3u, memoryManager->trimCandidateList.size());
     EXPECT_EQ(2u, position3);
-    EXPECT_EQ(nullptr, mm->trimCandidateList[position2]);
+    EXPECT_EQ(nullptr, memoryManager->trimCandidateList[position2]);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListRemovesInitialNullEntriesAndUpdatesPositions) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
-    mm->addToTrimCandidateList(&allocation4);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation4);
 
     size_t position3 = allocation3.getTrimCandidateListPosition();
     size_t position4 = allocation4.getTrimCandidateListPosition();
 
-    mm->removeFromTrimCandidateList(&allocation2);
-    mm->removeFromTrimCandidateList(&allocation1);
+    memoryManager->removeFromTrimCandidateList(&allocation2);
+    memoryManager->removeFromTrimCandidateList(&allocation1);
 
-    EXPECT_EQ(4u, mm->trimCandidateList.size());
+    EXPECT_EQ(4u, memoryManager->trimCandidateList.size());
 
-    mm->compactTrimCandidateList();
+    memoryManager->compactTrimCandidateList();
 
-    EXPECT_EQ(2u, mm->trimCandidateList.size());
+    EXPECT_EQ(2u, memoryManager->trimCandidateList.size());
 
-    EXPECT_EQ(mm->trimCandidateList[0], &allocation3);
+    EXPECT_EQ(memoryManager->trimCandidateList[0], &allocation3);
     EXPECT_EQ(0u, allocation3.getTrimCandidateListPosition());
 
-    EXPECT_EQ(mm->trimCandidateList[1], &allocation4);
+    EXPECT_EQ(memoryManager->trimCandidateList[1], &allocation4);
     EXPECT_EQ(1u, allocation4.getTrimCandidateListPosition());
 }
 
@@ -807,28 +846,28 @@ HWTEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListWithNonNullEntr
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
-    mm->addToTrimCandidateList(&allocation4);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation4);
 
-    EXPECT_EQ(4u, mm->trimCandidateList.size());
+    EXPECT_EQ(4u, memoryManager->trimCandidateList.size());
 
-    mm->compactTrimCandidateList();
+    memoryManager->compactTrimCandidateList();
 
-    EXPECT_EQ(4u, mm->trimCandidateList.size());
+    EXPECT_EQ(4u, memoryManager->trimCandidateList.size());
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllocationsResident) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(&allocation2);
-    mm->pushAllocationForResidency(&allocation3);
-    mm->pushAllocationForResidency(&allocation4);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation3);
+    memoryManager->pushAllocationForResidency(&allocation4);
 
-    mm->makeResidentResidencyAllocations(nullptr);
+    memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_TRUE(allocation1.getResidencyData().resident);
     EXPECT_TRUE(allocation2.getResidencyData().resident);
@@ -840,14 +879,14 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdates
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(&allocation2);
-    mm->pushAllocationForResidency(&allocation3);
-    mm->pushAllocationForResidency(&allocation4);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation3);
+    memoryManager->pushAllocationForResidency(&allocation4);
 
     wddm->getMonitoredFence().currentFenceValue = 20;
 
-    mm->makeResidentResidencyAllocations(nullptr);
+    memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_EQ(20u, allocation1.getResidencyData().lastFence);
     EXPECT_EQ(20u, allocation2.getResidencyData().lastFence);
@@ -861,13 +900,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTr
     WddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1500);
 
-    WddmAllocation *allocationTriple = (WddmAllocation *)mm->allocateGraphicsMemory(8196, ptr);
+    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(allocationTriple);
-    mm->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(allocationTriple);
+    memoryManager->pushAllocationForResidency(&allocation2);
 
-    mm->makeResidentResidencyAllocations(nullptr);
+    memoryManager->makeResidentResidencyAllocations(nullptr);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
@@ -875,34 +914,34 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTr
 
     EXPECT_EQ(5u, gdi.getMakeResidentArg().NumAllocations);
 
-    mm->freeGraphicsMemory(allocationTriple);
+    memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastFencePLusOneForTripleAllocations) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2;
 
-    WddmAllocation *allocationTriple = (WddmAllocation *)mm->allocateGraphicsMemory(8196, (void *)0x1500);
+    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, (void *)0x1500);
 
     wddm->getMonitoredFence().currentFenceValue = 20;
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(allocationTriple);
-    mm->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(allocationTriple);
+    memoryManager->pushAllocationForResidency(&allocation2);
 
-    mm->makeResidentResidencyAllocations(nullptr);
+    memoryManager->makeResidentResidencyAllocations(nullptr);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_EQ(20u, allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->lastFence);
     }
 
-    mm->freeGraphicsMemory(allocationTriple);
+    memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManagerCtor) {
     SetUpMm<FamilyType>();
-    EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)mm->trimCallback, gdi.getRegisterTrimNotificationArg().Callback);
-    EXPECT_EQ((void *)mm, gdi.getRegisterTrimNotificationArg().Context);
+    EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi.getRegisterTrimNotificationArg().Callback);
+    EXPECT_EQ((void *)memoryManager, gdi.getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi.getRegisterTrimNotificationArg().hDevice);
 }
 
@@ -918,23 +957,23 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeri
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    mm->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValue = 10;
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
 
-    mm->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 2 allocations evicted
     EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
     // removed from trim candidate list
-    EXPECT_EQ(0u, mm->trimCandidateList.size());
+    EXPECT_EQ(0u, memoryManager->trimCandidateList.size());
     // marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident);
     EXPECT_FALSE(allocation2.getResidencyData().resident);
@@ -954,18 +993,18 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPerio
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    mm->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValue = 10;
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
 
-    mm->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 1 allocation evicted
     EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
@@ -986,7 +1025,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedF
     trimNotification.NumBytesToTrim = 0;
     void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1500);
     // 3-fragment Allocation
-    WddmAllocation *allocationTriple = (WddmAllocation *)mm->allocateGraphicsMemory(8196, ptr);
+    WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
     // whole allocation unused since previous trim
     allocationTriple->getResidencyData().lastFence = 0;
 
@@ -1001,17 +1040,17 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedF
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
 
     // Set last periodic fence value
-    mm->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValue = 10;
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(allocationTriple);
+    memoryManager->addToTrimCandidateList(allocationTriple);
 
-    mm->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 2 fragments evicted with one call
     EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
@@ -1019,7 +1058,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedF
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident);
 
-    mm->freeGraphicsMemory(allocationTriple);
+    memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -1029,14 +1068,14 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalled
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    mm->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValue = 10;
     // Set current fence value to greater value
     *wddm->getMonitoredFence().cpuAddress = 20;
 
-    mm->trimCandidateList.resize(0);
-    mm->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    memoryManager->trimCandidateList.resize(0);
+    memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, mm->lastPeriodicTrimFenceValue);
+    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValue);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -1046,19 +1085,19 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbac
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    mm->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValue = 10;
     // Set current fence value to greater value
     *wddm->getMonitoredFence().cpuAddress = 20;
 
-    mm->trimCandidateList.resize(0);
-    mm->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
+    memoryManager->trimCandidateList.resize(0);
+    memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, mm->lastPeriodicTrimFenceValue);
+    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValue);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
     SetUpMm<FamilyType>();
-    bool status = mm->trimResidencyToBudget(0);
+    bool status = memoryManager->trimResidencyToBudget(0);
 
     EXPECT_TRUE(status);
 }
@@ -1083,19 +1122,19 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    mm->trimResidencyToBudget(3 * 4096);
+    memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
 
-    EXPECT_EQ(1u, mm->trimCandidatesCount);
-    mm->compactTrimCandidateList();
-    EXPECT_EQ(1u, mm->trimCandidateList.size());
+    EXPECT_EQ(1u, memoryManager->trimCandidatesCount);
+    memoryManager->compactTrimCandidateList();
+    EXPECT_EQ(1u, memoryManager->trimCandidateList.size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
     EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
@@ -1114,14 +1153,14 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToT
     wddm->getMonitoredFence().lastSubmittedFence = 1;
 
     mockWddm->makeNonResidentResult.called = 0;
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation1);
 
-    bool status = mm->trimResidencyToBudget(3 * 4096);
+    bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
-    EXPECT_EQ(0u, mm->trimCandidateList.size());
+    EXPECT_EQ(0u, memoryManager->trimCandidateList.size());
 
     EXPECT_FALSE(status);
 }
@@ -1147,17 +1186,17 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesTo
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    bool status = mm->trimResidencyToBudget(3 * 4096);
+    bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(status);
     EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
-    EXPECT_EQ(1u, mm->trimCandidateList.size());
+    EXPECT_EQ(1u, memoryManager->trimCandidateList.size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
     EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
@@ -1184,13 +1223,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonRe
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    bool status = mm->trimResidencyToBudget(3 * 4096);
+    bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident);
     EXPECT_FALSE(allocation2.getResidencyData().resident);
@@ -1212,13 +1251,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIs
     mockWddm->makeNonResidentResult.called = 0;
     mockWddm->waitFromCpuResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation1);
 
     gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
 
-    bool status = mm->trimResidencyToBudget(3 * 4096);
+    bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident);
@@ -1240,7 +1279,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     allocation2.getResidencyData().resident = true;
 
     void *ptrTriple = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + 0x500);
-    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(mm->allocateGraphicsMemory(8196, ptrTriple));
+    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptrTriple));
 
     allocationTriple->getResidencyData().lastFence = 1;
     allocationTriple->getResidencyData().resident = true;
@@ -1255,11 +1294,11 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     // This should not be evicted
     allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->lastFence = 2;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(allocationTriple);
-    mm->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(allocationTriple);
+    memoryManager->addToTrimCandidateList(&allocation2);
 
     *wddm->getMonitoredFence().cpuAddress = 1;
     wddm->getMonitoredFence().lastSubmittedFence = 1;
@@ -1267,7 +1306,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    bool status = mm->trimResidencyToBudget(3 * 4096);
+    bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
 
@@ -1275,29 +1314,29 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident);
 
-    mm->freeGraphicsMemory(allocationTriple);
+    memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
     SetUpMm<FamilyType>();
-    mm->trimCandidatesCount = 10;
-    mm->trimCandidateList.resize(20);
+    memoryManager->trimCandidatesCount = 10;
+    memoryManager->trimCandidateList.resize(20);
 
-    bool comapctionRequired = mm->checkTrimCandidateListCompaction();
-
-    EXPECT_TRUE(comapctionRequired);
-
-    mm->trimCandidatesCount = 5;
-    mm->trimCandidateList.resize(20);
-
-    comapctionRequired = mm->checkTrimCandidateListCompaction();
+    bool comapctionRequired = memoryManager->checkTrimCandidateListCompaction();
 
     EXPECT_TRUE(comapctionRequired);
 
-    mm->trimCandidatesCount = 18;
-    mm->trimCandidateList.resize(20);
+    memoryManager->trimCandidatesCount = 5;
+    memoryManager->trimCandidateList.resize(20);
 
-    comapctionRequired = mm->checkTrimCandidateListCompaction();
+    comapctionRequired = memoryManager->checkTrimCandidateListCompaction();
+
+    EXPECT_TRUE(comapctionRequired);
+
+    memoryManager->trimCandidatesCount = 18;
+    memoryManager->trimCandidateList.resize(20);
+
+    comapctionRequired = memoryManager->checkTrimCandidateListCompaction();
 
     EXPECT_FALSE(comapctionRequired);
 }
@@ -1336,13 +1375,13 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerT
 
     mockWddm->makeNonResidentResult.called = 0;
 
-    mm->trimCandidateList.resize(0);
+    memoryManager->trimCandidateList.resize(0);
 
-    mm->addToTrimCandidateList(&allocation1);
-    mm->addToTrimCandidateList(&allocation2);
-    mm->addToTrimCandidateList(&allocation3);
+    memoryManager->addToTrimCandidateList(&allocation1);
+    memoryManager->addToTrimCandidateList(&allocation2);
+    memoryManager->addToTrimCandidateList(&allocation3);
 
-    bool status = mm->trimResidencyToBudget(budget);
+    bool status = memoryManager->trimResidencyToBudget(budget);
     EXPECT_TRUE(status);
 
     EXPECT_FALSE(allocation1.getResidencyData().resident);
@@ -1380,13 +1419,13 @@ HWTEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFille
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
     storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
-    mm->populateOsHandles(storage);
+    memoryManager->populateOsHandles(storage);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
     EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage->gmm);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
     EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
     storage.fragmentStorageData[0].freeTheFragment = true;
-    mm->cleanOsHandles(storage);
+    memoryManager->cleanOsHandles(storage);
 }
 
 HWTEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
@@ -1394,9 +1433,9 @@ HWTEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsk
     WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     auto ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
-    auto graphicsAllocation = mm->allocateGraphicsMemory(size, ptr);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, ptr);
 
-    auto &hostPtrManager = mm->hostPtrManager;
+    auto &hostPtrManager = memoryManager->hostPtrManager;
 
     ASSERT_EQ(3u, hostPtrManager.getFragmentCount());
 
@@ -1415,7 +1454,7 @@ HWTEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsk
         EXPECT_EQ(reqs.AllocationFragments[i].allocationSize,
                   graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->resourceParams.BaseWidth);
     }
-    mm->freeGraphicsMemory(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
 }
 
@@ -1436,7 +1475,7 @@ HWTEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAlloca
     handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
     handleStorage.fragmentStorageData[2].fragmentSize = size * 3;
 
-    auto allocation = mm->createGraphicsAllocation(handleStorage, size, ptr);
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
 
     EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
     EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
@@ -1450,7 +1489,7 @@ HWTEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAlloca
     EXPECT_EQ(size * 3, allocation->fragmentsStorage.fragmentStorageData[2].fragmentSize);
 
     EXPECT_NE(&allocation->fragmentsStorage, &handleStorage);
-    mm->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAllocationsResidentWhenMakeResidentFails) {
@@ -1462,12 +1501,12 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAllo
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(&allocation2);
-    mm->pushAllocationForResidency(&allocation3);
-    mm->pushAllocationForResidency(&allocation4);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation3);
+    memoryManager->pushAllocationForResidency(&allocation4);
 
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_FALSE(result);
 
@@ -1481,7 +1520,7 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTrip
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1500);
-    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(mm->allocateGraphicsMemory(8196, ptr));
+    WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptr));
     ASSERT_NE(nullptr, allocationTriple);
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
@@ -1489,11 +1528,11 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTrip
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(allocationTriple);
-    mm->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(allocationTriple);
+    memoryManager->pushAllocationForResidency(&allocation2);
 
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_FALSE(result);
 
@@ -1501,7 +1540,7 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTrip
         EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
     }
 
-    mm->freeGraphicsMemory(allocationTriple);
+    memoryManager->freeGraphicsMemory(allocationTriple);
 }
 
 HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsFailsWhenMakeResidentFailsAndCantTrimFurther) {
@@ -1513,12 +1552,12 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsFailsWhenMakeRe
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    mm->pushAllocationForResidency(&allocation1);
-    mm->pushAllocationForResidency(&allocation2);
-    mm->pushAllocationForResidency(&allocation3);
-    mm->pushAllocationForResidency(&allocation4);
+    memoryManager->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation2);
+    memoryManager->pushAllocationForResidency(&allocation3);
+    memoryManager->pushAllocationForResidency(&allocation4);
 
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_FALSE(result);
 
@@ -1538,9 +1577,9 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsCallsMakeReside
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, false, ::testing::_)).Times(1);
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, true, ::testing::_)).Times(1);
 
-    mm->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation1);
 
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_FALSE(result);
 }
@@ -1566,8 +1605,8 @@ HWTEST_F(WddmMemoryManagerTest2, givenAllocationPackWhenTheyArePassedToMakeResid
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, 2, false, ::testing::_)).Times(1);
 
-    mm->pushAllocationForResidency(&allocation3);
-    bool result = mm->makeResidentResidencyAllocations(&residencyPack);
+    memoryManager->pushAllocationForResidency(&allocation3);
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack);
     EXPECT_TRUE(result);
 }
 
@@ -1584,11 +1623,11 @@ HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMak
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentWithOutBytesToTrim)).WillOnce(::testing::Return(true));
 
-    mm->addToTrimCandidateList(&allocationToTrim);
+    memoryManager->addToTrimCandidateList(&allocationToTrim);
 
-    mm->pushAllocationForResidency(&allocation1);
+    memoryManager->pushAllocationForResidency(&allocation1);
 
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
 
     EXPECT_TRUE(result);
 
@@ -1604,9 +1643,9 @@ HWTEST_F(WddmMemoryManagerTest2, givenMemoryManagerWhenMakeResidentFailsThenMemo
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentThatFails)).WillOnce(::testing::Invoke(makeResidentThatSucceds));
 
-    mm->pushAllocationForResidency(&allocation1);
-    bool result = mm->makeResidentResidencyAllocations(nullptr);
-    EXPECT_TRUE(mm->isMemoryBudgetExhausted());
+    memoryManager->pushAllocationForResidency(&allocation1);
+    bool result = memoryManager->makeResidentResidencyAllocations(nullptr);
+    EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 
 TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
@@ -1843,7 +1882,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpu
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
     ASSERT_TRUE(result);
     EXPECT_EQ(Gmm::canonize(wddm.getAdapterInfo()->GfxPartition.Standard.Base), gpuVa);
 
@@ -1904,7 +1943,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMapped
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
     ASSERT_TRUE(result);
 }
 
@@ -1915,7 +1954,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRet
     WddmMock wddm;
     EXPECT_TRUE(wddm.init<FamilyType>());
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, 3, gpuVa, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, 3, gpuVa, false, false, false);
     ASSERT_FALSE(result);
 }
 
@@ -1938,7 +1977,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUn
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false);
+    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }

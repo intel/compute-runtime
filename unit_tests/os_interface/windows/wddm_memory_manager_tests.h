@@ -39,7 +39,7 @@ using namespace ::testing;
 
 class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixture {
   public:
-    WddmMemoryManager *mm = nullptr;
+    WddmMemoryManager *memoryManager = nullptr;
 
     virtual void SetUp();
 
@@ -52,15 +52,15 @@ class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixt
             heap32Base = 0x1000;
         }
         mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        mm = new (std::nothrow) WddmMemoryManager(false, wddm);
+        memoryManager = new (std::nothrow) WddmMemoryManager(false, wddm);
         //assert we have memory manager
-        ASSERT_NE(nullptr, mm);
+        ASSERT_NE(nullptr, memoryManager);
     }
 
     virtual void TearDown() {
         WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
         EXPECT_EQ(0, mockWddm->reservedAddresses.size());
-        delete mm;
+        delete memoryManager;
         this->wddm = nullptr;
         WddmFixture::TearDown();
         MemoryManagementFixture::TearDown();
@@ -71,7 +71,7 @@ typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 
 class MockWddmMemoryManagerFixture : public WddmFixture {
   public:
-    MockWddmMemoryManager *mm = nullptr;
+    MockWddmMemoryManager *memoryManager = nullptr;
 
     virtual void SetUp() {
         WddmFixture::SetUp(&gdi);
@@ -87,15 +87,15 @@ class MockWddmMemoryManagerFixture : public WddmFixture {
             heap32Base = 0x1000;
         }
         mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        mm = new (std::nothrow) MockWddmMemoryManager(wddm);
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
         //assert we have memory manager
-        ASSERT_NE(nullptr, mm);
+        ASSERT_NE(nullptr, memoryManager);
     }
 
     virtual void TearDown() {
         WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
         EXPECT_EQ(0, mockWddm->reservedAddresses.size());
-        delete mm;
+        delete memoryManager;
         this->wddm = nullptr;
         WddmFixture::TearDown();
     }
@@ -131,7 +131,7 @@ class GmockWddm : public Wddm {
 
 class WddmMemoryManagerFixtureWithGmockWddm {
   public:
-    MockWddmMemoryManager *mm = nullptr;
+    MockWddmMemoryManager *memoryManager = nullptr;
 
     void SetUp() {
         // wddm is deleted by memory manager
@@ -142,12 +142,12 @@ class WddmMemoryManagerFixtureWithGmockWddm {
     template <typename FamiltyType>
     void SetUpMm() {
         wddm->init<FamiltyType>();
-        mm = new (std::nothrow) MockWddmMemoryManager(wddm);
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
         //assert we have memory manager
-        ASSERT_NE(nullptr, mm);
+        ASSERT_NE(nullptr, memoryManager);
     }
     void TearDown() {
-        delete mm;
+        delete memoryManager;
         wddm = nullptr;
     }
 
@@ -174,10 +174,10 @@ class BufferWithWddmMemory : public ::testing::Test,
             heap32Base = 0x1000;
         }
         mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        mm = new (std::nothrow) WddmMemoryManager(false, wddm);
+        memoryManager = new (std::nothrow) WddmMemoryManager(false, wddm);
         //assert we have memory manager
-        ASSERT_NE(nullptr, mm);
-        context.setMemoryManager(mm);
+        ASSERT_NE(nullptr, memoryManager);
+        context.setMemoryManager(memoryManager);
         flags = 0;
     }
 

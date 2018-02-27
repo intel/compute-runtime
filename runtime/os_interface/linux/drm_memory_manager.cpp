@@ -246,7 +246,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr) {
+DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) {
     if (ptr) {
         uintptr_t inputPtr = (uintptr_t)ptr;
         auto allocationSize = alignSizeWholePage((void *)ptr, size);
