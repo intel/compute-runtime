@@ -30,11 +30,11 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
 
-  ${CMAKE_SOURCE_DIR}/runtime/api/api.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/helpers/abort.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/api/api.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/helpers/abort.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
 
   ${DEF_FILE}
   ${GTPIN_INIT_FILE}
@@ -48,8 +48,8 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
-  ${CMAKE_SOURCE_DIR}/runtime/os_interface/windows/wddm_create.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
-  ${CMAKE_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm_create.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
   PARENT_SCOPE
 )
