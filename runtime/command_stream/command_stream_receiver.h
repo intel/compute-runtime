@@ -112,7 +112,7 @@ class CommandStreamReceiver {
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
 
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) = 0;
-    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait);
+    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
 
     // returns size of block that needs to be reserved at the beginning of each instruction heap for CommandStreamReceiver
     MOCKABLE_VIRTUAL size_t getInstructionHeapCmdStreamReceiverReservedSize() const;

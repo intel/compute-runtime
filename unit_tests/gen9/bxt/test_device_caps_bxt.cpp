@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -86,5 +86,5 @@ BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {
 
 BXTTEST_F(BxtUsDeviceIdTest, kmdNotifyMechanism) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
-    EXPECT_EQ(30, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMs);
+    EXPECT_EQ(30000, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMicroseconds);
 }

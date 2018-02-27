@@ -65,7 +65,7 @@ struct RuntimeCapabilityTable {
     bool forceStatelessCompilationFor32Bit;
 
     bool enableKmdNotify;
-    int64_t delayKmdNotifyMs;
+    int64_t delayKmdNotifyMicroseconds;
     bool ftr64KBpages;
 
     EngineType defaultEngineType;

@@ -90,9 +90,9 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
                                                                   ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
                                                                   : tempHwInfos[devNum].capabilityTable.enableKmdNotify;
 
-        tempHwInfos[devNum].capabilityTable.delayKmdNotifyMs = DebugManager.flags.OverrideKmdNotifyDelayMs.get() >= 0
-                                                                   ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMs.get())
-                                                                   : tempHwInfos[devNum].capabilityTable.delayKmdNotifyMs;
+        tempHwInfos[devNum].capabilityTable.delayKmdNotifyMicroseconds = DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get() >= 0
+                                                                             ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get())
+                                                                             : tempHwInfos[devNum].capabilityTable.delayKmdNotifyMicroseconds;
 
         numDevices = 1;
         *pHWInfos = tempHwInfos;

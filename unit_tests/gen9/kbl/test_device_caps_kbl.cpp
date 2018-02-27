@@ -35,7 +35,7 @@ KBLTEST_F(KblDeviceCaps, reportsOcl21) {
 
 KBLTEST_F(KblDeviceCaps, kmdNotifyMechanism) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
-    EXPECT_EQ(30, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMs);
+    EXPECT_EQ(30000, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMicroseconds);
 }
 
 KBLTEST_F(KblDeviceCaps, GivenKBLWhenCheckftr64KBpagesThenTrue) {

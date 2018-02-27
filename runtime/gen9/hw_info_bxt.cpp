@@ -66,7 +66,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,
     false,                 // forceStatelessCompilationFor32Bit
     false,                 // EnableKmdNotify
-    30,                    // delayKmdNotifyMs
+    30000,                 // delayKmdNotifyMicroseconds
     false,                 // ftr64KBpages
     EngineType::ENGINE_RCS // defaultEngineType
 };

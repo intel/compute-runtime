@@ -61,7 +61,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,
     true,                  // forceStatelessCompilationFor32Bit
     false,                 // EnableKmdNotify
-    30,                    // delayKmdNotifyMs
+    30000,                 // delayKmdNotifyMicroseconds
     true,                  // ftr64KBpages
     EngineType::ENGINE_RCS // defaultEngineType
 };

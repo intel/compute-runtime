@@ -550,11 +550,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) {
-    auto status = waitForCompletionWithTimeout(this->hwInfo.capabilityTable.enableKmdNotify, this->hwInfo.capabilityTable.delayKmdNotifyMs, taskCountToWait);
+    auto status = waitForCompletionWithTimeout(this->hwInfo.capabilityTable.enableKmdNotify, this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds, taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
-        waitForCompletionWithTimeout(false, this->hwInfo.capabilityTable.delayKmdNotifyMs, taskCountToWait);
+        waitForCompletionWithTimeout(false, this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds, taskCountToWait);
     }
 
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);

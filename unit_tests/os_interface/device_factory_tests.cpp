@@ -102,17 +102,17 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     bool success = DeviceFactory::getDevices(&hwInfoReference, numDevices);
     ASSERT_TRUE(success);
     auto refEnableKmdNotify = hwInfoReference->capabilityTable.enableKmdNotify;
-    auto refDelayKmdNotifyMs = hwInfoReference->capabilityTable.delayKmdNotifyMs;
+    auto refDelayKmdNotifyMicroseconds = hwInfoReference->capabilityTable.delayKmdNotifyMicroseconds;
     DeviceFactory::releaseDevices();
 
     DebugManager.flags.OverrideEnableKmdNotify.set(!refEnableKmdNotify);
-    DebugManager.flags.OverrideKmdNotifyDelayMs.set(static_cast<int32_t>(refDelayKmdNotifyMs) + 10);
+    DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(static_cast<int32_t>(refDelayKmdNotifyMicroseconds) + 10);
 
     success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices);
     ASSERT_TRUE(success);
 
     EXPECT_EQ(!refEnableKmdNotify, hwInfoOverriden->capabilityTable.enableKmdNotify);
-    EXPECT_EQ(refDelayKmdNotifyMs + 10, hwInfoOverriden->capabilityTable.delayKmdNotifyMs);
+    EXPECT_EQ(refDelayKmdNotifyMicroseconds + 10, hwInfoOverriden->capabilityTable.delayKmdNotifyMicroseconds);
 
     DeviceFactory::releaseDevices();
 }

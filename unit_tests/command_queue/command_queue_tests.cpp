@@ -666,7 +666,7 @@ struct KmdNotifyTests : public ::testing::Test {
         }
         DebugManagerStateRestore stateRestore;
         DebugManager.flags.OverrideEnableKmdNotify.set(overrideEnable);
-        DebugManager.flags.OverrideKmdNotifyDelayMs.set(overrideTimeout);
+        DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(overrideTimeout);
         size_t numDevices;
         HardwareInfo *hwInfo = nullptr;
         DeviceFactory::getDevices(&hwInfo, numDevices);

@@ -83,7 +83,7 @@ SKLTEST_F(SklUsDeviceIdTest, isSimulationCap) {
 
 SKLTEST_F(SklUsDeviceIdTest, kmdNotifyMechanism) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
-    EXPECT_EQ(30, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMs);
+    EXPECT_EQ(30000, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMicroseconds);
 }
 
 SKLTEST_F(SklUsDeviceIdTest, GivenSKLWhenCheckftr64KBpagesThenTrue) {

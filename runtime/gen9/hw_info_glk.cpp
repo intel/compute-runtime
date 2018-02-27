@@ -61,7 +61,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     true,
     false,                 // forceStatelessCompilationFor32Bit
     true,                  // EnableKmdNotify
-    30,                    // delayKmdNotifyMs
+    30000,                 // delayKmdNotifyMicroseconds
     false,                 // ftr64KBpages
     EngineType::ENGINE_RCS // defaultEngineType
 };

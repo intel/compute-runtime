@@ -185,9 +185,9 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                      ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
                                                      : outHwInfo->capabilityTable.enableKmdNotify;
 
-    outHwInfo->capabilityTable.delayKmdNotifyMs = DebugManager.flags.OverrideKmdNotifyDelayMs.get() >= 0
-                                                      ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMs.get())
-                                                      : outHwInfo->capabilityTable.delayKmdNotifyMs;
+    outHwInfo->capabilityTable.delayKmdNotifyMicroseconds = DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get() >= 0
+                                                                ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get())
+                                                                : outHwInfo->capabilityTable.delayKmdNotifyMicroseconds;
 
     pPlatform.release();
     pSkuTable.release();

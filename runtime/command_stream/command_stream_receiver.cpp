@@ -176,7 +176,7 @@ void CommandStreamReceiver::cleanupResources() {
     }
 }
 
-bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) {
+bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
 
@@ -186,10 +186,10 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
     }
 
     time1 = std::chrono::high_resolution_clock::now();
-    while (*getTagAddress() < taskCountToWait && timeDiff <= timeoutMs) {
+    while (*getTagAddress() < taskCountToWait && timeDiff <= timeoutMicroseconds) {
         if (enableTimeout) {
             time2 = std::chrono::high_resolution_clock::now();
-            timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(time2 - time1).count();
+            timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(time2 - time1).count();
         }
     }
     if (*getTagAddress() >= taskCountToWait) {
