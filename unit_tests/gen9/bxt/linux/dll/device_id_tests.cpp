@@ -29,9 +29,15 @@
 using namespace OCLRT;
 
 TEST(BxtDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 2> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 8> expectedDescriptors = {{
+        {IBXT_A_DEVICE_F0_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IBXT_C_DEVICE_F0_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IBXT_GT_3x6_DEVICE_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
         {IBXT_P_3x6_DEVICE_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
         {IBXT_P_12EU_3x6_DEVICE_ID, &BXT_1x2x6::hwInfo, &BXT_1x2x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IBXT_PRO_12EU_3x6_DEVICE_ID, &BXT_1x2x6::hwInfo, &BXT_1x2x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IBXT_PRO_3x6_DEVICE_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IBXT_X_DEVICE_F0_ID, &BXT_1x3x6::hwInfo, &BXT_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
