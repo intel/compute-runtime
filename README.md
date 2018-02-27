@@ -36,7 +36,6 @@ Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini L
 
 By default, please submit an issue using native github.com interface: https://github.com/intel/compute-runtime/issues.  
 
-
 ## How to contribute
 
 Create a pull request on github.com with your patch. Make sure your change is cleanly building and passing ULTs.
@@ -44,7 +43,9 @@ A maintainer will contact you if there are questions or concerns.
 
 ## See also
 * Building and installation: [BUILD.md](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD.md)
+* Contribution guidelines: [CONTRIB.md](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIB.md)
 * Known issues and limitations: [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md)
+* Frequently asked questions: [FAQ.md](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md)
+* Quality expectations: [RELEASES.md](https://github.com/intel/compute-runtime/blob/master/documentation/RELEASES.md)
 
 ___(*) Other names and brands my be claimed as property of others.___
-
