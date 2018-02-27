@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017-2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,7 +80,7 @@ TEST(SettingsFileReader, CreateFileReaderWithSettingsFile) {
     size_t debugVariableCount = 0;
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     debugVariableCount++;
-#include "runtime/os_interface/DebugVariables.def"
+#include "runtime/os_interface/DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
     size_t mapCount = reader->getValueSettingsCount() + reader->getStringSettingsCount();
@@ -101,7 +101,7 @@ TEST(SettingsFileReader, GetSetting) {
             EXPECT_TRUE(true);                                                    \
         }                                                                         \
     }
-#include "runtime/os_interface/DebugVariables.def"
+#include "runtime/os_interface/DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 }
 

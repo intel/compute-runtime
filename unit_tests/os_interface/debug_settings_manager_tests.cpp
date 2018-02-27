@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017-2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -697,7 +697,7 @@ TEST(DebugSettingsManager, WithoutDebugFunctionality) {
         bool isEqual = TestDebugFlagsChecker::isEqual(debugManager.flags.variableName.get(), defaultValue); \
         EXPECT_TRUE(isEqual);                                                                               \
     }
-#include "runtime/os_interface/DebugVariables.def"
+#include "runtime/os_interface/DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 
     // test kernel dumping

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017-2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ private:                                                                        
         dataType value;                                                           \
 };
 
-#include "DebugVariables.def"
+#include "DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
 // clang-format on
 
@@ -87,7 +87,7 @@ class DebugSettingsManager {
     struct DebugVariables {
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     DebugVar##variableName variableName;
-#include "DebugVariables.def"
+#include "DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
     };
 
