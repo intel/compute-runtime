@@ -32,8 +32,12 @@
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+
 #include "gtest/gtest.h"
 #include "runtime/os_interface/os_time.h"
+
+#include <memory>
+#include <functional>
 
 using namespace OCLRT;
 
@@ -85,27 +89,84 @@ TEST_F(WddmTest, givenNullPageTableManagerWhenUpdateAuxTableCalledThenReturnFals
 }
 
 TEST(WddmTestEnumAdapters, expectTrue) {
-    ADAPTER_INFO adpaterInfo;
+    HardwareInfo outHwInfo;
+
     const HardwareInfo hwInfo = *platformDevices[0];
     OsLibrary *mockGdiDll = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
 
-    bool success = Wddm::enumAdapters(0, &adpaterInfo);
+    bool success = Wddm::enumAdapters(0, outHwInfo);
     EXPECT_TRUE(success);
 
     const HardwareInfo *hwinfo = *platformDevices;
 
-    EXPECT_EQ(adpaterInfo.GfxPlatform.eDisplayCoreFamily, hwinfo->pPlatform->eDisplayCoreFamily);
+    ASSERT_NE(nullptr, outHwInfo.pPlatform);
+    EXPECT_EQ(outHwInfo.pPlatform->eDisplayCoreFamily, hwinfo->pPlatform->eDisplayCoreFamily);
     delete mockGdiDll;
+
+    delete outHwInfo.pPlatform;
+    delete outHwInfo.pSkuTable;
+    delete outHwInfo.pSysInfo;
+    delete outHwInfo.pWaTable;
+}
+
+TEST(WddmTestEnumAdapters, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
+    HardwareInfo outHwInfo;
+
+    memset(&outHwInfo, 0, sizeof(outHwInfo));
+
+    auto hwInfo = *platformDevices[0];
+    std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
+
+    bool success = Wddm::enumAdapters(0, outHwInfo);
+    EXPECT_TRUE(success);
+
+    const HardwareInfo *hwinfo = *platformDevices;
+
+    ASSERT_NE(nullptr, outHwInfo.pPlatform);
+    EXPECT_EQ(outHwInfo.pPlatform->eDisplayCoreFamily, hwinfo->pPlatform->eDisplayCoreFamily);
+
+    EXPECT_EQ(outHwInfo.capabilityTable.defaultProfilingTimerResolution, hwInfo.capabilityTable.defaultProfilingTimerResolution);
+    EXPECT_EQ(outHwInfo.capabilityTable.clVersionSupport, hwInfo.capabilityTable.clVersionSupport);
+    EXPECT_EQ(outHwInfo.capabilityTable.delayKmdNotifyMicroseconds, hwInfo.capabilityTable.delayKmdNotifyMicroseconds);
+
+    delete outHwInfo.pPlatform;
+    delete outHwInfo.pSkuTable;
+    delete outHwInfo.pSysInfo;
+    delete outHwInfo.pWaTable;
+}
+
+TEST(WddmTestEnumAdapters, givenUnknownPlatformWhenEnumAdapterIsCalledThenFalseIsReturnedAndOutputIsEmpty) {
+    HardwareInfo outHwInfo;
+
+    memset(&outHwInfo, 0, sizeof(outHwInfo));
+
+    HardwareInfo hwInfo = *platformDevices[0];
+    auto bkp = hwInfo.pPlatform->eProductFamily;
+    PLATFORM platform = *(hwInfo.pPlatform);
+    platform.eProductFamily = IGFX_UNKNOWN;
+
+    std::unique_ptr<OsLibrary, std::function<void(OsLibrary *)>> mockGdiDll(
+        setAdapterInfo(&platform, hwInfo.pSysInfo),
+        [&](OsLibrary *ptr) {
+            platform.eProductFamily = bkp;
+            typedef void(__stdcall * pfSetAdapterInfo)(const void *, const void *);
+            pfSetAdapterInfo fSetAdpaterInfo = reinterpret_cast<pfSetAdapterInfo>(ptr->getProcAddress("MockSetAdapterInfo"));
+
+            fSetAdpaterInfo(&platform, hwInfo.pSysInfo);
+            delete ptr;
+        });
+    bool ret = Wddm::enumAdapters(0, outHwInfo);
+    EXPECT_FALSE(ret);
+    EXPECT_EQ(nullptr, outHwInfo.pPlatform);
+    EXPECT_EQ(nullptr, outHwInfo.pSkuTable);
+    EXPECT_EQ(nullptr, outHwInfo.pSysInfo);
+    EXPECT_EQ(nullptr, outHwInfo.pWaTable);
 }
 
 TEST(WddmTestEnumAdapters, devIdExpectFalse) {
-    ADAPTER_INFO adpaterInfo;
-    bool success = Wddm::enumAdapters(1, &adpaterInfo);
-    EXPECT_FALSE(success);
-}
+    HardwareInfo tempHwInfos;
 
-TEST(WddmTestEnumAdapters, nullAdapterInfoExpectFalse) {
-    bool success = Wddm::enumAdapters(0, nullptr);
+    bool success = Wddm::enumAdapters(1, tempHwInfos);
     EXPECT_FALSE(success);
 }
 

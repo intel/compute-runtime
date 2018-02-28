@@ -23,14 +23,13 @@
 #ifdef _WIN32
 
 #include "runtime/command_stream/preemption.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hw_helper.h"
+#include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/windows/wddm.h"
-#include "runtime/device/device.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/sku_info/operations/sku_info_receiver.h"
-#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 
@@ -40,35 +39,15 @@ size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
-    bool success = false;
     HardwareInfo *tempHwInfos = new HardwareInfo[1];
-    std::unique_ptr<ADAPTER_INFO> adapterInfo(new ADAPTER_INFO);
     unsigned int devNum = 0;
     numDevices = 0;
 
-    success = Wddm::enumAdapters(devNum, adapterInfo.get());
-
-    if (success) {
-        auto featureTable = new FeatureTable();
-        auto waTable = new WorkaroundTable();
-        tempHwInfos[devNum].pPlatform = new PLATFORM(adapterInfo->GfxPlatform);
-        tempHwInfos[devNum].pSkuTable = featureTable;
-        tempHwInfos[devNum].pWaTable = waTable;
-        tempHwInfos[devNum].pSysInfo = new GT_SYSTEM_INFO(adapterInfo->SystemInfo);
-
-        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo.get());
-        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo.get());
-
-        auto productFamily = tempHwInfos[devNum].pPlatform->eProductFamily;
-        DEBUG_BREAK_IF(hardwareInfoTable[productFamily] == nullptr);
-
-        tempHwInfos[devNum].capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
-
+    if (Wddm::enumAdapters(devNum, tempHwInfos[devNum])) {
         // Overwrite dynamic parameters
-        tempHwInfos[devNum].capabilityTable.maxRenderFrequency = adapterInfo->MaxRenderFreq;
-        tempHwInfos[devNum].capabilityTable.ftrSvm = adapterInfo->SkuTable.FtrSVM;
+        tempHwInfos[devNum].capabilityTable.ftrSvm = tempHwInfos[devNum].pSkuTable->ftrSVM;
 
-        HwHelper &hwHelper = HwHelper::get(adapterInfo->GfxPlatform.eRenderCoreFamily);
+        HwHelper &hwHelper = HwHelper::get(tempHwInfos[devNum].pPlatform->eRenderCoreFamily);
 
         hwHelper.adjustDefaultEngineType(&tempHwInfos[devNum]);
         tempHwInfos[devNum].capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
@@ -77,15 +56,15 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
 
         hwHelper.setCapabilityCoherencyFlag(&tempHwInfos[devNum], tempHwInfos[devNum].capabilityTable.ftrSupportsCoherency);
 
-        hwHelper.setupPreemptionRegisters(&tempHwInfos[devNum], !!adapterInfo->WaTable.WaEnablePreemptionGranularityControlByUMD);
+        hwHelper.setupPreemptionRegisters(&tempHwInfos[devNum], !!tempHwInfos[devNum].pWaTable->waEnablePreemptionGranularityControlByUMD);
         PreemptionHelper::adjustDefaultPreemptionMode(tempHwInfos[devNum].capabilityTable,
-                                                      static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidThreadLevelPreempt),
-                                                      static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuThreadGroupLevelPreempt),
-                                                      static_cast<bool>(adapterInfo->SkuTable.FtrGpGpuMidBatchPreempt));
+                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuMidThreadLevelPreempt),
+                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuThreadGroupLevelPreempt),
+                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuMidBatchPreempt));
         tempHwInfos->capabilityTable.requiredPreemptionSurfaceSize = tempHwInfos->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
 
         // Instrumentation
-        tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation && (adapterInfo->Caps.InstrumentationIsEnabled != 0);
+        tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation;
 
         tempHwInfos[devNum].capabilityTable.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
                                                                   ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
@@ -99,11 +78,13 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         *pHWInfos = tempHwInfos;
         DeviceFactory::numDevices = 1;
         DeviceFactory::hwInfos = tempHwInfos;
+
+        return true;
     } else {
         delete[] tempHwInfos;
     }
 
-    return success;
+    return false;
 }
 
 void DeviceFactory::releaseDevices() {

@@ -91,14 +91,16 @@ Wddm::~Wddm() {
         delete gdi;
 }
 
-bool Wddm::enumAdapters(unsigned int devNum, ADAPTER_INFO *adapterInfo) {
+bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
     bool success = false;
     if (devNum > 0)
         return false;
+    std::unique_ptr<ADAPTER_INFO> adapterInfo(new ADAPTER_INFO);
+
     if (adapterInfo == nullptr)
         return false;
 
-    Wddm *wddm = createWddm();
+    std::unique_ptr<Wddm> wddm(createWddm());
     DEBUG_BREAK_IF(wddm == nullptr);
 
     if (wddm->gdi->isInitialized()) {
@@ -109,10 +111,29 @@ bool Wddm::enumAdapters(unsigned int devNum, ADAPTER_INFO *adapterInfo) {
             success = wddm->queryAdapterInfo();
             if (!success)
                 break;
-            memcpy_s(adapterInfo, sizeof(ADAPTER_INFO), wddm->adapterInfo, sizeof(ADAPTER_INFO));
+            memcpy_s(adapterInfo.get(), sizeof(ADAPTER_INFO), wddm->adapterInfo, sizeof(ADAPTER_INFO));
         } while (!success);
     }
-    delete wddm;
+    if (success) {
+        auto productFamily = adapterInfo->GfxPlatform.eProductFamily;
+        if (hardwareInfoTable[productFamily] == nullptr)
+            return false;
+
+        auto featureTable = new FeatureTable();
+        auto waTable = new WorkaroundTable();
+
+        outHardwareInfo.pPlatform = new PLATFORM(adapterInfo->GfxPlatform);
+        outHardwareInfo.pSkuTable = featureTable;
+        outHardwareInfo.pWaTable = waTable;
+        outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(adapterInfo->SystemInfo);
+
+        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo.get());
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo.get());
+
+        outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
+        outHardwareInfo.capabilityTable.maxRenderFrequency = adapterInfo->MaxRenderFreq;
+        outHardwareInfo.capabilityTable.instrumentationEnabled &= adapterInfo->Caps.InstrumentationIsEnabled != 0;
+    }
     return success;
 }
 
