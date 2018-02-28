@@ -142,6 +142,42 @@ if(NOT THIRD_PARTY_DIR)
 endif(NOT THIRD_PARTY_DIR)
 message(STATUS "Third party dir: ${THIRD_PARTY_DIR}")
 
+if(WIN32)
+# get WDK location and version to use
+	if(NOT WDK_DIR)
+		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wdk")
+			get_filename_component(WDK_DIR "../wdk" ABSOLUTE)
+		endif()
+	endif(NOT WDK_DIR)
+	if(WDK_DIR)
+		if(IS_DIRECTORY "${WDK_DIR}/Win15")
+			get_filename_component(WDK_DIR "${WDK_DIR}/Win15" ABSOLUTE)
+		endif()
+	endif()
+	message(STATUS "WDK Directory: ${WDK_DIR}")
+
+	if(NOT WDK_VERSION)
+		# Get WDK version from ${WDK_DIR}/WDKVersion.txt
+		file(READ "${WDK_DIR}/WDKVersion.txt" WindowsTargetPlatformVersion)
+		string(REPLACE " " ";" WindowsTargetPlatformVersion ${WindowsTargetPlatformVersion})
+		list(LENGTH WindowsTargetPlatformVersion versionListLength)
+		if(NOT versionListLength EQUAL 3)
+			message(ERROR "Error reading content of WDKVersion.txt file")
+		endif(NOT versionListLength EQUAL 3)
+		list(GET WindowsTargetPlatformVersion 2 WindowsTargetPlatformVersion)
+	else()
+		set(WindowsTargetPlatformVersion ${WDK_VERSION})
+	endif()
+	message(STATUS "WDK Version is ${WindowsTargetPlatformVersion}")
+
+	set(WDK_INCLUDE_PATHS
+		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
+		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
+		"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
+	)
+	message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
+endif()
+
 if(ARTIFACTS_DIR)
 	if(NOT IGC_PATH)
 		if(WIN32)
@@ -326,25 +362,13 @@ if(CCACHE_EXE_FOUND AND CCACHE_ALLOWED)
 	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
 endif()
 
-if(MSVC)
-	if(NOT WDK_DIR)
-		if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/../wdk")
-			get_filename_component(WDK_DIR "../wdk" ABSOLUTE)
-		endif()
-	endif(NOT WDK_DIR)
-	if(WDK_DIR)
-		if(IS_DIRECTORY "${WDK_DIR}/Win15")
-			get_filename_component(WDK_DIR "${WDK_DIR}/Win15" ABSOLUTE)
-		endif()
-	endif()
-	message(STATUS "WDK Directory: ${WDK_DIR}")
-else()
+if(UNIX)
 	find_package(PkgConfig)
-  pkg_check_modules(LIBVA QUIET libva)
-  if(LIBVA_FOUND)
-    add_definitions(-DLIBVA)
-    message(STATUS "Using libva")
-  endif()
+	pkg_check_modules(LIBVA QUIET libva)
+	if(LIBVA_FOUND)
+		add_definitions(-DLIBVA)
+		message(STATUS "Using libva")
+	endif()
 endif()
 
 # Miscs options
@@ -363,31 +387,10 @@ if(OCL_RUNTIME_PROFILING)
 endif()
 
 if(MSVC)
-	if(NOT WDK_VERSION)
-		# Get WDK version from ${WDK_DIR}/WDKVersion.txt
-		file(READ "${WDK_DIR}/WDKVersion.txt" WindowsTargetPlatformVersion)
-		string(REPLACE " " ";" WindowsTargetPlatformVersion ${WindowsTargetPlatformVersion})
-		list(LENGTH WindowsTargetPlatformVersion versionListLength)
-		if(NOT versionListLength EQUAL 3)
-			message(ERROR "Error reading content of WDKVersion.txt file")
-		endif(NOT versionListLength EQUAL 3)
-		list(GET WindowsTargetPlatformVersion 2 WindowsTargetPlatformVersion)
-	else()
-		set(WindowsTargetPlatformVersion ${WDK_VERSION})
-	endif()
-
-	message(STATUS "WDK Version is ${WindowsTargetPlatformVersion}")
-
-	set(WDK_INCLUDE_PATHS
-			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/um"
-			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/shared"
-			"${WDK_DIR}/Include/${WindowsTargetPlatformVersion}/km"
-	)
 	# Force to treat warnings as errors
 	if(NOT CMAKE_CXX_FLAGS MATCHES "/WX")
 		 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
 	endif()
-	message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 
 # Support for WUD
 	set(CMAKE_CXX_STANDARD_LIBRARIES "onecore.lib")
