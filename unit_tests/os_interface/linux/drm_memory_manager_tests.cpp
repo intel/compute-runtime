@@ -304,8 +304,6 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowedHostPtr)
     ::alignedFree(ptr);
 }
 
-/* ---- */
-
 TEST_F(DrmMemoryManagerTest, unreference) {
     mock->ioctl_expected = 2; //create+close
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, true);
@@ -612,6 +610,8 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
     EXPECT_TRUE(allocation->is32BitAllocation);
 
     EXPECT_EQ(memoryManager->allocator32Bit->getBase(), allocation->gpuBaseAddress);
+
+    EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_EXTERNAL);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -990,6 +990,26 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
     }
 }
 
+TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIsExhaustedAndNewAllocationsIsMadeThenNullIsReturned) {
+    DebugManager.flags.Force32bitAddressing.set(true);
+    mock->ioctl_expected = 0;
+    memoryManager->setForce32BitAllocations(true);
+    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    memoryManager->device = pDevice.get();
+
+    auto allocator = memoryManager->getDrmInternal32BitAllocator();
+    size_t size = 4 * GB - 4096;
+    auto alloc = allocator->allocate(size);
+    EXPECT_NE(nullptr, alloc);
+
+    size_t allocationSize = 4096 * 3;
+    auto graphicsAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, allocationSize);
+    EXPECT_EQ(nullptr, graphicsAllocation);
+    EXPECT_TRUE(memoryManager->device->getDeviceInfo().force32BitAddressess);
+
+    DebugManager.flags.Force32bitAddressing.set(false);
+}
+
 TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenProperIoctlsAreCalledAndUnmapSizeIsNonZero) {
     //GEM CREATE + SET_TILING + WAIT + CLOSE
     mock->ioctl_expected = 4;
@@ -1332,7 +1352,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     auto drmAllocation = (DrmAllocation *)graphicsAllocation;
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
-    EXPECT_EQ(BIT32_ALLOCATOR, drmAllocation->getBO()->peekAllocationType());
+    EXPECT_EQ(BIT32_ALLOCATOR_EXTERNAL, drmAllocation->getBO()->peekAllocationType());
     memoryManager->freeGraphicsMemory(graphicsAllocation);
     EXPECT_EQ(0, mmapMockCallCount);
     EXPECT_EQ(0, munmapMockCallCount);
@@ -1493,6 +1513,71 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsR
 
     memoryManager->freeGraphicsMemory(paddedAllocation);
     memoryManager->freeGraphicsMemory(buffer);
+}
+
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWithNoPointerThenAllocationFromInternalHeapIsReturned) {
+    mock->ioctl_expected = 3;
+    auto bufferSize = MemoryConstants::pageSize;
+    void *ptr = nullptr;
+    auto drmAllocation = (DrmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, bufferSize);
+    ASSERT_NE(nullptr, drmAllocation);
+
+    auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
+
+    EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
+
+    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+
+    auto gpuPtr = drmAllocation->getGpuAddress();
+
+    auto heapBase = internalAllocator->getBase();
+    auto heapSize = 4 * GB;
+
+    EXPECT_GE(gpuPtr, heapBase);
+    EXPECT_LE(gpuPtr, heapBase + heapSize);
+
+    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+
+    auto bo = drmAllocation->getBO();
+    EXPECT_TRUE(bo->peekIsAllocated());
+    EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_INTERNAL);
+    EXPECT_EQ(bo->peekUnmapSize(), bufferSize);
+
+    memoryManager->freeGraphicsMemory(drmAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWithPointerThenAllocationFromInternalHeapIsReturned) {
+    mock->ioctl_expected = 3;
+    auto bufferSize = MemoryConstants::pageSize;
+    void *ptr = (void *)0x100000;
+    auto drmAllocation = (DrmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, bufferSize);
+    ASSERT_NE(nullptr, drmAllocation);
+
+    auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
+
+    EXPECT_NE(nullptr, drmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(ptr, drmAllocation->getUnderlyingBuffer());
+    EXPECT_EQ(bufferSize, drmAllocation->getUnderlyingBufferSize());
+
+    EXPECT_TRUE(drmAllocation->is32BitAllocation);
+
+    auto gpuPtr = drmAllocation->getGpuAddress();
+
+    auto heapBase = internalAllocator->getBase();
+    auto heapSize = 4 * GB;
+
+    EXPECT_GE(gpuPtr, heapBase);
+    EXPECT_LE(gpuPtr, heapBase + heapSize);
+
+    EXPECT_EQ(drmAllocation->gpuBaseAddress, heapBase);
+
+    auto bo = drmAllocation->getBO();
+    EXPECT_FALSE(bo->peekIsAllocated());
+    EXPECT_EQ(bo->peekAllocationType(), StorageAllocatorType::BIT32_ALLOCATOR_INTERNAL);
+    EXPECT_EQ(bo->peekUnmapSize(), bufferSize);
+
+    memoryManager->freeGraphicsMemory(drmAllocation);
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAllocUserptrFailsThenReturnsNullptr) {

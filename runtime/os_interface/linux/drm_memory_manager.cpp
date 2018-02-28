@@ -124,7 +124,12 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
                 if (allocatorType == MMAP_ALLOCATOR) {
                     munmapFunction(address, unmapSize);
                 } else {
-                    allocator32Bit->free(address, unmapSize);
+                    if (allocatorType == BIT32_ALLOCATOR_EXTERNAL) {
+                        allocator32Bit->free(address, unmapSize);
+                    } else {
+                        UNRECOVERABLE_IF(allocatorType != BIT32_ALLOCATOR_INTERNAL)
+                        internal32bitAllocator->free(address, unmapSize);
+                    }
                 }
 
             } else {
@@ -247,11 +252,14 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
 }
 
 DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) {
+    auto allocatorToUse = memoryType == MemoryType::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
+    auto allocationType = memoryType == MemoryType::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
+
     if (ptr) {
         uintptr_t inputPtr = (uintptr_t)ptr;
         auto allocationSize = alignSizeWholePage((void *)ptr, size);
         auto realAllocationSize = allocationSize;
-        auto gpuVirtualAddress = allocator32Bit->allocate(realAllocationSize);
+        auto gpuVirtualAddress = allocatorToUse->allocate(realAllocationSize);
         if (!gpuVirtualAddress) {
             return nullptr;
         }
@@ -260,7 +268,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
 
         BufferObject *bo = allocUserptr(alignedUserPointer, allocationSize, 0, true);
         if (!bo) {
-            allocator32Bit->free(gpuVirtualAddress, realAllocationSize);
+            allocatorToUse->free(gpuVirtualAddress, realAllocationSize);
             return nullptr;
         }
 
@@ -269,18 +277,19 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
         bo->address = gpuVirtualAddress;
         uintptr_t offset = (uintptr_t)bo->address;
         bo->softPin((uint64_t)offset);
+        bo->setAllocationType(allocationType);
         auto drmAllocation = new DrmAllocation(bo, (void *)ptr, (uint64_t)ptrOffset(gpuVirtualAddress, inputPointerOffset), allocationSize);
         drmAllocation->is32BitAllocation = true;
-        drmAllocation->gpuBaseAddress = allocator32Bit->getBase();
+        drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
         return drmAllocation;
     }
 
     size_t alignedAllocationSize = alignUp(size, MemoryConstants::pageSize);
     auto allocationSize = alignedAllocationSize;
-    auto res = allocator32Bit->allocate(allocationSize);
+    auto res = allocatorToUse->allocate(allocationSize);
 
     if (!res) {
-        if (device && device->getProgramCount() == 0) {
+        if (memoryType == MemoryType::EXTERNAL_ALLOCATION && device && device->getProgramCount() == 0) {
             this->force32bitAllocations = false;
             device->setForce32BitAddressing(false);
             return (DrmAllocation *)createGraphicsAllocationWithRequiredBitness(size, ptr);
@@ -292,17 +301,23 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
     BufferObject *bo = allocUserptr(reinterpret_cast<uintptr_t>(res), alignedAllocationSize, 0, true);
 
     if (!bo) {
-        allocator32Bit->free(res, allocationSize);
+        allocatorToUse->free(res, allocationSize);
         return nullptr;
     }
 
     bo->isAllocated = true;
     bo->setUnmapSize(allocationSize);
 
+    bo->setAllocationType(allocationType);
+
     auto drmAllocation = new DrmAllocation(bo, res, alignedAllocationSize);
     drmAllocation->is32BitAllocation = true;
-    drmAllocation->gpuBaseAddress = allocator32Bit->getBase();
+    drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
     return drmAllocation;
+}
+
+GraphicsAllocation *DrmMemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
+    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), MemoryType::INTERNAL_ALLOCATION);
 }
 
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
@@ -326,7 +341,7 @@ BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t si
 
     if (requireSpecificBitness && this->force32bitAllocations) {
         gpuRange = this->allocator32Bit->allocate(size);
-        storageType = BIT32_ALLOCATOR;
+        storageType = BIT32_ALLOCATOR_EXTERNAL;
     } else {
         gpuRange = mmapFunction(nullptr, size, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
         storageType = MMAP_ALLOCATOR;
