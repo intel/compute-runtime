@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,9 +40,12 @@ class TestedBufferObject : public BufferObject {
         this->tiling_mode = mode;
     }
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject) {
+    void fillExecObject(drm_i915_gem_exec_object2 &execObject) override {
         BufferObject::fillExecObject(execObject);
+        execObjectPointerFilled = &execObject;
     }
+
+    drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
 };
 
 class DrmBufferObjectFixture : public MemoryManagementFixture {
@@ -159,7 +162,8 @@ TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndForceNonCoherent) {
     ASSERT_NE(nullptr, boToPin.get());
 
     bo->setAddress(buff.get());
-    auto ret = bo->pin(boToPin.get());
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
     uint32_t bb_end = 0x05000000;
     EXPECT_EQ(buff[0], bb_end);
@@ -179,7 +183,8 @@ TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndNoForceNonCoherent) {
     ASSERT_NE(nullptr, boToPin.get());
 
     bo->setAddress(buff.get());
-    auto ret = bo->pin(boToPin.get());
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
     EXPECT_EQ(mock->ioctl_res, ret);
     uint32_t bb_end = 0x05000000;
     EXPECT_EQ(buff[0], bb_end);
@@ -194,11 +199,71 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
 
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
+    this->mock->errnoValue = EINVAL;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock));
     ASSERT_NE(nullptr, boToPin.get());
 
     bo->setAddress(buff.get());
-    auto ret = bo->pin(boToPin.get());
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
+    EXPECT_EQ(EINVAL, ret);
+}
+
+TEST(DrmBufferObjectSimpleTest, givenInvalidBoWhenPinIsCalledThenErrorIsReturned) {
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
+    std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
+    ASSERT_NE(nullptr, mock.get());
+    std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
+    ASSERT_NE(nullptr, bo.get());
+    drm_i915_gem_exec_object2 execObjectsStorage[3];
+    bo->setExecObjectsStorage(execObjectsStorage);
+
+    // fail DRM_IOCTL_I915_GEM_EXECBUFFER2 in pin
+    mock->ioctl_res = -1;
+
+    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(mock.get()));
+    ASSERT_NE(nullptr, boToPin.get());
+
+    bo->setAddress(buff.get());
+    mock->errnoValue = EFAULT;
+
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
+    EXPECT_EQ(EFAULT, ret);
+}
+
+TEST(DrmBufferObjectSimpleTest, givenArrayOfBosWhenPinnedThenAllBosArePinned) {
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[256]);
+    std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom);
+    ASSERT_NE(nullptr, mock.get());
+    std::unique_ptr<TestedBufferObject> bo(new TestedBufferObject(mock.get()));
+    ASSERT_NE(nullptr, bo.get());
+    drm_i915_gem_exec_object2 execObjectsStorage[4];
+    bo->setExecObjectsStorage(execObjectsStorage);
+    mock->ioctl_res = 0;
+
+    std::unique_ptr<TestedBufferObject> boToPin(new TestedBufferObject(mock.get()));
+    std::unique_ptr<TestedBufferObject> boToPin2(new TestedBufferObject(mock.get()));
+    std::unique_ptr<TestedBufferObject> boToPin3(new TestedBufferObject(mock.get()));
+
+    ASSERT_NE(nullptr, boToPin.get());
+    ASSERT_NE(nullptr, boToPin2.get());
+    ASSERT_NE(nullptr, boToPin3.get());
+
+    BufferObject *array[3] = {boToPin.get(), boToPin2.get(), boToPin3.get()};
+
+    bo->setAddress(buff.get());
+    auto ret = bo->pin(array, 3);
     EXPECT_EQ(mock->ioctl_res, ret);
+    uint32_t bb_end = 0x05000000;
+    EXPECT_EQ(buff[0], bb_end);
+
+    EXPECT_LT(0u, mock->execBuffer.batch_len);
+    EXPECT_EQ(4u, mock->execBuffer.buffer_count); // 3 bos to pin plus 1 exec bo
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(boToPin->execObjectPointerFilled), mock->execBuffer.buffers_ptr);
+    EXPECT_NE(nullptr, boToPin2->execObjectPointerFilled);
+    EXPECT_NE(nullptr, boToPin3->execObjectPointerFilled);
+
+    bo->setAddress(nullptr);
 }

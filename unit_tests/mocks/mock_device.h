@@ -138,8 +138,8 @@ class FailMemoryManager : public MockMemoryManager {
     void *lockResource(GraphicsAllocation *gfxAllocation) override { return nullptr; };
     void unlockResource(GraphicsAllocation *gfxAllocation) override{};
 
-    bool populateOsHandles(OsHandleStorage &handleStorage) override {
-        return false;
+    MemoryManager::AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override {
+        return AllocationStatus::Error;
     };
     void cleanOsHandles(OsHandleStorage &handleStorage) override{};
 

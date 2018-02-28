@@ -36,7 +36,7 @@ class DrmMemoryManager : public MemoryManager {
   public:
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
-    DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed);
+    DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory);
     ~DrmMemoryManager() override;
 
     BufferObject *getPinBB() const;
@@ -64,7 +64,7 @@ class DrmMemoryManager : public MemoryManager {
     uint64_t getMaxApplicationAddress() override;
     uint64_t getInternalHeapBaseAddress() override;
 
-    bool populateOsHandles(OsHandleStorage &handleStorage) override;
+    AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
     // drm/i915 ioctl wrappers
@@ -74,6 +74,10 @@ class DrmMemoryManager : public MemoryManager {
     void push(DrmAllocation *alloc);
 
     DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
+    void waitForDeletions() override;
+    bool isValidateHostMemoryEnabled() const {
+        return validateHostPtrMemory;
+    }
 
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
@@ -86,6 +90,8 @@ class DrmMemoryManager : public MemoryManager {
     Drm *drm;
     BufferObject *pinBB;
     size_t pinThreshold = 8 * 1024 * 1024;
+    bool forcePinEnabled = false;
+    const bool validateHostPtrMemory;
     std::unique_ptr<DrmGemCloseWorker> gemCloseWorker;
     decltype(&lseek) lseekFunction = lseek;
     decltype(&mmap) mmapFunction = mmap;

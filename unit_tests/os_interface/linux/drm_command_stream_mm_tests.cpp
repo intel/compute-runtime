@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,7 +61,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     }
 }
 
-HWTEST_F(DrmCommandStreamMMTest, MMwithoutPinBB) {
+HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     DebugManagerStateRestore dbgRestorer;
     {
         DebugManager.flags.EnableForcePin.set(false);
@@ -75,7 +75,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithoutPinBB) {
         csr.setMemoryManager(nullptr);
 
         ASSERT_NE(nullptr, mm);
-        EXPECT_EQ(nullptr, mm->getPinBB());
+        EXPECT_NE(nullptr, mm->getPinBB());
 
         delete mm;
     }

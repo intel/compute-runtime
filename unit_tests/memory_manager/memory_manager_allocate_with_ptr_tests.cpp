@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,24 +20,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/fixtures/memory_manager_fixture.h"
-#include "unit_tests/mocks/mock_csr.h"
+#include "gtest/gtest.h"
+#include "test.h"
+#include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include <memory>
 
 using namespace OCLRT;
-using ::testing::NiceMock;
+using namespace std;
+using namespace ::testing;
 
-void MemoryManagerWithCsrFixture::SetUp() {
-    gmockMemoryManager = new NiceMock<GMockMemoryManager>;
-    memoryManager = gmockMemoryManager;
+TEST(MemoryManagerTest, givenInvalidHostPointerWhenPopulateOsHandlesFailsThenNullAllocationIsReturned) {
+    unique_ptr<NiceMock<GMockMemoryManager>> gmockMemoryManager(new NiceMock<GMockMemoryManager>);
 
-    ON_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerCleanAllocationList));
-    ON_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerPopulateOsHandles));
+    EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).Times(1).WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
 
-    csr.tagAddress = &currentGpuTag;
-    memoryManager->csr = &csr;
-}
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
 
-void MemoryManagerWithCsrFixture::TearDown() {
-    delete memoryManager;
+    auto allocation = gmockMemoryManager->allocateGraphicsMemory(size, memory);
+
+    ASSERT_EQ(nullptr, allocation);
+    gmockMemoryManager->freeGraphicsMemory(allocation);
 }

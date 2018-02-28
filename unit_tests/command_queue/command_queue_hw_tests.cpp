@@ -34,6 +34,7 @@
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -44,8 +45,8 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-
 #include "gmock/gmock-matchers.h"
+#include <memory>
 
 using namespace OCLRT;
 
@@ -1084,4 +1085,67 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
         }
         EXPECT_EQ(expected, it->second);
     }
+}
+
+HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
+    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
+    ASSERT_NE(nullptr, gmockMemoryManager);
+
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ASSERT_NE(nullptr, device.get());
+    device->injectMemoryManager(gmockMemoryManager);
+    MockContext *mockContext = new MockContext(device.get());
+    ASSERT_NE(nullptr, mockContext);
+
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(mockContext, device.get(), 0);
+    ASSERT_NE(nullptr, mockCmdQ);
+
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, true);
+
+    EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).Times(1).WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+
+    bool result = mockCmdQ->createAllocationForHostSurface(surface);
+    EXPECT_TRUE(result);
+
+    auto allocation = surface.getAllocation();
+    ASSERT_NE(nullptr, allocation);
+
+    EXPECT_NE(memory, allocation->getUnderlyingBuffer());
+    EXPECT_THAT(allocation->getUnderlyingBuffer(), MemCompare(memory, size));
+
+    gmockMemoryManager->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    mockCmdQ->release();
+    mockContext->release();
+}
+
+HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {
+    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
+    ASSERT_NE(nullptr, gmockMemoryManager);
+
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ASSERT_NE(nullptr, device.get());
+    device->injectMemoryManager(gmockMemoryManager);
+    MockContext *mockContext = new MockContext(device.get());
+    ASSERT_NE(nullptr, mockContext);
+
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(mockContext, device.get(), 0);
+    ASSERT_NE(nullptr, mockCmdQ);
+
+    const char memory[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    size_t size = sizeof(memory);
+    HostPtrSurface surface(const_cast<char *>(memory), size, false);
+
+    EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).Times(1).WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
+
+    bool result = mockCmdQ->createAllocationForHostSurface(surface);
+    EXPECT_FALSE(result);
+
+    auto allocation = surface.getAllocation();
+    EXPECT_EQ(nullptr, allocation);
+
+    gmockMemoryManager->cleanAllocationList(-1, TEMPORARY_ALLOCATION);
+    mockCmdQ->release();
+    mockContext->release();
 }

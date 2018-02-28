@@ -84,7 +84,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     void *srcPtr = const_cast<void *>(ptr);
 
     MemObjSurface dstImgSurf(dstImage);
-    HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize);
+    HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     Surface *surfaces[] = {&dstImgSurf, &hostPtrSurf};
 
     if (region[0] != 0 &&

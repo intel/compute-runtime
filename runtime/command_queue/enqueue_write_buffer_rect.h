@@ -84,7 +84,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     void *srcPtr = const_cast<void *>(ptr);
 
     MemObjSurface dstBufferSurf(buffer);
-    HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize);
+    HostPtrSurface hostPtrSurf(srcPtr, hostPtrSize, true);
     Surface *surfaces[] = {&dstBufferSurf, &hostPtrSurf};
 
     if (region[0] != 0 &&

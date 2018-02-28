@@ -26,6 +26,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_time.h"
+#include "runtime/utilities/stackvec.h"
 
 #include <sys/syscall.h>
 #include <sys/mman.h>
@@ -182,31 +183,39 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     return ret;
 }
 
-int BufferObject::pin(BufferObject *boToPin) {
+int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
     drm_i915_gem_execbuffer2 execbuf;
-    drm_i915_gem_exec_object2 execObject[2];
+    StackVec<drm_i915_gem_exec_object2, max_fragments_count + 1> execObject;
 
     reinterpret_cast<uint32_t *>(this->address)[0] = 0x05000000;
     reinterpret_cast<uint32_t *>(this->address)[1] = 0x00000000;
 
-    boToPin->fillExecObject(execObject[0]);
-    this->fillExecObject(execObject[1]);
+    execObject.resize(numberOfBos + 1);
+
+    uint32_t boIndex = 0;
+    for (boIndex = 0; boIndex < (uint32_t)numberOfBos; boIndex++) {
+        boToPin[boIndex]->fillExecObject(execObject[boIndex]);
+    }
+
+    this->fillExecObject(execObject[boIndex]);
 
     memset(&execbuf, 0, sizeof(execbuf));
-    execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObject);
-    execbuf.buffer_count = 2;
+    execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(&execObject[0]);
+    execbuf.buffer_count = boIndex + 1;
     execbuf.batch_len = alignUp(static_cast<uint32_t>(sizeof(uint32_t)), 8);
 
     if (drm->peekCoherencyDisablePatchActive()) {
         execbuf.flags = execbuf.flags | I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
     }
 
+    int err = 0;
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);
     if (ret != 0) {
-        int err = errno;
+        err = this->drm->getErrno();
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(I915_GEM_EXECBUFFER2) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
     }
 
-    return ret;
+    return err;
 }
+
 } // namespace OCLRT

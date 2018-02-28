@@ -80,6 +80,12 @@ struct ImageInfo;
 
 class MemoryManager {
   public:
+    enum AllocationStatus {
+        Success = 0,
+        Error,
+        InvalidHostPointer,
+    };
+
     MemoryManager(bool enable64kbpages);
 
     virtual ~MemoryManager();
@@ -127,7 +133,7 @@ class MemoryManager {
     GraphicsAllocation *createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
     virtual GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding);
 
-    virtual bool populateOsHandles(OsHandleStorage &handleStorage) = 0;
+    virtual AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) = 0;
     virtual void cleanOsHandles(OsHandleStorage &handleStorage) = 0;
 
     void freeSystemMemory(void *ptr);

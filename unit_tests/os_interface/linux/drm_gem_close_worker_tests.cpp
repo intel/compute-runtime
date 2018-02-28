@@ -82,7 +82,7 @@ class DrmGemCloseWorkerFixture : public MemoryManagementFixture {
         this->drmMock->gem_close_cnt = 0;
         this->drmMock->gem_close_expected = 0;
 
-        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false);
+        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false, false);
     }
 
     void TearDown() override {

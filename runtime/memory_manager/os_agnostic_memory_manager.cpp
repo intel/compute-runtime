@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -181,7 +181,7 @@ void OsAgnosticMemoryManager::turnOnFakingBigAllocations() {
     this->fakeBigAllocations = true;
 }
 
-bool OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
@@ -195,7 +195,7 @@ bool OsAgnosticMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) 
             hostPtrManager.storeFragment(newFragment);
         }
     }
-    return true;
+    return AllocationStatus::Success;
 }
 void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {

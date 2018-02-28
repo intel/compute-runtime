@@ -168,6 +168,8 @@ class DrmMockCustom : public Drm {
     __u32 setDomainReadDomains = 0;
     __u32 setDomainWriteDomain = 0;
 
+    int errnoValue = 0;
+
     int ioctl(unsigned long request, void *arg) override {
         auto ext = ioctl_res_ext.load();
 
@@ -266,5 +268,8 @@ class DrmMockCustom : public Drm {
 
     DrmMockCustom() : Drm(mockFd) {
         reset();
+    }
+    int getErrno() override {
+        return errnoValue;
     }
 };

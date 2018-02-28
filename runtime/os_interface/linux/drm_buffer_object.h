@@ -52,13 +52,14 @@ class BufferObject {
     using ResidencyVector = std::vector<BufferObject *>;
 
   public:
-    ~BufferObject(){};
+    MOCKABLE_VIRTUAL ~BufferObject(){};
 
     bool softPin(uint64_t offset);
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
-    int pin(BufferObject *boToPin);
+    int pin(BufferObject *boToPin[], size_t numberOfBos);
+
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency = false, bool lowPriority = false);
 
     int wait(int64_t timeoutNs);
@@ -106,7 +107,7 @@ class BufferObject {
     uint32_t tiling_mode;
     uint32_t stride;
 
-    void fillExecObject(drm_i915_gem_exec_object2 &execObject);
+    MOCKABLE_VIRTUAL void fillExecObject(drm_i915_gem_exec_object2 &execObject);
     void processRelocs(int &idx);
 
     uint64_t offset64; // last-seen GPU offset

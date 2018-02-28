@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -229,6 +229,10 @@ int Drm::getMinEuInPool(int &minEUinPool) {
 #else
     return 0;
 #endif
+}
+
+int Drm::getErrno() {
+    return errno;
 }
 
 } // namespace OCLRT

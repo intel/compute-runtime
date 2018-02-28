@@ -81,7 +81,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::setDomainCpu;
 
-    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false) {
+    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false, false) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -91,7 +91,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         mmapMockCallCount = 0;
         munmapMockCallCount = 0;
     };
-    TestedDrmMemoryManager(Drm *drm, bool allowForcePin) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, allowForcePin) {
+    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, allowForcePin, validateHostPtrMemory) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -140,31 +140,61 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
 };
 
-typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
+class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation : public MemoryManagementFixture {
+  public:
+    TestedDrmMemoryManager *memoryManager = nullptr;
+    DrmMockCustom *mock;
 
-TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryMangerWhenItIsCreatedThenItContainsInternal32BitAllocator) {
-    mock->ioctl_expected.reset();
+    void SetUp() override {
+        MemoryManagementFixture::SetUp();
+        this->mock = new DrmMockCustom;
+        memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock);
+        ASSERT_NE(nullptr, memoryManager);
+        memoryManager->getgemCloseWorker()->close(true);
+    }
+
+    void TearDown() override {
+        delete memoryManager;
+        delete this->mock;
+        this->mock = nullptr;
+        MemoryManagementFixture::TearDown();
+    }
+
+  protected:
+    DrmMockCustom::IoctlResExt ioctlResExt = {0, 0};
+};
+
+typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
+typedef Test<DrmMemoryManagerFixtureWithoutQuietIoctlExpectation> DrmMemoryManagerWithExplicitExpectationsTest;
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryMangerWhenItIsCreatedThenItContainsInternal32BitAllocator) {
     EXPECT_NE(nullptr, memoryManager->getDrmInternal32BitAllocator());
 }
 
-TEST_F(DrmMemoryManagerTest, pinBBnotCreated) {
-    mock->ioctl_expected.reset();
-    EXPECT_EQ(nullptr, memoryManager->getPinBB());
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenforcePinAllowedWhenMemoryManagerIsCreatedThenPinBbIsCreated) {
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    EXPECT_NE(nullptr, mm->getPinBB());
+    delete mm;
 }
 
 TEST_F(DrmMemoryManagerTest, pinBBisCreated) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     EXPECT_NE(nullptr, mm->getPinBB());
     delete mm;
+}
+
+TEST_F(DrmMemoryManagerTest, givenNotAllowedForcePinWhenMemoryManagerIsCreatedThenPinBBIsNotCreated) {
+    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false));
+    EXPECT_EQ(nullptr, mm->getPinBB());
 }
 
 TEST_F(DrmMemoryManagerTest, pinBBnotCreatedWhenIoctlFailed) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_res = -1;
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     EXPECT_EQ(nullptr, mm->getPinBB());
     delete mm;
 }
@@ -175,7 +205,7 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     auto alloc = mm->allocateGraphicsMemory(10 * 1014 * 1024, 1024, true, false);
@@ -192,7 +222,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAll
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     // one page is too small for early pinning
@@ -210,7 +240,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
     mock->ioctl_expected.gemClose = 2;
     mock->ioctl_expected.gemWait = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     auto alloc = mm->allocateGraphicsMemory(1024, 1024, false, false);
@@ -227,8 +257,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false);
-    ASSERT_EQ(nullptr, mm->getPinBB());
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
 
     auto alloc = mm->allocateGraphicsMemory(1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
@@ -246,7 +275,7 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.execbuffer2 = 1;
     mock->ioctl_expected.gemWait = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     size_t size = 10 * 1024 * 1024;
@@ -261,12 +290,12 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     ::alignedFree(ptr);
 }
 
-TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAllocationHostPtr) {
+TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIsTrueThenBufferObjectIsNotPinned) {
     mock->ioctl_expected.gemUserptr = 2;
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     // one page is too small for early pinning
@@ -287,7 +316,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true);
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     ASSERT_NE(nullptr, mm->getPinBB());
 
     size_t size = 4 * 1024;
@@ -307,8 +336,7 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false);
-    ASSERT_EQ(nullptr, mm->getPinBB());
+    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
 
     size_t size = 4 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
@@ -334,10 +362,10 @@ TEST_F(DrmMemoryManagerTest, UnreferenceNullPtr) {
     memoryManager->unreference(nullptr);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
     class MyTestedDrmMemoryManager : public DrmMemoryManager {
       public:
-        MyTestedDrmMemoryManager(Drm *drm, gemCloseWorkerMode mode) : DrmMemoryManager(drm, mode, false) {}
+        MyTestedDrmMemoryManager(Drm *drm, gemCloseWorkerMode mode) : DrmMemoryManager(drm, mode, false, false) {}
         DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
     };
 
@@ -506,7 +534,6 @@ TEST_F(DrmMemoryManagerTest, getMaxApplicationAddress) {
 
 TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
     auto hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
-
     // gpuMemSize < hostMemSize
     auto gpuMemorySize = hostMemorySize - 1u;
     mock->gpuMemSize = gpuMemorySize;
@@ -554,6 +581,64 @@ TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledP
     memoryManager->cleanOsHandles(storage);
 }
 
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesReturnsInvalidHostPointerError) {
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true));
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    storage.fragmentStorageData[0].fragmentSize = 1;
+
+    mock->reset();
+
+    DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+    mock->errnoValue = EFAULT;
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 1;
+
+    MemoryManager::AllocationStatus result = testedMemoryManager->populateOsHandles(storage);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
+    mock->testIoctls();
+
+    EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
+    EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
+    EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
+
+    storage.fragmentStorageData[0].freeTheFragment = true;
+    testedMemoryManager->cleanOsHandles(storage);
+    mock->ioctl_res_ext = &mock->NONE;
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenPinningFailWithErrorDifferentThanEfaultThenPopulateOsHandlesReturnsError) {
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true));
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    storage.fragmentStorageData[0].fragmentSize = 1;
+
+    mock->reset();
+
+    DrmMockCustom::IoctlResExt ioctlResExt = {1, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+    mock->errnoValue = ENOMEM;
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 1;
+
+    MemoryManager::AllocationStatus result = testedMemoryManager->populateOsHandles(storage);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, result);
+    mock->testIoctls();
+
+    EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
+    EXPECT_EQ(nullptr, storage.fragmentStorageData[1].osHandleStorage);
+    EXPECT_EQ(nullptr, storage.fragmentStorageData[2].osHandleStorage);
+
+    storage.fragmentStorageData[0].freeTheFragment = true;
+    testedMemoryManager->cleanOsHandles(storage);
+    mock->ioctl_res_ext = &mock->NONE;
+}
+
 TEST_F(DrmMemoryManagerTest, GivenNoInputsWhenOsHandleIsCreatedThenAllBoHandlesAreInitializedAsNullPtrs) {
     OsHandle boHandle;
     EXPECT_EQ(nullptr, boHandle.bo);
@@ -563,7 +648,6 @@ TEST_F(DrmMemoryManagerTest, GivenNoInputsWhenOsHandleIsCreatedThenAllBoHandlesA
 }
 
 TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocationThenGraphicsAllocationIsCreated) {
-
     OsHandleStorage handleStorage;
     auto ptr = (void *)0x1000;
     auto ptr2 = (void *)0x1001;
@@ -625,8 +709,7 @@ TEST_F(DrmMemoryManagerTest, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
     EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
 }
 
-TEST_F(DrmMemoryManagerTest, testProfilingAllocatorCleanup) {
-    mock->ioctl_expected.total = -1; //don't care
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, testProfilingAllocatorCleanup) {
     MemoryManager *memMngr = memoryManager;
     TagAllocator<HwTimeStamps> *allocator = memMngr->getEventTsAllocator();
     EXPECT_NE(nullptr, allocator);
@@ -710,9 +793,9 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
 
     if (is32BitOsAllocatorAvailable) {
         EXPECT_LT(address64bit - baseAddress, max32BitAddress);
-        }
+    }
 
-        delete buffer;
+    delete buffer;
 }
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
@@ -755,37 +838,37 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
     if (is32BitOsAllocatorAvailable) {
         auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
         EXPECT_LT(address64bitOnGpu - baseAddress, max32BitAddress);
-        }
+    }
 
-        EXPECT_TRUE(drmAllocation->is32BitAllocation);
+    EXPECT_TRUE(drmAllocation->is32BitAllocation);
 
-        auto allocationCpuPtr = (uintptr_t)drmAllocation->getUnderlyingBuffer();
-        auto allocationPageOffset = allocationCpuPtr - alignDown(allocationCpuPtr, MemoryConstants::pageSize);
+    auto allocationCpuPtr = (uintptr_t)drmAllocation->getUnderlyingBuffer();
+    auto allocationPageOffset = allocationCpuPtr - alignDown(allocationCpuPtr, MemoryConstants::pageSize);
 
-        auto allocationGpuPtr = (uintptr_t)drmAllocation->getGpuAddress();
-        auto allocationGpuOffset = allocationGpuPtr - alignDown(allocationGpuPtr, MemoryConstants::pageSize);
+    auto allocationGpuPtr = (uintptr_t)drmAllocation->getGpuAddress();
+    auto allocationGpuOffset = allocationGpuPtr - alignDown(allocationGpuPtr, MemoryConstants::pageSize);
 
-        auto bufferObject = drmAllocation->getBO();
+    auto bufferObject = drmAllocation->getBO();
 
-        if (DebugManager.flags.UseNewHeapAllocator.get()) {
-            EXPECT_NE(0u, bufferObject->peekUnmapSize());
-        } else {
-            EXPECT_EQ(0u, bufferObject->peekUnmapSize());
-        }
-        EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), (void *)offsetedPtr);
+    if (DebugManager.flags.UseNewHeapAllocator.get()) {
+        EXPECT_NE(0u, bufferObject->peekUnmapSize());
+    } else {
+        EXPECT_EQ(0u, bufferObject->peekUnmapSize());
+    }
+    EXPECT_EQ(drmAllocation->getUnderlyingBuffer(), (void *)offsetedPtr);
 
-        // Gpu address should be different
-        EXPECT_NE(offsetedPtr, drmAllocation->getGpuAddress());
-        // Gpu address offset iqual to cpu offset
-        EXPECT_EQ(allocationGpuOffset, ptrOffset);
+    // Gpu address should be different
+    EXPECT_NE(offsetedPtr, drmAllocation->getGpuAddress());
+    // Gpu address offset iqual to cpu offset
+    EXPECT_EQ(allocationGpuOffset, ptrOffset);
 
-        EXPECT_EQ(allocationPageOffset, ptrOffset);
-        EXPECT_FALSE(bufferObject->peekIsAllocated());
+    EXPECT_EQ(allocationPageOffset, ptrOffset);
+    EXPECT_FALSE(bufferObject->peekIsAllocated());
 
-        auto boAddress = bufferObject->peekAddress();
-        EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);
+    auto boAddress = bufferObject->peekAddress();
+    EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);
 
-        delete buffer;
+    delete buffer;
 }
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64BitHostPtrThen32BitBufferIsReturned) {
@@ -868,6 +951,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
+    mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAllocUserptrFailsThenFails) {
@@ -881,6 +965,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
+    mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
@@ -925,9 +1010,9 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
         EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
         auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
         EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
-        }
+    }
 
-        delete buffer;
+    delete buffer;
 }
 
 TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
@@ -1540,7 +1625,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     EXPECT_EQ(1, munmapMockCallCount);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle((void *)1);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
@@ -1667,6 +1752,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledButFails
     EXPECT_EQ(nullptr, ptr);
 
     memoryManager->unlockResource(&drmAllocation);
+    mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationWithoutBufferObjectThenReturnFalse) {
@@ -1692,6 +1778,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledButFai
 
     auto success = memoryManager->setDomainCpu(drmAllocation, false);
     EXPECT_FALSE(success);
+    mock->ioctl_res_ext = &mock->NONE;
 }
 
 TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSetDomainCpuIsCalledOnAllocationThenReturnSetWriteDomain) {
@@ -1903,7 +1990,6 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
     mock->ioctl_expected.gemUserptr = 3;
     mock->ioctl_expected.gemWait = 2;
     mock->ioctl_expected.gemClose = 2;
-
     this->ioctlResExt = {2, -1};
     mock->ioctl_res_ext = &ioctlResExt;
 
@@ -1921,13 +2007,14 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
     EXPECT_EQ(nullptr, paddedAllocation);
 
     memoryManager->freeGraphicsMemory(buffer);
+    mock->ioctl_res_ext = &mock->NONE;
 }
 
-TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForVirtualPaddingSupportThenTrueIsReturned) {
     EXPECT_TRUE(memoryManager->peekVirtualPaddingSupport());
 }
 
-TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenNullPtrIsReturned) {
     EXPECT_EQ(nullptr, memoryManager->getAlignedMallocRestrictions());
 }
 
@@ -2205,7 +2292,7 @@ TEST(MmapFlags, givenVariousMmapParametersGetTimeDeltaForTheOperation) {
 }
 
 TEST(DrmMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
@@ -2213,7 +2300,7 @@ TEST(DrmMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterE
 TEST(DrmMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
@@ -2221,14 +2308,193 @@ TEST(DrmMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThe
 TEST(DrmMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(false);
-    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false);
+    DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false, true);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
 
 TEST(DrmMemoryManager, givenDefaultDrmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenInternalHeapBaseIsReturned) {
-    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true, true));
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
     auto heapBase = internalAllocator->getBase();
     EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress());
+}
+
+TEST(DrmMemoryManager, givenEnabledGemCloseWorkerWhenWaitForDeletionsIsCalledThenGemCloseWorkerIsEmpty) {
+    TestedDrmMemoryManager memoryManager(Drm::get(0));
+    auto gemCloseWorker = memoryManager.getgemCloseWorker();
+
+    EXPECT_TRUE(gemCloseWorker->isEmpty());
+    auto allocation = memoryManager.allocateGraphicsMemory(1024, 4096, false, false);
+
+    memoryManager.push(allocation);
+    memoryManager.waitForDeletions();
+
+    EXPECT_TRUE(gemCloseWorker->isEmpty());
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWithEnabledHostMemoryValidationWhenFeatureIsQueriedThenTrueIsReturned) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    ASSERT_NE(nullptr, memoryManager.get());
+    EXPECT_TRUE(memoryManager->isValidateHostMemoryEnabled());
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWithDisabledHostMemoryValidationWhenFeatureIsQueriedThenFalseIsReturned) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, false));
+    ASSERT_NE(nullptr, memoryManager.get());
+    EXPECT_FALSE(memoryManager->isValidateHostMemoryEnabled());
+}
+
+TEST(DrmMemoryManager, givenEnabledHostMemoryValidationWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    ASSERT_NE(nullptr, memoryManager.get());
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
+}
+
+TEST(DrmMemoryManager, givenEnabledHostMemoryValidationAndForcePinWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true, true));
+    ASSERT_NE(nullptr, memoryManager.get());
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPinBBAllocationFailsThenUnrecoverableIsCalled) {
+    this->mock->ioctl_res = -1;
+    this->mock->ioctl_expected.gemUserptr = 1;
+    EXPECT_THROW(
+        {
+            std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock, false, true));
+            EXPECT_NE(nullptr, testedMemoryManager.get());
+        },
+        std::exception);
+    this->mock->ioctl_res = 0;
+    this->mock->testIoctls();
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledThenHostMemoryIsValidated) {
+
+    std::unique_ptr<DrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock, false, true));
+    ASSERT_NE(nullptr, testedMemoryManager.get());
+    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 1; // for pinning - host memory validation
+
+    OsHandleStorage handleStorage;
+    handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    handleStorage.fragmentStorageData[0].fragmentSize = 4096;
+    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
+
+    mock->testIoctls();
+
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
+    handleStorage.fragmentStorageData[0].freeTheFragment = true;
+
+    testedMemoryManager->cleanOsHandles(handleStorage);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryEnabledWhenHostPtrAllocationIsCreatedWithoutForcingPinThenBufferObjectIsPinned) {
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 2;
+
+    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
+    ASSERT_NE(nullptr, mm->getPinBB());
+
+    size_t size = 10 * 1024 * 1024;
+    void *ptr = ::alignedMalloc(size, 4096);
+    auto alloc = mm->allocateGraphicsMemory(size, ptr, false);
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_NE(nullptr, alloc->getBO());
+
+    mm->freeGraphicsMemory(alloc);
+    ::alignedFree(ptr);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledHostMemoryValidationWhenValidHostPointerIsPassedToPopulateThenSuccessIsReturned) {
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, true));
+
+    OsHandleStorage storage;
+    storage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    storage.fragmentStorageData[0].fragmentSize = 1;
+    auto result = testedMemoryManager->populateOsHandles(storage);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
+
+    EXPECT_NE(nullptr, storage.fragmentStorageData[0].osHandleStorage);
+    storage.fragmentStorageData[0].freeTheFragment = true;
+    testedMemoryManager->cleanOsHandles(storage);
+}
+
+TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmallAllocationIsCreatedThenBufferObjectIsPinned) {
+    mock->ioctl_expected.gemUserptr = 2;  // 1 pinBB, 1 small allocation
+    mock->ioctl_expected.execbuffer2 = 1; // pinning
+    mock->ioctl_expected.gemWait = 1;     // in freeGraphicsAllocation
+    mock->ioctl_expected.gemClose = 2;    // 1 pinBB, 1 small allocation
+
+    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
+    ASSERT_NE(nullptr, mm->getPinBB());
+
+    // one page is too small for early pinning but pinning is used for host memory validation
+    size_t size = 4 * 1024;
+    void *ptr = ::alignedMalloc(size, 4096);
+    auto alloc = mm->allocateGraphicsMemory(size, ptr, false);
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_NE(nullptr, alloc->getBO());
+
+    mm->freeGraphicsMemory(alloc);
+    ::alignedFree(ptr);
+}
+
+TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAllocationWithForcePinFlagTrueIsCreatedThenAllocationIsNotPinned) {
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_res = -1;
+    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false));
+    EXPECT_EQ(nullptr, mm->getPinBB());
+    mock->ioctl_res = 0;
+
+    auto allocation = mm->allocateGraphicsMemory(4096, 4096, true, false);
+    EXPECT_NE(nullptr, allocation);
+    mm->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationEnabledWhenAllocationIsCreatedThenBufferObjectIsPinnedOnlyOnce) {
+    std::unique_ptr<TestedDrmMemoryManager> mm(new TestedDrmMemoryManager(this->mock, false, true));
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.execbuffer2 = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemWait = 1;
+
+    size_t size = 1024;
+    void *ptr = ::alignedMalloc(size, 4096);
+    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_NE(nullptr, alloc->getBO());
+
+    mm->freeGraphicsMemory(alloc);
+    mock->testIoctls();
+
+    ::alignedFree(ptr);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationDisabledWhenAllocationIsCreatedThenBufferObjectIsNotPinned) {
+    std::unique_ptr<TestedDrmMemoryManager> mm(new TestedDrmMemoryManager(this->mock, false, false));
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemClose = 1;
+    mock->ioctl_expected.gemWait = 1;
+
+    size_t size = 10 * 1024 * 1024; // bigger than threshold
+    void *ptr = ::alignedMalloc(size, 4096);
+    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_NE(nullptr, alloc->getBO());
+
+    mm->freeGraphicsMemory(alloc);
+    mock->testIoctls();
+
+    ::alignedFree(ptr);
 }

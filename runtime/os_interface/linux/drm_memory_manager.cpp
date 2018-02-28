@@ -41,23 +41,29 @@ extern "C" {
 
 namespace OCLRT {
 
-DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed) : MemoryManager(false), drm(drm), pinBB(nullptr) {
+DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory) : MemoryManager(false),
+                                                                                                                          drm(drm),
+                                                                                                                          pinBB(nullptr),
+                                                                                                                          forcePinEnabled(forcePinAllowed),
+                                                                                                                          validateHostPtrMemory(validateHostPtrMemory) {
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }
 
-    if (forcePinAllowed) {
-        auto mem = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
-        DEBUG_BREAK_IF(mem == nullptr);
+    auto mem = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    DEBUG_BREAK_IF(mem == nullptr);
 
+    if (forcePinEnabled || validateHostPtrMemory) {
         pinBB = allocUserptr(reinterpret_cast<uintptr_t>(mem), MemoryConstants::pageSize, 0, true);
+    }
 
-        if (!pinBB) {
-            alignedFree(mem);
-        } else {
-            pinBB->isAllocated = true;
-        }
+    if (!pinBB) {
+        alignedFree(mem);
+        DEBUG_BREAK_IF(true);
+        UNRECOVERABLE_IF(validateHostPtrMemory);
+    } else {
+        pinBB->isAllocated = true;
     }
     internal32bitAllocator.reset(new Allocator32bit);
 }
@@ -191,20 +197,21 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     }
 
     bo->isAllocated = true;
-    if (pinBB != nullptr && forcePin && size >= this->pinThreshold) {
-        pinBB->pin(bo);
+    if (forcePinEnabled && pinBB != nullptr && forcePin && size >= this->pinThreshold) {
+        pinBB->pin(&bo, 1);
     }
 
     return new DrmAllocation(bo, res, cSize);
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
-    auto res = (DrmAllocation *)MemoryManager::allocateGraphicsMemory(size, const_cast<void *>(ptr));
+    auto res = (DrmAllocation *)MemoryManager::allocateGraphicsMemory(size, const_cast<void *>(ptr), forcePin);
 
-    if (res != nullptr && pinBB != nullptr && forcePin && size >= this->pinThreshold) {
-        pinBB->pin(res->getBO());
+    bool forcePinAllowed = res != nullptr && pinBB != nullptr && forcePinEnabled && forcePin && size >= this->pinThreshold;
+    if (!validateHostPtrMemory && forcePinAllowed) {
+        BufferObject *boArray[] = {res->getBO()};
+        pinBB->pin(boArray, 1);
     }
-
     return res;
 }
 
@@ -466,7 +473,10 @@ uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
     return this->internal32bitAllocator->getBase();
 }
 
-bool DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+    BufferObject *allocatedBos[max_fragments_count];
+    size_t numberOfBosAllocated = 0;
+
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         // If there is no fragment it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].fragmentSize) {
@@ -479,12 +489,27 @@ bool DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
                                                                                     true);
             if (!handleStorage.fragmentStorageData[i].osHandleStorage->bo) {
                 handleStorage.fragmentStorageData[i].freeTheFragment = true;
-                return false;
+                return AllocationStatus::Error;
             }
+
+            allocatedBos[i] = handleStorage.fragmentStorageData[i].osHandleStorage->bo;
+            numberOfBosAllocated++;
+
             hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
         }
     }
-    return true;
+
+    if (validateHostPtrMemory) {
+        int result = pinBB->pin(allocatedBos, numberOfBosAllocated);
+
+        if (result == EFAULT) {
+            return AllocationStatus::InvalidHostPointer;
+        } else if (result != 0) {
+            return AllocationStatus::Error;
+        }
+    }
+
+    return AllocationStatus::Success;
 }
 void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {
@@ -504,6 +529,14 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
 BufferObject *DrmMemoryManager::getPinBB() const {
     return pinBB;
+}
+
+void DrmMemoryManager::waitForDeletions() {
+    if (gemCloseWorker.get()) {
+        while (!gemCloseWorker->isEmpty())
+            ;
+    }
+    MemoryManager::waitForDeletions();
 }
 
 bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable) {

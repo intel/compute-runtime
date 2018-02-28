@@ -692,6 +692,15 @@ template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &surface) {
     auto memoryManager = device->getCommandStreamReceiver().getMemoryManager();
     GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), surface.getMemoryPointer());
+
+    if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
+        // Try with no host pointer allocation and copy
+        allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), MemoryConstants::pageSize, false, false);
+
+        if (allocation) {
+            memcpy_s(allocation->getUnderlyingBuffer(), allocation->getUnderlyingBufferSize(), surface.getMemoryPointer(), surface.getSurfaceSize());
+        }
+    }
     if (allocation == nullptr) {
         return false;
     }

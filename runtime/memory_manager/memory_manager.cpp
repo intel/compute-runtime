@@ -125,6 +125,7 @@ void MemoryManager::freeGmm(GraphicsAllocation *gfxAllocation) {
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
     std::lock_guard<decltype(mtx)> lock(mtx);
     auto requirements = HostPtrManager::getAllocationRequirements(ptr, size);
+    GraphicsAllocation *graphicsAllocation = nullptr;
 
     if (deferredDeleter) {
         deferredDeleter->drain(true);
@@ -141,14 +142,13 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const voi
     if (osStorage.fragmentCount == 0) {
         return nullptr;
     }
-    auto success = populateOsHandles(osStorage);
-    if (!success) {
+    auto result = populateOsHandles(osStorage);
+    if (result != AllocationStatus::Success) {
         cleanOsHandles(osStorage);
         return nullptr;
     }
 
-    auto graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
-
+    graphicsAllocation = createGraphicsAllocation(osStorage, size, ptr);
     return graphicsAllocation;
 }
 

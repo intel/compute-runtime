@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -308,5 +308,14 @@ TEST(DrmTest, getMinEuInPool) {
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0, minEUinPool);
 #endif
+    delete pDrm;
+}
+
+TEST(DrmTest, givenDrmWhenGetErrnoIsCalledThenErrnoValueIsReturned) {
+    Drm2 *pDrm = new Drm2;
+    EXPECT_NE(nullptr, pDrm);
+
+    auto errnoFromDrm = pDrm->getErrno();
+    EXPECT_EQ(errno, errnoFromDrm);
     delete pDrm;
 }

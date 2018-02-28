@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@ set(IGDRCL_SRCS_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_mt_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_with_ptr_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp

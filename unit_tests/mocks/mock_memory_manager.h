@@ -39,11 +39,14 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     GraphicsAllocation *peekAllocationListHead();
 };
 
-class GMockMemoryManager : public OsAgnosticMemoryManager {
+class GMockMemoryManager : public MockMemoryManager {
   public:
     MOCK_METHOD2(cleanAllocationList, bool(uint32_t waitTaskCount, uint32_t allocationType));
     // cleanAllocationList call defined in MemoryManager.
+
+    MOCK_METHOD1(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage));
     bool MemoryManagerCleanAllocationList(uint32_t waitTaskCount, uint32_t allocationType) { return MemoryManager::cleanAllocationList(waitTaskCount, allocationType); }
+    MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage); }
 };
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {

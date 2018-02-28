@@ -336,7 +336,7 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
     return true;
 }
 
-bool WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         // If no fragment is present it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
@@ -348,7 +348,7 @@ bool WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
         }
     }
     wddm->createAllocationsAndMapGpuVa(handleStorage);
-    return true;
+    return AllocationStatus::Success;
 }
 
 void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {

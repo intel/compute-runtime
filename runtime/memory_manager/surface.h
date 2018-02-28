@@ -54,6 +54,10 @@ class HostPtrSurface : public Surface {
         gfxAllocation = nullptr;
     }
 
+    HostPtrSurface(void *ptr, size_t size, bool copyAllowed) : HostPtrSurface(ptr, size) {
+        isPtrCopyAllowed = copyAllowed;
+    }
+
     HostPtrSurface(void *ptr, size_t size, GraphicsAllocation *allocation) : memoryPointer(ptr), surfaceSize(size), gfxAllocation(allocation) {
         DEBUG_BREAK_IF(!ptr);
     }
@@ -86,10 +90,15 @@ class HostPtrSurface : public Surface {
         return gfxAllocation;
     }
 
+    bool peekIsPtrCopyAllowed() {
+        return isPtrCopyAllowed;
+    }
+
   protected:
     void *memoryPointer;
     size_t surfaceSize;
     GraphicsAllocation *gfxAllocation;
+    bool isPtrCopyAllowed = false;
 };
 
 class MemObjSurface : public Surface {
