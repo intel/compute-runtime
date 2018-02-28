@@ -86,5 +86,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     PDPE ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;
+
+    MOCKABLE_VIRTUAL void *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer);
 };
 } // namespace OCLRT

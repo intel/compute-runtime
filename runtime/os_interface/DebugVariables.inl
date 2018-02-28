@@ -60,6 +60,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, TbxPort, 4321, "TCP-IP port of TBX server")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, "unk", "Specify product for use in AUB/TBX")
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBBufferDump, false, "Avoid dumping buffers in AUB files")
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBImageDump, false, "Avoid dumping images in AUB files")
+DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")

@@ -33,6 +33,8 @@ class FlushStampTracker;
 struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,
                 size_t startOffset,
+                size_t chainedBatchBufferStartOffset,
+                GraphicsAllocation *chainedBatchBuffer,
                 bool requiresCoherency,
                 bool lowPriority,
                 QueueThrottle throttle,
@@ -41,6 +43,8 @@ struct BatchBuffer {
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
+    size_t chainedBatchBufferStartOffset = 0u;
+    GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool requiresCoherency = false;
     bool low_priority = false;
     QueueThrottle throttle = QueueThrottle::MEDIUM;

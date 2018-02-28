@@ -27,6 +27,7 @@
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -265,6 +266,33 @@ HWTEST_F(AUBSimpleArg, simple) {
 
     auto pISA = (void *)ptrOffset(pISH, (uintptr_t)offsetKSP);
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
+}
+
+HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+    size_t localWorkSize[3] = {1, 1, 1};
+    cl_uint numEventsInWaitList = 0;
+    cl_event *eventWaitList = nullptr;
+    cl_event *event = nullptr;
+
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
+    pCmdQ->getDevice().getCommandStreamReceiver().overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+
+    auto retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        localWorkSize,
+        numEventsInWaitList,
+        eventWaitList,
+        event);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
 struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,

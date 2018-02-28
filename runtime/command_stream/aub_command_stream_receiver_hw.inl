@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/string.h"
 #include <cstring>
 
 namespace OCLRT {
@@ -212,21 +213,20 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
-    if (this->standalone) {
-        if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
-            makeResident(*batchBuffer.commandBufferAllocation);
-        } else {
-            allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
-            batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
-        }
-        processResidency(allocationsForResidency);
-    }
-
     // Write our batch buffer
     auto pBatchBuffer = ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset);
     auto currentOffset = batchBuffer.usedSize;
     DEBUG_BREAK_IF(currentOffset < batchBuffer.startOffset);
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
+
+    std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(nullptr, [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
+    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get() && (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch)) {
+        flatBatchBuffer.reset(flattenBatchBuffer(batchBuffer, sizeBatchBuffer));
+        if (flatBatchBuffer.get() != nullptr) {
+            pBatchBuffer = flatBatchBuffer.get();
+        }
+    }
+
     {
         {
             std::ostringstream str;
@@ -244,6 +244,18 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             sizeBatchBuffer,
             AubMemDump::AddressSpaceValues::TraceNonlocal,
             AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
+    }
+
+    if (this->standalone) {
+        if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
+            if (!DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+                makeResident(*batchBuffer.commandBufferAllocation);
+            }
+        } else {
+            allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
+            batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
+        }
+        processResidency(allocationsForResidency);
     }
 
     // Add a batch buffer start to the ring buffer
@@ -368,6 +380,25 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         pollForCompletion(engineType);
     }
     return 0;
+}
+
+template <typename GfxFamily>
+void *AUBCommandStreamReceiverHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer) {
+    void *flatBatchBuffer = nullptr;
+
+    if (batchBuffer.chainedBatchBuffer) {
+        batchBuffer.chainedBatchBuffer->setAllocationType(batchBuffer.chainedBatchBuffer->getAllocationType() | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+        auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
+        auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+        flatBatchBuffer = this->getMemoryManager()->alignedMallocWrapper(flatBatchBufferSize, MemoryConstants::pageSize);
+        UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
+        // Copy FLB
+        memcpy_s(flatBatchBuffer, sizeMainBatchBuffer, ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset), sizeMainBatchBuffer);
+        // Copy SLB
+        memcpy_s(ptrOffset(flatBatchBuffer, sizeMainBatchBuffer), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), batchBuffer.chainedBatchBuffer->getUnderlyingBuffer(), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize());
+        sizeBatchBuffer = flatBatchBufferSize;
+    }
+    return flatBatchBuffer;
 }
 
 template <typename GfxFamily>

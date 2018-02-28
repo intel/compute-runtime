@@ -312,6 +312,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool submitCommandStreamFromCsr = false;
     void *bbEndLocation = nullptr;
     auto bbEndPaddingSize = this->dispatchMode == DispatchMode::ImmediateDispatch ? 0 : sizeof(MI_BATCH_BUFFER_START) - sizeof(MI_BATCH_BUFFER_END);
+    size_t chainedBatchBufferStartOffset = 0;
+    GraphicsAllocation *chainedBatchBuffer = nullptr;
 
     if (submitTask) {
         this->addBatchBufferEnd(commandStreamTask, &bbEndLocation);
@@ -319,6 +321,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         this->alignToCacheLine(commandStreamTask);
 
         if (submitCSR) {
+            chainedBatchBufferStartOffset = commandStreamCSR.getUsed();
+            chainedBatchBuffer = commandStreamTask.getGraphicsAllocation();
             // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
             auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
             addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask));
@@ -340,7 +344,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
-    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, streamToSubmit.getUsed(), &streamToSubmit};
+    BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, chainedBatchBuffer, dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, streamToSubmit.getUsed(), &streamToSubmit};
     EngineType engineType = device->getEngineType();
 
     if (submitCSR | submitTask) {
