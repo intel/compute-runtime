@@ -35,7 +35,7 @@ namespace OCLRT {
 const std::string Program::clOptNameClVer("-cl-std=CL");
 const std::string Program::clOptNameUniformWgs{"-cl-uniform-work-group-size"};
 
-Program::Program() : Program(nullptr) {
+Program::Program() : Program(nullptr, false) {
     numDevices = 0;
 }
 

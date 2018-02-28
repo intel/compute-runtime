@@ -358,7 +358,7 @@ TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
 }
 TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     MockContext context(pDevice, true);
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -389,7 +389,7 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
 
 TEST_F(CompilerInterfaceCachedTests, wasCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -420,7 +420,7 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
 
 TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 

@@ -1609,7 +1609,7 @@ TEST(ProgramFromBinaryTests, CreateWithBinary_FailRecompile) {
 TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     class TestedProgram : public Program {
       public:
-        TestedProgram(Context *context, bool isBuiltIn = false) : Program(context) {}
+        TestedProgram(Context *context, bool isBuiltIn) : Program(context, isBuiltIn) {}
         char *setGenBinary(char *binary) {
             auto res = genBinary;
             genBinary = binary;
@@ -1679,7 +1679,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
-        MockProgram program(pContext);
+        MockProgram program(pContext, false);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1702,7 +1702,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
 
     pDevice->getMutableDeviceInfo()->clVersion = "OpenCL 2.0 ";
     if (pDevice) {
-        MockProgram program(pContext);
+        MockProgram program(pContext, false);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         ASSERT_EQ(std::string(paramValue), "OpenCL 2.0 ");
@@ -1717,7 +1717,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStateful
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
     if (pDevice) {
-        MockProgram program(pContext);
+        MockProgram program(pContext, false);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1746,7 +1746,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
-        MockProgram program(pContext);
+        MockProgram program(pContext, false);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1841,7 +1841,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatel
 
 TEST_F(ProgramTests, ProgramCtorSetsProperProgramScopePatchListSize) {
 
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
     EXPECT_EQ((size_t)0, program.getProgramScopePatchListSize());
 }
 
@@ -1850,7 +1850,7 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramThenIncrementContextRefCount) 
     auto initialInternalRefCount = pContext->getRefInternalCount();
     MockProgram tempProgram;
 
-    MockProgram *program = new MockProgram(pContext);
+    MockProgram *program = new MockProgram(pContext, false);
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount + 1);
@@ -2477,7 +2477,7 @@ TEST_F(ProgramTests, GetProgramCompilerVersion) {
 }
 
 TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenNoSurfaceIsCreated) {
-    MockProgram *program = new MockProgram(pContext);
+    MockProgram *program = new MockProgram(pContext, false);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2503,7 +2503,7 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 }
 
 TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenSurfaceIsCreated) {
-    MockProgram *program = new MockProgram(pContext);
+    MockProgram *program = new MockProgram(pContext, false);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2529,7 +2529,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 }
 
 TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenSecondSurfaceIsNotCreated) {
-    MockProgram *program = new MockProgram(pContext);
+    MockProgram *program = new MockProgram(pContext, false);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2563,7 +2563,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 }
 
 TEST_F(ProgramTests, freeBlockPrivateSurfacesFreesGraphicsAllocationsFromBlockKernelManager) {
-    MockProgram *program = new MockProgram(pContext);
+    MockProgram *program = new MockProgram(pContext, false);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2610,7 +2610,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBultinIsCreat
 }
 
 TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCreatedThen32bitFlagIsPassedAsInternalOption) {
-    MockProgram pProgram(pContext);
+    MockProgram pProgram(pContext, false);
     auto &internalOptions = pProgram.getInternalOptions();
     std::string s1 = internalOptions;
     size_t pos = s1.find("-m32");
@@ -2624,7 +2624,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
 TEST_F(Program32BitTests, givenDeviceWhenProgramIsCreatedThenProgramCountInDeviceIncreases) {
     auto device = pContext->getDevice(0);
     EXPECT_EQ(0u, device->getProgramCount());
-    MockProgram pProgram(pContext);
+    MockProgram pProgram(pContext, false);
     EXPECT_EQ(1u, device->getProgramCount());
 }
 
@@ -2638,8 +2638,8 @@ TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizatio
 template <int32_t ErrCodeToReturn, bool spirv = true>
 struct CreateProgramFromBinaryMock : MockProgram {
     using MockProgram::MockProgram;
-    CreateProgramFromBinaryMock(Context *context, bool isBuiltIn = false)
-        : MockProgram(context) {
+    CreateProgramFromBinaryMock(Context *context, bool isBuiltIn)
+        : MockProgram(context, isBuiltIn) {
     }
 
     cl_int createProgramFromBinary(const void *pBinary,
@@ -2771,7 +2771,7 @@ TEST_F(ProgramTests, linkingTwoValidSpirvProgramsReturnsValidProgram) {
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenNoParentAndSubgroupKernelsThenSeparateNoneKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     EXPECT_EQ(0u, program.getKernelInfoArray().size());
     EXPECT_EQ(0u, program.getParentKernelInfoArray().size());
@@ -2784,7 +2784,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenNoParentAndSubgroupKernelsThen
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNoneKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     auto pRegularKernel1Info = KernelInfo::create();
     pRegularKernel1Info->name = "regular_kernel_1";
@@ -2806,7 +2806,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNone
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKernelThenSeparateNoneKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     auto pParentKernelInfo = KernelInfo::create();
     pParentKernelInfo->name = "another_parent_kernel";
@@ -2830,7 +2830,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKe
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroupKernelThenSeparateNoneKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     auto pSubgroupKernelInfo = KernelInfo::create();
     pSubgroupKernelInfo->name = "another_subgroup_kernel";
@@ -2854,7 +2854,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroup
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThenSeparateChildKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     auto pParentKernelInfo = KernelInfo::create();
     pParentKernelInfo->name = "parent_kernel";
@@ -2878,7 +2878,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThe
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelThenSeparateChildKernel) {
-    MockProgram program(pContext);
+    MockProgram program(pContext, false);
 
     auto pSubgroupKernelInfo = KernelInfo::create();
     pSubgroupKernelInfo->name = "subgroup_kernel";

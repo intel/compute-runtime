@@ -410,7 +410,7 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
 
     // setup global memory
     char globalBuffer[16];
@@ -531,7 +531,7 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiri
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
@@ -590,7 +590,7 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForNoSurfaces) {
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
@@ -790,7 +790,7 @@ HWTEST_F(KernelCommandsTest, getSizeRequiredIHForExecutionModelReturnsZeroForNon
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
 
     // create kernel
     std::unique_ptr<MockKernel> pKernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *pKernelInfo.get(), *pDevice));

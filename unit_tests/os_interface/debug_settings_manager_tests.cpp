@@ -564,7 +564,7 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsBuffer) {
     auto buffer = BufferHelper<>::create(&context);
     cl_mem clObj = buffer;
 
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
     auto device = unique_ptr<Device>(Device::create<OCLRT::Device>(nullptr, false));
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));

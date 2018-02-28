@@ -37,7 +37,7 @@ T *Program::create(
     auto pContext = castToObject<Context>(context);
     DEBUG_BREAK_IF(!pContext);
 
-    auto program = new T(pContext);
+    auto program = new T(pContext, false);
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
 
@@ -76,7 +76,7 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        program = new T(pContext);
+        program = new T(pContext, false);
         program->sourceCode.swap(combinedString);
     }
 

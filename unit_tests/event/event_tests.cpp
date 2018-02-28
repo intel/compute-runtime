@@ -593,7 +593,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
     pKernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, printfStringInfo));
 
-    MockProgram *pProgram = new MockProgram(mockContext);
+    MockProgram *pProgram = new MockProgram(mockContext, false);
 
     uint64_t crossThread[10];
     MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);

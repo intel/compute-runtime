@@ -72,7 +72,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeOfPointer;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeOfPointer;
 
-        pProgram = new MockProgram(pContext);
+        pProgram = new MockProgram(pContext, false);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);

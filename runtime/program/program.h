@@ -116,7 +116,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(Context *context, bool isBuiltIn = false);
+    Program(Context *context, bool isBuiltIn);
     ~Program() override;
 
     Program(const Program &) = delete;

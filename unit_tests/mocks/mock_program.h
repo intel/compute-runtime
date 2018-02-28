@@ -33,7 +33,7 @@ class GraphicsAllocation;
 class MockProgram : public Program {
   public:
     MockProgram() : Program() {}
-    MockProgram(Context *context) : Program(context) {}
+    MockProgram(Context *context, bool isBuiltinKernel) : Program(context, isBuiltinKernel) {}
     ~MockProgram() {
         if (contextSet)
             context = nullptr;
