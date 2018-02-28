@@ -38,16 +38,15 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
 size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
-void *DeviceFactory::internal = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     bool success = false;
     HardwareInfo *tempHwInfos = new HardwareInfo[1];
-    ADAPTER_INFO *adapterInfo = new ADAPTER_INFO[1];
+    std::unique_ptr<ADAPTER_INFO> adapterInfo(new ADAPTER_INFO);
     unsigned int devNum = 0;
     numDevices = 0;
 
-    success = Wddm::enumAdapters(devNum, adapterInfo);
+    success = Wddm::enumAdapters(devNum, adapterInfo.get());
 
     if (success) {
         auto featureTable = new FeatureTable();
@@ -57,8 +56,8 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         tempHwInfos[devNum].pWaTable = waTable;
         tempHwInfos[devNum].pSysInfo = new GT_SYSTEM_INFO(adapterInfo->SystemInfo);
 
-        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo);
-        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo);
+        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo.get());
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo.get());
 
         auto productFamily = tempHwInfos[devNum].pPlatform->eProductFamily;
         DEBUG_BREAK_IF(hardwareInfoTable[productFamily] == nullptr);
@@ -98,7 +97,6 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
 
         numDevices = 1;
         *pHWInfos = tempHwInfos;
-        internal = static_cast<void *>(adapterInfo);
         DeviceFactory::numDevices = 1;
         DeviceFactory::hwInfos = tempHwInfos;
     } else {
@@ -117,8 +115,6 @@ void DeviceFactory::releaseDevices() {
             delete hwInfos[i].pSysInfo;
         }
         delete[] hwInfos;
-        ADAPTER_INFO *adapterInfo = static_cast<ADAPTER_INFO *>(internal);
-        delete[] adapterInfo;
     }
     DeviceFactory::hwInfos = nullptr;
     DeviceFactory::numDevices = 0;

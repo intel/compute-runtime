@@ -37,7 +37,6 @@ namespace OCLRT {
 
 size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
-void *DeviceFactory::internal = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     std::vector<HardwareInfo> tHwInfos;

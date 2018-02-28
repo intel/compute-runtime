@@ -35,6 +35,5 @@ class DeviceFactory {
   protected:
     static size_t numDevices;
     static HardwareInfo *hwInfos;
-    static void *internal;
 };
 }
