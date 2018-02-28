@@ -253,7 +253,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     EXPECT_EQ(nullptr, gpuAllocation);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevelZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -262,8 +262,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 64u;
@@ -274,11 +273,42 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
-                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevelNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+    SetUpMm<FamilyType>();
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_image_desc imageDesc = {};
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 64u;
+    imageDesc.image_height = 64u;
+    imageDesc.num_mip_levels = 1u;
+
+    auto retVal = CL_SUCCESS;
+
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
+
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    ASSERT_NE(nullptr, imageGraphicsAllocation);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
@@ -290,8 +320,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 64u;
@@ -304,15 +333,15 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_EQ(retVal, CL_SUCCESS);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
-                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLevelZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -321,8 +350,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgisBeingCrea
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
@@ -334,11 +362,41 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgisBeingCrea
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
-    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
-                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_BUFFER);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_BUFFER, imageGraphicsAllocation->gmm->resourceParams.Usage);
+}
+
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLevelNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
+    SetUpMm<FamilyType>();
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_image_desc imageDesc = {};
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 64u;
+    imageDesc.num_mip_levels = 1u;
+
+    auto retVal = CL_SUCCESS;
+
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
+
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    ASSERT_NE(nullptr, imageGraphicsAllocation);
+    EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
 HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {

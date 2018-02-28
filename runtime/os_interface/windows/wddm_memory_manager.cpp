@@ -66,7 +66,7 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    if (!Gmm::allowTiling(*imgInfo.imgDesc)) {
+    if (!Gmm::allowTiling(*imgInfo.imgDesc) && imgInfo.mipLevel == 0) {
         delete gmm;
         return allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
     }

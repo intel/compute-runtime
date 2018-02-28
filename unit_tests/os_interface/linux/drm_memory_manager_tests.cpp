@@ -1024,7 +1024,7 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     EXPECT_EQ(1, munmapMockCallCount);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipLevelZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     //GEM CREATE + SET_TILING + WAIT + CLOSE
     mock->ioctl_expected = 4;
 
@@ -1035,8 +1035,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedTh
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 64u;
@@ -1047,6 +1046,53 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedTh
     cl_mem_flags flags = CL_MEM_WRITE_ONLY;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    ASSERT_NE(nullptr, imageGraphicsAllocation);
+    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
+    auto imageSize = drmAllocation->getUnderlyingBufferSize();
+    auto rowPitch = dstImage->getImageDesc().image_row_pitch;
+
+    EXPECT_EQ(imageSize, drmAllocation->getBO()->peekUnmapSize());
+
+    EXPECT_EQ(1u, this->mock->createParamsHandle);
+    EXPECT_EQ(imageSize, this->mock->createParamsSize);
+    __u32 tilingMode = I915_TILING_Y;
+    EXPECT_EQ(tilingMode, this->mock->setTilingMode);
+    EXPECT_EQ(rowPitch, this->mock->setTilingStride);
+    EXPECT_EQ(1u, this->mock->setTilingHandle);
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipLevelNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+    //GEM CREATE + SET_TILING + WAIT + CLOSE
+    mock->ioctl_expected = 4;
+
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_image_desc imageDesc = {};
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    imageDesc.image_width = 64u;
+    imageDesc.image_height = 64u;
+    imageDesc.num_mip_levels = 1u;
+
+    auto retVal = CL_SUCCESS;
+
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
@@ -1074,8 +1120,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedAn
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 64u;
@@ -1109,8 +1154,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 64u;
@@ -1123,6 +1167,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
@@ -1142,7 +1188,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
     EXPECT_EQ(1u, this->mock->setTilingHandle);
 }
 
-TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipLevelZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     //USERPTR + WAIT + CLOSE
     mock->ioctl_expected = 3;
 
@@ -1153,8 +1199,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgisBeingCreatedT
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
@@ -1166,6 +1211,54 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgisBeingCreatedT
     cl_mem_flags flags = CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
     auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
+    ASSERT_NE(nullptr, imageGraphicsAllocation);
+    EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
+                GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(imageGraphicsAllocation);
+
+    EXPECT_EQ(0u, drmAllocation->getBO()->peekUnmapSize());
+
+    EXPECT_EQ(0u, this->mock->createParamsHandle);
+    EXPECT_EQ(0u, this->mock->createParamsSize);
+    __u32 tilingMode = I915_TILING_NONE;
+    EXPECT_EQ(tilingMode, this->mock->setTilingMode);
+    EXPECT_EQ(0u, this->mock->setTilingStride);
+    EXPECT_EQ(0u, this->mock->setTilingHandle);
+
+    EXPECT_EQ(Sharing::nonSharedResource, imageGraphicsAllocation->peekSharedHandle());
+}
+
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenNonTiledImgWithMipLevelNonZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
+    //USERPTR + WAIT + CLOSE
+    mock->ioctl_expected = 3;
+
+    MockContext context;
+    context.setMemoryManager(memoryManager);
+
+    cl_image_format imageFormat;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    cl_image_desc imageDesc = {};
+
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 64u;
+    imageDesc.num_mip_levels = 1u;
+
+    char data[64u * 4 * 8];
+
+    auto retVal = CL_SUCCESS;
+
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, data, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, dstImage);
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
     EXPECT_TRUE(imageGraphicsAllocation->gmm->resourceParams.Usage ==
@@ -1196,8 +1289,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhen1DarrayImageIsBeingCreated
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
     imageFormat.image_channel_order = CL_R;
 
-    cl_image_desc imageDesc;
-    memset(&imageDesc, 0, sizeof(imageDesc));
+    cl_image_desc imageDesc = {};
 
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     imageDesc.image_width = 64u;
