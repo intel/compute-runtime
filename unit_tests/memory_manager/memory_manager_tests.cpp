@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -526,6 +526,21 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenTagPerfCountAllocatorIsCreated
     TagAllocator<HwPerfCounter> *allocator = memoryManager->getEventPerfCountAllocator();
     EXPECT_NE(nullptr, allocator);
     EXPECT_EQ(UnlimitedPerfCounterCount, allocator->peekMaxTagPoolCount());
+}
+
+TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
+    auto currentAllocator = memoryManager->allocator32Bit.get();
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_EQ(memoryManager->allocator32Bit.get(), currentAllocator);
+}
+
+TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithFalseThenAllocatorIsNotDeleted) {
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
+    memoryManager->setForce32BitAllocations(false);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationThen32bitGraphicsAllocationIsReturned) {

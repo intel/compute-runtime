@@ -43,7 +43,6 @@ namespace OCLRT {
 
 DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed) : MemoryManager(false), drm(drm), pinBB(nullptr) {
     MemoryManager::virtualPaddingAvailable = true;
-    allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit);
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));
     }

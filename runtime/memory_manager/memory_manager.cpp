@@ -213,6 +213,13 @@ std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size
     return allocation;
 }
 
+void MemoryManager::setForce32BitAllocations(bool newValue) {
+    if (newValue && !this->allocator32Bit) {
+        this->allocator32Bit.reset(new Allocator32bit);
+    }
+    force32bitAllocations = newValue;
+}
+
 void MemoryManager::applyCommonCleanup() {
     if (this->paddingAllocation) {
         this->freeGraphicsMemory(this->paddingAllocation);

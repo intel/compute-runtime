@@ -171,7 +171,7 @@ class MemoryManager {
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
 
     bool peekForce32BitAllocations() { return force32bitAllocations; }
-    void setForce32BitAllocations(bool newValue) { force32bitAllocations = newValue; }
+    void setForce32BitAllocations(bool newValue);
 
     GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr) {
         return createGraphicsAllocationWithRequiredBitness(size, ptr, false);

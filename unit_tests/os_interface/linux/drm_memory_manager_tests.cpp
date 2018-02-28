@@ -597,6 +597,7 @@ TEST_F(DrmMemoryManagerTest, testProfilingAllocatorCleanup) {
 TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32BitDrmAllocationIsBeingReturned) {
     mock->ioctl_expected = 3;
     auto size = 10u;
+    memoryManager->setForce32BitAllocations(true);
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
@@ -613,6 +614,24 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationThen32
     EXPECT_EQ(memoryManager->allocator32Bit->getBase(), allocation->gpuBaseAddress);
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {
+    mock->ioctl_expected = 0;
+    EXPECT_EQ(nullptr, memoryManager->allocator32Bit.get());
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
+    auto currentAllocator = memoryManager->allocator32Bit.get();
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_EQ(memoryManager->allocator32Bit.get(), currentAllocator);
+}
+
+TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithFalseThenAllocatorIsNotDeleted) {
+    mock->ioctl_expected = 0;
+    memoryManager->setForce32BitAllocations(true);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
+    memoryManager->setForce32BitAllocations(false);
+    EXPECT_NE(nullptr, memoryManager->allocator32Bit.get());
 }
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen32BitBufferIsReturned) {
@@ -795,6 +814,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationWithHo
 
     auto size = 10u;
     void *host_ptr = (void *)0x1000;
+    memoryManager->setForce32BitAllocations(true);
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, host_ptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
@@ -807,6 +827,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
     mock->ioctl_res_ext = &ioctlResExt;
 
     auto size = 10u;
+    memoryManager->setForce32BitAllocations(true);
     auto allocation = memoryManager->allocate32BitGraphicsMemory(size, nullptr, MemoryType::EXTERNAL_ALLOCATION);
 
     EXPECT_EQ(nullptr, allocation);
