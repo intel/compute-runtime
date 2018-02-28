@@ -215,6 +215,26 @@ HWTEST_F(WddmTest, createAllocation32bit) {
     releaseGmm(gmm);
 }
 
+HWTEST_F(WddmTest, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddressWithingHeap1Limits) {
+    wddm->init<FamilyType>();
+    void *alignedPtr = (void *)0x12000;
+    size_t alignedSize = 0x2000;
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr);
+
+    allocation.handle = ALLOCATION_HANDLE;
+    allocation.gmm = getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
+
+    bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), false, false, true);
+    EXPECT_TRUE(ret);
+
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+
+    EXPECT_GE(allocation.gpuPtr, cannonizedHeapBase);
+    EXPECT_LE(allocation.gpuPtr, cannonizedHeapEnd);
+    releaseGmm(allocation.gmm);
+}
+
 HWTEST_F(WddmTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
     EXPECT_TRUE(wddm->init<FamilyType>());
     OsHandleStorage storage;
