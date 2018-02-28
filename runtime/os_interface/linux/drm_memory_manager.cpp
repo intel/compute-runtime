@@ -60,6 +60,7 @@ DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool force
             pinBB->isAllocated = true;
         }
     }
+    internal32bitAllocator.reset(new Allocator32bit);
 }
 
 DrmMemoryManager::~DrmMemoryManager() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -90,5 +90,6 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
     std::recursive_mutex mtx;
+    std::unique_ptr<Allocator32bit> internal32bitAllocator;
 };
 } // namespace OCLRT

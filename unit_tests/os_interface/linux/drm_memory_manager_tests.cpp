@@ -107,6 +107,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         return DrmMemoryManager::allocUserptr(address, size, flags, softpin);
     }
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
+    Allocator32bit *getDrmInternal32BitAllocator() { return internal32bitAllocator.get(); }
 };
 
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
@@ -141,6 +142,11 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 };
 
 typedef Test<DrmMemoryManagerFixture> DrmMemoryManagerTest;
+
+TEST_F(DrmMemoryManagerTest, givenDefaultDrmMemoryMangerWhenItIsCreatedThenItContainsInternal32BitAllocator) {
+    mock->ioctl_expected = 0;
+    EXPECT_NE(nullptr, memoryManager->getDrmInternal32BitAllocator());
+}
 
 TEST_F(DrmMemoryManagerTest, pinBBnotCreated) {
     mock->ioctl_expected = 0;
