@@ -627,6 +627,10 @@ HWTEST_F(WddmTest, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextI
     EXPECT_TRUE(!!privateData->NoRingFlushes);
 }
 
+HWTEST_F(WddmTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {
+    EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
+}
+
 HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
