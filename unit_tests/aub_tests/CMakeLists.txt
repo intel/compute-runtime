@@ -55,9 +55,7 @@ add_subdirectory(command_stream)
 add_subdirectory(fixtures)
 add_subdirectory(mem_obj)
 
-
-
-target_sources(igdrcl_aub_tests PUBLIC
+target_sources(igdrcl_aub_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/buffer_fixture.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/built_in_fixture.cpp
@@ -78,14 +76,14 @@ target_sources(igdrcl_aub_tests PUBLIC
 )
 
 if(MSVC)
-    target_sources(igdrcl_aub_tests PUBLIC
+    target_sources(igdrcl_aub_tests PRIVATE
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/options.cpp
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
         ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
     )
 else(MSVC)
-    target_sources(igdrcl_aub_tests PUBLIC
+    target_sources(igdrcl_aub_tests PRIVATE
         ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
     )
 endif(MSVC)
@@ -99,6 +97,7 @@ target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests gtest gmock)
 
 link_directories(${GMM_LIB_PATHS})
+create_project_source_tree(igdrcl_aub_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
 
 if(MSVC)
     target_link_libraries(igdrcl_aub_tests Ws2_32.lib)

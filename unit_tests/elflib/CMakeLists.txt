@@ -18,17 +18,15 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 project(elflib_tests)
 
 set(CLELFLIB_UNIT_TESTS_SRCS
-    "${CMAKE_CURRENT_SOURCE_DIR}/elflib_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h"
+  ${CMAKE_CURRENT_SOURCE_DIR}/elflib_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
 )
 
 add_executable(elflib_tests ${CLELFLIB_UNIT_TESTS_SRCS})
@@ -52,7 +50,6 @@ add_custom_command(
 )
 add_dependencies(run_unit_tests run_elflib_tests)
 
-# The following filters are added to the VS IDE representation
 set_target_properties(elflib_tests PROPERTIES FOLDER "elflib")
 set_target_properties(run_elflib_tests PROPERTIES FOLDER "elflib")
-source_group("source files" FILES ${CLELFLIB_UNIT_TESTS_SRCS})
+create_project_source_tree(elflib_tests ${IGDRCL_SOURCE_DIR}/unit_tests)

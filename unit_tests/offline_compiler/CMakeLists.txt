@@ -84,10 +84,7 @@ if(WIN32)
   target_include_directories(cloc_tests PRIVATE ${UMKM_SHAREDDATA_INCLUDE_PATHS})
 endif()
 
-# The following filters are added to the VS IDE representation
-source_group("source files" FILES ${IGDRCL_SRCS_offline_compiler_tests})
-source_group("source files\\windows" FILES ${IGDRCL_SRCS_offline_compiler_tests_windows})
-source_group("source files\\mock" FILES ${IGDRCL_SRCS_offline_compiler_mock})
+create_project_source_tree(cloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})
 
 set_target_properties(cloc_tests PROPERTIES FOLDER "offline_compiler")
 set_property(TARGET cloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})

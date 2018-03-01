@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,17 +18,16 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We require cmake 3.2.0 or later
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 add_library(elflib STATIC
-	${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-	${CMAKE_CURRENT_SOURCE_DIR}/reader.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/reader.h
-	${CMAKE_CURRENT_SOURCE_DIR}/types.h
-	${CMAKE_CURRENT_SOURCE_DIR}/writer.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/writer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/reader.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/types.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/writer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/writer.h
 )
+
+create_project_source_tree(elflib)
 
 target_include_directories(elflib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_include_directories(elflib PRIVATE ${IGDRCL_SOURCE_DIR})

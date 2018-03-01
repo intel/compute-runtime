@@ -50,7 +50,7 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
   endif(${GENX_HAS_PLATFORMS})
 endforeach(GEN_NUM)
 
-list (APPEND IGDRCL_SRCS_LIB_ULT
+list(APPEND IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
@@ -66,9 +66,12 @@ add_library (igdrcl_libult_cs OBJECT
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_command_stream.h
 )
 
+create_project_source_tree(igdrcl_libult ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+create_project_source_tree(igdrcl_libult_cs ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+
 if(MSVC)
   target_include_directories(igdrcl_libult PRIVATE ${WDK_INCLUDE_PATHS})
-endif(MSVC)
+endif()
 
 if (WIN32)
   target_compile_definitions(igdrcl_libult PUBLIC OGL=1)

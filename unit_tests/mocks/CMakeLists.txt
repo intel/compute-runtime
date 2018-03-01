@@ -71,6 +71,8 @@ endif()
 
 add_library(igdrcl_mocks STATIC ${IGDRCL_SRCS_tests_mocks})
 
+create_project_source_tree(igdrcl_mocks)
+
 add_dependencies(igdrcl_mocks gtest gmock)
 
 target_include_directories(igdrcl_mocks PRIVATE 

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,17 +18,17 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 project(test_dynamic_lib)
 
 if(WIN32)
   set(OS_SUFFIX win)
-else(WIN32)
+else()
   set(OS_SUFFIX lin)
-endif(WIN32)
+endif()
 
 add_library(test_dynamic_lib SHARED test_dynamic_lib_${OS_SUFFIX}.cpp)
+
+create_project_source_tree(test_dynamic_lib)
 
 set_target_properties(test_dynamic_lib PROPERTIES FOLDER "test mocks")
 set_property(TARGET test_dynamic_lib APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})

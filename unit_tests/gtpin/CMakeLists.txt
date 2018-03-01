@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,13 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# This is a child cmakelists.txt file of the OpenCL unit test project
-
 set(IGDRCL_SRCS_tests_gtpin
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp"
-    PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
+  PARENT_SCOPE
 )
-
-source_group("source files\\gtpin" FILES ${IGDRCL_SRCS_tests_gtpin})
-

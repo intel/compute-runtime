@@ -56,6 +56,8 @@ target_include_directories(igdrcl_tbx_tests PRIVATE
 	${IGDRCL__IGC_INCLUDE_DIR}
 )
 
+create_project_source_tree(igdrcl_tbx_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
+
 add_custom_target(run_tbx_tests ALL DEPENDS igdrcl_tbx_tests)
 add_custom_command(
 	TARGET run_tbx_tests

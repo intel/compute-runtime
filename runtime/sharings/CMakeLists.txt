@@ -48,3 +48,5 @@ else()
 endif()
 
 add_subdirectories()
+
+create_project_source_tree(${SHARINGS_ENABLE_LIB_NAME} ${IGDRCL_SOURCE_DIR}/runtime)

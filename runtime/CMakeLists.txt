@@ -193,11 +193,10 @@ if(${GENERATE_EXECUTABLE})
     OUTPUT_NAME "${NEO_DLL_NAME_BASE}${IGDRCL_NAME_POSTFIX}${IGDRCL_OPTION__BITS}"
   )
   set_target_properties(${NEO_DYNAMIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
+  create_project_source_tree(${NEO_DYNAMIC_LIB_NAME})
 endif(${GENERATE_EXECUTABLE})
 
-if(WIN32)
-  create_project_source_tree(${NEO_STATIC_LIB_NAME})
-endif()
+create_project_source_tree(${NEO_STATIC_LIB_NAME})
 
 if(UNIX AND NOT (TARGET clang-tidy))
   add_custom_target(clang-tidy

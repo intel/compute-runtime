@@ -79,11 +79,11 @@ endforeach(GEN_NUM)
 
 set(CLOC_SRCS
   ${CLOC_SRCS_LIB}
-  main.cpp
-  ${IGDRCL_SOURCE_DIR}/offline_compiler/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
 )
-
 add_executable(cloc ${CLOC_SRCS})
+create_project_source_tree(cloc ${IGDRCL_SOURCE_DIR}/runtime)
 
 if(IGC_OCL_ADAPTOR_DIR) # IGC/AdaptorOCL
   target_include_directories(cloc PUBLIC "${IGC_OCL_ADAPTOR_DIR}")
@@ -112,7 +112,6 @@ endif(UNIX)
 
 target_link_libraries(cloc elflib)
 
-source_group("source files" FILES ${CLOC_SRCS})
 set_target_properties(cloc PROPERTIES FOLDER "offline_compiler")
 set_property(TARGET cloc APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 
