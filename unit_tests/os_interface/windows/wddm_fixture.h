@@ -43,7 +43,7 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
 
 class WddmMock : public Wddm {
     struct CallResult {
@@ -390,7 +390,7 @@ class WddmFixture {
   public:
     virtual void SetUp() {
         const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
+        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 
         setSizesFunction = reinterpret_cast<decltype(&MockSetSizes)>(mockGdiDll->getProcAddress("MockSetSizes"));
         getSizesFunction = reinterpret_cast<decltype(&GetMockSizes)>(mockGdiDll->getProcAddress("GetMockSizes"));
@@ -443,7 +443,7 @@ class WddmFixtureMock {
   public:
     virtual void SetUp() {
         const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
+        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
         wddm = new WddmMock();
     }
 

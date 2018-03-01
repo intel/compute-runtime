@@ -21,6 +21,8 @@
  */
 
 #include "runtime/os_interface/os_library.h"
+#include "common/gtsysinfo.h"
+#include "igfxfmid.h"
 
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
@@ -33,7 +35,7 @@ const char *gdiDllName = "gdi32_mock.dll";
 const char *testDllName = "test_dynamic_lib.dll";
 }
 
-OCLRT::OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo) {
+OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo) {
     OCLRT::OsLibrary *mockGdiDll;
     mockGdiDll = OCLRT::OsLibrary::load("gdi32_mock.dll");
 

@@ -21,6 +21,8 @@
  */
 
 #include "runtime/os_interface/os_library.h"
+#include "common/gtsysinfo.h"
+#include "igfxfmid.h"
 
 namespace Os {
 ///////////////////////////////////////////////////////////////////////////////
@@ -36,6 +38,6 @@ const char *testDllName = "libtest_dynamic_lib.so";
 const char *sysFsPciPath = "./test_files";
 }
 
-OCLRT::OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo) {
+OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo) {
     return nullptr;
 }

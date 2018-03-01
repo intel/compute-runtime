@@ -77,7 +77,7 @@ void TestEnvironment::setDefaultDebugVars(
     fclDefaultDebugVars = fclDefaults;
     igcDefaultDebugVars = igcDefaults;
 
-    libraryOS = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
+    libraryOS = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 }
 
 void TestEnvironment::setMockFileNames(

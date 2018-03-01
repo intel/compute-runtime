@@ -29,7 +29,7 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
 
 typedef Test<WddmGmmFixture> WddmTest;
 

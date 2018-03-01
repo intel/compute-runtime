@@ -92,7 +92,7 @@ TEST(WddmTestEnumAdapters, expectTrue) {
     HardwareInfo outHwInfo;
 
     const HardwareInfo hwInfo = *platformDevices[0];
-    OsLibrary *mockGdiDll = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
+    OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 
     bool success = Wddm::enumAdapters(0, outHwInfo);
     EXPECT_TRUE(success);

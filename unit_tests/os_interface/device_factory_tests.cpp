@@ -31,14 +31,14 @@
 
 using namespace OCLRT;
 
-OsLibrary *setAdapterInfo(const void *platform, const void *gtSystemInfo);
+OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
 
 struct DeviceFactoryTest : public MemoryManagementFixture,
                            public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll = setAdapterInfo(reinterpret_cast<const void *>(hwInfo.pPlatform), reinterpret_cast<const void *>(hwInfo.pSysInfo));
+        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
         MemoryManagementFixture::SetUp();
     }
 
