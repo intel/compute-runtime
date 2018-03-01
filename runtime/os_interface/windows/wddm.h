@@ -91,7 +91,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
-    MOCKABLE_VIRTUAL bool submit(void *commandBuffer, size_t size, void *commandHeader);
+    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
     MOCKABLE_VIRTUAL bool waitOnGPU();
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue);
 

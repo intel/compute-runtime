@@ -172,6 +172,19 @@ TEST_F(WddmCommandStreamTest, Flush) {
     memManager->freeGraphicsMemory(commandBuffer);
 }
 
+TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThenCpuAddressWhenSubmitIsCalledThenGpuAddressIsUsed) {
+    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
+
+    auto cpuAddress = commandBuffer->getUnderlyingBuffer();
+    uint64_t mockGpuAddres = 1337;
+    commandBuffer->setCpuPtrAndGpuAddress(cpuAddress, mockGpuAddres);
+
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
+    EXPECT_EQ(mockGpuAddres, wddm->submitResult.commandBufferSubmitted);
+    memManager->freeGraphicsMemory(commandBuffer);
+}
 TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     auto offset = 128u;
     GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
@@ -182,7 +195,7 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
-    EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, (char *)commandBuffer->getUnderlyingBuffer() + offset);
+    EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, reinterpret_cast<uint64_t>(commandBuffer->getUnderlyingBuffer()) + offset);
 
     memManager->freeGraphicsMemory(commandBuffer);
 }
@@ -550,7 +563,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 
     EXPECT_EQ(1u, mockWddm->submitResult.called);
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
-    EXPECT_EQ(csrCommandStream->getUnderlyingBuffer(), mockWddm->submitResult.commandBufferSubmitted);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(csrCommandStream->getUnderlyingBuffer()), mockWddm->submitResult.commandBufferSubmitted);
     EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)mockWddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
     EXPECT_EQ(3u, mockWddm->makeResidentResult.handleCount);
 

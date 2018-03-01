@@ -729,12 +729,12 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS ? true : false;
 }
 
-bool Wddm::submit(void *commandBuffer, size_t size, void *commandHeader) {
+bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
     D3DKMT_SUBMITCOMMAND SubmitCommand = {0};
     NTSTATUS status = STATUS_SUCCESS;
     bool success = true;
 
-    SubmitCommand.Commands = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(commandBuffer);
+    SubmitCommand.Commands = commandBuffer;
     SubmitCommand.CommandLength = static_cast<UINT>(size);
     SubmitCommand.BroadcastContextCount = 1;
     SubmitCommand.BroadcastContext[0] = context;

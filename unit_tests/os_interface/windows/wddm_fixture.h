@@ -50,7 +50,7 @@ class WddmMock : public Wddm {
         uint32_t called = 0;
         uint64_t uint64ParamPassed = -1;
         bool success = false;
-        void *commandBufferSubmitted = nullptr;
+        uint64_t commandBufferSubmitted = 0u;
         void *commandHeaderSubmitted = nullptr;
         void *cpuPtrPassed = nullptr;
     };
@@ -206,7 +206,7 @@ class WddmMock : public Wddm {
         return queryAdapterInfoResult.success = Wddm::queryAdapterInfo();
     }
 
-    bool submit(void *commandBuffer, size_t size, void *commandHeader) override {
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override {
         submitResult.called++;
         submitResult.commandBufferSubmitted = commandBuffer;
         submitResult.commandHeaderSubmitted = commandHeader;
