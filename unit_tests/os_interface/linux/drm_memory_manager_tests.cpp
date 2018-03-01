@@ -636,7 +636,6 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhensetForce32BitAllocationsIsCal
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    {
         mock->ioctl_expected = 3;
         DebugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
@@ -666,13 +665,10 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferAllocationThen
         }
 
         delete buffer;
-        DebugManager.flags.Force32bitAddressing.set(false);
-    }
 }
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHostPtrThen32BitBufferIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    {
         if (DebugManager.flags.UseNewHeapAllocator.get())
             mock->ioctl_expected = 3;
         else
@@ -737,8 +733,6 @@ TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFromHos
         EXPECT_EQ(alignDown(boAddress, MemoryConstants::pageSize), boAddress);
 
         delete buffer;
-        DebugManager.flags.Force32bitAddressing.set(false);
-    }
 }
 
 TEST_F(DrmMemoryManagerTest, Given32bitAllocatorWhenAskedForBufferCreatedFrom64BitHostPtrThen32BitBufferIsReturned) {
@@ -835,7 +829,6 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedFor32BitAllocationAndAll
 
 TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
-    {
         mock->ioctl_expected = -1;
         DebugManager.flags.Force32bitAddressing.set(true);
         MockContext context;
@@ -879,118 +872,101 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenUseHostPtrAndAllocHostPtrAreCr
         }
 
         delete buffer;
-
-        DebugManager.flags.Force32bitAddressing.set(false);
-    }
 }
 
 TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCreatedThenFirstSucceedsAndSecondFails) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        mock->ioctl_expected = -1;
-        DebugManager.flags.Force32bitAddressing.set(true);
-        MockContext context;
-        memoryManager->setForce32BitAllocations(true);
-        context.setMemoryManager(memoryManager);
+    mock->ioctl_expected = -1;
+    DebugManager.flags.Force32bitAddressing.set(true);
+    MockContext context;
+    memoryManager->setForce32BitAllocations(true);
+    context.setMemoryManager(memoryManager);
 
-        size_t size = 2 * 1024 * 1024 * 1024u;
-        void *ptr = (void *)0x100000000000;
-        auto retVal = CL_SUCCESS;
+    size_t size = 2 * 1024 * 1024 * 1024u;
+    void *ptr = (void *)0x100000000000;
+    auto retVal = CL_SUCCESS;
 
-        auto buffer = Buffer::create(
-            &context,
-            CL_MEM_ALLOC_HOST_PTR,
-            size,
-            nullptr,
-            retVal);
+    auto buffer = Buffer::create(
+        &context,
+        CL_MEM_ALLOC_HOST_PTR,
+        size,
+        nullptr,
+        retVal);
 
-        size_t size2 = 2 * 1025 * 1024 * 1024u;
+    size_t size2 = 2 * 1025 * 1024 * 1024u;
 
-        auto buffer2 = Buffer::create(
-            &context,
-            CL_MEM_USE_HOST_PTR,
-            size2,
-            (void *)ptr,
-            retVal);
+    auto buffer2 = Buffer::create(
+        &context,
+        CL_MEM_USE_HOST_PTR,
+        size2,
+        (void *)ptr,
+        retVal);
 
-        EXPECT_NE(retVal, CL_SUCCESS);
-        EXPECT_EQ(nullptr, buffer2);
+    EXPECT_NE(retVal, CL_SUCCESS);
+    EXPECT_EQ(nullptr, buffer2);
 
-        if (is32BitOsAllocatorAvailable && buffer) {
-            auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
+    if (is32BitOsAllocatorAvailable && buffer) {
+        auto bufferPtr = buffer->getGraphicsAllocation()->getGpuAddress();
 
-            if (DebugManager.flags.UseNewHeapAllocator.get() == false) {
-                uintptr_t maxMmap32BitAddress = 0x80000000;
-                EXPECT_EQ((uintptr_t)bufferPtr, maxMmap32BitAddress);
-            }
-
-            EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
-            auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
-            EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
+        if (DebugManager.flags.UseNewHeapAllocator.get() == false) {
+            uintptr_t maxMmap32BitAddress = 0x80000000;
+            EXPECT_EQ((uintptr_t)bufferPtr, maxMmap32BitAddress);
         }
 
-        delete buffer;
-
-        DebugManager.flags.Force32bitAddressing.set(false);
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->is32BitAllocation);
+        auto baseAddress = buffer->getGraphicsAllocation()->gpuBaseAddress;
+        EXPECT_LT((uintptr_t)(bufferPtr - baseAddress), max32BitAddress);
     }
+
+    delete buffer;
 }
 TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExhaustedThenOptimizationIsTurningOfIfNoProgramsAreCreated) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        DebugManager.flags.Force32bitAddressing.set(true);
-        mock->ioctl_expected = 3;
-        auto pDevice = Device::create<OCLRT::MockDevice>(nullptr);
-        memoryManager->device = pDevice;
-        memoryManager->setForce32BitAllocations(true);
+    DebugManager.flags.Force32bitAddressing.set(true);
+    mock->ioctl_expected = 3;
+    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    memoryManager->device = pDevice.get();
+    memoryManager->setForce32BitAllocations(true);
 
-        mockAllocator32Bit::resetState();
-        fail32BitMmap = true;
-        failLowerRanger = true;
-        failUpperRange = true;
-        failMmap = true;
-        mockAllocator32Bit::OsInternalsPublic *osInternals = mockAllocator32Bit::createOsInternals();
-        osInternals->mmapFunction = MockMmap;
-        osInternals->munmapFunction = MockMunmap;
-        mockAllocator32Bit *mock32BitAllocator = new mockAllocator32Bit(osInternals);
+    mockAllocator32Bit::resetState();
+    fail32BitMmap = true;
+    failLowerRanger = true;
+    failUpperRange = true;
+    failMmap = true;
+    mockAllocator32Bit::OsInternalsPublic *osInternals = mockAllocator32Bit::createOsInternals();
+    osInternals->mmapFunction = MockMmap;
+    osInternals->munmapFunction = MockMunmap;
+    std::unique_ptr<mockAllocator32Bit> mock32BitAllocator(new mockAllocator32Bit(osInternals));
 
-        memoryManager->allocator32Bit.reset(mock32BitAllocator);
+    memoryManager->allocator32Bit.reset(mock32BitAllocator.release());
 
-        //ask for 4GB
-        auto allocationSize = 4096u;
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
-        EXPECT_NE(nullptr, graphicsAllocation);
-        EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddressess);
+    //ask for 4GB
+    auto allocationSize = 4096u;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
+    EXPECT_NE(nullptr, graphicsAllocation);
+    EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddressess);
 
-        memoryManager->freeGraphicsMemory(graphicsAllocation);
-        delete pDevice;
-        memoryManager->allocator32Bit.release();
-        delete mock32BitAllocator;
-        DebugManager.flags.Force32bitAddressing.set(false);
-    }
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExhaustedAndThereAreProgramsThenOptimizationIsStillOnAndFailureIsReturned) {
     DebugManagerStateRestore dbgRestorer;
-    {
-        DebugManager.flags.Force32bitAddressing.set(true);
-        mock->ioctl_expected = 0;
-        auto pDevice = Device::create<OCLRT::MockDevice>(nullptr);
-        pDevice->increaseProgramCount();
-        memoryManager->device = pDevice;
-        memoryManager->setForce32BitAllocations(true);
+    DebugManager.flags.Force32bitAddressing.set(true);
+    mock->ioctl_expected = 0;
+    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    pDevice->increaseProgramCount();
+    memoryManager->device = pDevice.get();
+    memoryManager->setForce32BitAllocations(true);
 
-        //ask for 4GB - 1
-        size_t allocationSize = (4 * 1023 * 1024 * (size_t)1024u - 1) + 4 * 1024 * (size_t)1024u;
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
-        EXPECT_EQ(nullptr, graphicsAllocation);
-        EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
-
-        delete pDevice;
-        DebugManager.flags.Force32bitAddressing.set(false);
-    }
+    //ask for 4GB - 1
+    size_t allocationSize = (4 * 1023 * 1024 * (size_t)1024u - 1) + 4 * 1024 * (size_t)1024u;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
+    EXPECT_EQ(nullptr, graphicsAllocation);
+    EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
 }
 
 TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIsExhaustedAndNewAllocationsIsMadeThenNullIsReturned) {
+    DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.Force32bitAddressing.set(true);
     mock->ioctl_expected = 0;
     memoryManager->setForce32BitAllocations(true);
@@ -1006,8 +982,6 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     auto graphicsAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, allocationSize);
     EXPECT_EQ(nullptr, graphicsAllocation);
     EXPECT_TRUE(memoryManager->device->getDeviceInfo().force32BitAddressess);
-
-    DebugManager.flags.Force32bitAddressing.set(false);
 }
 
 TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenProperIoctlsAreCalledAndUnmapSizeIsNonZero) {
@@ -1890,19 +1864,17 @@ TEST(DrmMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterE
 }
 
 TEST(DrmMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
+    DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(true);
     DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
 TEST(DrmMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
-    bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
+    DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.EnableDeferredDeleter.set(false);
     DrmMemoryManager memoryManager(Drm::get(0), gemCloseWorkerMode::gemCloseWorkerInactive, false);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
-    DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
