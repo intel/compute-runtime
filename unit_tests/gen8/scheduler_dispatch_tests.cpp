@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,6 +56,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         dispatchScheduler<FamilyType>(
             *pCmdQ,
             *pDevQueueHw,
+            pDevice->getPreemptionMode(),
             scheduler);
 
         HardwareParse hwParser;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -64,6 +64,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false);
 
         size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE).getUsed();
@@ -119,6 +120,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false);
 
         auto iohUsed = ioh.getUsed();
@@ -145,6 +147,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false);
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
@@ -180,6 +183,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    true); // blockQueue
         ASSERT_NE(nullptr, blockedCommandsData);
 
@@ -276,6 +280,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    true); // blockQueue
 
         ASSERT_NE(nullptr, blockedCommandsData);
@@ -308,6 +313,7 @@ HWTEST_F(MockParentKernelDispatch, GivenParentKernelWhenDispatchedThenMediaInter
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false); // blockQueue
 
         LinearStream *commandStream = &pCmdQ->getCS(0);
@@ -363,6 +369,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false); // blockQueue
 
         EXPECT_EQ(0u, ssh.getUsed());
@@ -397,6 +404,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
                                    &blockedCommandsData,
                                    nullptr,
                                    nullptr,
+                                   pDevice->getPreemptionMode(),
                                    false); // blockQueue
 
         EXPECT_EQ(bufferMemory, ssh.getBase());

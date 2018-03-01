@@ -514,3 +514,30 @@ GEN9TEST_F(Gen9PreemptionTests, getPreemptionWaCsSizeMidThreadWa) {
     size_t size = PreemptionHelper::getPreemptionWaCsSize<FamilyType>(*device);
     EXPECT_EQ(expectedSize, size);
 }
+
+GEN9TEST_F(Gen9PreemptionTests, givenInterfaceDescriptorDataWhenAnyPreemptionModeThenNoChange) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    INTERFACE_DESCRIPTOR_DATA idd;
+    INTERFACE_DESCRIPTOR_DATA iddArg;
+    int ret;
+
+    idd = FamilyType::cmdInitInterfaceDescriptorData;
+    iddArg = FamilyType::cmdInitInterfaceDescriptorData;
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::Disabled);
+    ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
+    EXPECT_EQ(0, ret);
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidBatch);
+    ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
+    EXPECT_EQ(0, ret);
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::ThreadGroup);
+    ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
+    EXPECT_EQ(0, ret);
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<FamilyType>(&iddArg, PreemptionMode::MidThread);
+    ret = memcmp(&idd, &iddArg, sizeof(INTERFACE_DESCRIPTOR_DATA));
+    EXPECT_EQ(0, ret);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -149,7 +149,8 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     EXPECT_EQ(commandStreamBuffer, commandStream.getBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
@@ -195,7 +196,8 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     EXPECT_EQ(commandStreamBuffer, commandStream.getBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
@@ -222,7 +224,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
             nullptr,
             nullptr,
             nullptr,
-            nullptr);
+            nullptr,
+            pDevice->getPreemptionMode());
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -250,7 +253,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
             nullptr,
             nullptr,
             nullptr,
-            nullptr);
+            nullptr,
+            pDevice->getPreemptionMode());
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -277,7 +281,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
             nullptr,
             nullptr,
             nullptr,
-            nullptr);
+            nullptr,
+            pDevice->getPreemptionMode());
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -305,7 +310,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
             nullptr,
             nullptr,
             nullptr,
-            nullptr);
+            nullptr,
+            pDevice->getPreemptionMode());
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -332,7 +338,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(2u, *kernel.numWorkGroupsX);
     EXPECT_EQ(5u, *kernel.numWorkGroupsY);
     EXPECT_EQ(10u, *kernel.numWorkGroupsZ);
@@ -361,7 +368,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -390,7 +398,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(10u, *kernel.localWorkSizeZ);
@@ -420,7 +429,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -450,7 +460,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(2u, *kernel.localWorkSizeX);
     EXPECT_EQ(5u, *kernel.localWorkSizeY);
     EXPECT_EQ(1u, *kernel.localWorkSizeZ);
@@ -478,7 +489,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(1u, *kernel.localWorkSizeX);
     EXPECT_EQ(2u, *kernel.localWorkSizeY);
     EXPECT_EQ(3u, *kernel.localWorkSizeZ);
@@ -509,7 +521,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
     EXPECT_EQ(1u, *kernel.localWorkSizeX);
     EXPECT_EQ(2u, *kernel.localWorkSizeY);
     EXPECT_EQ(3u, *kernel.localWorkSizeZ);
@@ -543,7 +556,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     auto dispatchId = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -584,7 +598,8 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     auto dispatchId = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -629,6 +644,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
         &blockedCommandsData,
         nullptr,
         nullptr,
+        pDevice->getPreemptionMode(),
         blockQueue);
 
     auto &commandStream = pCmdQ->getCS();
@@ -669,6 +685,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
         &blockedCommandsData,
         nullptr,
         nullptr,
+        pDevice->getPreemptionMode(),
         blockQueue);
 
     Vec3<size_t> localWorkgroupSize(workGroupSize);
@@ -707,6 +724,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
         &blockedCommandsData,
         nullptr,
         nullptr,
+        pDevice->getPreemptionMode(),
         blockQueue);
 
     auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
@@ -739,7 +757,8 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
@@ -770,7 +789,8 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     auto dshAfterMultiDisptach = indirectHeap.getUsed();
 
@@ -846,7 +866,8 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -889,7 +910,8 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoAndDifferentK
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -937,7 +959,8 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoButSameKernel
         nullptr,
         nullptr,
         nullptr,
-        nullptr);
+        nullptr,
+        pDevice->getPreemptionMode());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -979,7 +1002,7 @@ HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoheren
     DispatchInfo di2(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
 
-    dispatchWalker<FamilyType>(*pCmdQ, multiDispatchInfo, 0, nullptr, nullptr, nullptr, nullptr);
+    dispatchWalker<FamilyType>(*pCmdQ, multiDispatchInfo, 0, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode());
 
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 

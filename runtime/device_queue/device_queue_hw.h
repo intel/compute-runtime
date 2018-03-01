@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -76,7 +76,7 @@ class DeviceQueueHw : public DeviceQueue {
 
     void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) override;
     void resetDeviceQueue() override;
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler) override;
+    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) override;
 
     uint32_t getSchedulerReturnInstance() {
         return igilQueue->m_controls.m_SchedulerEarlyReturn;

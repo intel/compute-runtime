@@ -105,7 +105,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 
 CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandStreamReceiver &commandStreamReceiver,
                                            std::unique_ptr<KernelOperation> kernelOperation, std::vector<Surface *> &surfaces,
-                                           bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler, Kernel *kernel, uint32_t kernelCount)
+                                           bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
+                                           PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
     : commandQueue(commandQueue),
       commandStreamReceiver(commandStreamReceiver),
       kernelOperation(std::move(kernelOperation)),
@@ -123,6 +124,7 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandSt
         kernel->incRefInternal();
     }
     this->kernelCount = kernelCount;
+    this->preemptionMode = preemptionMode;
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
@@ -240,7 +242,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
         devQueue->dispatchScheduler(
             commandQueue,
-            scheduler);
+            scheduler,
+            preemptionMode);
 
         scheduler.makeResident(commandStreamReceiver);
 
@@ -257,7 +260,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.requiresCoherency = requiresCoherency;
     dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = commandQueue.getThrottle();
-    dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), kernel);
+    dispatchFlags.preemptionMode = preemptionMode;
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

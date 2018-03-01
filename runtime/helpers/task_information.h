@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,8 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/utilities/iflist.h"
-#include "runtime/helpers//completion_stamp.h"
+#include "runtime/helpers/completion_stamp.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
 
 #include <memory>
@@ -99,7 +100,9 @@ struct KernelOperation {
 class CommandComputeKernel : public Command {
   public:
     CommandComputeKernel(CommandQueue &commandQueue, CommandStreamReceiver &commandStreamReceiver,
-                         std::unique_ptr<KernelOperation> kernelResources, std::vector<Surface *> &surfaces, bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler, Kernel *kernel = nullptr, uint32_t kernelCount = 0);
+                         std::unique_ptr<KernelOperation> kernelResources, std::vector<Surface *> &surfaces,
+                         bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
+                         PreemptionMode preemptionMode, Kernel *kernel = nullptr, uint32_t kernelCount = 0);
 
     ~CommandComputeKernel() override;
 
@@ -120,6 +123,7 @@ class CommandComputeKernel : public Command {
     std::unique_ptr<PrintfHandler> printfHandler;
     Kernel *kernel;
     uint32_t kernelCount;
+    PreemptionMode preemptionMode;
 };
 
 class CommandMarker : public Command {

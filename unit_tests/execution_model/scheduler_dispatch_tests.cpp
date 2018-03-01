@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,6 +77,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchScheduler) {
         dispatchScheduler<FamilyType>(
             *pCmdQ,
             *pDevQueueHw,
+            pDevice->getPreemptionMode(),
             scheduler);
 
         EXPECT_EQ(0u, *scheduler.globalWorkOffsetX);
@@ -194,6 +195,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQ
         dispatchScheduler<FamilyType>(
             *pCmdQ,
             *pDevQueueHw,
+            pDevice->getPreemptionMode(),
             scheduler);
 
         auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
@@ -226,6 +228,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToF
         dispatchScheduler<FamilyType>(
             *pCmdQ,
             mockDevQueue,
+            device->getPreemptionMode(),
             scheduler);
 
         HardwareParse hwParser;

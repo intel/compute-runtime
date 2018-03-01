@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/execution_model/device_enqueue.h"
@@ -92,7 +93,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     }
 
     virtual void resetDeviceQueue();
-    virtual void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler);
+    virtual void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode);
     virtual IndirectHeap *getIndirectHeap(IndirectHeap::Type type);
 
     void acquireEMCriticalSection() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -322,7 +322,7 @@ TEST_F(DeviceQueueTest, dispatchScheduler) {
     CommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
-    devQueue.dispatchScheduler(cmdQ, *kernel);
+    devQueue.dispatchScheduler(cmdQ, *kernel, device->getPreemptionMode());
     delete kernel;
 }
 

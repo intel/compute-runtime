@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -109,7 +109,8 @@ HWTEST_P(KernelSLMAndBarrierTest, test_SLMProgramming) {
         0,
         1,
         kernelInfo.workloadInfo.slmStaticSize,
-        !!executionEnvironment.HasBarriers); // Barriers Enabled
+        !!executionEnvironment.HasBarriers,
+        pDevice->getPreemptionMode()); // Barriers Enabled
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getBase() + offsetInterfaceDescriptorData;

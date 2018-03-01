@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,8 @@
  */
 
 #include "runtime/command_queue/local_id_gen.h"
+#include "runtime/command_stream/csr_definitions.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/dispatch_info.h"
@@ -171,12 +173,13 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     uint32_t numSamplers,
     uint32_t threadsPerThreadGroup,
     uint32_t sizeSlm,
-    bool barrierEnable) {
+    bool barrierEnable,
+    PreemptionMode preemptionMode) {
     typedef typename GfxFamily::SAMPLER_STATE SAMPLER_STATE;
     typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     // Allocate some memory for the interface descriptor
-    auto pInterfaceDescriptor = (INTERFACE_DESCRIPTOR_DATA *)ptrOffset(indirectHeap.getBase(), (size_t)offsetInterfaceDescriptor);
+    auto pInterfaceDescriptor = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getBase(), (size_t)offsetInterfaceDescriptor));
     *pInterfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
 
     // Program the kernel start pointer
@@ -210,6 +213,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
     pInterfaceDescriptor->setBarrierEnable(barrierEnable);
+
+    PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
 
     return (size_t)offsetInterfaceDescriptor;
 }
@@ -326,7 +331,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     uint32_t simd,
     const size_t localWorkSize[3],
     const uint64_t offsetInterfaceDescriptorTable,
-    const uint32_t interfaceDescriptorIndex) {
+    const uint32_t interfaceDescriptorIndex,
+    PreemptionMode preemptionMode) {
 
     typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename GfxFamily::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
@@ -410,7 +416,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         samplerCount,
         threadsPerThreadGroup,
         kernel.slmTotalSize,
-        !!patchInfo.executionEnvironment->HasBarriers);
+        !!patchInfo.executionEnvironment->HasBarriers,
+        preemptionMode);
 
     // Program media state flush to set interface descriptor offset
     KernelCommandsHelper<GfxFamily>::sendMediaStateFlush(

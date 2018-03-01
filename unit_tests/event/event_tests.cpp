@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -475,9 +475,9 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
     std::vector<Surface *> v;
     SurfaceMock *surface = new SurfaceMock;
     v.push_back(surface);
-
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     auto cmdComputeKernel = new CommandComputeKernel(*pCmdQ, pDevice->getCommandStreamReceiver(),
-                                                     std::unique_ptr<KernelOperation>(kernelOperation), v, false, false, false, nullptr);
+                                                     std::unique_ptr<KernelOperation>(kernelOperation), v, false, false, false, nullptr, preemptionMode);
 
     EXPECT_LT(cmdQueueDsh.getMaxAvailableSpace(), dsh->getMaxAvailableSpace());
     EXPECT_EQ(requestedSize, ish->getMaxAvailableSpace());
@@ -512,9 +512,9 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     std::vector<Surface *> v;
     SurfaceMock *surface = new SurfaceMock;
     surface->graphicsAllocation = new GraphicsAllocation((void *)0x1234, 100u);
-
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(surface);
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -550,7 +550,8 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
     std::vector<Surface *> v;
     NullSurface *surface = new NullSurface;
     v.push_back(surface);
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr);
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -610,7 +611,8 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, std::move(printfHandler), pKernel);
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, std::move(printfHandler), preemptionMode, pKernel);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -1420,9 +1422,9 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
                                                    UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
-
+    PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
     event->setCommand(std::unique_ptr<Command>(cmd));
 
     FlushStamp expectedFlushStamp = 0;

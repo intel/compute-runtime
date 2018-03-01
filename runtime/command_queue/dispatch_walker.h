@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -433,6 +433,7 @@ void dispatchWalker(
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
     OCLRT::HwPerfCounter *hwPerfCounter,
+    PreemptionMode preemptionMode,
     bool blockQueue = false,
     unsigned int commandType = 0) {
 
@@ -586,7 +587,8 @@ void dispatchWalker(
             simd,
             localWorkSizes,
             offsetInterfaceDescriptorTable,
-            interfaceDescriptorIndex);
+            interfaceDescriptorIndex,
+            preemptionMode);
 
         if (&dispatchInfo == &*multiDispatchInfo.begin()) {
             // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
@@ -659,17 +661,19 @@ void dispatchWalker(
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
     HwPerfCounter *hwPerfCounter,
+    PreemptionMode preemptionMode,
     bool blockQueue = false) {
 
     DispatchInfo dispatchInfo(const_cast<Kernel *>(&kernel), workDim, workItems, localWorkSizesIn, globalOffsets);
     dispatchWalker<GfxFamily>(commandQueue, dispatchInfo, numEventsInWaitList, eventWaitList,
-                              blockedCommandsData, hwTimeStamps, hwPerfCounter, blockQueue);
+                              blockedCommandsData, hwTimeStamps, hwPerfCounter, preemptionMode, blockQueue);
 }
 
 template <typename GfxFamily>
 void dispatchScheduler(
     CommandQueue &commandQueue,
     DeviceQueueHw<GfxFamily> &devQueueHw,
+    PreemptionMode preemptionMode,
     SchedulerKernel &scheduler) {
 
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
@@ -754,7 +758,8 @@ void dispatchScheduler(
         simd,
         localWorkSizes,
         offsetInterfaceDescriptorTable,
-        interfaceDescriptorIndex);
+        interfaceDescriptorIndex,
+        preemptionMode);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, scheduler, true);

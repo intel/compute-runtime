@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,8 +46,8 @@ struct KernelCommandsTest : DeviceFixture,
                             BuiltInFixture,
                             ::testing::Test {
 
-    using ContextFixture::SetUp;
     using BuiltInFixture::SetUp;
+    using ContextFixture::SetUp;
 
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -135,7 +135,7 @@ HWTEST_F(KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
 
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     KernelCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, false);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, false, pDevice->getPreemptionMode());
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -272,7 +272,8 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         IDToffset,
-        0);
+        0,
+        pDevice->getPreemptionMode());
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -354,7 +355,8 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
         kernel->getKernelInfo().getMaxSimdSize(),
         localWorkSizes,
         0,
-        0);
+        0,
+        pDevice->getPreemptionMode());
 
     EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -508,7 +510,8 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
             pKernel->getKernelInfo().getMaxSimdSize(),
             localWorkSizes,
             0,
-            0);
+            0,
+            pDevice->getPreemptionMode());
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -742,7 +745,8 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
         8,
         localWorkSizes,
         interfaceDescriptorTableOffset,
-        0);
+        0,
+        pDevice->getPreemptionMode());
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);

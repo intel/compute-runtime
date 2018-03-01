@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,7 +60,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         uint32_t numSamplers,
         uint32_t threadsPerThreadGroup,
         uint32_t sizeSlm,
-        bool barrierEnable);
+        bool barrierEnable,
+        PreemptionMode preemptionMode);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -103,7 +104,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         uint32_t simd,
         const size_t localWorkSize[3],
         const uint64_t offsetInterfaceDescriptorTable,
-        const uint32_t interfaceDescriptorIndex);
+        const uint32_t interfaceDescriptorIndex,
+        PreemptionMode preemptionMode);
 
     static size_t getSizeRequiredCS();
     static bool isPipeControlWArequired();

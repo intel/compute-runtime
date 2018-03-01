@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -385,9 +385,10 @@ size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &sc
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler) {
+void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) {
     OCLRT::dispatchScheduler<GfxFamily>(cmdQ,
                                         *this,
+                                        preemptionMode,
                                         scheduler);
     return;
 }

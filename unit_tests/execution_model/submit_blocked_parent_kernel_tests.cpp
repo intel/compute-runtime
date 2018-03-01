@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,9 +74,9 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         timestampAddedInCleanupSection = hwTimeStamp;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
     }
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler) override {
+    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) override {
         schedulerDispatched = true;
-        return BaseClass::dispatchScheduler(cmdQ, scheduler);
+        return BaseClass::dispatchScheduler(cmdQ, scheduler, preemptionMode);
     }
 
     uint32_t criticalSectioncheckCounter = 0;
@@ -114,10 +114,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 
@@ -174,10 +174,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 
@@ -219,10 +219,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 
@@ -259,10 +259,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         HwTimeStamps timestamp;
 
@@ -302,10 +302,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 
@@ -348,10 +348,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmitte
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(cmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 
@@ -397,10 +397,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
 
         blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
-
+        PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
         auto *cmdComputeKernel = new CommandComputeKernel(*pCmdQ, device->getCommandStreamReceiver(),
-                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, parentKernel, 1);
+                                                          std::unique_ptr<KernelOperation>(blockedCommandData), surfaces, false, false, false, nullptr, preemptionMode, parentKernel, 1);
 
         cmdComputeKernel->submit(0, false);
 

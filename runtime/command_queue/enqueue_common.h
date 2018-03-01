@@ -183,6 +183,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     std::unique_ptr<PrintfHandler> printfHandler;
     bool slmUsed = false;
     EngineType engineType = device->getEngineType();
+    auto preemption = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
     auto blockQueue = false;
@@ -244,6 +245,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
+            preemption,
             blockQueue,
             commandType);
 
@@ -282,6 +284,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             dispatchScheduler<GfxFamily>(
                 *this,
                 *devQueueHw,
+                preemption,
                 scheduler);
 
             scheduler.makeResident(commandStreamReceiver);
@@ -638,7 +641,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         for (auto &surface : CreateRange(surfaces, surfaceCount)) {
             allSurfaces.push_back(surface->duplicate());
         }
-
+        PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
         auto kernelOperation = std::unique_ptr<KernelOperation>(blockedCommandsData); // marking ownership
         auto cmd = std::unique_ptr<Command>(new CommandComputeKernel(
             *this,
@@ -649,6 +652,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             slmUsed,
             commandType == CL_COMMAND_NDRANGE_KERNEL,
             std::move(printfHandler),
+            preemptionMode,
             multiDispatchInfo.begin()->getKernel(),
             (uint32_t)multiDispatchInfo.size()));
         eventBuilder->getEvent()->setCommand(std::move(cmd));

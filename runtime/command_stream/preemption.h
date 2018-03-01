@@ -32,6 +32,9 @@ struct MultiDispatchInfo;
 
 class PreemptionHelper {
   public:
+    template <typename CmdFamily>
+    using INTERFACE_DESCRIPTOR_DATA = typename CmdFamily::INTERFACE_DESCRIPTOR_DATA;
+
     static PreemptionMode taskPreemptionMode(Device &device, Kernel *kernel);
     static PreemptionMode taskPreemptionMode(Device &device, const MultiDispatchInfo &multiDispatchInfo);
     static bool allowThreadGroupPreemption(Kernel *kernel, const WorkaroundTable *waTable);
@@ -65,6 +68,9 @@ class PreemptionHelper {
     static void applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, const Device &device);
 
     static PreemptionMode getDefaultPreemptionMode(const HardwareInfo &hwInfo);
+
+    template <typename GfxFamily>
+    static void programInterfaceDescriptorDataPreemption(INTERFACE_DESCRIPTOR_DATA<GfxFamily> *idd, PreemptionMode preemptionMode);
 };
 
 template <typename GfxFamily>
