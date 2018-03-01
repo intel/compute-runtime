@@ -18,9 +18,39 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 project(igdrcl_tests)
+
+add_custom_target(unit_tests)
+
+set(IGDRCL_SRCS_tests_local
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/abort.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/custom_event_listener.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
+)
+
+add_subdirectory(libult)
+
+set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
+  $<TARGET_OBJECTS:igdrcl_libult>
+  $<TARGET_OBJECTS:igdrcl_libult_cs>
+  $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
+  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
+  $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
+  $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
+)
+
+add_executable(igdrcl_tests
+  ${NEO_IGDRCL_TESTS__TARGET_OBJECTS}
+  ${IGDRCL_SRCS_tests_local}
+)
 
 add_subdirectory(accelerators)
 add_subdirectory(api)
@@ -44,7 +74,6 @@ add_subdirectory(indirect_heap)
 add_subdirectory(instrumentation)
 add_subdirectory(kernel)
 add_subdirectory(linux)
-add_subdirectory(libult)
 add_subdirectory(mem_obj)
 add_subdirectory(memory_manager)
 add_subdirectory(mocks)
@@ -84,30 +113,8 @@ if(GTEST_FILTERING_PATTERN)
   message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
 endif(GTEST_FILTERING_PATTERN)
 
-set(IGDRCL_SRCS_tests_local
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/abort.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/custom_event_listener.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/program/evaluate_unhandled_token_ult.cpp
-)
 
 set(IGDRCL_SRCS_tests
-  ${IGDRCL_SRCS_tests_local}
-  ${IGDRCL_SRCS_built_in_tests}
-  ${IGDRCL_SRCS_tests_accelerators}
-  ${IGDRCL_SRCS_tests_api}
-  ${IGDRCL_SRCS_tests_command_queue}
-  ${IGDRCL_SRCS_tests_command_stream}
-  ${IGDRCL_SRCS_tests_compiler_interface}
-  ${IGDRCL_SRCS_tests_context}
   ${IGDRCL_SRCS_tests_device}
   ${IGDRCL_SRCS_tests_device_queue}
   ${IGDRCL_SRCS_tests_event}
@@ -197,15 +204,8 @@ if(GTPIN_HEADERS_DIR)
 	endforeach(GEN_NUM)
 endif(GTPIN_HEADERS_DIR)
 
-add_executable(igdrcl_tests
-  ${IGDRCL_SRCS_tests}
-  $<TARGET_OBJECTS:igdrcl_libult>
-  $<TARGET_OBJECTS:igdrcl_libult_cs>
-  $<TARGET_OBJECTS:igdrcl_lib_mockable_sharings_enable>
-  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
-  $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>
-  $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
-)
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests})
+
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
@@ -297,9 +297,9 @@ function(neo_copy_test_files target gen)
   set_target_properties(${target} PROPERTIES FOLDER "opencl runtime/${gen}")
 endfunction()
 
-add_custom_target(unit_tests
-    DEPENDS igdrcl_tests
-    DEPENDS test_dynamic_lib
+add_dependencies(unit_tests
+  igdrcl_tests
+  test_dynamic_lib
 )
 
 add_custom_target(run_unit_tests ALL)

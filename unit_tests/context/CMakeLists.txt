@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,14 +19,15 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_tests_context
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/context_get_info_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/context_multi_device_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/context_negative_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/context_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_enqueue_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/get_supported_image_formats_tests.cpp"
-    PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/context_get_info_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/context_multi_device_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/context_negative_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/context_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_enqueue_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/driver_diagnostics_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_supported_image_formats_tests.cpp
 )
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_context})
+add_subdirectories()

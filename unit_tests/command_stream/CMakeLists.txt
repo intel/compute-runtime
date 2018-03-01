@@ -19,20 +19,20 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_tests_command_stream
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_fixture.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp"
-    PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp
 )
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
