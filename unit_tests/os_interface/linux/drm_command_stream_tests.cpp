@@ -116,7 +116,7 @@ TEST_F(DrmCommandStreamTest, makeResident) {
         .Times(0);
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
-    auto graphicsAllocation = DrmAllocation(nullptr, nullptr, 1024);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
     csr->makeResident(graphicsAllocation);
 }
 
@@ -130,7 +130,7 @@ TEST_F(DrmCommandStreamTest, makeResidentTwiceTheSame) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    auto graphicsAllocation = DrmAllocation(nullptr, nullptr, 1024);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation);
@@ -146,7 +146,7 @@ TEST_F(DrmCommandStreamTest, makeResidentSizeZero) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    auto graphicsAllocation = DrmAllocation(nullptr, nullptr, 0);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 0);
 
     csr->makeResident(graphicsAllocation);
 }
@@ -161,8 +161,8 @@ TEST_F(DrmCommandStreamTest, makeResidentResized) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    auto graphicsAllocation = DrmAllocation(nullptr, nullptr, 1024);
-    auto graphicsAllocation2 = DrmAllocation(nullptr, nullptr, 8192);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
+    DrmAllocation graphicsAllocation2(nullptr, nullptr, 8192);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation2);
@@ -413,8 +413,8 @@ TEST_F(DrmCommandStreamTest, FlushCheckFlags) {
         .Times(1)
         .WillRepeatedly(::testing::Return(0));
 
-    auto allocation = DrmAllocation(nullptr, (void *)0x7FFFFFFF, 1024);
-    auto allocation2 = DrmAllocation(nullptr, (void *)0x307FFFFFFF, 1024);
+    DrmAllocation allocation(nullptr, (void *)0x7FFFFFFF, 1024);
+    DrmAllocation allocation2(nullptr, (void *)0x307FFFFFFF, 1024);
     csr->makeResident(allocation);
     csr->makeResident(allocation2);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -448,7 +448,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(1);
 
-    auto allocation = DrmAllocation(nullptr, nullptr, 1024);
+    DrmAllocation allocation(nullptr, nullptr, 1024);
 
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -493,7 +493,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
         .WillOnce(::testing::Return(-1));
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(1);
-    auto allocation = DrmAllocation(nullptr, nullptr, 1024);
+    DrmAllocation allocation(nullptr, nullptr, 1024);
 
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1341,7 +1341,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
 
 TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     std::unique_ptr<BufferObject> buffer(this->createBO(0));
-    auto allocation = DrmAllocation(buffer.get(), nullptr, buffer->peekSize());
+    DrmAllocation allocation(buffer.get(), nullptr, buffer->peekSize());
     EXPECT_EQ(nullptr, allocation.getUnderlyingBuffer());
     EXPECT_EQ(buffer->peekSize(), allocation.getUnderlyingBufferSize());
 

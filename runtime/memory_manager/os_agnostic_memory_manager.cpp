@@ -59,7 +59,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
             return nullptr;
         }
         memoryAllocation->uncacheable = uncacheable;
-        allocationMap.insert(std::pair<void *, MemoryAllocation>(ptr, *memoryAllocation));
+        allocationMap.emplace(ptr, memoryAllocation);
     }
     counter++;
     return memoryAllocation;
@@ -82,7 +82,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
         memAlloc->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
 
-        allocationMap.insert(std::pair<void *, MemoryAllocation>(const_cast<void *>(ptr), *memAlloc));
+        allocationMap.emplace(const_cast<void *>(ptr), memAlloc);
         counter++;
         return memAlloc;
     }
@@ -102,7 +102,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
         memoryAllocation->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
         memoryAllocation->cpuPtrAllocated = true;
-        allocationMap.insert(std::pair<void *, MemoryAllocation>(ptrAlloc, *memoryAllocation));
+        allocationMap.emplace(ptrAlloc, memoryAllocation);
     }
     counter++;
     return memoryAllocation;
@@ -139,12 +139,12 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     auto it = allocationMap.find(ptr);
 
     if (it != allocationMap.end()) {
-        it->second.refCount--;
-        if (it->second.refCount == 0) {
-            freeMemory = it->second.cpuPtrAllocated;
-            is32BitAllocation = it->second.is32BitAllocation;
-            gpuPtrToFree = reinterpret_cast<void *>(it->second.getGpuAddress() & ~MemoryConstants::pageMask);
-            sizeToFree = it->second.sizeToFree;
+        it->second->refCount--;
+        if (it->second->refCount == 0) {
+            freeMemory = it->second->cpuPtrAllocated;
+            is32BitAllocation = it->second->is32BitAllocation;
+            gpuPtrToFree = reinterpret_cast<void *>(it->second->getGpuAddress() & ~MemoryConstants::pageMask);
+            sizeToFree = it->second->sizeToFree;
             allocationMap.erase(it);
         }
     }

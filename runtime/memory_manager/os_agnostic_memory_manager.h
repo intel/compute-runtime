@@ -46,7 +46,7 @@ class MemoryAllocation : public GraphicsAllocation {
                                                                                                                             id(count) {}
 };
 
-typedef std::map<void *, MemoryAllocation> PointerMap;
+typedef std::map<void *, MemoryAllocation *> PointerMap;
 
 class OsAgnosticMemoryManager : public MemoryManager {
   public:

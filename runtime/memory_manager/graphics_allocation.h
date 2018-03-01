@@ -61,6 +61,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     };
 
     virtual ~GraphicsAllocation() = default;
+    GraphicsAllocation &operator=(const GraphicsAllocation &) = delete;
+    GraphicsAllocation(const GraphicsAllocation &) = delete;
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn) : size(sizeIn),
                                                         cpuPtr(cpuPtrIn),
                                                         gpuAddress((uint64_t)cpuPtrIn),

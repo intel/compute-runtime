@@ -931,7 +931,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
     EXPECT_GE(commandStream.getAvailableSpace(), sizeRequested);
     commandStream.getSpace(sizeRequested - sizeCQReserves);
 
-    GraphicsAllocation allocation = GraphicsAllocation((void *)0x1234, 1);
+    GraphicsAllocation allocation((void *)0x1234, 1);
     LinearStream linear(&allocation);
 
     auto blocking = true;

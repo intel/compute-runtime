@@ -37,10 +37,16 @@
 #include "unit_tests/mocks/mock_memory_manager.h"
 
 #include <future>
+#include <type_traits>
 
 using namespace OCLRT;
 
 typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
+
+TEST(GraphicsAllocationTest, defaultTypeTraits) {
+    EXPECT_FALSE(std::is_copy_constructible<GraphicsAllocation>::value);
+    EXPECT_FALSE(std::is_copy_assignable<GraphicsAllocation>::value);
+}
 
 TEST(GraphicsAllocationTest, Ctor) {
     void *cpuPtr = (void *)0x30000;
