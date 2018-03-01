@@ -68,6 +68,9 @@ endif()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# we force using response files
+set(CMAKE_NINJA_FORCE_RESPONSE_FILE 1)
+
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
 if(MSVC)
