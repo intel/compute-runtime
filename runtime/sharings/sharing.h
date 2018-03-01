@@ -55,6 +55,7 @@ class SharingHandler {
     virtual ~SharingHandler() = default;
 
     virtual void getMemObjectInfo(size_t &paramValueSize, void *&paramValue){};
+    virtual void releaseReusedGraphicsAllocation(){};
 
   protected:
     virtual void synchronizeHandler(UpdateData *updateData);

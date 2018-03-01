@@ -24,6 +24,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include <atomic>
 
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -116,6 +117,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t gpuBaseAddress = 0;
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
+    std::atomic<uint32_t> reuseCount{0}; // GraphicsAllocation can be reused by shared resources
 
     int residencyTaskCount = ObjectNotResident;
 

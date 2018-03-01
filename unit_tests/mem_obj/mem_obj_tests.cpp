@@ -27,6 +27,7 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -304,4 +305,48 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     EXPECT_FALSE(memObj.allowTiling());
     EXPECT_FALSE(memObj.peekSharingHandler());
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
+}
+
+TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThenFreeAllocationOnce) {
+    // Each SharingHandler should have own implementation of reuseCount management
+    struct MySharingHandler : public SharingHandler {
+        MySharingHandler(GraphicsAllocation *allocation) : allocation(allocation) {
+            allocation->reuseCount++;
+        }
+        void releaseReusedGraphicsAllocation() override {
+            allocation->reuseCount--;
+        }
+
+        GraphicsAllocation *allocation = nullptr;
+    };
+
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+
+    MemoryManagementFixture memoryLeaksCheck;
+    memoryLeaksCheck.SetUp();
+
+    auto allocation = memoryManager.allocateGraphicsMemory(1);
+
+    auto memObj1 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    memObj1->setSharingHandler(new MySharingHandler(allocation));
+
+    auto memObj2 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    memObj2->setSharingHandler(new MySharingHandler(allocation));
+
+    auto memObj3 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    memObj3->setSharingHandler(new MySharingHandler(allocation));
+
+    EXPECT_EQ(3u, allocation->reuseCount.load());
+
+    delete memObj3;
+    EXPECT_EQ(2u, allocation->reuseCount.load());
+    delete memObj1;
+    EXPECT_EQ(1u, allocation->reuseCount.load());
+
+    delete memObj2;
+
+    // GraphicsAllocation should be removed by last memObj
+    memoryLeaksCheck.TearDown();
 }
