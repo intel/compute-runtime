@@ -104,6 +104,10 @@ link_directories(${GMM_LIB_PATHS})
 
 target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
 
+if(INSTRUMENTATION_LIB_NAME)
+	add_dependencies(${NEO_STATIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
+endif()
+
 if(WIN32)
   if(GTPIN_HEADERS_DIR)
     set( DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/GTPinExports${IGDRCL_OPTION__BITS}.def" )
