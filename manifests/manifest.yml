@@ -4,7 +4,7 @@ components:
     clean_on_sync: true
     dest_dir: gmmlib
     repository: https://github.com/intel/gmmlib.git
-    revision: 7d3ee42f2a780e327998129614ad3a95b1704f22
+    revision: 955c283da9d12f36ad2238d3c636f9bfef586279
     type: git
   gmock:
     branch: master
@@ -25,7 +25,7 @@ components:
     clean_on_sync: true
     dest_dir: igc
     repository: https://github.com/intel/intelgraphicscompiler
-    revision: 4c4ca21fbaacb80975f2ef4758501f45bf8b2d57
+    revision: 927a7260b4e653e53c413a792767b729d1de5f2e
     type: git
   infra:
     branch: infra
@@ -62,6 +62,6 @@ components:
     branch: wdk
     clean_on_sync: true
     dest_dir: wdk
-    revision: ad7ff91bc486b6369d55387fe0a42352a6a88bf3
+    revision: 75472288b348d1428ca7c777fc9ef41a634a3178
     type: git
 version: '1'
