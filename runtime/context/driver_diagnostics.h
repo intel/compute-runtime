@@ -67,7 +67,7 @@ enum PerformanceHints {
 class DriverDiagnostics {
   public:
     DriverDiagnostics(cl_diagnostics_verbose_level level);
-    cl_bool validFlags(cl_diagnostics_verbose_level flags) const;
+    bool validFlags(cl_diagnostics_verbose_level flags) const;
     ~DriverDiagnostics() = default;
     static const char *hintFormat[];
     static const cl_int maxHintStringSize = 1024;

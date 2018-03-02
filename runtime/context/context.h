@@ -107,7 +107,12 @@ class Context : public BaseObject<_cl_context> {
         char hint[DriverDiagnostics::maxHintStringSize];
         snprintf(hint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[performanceHint], std::forward<Args>(args)..., 0);
         if (driverDiagnostics->validFlags(flags)) {
-            contextCallback(hint, &flags, sizeof(flags), userData);
+            if (contextCallback) {
+                contextCallback(hint, &flags, sizeof(flags), userData);
+            }
+            if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
+                printf("\n%s\n", hint);
+            }
         }
     }
 

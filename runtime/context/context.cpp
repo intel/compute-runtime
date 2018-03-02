@@ -36,6 +36,7 @@
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing.h"
 #include <algorithm>
@@ -104,6 +105,7 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     auto propertiesCurrent = properties;
     bool interopUserSync = false;
+    int32_t driverDiagnosticsUsed = -1;
     auto sharingBuilder = sharingFactory.build();
 
     std::unique_ptr<DriverDiagnostics> driverDiagnostics;
@@ -122,7 +124,7 @@ bool Context::createImpl(const cl_context_properties *properties,
             }
         } break;
         case CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL:
-            driverDiagnostics.reset(new DriverDiagnostics((cl_diagnostics_verbose_level)propertyValue));
+            driverDiagnosticsUsed = static_cast<int32_t>(propertyValue);
             break;
         case CL_CONTEXT_INTEROP_USER_SYNC:
             interopUserSync = propertyValue > 0;
@@ -147,6 +149,13 @@ bool Context::createImpl(const cl_context_properties *properties,
         memcpy_s(propertiesNew, (numProperties + 1) * sizeof(cl_context_properties), properties, numProperties * sizeof(cl_context_properties));
         propertiesNew[numProperties] = 0;
         numProperties++;
+    }
+
+    if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
+        driverDiagnosticsUsed = DebugManager.flags.PrintDriverDiagnostics.get();
+    }
+    if (driverDiagnosticsUsed >= 0) {
+        driverDiagnostics.reset(new DriverDiagnostics((cl_diagnostics_verbose_level)driverDiagnosticsUsed));
     }
 
     this->numProperties = numProperties;

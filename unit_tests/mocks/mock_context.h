@@ -46,6 +46,7 @@ class MockContext : public Context {
     cl_bool peekPreferD3dSharedResources() { return preferD3dSharedResources; }
 
     void forcePreferD3dSharedResources(cl_bool value) { preferD3dSharedResources = value; }
+    DriverDiagnostics *getDriverDiagnostics() { return this->driverDiagnostics; }
 
   private:
     std::unique_ptr<Device> device;

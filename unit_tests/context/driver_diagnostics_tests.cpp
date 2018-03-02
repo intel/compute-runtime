@@ -345,6 +345,93 @@ TEST_F(PerformanceHintTest, GivenNonZeroCopyImageAndContextWhenCreateImageThenCo
     EXPECT_FALSE(containsHint(expectedHint, userData));
 }
 
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticValueWhenContextIsCreatedThenItHasHintLevelSetToThatValue) {
+    DebugManagerStateRestore dbgRestore;
+    auto hintLevel = 1;
+    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+
+    auto pDevice = castToObject<Device>(devices[0]);
+    cl_device_id clDevice = pDevice;
+
+    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+
+    EXPECT_TRUE(!!context->isProvidingPerformanceHints());
+    auto driverDiagnostics = context->getDriverDiagnostics();
+    ASSERT_NE(nullptr, driverDiagnostics);
+    EXPECT_TRUE(driverDiagnostics->validFlags(hintLevel));
+    context->release();
+}
+
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenHintIsCalledThenDriverProvidedOutputOnCout) {
+    DebugManagerStateRestore dbgRestore;
+    auto hintLevel = 255;
+    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+
+    auto pDevice = castToObject<Device>(devices[0]);
+    cl_device_id clDevice = pDevice;
+
+    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+
+    testing::internal::CaptureStdout();
+    auto buffer = Buffer::create(
+        context,
+        CL_MEM_READ_ONLY,
+        4096,
+        nullptr,
+        retVal);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
+    EXPECT_EQ('\n', output[0]);
+
+    buffer->release();
+    context->release();
+}
+
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenActionForHintOccursThenNothingIsProvidedToCout) {
+    DebugManagerStateRestore dbgRestore;
+    auto hintLevel = 8;
+    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+
+    auto pDevice = castToObject<Device>(devices[0]);
+    cl_device_id clDevice = pDevice;
+
+    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+
+    testing::internal::CaptureStdout();
+    auto buffer = Buffer::create(
+        context,
+        CL_MEM_READ_ONLY,
+        4096,
+        nullptr,
+        retVal);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(0u, output.size());
+
+    buffer->release();
+    context->release();
+}
+
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenContextIsBeingCreatedThenPropertiesPassedToContextAreOverwritten) {
+    DebugManagerStateRestore dbgRestore;
+    auto hintLevel = 1;
+    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+
+    auto pDevice = castToObject<Device>(devices[0]);
+    cl_device_id clDevice = pDevice;
+    cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
+    auto retValue = CL_SUCCESS;
+    auto context = Context::create<MockContext>(validProperties, DeviceVector(&clDevice, 1), callbackFunction, (void *)userData, retVal);
+    EXPECT_EQ(CL_SUCCESS, retValue);
+    auto driverDiagnostics = context->getDriverDiagnostics();
+    ASSERT_NE(nullptr, driverDiagnostics);
+    EXPECT_TRUE(driverDiagnostics->validFlags(hintLevel));
+    EXPECT_FALSE(driverDiagnostics->validFlags(2));
+
+    context->release();
+}
+
 TEST_P(PerformanceHintKernelTest, GivenSpillFillWhenKernelIsInitializedThenContextProvidesProperHint) {
 
     auto pDevice = castToObject<Device>(devices[0]);
@@ -409,3 +496,7 @@ INSTANTIATE_TEST_CASE_P(
     DriverDiagnosticsTests,
     PerformanceHintKernelTest,
     testing::Bool());
+
+TEST(PerformanceHintsDebugVariables, givenDefaultDebugManagerWhenPrintDriverDiagnosticsIsCalledThenMinusOneIsReturned) {
+    EXPECT_EQ(-1, DebugManager.flags.PrintDriverDiagnostics.get());
+}

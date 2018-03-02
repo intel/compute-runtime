@@ -43,6 +43,7 @@ DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, 0, "enables debug messages an
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, 0, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
 DECLARE_DEBUG_VARIABLE(bool, PrintEMDebugInformation, false, "prints execution model related debug information")
 DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver choosen local workgroup sizes")
+DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNullHardware, false, "works on Windows only, sets the Null Hardware flag that makes all Command buffers completed while GPU does nothing")
 DECLARE_DEBUG_VARIABLE(bool, ForceLinearImages, false, "Force linear images. Default is Y-tiled.")

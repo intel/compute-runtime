@@ -28,8 +28,8 @@ DriverDiagnostics::DriverDiagnostics(cl_diagnostics_verbose_level level) {
     this->verboseLevel = level;
 }
 
-cl_bool DriverDiagnostics::validFlags(cl_diagnostics_verbose_level flags) const {
-    return (verboseLevel & flags) != 0;
+bool DriverDiagnostics::validFlags(cl_diagnostics_verbose_level flags) const {
+    return !!(verboseLevel & flags);
 }
 
 const char *DriverDiagnostics::hintFormat[] = {
