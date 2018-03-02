@@ -1443,7 +1443,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     clReleaseCommandQueue(inOrderQueue);
 }
 
-HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlPositionIsNotRecorded) {
+HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlPositionIsRecorded) {
     const cl_queue_properties props[] = {0};
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
 
@@ -1461,13 +1461,13 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
     EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
 
     clReleaseCommandQueue(inOrderQueue);
 }
 
-HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlHasDcFlushSet) {
+HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasSharedObjectsAsArgIsMadeThenPipeControlDoesntHaveDcFlush) {
     auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
     mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
@@ -1477,7 +1477,7 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelThatHasShar
     mockKernel.mockKernel->setUsingSharedArgs(true);
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
-    EXPECT_TRUE(mockCsr->passedDispatchFlags.dcFlush);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.dcFlush);
 }
 
 HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeThenPipeControlPositionIsNotRecorded) {

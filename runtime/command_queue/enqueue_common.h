@@ -539,7 +539,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
-    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler) || multiDispatchInfo.begin()->getKernel()->isUsingSharedObjArgs();
+    dispatchFlags.dcFlush = shouldFlushDC(commandType, printfHandler);
     dispatchFlags.useSLM = slmUsed;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.GSBA32BitRequired = commandType == CL_COMMAND_NDRANGE_KERNEL;
@@ -549,7 +549,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.implicitFlush = implicitFlush;
     dispatchFlags.flushStampReference = this->flushStamp->getStampReference();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
-    dispatchFlags.outOfOrderExecutionAllowed = (!eventBuilder.getEvent() && !multiDispatchInfo.begin()->getKernel()->isUsingSharedObjArgs()) || this->isOOQEnabled();
+    dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || this->isOOQEnabled();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
