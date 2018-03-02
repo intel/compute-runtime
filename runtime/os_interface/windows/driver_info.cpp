@@ -32,9 +32,8 @@ DriverInfo *DriverInfo::create(OSInterface *osInterface) {
     if (osInterface) {
         auto wddm = osInterface->get()->getWddm();
         DEBUG_BREAK_IF(wddm == nullptr);
-        DEBUG_BREAK_IF(wddm->getAdapterInfo() == nullptr);
 
-        std::string path(wddm->getAdapterInfo()->DeviceRegistryPath);
+        std::string path(wddm->getDeviceRegistryPath());
 
         auto result = new DriverInfoWindows();
         path = result->trimRegistryKey(path);

@@ -696,12 +696,12 @@ HWTEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocat
     SetUpMm<FamilyType>();
     auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base));
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
     EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
-    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
-    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
 
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
@@ -716,12 +716,12 @@ HWTEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationW
     auto ptr = (void *)0x1000000;
     auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, 4096u);
     ASSERT_NE(nullptr, wddmAllocation);
-    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base));
+    EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
     EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(4096u, wddmAllocation->getUnderlyingBufferSize());
     EXPECT_NE((uint64_t)wddmAllocation->getUnderlyingBuffer(), wddmAllocation->getGpuAddress());
-    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
-    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
 
     EXPECT_GE(wddmAllocation->getGpuAddress(), cannonizedHeapBase);
     EXPECT_LE(wddmAllocation->getGpuAddress(), cannonizedHeapEnd);
@@ -1933,7 +1933,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpu
 
     GMM_DDI_UPDATEAUXTABLE givenDdiUpdateAuxTable = {};
     GMM_DDI_UPDATEAUXTABLE expectedDdiUpdateAuxTable = {};
-    expectedDdiUpdateAuxTable.BaseGpuVA = Gmm::canonize(wddm.getAdapterInfo()->GfxPartition.Standard.Base);
+    expectedDdiUpdateAuxTable.BaseGpuVA = Gmm::canonize(wddm.getGfxPartition().Standard.Base);
     expectedDdiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
     expectedDdiUpdateAuxTable.DoNotWait = true;
     expectedDdiUpdateAuxTable.Map = true;
@@ -1942,7 +1942,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpu
 
     auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
     ASSERT_TRUE(result);
-    EXPECT_EQ(Gmm::canonize(wddm.getAdapterInfo()->GfxPartition.Standard.Base), gpuVa);
+    EXPECT_EQ(Gmm::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
 
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }

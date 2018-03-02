@@ -126,10 +126,10 @@ class Wddm {
                 success = createPagingQueue();
                 if (!success)
                     break;
-                success = Gmm::initContext(&adapterInfo->GfxPlatform,
+                success = Gmm::initContext(gfxPlatform.get(),
                                            featureTable.get(),
                                            waTable.get(),
-                                           &adapterInfo->SystemInfo);
+                                           gtSystemInfo.get());
                 if (!success)
                     break;
                 success = configureDeviceAddressSpace<GfxFamily>();
@@ -147,25 +147,28 @@ class Wddm {
         return initialized;
     }
 
-    bool isInitialized() {
+    bool isInitialized() const {
         return initialized;
     }
 
-    GT_SYSTEM_INFO *getGtSysInfo() {
-        DEBUG_BREAK_IF(!adapterInfo);
-        return &adapterInfo->SystemInfo;
+    GT_SYSTEM_INFO *getGtSysInfo() const {
+        DEBUG_BREAK_IF(!gtSystemInfo);
+        return gtSystemInfo.get();
     }
 
-    ADAPTER_INFO *getAdapterInfo() {
-        DEBUG_BREAK_IF(!adapterInfo);
-        return adapterInfo;
+    const GMM_GFX_PARTITIONING &getGfxPartition() const {
+        return gfxPartition;
+    }
+
+    const std::string &getDeviceRegistryPath() const {
+        return deviceRegistryPath;
     }
 
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
 
-    uint64_t getSystemSharedMemory();
+    uint64_t getSystemSharedMemory() const;
 
-    uint64_t getMaxApplicationAddress();
+    uint64_t getMaxApplicationAddress() const;
 
     D3DKMT_HANDLE getAdapter() const { return adapter; }
     D3DKMT_HANDLE getDevice() const { return device; }
@@ -196,7 +199,7 @@ class Wddm {
     void resetPageTableManager(GmmPageTableMngr *newPageTableManager);
     bool updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map);
 
-    uintptr_t getWddmMinAddress() {
+    uintptr_t getWddmMinAddress() const {
         return this->minAddress;
     }
 
@@ -215,9 +218,16 @@ class Wddm {
 
     MonitoredFence monitoredFence;
 
-    ADAPTER_INFO *adapterInfo;
+    // Adapter information
+    std::unique_ptr<PLATFORM> gfxPlatform;
+    std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
     std::unique_ptr<FeatureTable> featureTable;
     std::unique_ptr<WorkaroundTable> waTable;
+    GMM_GFX_PARTITIONING gfxPartition;
+    uint64_t systemSharedMemory = 0;
+    uint32_t maxRenderFrequency = 0;
+    bool instrumentationEnabled = false;
+    std::string deviceRegistryPath;
 
     unsigned long hwContextId;
     LUID adapterLuid;

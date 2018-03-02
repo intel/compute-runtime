@@ -205,7 +205,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     }
 
     wddmAllocation->is32BitAllocation = true;
-    auto baseAddress = memoryType == MemoryType::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base;
+    auto baseAddress = memoryType == MemoryType::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
     wddmAllocation->gpuBaseAddress = Gmm::canonize(baseAddress);
 
     return wddmAllocation;

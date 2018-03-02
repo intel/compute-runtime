@@ -61,8 +61,13 @@ Wddm::Wddm(Gdi *gdi) : initialized(false),
                        currentPagingFenceValue(0),
                        hwContextId(0),
                        trimCallbackHandle(nullptr) {
-    adapterInfo = reinterpret_cast<ADAPTER_INFO *>(alignedMalloc(sizeof(ADAPTER_INFO), 64));
-    memset(adapterInfo, 0, sizeof(ADAPTER_INFO));
+    featureTable.reset(new FeatureTable());
+    waTable.reset(new WorkaroundTable());
+    gtSystemInfo.reset(new GT_SYSTEM_INFO);
+    gfxPlatform.reset(new PLATFORM);
+    memset(gtSystemInfo.get(), 0, sizeof(*gtSystemInfo));
+    memset(gfxPlatform.get(), 0, sizeof(*gfxPlatform));
+
     registryReader.reset(new RegistryReader("System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
     adapterLuid.HighPart = 0;
     adapterLuid.LowPart = 0;
@@ -80,7 +85,6 @@ Wddm::Wddm() : Wddm(new Gdi()) {
 
 Wddm::~Wddm() {
     resetPageTableManager(nullptr);
-    alignedFree(adapterInfo);
     if (initialized)
         Gmm::destroyContext();
     destroyContext(context);
@@ -95,10 +99,6 @@ bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
     bool success = false;
     if (devNum > 0)
         return false;
-    std::unique_ptr<ADAPTER_INFO> adapterInfo(new ADAPTER_INFO);
-
-    if (adapterInfo == nullptr)
-        return false;
 
     std::unique_ptr<Wddm> wddm(createWddm());
     DEBUG_BREAK_IF(wddm == nullptr);
@@ -111,28 +111,21 @@ bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
             success = wddm->queryAdapterInfo();
             if (!success)
                 break;
-            memcpy_s(adapterInfo.get(), sizeof(ADAPTER_INFO), wddm->adapterInfo, sizeof(ADAPTER_INFO));
         } while (!success);
     }
     if (success) {
-        auto productFamily = adapterInfo->GfxPlatform.eProductFamily;
+        auto productFamily = wddm->gfxPlatform->eProductFamily;
         if (hardwareInfoTable[productFamily] == nullptr)
             return false;
 
-        auto featureTable = new FeatureTable();
-        auto waTable = new WorkaroundTable();
-
-        outHardwareInfo.pPlatform = new PLATFORM(adapterInfo->GfxPlatform);
-        outHardwareInfo.pSkuTable = featureTable;
-        outHardwareInfo.pWaTable = waTable;
-        outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(adapterInfo->SystemInfo);
-
-        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable, adapterInfo.get());
-        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable, adapterInfo.get());
+        outHardwareInfo.pPlatform = new PLATFORM(*wddm->gfxPlatform);
+        outHardwareInfo.pSkuTable = new FeatureTable(*wddm->featureTable);
+        outHardwareInfo.pWaTable = new WorkaroundTable(*wddm->waTable);
+        outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*wddm->gtSystemInfo);
 
         outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
-        outHardwareInfo.capabilityTable.maxRenderFrequency = adapterInfo->MaxRenderFreq;
-        outHardwareInfo.capabilityTable.instrumentationEnabled &= adapterInfo->Caps.InstrumentationIsEnabled != 0;
+        outHardwareInfo.capabilityTable.maxRenderFrequency = wddm->maxRenderFrequency;
+        outHardwareInfo.capabilityTable.instrumentationEnabled &= wddm->instrumentationEnabled;
     }
     return success;
 }
@@ -140,9 +133,10 @@ bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
 bool Wddm::queryAdapterInfo() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_QUERYADAPTERINFO QueryAdapterInfo = {0};
+    ADAPTER_INFO adapterInfo = {0};
     QueryAdapterInfo.hAdapter = adapter;
     QueryAdapterInfo.Type = KMTQAITYPE_UMDRIVERPRIVATE;
-    QueryAdapterInfo.pPrivateDriverData = adapterInfo;
+    QueryAdapterInfo.pPrivateDriverData = &adapterInfo;
     QueryAdapterInfo.PrivateDriverDataSize = sizeof(ADAPTER_INFO);
 
     status = gdi->queryAdapterInfo(&QueryAdapterInfo);
@@ -150,11 +144,19 @@ bool Wddm::queryAdapterInfo() {
 
     // translate
     if (status == STATUS_SUCCESS) {
-        featureTable.reset(new FeatureTable());
-        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), adapterInfo);
+        memcpy_s(gtSystemInfo.get(), sizeof(GT_SYSTEM_INFO), &adapterInfo.SystemInfo, sizeof(GT_SYSTEM_INFO));
+        memcpy_s(gfxPlatform.get(), sizeof(PLATFORM), &adapterInfo.GfxPlatform, sizeof(PLATFORM));
 
-        waTable.reset(new WorkaroundTable());
-        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable.get(), adapterInfo);
+        SkuInfoReceiver::receiveFtrTableFromAdapterInfo(featureTable.get(), &adapterInfo);
+        SkuInfoReceiver::receiveWaTableFromAdapterInfo(waTable.get(), &adapterInfo);
+
+        memcpy_s(&gfxPartition, sizeof(gfxPartition), &adapterInfo.GfxPartition, sizeof(GMM_GFX_PARTITIONING));
+
+        deviceRegistryPath = adapterInfo.DeviceRegistryPath;
+
+        systemSharedMemory = adapterInfo.SystemSharedMemory;
+        maxRenderFrequency = adapterInfo.MaxRenderFreq;
+        instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
     }
 
     return status == STATUS_SUCCESS;
@@ -377,24 +379,24 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     MapGPUVA.OffsetInPages = 0;
 
     if (useHeap1) {
-        MapGPUVA.MinimumAddress = adapterInfo->GfxPartition.Heap32[1].Base;
-        MapGPUVA.MaximumAddress = adapterInfo->GfxPartition.Heap32[1].Limit;
+        MapGPUVA.MinimumAddress = gfxPartition.Heap32[1].Base;
+        MapGPUVA.MaximumAddress = gfxPartition.Heap32[1].Limit;
         MapGPUVA.BaseAddress = 0;
     } else if (use64kbPages) {
-        MapGPUVA.MinimumAddress = adapterInfo->GfxPartition.Standard64KB.Base;
-        MapGPUVA.MaximumAddress = adapterInfo->GfxPartition.Standard64KB.Limit;
+        MapGPUVA.MinimumAddress = gfxPartition.Standard64KB.Base;
+        MapGPUVA.MaximumAddress = gfxPartition.Standard64KB.Limit;
     } else {
         MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
         MapGPUVA.MinimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
         MapGPUVA.MaximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7fffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
 
         if (!cpuPtr) {
-            MapGPUVA.MinimumAddress = adapterInfo->GfxPartition.Standard.Base;
-            MapGPUVA.MaximumAddress = adapterInfo->GfxPartition.Standard.Limit;
+            MapGPUVA.MinimumAddress = gfxPartition.Standard.Base;
+            MapGPUVA.MaximumAddress = gfxPartition.Standard.Limit;
         }
         if (allocation32bit) {
-            MapGPUVA.MinimumAddress = adapterInfo->GfxPartition.Heap32[0].Base;
-            MapGPUVA.MaximumAddress = adapterInfo->GfxPartition.Heap32[0].Limit;
+            MapGPUVA.MinimumAddress = gfxPartition.Heap32[0].Base;
+            MapGPUVA.MaximumAddress = gfxPartition.Heap32[0].Limit;
             MapGPUVA.BaseAddress = 0;
         }
     }
@@ -856,11 +858,11 @@ bool Wddm::waitFromCpu(uint64_t lastFenceValue) {
     return status == STATUS_SUCCESS;
 }
 
-uint64_t Wddm::getSystemSharedMemory() {
-    return adapterInfo->SystemSharedMemory;
+uint64_t Wddm::getSystemSharedMemory() const {
+    return systemSharedMemory;
 }
 
-uint64_t Wddm::getMaxApplicationAddress() {
+uint64_t Wddm::getMaxApplicationAddress() const {
     return maximumApplicationAddress;
 }
 
@@ -874,11 +876,11 @@ PFND3DKMT_ESCAPE Wddm::getEscapeHandle() const {
 }
 
 uint64_t Wddm::getHeap32Base() {
-    return alignUp(adapterInfo->GfxPartition.Heap32[0].Base, MemoryConstants::pageSize);
+    return alignUp(gfxPartition.Heap32[0].Base, MemoryConstants::pageSize);
 }
 
 uint64_t Wddm::getHeap32Size() {
-    return alignDown(adapterInfo->GfxPartition.Heap32[0].Limit, MemoryConstants::pageSize);
+    return alignDown(gfxPartition.Heap32[0].Limit, MemoryConstants::pageSize);
 }
 
 void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager) {

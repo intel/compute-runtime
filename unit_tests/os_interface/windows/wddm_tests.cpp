@@ -288,8 +288,8 @@ HWTEST_F(WddmTest, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddre
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), false, false, true);
     EXPECT_TRUE(ret);
 
-    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Base);
-    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getAdapterInfo()->GfxPartition.Heap32[1].Limit);
+    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
+    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
 
     EXPECT_GE(allocation.gpuPtr, cannonizedHeapBase);
     EXPECT_LE(allocation.gpuPtr, cannonizedHeapEnd);

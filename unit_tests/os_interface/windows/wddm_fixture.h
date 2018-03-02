@@ -61,7 +61,6 @@ class WddmMock : public Wddm {
 
   public:
     using Wddm::adapter;
-    using Wddm::adapterInfo;
     using Wddm::createMonitoredFence;
     using Wddm::device;
     using Wddm::gdi;
@@ -248,8 +247,12 @@ class WddmMock : public Wddm {
     }
 
     void setHeap32(uint64_t base, uint64_t size) {
-        adapterInfo->GfxPartition.Heap32[0].Base = base;
-        adapterInfo->GfxPartition.Heap32[0].Limit = size;
+        gfxPartition.Heap32[0].Base = base;
+        gfxPartition.Heap32[0].Limit = size;
+    }
+
+    GMM_GFX_PARTITIONING *getGfxPartitionPtr() {
+        return &gfxPartition;
     }
 
     bool waitFromCpu(uint64_t lastFenceValue) override {

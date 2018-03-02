@@ -31,8 +31,9 @@ bool Wddm::configureDeviceAddressSpace() {
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
     minAddress = windowsMinAddress;
+
     return gmmMemory->configureDeviceAddressSpace(adapter, device, gdi->escape,
                                                   maximumApplicationAddress + 1u,
-                                                  0, 0, adapterInfo->SkuTable.FtrL3IACoherency, 0, 0);
+                                                  0, 0, featureTable->ftrL3IACoherency, 0, 0);
 }
 } // namespace OCLRT
