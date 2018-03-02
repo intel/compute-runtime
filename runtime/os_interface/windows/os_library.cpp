@@ -22,7 +22,6 @@
 
 #include "runtime/os_interface/os_library.h"
 #include "os_library.h"
-#include "DriverStore.h"
 
 namespace OCLRT {
 
@@ -37,12 +36,28 @@ OsLibrary *OsLibrary::load(const std::string &name) {
 }
 
 namespace Windows {
+decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
+decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
+
+HMODULE OsLibrary::loadDependency(const std::string &dependencyFileName) const {
+    char dllPath[MAX_PATH];
+    DWORD length = getModuleFileNameA(GetModuleHandle(NULL), dllPath, MAX_PATH);
+    for (DWORD idx = length; idx > 0; idx--) {
+        if (dllPath[idx - 1] == '\\') {
+            dllPath[idx] = '\0';
+            break;
+        }
+    }
+    strcat_s(dllPath, MAX_PATH, dependencyFileName.c_str());
+
+    return loadLibraryExA(dllPath, NULL, 0);
+}
 
 OsLibrary::OsLibrary(const std::string &name) {
     if (name.empty()) {
         this->handle = GetModuleHandleA(nullptr);
     } else {
-        this->handle = LoadDependency(name.c_str());
+        this->handle = loadDependency(name);
         if (this->handle == nullptr) {
             this->handle = ::LoadLibraryA(name.c_str());
         }

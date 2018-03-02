@@ -39,6 +39,12 @@ class OsLibrary : public OCLRT::OsLibrary {
 
     bool isLoaded();
     void *getProcAddress(const std::string &procName);
+
+  protected:
+    HMODULE loadDependency(const std::string &dependencyFileName) const;
+
+    static decltype(&LoadLibraryExA) loadLibraryExA;
+    static decltype(&GetModuleFileNameA) getModuleFileNameA;
 };
 }
 }
