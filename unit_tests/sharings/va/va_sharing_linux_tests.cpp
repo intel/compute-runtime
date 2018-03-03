@@ -47,8 +47,11 @@ class VASharingFunctionsTested : public VASharingFunctions {
     }
 
     bool wereFunctionsAssignedNull() {
+        // vaDisplayIsValidPFN is a special case. Even if libva library was not loaded
+        // successfully, this pointer should remain valid and point to the default
+        // function implementation returning 0.
         if (
-            vaDisplayIsValidPFN == nullptr &&
+            vaDisplayIsValidPFN != nullptr &&
             vaDeriveImagePFN == nullptr &&
             vaDestroyImagePFN == nullptr &&
             vaSyncSurfacePFN == nullptr &&
@@ -78,6 +81,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenFailsThenFunctionsAreNull) 
     };
 
     VASharingFunctionsTested functions;
+    EXPECT_FALSE(functions.isValidVaDisplay());
     EXPECT_TRUE(functions.wereFunctionsAssignedNull());
 }
 
@@ -97,8 +101,10 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotN
         return valib.get();
     };
 
+    VADisplayIsValidPFN displayIsValid = [](VADisplay dpy) -> int { return 1; };
+
     VASharingFunctions::fdlsym = [&](void *handle, const char *symbol) -> void * {
-        return (void *)GetLibFunc;
+        return (symbol && !strcmp(symbol, "vaDisplayIsValid"))? (void*)displayIsValid: (void *)GetLibFunc;
     };
 
     VASharingFunctions::fdlclose = [&](void *handle) -> int {
@@ -106,6 +112,7 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotN
     };
 
     VASharingFunctionsTested functions;
+    EXPECT_TRUE(functions.isValidVaDisplay());
     EXPECT_TRUE(functions.wereFunctionsAssigned());
 }
 

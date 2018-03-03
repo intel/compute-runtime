@@ -73,7 +73,10 @@ class VASharingFunctions : public SharingFunctions {
   protected:
     void *libHandle = nullptr;
     VADisplay vaDisplay = nullptr;
-    VADisplayIsValidPFN vaDisplayIsValidPFN = [](VADisplay vaDisplay) { return 0; };
+
+    const VADisplayIsValidPFN vaDefaultDisplayIsValidPFN = [](VADisplay vaDisplay) { return 0; };
+
+    VADisplayIsValidPFN vaDisplayIsValidPFN = vaDefaultDisplayIsValidPFN;
     VADeriveImagePFN vaDeriveImagePFN;
     VADestroyImagePFN vaDestroyImagePFN;
     VASyncSurfacePFN vaSyncSurfacePFN;

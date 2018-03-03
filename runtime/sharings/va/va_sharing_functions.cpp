@@ -63,7 +63,7 @@ void VASharingFunctions::initFunctions() {
             vaGetLibFuncPFN = (VAGetLibFuncPFN)fdlsym(libHandle, "vaGetLibFunc");
             vaExtGetSurfaceHandlePFN = (VAExtGetSurfaceHandlePFN)getLibFunc("DdiMedia_ExtGetSurfaceHandle");
         } else {
-            vaDisplayIsValidPFN = nullptr;
+            vaDisplayIsValidPFN = vaDefaultDisplayIsValidPFN;
             vaDeriveImagePFN = nullptr;
             vaDestroyImagePFN = nullptr;
             vaSyncSurfacePFN = nullptr;
