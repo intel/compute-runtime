@@ -123,7 +123,6 @@ foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
   add_custom_command(
     TARGET copy_compiler_files
     PRE_BUILD
-    COMMAND echo copying $<TARGET_FILE:${TARGET_tmp}> to "$<TARGET_FILE_DIR:cloc>"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:cloc>
 )
 endforeach(TARGET_tmp)

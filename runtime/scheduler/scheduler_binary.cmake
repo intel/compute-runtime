@@ -32,7 +32,6 @@ else()
 endif()
 
 set(SCHEDULER_INCLUDE_DIR ${TargetDir})
-set(SCHEDULER_CPP "")
 
 function(compile_kernel target gen_name gen_num kernel)
   set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_name}")
@@ -42,20 +41,18 @@ function(compile_kernel target gen_name gen_num kernel)
 
   set(OUTPUTPATH "${OUTPUTDIR}/${BASENAME}_${gen_name}.bin")
 
-  unset(SCHEDULER_CPP)
-  set(SCHEDULER_CPP_TEMP ${OUTPUTDIR}/${BASENAME}_${gen_name}.cpp)
-  set(SCHEDULER_CPP scheduler/${NEO_ARCH}/${gen_name}/${BASENAME}_${gen_name}.cpp PARENT_SCOPE)
+  set(SCHEDULER_CPP ${OUTPUTDIR}/${BASENAME}_${gen_name}.cpp PARENT_SCOPE)
 
   if(MSVC)
     add_custom_command(
-      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP_TEMP}
+      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
       COMMAND cloc -q -file ${kernel} -device ${gen_name} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS ${kernel} cloc copy_compiler_files
     )
   else()
     add_custom_command(
-      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP_TEMP}
+      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
       COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${kernel} -device ${gen_name} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
       WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS ${kernel} cloc copy_compiler_files
@@ -77,9 +74,8 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
         string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
         compile_kernel(scheduler_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${GEN_NUM} ${SCHEDULER_KERNEL})
         add_dependencies(scheduler scheduler_${PLATFORM_IT_LOWER})
-        set (RUNTIME_GENERATED_SCHEDULER_GEN${GEN_NUM}_${PLATFORM_IT} ${SCHEDULER_CPP})
+        list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
       endif(COMPILE_BUILT_INS AND ${PLATFORM_SUPPORTS_2_0})
-      list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_INCLUDE_DIR}/${RUNTIME_GENERATED_SCHEDULER_GEN${GEN_NUM}_${PLATFORM_IT}})
     endforeach(PLATFORM_IT)
 
     source_group("generated files\\gen${GEN_NUM}" FILES ${GENERATED_SCHEDULER_CPPS})
