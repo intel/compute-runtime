@@ -22,12 +22,12 @@
 
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include <cstddef>
 #include <cstdint>
 #include <atomic>
 
 namespace OCLRT {
-class GraphicsAllocation;
 
 class LinearStream {
   public:
@@ -36,6 +36,7 @@ class LinearStream {
     LinearStream(void *buffer, size_t bufferSize);
     LinearStream(GraphicsAllocation *buffer);
     void *getBase() const;
+    uint64_t getGpuBase() const;
     void *getSpace(size_t size);
     void *getSpaceUnsecure(size_t size);
     void putSpace(size_t size);
@@ -62,6 +63,10 @@ class LinearStream {
 
 inline void *LinearStream::getBase() const {
     return buffer;
+}
+
+inline uint64_t LinearStream::getGpuBase() const {
+    return this->graphicsAllocation->gpuBaseAddress;
 }
 
 inline void *LinearStream::getSpaceUnsecure(size_t size) {

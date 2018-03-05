@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/command_stream/linear_stream_fixture.h"
 
 using namespace OCLRT;
@@ -106,4 +107,40 @@ TEST_F(LinearStreamTest, testReplaceBuffer) {
     EXPECT_EQ(buffer, linearStream.getBase());
     EXPECT_EQ(sizeof(buffer), linearStream.getAvailableSpace());
     EXPECT_EQ(0u, linearStream.getUsed());
+}
+
+TEST_F(LinearStreamTest, givenNewGraphicsAllocationWhenReplaceIsCalledThenLinearStreamContainsNewGraphicsAllocation) {
+    auto graphicsAllocation = linearStream.getGraphicsAllocation();
+    EXPECT_NE(nullptr, graphicsAllocation);
+    auto address = (void *)0x100000;
+    GraphicsAllocation newGraphicsAllocation(address, 4096);
+    EXPECT_NE(&newGraphicsAllocation, graphicsAllocation);
+    linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
+    EXPECT_EQ(&newGraphicsAllocation, linearStream.getGraphicsAllocation());
+}
+
+TEST_F(LinearStreamTest, givenGraphicsAllocationWithGpuBaseAddressWhenItIsUsedInLinearStreamThenGetGpuBaseReturnsGraphicsAllocationBase) {
+    auto graphicsAllocation = linearStream.getGraphicsAllocation();
+    EXPECT_NE(nullptr, graphicsAllocation);
+    auto address = (void *)0x100000;
+    uint64_t gpuAddress = 0x1000001;
+    uint64_t gpuHeapBase = 0x1000000;
+
+    GraphicsAllocation newGraphicsAllocation(address, gpuAddress, gpuHeapBase, 4096);
+    linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
+
+    EXPECT_EQ(gpuHeapBase, linearStream.getGpuBase());
+}
+
+TEST_F(LinearStreamTest, givenGraphicsAllocationWithGpuBaseAddressWhenItIsQueriedForOffsetFromBaseThenProperOffsetIsReturned) {
+    auto graphicsAllocation = linearStream.getGraphicsAllocation();
+    EXPECT_NE(nullptr, graphicsAllocation);
+    auto address = (void *)0x100000;
+    uint64_t gpuAddress = 0x1000001;
+    uint64_t gpuHeapBase = 0x1000000;
+
+    GraphicsAllocation newGraphicsAllocation(address, gpuAddress, gpuHeapBase, 4096);
+    linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
+
+    EXPECT_EQ(gpuHeapBase, linearStream.getGpuBase());
 }
