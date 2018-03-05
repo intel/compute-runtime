@@ -127,6 +127,8 @@ class Buffer : public MemObj {
                             bool &copyMemoryFromHostPtr,
                             MemoryManager *memMngr);
 
+    static bool isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags);
+
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);
 };
 

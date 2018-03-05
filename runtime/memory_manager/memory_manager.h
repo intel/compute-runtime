@@ -185,7 +185,7 @@ class MemoryManager {
         return createGraphicsAllocationWithRequiredBitness(size, ptr, false);
     }
 
-    GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
+    MOCKABLE_VIRTUAL GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
         if (force32bitAllocations && is64bit) {
             return allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
         } else {

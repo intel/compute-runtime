@@ -25,6 +25,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -64,6 +65,158 @@ TEST(Buffer, givenBufferWhenAskedForPtrLengthThenReturnCorrectValue) {
 
     auto retOffset = buffer->calculateMappedPtrLength(size);
     EXPECT_EQ(size[0], retOffset);
+}
+
+TEST(Buffer, givenReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedByFlagsThenTrueIsReturned) {
+    class MockBuffer : public Buffer {
+      public:
+        using Buffer::isReadOnlyMemoryPermittedByFlags;
+    };
+    cl_mem_flags flags = CL_MEM_HOST_NO_ACCESS | CL_MEM_READ_ONLY;
+    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+
+    flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY;
+    EXPECT_TRUE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+}
+
+class BufferReadOnlyTest : public testing::TestWithParam<uint64_t> {
+};
+
+TEST_P(BufferReadOnlyTest, givenNonReadOnlySetOfInputFlagsWhenPassedToisReadOnlyMemoryPermittedByFlagsThenFalseIsReturned) {
+    class MockBuffer : public Buffer {
+      public:
+        using Buffer::isReadOnlyMemoryPermittedByFlags;
+    };
+
+    cl_mem_flags flags = GetParam() | CL_MEM_USE_HOST_PTR;
+    EXPECT_FALSE(MockBuffer::isReadOnlyMemoryPermittedByFlags(flags));
+}
+static cl_mem_flags nonReadOnlyFlags[] = {
+    CL_MEM_READ_WRITE | CL_MEM_HOST_READ_ONLY,
+    CL_MEM_WRITE_ONLY,
+    CL_MEM_READ_ONLY | CL_MEM_HOST_WRITE_ONLY,
+    CL_MEM_HOST_READ_ONLY,
+    CL_MEM_HOST_WRITE_ONLY,
+    CL_MEM_HOST_NO_ACCESS,
+    CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY,
+    CL_MEM_HOST_WRITE_ONLY | CL_MEM_WRITE_ONLY,
+    0};
+
+INSTANTIATE_TEST_CASE_P(
+    nonReadOnlyFlags,
+    BufferReadOnlyTest,
+    testing::ValuesIn(nonReadOnlyFlags));
+
+class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
+  public:
+    MOCK_METHOD3(createGraphicsAllocationWithRequiredBitness, GraphicsAllocation *(size_t size, void *ptr, bool forcePin));
+    GraphicsAllocation *baseCreateGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
+        return MockMemoryManager::createGraphicsAllocationWithRequiredBitness(size, ptr, forcePin);
+    }
+};
+
+TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenBufferHasAllocatedNewMemoryStorageAndBufferIsNotZeroCopy) {
+    void *memory = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, memory);
+
+    memset(memory, 0xAA, MemoryConstants::pageSize);
+
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    // First fail in createGraphicsAllocation simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
+        .WillOnce(::testing::Return(nullptr));
+
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseCreateGraphicsAllocationWithRequiredBitness));
+
+    cl_int retVal;
+    cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+
+    EXPECT_FALSE(buffer->isMemObjZeroCopy());
+    void *memoryStorage = buffer->getCpuAddressForMemoryTransfer();
+    EXPECT_NE((void *)memory, memoryStorage);
+    EXPECT_THAT(buffer->getCpuAddressForMemoryTransfer(), MemCompare(memory, MemoryConstants::pageSize));
+
+    alignedFree(memory);
+}
+
+TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSecondAllocationFailsThenNullptrIsReturned) {
+    void *memory = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, memory);
+
+    memset(memory, 0xAA, MemoryConstants::pageSize);
+
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    // First fail in createGraphicsAllocation simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
+        .WillOnce(::testing::Return(nullptr));
+
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
+        .WillOnce(::testing::Return(nullptr));
+
+    cl_int retVal;
+    cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+
+    EXPECT_EQ(nullptr, buffer.get());
+    alignedFree(memory);
+}
+
+TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThenBufferAllocationFailsAndReturnsNullptr) {
+    void *memory = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, memory);
+
+    memset(memory, 0xAA, MemoryConstants::pageSize);
+
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    // First fail in createGraphicsAllocation simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
+        .WillOnce(::testing::Return(nullptr));
+
+    cl_int retVal;
+    cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY | CL_MEM_USE_HOST_PTR;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, (void *)memory, retVal));
+
+    EXPECT_EQ(nullptr, buffer.get());
+    alignedFree(memory);
+}
+
+TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAllocationFailsAndReturnsNullptr) {
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    // First fail in createGraphicsAllocation simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
+        .WillOnce(::testing::Return(nullptr));
+
+    cl_int retVal;
+    cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_WRITE_ONLY;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_EQ(nullptr, buffer.get());
 }
 
 class BufferTest : public DeviceFixture,

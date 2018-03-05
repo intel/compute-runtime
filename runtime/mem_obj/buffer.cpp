@@ -132,6 +132,12 @@ Buffer *Buffer::create(Context *context,
                     //Host ptr was not created with clSVMAlloc - create graphic allocation
                     memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, hostPtr, true);
                 }
+                if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
+                    memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
+                    zeroCopy = false;
+                    copyMemoryFromHostPtr = true;
+                    allocateMemory = true;
+                }
             }
 
             if (!memory) {
@@ -227,6 +233,14 @@ void Buffer::checkMemory(cl_mem_flags flags,
         }
     }
     return;
+}
+
+bool Buffer::isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags) {
+    // Host won't access or will only read and kernel will only read
+    if ((flags & (CL_MEM_HOST_NO_ACCESS | CL_MEM_HOST_READ_ONLY)) && (flags & CL_MEM_READ_ONLY)) {
+        return true;
+    }
+    return false;
 }
 
 Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
