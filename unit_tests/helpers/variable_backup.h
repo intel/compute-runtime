@@ -28,6 +28,14 @@ class VariableBackup {
     VariableBackup(T *ptr) : pValue(ptr) {
         oldValue = *ptr;
     }
+    VariableBackup(T *ptr, T &&newValue) : pValue(ptr) {
+        oldValue = *ptr;
+        *pValue = newValue;
+    }
+    VariableBackup(T *ptr, T &newValue) : pValue(ptr) {
+        oldValue = *ptr;
+        *pValue = newValue;
+    }
     ~VariableBackup() {
         *pValue = oldValue;
     }

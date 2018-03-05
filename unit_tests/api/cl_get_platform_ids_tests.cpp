@@ -64,8 +64,7 @@ TEST_F(clGetPlatformIDsTests, NoPlatformListReturnsError) {
 }
 
 TEST(clGetPlatformIDsNegativeTests, WhenInitFailedThenErrorIsReturned) {
-    VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult);
-    bkp = false;
+    VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult, false);
 
     cl_int retVal = CL_SUCCESS;
     cl_platform_id platformRet = nullptr;

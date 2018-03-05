@@ -50,8 +50,7 @@ class MockPerformanceCountersGen : public PerformanceCounters {
 HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithoutGenSpecificThenDefaultFunctionIsUsed) {
     auto gfxCore = platformDevices[0]->pPlatform->eRenderCoreFamily;
 
-    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[gfxCore]);
-    bkp = nullptr;
+    VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[gfxCore], nullptr);
 
     MockOSTime osTime;
     std::unique_ptr<MockPerformanceCountersGen> counters(new MockPerformanceCountersGen(&osTime));

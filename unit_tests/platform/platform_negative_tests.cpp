@@ -53,8 +53,7 @@ TEST_F(PlatformNegativeTest, GivenPlatformWhenGetDevicesFailedThenFalseIsReturne
         Platform *pPlatform = nullptr;
     } a(pPlatform);
 
-    VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult);
-    bkp = false;
+    VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult, false);
 
     auto ret = pPlatform->initialize(numPlatformDevices, platformDevices);
     EXPECT_FALSE(ret);
