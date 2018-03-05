@@ -57,8 +57,6 @@ class DrmCommandStreamFixture {
     const int mockFd = 33;
 
     void SetUp() {
-        //gmock
-        MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
 
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
