@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_sip.h"
 
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -112,7 +113,7 @@ void MockCompilerEnableGuard::Disable() {
         enabled = false;
     }
 }
-}
+} // namespace OCLRT
 
 namespace IGC {
 
@@ -313,7 +314,7 @@ IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 1)::Crea
                                                                                                      IGC::CodeType::CodeType_t outType) {
     return nullptr;
 }
-}
+} // namespace IGC
 
 #include "cif/macros/disable.h"
 
@@ -513,15 +514,6 @@ IGC::FclOclTranslationCtxBase *MockFclOclDeviceCtx::CreateTranslationCtxImpl(CIF
 }
 
 std::vector<char> MockCompilerInterface::getDummyGenBinary() {
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".gen");
-
-    void *binary = nullptr;
-    auto binarySize = loadDataFromFile(testFile.c_str(), binary);
-    std::vector<char> ret{reinterpret_cast<char *>(binary), reinterpret_cast<char *>(binary) + binarySize};
-    deleteDataReadFromFile(binary);
-    return ret;
+    return MockSipKernel::getDummyGenBinary();
 }
-}
+} // namespace OCLRT

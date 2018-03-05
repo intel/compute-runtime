@@ -24,8 +24,10 @@
 #include "test.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
+#include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/hash.h"
+#include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/global_environment.h"
@@ -34,13 +36,13 @@
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/run_kernel_fixture.h"
-#include <string>
-#include "runtime/helpers/string.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "runtime/helpers/dispatch_info_builder.h"
 #include "os_inc.h"
+
+#include <string>
 
 using namespace OCLRT;
 
@@ -1473,6 +1475,7 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
 }
 
 TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompilerInterface) {
+    MockBuiltins mockBuiltins;
     MockCompilerInterface mockCompilerInterface;
     mockCompilerInterface.overrideGlobalCompilerInterface();
     mockCompilerInterface.sipKernelBinaryOverride = mockCompilerInterface.getDummyGenBinary();
@@ -1483,7 +1486,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     errCode = p->processGenBinary();
     ASSERT_EQ(CL_SUCCESS, errCode);
 
-    const SipKernel &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    const SipKernel &sipKern = mockBuiltins.getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
 
     const auto &sipKernelInfo = p->getKernelInfo(static_cast<size_t>(0));
 

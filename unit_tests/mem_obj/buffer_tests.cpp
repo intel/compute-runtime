@@ -225,17 +225,16 @@ class BufferTest : public DeviceFixture,
     void SetUp() override {
         flags = GetParam();
         DeviceFixture::SetUp();
-        contextMemoryManager = context.getMemoryManager();
-        context.setMemoryManager(pDevice->getMemoryManager());
+        context.reset(new MockContext(pDevice));
     }
 
     void TearDown() override {
-        context.setMemoryManager(contextMemoryManager);
+        context.reset();
         DeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
-    MockContext context;
+    std::unique_ptr<MockContext> context;
     MemoryManager *contextMemoryManager;
     cl_mem_flags flags = 0;
     unsigned char pHostPtr[g_scTestBufferSizeInBytes];
@@ -245,7 +244,7 @@ typedef BufferTest NoHostPtr;
 
 TEST_P(NoHostPtr, ValidFlags) {
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -279,7 +278,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     }
 
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -294,7 +293,7 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
 
 TEST_P(NoHostPtr, completionStamp) {
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -325,7 +324,7 @@ TEST_P(NoHostPtr, completionStamp) {
 
 TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags | CL_MEM_USE_HOST_PTR,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -338,7 +337,7 @@ TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
 
 TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags | CL_MEM_COPY_HOST_PTR,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -351,7 +350,7 @@ TEST_P(NoHostPtr, WithCopyHostPtr_returnsError) {
 
 TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
     auto buffer = Buffer::create(
-        &context,
+        context.get(),
         flags,
         g_scTestBufferSizeInBytes,
         nullptr,
@@ -417,7 +416,7 @@ struct ValidHostPtr
 
     Buffer *createBuffer() {
         return Buffer::create(
-            &context,
+            context.get(),
             flags,
             g_scTestBufferSizeInBytes,
             pHostPtr,
@@ -475,7 +474,7 @@ TEST_P(ValidHostPtr, getSize) {
 
 TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroFlagsThenItCreatesSuccesfuly) {
     auto retVal = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context,
+    auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
                                    g_scTestBufferSizeInBytes,
                                    pHostPtr,
@@ -498,7 +497,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithZeroF
 }
 TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithParentFlagsThenItIsCreatedSuccesfuly) {
     auto retVal = CL_SUCCESS;
-    auto clBuffer = clCreateBuffer(&context,
+    auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
                                    g_scTestBufferSizeInBytes,
                                    pHostPtr,
@@ -547,7 +546,7 @@ TEST_P(ValidHostPtr, givenValidHostPtrParentFlagsWhenSubBufferIsCreatedWithInval
         return;
     }
 
-    auto clBuffer = clCreateBuffer(&context,
+    auto clBuffer = clCreateBuffer(context.get(),
                                    flags,
                                    g_scTestBufferSizeInBytes,
                                    pHostPtr,
@@ -589,15 +588,15 @@ TEST_P(ValidHostPtr, failedAllocationInjection) {
 TEST_P(ValidHostPtr, SvmHostPtr) {
     const DeviceInfo &devInfo = pPlatform->getDevice(0)->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
-        auto ptr = clSVMAlloc(&context, CL_MEM_READ_WRITE, 64, 64);
+        auto ptr = clSVMAlloc(context.get(), CL_MEM_READ_WRITE, 64, 64);
 
-        auto bufferSvm = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
+        auto bufferSvm = Buffer::create(context.get(), CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, 64, ptr, retVal);
         EXPECT_NE(nullptr, bufferSvm);
         EXPECT_TRUE(bufferSvm->isMemObjWithHostPtrSVM());
-        EXPECT_EQ(context.getSVMAllocsManager()->getSVMAlloc(ptr), bufferSvm->getGraphicsAllocation());
+        EXPECT_EQ(context->getSVMAllocsManager()->getSVMAlloc(ptr), bufferSvm->getGraphicsAllocation());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
-        clSVMFree(&context, ptr);
+        clSVMFree(context.get(), ptr);
         delete bufferSvm;
     }
 }

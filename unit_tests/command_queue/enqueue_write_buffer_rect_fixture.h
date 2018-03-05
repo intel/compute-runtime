@@ -41,17 +41,15 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-
-        contextMemoryManager = context.getMemoryManager();
-        context.setMemoryManager(pCmdQ->getDevice().getMemoryManager());
-        BufferDefaults::context = new MockContext;
+        context.reset(new MockContext(&pCmdQ->getDevice()));
+        BufferDefaults::context = context.get();
 
         //For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;
         buffer.reset(Buffer::create(
-            &context,
+            context.get(),
             CL_MEM_READ_WRITE,
             slicePitch * rowPitch,
             nullptr,
@@ -65,10 +63,8 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     void TearDown() override {
         buffer.reset(nullptr);
         nonZeroCopyBuffer.reset(nullptr);
-        delete BufferDefaults::context;
         ::alignedFree(hostPtr);
-
-        context.setMemoryManager(contextMemoryManager);
+        context.reset(nullptr);
         CommandEnqueueFixture::TearDown();
     }
 
@@ -100,13 +96,11 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    MockContext context;
+    std::unique_ptr<MockContext> context;
     std::unique_ptr<Buffer> buffer;
     std::unique_ptr<Buffer> nonZeroCopyBuffer;
 
     void *hostPtr;
-
-    MemoryManager *contextMemoryManager;
 
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;

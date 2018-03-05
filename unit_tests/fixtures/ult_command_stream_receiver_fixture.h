@@ -99,6 +99,7 @@ struct UltCommandStreamReceiverTest
         flushTaskFlags.blocking = block;
         flushTaskFlags.requiresCoherency = requiresCoherency;
         flushTaskFlags.lowPriority = lowPriority;
+        flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
         return commandStreamReceiver.flushTask(
             commandStream,

@@ -38,11 +38,14 @@ apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/built_ins_helper.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
@@ -92,8 +95,6 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.h
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
 )
 add_library (igdrcl_libult_env OBJECT
   ${IGDRCL_SRCS_LIB_ULT_ENV}

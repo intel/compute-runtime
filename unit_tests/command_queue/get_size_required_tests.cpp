@@ -51,7 +51,6 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
         CommandEnqueueFixture::TearDown();
     }
 
-    MockContext context;
     IndirectHeap *dsh;
     IndirectHeap *ioh;
     IndirectHeap *ssh;

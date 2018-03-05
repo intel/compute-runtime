@@ -274,8 +274,8 @@ struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory
                                public HardwareParse,
                                ::testing::TestWithParam<InputType> {
     typedef HelloWorldFixture<HelloWorldFixtureFactory> ParentClass;
-    using ParentClass::pCmdBuffer;
     using ParentClass::pCS;
+    using ParentClass::pCmdBuffer;
 
     EnqueueKernelTypeTest() {
     }
@@ -1064,7 +1064,9 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
-    size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+
+    //Two more surfaces from preemptionAllocation and SipKernel
+    size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
     EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());

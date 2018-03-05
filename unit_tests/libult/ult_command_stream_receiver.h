@@ -67,6 +67,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         this->tagAllocation = tempTagLocation;
         this->tagAddress = reinterpret_cast<uint32_t *>(tempTagLocation->getUnderlyingBuffer());
         this->storeMakeResidentAllocations = false;
+        if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+            tempPreemptionLocation = new GraphicsAllocation(nullptr, 0);
+            this->preemptionCsrAllocation = tempPreemptionLocation;
+        }
     }
 
     virtual MemoryManager *createMemoryManager(bool enable64kbPages) override {
@@ -112,12 +116,17 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
     GraphicsAllocation *tempTagLocation;
+    GraphicsAllocation *tempPreemptionLocation = nullptr;
 };
 
 template <typename GfxFamily>
 UltCommandStreamReceiver<GfxFamily>::~UltCommandStreamReceiver() {
     this->setTagAllocation(nullptr);
     delete tempTagLocation;
+    if (tempPreemptionLocation) {
+        this->setPreemptionCsrAllocation(nullptr);
+        delete tempPreemptionLocation;
+    }
 }
 
 } // namespace OCLRT

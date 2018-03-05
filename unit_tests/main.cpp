@@ -27,6 +27,7 @@
 #include "helpers/test_files.h"
 #include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_sip.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "gmock/gmock.h"
@@ -138,10 +139,12 @@ void initializeTestHelpers() {
     auto initialized = Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
                                         hwinfo->pWaTable, hwinfo->pSysInfo);
     ASSERT_TRUE(initialized);
+    MockSipKernel::initDummyBinary();
 }
 
 void cleanTestHelpers() {
     Gmm::destroyContext();
+    MockSipKernel::shutDown();
 }
 
 std::string getHardwarePrefix() {

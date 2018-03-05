@@ -26,6 +26,7 @@
 #include "runtime/helpers/preamble.h"
 #include "unit_tests/preamble/preamble_fixture.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 using namespace OCLRT;
 
@@ -75,6 +76,8 @@ SKLTEST_F(Gen9L3Config, checkSLM) {
 
 typedef PreambleFixture ThreadArbitration;
 SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitrationIsSetToRoundRobin) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     typedef SKLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;

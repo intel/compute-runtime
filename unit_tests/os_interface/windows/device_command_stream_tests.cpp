@@ -29,6 +29,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/options.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -99,6 +100,7 @@ class WddmCommandStreamWithMockGdiFixture : public WddmFixture {
     MockGdi gdi;
     DebugManagerStateRestore stateRestore;
     GraphicsAllocation *tagAllocation;
+    GraphicsAllocation *preemptionAllocation = nullptr;
 
     void SetUp() {
         WddmFixture::SetUp(&gdi);
@@ -115,12 +117,18 @@ class WddmCommandStreamWithMockGdiFixture : public WddmFixture {
         memManager->device = device;
 
         tagAllocation = memManager->allocateGraphicsMemory(1024, 4096);
+        if (device->getPreemptionMode() == PreemptionMode::MidThread) {
+            preemptionAllocation = memManager->allocateGraphicsMemory(1024, 4096);
+        }
         auto tagBuffer = (uint32_t *)tagAllocation->getUnderlyingBuffer();
         tagBuffer[0] = initialHardwareTag;
     }
 
     void TearDown() {
         memManager->freeGraphicsMemory(tagAllocation);
+        if (preemptionAllocation) {
+            memManager->freeGraphicsMemory(preemptionAllocation);
+        }
         delete csr->getTagAddress();
         delete csr;
         delete memManager;
@@ -673,6 +681,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto sshAlloc = memManager->allocateGraphicsMemory(1024, 4096);
 
     mockCsr->setTagAllocation(tagAllocation);
+    mockCsr->setPreemptionCsrAllocation(preemptionAllocation);
 
     LinearStream cs(commandBuffer);
     LinearStream dsh(dshAlloc);
@@ -694,11 +703,14 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
+    //preemption allocation
+    size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+
     EXPECT_EQ(1u, mockWddm->submitResult.called);
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
     EXPECT_EQ(reinterpret_cast<uint64_t>(csrCommandStream->getUnderlyingBuffer()), mockWddm->submitResult.commandBufferSubmitted);
     EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)mockWddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
-    EXPECT_EQ(6u, mockWddm->makeResidentResult.handleCount);
+    EXPECT_EQ(6u + csrSurfaceCount, mockWddm->makeResidentResult.handleCount);
 
     std::vector<D3DKMT_HANDLE> expectedHandles;
     expectedHandles.push_back(((WddmAllocation *)tagAllocation)->handle);
@@ -812,7 +824,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
     mockWddmCsr.setMemoryManager(memManager);
     mockWddmCsr.setTagAllocation(tagAllocation);
-
+    mockWddmCsr.setPreemptionCsrAllocation(preemptionAllocation);
     auto &csrCS = mockWddmCsr.getCS();
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
@@ -820,8 +832,12 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
 
     EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
-    EXPECT_CALL(*mockMngr, initContextTRTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
+    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+        .Times(1)
+        .WillOnce(Return(GMM_SUCCESS));
+    EXPECT_CALL(*mockMngr, initContextTRTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+        .Times(1)
+        .WillOnce(Return(GMM_SUCCESS));
 
     DispatchFlags dispatchFlags;
     mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
@@ -844,6 +860,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     mockWddmCsr.setMemoryManager(memManager);
     mockWddmCsr.setTagAllocation(tagAllocation);
+    mockWddmCsr.setPreemptionCsrAllocation(preemptionAllocation);
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(graphicsAllocation);

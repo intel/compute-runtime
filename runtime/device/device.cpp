@@ -20,14 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/preemption.h"
 #include "hw_cmds.h"
-#include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_vector.h"
+#include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -175,7 +176,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
         }
         commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
         auto sipType = SipKernel::getSipKernelType(pHwInfo->pPlatform->eRenderCoreFamily, pDevice->isSourceLevelDebuggerActive());
-        BuiltIns::getInstance().getSipKernel(sipType, *pDevice);
+        initSipKernel(sipType, *pDevice);
     }
 
     return true;

@@ -21,9 +21,9 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/command_stream/command_stream_receiver_hw.inl"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
@@ -66,7 +66,8 @@ class DrmCommandStreamFixture {
         ASSERT_NE(nullptr, csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_)).Times(1);
+        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
+            .Times(1);
         mm = csr->createMemoryManager(false);
         ::testing::Mock::VerifyAndClearExpectations(mock);
 
@@ -79,7 +80,8 @@ class DrmCommandStreamFixture {
         ::testing::Mock::VerifyAndClearExpectations(mock);
         delete csr;
         // Memory manager closes pinBB with ioctl, expect one call
-        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_)).Times(::testing::AtLeast(1));
+        EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
+            .Times(::testing::AtLeast(1));
         delete mm;
         delete this->mock;
         this->mock = 0;
@@ -102,7 +104,9 @@ TEST_F(DrmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedBo
     expectedWait.bo_handle = static_cast<uint32_t>(handleToWait);
     expectedWait.timeout_ns = -1;
 
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_)).Times(1).WillRepeatedly(copyIoctlParam(&calledWait));
+    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
+        .Times(1)
+        .WillRepeatedly(copyIoctlParam(&calledWait));
 
     csr->waitForFlushStamp(handleToWait);
     EXPECT_TRUE(memcmp(&expectedWait, &calledWait, sizeof(drm_i915_gem_wait)) == 0);
@@ -935,7 +939,25 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenDrmCsrCreatedWithInactiveGemCloseWor
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
 }
 
-typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamBatchingTests;
+class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixture> {
+  public:
+    DrmAllocation *tagAllocation;
+    DrmAllocation *preemptionAllocation = nullptr;
+    void SetUp() override {
+        DrmCommandStreamEnhancedFixture::SetUp();
+        tagAllocation = mm->allocateGraphicsMemory(1024, 4096);
+        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
+            preemptionAllocation = mm->allocateGraphicsMemory(1024, 4096);
+        }
+    }
+    void TearDown() override {
+        if (preemptionAllocation) {
+            mm->freeGraphicsMemory(preemptionAllocation);
+        }
+        mm->freeGraphicsMemory(tagAllocation);
+        DrmCommandStreamEnhancedFixture::TearDown();
+    }
+};
 
 TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsArePassed) {
     tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
@@ -952,7 +974,10 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
-    EXPECT_EQ(4, this->mock->ioctl_cnt.total);
+    //preemption allocation in Mid Thread preemption mode
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+
+    EXPECT_EQ(5 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
     uint64_t flags = I915_EXEC_RENDER | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
@@ -969,7 +994,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
-    auto tagAllocation = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -981,7 +1005,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     tCsr->getMemoryManager()->device = device.get();
 
     tCsr->setTagAllocation(tagAllocation);
-
+    tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     DispatchFlags dispatchFlags;
     tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
@@ -990,8 +1014,14 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     EXPECT_FALSE(cmdBuffers.peekIsEmpty());
     EXPECT_NE(nullptr, cmdBuffers.peekHead());
 
+    //preemption allocation
+    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+
+    //preemption allocation in Mid Thread preemption mode
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+
     auto recordedCmdBuffer = cmdBuffers.peekHead();
-    EXPECT_EQ(3u, recordedCmdBuffer->surfaces.size());
+    EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
 
     //try to find all allocations
     auto elementInVector = std::find(recordedCmdBuffer->surfaces.begin(), recordedCmdBuffer->surfaces.end(), dummyAllocation);
@@ -1005,14 +1035,14 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     EXPECT_EQ(tCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    EXPECT_EQ(5, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(5 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
 
     EXPECT_EQ(0u, this->mock->execBuffer.flags);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
-    mm->freeGraphicsMemory(tagAllocation);
     tCsr->setTagAllocation(nullptr);
+    tCsr->setPreemptionCsrAllocation(nullptr);
 }
 
 TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
@@ -1024,12 +1054,12 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
-    auto tagAllocation = mm->allocateGraphicsMemory(1024, 4096);
     LinearStream cs(commandBuffer);
     std::unique_ptr<Device> device(DeviceHelper<>::create(nullptr));
 
     tCsr->getMemoryManager()->device = device.get();
     tCsr->setTagAllocation(tagAllocation);
+    tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     auto &submittedCommandBuffer = tCsr->getCS(1024);
     //use some bytes
     submittedCommandBuffer.getSpace(4);
@@ -1051,8 +1081,14 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
     EXPECT_FALSE(commandBufferGraphicsAllocation->isResident());
 
+    //preemption allocation
+    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+
+    //preemption allocation in Mid Thread preemption mode
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+
     //validate that submited command buffer has what we want
-    EXPECT_EQ(3u, this->mock->execBuffer.buffer_count);
+    EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);
     EXPECT_EQ(4u, this->mock->execBuffer.batch_start_offset);
     EXPECT_EQ(submittedCommandBuffer.getUsed(), this->mock->execBuffer.batch_len);
 
@@ -1071,12 +1107,12 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
         EXPECT_TRUE(handleFound);
     }
 
-    EXPECT_EQ(6, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
-    mm->freeGraphicsMemory(tagAllocation);
     tCsr->setTagAllocation(nullptr);
+    tCsr->setPreemptionCsrAllocation(nullptr);
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamLeaksTest;

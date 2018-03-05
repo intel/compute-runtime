@@ -143,11 +143,10 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         parseCommands<FamilyType>(*pCmdQ);
     }
 
-    MockContext context;
     Buffer *srcBuffer;
     Buffer *dstBuffer;
 
     static const size_t rowPitch = 100;
     static const size_t slicePitch = 100 * 100;
 };
-}
+} // namespace OCLRT

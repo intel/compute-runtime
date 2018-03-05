@@ -43,16 +43,21 @@ void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
+        context.reset(new MockContext());
         memoryManager = new MockMemoryManager;
-        device = static_cast<MockDevice *>(context.getDevice(0));
+        device = static_cast<MockDevice *>(context->getDevice(0));
         device->injectMemoryManager(memoryManager);
-        context.setMemoryManager(memoryManager);
+        context->setMemoryManager(memoryManager);
         allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize);
-        memObj = new MemObj(&context, CL_MEM_OBJECT_BUFFER,
+        memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
                             nullptr, nullptr, allocation, true, false, false);
-        *context.getDevice(0)->getTagAddress() = 0;
+        *context->getDevice(0)->getTagAddress() = 0;
+    }
+
+    void TearDown() override {
+        context.reset();
     }
 
     void makeMemObjUsed() {
@@ -61,17 +66,17 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
 
     void makeMemObjNotReady() {
         makeMemObjUsed();
-        *context.getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount - 1;
+        *context->getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount - 1;
     }
 
     void makeMemObjReady() {
         makeMemObjUsed();
-        *context.getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount;
+        *context->getDevice(0)->getTagAddress() = memObj->getGraphicsAllocation()->taskCount;
     }
 
     MockDevice *device;
     MockMemoryManager *memoryManager;
-    MockContext context;
+    std::unique_ptr<MockContext> context;
     GraphicsAllocation *allocation;
     MemObj *memObj;
     size_t size = MemoryConstants::pageSize;
@@ -140,12 +145,15 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasCallbacks) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount)).Times(1);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+            .Times(1);
     } else {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).Times(0);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+            .Times(0);
     }
     delete memObj;
 }
@@ -167,12 +175,15 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasAllocatedMappedPtr) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount)).Times(1);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+            .Times(1);
     } else {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).Times(0);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+            .Times(0);
     }
     delete memObj;
 }
@@ -188,7 +199,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         MemObjOffsetArray origin = {{0, 0, 0}};
         MemObjSizeArray region = {{1, 1, 1}};
         cl_map_flags mapFlags = CL_MAP_READ;
-        memObj = new MemObj(&context, CL_MEM_OBJECT_BUFFER,
+        memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
                             storage, nullptr, allocation, true, false, false);
@@ -205,12 +216,15 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     if (hasAllocatedMappedPtr) {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount)).Times(1);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+            .Times(1);
     } else {
-        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).Times(0);
+        EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+            .Times(0);
     }
     delete memObj;
 
@@ -235,9 +249,11 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
-    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount)).Times(1);
+    EXPECT_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, TimeoutControls::maxTimeout, allocation->taskCount))
+        .Times(1);
 
     delete memObj;
 }
@@ -258,7 +274,8 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
 
-    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
+    ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
+        .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
 
     delete memObj;
     EXPECT_TRUE(memoryManager->isAllocationListEmpty());
