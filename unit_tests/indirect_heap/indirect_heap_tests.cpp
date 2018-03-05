@@ -98,7 +98,7 @@ TEST_F(IndirectHeapTest, alignShouldAlignUpward) {
     EXPECT_GT(ptr2, ptr1);
 }
 
-TEST_F(IndirectHeapTest, getBase) {
-    auto base = indirectHeap.getBase();
+TEST_F(IndirectHeapTest, givenIndirectHeapWhenGetCpuBaseIsCalledThenCpuAddressIsReturned) {
+    auto base = indirectHeap.getCpuBase();
     EXPECT_EQ(base, buffer);
 }

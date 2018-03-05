@@ -48,12 +48,12 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setIndirectObjectBaseAddressModifyEnable(true);
     pCmd->setInstructionBaseAddressModifyEnable(true);
 
-    pCmd->setDynamicStateBaseAddress(reinterpret_cast<uintptr_t>(dsh.getBase()));
+    pCmd->setDynamicStateBaseAddress(reinterpret_cast<uintptr_t>(dsh.getCpuBase()));
     // GSH must be set to 0 for stateless
     pCmd->setGeneralStateBaseAddress(generalStateBase);
-    pCmd->setSurfaceStateBaseAddress(reinterpret_cast<uintptr_t>(ssh.getBase()));
-    pCmd->setIndirectObjectBaseAddress(reinterpret_cast<uintptr_t>(ioh.getBase()));
-    pCmd->setInstructionBaseAddress(reinterpret_cast<uintptr_t>(ih.getBase()));
+    pCmd->setSurfaceStateBaseAddress(reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
+    pCmd->setIndirectObjectBaseAddress(reinterpret_cast<uintptr_t>(ioh.getCpuBase()));
+    pCmd->setInstructionBaseAddress(reinterpret_cast<uintptr_t>(ih.getCpuBase()));
 
     pCmd->setDynamicStateBufferSizeModifyEnable(true);
     pCmd->setGeneralStateBufferSizeModifyEnable(true);

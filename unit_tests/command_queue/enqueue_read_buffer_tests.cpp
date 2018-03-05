@@ -214,12 +214,12 @@ HWTEST_F(EnqueueReadBufferTypeTest, StateBaseAddress) {
     EXPECT_TRUE(cmd->getIndirectObjectBaseAddressModifyEnable());
     EXPECT_TRUE(cmd->getInstructionBaseAddressModifyEnable());
 
-    EXPECT_EQ((uintptr_t)pDSH->getBase(), cmd->getDynamicStateBaseAddress());
+    EXPECT_EQ((uintptr_t)pDSH->getCpuBase(), cmd->getDynamicStateBaseAddress());
     // Stateless accesses require GSH.base to be 0.
     EXPECT_EQ(0u, cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ((uintptr_t)pSSH->getBase(), cmd->getSurfaceStateBaseAddress());
-    EXPECT_EQ((uintptr_t)pIOH->getBase(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ((uintptr_t)pIH->getBase(), cmd->getInstructionBaseAddress());
+    EXPECT_EQ((uintptr_t)pSSH->getCpuBase(), cmd->getSurfaceStateBaseAddress());
+    EXPECT_EQ((uintptr_t)pIOH->getCpuBase(), cmd->getIndirectObjectBaseAddress());
+    EXPECT_EQ((uintptr_t)pIH->getCpuBase(), cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
     EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());

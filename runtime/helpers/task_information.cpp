@@ -35,15 +35,15 @@
 
 namespace OCLRT {
 KernelOperation::~KernelOperation() {
-    alignedFree(dsh->getBase());
-    alignedFree(ish->getBase());
+    alignedFree(dsh->getCpuBase());
+    alignedFree(ish->getCpuBase());
     if (doNotFreeISH) {
         ioh.release();
     } else {
-        alignedFree(ioh->getBase());
+        alignedFree(ioh->getCpuBase());
     }
-    alignedFree(ssh->getBase());
-    alignedFree(commandStream->getBase());
+    alignedFree(ssh->getCpuBase());
+    alignedFree(commandStream->getCpuBase());
 }
 
 CommandMapUnmap::CommandMapUnmap(MapOperationType op, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
@@ -163,7 +163,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     size_t offset = queueCommandStream.getUsed();
     void *pDst = queueCommandStream.getSpace(commandsSize);
     //transfer the memory to commandStream of the queue.
-    memcpy_s(pDst, commandsSize, commandStream.getBase(), commandsSize);
+    memcpy_s(pDst, commandsSize, commandStream.getCpuBase(), commandsSize);
 
     size_t requestedDshSize = kernelOperation->dsh->getUsed();
     size_t requestedIshSize = kernelOperation->ish->getUsed() + kernelOperation->instructionHeapSizeEM;
@@ -190,26 +190,26 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         // In ExecutionModel IOH is the same as DSH to eliminate StateBaseAddress reprogramming for scheduler kernel and blocks.
         ioh = dsh;
 
-        memcpy_s(dsh->getSpace(0), dsh->getAvailableSpace(), ptrOffset(kernelOperation->dsh->getBase(), devQueue->colorCalcStateSize), kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
+        memcpy_s(dsh->getSpace(0), dsh->getAvailableSpace(), ptrOffset(kernelOperation->dsh->getCpuBase(), devQueue->colorCalcStateSize), kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
         dsh->getSpace(kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
     } else {
         dsh = &commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, requestedDshSize);
         ioh = &commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, requestedIohSize);
 
-        memcpy_s(dsh->getBase(), requestedDshSize, kernelOperation->dsh->getBase(), kernelOperation->dsh->getUsed());
+        memcpy_s(dsh->getCpuBase(), requestedDshSize, kernelOperation->dsh->getCpuBase(), kernelOperation->dsh->getUsed());
         dsh->getSpace(requestedDshSize);
 
-        memcpy_s(ioh->getBase(), requestedIohSize, kernelOperation->ioh->getBase(), kernelOperation->ioh->getUsed());
+        memcpy_s(ioh->getCpuBase(), requestedIohSize, kernelOperation->ioh->getCpuBase(), kernelOperation->ioh->getUsed());
         ioh->getSpace(requestedIohSize);
     }
 
     IndirectHeap &ish = commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION, requestedIshSize);
     IndirectHeap &ssh = commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, requestedSshSize);
 
-    memcpy_s(ptrOffset(ish.getBase(), commandQueue.getInstructionHeapReservedBlockSize()), requestedIshSize, kernelOperation->ish->getBase(), kernelOperation->ish->getUsed());
+    memcpy_s(ptrOffset(ish.getCpuBase(), commandQueue.getInstructionHeapReservedBlockSize()), requestedIshSize, kernelOperation->ish->getCpuBase(), kernelOperation->ish->getUsed());
     ish.getSpace(kernelOperation->ish->getUsed());
 
-    memcpy_s(ssh.getBase(), requestedSshSize, kernelOperation->ssh->getBase(), kernelOperation->ssh->getUsed());
+    memcpy_s(ssh.getCpuBase(), requestedSshSize, kernelOperation->ssh->getCpuBase(), kernelOperation->ssh->getUsed());
     ssh.getSpace(kernelOperation->ssh->getUsed());
 
     auto requiresCoherency = false;

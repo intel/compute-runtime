@@ -36,7 +36,7 @@ struct HeapDirtyStateTests : ::testing::Test {
 
     void SetUp() override {
         stream.reset(new LinearStream(buffer, bufferSize));
-        ASSERT_EQ(buffer, stream->getBase());
+        ASSERT_EQ(buffer, stream->getCpuBase());
         ASSERT_EQ(bufferSize, stream->getMaxAvailableSpace());
     }
 
@@ -79,7 +79,7 @@ TEST_F(HeapDirtyStateTests, givenNonDirtyObjectWhenSizeChangedThenReturnDirty) {
     EXPECT_TRUE(mockHeapDirtyState.updateAndCheck(stream.get()));
 
     auto newBufferSize = bufferSize + 1;
-    stream->replaceBuffer(stream->getBase(), newBufferSize);
+    stream->replaceBuffer(stream->getCpuBase(), newBufferSize);
 
     EXPECT_TRUE(mockHeapDirtyState.updateAndCheck(stream.get()));
 

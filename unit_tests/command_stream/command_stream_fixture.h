@@ -34,7 +34,7 @@ struct CommandStreamFixture {
 
     void SetUp(CommandQueue *pCmdQ) {
         pCS = &pCmdQ->getCS();
-        pCmdBuffer = pCS->getBase();
+        pCmdBuffer = pCS->getCpuBase();
     }
 
     virtual void TearDown(void) {

@@ -35,7 +35,7 @@ class LinearStream {
     LinearStream();
     LinearStream(void *buffer, size_t bufferSize);
     LinearStream(GraphicsAllocation *buffer);
-    void *getBase() const;
+    void *getCpuBase() const;
     uint64_t getGpuBase() const;
     void *getSpace(size_t size);
     void *getSpaceUnsecure(size_t size);
@@ -61,7 +61,7 @@ class LinearStream {
     GraphicsAllocation *graphicsAllocation;
 };
 
-inline void *LinearStream::getBase() const {
+inline void *LinearStream::getCpuBase() const {
     return buffer;
 }
 

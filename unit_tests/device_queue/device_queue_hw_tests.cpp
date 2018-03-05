@@ -197,8 +197,8 @@ HWTEST_F(DeviceQueueSlb, buildSlbAfterReset) {
     auto cmds = mockDeviceQueueHw->expectedCmds;
     auto cmdsWithProfiling = mockDeviceQueueHwWithProfiling->expectedCmds;
 
-    void *currCmd = slbCS->getBase();
-    void *currCmdWithProfiling = mockDeviceQueueHwWithProfiling->getSlbCS()->getBase();
+    void *currCmd = slbCS->getCpuBase();
+    void *currCmdWithProfiling = mockDeviceQueueHwWithProfiling->getSlbCS()->getCpuBase();
     for (size_t i = 0; i < 128; i++) {
         currCmd = compareCmds(currCmd, cmds.mediaStateFlush);
         currCmdWithProfiling = compareCmds(currCmdWithProfiling, cmdsWithProfiling.mediaStateFlush);
@@ -336,7 +336,7 @@ HWTEST_F(DeviceQueueSlb, cleanupSection) {
     hwParser.parseCommands<FamilyType>(*slbCS, cleanupSectionOffsetToParse);
     hwParser.findHardwareCommands<FamilyType>();
 
-    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getBase() + cleanupSectionOffset;
+    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getCpuBase() + cleanupSectionOffset;
     EXPECT_EQ(cleanUpSectionAddress, igilCmdQueue->m_controls.m_CleanupSectionAddress);
     EXPECT_EQ(slbCS->getUsed() - cleanupSectionOffset, igilCmdQueue->m_controls.m_CleanupSectionSize);
 
@@ -388,7 +388,7 @@ HWTEST_F(DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     hwParser.parseCommands<FamilyType>(*slbCS, cleanupSectionOffsetToParse);
     hwParser.findHardwareCommands<FamilyType>();
 
-    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getBase() + cleanupSectionOffset;
+    uint64_t cleanUpSectionAddress = (uint64_t)slbCS->getCpuBase() + cleanupSectionOffset;
     EXPECT_EQ(cleanUpSectionAddress, igilCmdQueue->m_controls.m_CleanupSectionAddress);
     EXPECT_EQ(slbCS->getUsed() - cleanupSectionOffset, igilCmdQueue->m_controls.m_CleanupSectionSize);
 
@@ -446,7 +446,7 @@ HWTEST_F(DeviceQueueHwTest, getIndirectHeapDSH) {
     auto dshBufferSize = deviceQueue->getDshBuffer()->getUnderlyingBufferSize();
 
     auto size = heap->getAvailableSpace();
-    auto heapMemory = heap->getBase();
+    auto heapMemory = heap->getCpuBase();
 
     // ExecutionModel DSH is offseted by colorCalcState, ParentKernel Interface Descriptor Data is located in first table just after colorCalcState
 
@@ -548,8 +548,8 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectState) {
 
         EXPECT_EQ(0u, usedAfterDSH - usedBeforeDSH);
 
-        alignedFree(ish->getBase());
-        alignedFree(ssh->getBase());
+        alignedFree(ish->getCpuBase());
+        alignedFree(ssh->getCpuBase());
         delete ish;
         delete ssh;
     }
@@ -579,8 +579,8 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
 
         EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
 
-        alignedFree(ish->getBase());
-        alignedFree(ssh->getBase());
+        alignedFree(ish->getCpuBase());
+        alignedFree(ssh->getCpuBase());
         delete ish;
         delete ssh;
     }
@@ -616,8 +616,8 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectDSHValues) {
         EXPECT_EQ(igilQueue->m_controls.m_CurrentDSHoffset, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
         EXPECT_EQ(igilQueue->m_controls.m_ParentDSHOffset, devQueueHw->offsetDsh);
 
-        alignedFree(ish->getBase());
-        alignedFree(ssh->getBase());
+        alignedFree(ish->getCpuBase());
+        alignedFree(ssh->getCpuBase());
         delete ish;
         delete ssh;
         delete devQueueHw;

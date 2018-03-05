@@ -336,7 +336,7 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
     EXPECT_EQ(2u, numSurfaceStates);
     size_t bindingTableStateSize = numSurfaceStates * sizeof(RENDER_SURFACE_STATE);
     uint32_t *bindingTableStatesPointers = reinterpret_cast<uint32_t *>(
-        reinterpret_cast<uint8_t *>(ssh.getBase()) + ssh.getUsed() + bindingTableStateSize);
+        reinterpret_cast<uint8_t *>(ssh.getCpuBase()) + ssh.getUsed() + bindingTableStateSize);
     for (auto i = 0u; i < numSurfaceStates; i++) {
         *(&bindingTableStatesPointers[i]) = 0xDEADBEEF;
     }
@@ -513,7 +513,7 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
             0,
             pDevice->getPreemptionMode());
 
-        bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getBase()) + localSshOffset + btiOffset);
+        bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
             uint32_t expected = localSshOffset + i * sizeof(typename FamilyType::RENDER_SURFACE_STATE);
             EXPECT_EQ(expected, bti[i].getSurfaceStatePointer());
@@ -720,9 +720,9 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
     dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
     dsh.getSpace(4);
 
-    char *initialDshPointer = static_cast<char *>(dsh.getBase()) + dsh.getUsed();
+    char *initialDshPointer = static_cast<char *>(dsh.getCpuBase()) + dsh.getUsed();
     char *borderColorPointer = alignUp(initialDshPointer, 64);
-    uint32_t borderColorOffset = static_cast<uint32_t>(borderColorPointer - static_cast<char *>(dsh.getBase()));
+    uint32_t borderColorOffset = static_cast<uint32_t>(borderColorPointer - static_cast<char *>(dsh.getCpuBase()));
 
     SAMPLER_STATE *pSamplerState = reinterpret_cast<SAMPLER_STATE *>(mockDsh + borderColorSize);
 

@@ -267,7 +267,7 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::resetDSH() {
     if (heaps[IndirectHeap::DYNAMIC_STATE]) {
-        heaps[IndirectHeap::DYNAMIC_STATE]->replaceBuffer(heaps[IndirectHeap::DYNAMIC_STATE]->getBase(), heaps[IndirectHeap::DYNAMIC_STATE]->getMaxAvailableSpace());
+        heaps[IndirectHeap::DYNAMIC_STATE]->replaceBuffer(heaps[IndirectHeap::DYNAMIC_STATE]->getCpuBase(), heaps[IndirectHeap::DYNAMIC_STATE]->getMaxAvailableSpace());
         heaps[IndirectHeap::DYNAMIC_STATE]->getSpace(colorCalcStateSize);
     }
 }
@@ -295,7 +295,7 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &instructionHeap,
     void *pDSH = dshBuffer->getUnderlyingBuffer();
 
     // Heap and dshBuffer shoud be the same if heap is created
-    DEBUG_BREAK_IF(!((heaps[IndirectHeap::DYNAMIC_STATE] == nullptr) || (heaps[IndirectHeap::DYNAMIC_STATE]->getBase() == pDSH)));
+    DEBUG_BREAK_IF(!((heaps[IndirectHeap::DYNAMIC_STATE] == nullptr) || (heaps[IndirectHeap::DYNAMIC_STATE]->getCpuBase() == pDSH)));
 
     // Set scheduler ID to last entry in first table, it will have ID == 0, blocks will have following entries.
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());

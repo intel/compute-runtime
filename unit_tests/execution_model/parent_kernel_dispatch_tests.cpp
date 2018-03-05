@@ -391,7 +391,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
 
         EXPECT_EQ(0u, ssh.getUsed());
 
-        auto *bufferMemory = ssh.getBase();
+        auto *bufferMemory = ssh.getCpuBase();
 
         dispatchWalker<FamilyType>(*pCmdQ,
                                    *mockParentKernel,
@@ -407,7 +407,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
                                    pDevice->getPreemptionMode(),
                                    false); // blockQueue
 
-        EXPECT_EQ(bufferMemory, ssh.getBase());
+        EXPECT_EQ(bufferMemory, ssh.getCpuBase());
 
         delete mockParentKernel;
     }

@@ -138,7 +138,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             }
         }
 
-        epiloguePipeControlLocation = ptrOffset(commandStreamTask.getBase(), commandStreamTask.getUsed());
+        epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
         if (dispatchFlags.outOfOrderExecutionAllowed && !dispatchFlags.dcFlush) {
             currentPipeControlForNooping = epiloguePipeControlLocation;

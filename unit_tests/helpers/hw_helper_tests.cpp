@@ -135,6 +135,6 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     auto lri = LriHelper<FamilyType>::program(&stream, address, data);
 
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), stream.getUsed());
-    EXPECT_EQ(lri, stream.getBase());
+    EXPECT_EQ(lri, stream.getCpuBase());
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }

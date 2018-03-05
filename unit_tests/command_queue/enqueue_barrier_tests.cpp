@@ -269,7 +269,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     auto &commandStream = pCmdQ->getCS(0);
 
     auto commandStreamStart = commandStream.getUsed();
-    auto commandStreamBuffer = commandStream.getBase();
+    auto commandStreamBuffer = commandStream.getCpuBase();
 
     auto retVal = pCmdQ->enqueueBarrierWithWaitList(
         numEventsInWaitList,
@@ -285,7 +285,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     event2.setStatus(CL_COMPLETE);
 
     auto commandStreamStart2 = commandStream.getUsed();
-    auto commandStreamBuffer2 = commandStream.getBase();
+    auto commandStreamBuffer2 = commandStream.getCpuBase();
 
     EXPECT_EQ(0u, commandStreamStart);
     EXPECT_GT(commandStreamStart2, 0u);

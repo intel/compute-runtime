@@ -113,7 +113,7 @@ HWTEST_P(KernelSLMAndBarrierTest, test_SLMProgramming) {
         pDevice->getPreemptionMode()); // Barriers Enabled
 
     // add the heap base + offset
-    uint32_t *pIdData = (uint32_t *)indirectHeap.getBase() + offsetInterfaceDescriptorData;
+    uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;
 
     INTERFACE_DESCRIPTOR_DATA *pSrcIDData = (INTERFACE_DESCRIPTOR_DATA *)pIdData;
 

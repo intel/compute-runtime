@@ -419,7 +419,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     for (auto heapType : heaps) {
         auto &heap = pCmdQ->getIndirectHeap(heapType, prealocatedHeapSize);
         heap.getSpace(16);
-        memset(heap.getBase(), 0, prealocatedHeapSize);
+        memset(heap.getCpuBase(), 0, prealocatedHeapSize);
     }
 
     // preallocating memsetted allocations to get predictable results
@@ -451,17 +451,17 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     userEvent.setStatus(CL_COMPLETE);
 
     // make sure used heaps are from preallocated pool
-    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getBase()));
-    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0).getBase()));
-    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0).getBase()));
-    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getCpuBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0).getCpuBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0).getCpuBase()));
+    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getCpuBase()));
 
     pCmdQ->getDevice().getMemoryManager()->cleanAllocationList(-1, REUSABLE_ALLOCATION);
     std::unordered_map<int, std::vector<char>> blockedCommandHeaps;
     int i = 0;
     for (auto heapType : heaps) {
         auto &heap = pCmdQ->getIndirectHeap(heapType, 0);
-        blockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getBase()), reinterpret_cast<char *>(heap.getBase()) + heap.getUsed());
+        blockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getCpuBase()), reinterpret_cast<char *>(heap.getCpuBase()) + heap.getUsed());
 
         // prepare new heaps for nonblocked command
         pCmdQ->releaseIndirectHeap(heapType);
@@ -473,7 +473,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     std::unordered_map<int, std::vector<char>> nonblockedCommandHeaps;
     for (auto heapType : heaps) {
         auto &heap = pCmdQ->getIndirectHeap(heapType, 0);
-        nonblockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getBase()), reinterpret_cast<char *>(heap.getBase()) + heap.getUsed());
+        nonblockedCommandHeaps[static_cast<int>(heaps[i])].assign(reinterpret_cast<char *>(heap.getCpuBase()), reinterpret_cast<char *>(heap.getCpuBase()) + heap.getUsed());
         ++i;
     }
 
@@ -510,18 +510,18 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
 
-    auto ishBase = ish.getBase();
-    auto iohBase = ioh.getBase();
-    auto dshBase = dsh.getBase();
-    auto sshBase = ssh.getBase();
+    auto ishBase = ish.getCpuBase();
+    auto iohBase = ioh.getCpuBase();
+    auto dshBase = dsh.getCpuBase();
+    auto sshBase = ssh.getCpuBase();
 
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(ishBase, ish.getBase());
-    EXPECT_EQ(iohBase, ioh.getBase());
-    EXPECT_EQ(dshBase, dsh.getBase());
-    EXPECT_EQ(sshBase, ssh.getBase());
+    EXPECT_EQ(ishBase, ish.getCpuBase());
+    EXPECT_EQ(iohBase, ioh.getCpuBase());
+    EXPECT_EQ(dshBase, dsh.getCpuBase());
+    EXPECT_EQ(sshBase, ssh.getCpuBase());
 }
 
 HWTEST_F(BlockedCommandQueueTest, givenEnqueueBlockedByUserEventWhenItIsEnqueuedThenKernelReferenceCountIsIncreased) {

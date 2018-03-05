@@ -145,7 +145,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
         }
 
         //pass current allocation to reusable list
-        if (commandStream.getBase()) {
+        if (commandStream.getCpuBase()) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
         }
 
@@ -169,7 +169,7 @@ void CommandStreamReceiver::cleanupResources() {
         scratchAllocation = nullptr;
     }
 
-    if (commandStream.getBase()) {
+    if (commandStream.getCpuBase()) {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);

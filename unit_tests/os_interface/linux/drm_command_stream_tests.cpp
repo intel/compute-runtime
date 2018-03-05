@@ -202,7 +202,7 @@ TEST_F(DrmCommandStreamTest, Flush) {
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
-    EXPECT_EQ(cs.getBase(), nullptr);
+    EXPECT_EQ(cs.getCpuBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
 }
 
@@ -229,7 +229,7 @@ TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, true, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getBase(), nullptr);
+    EXPECT_EQ(cs.getCpuBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
 }
 
@@ -795,11 +795,11 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    auto storedBase = cs.getBase();
+    auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getBase(), storedBase);
+    EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
     auto drmAllocation = (DrmAllocation *)storedGraphicsAllocation;
@@ -875,11 +875,11 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
-    auto storedBase = cs.getBase();
+    auto storedBase = cs.getCpuBase();
     auto storedGraphicsAllocation = cs.getGraphicsAllocation();
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getBase(), storedBase);
+    EXPECT_EQ(cs.getCpuBase(), storedBase);
     EXPECT_EQ(cs.getGraphicsAllocation(), storedGraphicsAllocation);
 
     auto drmAllocation = (DrmAllocation *)storedGraphicsAllocation;
@@ -1356,7 +1356,7 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getBase(), nullptr);
+    EXPECT_EQ(cs.getCpuBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
 }
 
@@ -1423,7 +1423,7 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushCalled) {
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getBase(), nullptr);
+    EXPECT_EQ(cs.getCpuBase(), nullptr);
     EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);

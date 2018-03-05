@@ -134,7 +134,7 @@ bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const Linear
         return false;
     }
 
-    return (0 == memcmp(ih.getBase(), sip.getBinary(), sip.getBinarySize()));
+    return (0 == memcmp(ih.getCpuBase(), sip.getBinary(), sip.getBinarySize()));
 }
 
 PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {

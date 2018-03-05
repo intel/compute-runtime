@@ -179,7 +179,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     // Allocate some memory for the interface descriptor
-    auto pInterfaceDescriptor = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getBase(), (size_t)offsetInterfaceDescriptor));
+    auto pInterfaceDescriptor = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
     *pInterfaceDescriptor = GfxFamily::cmdInitInterfaceDescriptorData;
 
     // Program the kernel start pointer
@@ -290,7 +290,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
 
     // Compiler sends BTI table that is already populated with surface state pointers relative to local SSH.
     // We may need to patch these pointers so that they are relative to surface state base address
-    if (dstSurfaceState == dstHeap.getBase()) {
+    if (dstSurfaceState == dstHeap.getCpuBase()) {
         // nothing to patch, we're at the start of heap (which is assumed to be the surface state base address)
         // we need to simply copy the ssh (including BTIs from compiler)
         memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, sshSize);
@@ -300,7 +300,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
     // We can copy-over the surface states, but BTIs will need to be patched
     memcpy_s(dstSurfaceState, sshSize, srcSurfaceState, offsetOfBindingTable);
 
-    uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getBase()));
+    uint32_t surfaceStatesOffset = static_cast<uint32_t>(ptrDiff(dstSurfaceState, dstHeap.getCpuBase()));
 
     // march over BTIs and offset the pointers based on surface state base address
     auto *dstBtiTableBase = reinterpret_cast<BINDING_TABLE_STATE *>(ptrOffset(dstSurfaceState, offsetOfBindingTable));
@@ -316,7 +316,7 @@ size_t KernelCommandsHelper<GfxFamily>::pushBindingTableAndSurfaceStates(Indirec
         DEBUG_BREAK_IF(bti.getRawData(0) % sizeof(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE) != 0);
     }
 
-    return ptrDiff(dstBtiTableBase, dstHeap.getBase());
+    return ptrDiff(dstBtiTableBase, dstHeap.getCpuBase());
 }
 
 template <typename GfxFamily>

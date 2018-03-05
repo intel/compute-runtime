@@ -28,7 +28,7 @@ using namespace OCLRT;
 
 TEST(LinearStreamCtorTest, establishInitialValues) {
     LinearStream linearStream;
-    EXPECT_EQ(nullptr, linearStream.getBase());
+    EXPECT_EQ(nullptr, linearStream.getCpuBase());
     EXPECT_EQ(0u, linearStream.getMaxAvailableSpace());
 }
 
@@ -97,14 +97,14 @@ TEST_F(LinearStreamTest, testGetUsed) {
     EXPECT_EQ(sizeToAllocate, linearStream.getUsed());
 }
 
-TEST_F(LinearStreamTest, testGetBase) {
-    ASSERT_EQ(pCmdBuffer, linearStream.getBase());
+TEST_F(LinearStreamTest, givenLinearStreamWhenGetCpuBaseIsCalledThenCpuBaseAddressIsReturned) {
+    ASSERT_EQ(pCmdBuffer, linearStream.getCpuBase());
 }
 
 TEST_F(LinearStreamTest, testReplaceBuffer) {
     char buffer[256];
     linearStream.replaceBuffer(buffer, sizeof(buffer));
-    EXPECT_EQ(buffer, linearStream.getBase());
+    EXPECT_EQ(buffer, linearStream.getCpuBase());
     EXPECT_EQ(sizeof(buffer), linearStream.getAvailableSpace());
     EXPECT_EQ(0u, linearStream.getUsed());
 }

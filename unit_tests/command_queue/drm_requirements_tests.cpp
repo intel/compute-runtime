@@ -152,7 +152,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCS) {
     ASSERT_NE(nullptr, memoryManager);
     {
         auto &cs = pCSR->getCS();
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         memoryManager->freeGraphicsMemory(cs.getGraphicsAllocation());
@@ -161,7 +161,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCS) {
     }
     {
         auto &cs = pCSR->getCS();
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GE(cs.getGraphicsAllocation()->getUnderlyingBufferSize(), cs.getMaxAvailableSpace());
@@ -178,7 +178,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCSSized) {
     ASSERT_NE(nullptr, memoryManager);
     {
         auto &cs = pCSR->getCS(128);
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         memoryManager->freeGraphicsMemory(cs.getGraphicsAllocation());
@@ -187,7 +187,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCSSized) {
     }
     {
         auto &cs = pCSR->getCS(128);
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GE(cs.getGraphicsAllocation()->getUnderlyingBufferSize(), cs.getMaxAvailableSpace());
@@ -200,7 +200,7 @@ TEST_F(DrmRequirementsTests, cqNewCS) {
     {
         auto &cs = pCmdQ->getCS();
         auto memoryManager = pDevice->getMemoryManager();
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         memoryManager->freeGraphicsMemory(cs.getGraphicsAllocation());
@@ -209,7 +209,7 @@ TEST_F(DrmRequirementsTests, cqNewCS) {
     }
     {
         auto &cs = pCmdQ->getCS();
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GE(cs.getGraphicsAllocation()->getUnderlyingBufferSize(), cs.getMaxAvailableSpace());
@@ -220,7 +220,7 @@ TEST_F(DrmRequirementsTests, cqNewCSSized) {
     {
         auto &cs = pCmdQ->getCS(128);
         auto memoryManager = pDevice->getMemoryManager();
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         memoryManager->freeGraphicsMemory(cs.getGraphicsAllocation());
@@ -229,7 +229,7 @@ TEST_F(DrmRequirementsTests, cqNewCSSized) {
     }
     {
         auto &cs = pCmdQ->getCS(128);
-        EXPECT_NE(nullptr, cs.getBase());
+        EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
         EXPECT_GE(cs.getGraphicsAllocation()->getUnderlyingBufferSize(), cs.getMaxAvailableSpace());

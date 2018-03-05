@@ -566,7 +566,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndir
 
     EXPECT_EQ(nullptr, cmdQ.indirectHeap[this->GetParam()]->getGraphicsAllocation());
 
-    EXPECT_EQ(nullptr, indirectHeap.getBase());
+    EXPECT_EQ(nullptr, indirectHeap.getCpuBase());
     EXPECT_EQ(0u, indirectHeap.getMaxAvailableSpace());
 }
 
@@ -779,7 +779,7 @@ TEST(CommandQueueGetIndirectHeap, whenNewInstructionHeapIsBeingCreatedThenComman
     EXPECT_EQ(alignedPatternSize, heap.getUsed());
 
     ASSERT_LE(sizeof(sipPattern), heap.getMaxAvailableSpace());
-    char *reservedBlock = reinterpret_cast<char *>(heap.getBase());
+    char *reservedBlock = reinterpret_cast<char *>(heap.getCpuBase());
     auto dataFoundInReservedBlock = ArrayRef<char>(reservedBlock, sizeof(sipPattern));
     auto expectedData = ArrayRef<char>(csr->instructionHeapReserveredData);
     EXPECT_THAT(dataFoundInReservedBlock, testing::ContainerEq(expectedData));

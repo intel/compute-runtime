@@ -132,7 +132,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     ASSERT_EQ(commandStream.getAvailableSpace(), sizeThatNeedsToBeSubstracted);
 
     auto commandStreamStart = commandStream.getUsed();
-    auto commandStreamBuffer = commandStream.getBase();
+    auto commandStreamBuffer = commandStream.getCpuBase();
     ASSERT_NE(0u, commandStreamStart);
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -152,7 +152,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
         nullptr,
         pDevice->getPreemptionMode());
 
-    EXPECT_EQ(commandStreamBuffer, commandStream.getBase());
+    EXPECT_EQ(commandStreamBuffer, commandStream.getCpuBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
@@ -179,7 +179,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
     ASSERT_EQ(commandStream.getAvailableSpace(), sizeThatNeedsToBeSubstracted);
 
     auto commandStreamStart = commandStream.getUsed();
-    auto commandStreamBuffer = commandStream.getBase();
+    auto commandStreamBuffer = commandStream.getCpuBase();
     ASSERT_NE(0u, commandStreamStart);
 
     size_t globalOffsets[3] = {0, 0, 0};
@@ -199,7 +199,7 @@ HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
         nullptr,
         pDevice->getPreemptionMode());
 
-    EXPECT_EQ(commandStreamBuffer, commandStream.getBase());
+    EXPECT_EQ(commandStreamBuffer, commandStream.getCpuBase());
     EXPECT_LT(commandStreamStart, commandStream.getUsed());
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
@@ -799,7 +799,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
 
     EXPECT_LE(dshBeforeMultiDisptach + interfaceDesriptorTableSize, dshAfterMultiDisptach);
 
-    INTERFACE_DESCRIPTOR_DATA *pID = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getBase(), dshBeforeMultiDisptach));
+    INTERFACE_DESCRIPTOR_DATA *pID = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), dshBeforeMultiDisptach));
 
     for (uint32_t index = 0; index < multiDispatchInfo.size(); index++) {
         uint32_t addressLow = pID[index].getKernelStartPointer();

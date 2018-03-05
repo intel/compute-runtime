@@ -98,7 +98,7 @@ HWTEST_F(SchedulerSourceTest, PatchGpgpuWalker) {
     auto itorMediaStateFlush = find<MEDIA_STATE_FLUSH *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     auto *msf = (MEDIA_STATE_FLUSH *)*itorMediaStateFlush;
 
-    EXPECT_EQ((void *)slb->getBase(), (void *)msf);
+    EXPECT_EQ((void *)slb->getCpuBase(), (void *)msf);
 
     auto itorArbCheck = find<MI_ARB_CHECK *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     auto *arbCheck = itorArbCheck != hwParser.cmdList.end() ? (MI_ARB_CHECK *)*itorArbCheck : nullptr;
@@ -125,33 +125,33 @@ HWTEST_F(SchedulerSourceTest, PatchGpgpuWalker) {
     auto *arbCheck2 = itorArbCheck2 != hwParser.cmdList.end() ? (MI_ARB_CHECK *)*itorArbCheck2 : nullptr;
 
     if (msf)
-        msfOffset = ptrDiff(msf, slb->getBase());
+        msfOffset = ptrDiff(msf, slb->getCpuBase());
 
     if (arbCheck)
-        miArbCheckOffset = ptrDiff(arbCheck, slb->getBase());
+        miArbCheckOffset = ptrDiff(arbCheck, slb->getCpuBase());
 
     if (miAtomic)
-        miAtomicOffset = ptrDiff(miAtomic, slb->getBase());
+        miAtomicOffset = ptrDiff(miAtomic, slb->getCpuBase());
 
     if (idLoad)
-        mediaIDLoadOffset = ptrDiff(idLoad, slb->getBase());
+        mediaIDLoadOffset = ptrDiff(idLoad, slb->getCpuBase());
 
     if (miLoadReg)
-        miLoadRegOffset = ptrDiff(miLoadReg, slb->getBase());
+        miLoadRegOffset = ptrDiff(miLoadReg, slb->getCpuBase());
 
     if (pipeControl)
-        pipeControlOffset = ptrDiff(pipeControl, slb->getBase());
+        pipeControlOffset = ptrDiff(pipeControl, slb->getCpuBase());
 
     if (walker)
-        gpgpuOffset = ptrDiff(walker, slb->getBase());
+        gpgpuOffset = ptrDiff(walker, slb->getCpuBase());
 
     if (msf2)
-        msfOffset2 = ptrDiff(msf2, slb->getBase());
+        msfOffset2 = ptrDiff(msf2, slb->getCpuBase());
 
     if (arbCheck2)
-        miArbCheckOffset2 = ptrDiff(arbCheck2, slb->getBase());
+        miArbCheckOffset2 = ptrDiff(arbCheck2, slb->getCpuBase());
 
-    uint32_t *slbBuffer = (uint32_t *)slb->getBase();
+    uint32_t *slbBuffer = (uint32_t *)slb->getCpuBase();
     uint32_t secondLevelBatchOffset = 0;
     uint32_t InterfaceDescriptorOffset = 3;
     uint32_t SIMDSize = 16;
@@ -175,7 +175,7 @@ HWTEST_F(SchedulerSourceTest, PatchGpgpuWalker) {
     itorMediaStateFlush = find<MEDIA_STATE_FLUSH *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     msf = (MEDIA_STATE_FLUSH *)*itorMediaStateFlush;
 
-    EXPECT_EQ((void *)slb->getBase(), (void *)msf);
+    EXPECT_EQ((void *)slb->getCpuBase(), (void *)msf);
 
     itorArbCheck = find<MI_ARB_CHECK *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
     arbCheck = itorArbCheck != hwParser.cmdList.end() ? (MI_ARB_CHECK *)*itorArbCheck : nullptr;
@@ -202,31 +202,31 @@ HWTEST_F(SchedulerSourceTest, PatchGpgpuWalker) {
     arbCheck2 = itorArbCheck2 != hwParser.cmdList.end() ? (MI_ARB_CHECK *)*itorArbCheck2 : nullptr;
 
     if (msf)
-        msfOffsetAfter = ptrDiff(msf, slbTested.getBase());
+        msfOffsetAfter = ptrDiff(msf, slbTested.getCpuBase());
 
     if (arbCheck)
-        miArbCheckOffsetAfter = ptrDiff(arbCheck, slbTested.getBase());
+        miArbCheckOffsetAfter = ptrDiff(arbCheck, slbTested.getCpuBase());
 
     if (miAtomic)
-        miAtomicOffsetAfter = ptrDiff(miAtomic, slbTested.getBase());
+        miAtomicOffsetAfter = ptrDiff(miAtomic, slbTested.getCpuBase());
 
     if (idLoad)
-        mediaIDLoadOffsetAfter = ptrDiff(idLoad, slbTested.getBase());
+        mediaIDLoadOffsetAfter = ptrDiff(idLoad, slbTested.getCpuBase());
 
     if (miLoadReg)
-        miLoadRegOffsetAfter = ptrDiff(miLoadReg, slbTested.getBase());
+        miLoadRegOffsetAfter = ptrDiff(miLoadReg, slbTested.getCpuBase());
 
     if (pipeControl)
-        pipeControlOffsetAfter = ptrDiff(pipeControl, slbTested.getBase());
+        pipeControlOffsetAfter = ptrDiff(pipeControl, slbTested.getCpuBase());
 
     if (walker)
-        gpgpuOffsetAfter = ptrDiff(walker, slbTested.getBase());
+        gpgpuOffsetAfter = ptrDiff(walker, slbTested.getCpuBase());
 
     if (msf2)
-        msfOffsetAfter2 = ptrDiff(msf2, slbTested.getBase());
+        msfOffsetAfter2 = ptrDiff(msf2, slbTested.getCpuBase());
 
     if (arbCheck2)
-        miArbCheckOffsetAfter2 = ptrDiff(arbCheck2, slbTested.getBase());
+        miArbCheckOffsetAfter2 = ptrDiff(arbCheck2, slbTested.getCpuBase());
 
     EXPECT_EQ(msfOffset, msfOffsetAfter);
     EXPECT_EQ(miArbCheckOffset, miArbCheckOffsetAfter);

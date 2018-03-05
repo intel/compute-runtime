@@ -148,7 +148,7 @@ struct HardwareParse {
         auto sizeToParse = commandStream.getUsed() - startOffset;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
             cmdList,
-            ptrOffset(commandStream.getBase(), startOffset),
+            ptrOffset(commandStream.getCpuBase(), startOffset),
             sizeToParse));
     }
 

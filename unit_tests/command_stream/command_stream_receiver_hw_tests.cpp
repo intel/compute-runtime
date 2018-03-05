@@ -234,7 +234,7 @@ HWTEST_F(CommandStreamReceiverFlushTests, addsBatchBufferEnd) {
     EXPECT_EQ(commandStream.getUsed(), usedPrevious + sizeof(typename FamilyType::MI_BATCH_BUFFER_END));
 
     auto batchBufferEnd = genCmdCast<typename FamilyType::MI_BATCH_BUFFER_END *>(
-        ptrOffset(commandStream.getBase(), usedPrevious));
+        ptrOffset(commandStream.getCpuBase(), usedPrevious));
     EXPECT_NE(nullptr, batchBufferEnd);
 }
 
@@ -531,10 +531,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressProgrammingShouldM
     ASSERT_NE(nullptr, cmdStateBaseAddress);
     auto &cmd = *reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
 
-    EXPECT_EQ(dsh.getBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
-    EXPECT_EQ(ih.getBase(), reinterpret_cast<void *>(cmd.getInstructionBaseAddress()));
-    EXPECT_EQ(ioh.getBase(), reinterpret_cast<void *>(cmd.getIndirectObjectBaseAddress()));
-    EXPECT_EQ(ssh.getBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
+    EXPECT_EQ(dsh.getCpuBase(), reinterpret_cast<void *>(cmd.getDynamicStateBaseAddress()));
+    EXPECT_EQ(ih.getCpuBase(), reinterpret_cast<void *>(cmd.getInstructionBaseAddress()));
+    EXPECT_EQ(ioh.getCpuBase(), reinterpret_cast<void *>(cmd.getIndirectObjectBaseAddress()));
+    EXPECT_EQ(ssh.getCpuBase(), reinterpret_cast<void *>(cmd.getSurfaceStateBaseAddress()));
 
     EXPECT_EQ(l3CacheOnMocs, cmd.getStatelessDataPortAccessMemoryObjectControlState());
     EXPECT_EQ(stateHeapMocs, cmd.getInstructionMemoryObjectControlState());
@@ -544,7 +544,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenStateBaseAddressWhenItIsRequi
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     configureCSRtoNonDirtyState<FamilyType>();
-    ih.replaceBuffer(ptrOffset(ih.getBase(), +1u), ih.getMaxAvailableSpace() - 1);
+    ih.replaceBuffer(ptrOffset(ih.getCpuBase(), +1u), ih.getMaxAvailableSpace() - 1);
 
     flushTask(commandStreamReceiver);
 
@@ -622,20 +622,20 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldBeSentIfSize
     auto iohSize = ioh.getMaxAvailableSpace();
     auto sshSize = ssh.getMaxAvailableSpace();
 
-    dsh.replaceBuffer(dsh.getBase(), 0);
-    ih.replaceBuffer(ih.getBase(), 0);
-    ioh.replaceBuffer(ioh.getBase(), 0);
-    ssh.replaceBuffer(ssh.getBase(), 0);
+    dsh.replaceBuffer(dsh.getCpuBase(), 0);
+    ih.replaceBuffer(ih.getCpuBase(), 0);
+    ioh.replaceBuffer(ioh.getCpuBase(), 0);
+    ssh.replaceBuffer(ssh.getCpuBase(), 0);
 
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.overrideMediaVFEStateDirty(false);
 
     configureCSRHeapStatesToNonDirty<FamilyType>();
 
-    dsh.replaceBuffer(dsh.getBase(), dshSize);
-    ih.replaceBuffer(ih.getBase(), ihSize);
-    ioh.replaceBuffer(ioh.getBase(), iohSize);
-    ssh.replaceBuffer(ssh.getBase(), sshSize);
+    dsh.replaceBuffer(dsh.getCpuBase(), dshSize);
+    ih.replaceBuffer(ih.getCpuBase(), ihSize);
+    ioh.replaceBuffer(ioh.getCpuBase(), iohSize);
+    ssh.replaceBuffer(ssh.getCpuBase(), sshSize);
 
     flushTask(commandStreamReceiver);
 
@@ -702,7 +702,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, stateBaseAddressShouldNotBeSentIfT
 
     flushTask(commandStreamReceiver);
 
-    auto base = commandStreamReceiver.commandStream.getBase();
+    auto base = commandStreamReceiver.commandStream.getCpuBase();
 
     auto stateBaseAddress = base
                                 ? genCmdCast<typename FamilyType::STATE_BASE_ADDRESS *>(base)
@@ -849,7 +849,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeeded);
-    auto expectedBase = csrCS.getBase();
+    auto expectedBase = csrCS.getCpuBase();
 
     // This case handles when we have *just* enough space
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
@@ -858,7 +858,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
-    EXPECT_EQ(expectedBase, csrCS.getBase());
+    EXPECT_EQ(expectedBase, csrCS.getCpuBase());
 }
 
 template <typename FamilyType>
@@ -906,7 +906,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsChainsWith
     ASSERT_NE(nullptr, bbs);
 
     // Expect to see address based on startOffset of task
-    auto expectedAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptrOffset(commandStream.getBase(), startOffset)));
+    auto expectedAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptrOffset(commandStream.getCpuBase(), startOffset)));
     EXPECT_EQ(expectedAddress, bbs->getBatchBufferStartAddressGraphicsaddress472());
 
     // MI_BATCH_BUFFER_START from UMD must be PPGTT for security reasons
@@ -1049,7 +1049,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
         // Search taskCS for PC to analyze
         auto pipeControlTask = genCmdCast<typename FamilyType::PIPE_CONTROL *>(
-            ptrOffset(commandStreamTask.getBase(), 24));
+            ptrOffset(commandStreamTask.getCpuBase(), 24));
         ASSERT_NE(nullptr, pipeControlTask);
 
         // Verify that the dcFlushEnabled bit is not set in PC
@@ -2377,7 +2377,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
-    auto initialBase = commandStream.getBase();
+    auto initialBase = commandStream.getCpuBase();
     auto initialUsed = commandStream.getUsed();
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
@@ -2401,8 +2401,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        dispatchFlags);
 
     //ensure command stream still used
-    EXPECT_EQ(initialBase, commandStream.getBase());
-    auto baseAfterFirstFlushTask = commandStream.getBase();
+    EXPECT_EQ(initialBase, commandStream.getCpuBase());
+    auto baseAfterFirstFlushTask = commandStream.getCpuBase();
     auto usedAfterFirstFlushTask = commandStream.getUsed();
 
     dispatchFlags.requiresCoherency = true;
@@ -2417,9 +2417,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        taskLevel,
                        dispatchFlags);
 
-    auto baseAfterSecondFlushTask = commandStream.getBase();
+    auto baseAfterSecondFlushTask = commandStream.getCpuBase();
     auto usedAfterSecondFlushTask = commandStream.getUsed();
-    EXPECT_EQ(initialBase, commandStream.getBase());
+    EXPECT_EQ(initialBase, commandStream.getCpuBase());
 
     EXPECT_EQ(baseAfterSecondFlushTask, baseAfterFirstFlushTask);
     EXPECT_EQ(baseAfterFirstFlushTask, initialBase);

@@ -743,7 +743,7 @@ void dispatchScheduler(
 
     // Create indirectHeap for IOH that is located at the end of device enqueue DSH
     size_t curbeOffset = devQueueHw.setSchedulerCrossThreadData(scheduler);
-    IndirectHeap indirectObjectHeap(dsh->getBase(), dsh->getMaxAvailableSpace());
+    IndirectHeap indirectObjectHeap(dsh->getCpuBase(), dsh->getMaxAvailableSpace());
     indirectObjectHeap.getSpace(curbeOffset);
     ioh = &indirectObjectHeap;
 

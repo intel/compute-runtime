@@ -26,9 +26,9 @@
 using namespace OCLRT;
 
 bool HeapDirtyState::updateAndCheck(const LinearStream *heap) {
-    bool dirty = address != heap->getBase() || size != heap->getMaxAvailableSpace();
+    bool dirty = address != heap->getCpuBase() || size != heap->getMaxAvailableSpace();
     if (dirty) {
-        address = heap->getBase();
+        address = heap->getCpuBase();
         size = heap->getMaxAvailableSpace();
     }
     return dirty;
