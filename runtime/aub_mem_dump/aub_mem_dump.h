@@ -283,6 +283,7 @@ struct AubDump : public TypeSelector<AubPageTableHelper32<TraitsIn>, AubPageTabl
     static void addMemoryWrite(Stream &stream, uint64_t addr, const void *memory, size_t blockSize, int addressSpace, int hint = DataTypeHintValues::TraceNotype);
     static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart);
     static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart);
+    static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress, size_t size, size_t offset);
 
   private:
     static uint64_t reserveAddress(Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace /* = AddressSpaceValues::TraceGttEntry*/, uint64_t physStart);

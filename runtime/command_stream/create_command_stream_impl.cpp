@@ -53,10 +53,17 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
                              pHwInfo->pSkuTable,
                              pHwInfo->pWaTable,
                              pHwInfo->pSysInfo);
-            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo);
+            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, false);
             break;
         case CSR_HW_WITH_AUB:
             commandStreamReceiver = funcCreate(*pHwInfo, true);
+            break;
+        case CSR_TBX_WITH_AUB:
+            Gmm::initContext(pHwInfo->pPlatform,
+                             pHwInfo->pSkuTable,
+                             pHwInfo->pWaTable,
+                             pHwInfo->pSysInfo);
+            commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, true);
             break;
         default:
             break;
@@ -74,6 +81,7 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
         switch (csr) {
         case CSR_AUB:
         case CSR_TBX: {
+        case CSR_TBX_WITH_AUB:
             auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
             auto hwInfoConst = *platformDevices;
             for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {

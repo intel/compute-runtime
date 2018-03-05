@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,7 @@ namespace OCLRT {
 void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
     const auto &hwInfo = pDevice->getHardwareInfo();
-    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo);
+    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, false);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
     mmTbx = pCommandStreamReceiver->createMemoryManager(false);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);

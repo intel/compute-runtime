@@ -52,19 +52,19 @@ struct TbxFixture : public TbxCommandStreamFixture,
     }
 };
 
-typedef Test<TbxFixture> Tbx_command_stream;
+typedef Test<TbxFixture> TbxCommandStreamTests;
 
-TEST_F(Tbx_command_stream, DISABLED_testFactory) {
+TEST_F(TbxCommandStreamTests, DISABLED_testFactory) {
 }
 
-HWTEST_F(Tbx_command_stream, DISABLED_testTbxMemoryManager) {
+HWTEST_F(TbxCommandStreamTests, DISABLED_testTbxMemoryManager) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     TbxMemoryManager *getMM = tbxCsr->getMemoryManager();
     EXPECT_NE(nullptr, getMM);
     EXPECT_EQ(1 * GB, getMM->getSystemSharedMemory());
 }
 
-TEST_F(Tbx_command_stream, DISABLED_makeResident) {
+TEST_F(TbxCommandStreamTests, DISABLED_makeResident) {
     uint8_t buffer[0x10000];
     size_t size = sizeof(buffer);
 
@@ -74,14 +74,14 @@ TEST_F(Tbx_command_stream, DISABLED_makeResident) {
     mmTbx->freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(Tbx_command_stream, DISABLED_makeResidentOnZeroSizedBufferShouldDoNothing) {
+TEST_F(TbxCommandStreamTests, DISABLED_makeResidentOnZeroSizedBufferShouldDoNothing) {
     GraphicsAllocation graphicsAllocation(nullptr, 0);
 
     pCommandStreamReceiver->makeResident(graphicsAllocation);
     pCommandStreamReceiver->makeNonResident(graphicsAllocation);
 }
 
-TEST_F(Tbx_command_stream, DISABLED_flush) {
+TEST_F(TbxCommandStreamTests, DISABLED_flush) {
     char buffer[4096];
     memset(buffer, 0, 4096);
     LinearStream cs(buffer, 4096);
@@ -90,7 +90,7 @@ TEST_F(Tbx_command_stream, DISABLED_flush) {
     pCommandStreamReceiver->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
-HWTEST_F(Tbx_command_stream, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
+HWTEST_F(TbxCommandStreamTests, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
     char buffer[4096];
     memset(buffer, 0, 4096);
     LinearStream cs(buffer, 4096);
@@ -108,7 +108,7 @@ HWTEST_F(Tbx_command_stream, DISABLED_flushUntilTailRCSLargerThanSizeRCS) {
     engineInfo.sizeRCS = size;
 }
 
-HWTEST_F(Tbx_command_stream, DISABLED_getCsTraits) {
+HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     tbxCsr->getCsTraits(EngineType::ENGINE_RCS);
     tbxCsr->getCsTraits(EngineType::ENGINE_BCS);
@@ -120,7 +120,7 @@ HWTEST_F(Tbx_command_stream, DISABLED_getCsTraits) {
 TEST(TbxCommandStreamReceiverTest, DISABLED_createShouldReturnFunctionPointer) {
     TbxCommandStreamReceiver tbx;
     const HardwareInfo *hwInfo = platformDevices[0];
-    CommandStreamReceiver *csr = tbx.create(*hwInfo);
+    CommandStreamReceiver *csr = tbx.create(*hwInfo, false);
     EXPECT_NE(nullptr, csr);
     delete csr;
 }
@@ -135,7 +135,7 @@ TEST(TbxCommandStreamReceiverTest, createShouldReturnNullptrForEmptyEntryInFacto
     auto pCreate = tbxCommandStreamReceiverFactory[family];
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
-    CommandStreamReceiver *csr = tbx.create(*hwInfo);
+    CommandStreamReceiver *csr = tbx.create(*hwInfo, false);
     EXPECT_EQ(nullptr, csr);
 
     tbxCommandStreamReceiverFactory[family] = pCreate;
@@ -149,8 +149,131 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
 
-    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo);
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, false);
     EXPECT_EQ(nullptr, csr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsCalledForGraphicsAllocationThenItShouldPushAllocationForResidencyToMemoryManager) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
+
+    tbxCsr->makeResident(*graphicsAllocation);
+
+    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentHasAlreadyBeenCalledForGraphicsAllocationThenItShouldNotPushAllocationForResidencyAgainToMemoryManager) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
+
+    tbxCsr->makeResident(*graphicsAllocation);
+
+    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+
+    tbxCsr->makeResident(*graphicsAllocation);
+
+    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithNonZeroSizeThenItShouldReturnTrue) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_TRUE(tbxCsr->writeMemory(*graphicsAllocation));
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCalledForGraphicsAllocationWithZeroSizeThenItShouldReturnFalse) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    GraphicsAllocation graphicsAllocation((void *)0x1234, 0);
+
+    EXPECT_FALSE(tbxCsr->writeMemory(graphicsAllocation));
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidencyIsCalledWithoutAllocationsForResidencyThenItShouldProcessAllocationsFromMemoryManager) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+
+    memoryManager->pushAllocationForResidency(graphicsAllocation);
+    tbxCsr->processResidency(nullptr);
+
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidencyIsCalledWithAllocationsForResidencyThenItShouldProcessGivenAllocations) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+
+    ResidencyContainer allocationsForResidency = {graphicsAllocation};
+    tbxCsr->processResidency(&allocationsForResidency);
+
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledThenItShouldProcessAllocationsForResidency) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    ASSERT_NE(nullptr, graphicsAllocation);
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    ASSERT_NE(nullptr, commandBuffer);
+
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {graphicsAllocation};
+
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+
+    tbxCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

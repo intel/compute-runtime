@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,6 +39,8 @@ enum CommandStreamReceiverType {
     CSR_TBX,
     // Use receiver for real HW and capture AUB file
     CSR_HW_WITH_AUB,
+    // Use TBX server and capture AUB file
+    CSR_TBX_WITH_AUB,
     // Number of CSR types
     CSR_TYPES_NUM
 };

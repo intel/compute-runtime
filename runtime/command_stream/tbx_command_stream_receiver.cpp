@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@ namespace OCLRT {
 
 TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwInfo) {
+CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwInfo, bool withAubDump) {
 
     if (hwInfo.pPlatform->eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
@@ -38,6 +38,6 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwIn
 
     auto pCreate = tbxCommandStreamReceiverFactory[hwInfo.pPlatform->eRenderCoreFamily];
 
-    return pCreate ? pCreate(hwInfo) : nullptr;
+    return pCreate ? pCreate(hwInfo, withAubDump) : nullptr;
 }
 }

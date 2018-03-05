@@ -69,6 +69,7 @@ HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFuntionRet
         break;
     case CSR_AUB:
     case CSR_TBX:
+    case CSR_TBX_WITH_AUB:
         EXPECT_TRUE(ret);
         EXPECT_NE(nullptr, hwInfo);
         EXPECT_EQ(1u, numDevices);
@@ -102,6 +103,7 @@ static CommandStreamReceiverType commandStreamReceiverTypes[] = {
     CSR_AUB,
     CSR_TBX,
     CSR_HW_WITH_AUB,
+    CSR_TBX_WITH_AUB,
     CSR_TYPES_NUM};
 
 INSTANTIATE_TEST_CASE_P(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "hw_cmds.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.inl"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/array_count.h"
 
@@ -39,4 +40,5 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
 }
 
 template class TbxCommandStreamReceiverHw<Family>;
+template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;
 }

@@ -22,7 +22,6 @@
 
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
-#include "runtime/command_stream/tbx_command_stream_receiver.h"
 
 namespace OCLRT {
 

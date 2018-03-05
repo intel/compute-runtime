@@ -46,8 +46,10 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
   public:
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
-    void makeResident(GraphicsAllocation &gfxAllocation) override;
     void makeCoherent(void *address, size_t length) override;
+
+    void processResidency(ResidencyContainer *allocationsForResidency) override;
+    bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
     void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
@@ -55,9 +57,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void initGlobalMMIO();
     void initEngineMMIO(EngineType engineType);
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump);
 
-    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
+    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr);
     ~TbxCommandStreamReceiverHw() override;
 
     void initializeEngine(EngineType engineType);

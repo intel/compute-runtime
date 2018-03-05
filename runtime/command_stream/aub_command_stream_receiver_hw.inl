@@ -456,14 +456,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-        static const size_t pageSize = 4096;
-        auto vmAddr = (static_cast<uintptr_t>(gpuAddress) + offset) & ~(pageSize - 1);
-        auto pAddr = physAddress & ~(pageSize - 1);
-
-        AUB::reserveAddressPPGTT(stream, vmAddr, pageSize, pAddr);
-        AUB::addMemoryWrite(stream, physAddress,
-                            reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(cpuAddress) + offset),
-                            size, AubMemDump::AddressSpaceValues::TraceNonlocal);
+        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset);
     };
     ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
 

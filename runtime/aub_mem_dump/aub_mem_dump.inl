@@ -24,6 +24,7 @@
 #include "aub_mem_dump.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include <algorithm>
 #include <cstring>
 
@@ -126,6 +127,18 @@ template <typename Traits>
 uint64_t AubDump<Traits>::reserveAddressGGTT(typename Traits::Stream &stream, const void *memory, size_t size, uint64_t physStart) {
     auto gfxAddress = BaseHelper::ptrToGGTT(memory);
     return AubDump<Traits>::reserveAddress(stream, gfxAddress, size, AddressSpaceValues::TraceGttEntry, physStart);
+}
+
+template <typename Traits>
+void AubDump<Traits>::reserveAddressGGTTAndWriteMmeory(typename Traits::Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress, size_t size, size_t offset) {
+    auto vmAddr = (gfxAddress + offset) & ~(MemoryConstants::pageSize - 1);
+    auto pAddr = physAddress & ~(MemoryConstants::pageSize - 1);
+
+    AubDump<Traits>::reserveAddressPPGTT(stream, vmAddr, MemoryConstants::pageSize, pAddr);
+
+    AubDump<Traits>::addMemoryWrite(stream, physAddress,
+                                    reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(memory) + offset),
+                                    size, AubMemDump::AddressSpaceValues::TraceNonlocal);
 }
 
 template <typename Traits>

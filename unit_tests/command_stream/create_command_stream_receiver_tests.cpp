@@ -69,6 +69,7 @@ static CommandStreamReceiverType commandStreamReceiverTypes[] = {
     CSR_AUB,
     CSR_TBX,
     CSR_HW_WITH_AUB,
+    CSR_TBX_WITH_AUB,
     CSR_TYPES_NUM};
 
 INSTANTIATE_TEST_CASE_P(

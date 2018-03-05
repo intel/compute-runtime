@@ -25,12 +25,13 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include <cstring>
 
 namespace OCLRT {
 
 template <typename GfxFamily>
-TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn)
+TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr)
     : BaseClass(hwInfoIn) {
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
@@ -156,8 +157,13 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn) {
-    auto csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn);
+CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, bool withAubDump) {
+    TbxCommandStreamReceiverHw<GfxFamily> *csr;
+    if (withAubDump) {
+        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn);
+    } else {
+        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, nullptr);
+    }
 
     // Open our stream
     csr->stream.open(nullptr);
@@ -195,6 +201,9 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             AubMemDump::AddressSpaceValues::TraceNonlocal,
             AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
     }
+
+    // Write allocations for residency
+    processResidency(allocationsForResidency);
 
     // Add a batch buffer start to the RCS
     auto previousTail = engineInfo.tailRCS;
@@ -323,31 +332,32 @@ void TbxCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.residencyTaskCount < (int)this->taskCount) {
-        auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-        auto gpuAddress = gfxAllocation.getGpuAddress();
-        auto size = gfxAllocation.getUnderlyingBufferSize();
+bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
+    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
+    auto gpuAddress = gfxAllocation.getGpuAddress();
+    auto size = gfxAllocation.getUnderlyingBufferSize();
 
-        if ((size == 0) || !!(gfxAllocation.getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE))
-            return;
+    if (size == 0)
+        return false;
 
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-            static const size_t pageSize = 4096;
-            auto vmAddr = (static_cast<uintptr_t>(gpuAddress) + offset) & ~(pageSize - 1);
-            auto pAddr = physAddress & ~(pageSize - 1);
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset);
+    };
+    ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
 
-            AUB::reserveAddressPPGTT(stream, vmAddr, pageSize, pAddr);
+    return true;
+}
 
-            AUB::addMemoryWrite(stream, physAddress,
-                                reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(cpuAddress) + offset),
-                                size, AubMemDump::AddressSpaceValues::TraceNonlocal);
-        };
-        ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
 
-        this->getMemoryManager()->pushAllocationForResidency(&gfxAllocation);
+    for (auto &gfxAllocation : residencyAllocations) {
+        if (!writeMemory(*gfxAllocation)) {
+            DEBUG_BREAK_IF(!(gfxAllocation->getUnderlyingBufferSize() == 0));
+        }
+        gfxAllocation->residencyTaskCount = this->taskCount + 1;
     }
-    gfxAllocation.residencyTaskCount = (int)this->taskCount;
 }
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -58,10 +58,10 @@ class TbxStream : public AubMemDump::AubStream {
 };
 
 struct TbxCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump);
 
     using TbxStream = OCLRT::TbxStream;
 };
 
-typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn);
+typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);
 } // namespace OCLRT
