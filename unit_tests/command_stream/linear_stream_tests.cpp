@@ -144,3 +144,20 @@ TEST_F(LinearStreamTest, givenGraphicsAllocationWithGpuBaseAddressWhenItIsQuerie
 
     EXPECT_EQ(gpuHeapBase, linearStream.getGpuBase());
 }
+
+TEST_F(LinearStreamTest, given32BitHeapWhenItIsAskedForGpuoffsetThenOffsetFromBaseIsReturned) {
+    auto allocationSize = 4096;
+    std::unique_ptr<char> memoryPtr(new char[allocationSize]);
+    uint64_t gpuHeapBase = 0x1000000;
+    uint64_t gpuAddress = 0x1000017;
+
+    auto currentOffset = gpuAddress - gpuHeapBase;
+
+    GraphicsAllocation newGraphicsAllocation(memoryPtr.get(), gpuAddress, gpuHeapBase, allocationSize);
+    linearStream.replaceGraphicsAllocation(&newGraphicsAllocation);
+
+    EXPECT_EQ(linearStream.getCurrentGpuOffsetFromHeapBase(), currentOffset);
+    linearStream.getSpace(10);
+    currentOffset += 10;
+    EXPECT_EQ(linearStream.getCurrentGpuOffsetFromHeapBase(), currentOffset);
+}

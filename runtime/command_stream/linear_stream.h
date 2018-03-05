@@ -22,6 +22,7 @@
 
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include <cstddef>
 #include <cstdint>
@@ -37,6 +38,7 @@ class LinearStream {
     LinearStream(GraphicsAllocation *buffer);
     void *getCpuBase() const;
     uint64_t getGpuBase() const;
+    uint64_t getCurrentGpuOffsetFromHeapBase() const;
     void *getSpace(size_t size);
     void *getSpaceUnsecure(size_t size);
     void putSpace(size_t size);
@@ -67,6 +69,10 @@ inline void *LinearStream::getCpuBase() const {
 
 inline uint64_t LinearStream::getGpuBase() const {
     return this->graphicsAllocation->gpuBaseAddress;
+}
+
+inline uint64_t LinearStream::getCurrentGpuOffsetFromHeapBase() const {
+    return ptrOffset(this->graphicsAllocation->getGpuAddressToPatch(), sizeUsed);
 }
 
 inline void *LinearStream::getSpaceUnsecure(size_t size) {
