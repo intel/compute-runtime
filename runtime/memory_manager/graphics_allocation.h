@@ -24,7 +24,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
-#include <atomic>
 
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
@@ -50,6 +49,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool coherent = false;
     osHandle sharedHandle;
     bool locked = false;
+    uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
 
   public:
     enum AllocationType {
@@ -117,19 +117,16 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t gpuBaseAddress = 0;
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
-    std::atomic<uint32_t> reuseCount{0}; // GraphicsAllocation can be reused by shared resources
 
     int residencyTaskCount = ObjectNotResident;
 
-    bool isResident() {
-        return residencyTaskCount != ObjectNotResident;
-    }
-    void setLocked(bool locked) {
-        this->locked = locked;
-    }
-    bool isLocked() {
-        return locked;
-    }
+    bool isResident() const { return residencyTaskCount != ObjectNotResident; }
+    void setLocked(bool locked) { this->locked = locked; }
+    bool isLocked() const { return locked; }
+
+    void incReuseCount() { reuseCount++; }
+    void decReuseCount() { reuseCount--; }
+    uint32_t peekReuseCount() const { return reuseCount; }
 
   private:
     int allocationType;

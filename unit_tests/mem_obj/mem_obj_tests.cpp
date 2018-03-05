@@ -311,10 +311,10 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
     // Each SharingHandler should have own implementation of reuseCount management
     struct MySharingHandler : public SharingHandler {
         MySharingHandler(GraphicsAllocation *allocation) : allocation(allocation) {
-            allocation->reuseCount++;
+            allocation->incReuseCount();
         }
         void releaseReusedGraphicsAllocation() override {
-            allocation->reuseCount--;
+            allocation->decReuseCount();
         }
 
         GraphicsAllocation *allocation = nullptr;
@@ -329,23 +329,23 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
 
     auto allocation = memoryManager.allocateGraphicsMemory(1);
 
-    auto memObj1 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    std::unique_ptr<MemObj> memObj1(new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false));
     memObj1->setSharingHandler(new MySharingHandler(allocation));
 
-    auto memObj2 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    std::unique_ptr<MemObj> memObj2(new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false));
     memObj2->setSharingHandler(new MySharingHandler(allocation));
 
-    auto memObj3 = new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false);
+    std::unique_ptr<MemObj> memObj3(new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false));
     memObj3->setSharingHandler(new MySharingHandler(allocation));
 
-    EXPECT_EQ(3u, allocation->reuseCount.load());
+    EXPECT_EQ(3u, allocation->peekReuseCount());
 
-    delete memObj3;
-    EXPECT_EQ(2u, allocation->reuseCount.load());
-    delete memObj1;
-    EXPECT_EQ(1u, allocation->reuseCount.load());
+    memObj3.reset(nullptr);
+    EXPECT_EQ(2u, allocation->peekReuseCount());
+    memObj1.reset(nullptr);
+    EXPECT_EQ(1u, allocation->peekReuseCount());
 
-    delete memObj2;
+    memObj2.reset(nullptr);
 
     // GraphicsAllocation should be removed by last memObj
     memoryLeaksCheck.TearDown();
