@@ -59,7 +59,6 @@ class DrmCommandStreamFixture {
     void SetUp() {
         //gmock
         MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
-        stderrCaptured = false;
 
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
@@ -80,10 +79,7 @@ class DrmCommandStreamFixture {
         delete this->mock;
         this->mock = 0;
         delete dbgState;
-        if (stderrCaptured)
-            testing::internal::GetCapturedStderr();
     }
-    bool stderrCaptured = false;
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore *dbgState;
 };
@@ -466,9 +462,6 @@ TEST_F(DrmCommandStreamTest, GIVENCSRWHENgetDMTHENNotNull) {
 }
 
 TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
-    testing::internal::CaptureStderr();
-    stderrCaptured = true;
-
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
         .Times(1)
         .WillOnce(::testing::DoAll(UserptrSetHandle(17), ::testing::Return(0)));

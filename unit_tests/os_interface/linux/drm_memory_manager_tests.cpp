@@ -493,7 +493,6 @@ TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
 }
 
 TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
-    testing::internal::CaptureStderr();
     mock->ioctl_expected = 3; //create+wait+close
     BufferObject *bo = memoryManager->allocUserptr(0, (size_t)1024, 0ul, true);
     ASSERT_NE(nullptr, bo);
@@ -502,7 +501,6 @@ TEST_F(DrmMemoryManagerTest, BoWaitFailure) {
     mock->ioctl_res = 1;
 
     memoryManager->unreference(bo);
-    testing::internal::GetCapturedStderr();
 }
 
 TEST_F(DrmMemoryManagerTest, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {

@@ -108,11 +108,9 @@ TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledWith
 }
 
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
-    testing::internal::CaptureStderr();
     mock->ioctl_expected = 1;
     mock->ioctl_res = -1;
     EXPECT_THROW(bo->exec(0, 0, 0), std::exception);
-    testing::internal::GetCapturedStderr();
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
@@ -194,7 +192,6 @@ TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndNoForceNonCoherent) {
 TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    testing::internal::CaptureStderr();
     mock->ioctl_expected = 1;
     mock->ioctl_res = -1;
 
@@ -204,6 +201,4 @@ TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     bo->setAddress(buff.get());
     auto ret = bo->pin(boToPin.get());
     EXPECT_EQ(mock->ioctl_res, ret);
-
-    testing::internal::GetCapturedStderr();
 }
