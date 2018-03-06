@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,17 +19,18 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_tests_device
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/device_caps_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/device_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_size_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/device_timers_tests.cpp"
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_caps_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_timers_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_size_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_tests.cpp
 )
 
-if (WIN32)
-	list (APPEND IGDRCL_SRCS_tests_device
-		"${CMAKE_CURRENT_SOURCE_DIR}/device_win_timers_tests.cpp"
-	)
+if(WIN32)
+  list(APPEND IGDRCL_SRCS_tests_device
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_win_timers_tests.cpp
+  )
 endif()
-set(IGDRCL_SRCS_tests_device "${IGDRCL_SRCS_tests_device}" PARENT_SCOPE)
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_device})
+add_subdirectories()

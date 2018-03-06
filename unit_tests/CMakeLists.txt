@@ -115,13 +115,6 @@ endif(GTEST_FILTERING_PATTERN)
 
 
 set(IGDRCL_SRCS_tests
-  ${IGDRCL_SRCS_tests_device}
-  ${IGDRCL_SRCS_tests_device_queue}
-  ${IGDRCL_SRCS_tests_event}
-  ${IGDRCL_SRCS_tests_execution_model}
-  ${IGDRCL_SRCS_tests_fixtures}
-  ${IGDRCL_SRCS_tests_gen_common}
-  ${IGDRCL_SRCS_tests_gmm_helper}
   ${IGDRCL_SRCS_tests_helpers}
   ${IGDRCL_SRCS_tests_instrumentation}
   ${IGDRCL_SRCS_tests_indirect_heap}
@@ -141,18 +134,6 @@ set(IGDRCL_SRCS_tests
   ${IGDRCL_SRCS_tests_sharings}
   ${IGDRCL_SRCS_tests_utilities}
 )
-
-if(GTPIN_HEADERS_DIR)
-  list (APPEND IGDRCL_SRCS_tests
-    ${IGDRCL_SRCS_tests_gtpin}
-  )
-endif(GTPIN_HEADERS_DIR)
-
-if(MSVC)
-  list(APPEND IGDRCL_SRCS_tests
-    ${IGDRCL_SRCS_tests_d3d_sharing}
-  )
-endif(MSVC)
 
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
