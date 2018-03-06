@@ -112,9 +112,9 @@ if(MSVC)
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.gen
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.bin
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${CLOC_DEFAULT_DEVICE}/offline_compiler_test
-    COMMAND echo cd ${TargetDir}/${CLOC_DEFAULT_DEVICE}
-    COMMAND cd ${TargetDir}/${CLOC_DEFAULT_DEVICE}
-    COMMAND ../cloc_tests --device ${CLOC_DEFAULT_DEVICE}
+    COMMAND echo cd ${TargetDir}
+    COMMAND cd ${TargetDir}
+    COMMAND cloc_tests --device ${CLOC_DEFAULT_DEVICE}
   )
 else()
   #####################
@@ -131,6 +131,6 @@ else()
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/*.bin
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${TargetDir}/offline_compiler_test"
     COMMAND cloc_tests --device ${CLOC_DEFAULT_DEVICE}
-    WORKING_DIRECTORY ${TargetDir}/${CLOC_DEFAULT_DEVICE}
+    WORKING_DIRECTORY ${TargetDir}
   )
 endif()

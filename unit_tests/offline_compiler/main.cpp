@@ -38,21 +38,13 @@ Environment *gEnvironment;
 
 extern bool printMemoryOpCallStack;
 
-std::string getRunPath(char *argv0) {
-    std::string res(argv0);
-
-    auto pos = res.rfind(fSeparator);
-    if (pos != std::string::npos)
-        res = res.substr(0, pos);
-
-    if (res == "." || pos == std::string::npos) {
+std::string getRunPath() {
+    std::string res;
 #if defined(__linux__)
-        res = getcwd(nullptr, 0);
+    res = getcwd(nullptr, 0);
 #else
-        res = _getcwd(nullptr, 0);
+    res = _getcwd(nullptr, 0);
 #endif
-    }
-
     return res;
 }
 
@@ -68,9 +60,9 @@ int main(int argc, char **argv) {
         char *ldLibraryPath = getenv("LD_LIBRARY_PATH");
 
         if (ldLibraryPath == nullptr) {
-            setenv("LD_LIBRARY_PATH", getRunPath(argv[0]).c_str(), 1);
+            setenv("LD_LIBRARY_PATH", getRunPath().c_str(), 1);
         } else {
-            std::string ldLibraryPathConcat = getRunPath(argv[0]) + ":" + std::string(ldLibraryPath);
+            std::string ldLibraryPathConcat = getRunPath() + ":" + std::string(ldLibraryPath);
             setenv("LD_LIBRARY_PATH", ldLibraryPathConcat.c_str(), 1);
         }
 
@@ -97,7 +89,7 @@ int main(int argc, char **argv) {
     // we look for test files always relative to binary location
     // this simplifies multi-process execution and using different
     // working directories
-    std::string nTestFiles = getRunPath(argv[0]);
+    std::string nTestFiles = getRunPath();
     nTestFiles.append("/");
     nTestFiles.append(devicePrefix);
     nTestFiles.append("/");
