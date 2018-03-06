@@ -33,6 +33,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "test.h"
 #include "runtime/helpers/cache_policy.h"
 
@@ -247,17 +248,13 @@ HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefault
 }
 
 TEST(CommandStreamReceiver, cmdStreamReceiverReservedBlockInInstructionHeapIsBasedOnPreemptionHelper) {
-    char pattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
-
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-
     {
         MockBuiltins mockBuiltins;
         mockBuiltins.overrideGlobalBuiltins();
         {
-            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
-                                                                                      pattern, sizeof(pattern)));
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr, getSipProgramWithCustomBinary()));
             mockBuiltins.overrideSipKernel(std::move(sipOverride));
         }
 

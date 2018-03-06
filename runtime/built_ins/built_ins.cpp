@@ -138,16 +138,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, const Device &device
         retVal = program->processGenBinary();
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
 
-        auto kernelInfo = program->getKernelInfo(size_t{0});
-        UNRECOVERABLE_IF(kernelInfo == nullptr);
-
-        uint32_t sipOffset = kernelInfo->systemKernelOffset;
-        UNRECOVERABLE_IF(sipOffset >= kernelInfo->heapInfo.pKernelHeader->KernelHeapSize)
-        sipBuiltIn.first.reset(new SipKernel(type, ptrOffset(kernelInfo->heapInfo.pKernelHeap, sipOffset),
-                                             kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - sipOffset));
-
-        DEBUG_BREAK_IF(retVal != CL_SUCCESS);
-        program->release();
+        sipBuiltIn.first.reset(new SipKernel(type, program));
     };
     std::call_once(sipBuiltIn.second, initializer);
     UNRECOVERABLE_IF(sipBuiltIn.first == nullptr);

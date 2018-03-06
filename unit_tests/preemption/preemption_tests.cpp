@@ -349,7 +349,7 @@ TEST(PreemptionTest, instructionHeapIsInvalidIfItSmallerThanSipKernel) {
         mockBuiltins.overrideGlobalBuiltins();
         {
             auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
-                                                                                      sipPattern, sizeof(sipPattern)));
+                                                                                      getSipProgramWithCustomBinary()));
             mockBuiltins.overrideSipKernel(std::move(sipOverride));
         }
 
@@ -371,8 +371,7 @@ TEST(PreemptionTest, instructionHeapIsInvalidIfItDoesNotContainSipKernelAtTheBeg
         MockBuiltins mockBuiltins;
         mockBuiltins.overrideGlobalBuiltins();
         {
-            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
-                                                                                      sipPattern, sizeof(sipPattern)));
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr, getSipProgramWithCustomBinary()));
             mockBuiltins.overrideSipKernel(std::move(sipOverride));
         }
 
@@ -386,16 +385,14 @@ TEST(PreemptionTest, instructionHeapIsValidIfItContainSipKernelAtTheBegining) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
 
-    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
     instructionHeap.getSpace(sizeof(instructionHeapBuffer));
-    memcpy_s(instructionHeapBuffer, sizeof(instructionHeapBuffer), sipPattern, sizeof(sipPattern));
 
     {
         MockBuiltins mockBuiltins;
         mockBuiltins.overrideGlobalBuiltins();
         {
-            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
-                                                                                      sipPattern, sizeof(sipPattern)));
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr, getSipProgramWithCustomBinary()));
+            memcpy_s(instructionHeapBuffer, sizeof(instructionHeapBuffer), sipOverride->getBinary(), sipOverride->getBinarySize());
             mockBuiltins.overrideSipKernel(std::move(sipOverride));
         }
 
@@ -409,22 +406,20 @@ TEST(PreemptionTest, whenPreemptionModeIsMidThreadThenInstructionHeapSipKernelRe
     LinearStream instructionHeap(instructionHeapBuffer, sizeof(instructionHeapBuffer));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
     mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-
-    char sipPattern[] = {2, 3, 5, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
-
     {
+        size_t sipSize = 0u;
         MockBuiltins mockBuiltins;
         mockBuiltins.overrideGlobalBuiltins();
         {
-            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr,
-                                                                                      sipPattern, sizeof(sipPattern)));
+            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr, getSipProgramWithCustomBinary()));
+            sipSize = sipOverride->getBinarySize();
             mockBuiltins.overrideSipKernel(std::move(sipOverride));
         }
 
-        EXPECT_EQ(sizeof(sipPattern), PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
+        EXPECT_EQ(sipSize, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
         PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
         EXPECT_TRUE(PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(instructionHeap, *mockDevice));
-        EXPECT_EQ(7, instructionHeapBuffer[sizeof(sipPattern)]); // check for overflow
+        EXPECT_EQ(7, instructionHeapBuffer[sipSize]); // check for overflow
     }
 }
 
@@ -442,8 +437,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
     {
         MockBuiltins tmpBuiltins;
-        char sipData[16] = {0};
-        tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, sipData, sizeof(sipData)}));
+        tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, getSipProgramWithCustomBinary()}));
         tmpBuiltins.overrideGlobalBuiltins();
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode,
                                                        nullptr, LinearStream(nullptr, 0), *mockDevice);

@@ -26,6 +26,7 @@
 #include "runtime/built_ins/sip.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_device_factory.h"
+#include "unit_tests/mocks/mock_program.h"
 
 using namespace OCLRT;
 
@@ -79,18 +80,16 @@ TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
 }
 
 TEST(Sip, getType) {
-    uint32_t binary = 0;
-
-    SipKernel csr{SipKernelType::Csr, &binary, sizeof(binary)};
+    SipKernel csr{SipKernelType::Csr, getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::Csr, csr.getType());
 
-    SipKernel dbgCsr{SipKernelType::DbgCsr, &binary, sizeof(binary)};
+    SipKernel dbgCsr{SipKernelType::DbgCsr, getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
 
-    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, &binary, sizeof(binary)};
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
 
-    SipKernel undefined{SipKernelType::COUNT, &binary, sizeof(binary)};
+    SipKernel undefined{SipKernelType::COUNT, getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
 }
 

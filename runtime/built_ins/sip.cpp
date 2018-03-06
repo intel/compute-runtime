@@ -72,14 +72,8 @@ const char *getSipLlSrc(const Device &device) {
     return (ptrSize == 8) ? llDummySrc64 : llDummySrc32;
 }
 
-SipKernel::SipKernel(SipKernelType type, const void *binary, size_t binarySize)
+SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
     : type(type) {
-
-    UNRECOVERABLE_IF(binary == nullptr);
-    UNRECOVERABLE_IF(binarySize == 0);
-
-    this->binary.reset(new char[binarySize]);
-    memcpy_s(this->binary.get(), binarySize, binary, binarySize);
-    this->binarySize = binarySize;
+    program.reset(sipProgram);
 }
 }

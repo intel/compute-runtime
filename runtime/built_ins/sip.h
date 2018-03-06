@@ -24,6 +24,8 @@
 
 #include <cinttypes>
 #include <memory>
+#include "runtime/helpers/ptr_math.h"
+#include "runtime/program/program.h"
 
 namespace OCLRT {
 
@@ -42,18 +44,20 @@ const char *getSipLlSrc(const Device &device);
 
 class SipKernel {
   public:
-    SipKernel(SipKernelType type, const void *binary, size_t binarySize);
+    SipKernel(SipKernelType type, Program *sipProgram);
     SipKernel(const SipKernel &) = delete;
     SipKernel &operator=(const SipKernel &) = delete;
     SipKernel(SipKernel &&) = default;
     SipKernel &operator=(SipKernel &&) = default;
 
     const char *getBinary() const {
-        return binary.get();
+        auto kernelInfo = program->getKernelInfo(size_t{0});
+        return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));
     }
 
     size_t getBinarySize() const {
-        return binarySize;
+        auto kernelInfo = program->getKernelInfo(size_t{0});
+        return kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - kernelInfo->systemKernelOffset;
     }
 
     SipKernelType getType() const {
@@ -62,7 +66,6 @@ class SipKernel {
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
-    std::unique_ptr<char[]> binary = nullptr;
-    size_t binarySize = 0;
+    std::unique_ptr<Program> program;
 };
 }
