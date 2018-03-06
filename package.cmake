@@ -32,6 +32,17 @@ if(UNIX)
     set(NEO_VERSION_BUILD 0)
   endif()
 
+  include("os_release_info.cmake")
+
+  get_os_release_info(os_name os_version)
+
+  if("${os_name}" STREQUAL "clear-linux-os")
+    # clear-linux-os distribution avoids /etc for distribution defaults.
+    set(_dir_etc "/usr/share/defaults/etc")
+  else()
+    set(_dir_etc "/etc")
+  endif()
+
   set(NEO_BINARY_INSTALL_DIR /opt/intel/opencl)
   set(CMAKE_INSTALL_PREFIX ${NEO_BINARY_INSTALL_DIR})
 
@@ -50,14 +61,14 @@ if(UNIX)
   install(
     CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"/opt/intel/opencl\n\" )"
     CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/intel.icd \"/opt/intel/opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postinst \"echo /opt/intel/opencl >> /etc/ld.so.conf\n\" )"
+    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postinst \"echo /opt/intel/opencl >> ${_dir_etc}/ld.so.conf\n\" )"
     CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postrm \"sed -i '/\\\\/opt\\\\/intel\\\\/opencl.*$/d' /etc/ld.so.conf\n\" )"
+    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postrm \"sed -i '/\\\\/opt\\\\/intel\\\\/opencl.*$/d' ${_dir_etc}/ld.so.conf\n\" )"
     CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
     COMPONENT igdrcl
   )
-  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION /etc/ld.so.conf.d COMPONENT igdrcl)
-  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION /etc/OpenCL/vendors/ COMPONENT igdrcl)
+  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT igdrcl)
+  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT igdrcl)
 
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
