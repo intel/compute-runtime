@@ -84,6 +84,24 @@ TEST(Sip, getType) {
     SipKernel csr{SipKernelType::Csr, &binary, sizeof(binary)};
     EXPECT_EQ(SipKernelType::Csr, csr.getType());
 
+    SipKernel dbgCsr{SipKernelType::DbgCsr, &binary, sizeof(binary)};
+    EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
+
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, &binary, sizeof(binary)};
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
+
     SipKernel undefined{SipKernelType::COUNT, &binary, sizeof(binary)};
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
+}
+
+TEST(DebugSip, WhenRequestingDbgCsrSipKernelThenProperCompilerInternalOptionsAreReturned) {
+    const char *opt = getSipKernelCompilerInternalOptions(SipKernelType::DbgCsr);
+    ASSERT_NE(nullptr, opt);
+    EXPECT_STREQ("-cl-include-sip-kernel-debug -cl-include-sip-csr -cl-set-bti:0", opt);
+}
+
+TEST(DebugSip, WhenRequestingDbgCsrWithLocalMemorySipKernelThenProperCompilerInternalOptionsAreReturned) {
+    const char *opt = getSipKernelCompilerInternalOptions(SipKernelType::DbgCsrLocal);
+    ASSERT_NE(nullptr, opt);
+    EXPECT_STREQ("-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0", opt);
 }

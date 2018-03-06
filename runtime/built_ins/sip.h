@@ -31,6 +31,8 @@ class Device;
 
 enum class SipKernelType : std::uint32_t {
     Csr = 0,
+    DbgCsr,
+    DbgCsrLocal,
     COUNT
 };
 

@@ -34,6 +34,10 @@ const char *getSipKernelCompilerInternalOptions(SipKernelType kernel) {
         return "";
     case SipKernelType::Csr:
         return "-cl-include-sip-csr";
+    case SipKernelType::DbgCsr:
+        return "-cl-include-sip-kernel-debug -cl-include-sip-csr -cl-set-bti:0";
+    case SipKernelType::DbgCsrLocal:
+        return "-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0";
     }
 }
 
