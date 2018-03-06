@@ -25,10 +25,11 @@ else()
 endif()
 
 set(RUNTIME_SRCS_DLL_BASE
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
 
   ${IGDRCL_SOURCE_DIR}/runtime/api/api.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp

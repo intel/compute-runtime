@@ -18,22 +18,23 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT CMakeLists.txt)
+add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT builtins_binary.cmake)
 
 # Add builtins sources
 add_subdirectory(registry)
 
-set(GENERATED_BUILTINS "COPY_BUFFER_TO_BUFFER"
-                       "COPY_BUFFER_RECT"
-                       "FILL_BUFFER"
-                       "COPY_BUFFER_TO_IMAGE3D"
-                       "COPY_IMAGE3D_TO_BUFFER"
-                       "COPY_IMAGE_TO_IMAGE1D"
-                       "COPY_IMAGE_TO_IMAGE2D"
-                       "COPY_IMAGE_TO_IMAGE3D"
-                       "FILL_IMAGE1D"
-                       "FILL_IMAGE2D"
-                       "FILL_IMAGE3D"
+set(GENERATED_BUILTINS
+  "copy_buffer_rect"
+  "copy_buffer_to_buffer"
+  "copy_buffer_to_image3d"
+  "copy_image3d_to_buffer"
+  "copy_image_to_image1d"
+  "copy_image_to_image2d"
+  "copy_image_to_image3d"
+  "fill_buffer"
+  "fill_image1d"
+  "fill_image2d"
+  "fill_image3d"
 )
 
 # Generate builtins cpps

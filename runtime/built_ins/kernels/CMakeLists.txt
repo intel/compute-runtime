@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -20,32 +20,19 @@
 
 add_custom_target(builtins)
 set_target_properties(builtins PROPERTIES FOLDER "built_ins")
-set (BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
+set(BUILTINS_OUTDIR_WITH_ARCH "${TargetDir}/built_ins/${NEO_ARCH}")
 add_dependencies(${BUILTINS_BINARIES_LIB_NAME} builtins)
 
-# Set variables needed to compile built-in kernels
-set (COPY_BUFFER_TO_BUFFER_BUILTIN copy_buffer_to_buffer.igdrcl_built_in)
-set (COPY_BUFFER_RECT_BUILTIN copy_buffer_rect.igdrcl_built_in)
-set (FILL_BUFFER_BUILTIN fill_buffer.igdrcl_built_in)
-set (COPY_BUFFER_TO_IMAGE3D_BUILTIN copy_buffer_to_image3d.igdrcl_built_in)
-set (COPY_IMAGE3D_TO_BUFFER_BUILTIN copy_image3d_to_buffer.igdrcl_built_in)
-set (COPY_IMAGE_TO_IMAGE1D_BUILTIN copy_image_to_image1d.igdrcl_built_in)
-set (COPY_IMAGE_TO_IMAGE2D_BUILTIN copy_image_to_image2d.igdrcl_built_in)
-set (COPY_IMAGE_TO_IMAGE3D_BUILTIN copy_image_to_image3d.igdrcl_built_in)
-set (FILL_IMAGE1D_BUILTIN fill_image1d.igdrcl_built_in)
-set (FILL_IMAGE2D_BUILTIN fill_image2d.igdrcl_built_in)
-set (FILL_IMAGE3D_BUILTIN fill_image3d.igdrcl_built_in)
-
 if("${NEO_ARCH}" STREQUAL "x32")
-    set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required")
+  set(BUILTIN_OPTIONS "-cl-intel-greater-than-4GB-buffer-required")
 else()
-    set(BUILTIN_OPTIONS "")
+  set(BUILTIN_OPTIONS "")
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-    set(BUILTIN_DEBUG_OPTION "-D DEBUG")
+  set(BUILTIN_DEBUG_OPTION "-D DEBUG")
 else()
-    set(BUILTIN_DEBUG_OPTION "")
+  set(BUILTIN_DEBUG_OPTION "")
 endif()
 
 set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
@@ -97,7 +84,7 @@ macro(compile_builtins GEN_NUM PLATFORM_IT)
 
   set (BUILTINS_COMMANDS)
   foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-    compile_builtin(${PLATFORM_LOWER} ${${GENERATED_BUILTIN}_BUILTIN})
+    compile_builtin(${PLATFORM_LOWER} ${GENERATED_BUILTIN}.igdrcl_built_in)
     list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
     set (RUNTIME_GENERATED_${GENERATED_BUILTIN}${GEN} ${BUILTIN_CPP} PARENT_SCOPE)
   endforeach(GENERATED_BUILTIN)

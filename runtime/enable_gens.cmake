@@ -102,9 +102,6 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
       list(APPEND RUNTIME_SRCS_GENX ${RUNTIME_SRCS_GEN${GEN_NUM}_LINUX})
       list(APPEND HW_SRC_LINK ${GEN${GEN_NUM}_SRC_LINK_LINUX})
     endif()
-
-    source_group("gen${GEN_NUM}" FILES ${RUNTIME_SRCS_GEN${GEN_NUM}_BASE} ${GEN${GEN_NUM}_SRC_LINK_BASE})
-    source_group("gen${GEN_NUM}\\windows" FILES ${RUNTIME_SRCS_GEN${GEN_NUM}_WINDOWS})
   endif()
 endforeach()
 

@@ -34,6 +34,7 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/range.h
   ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object.h
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stackvec.h

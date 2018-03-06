@@ -21,6 +21,7 @@
 set(RUNTIME_SRCS_COMPILER_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/binary_cache.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/binary_cache.h
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.inl

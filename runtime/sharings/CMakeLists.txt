@@ -42,9 +42,9 @@ set(RUNTIME_SRCS_SHARINGS
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS})
 
 if(WIN32)
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PUBLIC ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows)
 else()
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PUBLIC ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux)
+  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux)
 endif()
 
 add_subdirectories()

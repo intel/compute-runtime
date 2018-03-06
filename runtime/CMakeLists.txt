@@ -43,21 +43,14 @@ add_library(${NEO_STATIC_LIB_NAME} STATIC
 
 add_subdirectories()
 add_subdirectory(instrumentation${IGDRCL__INSTRUMENTATION_DIR_SUFFIX})
-
-if(WIN32)
-  if("${IGDRCL_OPTION__BITS}" STREQUAL "32" )
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
-  endif()
-endif()
-
 include(enable_gens.cmake)
 
 # Enable SSE4/AVX2 options for files that need them
 if(MSVC)
-  set_source_files_properties(command_queue/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/command_queue/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS /arch:AVX2)
 else()
-  set_source_files_properties(command_queue/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
-  set_source_files_properties(command_queue/local_id_gen_sse4.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/command_queue/local_id_gen_avx2.cpp PROPERTIES COMPILE_FLAGS -mavx2)
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/command_queue/local_id_gen_sse4.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
 # Put Driver version into define
@@ -65,22 +58,29 @@ if(NEO_DRIVER_VERSION)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
 endif()
 
+if(WIN32)
+  if("${IGDRCL_OPTION__BITS}" STREQUAL "32" )
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
+  endif()
+endif()
+
 target_link_libraries(${NEO_STATIC_LIB_NAME} elflib)
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${GMM_INCLUDE_PATHS}
   ${KMDAF_HEADERS_DIR}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
 )
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
   ${KHRONOS_HEADERS_DIR}
   ${CIF_BASE_DIR}
+  ${GMM_INCLUDE_PATHS}
   ${GTPIN_HEADERS_DIR}
+  ${HW_SRC_INCLUDE_PATH}
   ${IGC_OCL_ADAPTOR_DIR}
   ${IGDRCL__IGC_INCLUDE_DIR}
   ${THIRD_PARTY_DIR}
+  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
 )
 
 if(WIN32)
@@ -88,13 +88,11 @@ if(WIN32)
     ${WDK_INCLUDE_PATHS}
     os_interface/windows
   )
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC OGL=1)
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC INSTR_WIN_UMD=1)
+  target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC OGL_GEM=1)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     os_interface/linux
-    "${LIBDRM_DIR}/include"
+    ${LIBDRM_DIR}/include
   )
 endif()
 
@@ -105,7 +103,7 @@ link_directories(${GMM_LIB_PATHS})
 target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
 
 if(INSTRUMENTATION_LIB_NAME)
-	add_dependencies(${NEO_STATIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
+  add_dependencies(${NEO_STATIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
 endif()
 
 if(WIN32)
@@ -114,7 +112,7 @@ if(WIN32)
   else()
     set( DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLExports${IGDRCL_OPTION__BITS}.def" )
   endif()
-endif(WIN32)
+endif()
 
 list(APPEND LIB_FLAGS_DEFINITIONS -DCIF_HEADERS_ONLY_BUILD ${SUPPORTED_GEN_FLAGS_DEFINITONS})
 
@@ -126,8 +124,6 @@ set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_COD
 set_property(TARGET ${NEO_STATIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 
 set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
-
-target_include_directories(${NEO_STATIC_LIB_NAME} BEFORE PRIVATE ${HW_SRC_INCLUDE_PATH})
 
 if(${GENERATE_EXECUTABLE})
   if(GTPIN_HEADERS_DIR)
@@ -152,28 +148,20 @@ if(${GENERATE_EXECUTABLE})
   add_subdirectory(dll)
 
   if(HAVE_INSTRUMENTATION)
-    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} instrumentation_umd)
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
   endif()
 
   target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
-    ${HW_SRC_INCLUDE_PATH}
-  )
-
-  target_include_directories(${NEO_DYNAMIC_LIB_NAME} PUBLIC
-    ${GMM_INCLUDE_PATHS}
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
     ${INSTRUMENTATION_INCLUDE_PATH}
   )
+
   if(WIN32)
-    target_include_directories(${NEO_DYNAMIC_LIB_NAME} PUBLIC
-      ${WDK_INCLUDE_PATHS}
-    )
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} dxgi Ws2_32.lib)
   else()
-    target_include_directories(${NEO_DYNAMIC_LIB_NAME} PUBLIC
+    target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/devices${BRANCH_DIR_SUFFIX}
     )
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} dl pthread)
