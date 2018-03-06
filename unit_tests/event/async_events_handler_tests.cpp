@@ -180,7 +180,7 @@ TEST_F(AsyncEventsHandlerTests, givenDoubleRegisteredEventWhenListIsProcessedAnd
     EXPECT_TRUE(handler->peekIsListEmpty());
 }
 
-TEST_F(AsyncEventsHandlerTests, givenEventsNotHandlerByHanlderWhenDestructingThenUnreferenceAll) {
+TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenDestructingThenUnreferenceAll) {
     auto myHandler = new MockHandler();
     event1->setTaskStamp(Event::eventNotReady, 0);
     event2->setTaskStamp(Event::eventNotReady, 0);
@@ -201,6 +201,32 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandlerByHanlderWhenDestructingThe
     EXPECT_EQ(2, event1->getRefInternalCount());
     EXPECT_EQ(2, event2->getRefInternalCount());
     // release callbacks
+    event1->setStatus(CL_SUBMITTED);
+    event2->setStatus(CL_SUBMITTED);
+}
+
+TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenAsyncExecutionInterruptedThenUnreferenceAll) {
+    event1->setTaskStamp(Event::eventNotReady, 0);
+    event2->setTaskStamp(Event::eventNotReady, 0);
+    event1->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
+    event2->addCallback(&this->callbackFcn, CL_SUBMITTED, &counter);
+
+    handler->registerEvent(event1);
+    handler->process();
+    handler->registerEvent(event2);
+
+    EXPECT_FALSE(handler->peekIsListEmpty());
+    EXPECT_FALSE(handler->peekIsRegisterListEmpty());
+
+    EXPECT_EQ(3, event1->getRefInternalCount());
+    EXPECT_EQ(3, event2->getRefInternalCount());
+    handler->allowAsyncProcess.store(false);
+    handler->asyncProcess(); // enter and exit because of allowAsyncProcess == false
+    EXPECT_EQ(2, event1->getRefInternalCount());
+    EXPECT_EQ(2, event2->getRefInternalCount());
+    EXPECT_TRUE(handler->peekIsListEmpty());
+    EXPECT_TRUE(handler->peekIsRegisterListEmpty());
+
     event1->setStatus(CL_SUBMITTED);
     event2->setStatus(CL_SUBMITTED);
 }

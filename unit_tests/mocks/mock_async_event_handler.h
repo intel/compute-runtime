@@ -40,7 +40,11 @@ class MockHandler : public AsyncEventsHandler {
     using AsyncEventsHandler::openThread;
     using AsyncEventsHandler::thread;
 
-    ~MockHandler() override = default;
+    ~MockHandler() override {
+        if (!allowThreadCreating) {
+            asyncProcess(); // process once for cleanup
+        }
+    }
 
     MockHandler(bool allowAsync = false) : AsyncEventsHandler() {
         allowThreadCreating = allowAsync;

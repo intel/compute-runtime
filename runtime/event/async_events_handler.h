@@ -41,6 +41,7 @@ class AsyncEventsHandler {
   protected:
     Event *processList();
     void asyncProcess();
+    void releaseEvents();
     MOCKABLE_VIRTUAL void openThread();
     MOCKABLE_VIRTUAL void transferRegisterList();
     std::vector<Event *> registerList;

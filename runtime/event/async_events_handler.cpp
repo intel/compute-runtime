@@ -34,13 +34,6 @@ AsyncEventsHandler::AsyncEventsHandler() {
 
 AsyncEventsHandler::~AsyncEventsHandler() {
     closeThread();
-
-    for (auto event : list) {
-        event->decRefInternal();
-    }
-    for (auto event : registerList) {
-        event->decRefInternal();
-    }
 }
 
 void AsyncEventsHandler::registerEvent(Event *event) {
@@ -84,6 +77,7 @@ void AsyncEventsHandler::asyncProcess() {
         transferRegisterList();
         if (!allowAsyncProcess) {
             processList();
+            releaseEvents();
             break;
         }
         if (list.empty()) {
@@ -121,5 +115,13 @@ void AsyncEventsHandler::openThread() {
 void AsyncEventsHandler::transferRegisterList() {
     std::move(registerList.begin(), registerList.end(), std::back_inserter(list));
     registerList.clear();
+}
+
+void AsyncEventsHandler::releaseEvents() {
+    for (auto event : list) {
+        event->decRefInternal();
+    }
+    list.clear();
+    UNRECOVERABLE_IF(!registerList.empty()) // transferred before release
 }
 } // namespace OCLRT
