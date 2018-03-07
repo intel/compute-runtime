@@ -134,48 +134,58 @@ int OfflineCompiler::buildSourceCode() {
         UNRECOVERABLE_IF(fclDeviceCtx == nullptr);
         UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
 
-        IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
-        auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size());
-        auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
-        auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
+        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
 
-        auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation);
-        auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(intermediateRepresentation, IGC::CodeType::oclGenBin);
+        if (!inputFileLlvm) {
+            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
+            auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size());
+            auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
+            auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), internalOptions.c_str(), internalOptions.size());
 
-        if (false == OCLRT::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
-                                          fclTranslationCtx.get(), igcTranslationCtx.get())) {
-            retVal = CL_OUT_OF_HOST_MEMORY;
-            break;
-        }
+            auto fclTranslationCtx = fclDeviceCtx->CreateTranslationCtx(IGC::CodeType::oclC, intermediateRepresentation);
+            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(intermediateRepresentation, IGC::CodeType::oclGenBin);
 
-        auto fclOutput = fclTranslationCtx->Translate(fclSrc.get(), fclOptions.get(),
-                                                      fclInternalOptions.get(), nullptr, 0);
+            if (false == OCLRT::areNotNullptr(fclSrc.get(), fclOptions.get(), fclInternalOptions.get(),
+                                              fclTranslationCtx.get(), igcTranslationCtx.get())) {
+                retVal = CL_OUT_OF_HOST_MEMORY;
+                break;
+            }
 
-        if (fclOutput == nullptr) {
-            retVal = CL_OUT_OF_HOST_MEMORY;
-            break;
-        }
+            auto fclOutput = fclTranslationCtx->Translate(fclSrc.get(), fclOptions.get(),
+                                                          fclInternalOptions.get(), nullptr, 0);
 
-        UNRECOVERABLE_IF(fclOutput->GetBuildLog() == nullptr);
-        UNRECOVERABLE_IF(fclOutput->GetOutput() == nullptr);
+            if (fclOutput == nullptr) {
+                retVal = CL_OUT_OF_HOST_MEMORY;
+                break;
+            }
 
-        if (fclOutput->Successful() == false) {
+            UNRECOVERABLE_IF(fclOutput->GetBuildLog() == nullptr);
+            UNRECOVERABLE_IF(fclOutput->GetOutput() == nullptr);
+
+            if (fclOutput->Successful() == false) {
+                updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
+                retVal = CL_BUILD_PROGRAM_FAILURE;
+                break;
+            }
+
+            storeBinary(llvmBinary, llvmBinarySize, fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
             updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-            retVal = CL_BUILD_PROGRAM_FAILURE;
-            break;
+
+            igcOutput = igcTranslationCtx->Translate(fclOutput->GetOutput(), fclOptions.get(),
+                                                     fclInternalOptions.get(),
+                                                     nullptr, 0);
+
+        } else {
+            auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sourceCode.c_str(), sourceCode.size());
+            auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
+            auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), internalOptions.c_str(), internalOptions.size());
+            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(IGC::CodeType::llvmLl, IGC::CodeType::oclGenBin);
+            igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
         }
-
-        storeBinary(llvmBinary, llvmBinarySize, fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
-        updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
-
-        auto igcOutput = igcTranslationCtx->Translate(fclOutput->GetOutput(), fclOptions.get(),
-                                                      fclInternalOptions.get(),
-                                                      nullptr, 0);
         if (igcOutput == nullptr) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;
         }
-
         UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
         UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
         storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
@@ -448,6 +458,8 @@ int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
             argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-llvm_text")) {
             useLlvmText = true;
+        } else if (stringsAreEqual(argv[argIndex], "-llvm_input")) {
+            inputFileLlvm = true;
         } else if (stringsAreEqual(argv[argIndex], "-cpp_file")) {
             useCppFile = true;
         } else if ((stringsAreEqual(argv[argIndex], "-options")) &&
@@ -609,6 +621,7 @@ void OfflineCompiler::printUsage() {
     printf("                          will be placed.\n");
     printf("  -llvm_text              Readable LLVM text will be output in a .ll file instead of\n");
     printf("                          through the default lllvm binary (.bc) file.\n");
+    printf("  -llvm_input             Indicates input file is llvm source\n");
     printf("  -cpp_file               Cpp file with scheduler program binary will be generated.");
     printf("  -options <options>      Compiler options.\n");
     printf("  -options_name           Add suffix with compile options to filename\n");

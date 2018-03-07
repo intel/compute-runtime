@@ -505,4 +505,65 @@ TEST(OfflineCompilerTest, generateElfBinary) {
     EXPECT_NE(0u, mockOfflineCompiler->getElfBinarySize());
 }
 
+TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {
+    const char *argv[] = {
+        "cloc",
+        "-llvm_input"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm;
+    EXPECT_TRUE(llvmFileOption);
+}
+
+TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChangedThenLlvmInputFileIsFalse) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    bool llvmFileOption = mockOfflineCompiler->inputFileLlvm;
+    EXPECT_FALSE(llvmFileOption);
+}
+
+TEST(OfflineCompilerTest, givenLlvmInputFileAndLlvmInputFlagWhenBuildSourceCodeIsCalledThenGenBinaryIsProduced) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
+
+    std::string sipKernelFileName = "test_files/sip_dummy_kernel";
+
+    if (sizeof(uintptr_t) == 8) {
+        sipKernelFileName += "_64.ll";
+    } else {
+        sipKernelFileName += "_32.ll";
+    }
+
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        sipKernelFileName.c_str(),
+        "-llvm_input",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, mockOfflineCompiler->getGenBinary());
+    EXPECT_EQ(0u, mockOfflineCompiler->getGenBinarySize());
+
+    retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(nullptr, mockOfflineCompiler->getGenBinary());
+    EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
+}
 } // namespace OCLRT

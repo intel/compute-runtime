@@ -28,6 +28,8 @@ namespace OCLRT {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::inputFileLlvm;
+
     MockOfflineCompiler() : OfflineCompiler() {
     }
 
