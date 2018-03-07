@@ -444,6 +444,10 @@ int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
             (argIndex + 1 < numArgs)) {
             inputFile = argv[argIndex + 1];
             argIndex++;
+        } else if ((stringsAreEqual(argv[argIndex], "-output")) &&
+                   (argIndex + 1 < numArgs)) {
+            outputFile = argv[argIndex + 1];
+            argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-32")) {
             compile32 = true;
             internalOptions.append(" -m32 ");
@@ -615,6 +619,7 @@ void OfflineCompiler::printUsage() {
     printf("Compiles CL files into llvm (.bc or .ll), gen isa (.gen), and binary files (.bin)\n\n");
     printf("cloc -file <filename> -device <device_type> [-outdir <output_dir>]\n\n");
     printf("  -file <filename>        Indicates the CL kernel file to be compiled.\n");
+    printf("  -output <filename>      Indicates output files core name.\n");
     printf("  -device <device_type>   Indicates which device for which we will compile.\n");
     printf("                          <device_type> can be: %s\n", getDevicesTypes().c_str());
     printf("  -out_dir <output_dir>   Indicates the directory into which the compiled files\n");
@@ -718,8 +723,13 @@ bool OfflineCompiler::generateElfBinary() {
 // WriteOutAllFiles
 ////////////////////////////////////////////////////////////////////////////////
 void OfflineCompiler::writeOutAllFiles() {
+    std::string fileBase;
     std::string fileTrunk = getFileNameTrunk(inputFile);
-    std::string fileBase = fileTrunk + "_" + deviceName;
+    if (outputFile.empty()) {
+        fileBase = fileTrunk + "_" + deviceName;
+    } else {
+        fileBase = outputFile + "_" + deviceName;
+    }
 
     if (outputDirectory != "") {
         std::list<std::string> dirList;

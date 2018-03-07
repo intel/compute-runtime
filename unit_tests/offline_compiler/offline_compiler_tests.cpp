@@ -30,20 +30,29 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "gmock/gmock.h"
 
+#include <algorithm>
+
 #define ARRAY_COUNT(x) (sizeof(x) / sizeof(x[0]))
 
 extern Environment *gEnvironment;
 
 namespace OCLRT {
 
-bool compilerOutputExists(const std::string &fileName, const std::string &type) {
+std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
     std::string fName(fileName);
     fName.append("_");
     fName.append(gEnvironment->devicePrefix);
     fName.append(".");
     fName.append(type);
+    return fName;
+}
 
-    return fileExists(fName);
+bool compilerOutputExists(const std::string &fileName, const std::string &type) {
+    return fileExists(getCompilerOutputFileName(fileName, type));
+}
+
+void compilerOutputRemove(const std::string &fileName, const std::string &type) {
+    std::remove(getCompilerOutputFileName(fileName, type).c_str());
 }
 
 TEST_F(OfflineCompilerTests, GoodArgTest) {
@@ -565,5 +574,37 @@ TEST(OfflineCompilerTest, givenLlvmInputFileAndLlvmInputFlagWhenBuildSourceCodeI
 
     EXPECT_NE(nullptr, mockOfflineCompiler->getGenBinary());
     EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
+}
+
+TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-output",
+        "myOutputFileName",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
+
+    retVal = mockOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
+
+    compilerOutputRemove("myOutputFileName", "bc");
+    compilerOutputRemove("myOutputFileName", "bin");
+    compilerOutputRemove("myOutputFileName", "gen");
 }
 } // namespace OCLRT
