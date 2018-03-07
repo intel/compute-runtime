@@ -39,9 +39,12 @@ namespace Windows {
 decltype(&LoadLibraryExA) OsLibrary::loadLibraryExA = LoadLibraryExA;
 decltype(&GetModuleFileNameA) OsLibrary::getModuleFileNameA = GetModuleFileNameA;
 
+extern "C" IMAGE_DOS_HEADER __ImageBase;
+__inline HINSTANCE GetModuleHINSTANCE() { return (HINSTANCE)&__ImageBase; }
+
 HMODULE OsLibrary::loadDependency(const std::string &dependencyFileName) const {
     char dllPath[MAX_PATH];
-    DWORD length = getModuleFileNameA(GetModuleHandle(NULL), dllPath, MAX_PATH);
+    DWORD length = getModuleFileNameA(GetModuleHINSTANCE(), dllPath, MAX_PATH);
     for (DWORD idx = length; idx > 0; idx--) {
         if (dllPath[idx - 1] == '\\') {
             dllPath[idx] = '\0';
