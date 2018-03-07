@@ -47,4 +47,5 @@ set(IGDRCL_SRCS_tests_os_interface_linux
 if(UNIX)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
 endif()
+set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_os_interface_linux ${IGDRCL_SRCS_tests_os_interface_linux})
 add_subdirectories()

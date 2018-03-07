@@ -38,8 +38,9 @@ set(RUNTIME_SRCS_SHARINGS
   ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory.inl
 )
-
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SHARINGS})
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_SHARINGS ${RUNTIME_SRCS_SHARINGS})
+
 
 if(WIN32)
   target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows)

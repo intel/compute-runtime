@@ -48,3 +48,4 @@ set(IGDRCL_SRCS_tests_fixtures
   ${CMAKE_CURRENT_SOURCE_DIR}/two_walker_fixture.h
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_fixtures})
+set_property(GLOBAL PROPERTY IGDRCL_SRCS_tests_fixtures ${IGDRCL_SRCS_tests_fixtures})

@@ -21,7 +21,7 @@
  */
 
 #pragma once
-
+#include <cstdint>
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
