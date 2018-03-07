@@ -84,12 +84,18 @@ Image::Image(Context *context,
 
 void Image::transferData(void *dest, size_t destRowPitch, size_t destSlicePitch,
                          void *src, size_t srcRowPitch, size_t srcSlicePitch,
-                         std::array<size_t, 3> &copyRegion, std::array<size_t, 3> &copyOrigin) {
+                         std::array<size_t, 3> copyRegion, std::array<size_t, 3> copyOrigin) {
 
     size_t pixelSize = surfaceFormatInfo.ImageElementSizeInBytes;
     size_t lineWidth = copyRegion[0] * pixelSize;
 
     DBG_LOG(LogMemoryObject, __FUNCTION__, "memcpy dest:", dest, "sizeRowToCopy:", lineWidth, "src:", src);
+
+    if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+        // For 1DArray type, array region and origin are stored on 2nd position. For 2Darray its on 3rd position.
+        std::swap(copyOrigin[1], copyOrigin[2]);
+        std::swap(copyRegion[1], copyRegion[2]);
+    }
 
     for (size_t slice = copyOrigin[2]; slice < (copyOrigin[2] + copyRegion[2]); slice++) {
         auto srcSliceOffset = ptrOffset(src, srcSlicePitch * slice);
@@ -334,6 +340,11 @@ Image *Image::create(Context *context,
         if (transferNeeded) {
             std::array<size_t, 3> copyOrigin = {{0, 0, 0}};
             std::array<size_t, 3> copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
+            if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+                copyRegion = {{imageWidth, imageCount, 1}};
+            } else {
+                copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
+            }
 
             if (isTilingAllowed) {
                 auto cmdQ = context->getSpecialQueue();
@@ -1195,6 +1206,13 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     size_t rowPitch = mappingOnCpuAllowed() ? imageDesc.image_row_pitch : getHostPtrRowPitch();
     size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
 
-    return getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + rowPitch * origin[1] + slicePitch * origin[2];
+    size_t offset = getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0];
+    if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+        offset += slicePitch * origin[1];
+    } else {
+        offset += rowPitch * origin[1] + slicePitch * origin[2];
+    }
+
+    return offset;
 }
 } // namespace OCLRT

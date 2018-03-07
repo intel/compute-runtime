@@ -194,7 +194,7 @@ class Image : public MemObj {
 
     void transferData(void *dst, size_t dstRowPitch, size_t dstSlicePitch,
                       void *src, size_t srcRowPitch, size_t srcSlicePitch,
-                      std::array<size_t, 3> &copyRegion, std::array<size_t, 3> &copyOrigin);
+                      std::array<size_t, 3> copyRegion, std::array<size_t, 3> copyOrigin);
 
     cl_image_format imageFormat;
     cl_image_desc imageDesc;

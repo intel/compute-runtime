@@ -1027,6 +1027,19 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectVal
     EXPECT_EQ(expectedOffset, retOffset);
 }
 
+TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(&ctx));
+
+    MemObjOffsetArray origin = {{4, 5, 0}};
+
+    auto retOffset = image->calculateOffsetForMapping(origin);
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+                            image->getImageDesc().image_slice_pitch * origin[1];
+
+    EXPECT_EQ(expectedOffset, retOffset);
+}
+
 TEST(ImageTest, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorrectValue) {
     MockContext ctx;
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));

@@ -40,8 +40,6 @@ class ImageHostPtrTransferTests : public testing::Test {
         image.reset(ImageHelper<ImageUseHostPtr<ImageTraits>>::create(context.get()));
 
         imgDesc = &image->getImageDesc();
-        copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
-        copyRegion = copyOrigin;
 
         hostPtrSlicePitch = image->getHostPtrSlicePitch();
         hostPtrRowPitch = image->getHostPtrRowPitch();
@@ -50,7 +48,13 @@ class ImageHostPtrTransferTests : public testing::Test {
         pixelSize = image->getSurfaceFormatInfo().ImageElementSizeInBytes;
     }
 
-    void setExpectedData(uint8_t *dstPtr, size_t slicePitch, size_t rowPitch) {
+    void setExpectedData(uint8_t *dstPtr, size_t slicePitch, size_t rowPitch, std::array<size_t, 3> copyOrigin, std::array<size_t, 3> copyRegion) {
+        if (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+            // For 1DArray type, array region and origin are stored on 2nd position. For 2Darray its on 3rd position.
+            std::swap(copyOrigin[1], copyOrigin[2]);
+            std::swap(copyRegion[1], copyRegion[2]);
+        }
+
         for (size_t slice = copyOrigin[2]; slice < (copyOrigin[2] + copyRegion[2]); slice++) {
             auto sliceOffset = ptrOffset(dstPtr, slicePitch * slice);
             for (size_t height = copyOrigin[1]; height < (copyOrigin[1] + copyRegion[1]); height++) {
@@ -64,9 +68,6 @@ class ImageHostPtrTransferTests : public testing::Test {
     std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> image;
 
-    std::array<size_t, 3> copyRegion;
-    std::array<size_t, 3> copyOrigin;
-
     const cl_image_desc *imgDesc = nullptr;
     size_t hostPtrSlicePitch, hostPtrRowPitch, imageSlicePitch, imageRowPitch, pixelSize;
 };
@@ -77,12 +78,15 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferToHostPtrCalledThenCop
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
     EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
 
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
+    std::array<size_t, 3> copyRegion = copyOrigin;
+
     std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_depth]);
     memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_depth);
     memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_depth);
     memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_depth);
 
-    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch);
+    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch, copyOrigin, copyRegion);
 
     image->transferDataToHostPtr(copyRegion, copyOrigin);
 
@@ -95,12 +99,15 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferFromHostPtrCalledThenC
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
     EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
 
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_depth / 2}};
+    std::array<size_t, 3> copyRegion = copyOrigin;
+
     std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_depth]);
     memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_depth);
     memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_depth);
     memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_depth);
 
-    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch);
+    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch, copyOrigin, copyRegion);
 
     image->transferDataFromHostPtr(copyRegion, copyOrigin);
 
@@ -113,16 +120,19 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferToHostPtrCalledTh
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
     EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
 
-    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_depth]);
-    memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_depth);
-    memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_depth);
-    memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_depth);
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_array_size / 2}};
+    std::array<size_t, 3> copyRegion = copyOrigin;
 
-    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch);
+    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_array_size]);
+    memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_array_size);
+
+    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch, copyOrigin, copyRegion);
 
     image->transferDataToHostPtr(copyRegion, copyOrigin);
 
-    EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_depth) == 0);
+    EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_array_size) == 0);
 }
 
 TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
@@ -131,14 +141,51 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferFromHostPtrCalled
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
     EXPECT_NE(image->getCpuAddress(), image->getHostPtr());
 
-    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_depth]);
-    memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_depth);
-    memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_depth);
-    memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_depth);
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_height / 2, imgDesc->image_array_size / 2}};
+    std::array<size_t, 3> copyRegion = copyOrigin;
 
-    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch);
+    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_array_size]);
+    memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_array_size);
+    memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_array_size);
+
+    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch, copyOrigin, copyRegion);
 
     image->transferDataFromHostPtr(copyRegion, copyOrigin);
 
-    EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_depth) == 0);
+    EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_array_size) == 0);
+}
+
+TEST_F(ImageHostPtrTransferTests, given1dArrayImageWhenTransferToHostPtrCalledThenUseSecondCoordinateAsSlice) {
+    createImageAndSetTestParams<Image1dArrayDefaults>();
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 0}};
+    std::array<size_t, 3> copyRegion = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 1}};
+
+    std::unique_ptr<uint8_t> expectedHostPtr(new uint8_t[hostPtrSlicePitch * imgDesc->image_array_size]);
+    memset(image->getHostPtr(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(expectedHostPtr.get(), 0, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(image->getCpuAddress(), 123, imageSlicePitch * imgDesc->image_array_size);
+
+    setExpectedData(expectedHostPtr.get(), hostPtrSlicePitch, hostPtrRowPitch, copyOrigin, copyRegion);
+
+    image->transferDataToHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_array_size) == 0);
+}
+
+TEST_F(ImageHostPtrTransferTests, given1dArrayImageWhenTransferFromHostPtrCalledThenUseSecondCoordinateAsSlice) {
+    createImageAndSetTestParams<Image1dArrayDefaults>();
+    std::array<size_t, 3> copyOrigin = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 0}};
+    std::array<size_t, 3> copyRegion = {{imgDesc->image_width / 2, imgDesc->image_array_size / 2, 1}};
+
+    std::unique_ptr<uint8_t> expectedImageData(new uint8_t[imageSlicePitch * imgDesc->image_array_size]);
+    memset(image->getHostPtr(), 123, hostPtrSlicePitch * imgDesc->image_array_size);
+    memset(expectedImageData.get(), 0, imageSlicePitch * imgDesc->image_array_size);
+    memset(image->getCpuAddress(), 0, imageSlicePitch * imgDesc->image_array_size);
+
+    setExpectedData(expectedImageData.get(), imageSlicePitch, imageRowPitch, copyOrigin, copyRegion);
+
+    image->transferDataFromHostPtr(copyRegion, copyOrigin);
+
+    EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_array_size) == 0);
 }

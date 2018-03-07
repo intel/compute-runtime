@@ -24,6 +24,7 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/surface_formats.h"
+#include "unit_tests/fixtures/image_fixture.h"
 
 using namespace OCLRT;
 
@@ -122,6 +123,82 @@ TEST_F(clEnqueueMapImageTests, givenAnyZeroRegionParamWhenMapImageCalledThenRetu
 
     retVal = clReleaseMemObject(image);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clEnqueueMapImageTests, givenSecondOriginCoordinateAndNotAllowedImgTypeWhenMapCalledThenReturnError) {
+    size_t region[3] = {1, 1, 1};
+    size_t origin[3] = {0, 1, 0};
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    auto image1dBufferDesc = Image1dDefaults::imageDesc;
+    image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    image.reset(ImageHelper<Image1dDefaults>::create(pContext, &image1dBufferDesc));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(clEnqueueMapImageTests, givenThirdOriginCoordinateAndNotAllowedImgTypeWhenMapCalledThenReturnError) {
+    size_t region[3] = {1, 1, 1};
+    size_t origin[3] = {0, 0, 1};
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    image.reset(ImageHelper<Image2dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    image.reset(ImageHelper<Image1dArrayDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    auto image1dBufferDesc = Image1dDefaults::imageDesc;
+    image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    image.reset(ImageHelper<Image1dDefaults>::create(pContext, &image1dBufferDesc));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(clEnqueueMapImageTests, givenSecondRegionCoordinateAndNotAllowedImgTypeWhenMapCalledThenReturnError) {
+    size_t region[3] = {1, 2, 1};
+    size_t origin[3] = {0, 0, 0};
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    auto image1dBufferDesc = Image1dDefaults::imageDesc;
+    image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    image.reset(ImageHelper<Image1dDefaults>::create(pContext, &image1dBufferDesc));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+}
+
+TEST_F(clEnqueueMapImageTests, givenThirdRegionnCoordinateAndNotAllowedImgTypeWhenMapCalledThenReturnError) {
+    size_t region[3] = {1, 1, 2};
+    size_t origin[3] = {0, 0, 0};
+
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    image.reset(ImageHelper<Image2dDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    image.reset(ImageHelper<Image1dArrayDefaults>::create(pContext));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+
+    auto image1dBufferDesc = Image1dDefaults::imageDesc;
+    image1dBufferDesc.image_type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+    image.reset(ImageHelper<Image1dDefaults>::create(pContext, &image1dBufferDesc));
+    clEnqueueMapImage(pCommandQueue, image.get(), CL_TRUE, CL_MAP_READ, origin, region, 0, 0, 0, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
 struct clEnqueueMapImageYUVTests : public api_fixture,

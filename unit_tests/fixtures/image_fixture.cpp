@@ -26,8 +26,8 @@
 using OCLRT::MockContext;
 
 static const size_t imageWidth = 7;
-static const size_t imageHeight = 7;
-static const size_t imageDepth = 7;
+static const size_t imageHeight = 9;
+static const size_t imageDepth = 11;
 static const size_t imageArray = imageDepth;
 
 const cl_image_format Image1dDefaults::imageFormat = {
@@ -41,7 +41,7 @@ const cl_image_format LuminanceImage::imageFormat = {
 const cl_image_desc Image1dDefaults::imageDesc = {
     CL_MEM_OBJECT_IMAGE1D,
     imageWidth,
-    imageHeight,
+    1,
     1,
     1,
     0,

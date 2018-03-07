@@ -2436,6 +2436,19 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             break;
         }
 
+        auto imgType = pImage->getImageDesc().image_type;
+        if ((imgType == CL_MEM_OBJECT_IMAGE1D || imgType == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
+            (origin[1] > 0 || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
+
+        if ((imgType == CL_MEM_OBJECT_IMAGE2D || imgType == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
+            (origin[2] > 0 || region[2] > 1)) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
+
         retPtr = pCommandQueue->enqueueMapImage(
             pImage,
             blockingMap,

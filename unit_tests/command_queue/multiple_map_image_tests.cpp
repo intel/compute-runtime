@@ -221,7 +221,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPt
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{1, 0, 0}};
-    MemObjSizeArray region = {{3, 4, 1}};
+    MemObjSizeArray region = {{3, 1, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(1u, image->mapOperationsHandler.size());
@@ -242,7 +242,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDon
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{1, 0, 0}};
-    MemObjSizeArray region = {{3, 4, 1}};
+    MemObjSizeArray region = {{3, 1, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(1u, image->mapOperationsHandler.size());
@@ -265,7 +265,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrA
     cl_event clUnmapEvent = &unmapEvent;
 
     MemObjOffsetArray origin = {{1, 0, 0}};
-    MemObjSizeArray region = {{3, 4, 1}};
+    MemObjSizeArray region = {{3, 1, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_FALSE, CL_MAP_WRITE, &origin[0], &region[0], nullptr, nullptr, 1, &clMapEvent, nullptr, &retVal);
     mapEvent.setStatus(CL_COMPLETE);
     EXPECT_NE(nullptr, mappedPtr);
@@ -292,7 +292,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDontM
     cl_event clUnmapEvent = &unmapEvent;
 
     MemObjOffsetArray origin = {{1, 0, 0}};
-    MemObjSizeArray region = {{3, 4, 1}};
+    MemObjSizeArray region = {{3, 1, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_FALSE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 1, &clMapEvent, nullptr, &retVal);
     mapEvent.setStatus(CL_COMPLETE);
     EXPECT_NE(nullptr, mappedPtr);
@@ -379,7 +379,7 @@ HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenRet
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{1, 0, 0}};
-    MemObjSizeArray region = {{3, 4, 1}};
+    MemObjSizeArray region = {{3, 1, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
     EXPECT_EQ(CL_SUCCESS, retVal);
