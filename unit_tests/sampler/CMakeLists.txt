@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 -2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,9 +19,9 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_tests_sampler
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sampler_set_arg_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/get_sampler_info_tests.cpp"
-    PARENT_SCOPE
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/get_sampler_info_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_set_arg_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
 )
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sampler})

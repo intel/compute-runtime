@@ -115,24 +115,7 @@ endif(GTEST_FILTERING_PATTERN)
 
 
 set(IGDRCL_SRCS_tests
-  ${IGDRCL_SRCS_tests_helpers}
-  ${IGDRCL_SRCS_tests_instrumentation}
-  ${IGDRCL_SRCS_tests_indirect_heap}
-  ${IGDRCL_SRCS_tests_kernel}
-  ${IGDRCL_SRCS_tests_mem_obj}
-  ${IGDRCL_SRCS_tests_memory_manager}
   ${IGDRCL_SRCS_tests_os_interface}
-  ${IGDRCL_SRCS_tests_platform}
-  ${IGDRCL_SRCS_tests_preamble}
-  ${IGDRCL_SRCS_tests_preemption}
-  ${IGDRCL_SRCS_tests_profiling}
-  ${IGDRCL_SRCS_tests_program}
-  ${IGDRCL_SRCS_tests_sampler}
-  ${IGDRCL_SRCS_tests_scenarios}
-  ${IGDRCL_SRCS_tests_scheduler}
-  ${IGDRCL_SRCS_tests_sku_info}
-  ${IGDRCL_SRCS_tests_sharings}
-  ${IGDRCL_SRCS_tests_utilities}
 )
 
 if(NOT MSVC)

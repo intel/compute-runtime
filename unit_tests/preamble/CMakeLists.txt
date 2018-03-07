@@ -19,8 +19,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_tests_preamble
-    "${IGDRCL_SRCS_tests_preamble}"
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/preamble_fixture.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests.cpp"
-    PARENT_SCOPE)
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/preamble_fixture.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests.cpp
+)
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_preamble})

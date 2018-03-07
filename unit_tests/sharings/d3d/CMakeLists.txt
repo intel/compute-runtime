@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,9 +19,9 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(WIN32)
-    list(APPEND IGDRCL_SRCS_tests_sharings
-      "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-      "${CMAKE_CURRENT_SOURCE_DIR}/context_d3d_tests.cpp"
-    )
-    set(IGDRCL_SRCS_tests_sharings "${IGDRCL_SRCS_tests_sharings}" PARENT_SCOPE)
+  set(IGDRCL_SRCS_tests_sharings_d3d
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/context_d3d_tests.cpp
+  )
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sharings_d3d})
 endif(WIN32)

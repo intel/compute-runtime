@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,16 +18,10 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We are setting all of the source/OpenCL/tests/program files here and
-# sending the variable up to the parent scope
-
 set(IGDRCL_SRCS_tests_sharings
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sharing_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory_tests.cpp"
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/sharing_factory_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/sharing_tests.cpp
 )
-
-add_subdirectory(d3d)
-add_subdirectory(va)
-
-set(IGDRCL_SRCS_tests_sharings "${IGDRCL_SRCS_tests_sharings}" PARENT_SCOPE)
+target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_sharings})
+add_subdirectories()
