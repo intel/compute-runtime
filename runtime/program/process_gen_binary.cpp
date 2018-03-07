@@ -167,7 +167,6 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
     kernelInfo.kernelArgInfo.reserve(10);
     kernelInfo.patchInfo.kernelArgumentInfo.reserve(10);
     kernelInfo.patchInfo.dataParameterBuffers.reserve(20);
-    std::stringstream PatchTokens;
 
     DBG_LOG(LogPatchTokens, "\nPATCH_TOKENs for kernel", kernelInfo.name);
 
