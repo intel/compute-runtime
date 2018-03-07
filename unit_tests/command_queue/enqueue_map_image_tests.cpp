@@ -553,7 +553,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithouUsetHostPtrFlagWhenMappedOnCpuThen
     ASSERT_NE(nullptr, image);
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    size_t origin[] = {2, 1, 1};
+    size_t origin[] = {2, 0, 0};
     size_t region[] = {2, 1, 1};
     void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
@@ -581,7 +581,7 @@ HWTEST_F(EnqueueMapImageTest, givenImageWithUseHostPtrFlagWhenMappedOnCpuThenSet
     ASSERT_NE(nullptr, image);
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    size_t origin[] = {2, 1, 1};
+    size_t origin[] = {2, 0, 0};
     size_t region[] = {2, 1, 1};
     void *mappedPtr = clEnqueueMapImage(pCmdQ, image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, NULL, NULL, &retVal);
     EXPECT_NE(nullptr, mappedPtr);

@@ -132,7 +132,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 };
 
 HWTEST_F(MultipleMapImageTest, givenValidReadAndWriteImageWhenMappedOnGpuThenAddMappedPtrAndRemoveOnUnmap) {
-    auto image = createMockImage<Image2dDefaults, FamilyType>();
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
@@ -154,7 +154,7 @@ HWTEST_F(MultipleMapImageTest, givenValidReadAndWriteImageWhenMappedOnGpuThenAdd
 }
 
 HWTEST_F(MultipleMapImageTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMarker) {
-    auto image = createMockImage<Image2dDefaults, FamilyType>();
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
@@ -184,7 +184,7 @@ HWTEST_F(MultipleMapImageTest, givenNotMappedPtrWhenUnmapedOnGpuThenReturnError)
 }
 
 HWTEST_F(MultipleMapImageTest, givenErrorFromReadImageWhenMappedOnGpuThenDontAddMappedPtr) {
-    auto image = createMockImage<Image2dDefaults, FamilyType>();
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(image->mappingOnCpuAllowed());
     cmdQ->failOnReadImage = true;
@@ -198,7 +198,7 @@ HWTEST_F(MultipleMapImageTest, givenErrorFromReadImageWhenMappedOnGpuThenDontAdd
 }
 
 HWTEST_F(MultipleMapImageTest, givenErrorFromWriteImageWhenUnmappedOnGpuThenDontRemoveMappedPtr) {
-    auto image = createMockImage<Image2dDefaults, FamilyType>();
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(image->mappingOnCpuAllowed());
     cmdQ->failOnWriteImage = true;
@@ -220,7 +220,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenMappedOnCpuThenAddMappedPt
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjOffsetArray origin = {{1, 0, 0}};
     MemObjSizeArray region = {{3, 4, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
@@ -241,7 +241,7 @@ HWTEST_F(MultipleMapImageTest, givenUnblockedQueueWhenReadOnlyMappedOnCpuThenDon
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjOffsetArray origin = {{1, 0, 0}};
     MemObjSizeArray region = {{3, 4, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
@@ -264,7 +264,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedOnCpuThenAddMappedPtrA
     cl_event clMapEvent = &mapEvent;
     cl_event clUnmapEvent = &unmapEvent;
 
-    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjOffsetArray origin = {{1, 0, 0}};
     MemObjSizeArray region = {{3, 4, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_FALSE, CL_MAP_WRITE, &origin[0], &region[0], nullptr, nullptr, 1, &clMapEvent, nullptr, &retVal);
     mapEvent.setStatus(CL_COMPLETE);
@@ -291,7 +291,7 @@ HWTEST_F(MultipleMapImageTest, givenBlockedQueueWhenMappedReadOnlyOnCpuThenDontM
     cl_event clMapEvent = &mapEvent;
     cl_event clUnmapEvent = &unmapEvent;
 
-    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjOffsetArray origin = {{1, 0, 0}};
     MemObjSizeArray region = {{3, 4, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_FALSE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 1, &clMapEvent, nullptr, &retVal);
     mapEvent.setStatus(CL_COMPLETE);
@@ -355,7 +355,7 @@ HWTEST_F(MultipleMapImageTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrectP
 }
 
 HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingOnGpuForWriteThenReturnError) {
-    auto image = createMockImage<Image2dDefaults, FamilyType>();
+    auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
@@ -378,7 +378,7 @@ HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingOnCpuForWriteThenRet
     auto cmdQ = createMockCmdQ<FamilyType>();
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{1, 2, 1}};
+    MemObjOffsetArray origin = {{1, 0, 0}};
     MemObjSizeArray region = {{3, 4, 1}};
     void *mappedPtr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_READ, &origin[0], &region[0], nullptr, nullptr, 0, nullptr, nullptr, &retVal);
     EXPECT_NE(nullptr, mappedPtr);
