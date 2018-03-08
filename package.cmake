@@ -40,7 +40,7 @@ if(UNIX)
     ${IGDRCL_BINARY_DIR}/bin/libigdccl.so
     ${IGDRCL_BINARY_DIR}/bin/libigdfcl.so
     ${IGDRCL_BINARY_DIR}/bin/libiga64.so
-    ${IGDRCL_BINARY_DIR}/bin/libcommon_clang.so
+    ${IGDRCL_BINARY_DIR}/bin/lib${COMMON_CLANG_LIBRARY_NAME}.so
     DESTINATION ${NEO_BINARY_INSTALL_DIR}
     COMPONENT igdrcl
   )
