@@ -86,6 +86,8 @@ Device::Device(const HardwareInfo &hwInfo,
 }
 
 Device::~Device() {
+    BuiltIns::shutDown();
+    CompilerInterface::shutdown();
     DEBUG_BREAK_IF(nullptr == memoryManager);
     if (performanceCounters) {
         performanceCounters->shutdown();
@@ -105,8 +107,6 @@ Device::~Device() {
     tagAllocation = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
-    BuiltIns::shutDown();
-    CompilerInterface::shutdown();
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,

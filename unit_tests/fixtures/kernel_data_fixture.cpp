@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/fixtures/kernel_data_fixture.h"
 
 void KernelDataTest::buildAndDecode() {
@@ -122,5 +123,14 @@ void KernelDataTest::buildAndDecode() {
     }
     if (pPatchList != nullptr) {
         EXPECT_EQ(0, memcmp(pKernelInfo->heapInfo.pPatchList, pPatchList, patchListSize));
+    }
+    if (kernelHeapSize) {
+        auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
+        UNRECOVERABLE_IF(kernelAllocation == nullptr);
+        EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize);
+        auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
+        EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));
+    } else {
+        EXPECT_EQ(nullptr, pKernelInfo->getGraphicsAllocation());
     }
 }

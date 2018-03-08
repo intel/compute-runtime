@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +42,7 @@ class Kernel;
 struct KernelInfo;
 class DispatchInfo;
 struct KernelArgumentType;
+class GraphicsAllocation;
 
 extern std::unordered_map<std::string, uint32_t> accessQualifierMap;
 extern std::unordered_map<std::string, uint32_t> addressQualifierMap;
@@ -152,6 +153,7 @@ struct KernelInfo {
     void storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg);
     void storePatchToken(const SPatchString *pStringArg);
     void storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo);
+    GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
     cl_int resolveKernelInfo();
     void resizeKernelArgInfoAndRegisterParameter(uint32_t argCount) {
         if (kernelArgInfo.size() <= argCount) {
@@ -237,5 +239,6 @@ struct KernelInfo {
     uint32_t systemKernelOffset = 0;
     uint64_t kernelId = 0;
     bool isKernelHeapSubstituted = false;
+    GraphicsAllocation *kernelAllocation = nullptr;
 };
 } // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -67,6 +67,10 @@ class KernelDataTest : public testing::Test {
     }
 
     void TearDown() override {
+        if (pKernelInfo->kernelAllocation) {
+            pDevice->getMemoryManager()->freeGraphicsMemory(pKernelInfo->kernelAllocation);
+            const_cast<KernelInfo *>(pKernelInfo)->kernelAllocation = nullptr;
+        }
         delete pDevice;
         alignedFree(pKernelData);
     }

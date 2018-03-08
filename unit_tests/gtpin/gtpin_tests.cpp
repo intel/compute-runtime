@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1854,20 +1854,24 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 
         pProgram->storeGenBinary(&binary[0], binSize);
         retVal = pProgram->processGenBinary();
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        // Create kernels from program
-        cl_kernel kernels[2] = {0};
-        cl_uint numCreatedKernels = 0;
-        retVal = clCreateKernelsInProgram(pProgram, 0, &kernels[0], &numCreatedKernels);
-
-        if (nonfailingAllocation != failureIndex) {
-            EXPECT_EQ(nullptr, kernels[0]);
-            EXPECT_EQ(1u, numCreatedKernels);
+        if (retVal == CL_OUT_OF_HOST_MEMORY) {
+            auto nonFailingAlloc = nonfailingAllocation;
+            EXPECT_NE(nonFailingAlloc, failureIndex);
         } else {
-            EXPECT_NE(nullptr, kernels[0]);
-            EXPECT_EQ(1u, numCreatedKernels);
-            clReleaseKernel(kernels[0]);
+            EXPECT_EQ(CL_SUCCESS, retVal);
+            // Create kernels from program
+            cl_kernel kernels[2] = {0};
+            cl_uint numCreatedKernels = 0;
+            retVal = clCreateKernelsInProgram(pProgram, 0, &kernels[0], &numCreatedKernels);
+
+            if (nonfailingAllocation != failureIndex) {
+                EXPECT_EQ(nullptr, kernels[0]);
+                EXPECT_EQ(1u, numCreatedKernels);
+            } else {
+                EXPECT_NE(nullptr, kernels[0]);
+                EXPECT_EQ(1u, numCreatedKernels);
+                clReleaseKernel(kernels[0]);
+            }
         }
 
         clReleaseProgram(pProgram);

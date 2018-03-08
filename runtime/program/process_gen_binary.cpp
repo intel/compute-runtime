@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -795,6 +795,18 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
         }
     }
 
+    if (kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && this->pDevice) {
+        auto memoryManager = this->pDevice->getMemoryManager();
+        auto kernelIsaSize = kernelInfo.heapInfo.pKernelHeader->KernelHeapSize;
+        auto kernelAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, kernelIsaSize);
+        if (kernelAllocation) {
+            memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, kernelInfo.heapInfo.pKernelHeap, kernelIsaSize);
+            kernelInfo.kernelAllocation = kernelAllocation;
+        } else {
+            retVal = CL_OUT_OF_HOST_MEMORY;
+        }
+    }
+
     return retVal;
 }
 
@@ -923,9 +935,7 @@ cl_int Program::parseProgramScopePatchList() {
 cl_int Program::processGenBinary() {
     cl_int retVal = CL_SUCCESS;
 
-    for (auto &i : kernelInfoArray)
-        delete i;
-    kernelInfoArray.clear();
+    cleanCurrentKernelInfo();
 
     do {
         if (!genBinary || genBinarySize == 0) {

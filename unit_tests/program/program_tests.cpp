@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -601,10 +601,29 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_GlobalVariableTotalSize) {
     EXPECT_EQ(globalVarSize, 1024u);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Program::Create (from source)
-////////////////////////////////////////////////////////////////////////////////
-TEST_P(ProgramFromSourceTest, CreateWithSource_Simple) {}
+TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
+    cl_device_id device = pDevice;
+    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    auto kernelInfo = pProgram->getKernelInfo(size_t(0));
+
+    auto graphicsAllocation = kernelInfo->getGraphicsAllocation();
+    ASSERT_NE(nullptr, graphicsAllocation);
+    EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
+    EXPECT_EQ(graphicsAllocation->getUnderlyingBufferSize(), kernelInfo->heapInfo.pKernelHeader->KernelHeapSize);
+
+    auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
+    EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
+    EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.pKernelHeader->KernelHeapSize));
+    EXPECT_NE(0u, graphicsAllocation->gpuBaseAddress);
+}
+
+TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {
+    cl_device_id device = pDevice;
+    pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
+    EXPECT_EQ(1u, pProgram->getNumKernels());
+    pProgram->cleanCurrentKernelInfo();
+    EXPECT_EQ(0u, pProgram->getNumKernels());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Program::Build (source)
@@ -2562,7 +2581,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
     delete program;
 }
 
-TEST_F(ProgramTests, freeBlockPrivateSurfacesFreesGraphicsAllocationsFromBlockKernelManager) {
+TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledThenFreeGraphhicsAllocationsFromBlockKernelManagerIsCalled) {
     MockProgram *program = new MockProgram(pContext, false);
 
     uint32_t crossThreadOffsetBlock = 0;
@@ -2585,7 +2604,7 @@ TEST_F(ProgramTests, freeBlockPrivateSurfacesFreesGraphicsAllocationsFromBlockKe
 
     program->getBlockKernelManager()->pushPrivateSurface(privateSurface, 0);
 
-    program->freeBlockPrivateSurfaces();
+    program->freeBlockResources();
 
     delete privateSurfaceBlock;
     delete program;

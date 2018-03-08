@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -113,11 +113,9 @@ Program::~Program() {
     elfBinary = nullptr;
     elfBinarySize = 0;
 
-    for (auto &i : kernelInfoArray) {
-        delete i;
-    }
+    cleanCurrentKernelInfo();
 
-    freeBlockPrivateSurfaces();
+    freeBlockResources();
 
     delete blockKernelManager;
 
@@ -393,7 +391,7 @@ void Program::allocateBlockPrivateSurfaces() {
     }
 }
 
-void Program::freeBlockPrivateSurfaces() {
+void Program::freeBlockResources() {
     size_t blockCount = blockKernelManager->getCount();
 
     for (uint32_t i = 0; i < blockCount; i++) {
@@ -404,7 +402,22 @@ void Program::freeBlockPrivateSurfaces() {
             blockKernelManager->pushPrivateSurface(nullptr, i);
             getDevice(0).getMemoryManager()->freeGraphicsMemory(privateSurface);
         }
+        auto kernelInfo = blockKernelManager->getBlockKernelInfo(i);
+        DEBUG_BREAK_IF(!kernelInfo->kernelAllocation);
+        if (kernelInfo->kernelAllocation) {
+            getDevice(0).getMemoryManager()->freeGraphicsMemory(kernelInfo->kernelAllocation);
+        }
     }
+}
+
+void Program::cleanCurrentKernelInfo() {
+    for (auto &kernelInfo : kernelInfoArray) {
+        if (kernelInfo->kernelAllocation) {
+            this->pDevice->getMemoryManager()->freeGraphicsMemory(kernelInfo->kernelAllocation);
+        }
+        delete kernelInfo;
+    }
+    kernelInfoArray.clear();
 }
 
 void Program::updateNonUniformFlag() {
