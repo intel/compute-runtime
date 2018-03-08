@@ -39,14 +39,14 @@ target_include_directories(elflib_tests PRIVATE
 )
 
 if(UNIX)
-  target_link_libraries(elflib_tests pthread dl)
+  target_link_libraries(elflib_tests ${IGDRCL_EXTRA_LIBS})
 endif()
 
 add_custom_target(run_elflib_tests ALL DEPENDS elflib_tests)
 add_custom_command(
-    TARGET run_elflib_tests
-    POST_BUILD
-    COMMAND elflib_tests ${IGDRCL_TESTS_LISTENER_OPTION}
+  TARGET run_elflib_tests
+  POST_BUILD
+  COMMAND elflib_tests ${IGDRCL_TESTS_LISTENER_OPTION}
 )
 add_dependencies(run_unit_tests run_elflib_tests)
 

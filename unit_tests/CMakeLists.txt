@@ -20,6 +20,9 @@
 
 project(igdrcl_tests)
 
+set(TEST_PROJECTS_FOLDER "opencl runtime")
+set(PLATFORM_SPECIFIC_TARGETS_FOLDER "${TEST_PROJECTS_FOLDER}/test platforms")
+
 add_custom_target(unit_tests)
 
 set(IGDRCL_SRCS_tests_local
@@ -121,7 +124,6 @@ if(NEO_DRIVER_VERSION)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps_tests.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
 endif(NEO_DRIVER_VERSION)
 
-link_directories(${GMM_LIB_PATHS})
 if(CLELF_LIB_DIR)
   link_directories(${CLELF_LIB_DIR})
 endif(CLELF_LIB_DIR)
@@ -177,20 +179,15 @@ endif()
 set(BUILT_IN_KERNEL_DIR "${IGDRCL_SOURCE_DIR}/runtime/built_ins")
 
 target_include_directories(igdrcl_tests PRIVATE
-  ${GMM_INCLUDE_PATHS}
-  ${UMKM_SHAREDDATA_INCLUDE_PATHS}
   ${INSTRUMENTATION_INCLUDE_PATH}
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
 )
 
+target_link_libraries (igdrcl_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
 if(MSVC)
-  target_include_directories(igdrcl_tests PUBLIC
-    ${WDK_INCLUDE_PATHS}
-  )
   message(STATUS "TargetDir is: ${TargetDir}")
-  target_link_libraries (igdrcl_tests gtest gmock Ws2_32.lib)
 else()
   add_executable(igdrcl_linux
     ${IGDRCL_SRCS_linux_tests}
@@ -207,9 +204,8 @@ else()
     ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   )
-  target_link_libraries(igdrcl_linux ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks dl pthread gtest gmock)
-  target_link_libraries(igdrcl_linux_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks dl pthread gtest gmock)
-  target_link_libraries(igdrcl_tests dl pthread gtest gmock)
+  target_link_libraries(igdrcl_linux ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gtest gmock)
+  target_link_libraries(igdrcl_linux_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gtest gmock)
 
   set_property(TARGET igdrcl_linux_dll_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
   set_property(TARGET igdrcl_linux APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
@@ -253,7 +249,7 @@ function(neo_copy_test_files target gen)
     COMMAND WORKING_DIRECTORY ${TargetDir}
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "opencl runtime/${gen}")
+  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${gen}")
 endfunction()
 
 add_dependencies(unit_tests
@@ -286,16 +282,14 @@ else (MSVC)
   endif(PRE_ULT_COMMAND)
 endif (MSVC)
 
-create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)
-
-set_target_properties(igdrcl_tests PROPERTIES FOLDER "opencl runtime")
+set_target_properties(igdrcl_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
 if(NOT MSVC)
   set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
 
-set_target_properties(unit_tests PROPERTIES FOLDER "opencl runtime")
-set_target_properties(run_unit_tests PROPERTIES FOLDER "opencl runtime")
+set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
+set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 target_compile_definitions(igdrcl_tests PUBLIC ${TESTED_GEN_FLAGS_DEFINITONS})
 
@@ -488,7 +482,7 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
   add_custom_target(run_${product}_unit_tests ALL DEPENDS unit_tests)
   neo_copy_test_files(copy_test_files_${product} ${product})
   add_dependencies(unit_tests copy_test_files_${product})
-  set_target_properties(run_${product}_unit_tests PROPERTIES FOLDER "opencl runtime/${product}")
+  set_target_properties(run_${product}_unit_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
   add_custom_command(
     TARGET run_${product}_unit_tests
     POST_BUILD
@@ -561,3 +555,4 @@ add_subdirectory(elflib)
 add_subdirectory(mt_tests)
 add_subdirectory(aub_tests)
 add_subdirectory(tbx)
+create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)

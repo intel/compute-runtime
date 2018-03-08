@@ -84,12 +84,14 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
 )
 
 if(WIN32)
+  set(IGDRCL_EXTRA_LIBS Ws2_32)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     ${WDK_INCLUDE_PATHS}
     os_interface/windows
   )
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PRIVATE OGL=1)
 else()
+  set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     os_interface/linux
     ${LIBDRM_DIR}/include
@@ -118,7 +120,6 @@ list(APPEND LIB_FLAGS_DEFINITIONS -DCIF_HEADERS_ONLY_BUILD ${SUPPORTED_GEN_FLAGS
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC ${LIB_FLAGS_DEFINITIONS})
 
-set(IGDRCL_LIB_FLAGS_DEFINITIONS ${LIB_FLAGS_DEFINITIONS} PARENT_SCOPE)
 set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 set_property(TARGET ${NEO_STATIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
@@ -151,7 +152,7 @@ if(${GENERATE_EXECUTABLE})
     target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
   endif()
 
-  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME})
+  target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} ${IGDRCL_EXTRA_LIBS})
 
   target_include_directories(${NEO_DYNAMIC_LIB_NAME} BEFORE PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
@@ -159,12 +160,11 @@ if(${GENERATE_EXECUTABLE})
   )
 
   if(WIN32)
-    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} ${NEO_STATIC_LIB_NAME} dxgi Ws2_32.lib)
+    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} dxgi)
   else()
     target_include_directories(${NEO_DYNAMIC_LIB_NAME} PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/devices${BRANCH_DIR_SUFFIX}
     )
-    target_link_libraries(${NEO_DYNAMIC_LIB_NAME} dl pthread)
     set_property(TARGET ${NEO_DYNAMIC_LIB_NAME}
       APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/dll/linux/ocl.exports"
     )
@@ -198,3 +198,5 @@ if(UNIX AND NOT (TARGET clang-tidy))
     WORKING_DIRECTORY ${IGDRCL_SOURCE_DIR}
   )
 endif()
+
+set(IGDRCL_EXTRA_LIBS ${IGDRCL_EXTRA_LIBS} PARENT_SCOPE)
