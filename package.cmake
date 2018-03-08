@@ -35,12 +35,13 @@ if(UNIX)
   set(NEO_BINARY_INSTALL_DIR /opt/intel/opencl)
   set(CMAKE_INSTALL_PREFIX ${NEO_BINARY_INSTALL_DIR})
 
+  foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+    list(APPEND IGC_TARGET_FILES $<TARGET_FILE:${TARGET_tmp}>)
+  endforeach()
+
   install(FILES
     ${IGDRCL_BINARY_DIR}/bin/libigdrcl.so
-    ${IGDRCL_BINARY_DIR}/bin/libigdccl.so
-    ${IGDRCL_BINARY_DIR}/bin/libigdfcl.so
-    ${IGDRCL_BINARY_DIR}/bin/libiga64.so
-    ${IGDRCL_BINARY_DIR}/bin/libcommon_clang.so
+    ${IGC_TARGET_FILES}
     DESTINATION ${NEO_BINARY_INSTALL_DIR}
     COMPONENT igdrcl
   )
