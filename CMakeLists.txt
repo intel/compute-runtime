@@ -509,10 +509,6 @@ add_subdirectory(elf)
 generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
 generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
 
-if(EXISTS ../icd)
-	add_subdirectory(../icd ${IGDRCL_BINARY_DIR}/icd)
-endif(EXISTS ../icd)
-
 if(TARGET OpenCL)
 	target_include_directories(OpenCL PRIVATE ${KHRONOS_HEADERS_DIR})
 endif()
