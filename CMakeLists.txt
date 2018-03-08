@@ -72,6 +72,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # we force using response files
 set(CMAKE_NINJA_FORCE_RESPONSE_FILE 1)
 
+set(COMMON_CLANG_LIBRARY_NAME "opencl_clang")
+
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
 if(MSVC)
