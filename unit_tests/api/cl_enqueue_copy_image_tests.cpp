@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -170,7 +170,7 @@ TEST_F(clEnqueueCopyImageTests, returnSuccess) {
     EXPECT_NE(nullptr, srcImage);
     EXPECT_NE(nullptr, dstImage);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     auto retVal = clEnqueueCopyImage(
         pCommandQueue,
         srcImage,
@@ -210,7 +210,7 @@ TEST_F(clEnqueueCopyImageYUVTests, returnSuccess) {
     EXPECT_NE(nullptr, srcImage);
     EXPECT_NE(nullptr, dstImage);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     auto retVal = clEnqueueCopyImage(
         pCommandQueue,
         srcImage,

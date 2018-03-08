@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 -2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -111,7 +111,7 @@ TEST_F(clEnqueueCopyImageToBufferTests, success) {
     EXPECT_NE(nullptr, srcImage);
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<BufferUseHostPtr<>>::create(pContext));
     size_t srcOrigin[] = {0, 0, 0};
-    size_t region[] = {10, 10, 0};
+    size_t region[] = {10, 10, 1};
 
     auto retVal = clEnqueueCopyImageToBuffer(
         pCommandQueue,
@@ -143,7 +143,7 @@ TEST_F(clEnqueueCopyImageToBufferYUVTests, returnSuccess) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, srcImage);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     auto retVal = clEnqueueCopyImageToBuffer(
         pCommandQueue,
         srcImage,

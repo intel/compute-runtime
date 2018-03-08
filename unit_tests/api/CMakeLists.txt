@@ -51,6 +51,7 @@ set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_copy_image_to_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_fill_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_fill_image_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_map_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_map_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_enqueue_marker_tests.cpp

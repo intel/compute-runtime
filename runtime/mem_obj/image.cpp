@@ -1215,4 +1215,22 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
 
     return offset;
 }
+
+bool Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_mem_object_type &imgType) {
+    if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
+        return false;
+    }
+
+    if ((imgType == CL_MEM_OBJECT_IMAGE1D || imgType == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
+        (origin[1] > 0 || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
+        return false;
+    }
+
+    if ((imgType == CL_MEM_OBJECT_IMAGE2D || imgType == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
+        (origin[2] > 0 || region[2] > 1)) {
+        return false;
+    }
+
+    return true;
+}
 } // namespace OCLRT

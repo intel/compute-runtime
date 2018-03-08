@@ -167,6 +167,7 @@ class Image : public MemObj {
     void setMipLevel(int mipLevelNew) { this->mipLevel = mipLevelNew; }
 
     static const SurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
+    static bool validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_mem_object_type &imgType);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }

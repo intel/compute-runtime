@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -107,7 +107,7 @@ TEST_F(clEnqueueReadImageTests, returnSuccess) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     auto retVal = clEnqueueReadImage(
         pCommandQueue,
         image,
@@ -139,7 +139,7 @@ TEST_F(clEnqueueReadImageYUV_, returnSuccess) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, image);
     const size_t origin[] = {2, 2, 0};
-    const size_t region[] = {2, 2, 0};
+    const size_t region[] = {2, 2, 1};
     auto retVal = clEnqueueReadImage(
         pCommandQueue,
         image,
