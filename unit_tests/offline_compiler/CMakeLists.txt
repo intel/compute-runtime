@@ -24,10 +24,8 @@ set(IGDRCL_SRCS_cloc
   ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
 )
 
-link_directories(${GMM_LIB_PATHS})
-
 set(IGDRCL_SRCS_offline_compiler_mock
-  mock/mock_offline_compiler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
 )
 
 set(IGDRCL_SRCS_offline_compiler_tests
@@ -43,8 +41,6 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
   ${IGDRCL_SRCS_cloc}
   ${IGDRCL_SRCS_offline_compiler_mock}
-  ${IGDRCL_SRCS_offline_compiler_tests_linux}
-  ${IGDRCL_SRCS_offline_compiler_tests_windows}
   ${CLOC_SRCS_LIB}
 )
 
@@ -53,41 +49,22 @@ link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
 target_include_directories(cloc_tests PRIVATE
-  ${CLOC_INCLUDES}
+  $<TARGET_PROPERTY:cloc,INCLUDE_DIRECTORIES>
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
-  ${GMM_INCLUDE_PATHS}
 )
-target_compile_definitions(cloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
-
-if(IGC_OCL_ADAPTOR_DIR) # IGC/AdaptorOCL
-  target_include_directories(cloc_tests PRIVATE "${IGC_OCL_ADAPTOR_DIR}")
-endif(IGC_OCL_ADAPTOR_DIR)
-
-if(CIF_BASE_DIR)
-  target_include_directories(cloc_tests PRIVATE "${CIF_BASE_DIR}")
-endif(CIF_BASE_DIR)
-
-add_definitions(${CLOC_LIB_FLAGS_DEFINITIONS})
+target_compile_definitions(cloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:cloc,INTERFACE_COMPILE_DEFINITIONS>)
 
 target_link_libraries(cloc_tests igdrcl_mocks gtest elflib)
 
 if(UNIX)
   target_link_libraries(cloc_tests dl pthread)
-  target_include_directories(cloc_tests PRIVATE
-    ${GMM_SOURCE_DIR}/inc
-    ${GMM_SOURCE_DIR}/inc/common
-  )
-endif()
-if(WIN32)
-  target_link_libraries(cloc_tests)
-  target_include_directories(cloc_tests PRIVATE ${UMKM_SHAREDDATA_INCLUDE_PATHS})
 endif()
 
-create_project_source_tree(cloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})
-
-set_target_properties(cloc_tests PROPERTIES FOLDER "offline_compiler")
-set_property(TARGET cloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
+get_property(CLOC_FOLDER TARGET cloc PROPERTY FOLDER)
+get_property(CLOC_COMPILE_FLAGS TARGET cloc PROPERTY COMPILE_FLAGS)
+set_property(TARGET cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
+set_property(TARGET cloc_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${CLOC_COMPILE_FLAGS})
 
 string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_DEFAULT_DEVICE)
 
@@ -96,9 +73,10 @@ add_custom_target(run_cloc_tests ALL
   DEPENDS copy_test_files_${CLOC_DEFAULT_DEVICE}
   DEPENDS test_kernels_${CLOC_DEFAULT_DEVICE}
 )
-set_target_properties(run_cloc_tests PROPERTIES FOLDER "offline_compiler")
 
-if(MSVC)
+set_property(TARGET run_cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
+
+if(WIN32)
   add_custom_command(
     TARGET run_cloc_tests
     POST_BUILD
@@ -124,3 +102,4 @@ else()
     WORKING_DIRECTORY ${TargetDir}
   )
 endif()
+create_project_source_tree(cloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})

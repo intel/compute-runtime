@@ -472,7 +472,7 @@ else()
 endif(MSVC)
 
 add_subdirectory(offline_compiler ${IGDRCL_BUILD_DIR}/offline_compiler)
-target_compile_definitions(cloc PUBLIC MOCKABLE_VIRTUAL=)
+target_compile_definitions(cloc PRIVATE MOCKABLE_VIRTUAL=)
 
 macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
 	set(NEO_STATIC_LIB_NAME ${LIB_NAME})

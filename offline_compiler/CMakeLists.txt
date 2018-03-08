@@ -34,19 +34,17 @@ set(CLOC_SRCS_LIB
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
 )
 
-if (WIN32)
-  list (APPEND CLOC_SRCS_LIB
+if(WIN32)
+  list(APPEND CLOC_SRCS_LIB
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/os_library.cpp
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/options.cpp
   )
-endif (WIN32)
-
-if (UNIX)
-  list (APPEND CLOC_SRCS_LIB
+else()
+  list(APPEND CLOC_SRCS_LIB
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/os_library.cpp
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/options.cpp
   )
-endif (UNIX)
+endif()
 
 set(CLOC_LIB_FLAGS_DEFINITIONS
   -DCIF_HEADERS_ONLY_BUILD
@@ -56,7 +54,7 @@ set(OPTIONAL_RUNTIME_GENX_FILES
   hw_info.cpp
 )
 
-foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
+foreach(GEN_NUM RANGE ${MAX_GEN})
   GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
     foreach(SRC_IT ${OPTIONAL_RUNTIME_GENX_FILES})
@@ -69,13 +67,13 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
     GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_NUM} SUPPORTED_GENX_PLATFORMS)
     foreach(PLATFORM_IT ${SUPPORTED_GENX_PLATFORMS})
       string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list (APPEND CLOC_SRCS_LIB
+      list(APPEND CLOC_SRCS_LIB
         ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/hw_info_${PLATFORM_IT_LOWER}.cpp
         ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/enable_${PLATFORM_IT_LOWER}.cpp
-    )
-    endforeach(PLATFORM_IT)
-  endif(${GENX_HAS_PLATFORMS})
-endforeach(GEN_NUM)
+      )
+    endforeach()
+  endif()
+endforeach()
 
 set(CLOC_SRCS
   ${CLOC_SRCS_LIB}
@@ -85,15 +83,9 @@ set(CLOC_SRCS
 add_executable(cloc ${CLOC_SRCS})
 create_project_source_tree(cloc ${IGDRCL_SOURCE_DIR}/runtime)
 
-if(IGC_OCL_ADAPTOR_DIR) # IGC/AdaptorOCL
-  target_include_directories(cloc PUBLIC "${IGC_OCL_ADAPTOR_DIR}")
-endif(IGC_OCL_ADAPTOR_DIR)
-
-if(CIF_BASE_DIR)
-  target_include_directories(cloc PUBLIC "${CIF_BASE_DIR}")
-endif(CIF_BASE_DIR)
-
 set(CLOC_INCLUDES
+  ${IGC_OCL_ADAPTOR_DIR}
+  ${CIF_BASE_DIR}
   ${HW_SRC_INCLUDE_PATH}
   ${UMKM_SHAREDDATA_INCLUDE_PATHS}
   ${KHRONOS_HEADERS_DIR}
@@ -102,13 +94,12 @@ set(CLOC_INCLUDES
 )
 
 target_include_directories(cloc BEFORE PRIVATE ${CLOC_INCLUDES})
-set(CLOC_INCLUDES ${CLOC_INCLUDES} PARENT_SCOPE)
 
 target_compile_definitions(cloc PUBLIC ${CLOC_LIB_FLAGS_DEFINITIONS} ${SUPPORTED_GEN_FLAGS_DEFINITONS} DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 
 if(UNIX)
   target_link_libraries(cloc dl pthread)
-endif(UNIX)
+endif()
 
 target_link_libraries(cloc elflib)
 
@@ -124,7 +115,6 @@ foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
     PRE_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${TARGET_tmp}> $<TARGET_FILE_DIR:cloc>
 )
-endforeach(TARGET_tmp)
+endforeach()
 
-SET(CLOC_SRCS_LIB ${CLOC_SRCS_LIB} PARENT_SCOPE)
-SET(CLOC_LIB_FLAGS_DEFINITIONS ${CLOC_LIB_FLAGS_DEFINITIONS} PARENT_SCOPE)
+set(CLOC_SRCS_LIB ${CLOC_SRCS_LIB} PARENT_SCOPE)
