@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,8 @@
 
 #include "runtime/built_ins/sip.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/ptr_math.h"
+#include "runtime/program/program.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
 
@@ -75,5 +77,13 @@ const char *getSipLlSrc(const Device &device) {
 SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
     : type(type) {
     program.reset(sipProgram);
+}
+const char *SipKernel::getBinary() const {
+    auto kernelInfo = program->getKernelInfo(size_t{0});
+    return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));
+}
+size_t SipKernel::getBinarySize() const {
+    auto kernelInfo = program->getKernelInfo(size_t{0});
+    return kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - kernelInfo->systemKernelOffset;
 }
 }

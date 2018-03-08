@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,12 +24,11 @@
 
 #include <cinttypes>
 #include <memory>
-#include "runtime/helpers/ptr_math.h"
-#include "runtime/program/program.h"
 
 namespace OCLRT {
 
 class Device;
+class Program;
 
 enum class SipKernelType : std::uint32_t {
     Csr = 0,
@@ -50,15 +49,9 @@ class SipKernel {
     SipKernel(SipKernel &&) = default;
     SipKernel &operator=(SipKernel &&) = default;
 
-    const char *getBinary() const {
-        auto kernelInfo = program->getKernelInfo(size_t{0});
-        return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));
-    }
+    const char *getBinary() const;
 
-    size_t getBinarySize() const {
-        auto kernelInfo = program->getKernelInfo(size_t{0});
-        return kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - kernelInfo->systemKernelOffset;
-    }
+    size_t getBinarySize() const;
 
     SipKernelType getType() const {
         return type;
