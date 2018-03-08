@@ -470,6 +470,10 @@ int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
                    (argIndex + 1 < numArgs)) {
             options = argv[argIndex + 1];
             argIndex++;
+        } else if ((stringsAreEqual(argv[argIndex], "-internal_options")) &&
+                   (argIndex + 1 < numArgs)) {
+            internalOptions.append(argv[argIndex + 1]);
+            argIndex++;
         } else if (stringsAreEqual(argv[argIndex], "-options_name")) {
             useOptionsSuffix = true;
         } else if ((stringsAreEqual(argv[argIndex], "-out_dir")) &&
@@ -618,22 +622,23 @@ void OfflineCompiler::printUsage() {
 
     printf("Compiles CL files into llvm (.bc or .ll), gen isa (.gen), and binary files (.bin)\n\n");
     printf("cloc -file <filename> -device <device_type> [-outdir <output_dir>]\n\n");
-    printf("  -file <filename>        Indicates the CL kernel file to be compiled.\n");
-    printf("  -output <filename>      Indicates output files core name.\n");
-    printf("  -device <device_type>   Indicates which device for which we will compile.\n");
-    printf("                          <device_type> can be: %s\n", getDevicesTypes().c_str());
-    printf("  -out_dir <output_dir>   Indicates the directory into which the compiled files\n");
-    printf("                          will be placed.\n");
-    printf("  -llvm_text              Readable LLVM text will be output in a .ll file instead of\n");
-    printf("                          through the default lllvm binary (.bc) file.\n");
-    printf("  -llvm_input             Indicates input file is llvm source\n");
-    printf("  -cpp_file               Cpp file with scheduler program binary will be generated.");
-    printf("  -options <options>      Compiler options.\n");
-    printf("  -options_name           Add suffix with compile options to filename\n");
-    printf("  -32                     Force compile to 32-bit binary.\n");
-    printf("  -64                     Force compile to 64-bit binary.\n");
-    printf("  -q                      Be more quiet. print only warnings and errors.\n");
-    printf("  -?                      Print this usage message.\n");
+    printf("  -file <filename>             Indicates the CL kernel file to be compiled.\n");
+    printf("  -output <filename>           Indicates output files core name.\n");
+    printf("  -device <device_type>        Indicates which device for which we will compile.\n");
+    printf("                               <device_type> can be: %s\n", getDevicesTypes().c_str());
+    printf("  -out_dir <output_dir>        Indicates the directory into which the compiled files\n");
+    printf("                               will be placed.\n");
+    printf("  -llvm_text                   Readable LLVM text will be output in a .ll file instead of\n");
+    printf("                               through the default lllvm binary (.bc) file.\n");
+    printf("  -llvm_input                  Indicates input file is llvm source\n");
+    printf("  -cpp_file                    Cpp file with scheduler program binary will be generated.");
+    printf("  -options <options>           Compiler options.\n");
+    printf("  -internal_options <options>  Compiler internal options.\n");
+    printf("  -options_name                Add suffix with compile options to filename\n");
+    printf("  -32                          Force compile to 32-bit binary.\n");
+    printf("  -64                          Force compile to 64-bit binary.\n");
+    printf("  -q                           Be more quiet. print only warnings and errors.\n");
+    printf("  -?                           Print this usage message.\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////

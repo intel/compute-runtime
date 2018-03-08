@@ -607,4 +607,24 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     compilerOutputRemove("myOutputFileName", "bin");
     compilerOutputRemove("myOutputFileName", "gen");
 }
+
+TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreAppendedToInternalOptionsString) {
+    const char *argv[] = {
+        "cloc",
+        "-internal_options",
+        "myInternalOptions"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("myInternalOptions")));
+}
+
 } // namespace OCLRT
