@@ -18,19 +18,34 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(IGDRCL_SRCS_tests_os_interface_base
+set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/32bit_memory_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_factory_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_mock.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_neo_create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/drm_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_linux.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_library_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_gen_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_lin.cpp
 )
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_base})
+if(UNIX)
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_linux})
+endif()
 add_subdirectories()

@@ -113,11 +113,6 @@ if(GTEST_FILTERING_PATTERN)
   message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
 endif(GTEST_FILTERING_PATTERN)
 
-
-set(IGDRCL_SRCS_tests
-  ${IGDRCL_SRCS_tests_os_interface}
-)
-
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif (NOT MSVC)
