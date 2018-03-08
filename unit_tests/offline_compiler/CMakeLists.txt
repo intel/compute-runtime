@@ -99,11 +99,6 @@ add_custom_target(run_cloc_tests ALL
 set_target_properties(run_cloc_tests PROPERTIES FOLDER "offline_compiler")
 
 if(MSVC)
-  #####################
-  # MSVC / Windows
-  #####################
-  set( TargetDir $<TARGET_FILE_DIR:cloc_tests> )
-
   add_custom_command(
     TARGET run_cloc_tests
     POST_BUILD
@@ -112,15 +107,10 @@ if(MSVC)
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.gen
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.bin
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${CLOC_DEFAULT_DEVICE}/offline_compiler_test
-    COMMAND echo cd ${TargetDir}
-    COMMAND cd ${TargetDir}
     COMMAND cloc_tests --device ${CLOC_DEFAULT_DEVICE}
+    WORKING_DIRECTORY ${TargetDir}
   )
 else()
-  #####################
-  # Linux
-  #####################
-  set( TargetDir ${CMAKE_RUNTIME_OUTPUT_DIRECTORY} )
   add_custom_command(
     TARGET run_cloc_tests
     POST_BUILD
