@@ -20,21 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-R"===(
-target datalayout = "e-p:64:64:64"
-target triple = "spir64"
-define void @f() {
-    ret void
-}
-!opencl.compiler.options = !{!0}
-!opencl.kernels = !{!1}
-!0 = !{}
-!1 = !{void()* @f, !2, !3, !4, !5, !6, !7}
-!2 = !{!"kernel_arg_addr_space"}
-!3 = !{!"kernel_arg_access_qual"}
-!4 = !{!"kernel_arg_type"}
-!5 = !{!"kernel_arg_type_qual"}
-!6 = !{!"kernel_arg_base_type"}
-!7 = !{!"kernel_arg_name"}
+#pragma once
+#include <string>
 
-)==="
+namespace OCLRT {
+struct CompilerOptions {
+    static const char *debugKernelEnable;
+};
+} // namespace OCLRT

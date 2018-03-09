@@ -413,6 +413,11 @@ void KernelInfo::storePatchToken(const SPatchKernelAttributesInfo *pKernelAttrib
     }
 }
 
+void KernelInfo::storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface) {
+    usesSsh |= true;
+    patchInfo.pAllocateSystemThreadSurface = pSystemThreadSurface;
+}
+
 const char *KernelInfo::queryPrintfString(uint32_t index) const {
     auto printfInfo = patchInfo.stringDataMap.find(index);
     return printfInfo == patchInfo.stringDataMap.end() ? nullptr : printfInfo->second.pStringData;

@@ -21,6 +21,7 @@
  */
 #include "runtime/kernel/kernel.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/compiler_interface/compiler_options.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -33,6 +34,7 @@
 #include "runtime/program/create.inl"
 #include "program_tests.h"
 #include "unit_tests/fixtures/program_fixture.inl"
+#include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
@@ -2928,4 +2930,34 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
     EXPECT_EQ(dummyDevice, pProgram.getDevicePtr());
     pProgram.SetDevice(nullptr);
     EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+}
+
+TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
+    MockProgram program(pContext, false);
+    EXPECT_FALSE(program.isKernelDebugEnabled());
+}
+
+TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramHasKernelDebugEnabled) {
+    MockProgram program(pContext, false);
+    program.enableKernelDebug();
+    EXPECT_TRUE(program.isKernelDebugEnabled());
+}
+
+TEST_P(ProgramFromSourceTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
+    pProgram->enableKernelDebug();
+    cl_device_id device = pPlatform->getDevice(0);
+    std::string receivedInternalOptions;
+
+    auto debugVars = OCLRT::getFclDebugVars();
+    debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+    gEnvironment->fclPushDebugVars(debugVars);
+
+    cl_int retVal = pProgram->compile(1, &device, nullptr,
+                                      0, nullptr, nullptr,
+                                      nullptr,
+                                      nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
+    gEnvironment->fclPopDebugVars();
 }

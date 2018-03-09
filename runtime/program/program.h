@@ -235,6 +235,10 @@ class Program : public BaseObject<_cl_program> {
         return programOptionVersion;
     }
 
+    void enableKernelDebug() {
+        kernelDebugEnabled = true;
+    }
+
     static bool isValidLlvmBinary(const void *pBinary, size_t binarySize);
     static bool isValidSpirvBinary(const void *pBinary, size_t binarySize);
 
@@ -275,6 +279,10 @@ class Program : public BaseObject<_cl_program> {
 
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
+
+    bool isKernelDebugEnabled() {
+        return kernelDebugEnabled;
+    }
 
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;
@@ -326,7 +334,7 @@ class Program : public BaseObject<_cl_program> {
     cl_uint                   numDevices;
 
     bool                      isBuiltIn;
-
+    bool                      kernelDebugEnabled = false;
     friend class OfflineCompiler;
     // clang-format on
 };

@@ -1233,3 +1233,22 @@ TEST_F(KernelDataTest, PATCH_TOKEN_STATE_SIP) {
 
     EXPECT_EQ_VAL(token.SystemKernelOffset, pKernelInfo->systemKernelOffset);
 }
+
+TEST_F(KernelDataTest, PATCH_TOKEN_ALLOCATE_SIP_SURFACE) {
+    SPatchAllocateSystemThreadSurface token;
+    token.Token = PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
+    token.Size = static_cast<uint32_t>(sizeof(SPatchAllocateSystemThreadSurface));
+    token.Offset = 32;
+    token.BTI = 0;
+    token.PerThreadSystemThreadSurfaceSize = 0x10000;
+
+    pPatchList = &token;
+    patchListSize = token.Size;
+
+    buildAndDecode();
+
+    EXPECT_EQ(0u, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->BTI);
+    EXPECT_EQ(token.Offset, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Offset);
+    EXPECT_EQ(token.Token, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->Token);
+    EXPECT_EQ(token.PerThreadSystemThreadSurfaceSize, pKernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+}

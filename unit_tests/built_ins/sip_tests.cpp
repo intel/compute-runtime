@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,12 +23,29 @@
 #include "gtest/gtest.h"
 #include "test.h"
 
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
+#include "unit_tests/global_environment.h"
+#include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/mocks/mock_program.h"
 
 using namespace OCLRT;
+
+namespace SipKernelTests {
+std::string getDebugSipKernelNameWithBitnessAndProductSuffix(std::string &base, const char *product) {
+    std::string fullName = base + std::string("_");
+
+    if (sizeof(uintptr_t) == 8) {
+        fullName.append("64_");
+    } else {
+        fullName.append("32_");
+    }
+
+    fullName.append(product);
+    return fullName;
+}
 
 TEST(Sip, WhenSipKernelIsInvalidThenEmptyCompilerInternalOptionsAreReturned) {
     const char *opt = getSipKernelCompilerInternalOptions(SipKernelType::COUNT);
@@ -93,6 +110,10 @@ TEST(Sip, getType) {
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
 }
 
+TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsReturned) {
+    EXPECT_EQ(0x49c000u, SipKernel::maxDbgSurfaceSize);
+}
+
 TEST(DebugSip, WhenRequestingDbgCsrSipKernelThenProperCompilerInternalOptionsAreReturned) {
     const char *opt = getSipKernelCompilerInternalOptions(SipKernelType::DbgCsr);
     ASSERT_NE(nullptr, opt);
@@ -104,3 +125,27 @@ TEST(DebugSip, WhenRequestingDbgCsrWithLocalMemorySipKernelThenProperCompilerInt
     ASSERT_NE(nullptr, opt);
     EXPECT_STREQ("-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0", opt);
 }
+
+TEST(DebugSip, givenDebugCsrSipKernelWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {
+    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    MockCompilerDebugVars igcDebugVars;
+
+    auto product = mockDevice->getProductAbbrev();
+    std::string name = "sip_dummy_kernel_debug";
+    std::string builtInFileRoot = testFiles + getDebugSipKernelNameWithBitnessAndProductSuffix(name, product);
+    std::string builtInGenFile = builtInFileRoot;
+    builtInGenFile.append(".gen");
+
+    igcDebugVars.fileName = builtInGenFile;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto &builtins = BuiltIns::getInstance();
+    auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
+
+    EXPECT_EQ((int32_t)0, sipKernel.getDebugSurfaceBti());
+    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, sipKernel.getDebugSurfaceSize());
+
+    gEnvironment->igcPopDebugVars();
+}
+} // namespace SipKernelTests

@@ -153,6 +153,7 @@ struct KernelInfo {
     void storePatchToken(const SPatchAllocateStatelessDefaultDeviceQueueSurface *pStatelessDefaultDeviceQueueSurfaceArg);
     void storePatchToken(const SPatchString *pStringArg);
     void storePatchToken(const SPatchKernelAttributesInfo *pKernelAttributesInfo);
+    void storePatchToken(const SPatchAllocateSystemThreadSurface *pSystemThreadSurface);
     GraphicsAllocation *getGraphicsAllocation() const { return this->kernelAllocation; }
     cl_int resolveKernelInfo();
     void resizeKernelArgInfoAndRegisterParameter(uint32_t argCount) {

@@ -30,6 +30,8 @@
 
 namespace OCLRT {
 
+const size_t SipKernel::maxDbgSurfaceSize = 0x49c000; // proper value should be taken from compiler when it's ready
+
 const char *getSipKernelCompilerInternalOptions(SipKernelType kernel) {
     switch (kernel) {
     default:
@@ -78,6 +80,10 @@ const char *getSipLlSrc(const Device &device) {
 SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
     : type(type) {
     program.reset(sipProgram);
+    if (type == SipKernelType::DbgCsr || type == SipKernelType::DbgCsrLocal) {
+        debugSurfaceBti = 0;
+        debugSurfaceSize = SipKernel::maxDbgSurfaceSize;
+    }
 }
 
 GraphicsAllocation *SipKernel::getSipAllocation() const {

@@ -395,6 +395,10 @@ TEST(OfflineCompilerTest, getStringWithinDelimiters) {
 
     auto dst = mockOfflineCompiler->getStringWithinDelimiters(src);
 
+    size_t size = dst.size();
+    char nullChar = '\0';
+    EXPECT_EQ(nullChar, dst[size - 1]);
+
     // expect that pattern was not found
     EXPECT_EQ(std::string::npos, dst.find("R\"===("));
     EXPECT_EQ(std::string::npos, dst.find(")===\""));

@@ -24,6 +24,8 @@ set(RUNTIME_SRCS_COMPILER_INTERFACE
   ${CMAKE_CURRENT_SOURCE_DIR}/binary_cache.h
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/compiler_interface.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/create_main.cpp
 )

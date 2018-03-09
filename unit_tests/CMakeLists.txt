@@ -384,6 +384,45 @@ function(neo_gen_kernel_with_options target gen filepath)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${gen}")
 endfunction()
 
+function(neo_gen_kernel_from_ll target gen filepath output_name compile_options)
+  get_filename_component(filename ${filepath} NAME)
+  get_filename_component(basename ${filepath} NAME_WE)
+
+  set(outputdir "${TargetDir}/${gen}/test_files/${NEO_ARCH}")
+  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
+
+  set(results)
+  set(outputpath_base "${outputdir}/${output_name}_${gen}")
+  set(output_files
+    ${outputpath_base}.bin
+    ${outputpath_base}.gen
+  )
+
+  string(CONCAT compile_options \" ${compile_options} \" )
+  set(cmd "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input")
+
+  if(MSVC)
+    add_custom_command(
+        OUTPUT ${output_files}
+        COMMAND cloc -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
+        WORKING_DIRECTORY ${workdir}
+        DEPENDS ${filepath} cloc
+    )
+  else()
+    add_custom_command(
+        OUTPUT ${output_files}
+        COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
+        WORKING_DIRECTORY ${workdir}
+        DEPENDS ${filepath} cloc
+    )
+  endif()
+
+  list(APPEND results ${output_files})
+
+  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${gen}")
+endfunction()
+
 set(TEST_KERNEL test_files/CopyBuffer_simd8.cl)
 
 set(TEST_KERNEL_options
@@ -399,6 +438,14 @@ set(TEST_KERNEL_2_0_options
 
 set(TEST_KERNEL_2_0
   test_files/simple_block_kernel.cl
+)
+
+set(TEST_KERNEL_SIP_DEBUG_options
+  "-cl-include-sip-kernel-debug -cl-include-sip-csr -cl-set-bti:0"
+)
+
+set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
+  "-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0"
 )
 
 set(TEST_KERNELS
@@ -464,8 +511,32 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNELS})
         neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
+
         add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
         add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
+
+        set(sip_kernel_file_name)
+        set(sip_kernel_output_file)
+        set(sip_debug_kernel_output_file)
+        set(sip_debug_local_kernel_output_file)
+        if(${NEO_BITS} EQUAL "32")
+          list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_32.ll")
+          list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_32")
+          list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_32")
+        else()
+          list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_64.ll")
+          list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_64")
+          list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_64")
+        endif()
+
+        if("gen${GEN_NUM}" STREQUAL "gen9" )
+          neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
+          add_dependencies(unit_tests test_kernel_sip_debug_local_${PLATFORM_IT_LOWER})
+        endif()
+
+        neo_gen_kernel_from_ll(test_kernel_sip_debug_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
+        add_dependencies(unit_tests test_kernel_sip_debug_${PLATFORM_IT_LOWER})
+
         if(${PLATFORM_SUPPORTS_2_0})
           neo_gen_kernel_with_options(test_kernel_2_0_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
           add_dependencies(unit_tests test_kernel_2_0_${PLATFORM_IT_LOWER})

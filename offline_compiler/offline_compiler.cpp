@@ -265,7 +265,9 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
     start += strlen("R\"===(");
     size_t size = stop - start;
 
-    std::string dst(src, start, size);
+    std::string dst(src, start, size + 1);
+    dst[size] = '\0'; // put null char at the end
+
     return dst;
 }
 

@@ -36,4 +36,5 @@ define void @f()  {
 !5 = !{!"kernel_arg_type_qual"}
 !6 = !{!"kernel_arg_base_type"}
 !7 = !{!"kernel_arg_name"}
+
 )==="

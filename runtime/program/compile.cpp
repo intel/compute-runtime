@@ -23,6 +23,7 @@
 #include "config.h"
 #include "elf/writer.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/platform/platform.h"
 #include "runtime/helpers/validators.h"
 #include "program.h"
@@ -151,6 +152,11 @@ cl_int Program::compile(
 
         // set parameters for compilation
         internalOptions.append(platform()->peekCompilerExtensions());
+
+        if (isKernelDebugEnabled()) {
+            internalOptions.append(CompilerOptions::debugKernelEnable);
+        }
+
         inputArgs.pInput = pCompileData;
         inputArgs.InputSize = (uint32_t)compileDataSize;
         inputArgs.pOptions = options.c_str();

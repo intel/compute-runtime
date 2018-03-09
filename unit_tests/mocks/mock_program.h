@@ -35,6 +35,8 @@ class GraphicsAllocation;
 ////////////////////////////////////////////////////////////////////////////////
 class MockProgram : public Program {
   public:
+    using Program::isKernelDebugEnabled;
+
     MockProgram() : Program() {}
     MockProgram(Context *context, bool isBuiltinKernel) : Program(context, isBuiltinKernel) {}
     ~MockProgram() {

@@ -755,6 +755,17 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                     "\n  .SystemKernelOffset", pPatchToken->SystemKernelOffset);
         } break;
 
+        case PATCH_TOKEN_ALLOCATE_SIP_SURFACE: {
+            auto *pPatchToken = reinterpret_cast<const SPatchAllocateSystemThreadSurface *>(pPatch);
+            kernelInfo.storePatchToken(pPatchToken);
+            DBG_LOG(LogPatchTokens,
+                    "\n.PATCH_TOKEN_ALLOCATE_SIP_SURFACE", pPatch->Token,
+                    "\n  .Size", pPatch->Size,
+                    "\n  .BTI", pPatchToken->BTI,
+                    "\n  .Offset", pPatchToken->Offset,
+                    "\n  .PerThreadSystemThreadSurfaceSize", pPatchToken->PerThreadSystemThreadSurfaceSize);
+        } break;
+
         default:
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, " Program::parsePatchList. Unknown Patch Token: %d\n", pPatch->Token);
             if (false == isSafeToSkipUnhandledToken(pPatch->Token)) {

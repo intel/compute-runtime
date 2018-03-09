@@ -56,6 +56,7 @@ using iOpenCL::SPatchAllocateStatelessDefaultDeviceQueueSurface;
 using iOpenCL::SPatchString;
 using iOpenCL::SPatchGtpinFreeGRFInfo;
 using iOpenCL::SPatchStateSIP;
+using iOpenCL::SPatchAllocateSystemThreadSurface;
 
 typedef struct TagPrintfStringInfo {
     size_t SizeInBytes;
@@ -86,6 +87,7 @@ struct PatchInfo {
     const SPatchAllocateStatelessPrintfSurface *pAllocateStatelessPrintfSurface = nullptr;
     const SPatchAllocateStatelessEventPoolSurface *pAllocateStatelessEventPoolSurface = nullptr;
     const SPatchAllocateStatelessDefaultDeviceQueueSurface *pAllocateStatelessDefaultDeviceQueueSurface = nullptr;
+    const SPatchAllocateSystemThreadSurface *pAllocateSystemThreadSurface = nullptr;
     ::std::map<uint32_t, PrintfStringInfo> stringDataMap;
     ::std::vector<const SPatchKernelArgumentInfo *> kernelArgumentInfo;
 
