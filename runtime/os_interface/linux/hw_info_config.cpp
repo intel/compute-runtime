@@ -131,6 +131,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     pSysInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
 
     drm->obtainCoherencyDisablePatchActive();
+    drm->obtainDataPortCoherencyPatchActive();
     pSkuTable->ftrSVM = drm->is48BitAddressRangeSupported();
 
     int maxGpuFreq = 0;

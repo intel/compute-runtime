@@ -26,6 +26,7 @@
 #include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 
 #include "runtime/os_interface/os_interface.h"
 #include <fstream>
@@ -178,6 +179,50 @@ TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
     pDrm->StoredPPGTT = 2;
     EXPECT_FALSE(pDrm->is48BitAddressRangeSupported());
     delete pDrm;
+}
+
+ACTION_P2(saveGetParamData, saveParamPtr, forceReturnValuePtr) {
+    auto getParamArg = static_cast<drm_i915_getparam_t *>(arg1);
+    *saveParamPtr = getParamArg->param;
+    *getParamArg->value = forceReturnValuePtr;
+}
+struct DrmDataPortCoherencyTests : public ::testing::Test {
+    struct MyMockDrm : public Drm2 {
+        MyMockDrm() : Drm2(){};
+        MOCK_METHOD2(ioctl, int(unsigned long request, void *arg));
+    } drm;
+
+    void setupExpectCall(int expectedRetVal, int expectedGetParamValue) {
+        using namespace ::testing;
+        auto saveAndReturnAction = DoAll(saveGetParamData(&receivedGetParamType, expectedGetParamValue),
+                                         Return(expectedRetVal));
+        EXPECT_CALL(drm, ioctl(DRM_IOCTL_I915_GETPARAM, _)).Times(1).WillOnce(saveAndReturnAction);
+    }
+    int receivedGetParamType = 0;
+};
+
+TEST_F(DrmDataPortCoherencyTests, givenDisabledPatchWhenAskedToObtainDataPortCoherencyPatchThenReturnFlase) {
+    setupExpectCall(1, 0); // return error == 1, dont care about assigned feature value
+    drm.obtainDataPortCoherencyPatchActive();
+
+    EXPECT_EQ(receivedGetParamType, I915_PARAM_HAS_EXEC_DATA_PORT_COHERENCY);
+    EXPECT_FALSE(drm.peekDataPortCoherencyPatchActive());
+}
+
+TEST_F(DrmDataPortCoherencyTests, givenEnabledPatchAndDisabledFeatureWhenAskedToObtainDataPortCoherencyPatchThenReturnFlase) {
+    setupExpectCall(0, 0); // return success(0), set disabled feature (0)
+    drm.obtainDataPortCoherencyPatchActive();
+
+    EXPECT_EQ(receivedGetParamType, I915_PARAM_HAS_EXEC_DATA_PORT_COHERENCY);
+    EXPECT_FALSE(drm.peekDataPortCoherencyPatchActive());
+}
+
+TEST_F(DrmDataPortCoherencyTests, givenEnabledPatchAndEnabledFeatureWhenAskedToObtainDataPortCoherencyPatchThenReturnTrue) {
+    setupExpectCall(0, 1); // return success(0), set enabled feature (1)
+    drm.obtainDataPortCoherencyPatchActive();
+
+    EXPECT_EQ(receivedGetParamType, I915_PARAM_HAS_EXEC_DATA_PORT_COHERENCY);
+    EXPECT_TRUE(drm.peekDataPortCoherencyPatchActive());
 }
 
 #if defined(I915_PARAM_HAS_PREEMPTION)

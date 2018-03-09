@@ -124,6 +124,12 @@ void Drm::obtainCoherencyDisablePatchActive() {
     coherencyDisablePatchActive = (ret == 0) && (value != 0);
 }
 
+void Drm::obtainDataPortCoherencyPatchActive() {
+    int value = 0;
+    auto ret = getParamIoctl(I915_PARAM_HAS_EXEC_DATA_PORT_COHERENCY, &value);
+    dataPortCoherencyPatchActive = (ret == 0) && (value != 0);
+}
+
 std::string Drm::getSysFsPciPath(int deviceID) {
     std::string nullPath;
     std::string sysFsPciDirectory = Os::sysFsPciPath;

@@ -132,7 +132,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
 
 void BufferObject::fillExecObject(drm_i915_gem_exec_object2 &execObject) {
     execObject.handle = this->handle;
-    execObject.relocation_count = 0;     //No relocations, we are SoftPinning
+    execObject.relocation_count = 0; //No relocations, we are SoftPinning
     execObject.relocs_ptr = 0ul;
     execObject.alignment = 0;
     execObject.offset = this->isSoftpin ? this->offset64 : 0;
@@ -167,7 +167,9 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.flags = flags;
 
     if (drm->peekCoherencyDisablePatchActive() && !requiresCoherency) {
-        execbuf.flags = execbuf.flags | I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+        execbuf.flags |= (uint64_t)I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+    } else if (drm->peekDataPortCoherencyPatchActive() && requiresCoherency) {
+        execbuf.flags |= (uint64_t)I915_EXEC_DATA_PORT_COHERENT;
     }
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
