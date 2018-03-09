@@ -52,7 +52,7 @@ class MockBuiltins : public OCLRT::BuiltIns {
         return BuiltIns::pInstance;
     }
 
-    const OCLRT::SipKernel &getSipKernel(OCLRT::SipKernelType type, const OCLRT::Device &device) override {
+    const OCLRT::SipKernel &getSipKernel(OCLRT::SipKernelType type, OCLRT::Device &device) override {
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];
         }

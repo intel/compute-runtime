@@ -807,6 +807,8 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
         }
     }
 
+    DEBUG_BREAK_IF(kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && !this->pDevice);
+
     return retVal;
 }
 

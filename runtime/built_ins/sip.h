@@ -29,6 +29,7 @@ namespace OCLRT {
 
 class Device;
 class Program;
+class GraphicsAllocation;
 
 enum class SipKernelType : std::uint32_t {
     Csr = 0,
@@ -56,6 +57,8 @@ class SipKernel {
     SipKernelType getType() const {
         return type;
     }
+
+    GraphicsAllocation *getSipAllocation() const;
 
   protected:
     SipKernelType type = SipKernelType::COUNT;

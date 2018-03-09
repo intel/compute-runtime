@@ -41,9 +41,9 @@ class PreemptionHelper {
     static bool allowMidThreadPreemption(Kernel *kernel, Device &device);
     static void adjustDefaultPreemptionMode(RuntimeCapabilityTable &deviceCapabilities, bool allowMidThread, bool allowThreadGroup, bool allowMidBatch);
 
-    static size_t getInstructionHeapSipKernelReservedSize(const Device &device);
-    static void initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, const Device &device);
-    static bool isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, const Device &device);
+    static size_t getInstructionHeapSipKernelReservedSize(Device &device);
+    static void initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, Device &device);
+    static bool isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, Device &device);
 
     template <typename GfxFamily>
     static size_t getRequiredPreambleSize(const Device &device);
@@ -56,7 +56,7 @@ class PreemptionHelper {
 
     template <typename GfxFamily>
     static void programCmdStream(LinearStream &cmdStream, PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
-                                 GraphicsAllocation *preemptionCsr, const LinearStream &ih, const Device &device);
+                                 GraphicsAllocation *preemptionCsr, const LinearStream &ih, Device &device);
 
     template <typename GfxFamily>
     static size_t getPreemptionWaCsSize(const Device &device);

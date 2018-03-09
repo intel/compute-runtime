@@ -1500,3 +1500,9 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     EXPECT_EQ(SipKernelType::Csr, mockCompilerInterface.requestedSipKernel);
     p->release();
 }
+
+TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
+    const SipKernel &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    auto sipAllocation = sipKern.getSipAllocation();
+    EXPECT_NE(nullptr, sipAllocation);
+}

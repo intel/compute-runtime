@@ -104,7 +104,7 @@ void PreemptionHelper::adjustDefaultPreemptionMode(RuntimeCapabilityTable &devic
     }
 }
 
-size_t PreemptionHelper::getInstructionHeapSipKernelReservedSize(const Device &device) {
+size_t PreemptionHelper::getInstructionHeapSipKernelReservedSize(Device &device) {
     if (device.getPreemptionMode() != PreemptionMode::MidThread) {
         return 0;
     }
@@ -112,7 +112,7 @@ size_t PreemptionHelper::getInstructionHeapSipKernelReservedSize(const Device &d
     return BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device).getBinarySize();
 }
 
-void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, const Device &device) {
+void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, Device &device) {
     if (device.getPreemptionMode() != PreemptionMode::MidThread) {
         return;
     }
@@ -128,7 +128,7 @@ void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStr
 }
 
 // verify that SIP CSR kernel resides at the begining of the InstructionHeap
-bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, const Device &device) {
+bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, Device &device) {
     const SipKernel &sip = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device);
     if (ih.getUsed() < sip.getBinarySize()) {
         return false;

@@ -256,16 +256,18 @@ TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSi
     {
         BuiltIns::shutDown();
 
-        MockBuiltins mockBuiltins;
-        EXPECT_EQ(nullptr, mockBuiltins.peekCurrentInstance());
-        mockBuiltins.overrideGlobalBuiltins();
-        EXPECT_EQ(&mockBuiltins, mockBuiltins.peekCurrentInstance());
-        EXPECT_FALSE(mockBuiltins.getSipKernelCalled);
+        std::unique_ptr<MockBuiltins> mockBuiltins(new MockBuiltins);
+        EXPECT_EQ(nullptr, mockBuiltins->peekCurrentInstance());
+        mockBuiltins->overrideGlobalBuiltins();
+        EXPECT_EQ(mockBuiltins.get(), mockBuiltins->peekCurrentInstance());
+        EXPECT_FALSE(mockBuiltins->getSipKernelCalled);
 
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
         auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
-        EXPECT_TRUE(mockBuiltins.getSipKernelCalled);
-        mockBuiltins.restoreGlobalBuiltins();
+        EXPECT_TRUE(mockBuiltins->getSipKernelCalled);
+        mockBuiltins->restoreGlobalBuiltins();
+        //make sure to release builtins prior to device as they use device
+        mockBuiltins.reset();
     }
 }
 

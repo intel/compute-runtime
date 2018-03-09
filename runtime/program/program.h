@@ -165,6 +165,8 @@ class Program : public BaseObject<_cl_program> {
         return *pDevice;
     }
 
+    void setDevice(Device *device) { this->pDevice = device; }
+
     cl_uint getNumDevices() const {
         return 1;
     }

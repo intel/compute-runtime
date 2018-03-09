@@ -26,6 +26,7 @@
 #include "runtime/program/program.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
 
@@ -78,6 +79,11 @@ SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
     : type(type) {
     program.reset(sipProgram);
 }
+
+GraphicsAllocation *SipKernel::getSipAllocation() const {
+    return program->getKernelInfo(size_t{0})->getGraphicsAllocation();
+}
+
 const char *SipKernel::getBinary() const {
     auto kernelInfo = program->getKernelInfo(size_t{0});
     return reinterpret_cast<const char *>(ptrOffset(kernelInfo->heapInfo.pKernelHeap, kernelInfo->systemKernelOffset));

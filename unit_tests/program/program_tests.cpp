@@ -2919,3 +2919,13 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelT
     EXPECT_EQ(1u, program.getBlockKernelManager()->getCount());
     EXPECT_EQ(0, strcmp("subgroup_kernel_dispatch_0", program.getBlockKernelManager()->getBlockKernelInfo(0)->name.c_str()));
 }
+
+TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet) {
+    MockProgram pProgram(nullptr, false);
+    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    auto dummyDevice = (Device *)0x1337;
+    pProgram.SetDevice(dummyDevice);
+    EXPECT_EQ(dummyDevice, pProgram.getDevicePtr());
+    pProgram.SetDevice(nullptr);
+    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+}

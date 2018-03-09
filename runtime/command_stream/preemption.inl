@@ -95,7 +95,7 @@ template <typename GfxFamily>
 void PreemptionHelper::programCmdStream(LinearStream &cmdStream,
                                         PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
                                         GraphicsAllocation *preemptionCsr,
-                                        const LinearStream &ih, const Device &device) {
+                                        const LinearStream &ih, Device &device) {
     if (oldPreemptionMode == newPreemptionMode) {
         DEBUG_BREAK_IF((newPreemptionMode == PreemptionMode::MidThread) && (false == isValidInstructionHeapForMidThreadPreemption(ih, device)));
         return;

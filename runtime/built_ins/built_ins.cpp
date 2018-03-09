@@ -111,7 +111,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     return *static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
 }
 
-const SipKernel &BuiltIns::getSipKernel(SipKernelType type, const Device &device) {
+const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
     uint32_t kernelId = static_cast<uint32_t>(type);
     UNRECOVERABLE_IF(kernelId >= static_cast<uint32_t>(SipKernelType::COUNT));
     auto &sipBuiltIn = this->sipKernels[kernelId];
@@ -134,6 +134,8 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, const Device &device
                                                     &retVal);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         UNRECOVERABLE_IF(program == nullptr);
+
+        program->setDevice(&device);
 
         retVal = program->processGenBinary();
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);

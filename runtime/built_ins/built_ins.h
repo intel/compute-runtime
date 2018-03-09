@@ -196,7 +196,7 @@ class BuiltIns {
 
     SchedulerKernel &getSchedulerKernel(Context &context);
 
-    MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, const Device &device);
+    MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
 
     BuiltinsLib &getBuiltinsLib() {
         DEBUG_BREAK_IF(!builtinsLib.get());

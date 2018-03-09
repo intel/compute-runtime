@@ -106,6 +106,8 @@ class MockProgram : public Program {
         allowNonUniform = allow;
     }
 
+    Device *getDevicePtr() { return this->pDevice; }
+
     bool contextSet = false;
 };
 
