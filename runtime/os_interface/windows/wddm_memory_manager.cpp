@@ -278,8 +278,6 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     releaseResidencyLock();
 
-    UNRECOVERABLE_IF(gfxAllocation->taskCount != ObjectNotUsed && this->device && this->device->peekCommandStreamReceiver() && gfxAllocation->taskCount > *this->device->getCommandStreamReceiver().getTagAddress());
-
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {
             auto status = wddm->updateAuxTable(input->gpuPtr, input->gmm, false);
