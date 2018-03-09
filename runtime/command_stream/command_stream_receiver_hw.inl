@@ -454,8 +454,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             }
 
             //make sure we flush DC
-            ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
-
+            if (epiloguePipeControlLocation) {
+                ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
+            }
             auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit);
 
             //after flush task level is closed

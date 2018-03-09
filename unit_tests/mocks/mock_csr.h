@@ -200,6 +200,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::tagAddress;
     std::vector<char> instructionHeapReserveredData;
+    int *flushBatchedSubmissionsCallCounter = nullptr;
 
     ~MockCommandStreamReceiver() {
     }
@@ -217,6 +218,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         DispatchFlags &dispatchFlags) override;
 
     void flushBatchedSubmissions() override {
+        if (flushBatchedSubmissionsCallCounter) {
+            (*flushBatchedSubmissionsCallCounter)++;
+        }
     }
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override {

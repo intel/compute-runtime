@@ -107,6 +107,7 @@ struct UltCommandStreamReceiverTest
     }
 
     void TearDown() override {
+        pDevice->getCommandStreamReceiver().flushBatchedSubmissions();
         delete dsh.getGraphicsAllocation();
         delete ih.getGraphicsAllocation();
         delete ioh.getGraphicsAllocation();

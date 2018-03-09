@@ -36,36 +36,66 @@ struct OOQTaskTypedTests : public HelloWorldTest<OOQFixtureFactory> {
 
 TYPED_TEST_CASE_P(OOQTaskTypedTests);
 
-TYPED_TEST_P(OOQTaskTypedTests, doesntChangeTaskLevel) {
+bool isBlockingCall(unsigned int cmdType) {
+    if (cmdType == CL_COMMAND_WRITE_BUFFER ||
+        cmdType == CL_COMMAND_READ_BUFFER ||
+        cmdType == CL_COMMAND_WRITE_IMAGE ||
+        cmdType == CL_COMMAND_READ_IMAGE) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+TYPED_TEST_P(OOQTaskTypedTests, givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange) {
+    auto &commandStreamReceiver = this->pDevice->getCommandStreamReceiver();
+    auto tagAddress = commandStreamReceiver.getTagAddress();
+
+    auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
+    auto taskLevelClosed = blockingCall ? 1u : 0u; // for blocking commands task level will be closed
+
+    //for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    if (!blockingCall) {
+        *tagAddress = 0;
+    }
+
     auto previousTaskLevel = this->pCmdQ->taskLevel;
-    auto taskLevelClosed = 0u; // for blocking commands task level will be closed
+
     if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
         auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
         buffer->forceDisallowCPUCopy = true; // no task level logic when cpu copy
         TypeParam::enqueue(this->pCmdQ, buffer.get());
-        taskLevelClosed = 1u;
+        this->pCmdQ->flush();
+
     } else {
         TypeParam::enqueue(this->pCmdQ, nullptr);
     }
-    if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_IMAGE || TypeParam::Traits::cmdType == CL_COMMAND_READ_IMAGE) {
-        taskLevelClosed = 1u;
-    }
     EXPECT_EQ(previousTaskLevel + taskLevelClosed, this->pCmdQ->taskLevel);
+    *tagAddress = initialHardwareTag;
 }
 
-TYPED_TEST_P(OOQTaskTypedTests, changesTaskCount) {
+TYPED_TEST_P(OOQTaskTypedTests, givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated) {
     auto &commandStreamReceiver = this->pDevice->getCommandStreamReceiver();
     auto previousTaskCount = commandStreamReceiver.peekTaskCount();
+    auto tagAddress = commandStreamReceiver.getTagAddress();
+    auto blockingCall = isBlockingCall(TypeParam::Traits::cmdType);
+
+    //for non blocking calls make sure that resources are added to defer free list instaed of being destructed in place
+    if (!blockingCall) {
+        *tagAddress = 0;
+    }
 
     if (TypeParam::Traits::cmdType == CL_COMMAND_WRITE_BUFFER || TypeParam::Traits::cmdType == CL_COMMAND_READ_BUFFER) {
         auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
         buffer->forceDisallowCPUCopy = true; // no task level logic when cpu copy
         TypeParam::enqueue(this->pCmdQ, buffer.get());
+        this->pCmdQ->flush();
     } else {
         TypeParam::enqueue(this->pCmdQ, nullptr);
     }
     EXPECT_LT(previousTaskCount, commandStreamReceiver.peekTaskCount());
     EXPECT_LE(this->pCmdQ->taskCount, commandStreamReceiver.peekTaskCount());
+    *tagAddress = initialHardwareTag;
 }
 
 typedef ::testing::Types<
@@ -80,8 +110,8 @@ typedef ::testing::Types<
     EnqueueParams;
 
 REGISTER_TYPED_TEST_CASE_P(OOQTaskTypedTests,
-                           doesntChangeTaskLevel,
-                           changesTaskCount);
+                           givenNonBlockingCallWhenDoneOnOutOfOrderQueueThenTaskLevelDoesntChange,
+                           givenTaskWhenEnqueuedOnOutOfOrderQueueThenTaskCountIsUpdated);
 
 // Instantiate all of these parameterized tests
 INSTANTIATE_TYPED_TEST_CASE_P(OOQ, OOQTaskTypedTests, EnqueueParams);
@@ -248,6 +278,7 @@ TEST_F(OOQTaskTests, enqueueReadBuffer_blockingAndNonBlockedOnUserEvent) {
     retVal = clReleaseEvent(userEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
     alignedFree(alignedReadPtr);
 }
 

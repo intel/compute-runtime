@@ -27,6 +27,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "test.h"
 #include <memory>
@@ -143,4 +144,15 @@ TEST(DeviceCreation, givenDeviceWithUsedTagAllocationWhenItIsDestroyedThenThereA
     std::unique_ptr<SmallMockDevice> device(Device::create<SmallMockDevice>(platformDevices[0]));
     auto tagAllocation = device->peekTagAllocation();
     tagAllocation->taskCount = 1;
+}
+
+TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver;
+    mockDevice->resetCommandStreamReceiver(csr);
+    int flushedBatchedSubmissionsCalledCount = 0;
+    csr->flushBatchedSubmissionsCallCounter = &flushedBatchedSubmissionsCalledCount;
+    mockDevice.reset(nullptr);
+
+    EXPECT_EQ(1, flushedBatchedSubmissionsCalledCount);
 }

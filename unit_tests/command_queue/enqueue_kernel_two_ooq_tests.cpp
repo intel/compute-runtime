@@ -93,6 +93,9 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
         ASSERT_EQ(CL_SUCCESS, retVal);
         HardwareParse::parseCommands<FamilyType>(*pCmdQ2);
 
+        pCmdQ->flush();
+        pCmdQ2->flush();
+
         Event *E1 = castToObject<Event>(event1);
         ASSERT_NE(nullptr, E1);
         Event *E2 = castToObject<Event>(event2);

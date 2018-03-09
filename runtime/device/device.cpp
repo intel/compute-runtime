@@ -92,8 +92,12 @@ Device::~Device() {
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
-    delete commandStreamReceiver;
-    commandStreamReceiver = nullptr;
+    if (commandStreamReceiver) {
+        commandStreamReceiver->flushBatchedSubmissions();
+        delete commandStreamReceiver;
+        commandStreamReceiver = nullptr;
+    }
+
     if (memoryManager) {
         if (preemptionAllocation) {
             memoryManager->freeGraphicsMemory(preemptionAllocation);

@@ -105,6 +105,8 @@ HWTEST_F(AUBHelloWorld, simple) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    pCmdQ->flush();
+
     parseCommands<FamilyType>(*pCmdQ);
 
     auto *pWalker = reinterpret_cast<GPGPU_WALKER *>(cmdWalker);
@@ -242,6 +244,8 @@ HWTEST_F(AUBSimpleArg, simple) {
 
     parseCommands<FamilyType>(*pCmdQ);
 
+    pCmdQ->flush();
+
     auto *pWalker = reinterpret_cast<GPGPU_WALKER *>(cmdWalker);
     ASSERT_NE(nullptr, pWalker);
     auto alignmentIDSA = 32 * sizeof(uint8_t);
@@ -293,6 +297,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
         event);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
+    pCmdQ->flush();
 }
 
 struct AUBSimpleArgIntegrateTest : public SimpleArgFixture<AUBSimpleArgFixtureFactory>,
@@ -352,9 +357,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         ::testing::ValuesIn(TestSimdTable),
         ::testing::ValuesIn(TestParamTable)));
-
-typedef TwoWalkerTest<AUBHelloWorldFixtureFactory> AUBTwoWalker;
-
-TEST_F(AUBTwoWalker, simple) {
-}
 } // namespace ULT
