@@ -49,7 +49,6 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 
 template <typename GfxFamily>
 FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
-    DEBUG_BREAK_IF(engineType != EngineType::ENGINE_RCS);
     unsigned int engineFlag = 0xFF;
     bool ret = DrmEngineMapper<GfxFamily>::engineNodeMap(engineType, engineFlag);
     UNRECOVERABLE_IF(!(ret));
