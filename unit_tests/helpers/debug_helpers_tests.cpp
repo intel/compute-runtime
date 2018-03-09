@@ -21,8 +21,15 @@
  */
 
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "gtest/gtest.h"
 
-TEST(debug_break, whenDebugBreakCalledThenAssertIsThrown) {
+using namespace OCLRT;
+
+TEST(debugBreak, whenDebugBreakCalledInTestThenNothingIsThrown) {
     DEBUG_BREAK_IF(!false);
+}
+
+TEST(debugBreak, givenEnableDebugBreakWhenFlagIsEnabledThenReturnTrue) {
+    EXPECT_EQ(true, DebugManager.flags.EnableDebugBreak.get());
 }

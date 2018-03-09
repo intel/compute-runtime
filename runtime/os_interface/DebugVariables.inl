@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 /*DEBUG FLAGS*/
-DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, false, "Enable DEBUG_BREAKs")
+DECLARE_DEBUG_VARIABLE(bool, EnableDebugBreak, true, "Enable DEBUG_BREAKs")
 DECLARE_DEBUG_VARIABLE(bool, FlushAllCaches, false, "pipe controls between enqueues flush all possible caches")
 DECLARE_DEBUG_VARIABLE(bool, MakeEachEnqueueBlocking, false, "equivalent of finish after each enqueue")
 DECLARE_DEBUG_VARIABLE(bool, DoCpuCopyOnReadBuffer, false, "triggers CPU copy path for Read Buffer calls, only supported for some basic use cases ( no events, not blocked calls )")
