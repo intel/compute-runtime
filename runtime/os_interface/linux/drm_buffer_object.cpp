@@ -158,8 +158,6 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 
     if (drm->peekCoherencyDisablePatchActive() && !requiresCoherency) {
         execbuf.flags |= I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
-    } else if (drm->peekDataPortCoherencyPatchActive() && requiresCoherency) {
-        execbuf.flags |= I915_EXEC_DATA_PORT_COHERENT;
     }
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;

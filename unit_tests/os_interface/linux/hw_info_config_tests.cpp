@@ -359,13 +359,3 @@ TEST_F(HwInfoConfigTestLinuxDummy, givenPointerToHwInfoWhenConfigureHwInfoCalled
     EXPECT_EQ(0, ret);
     EXPECT_EQ(outHwInfo.pSysInfo->CsrSizeInMb * MemoryConstants::megaByte, outHwInfo.capabilityTable.requiredPreemptionSurfaceSize);
 }
-
-TEST_F(HwInfoConfigTestLinuxDummy, whenAskedToConfigureHwInfoThenObtainDataPortCoherencyPatchStatus) {
-    struct MyDrm : public Drm2 {
-        void obtainDataPortCoherencyPatchActive() override { obtainDataPortCoherencyPatchActiveCalled = true; }
-        bool obtainDataPortCoherencyPatchActiveCalled = false;
-    } myDrm;
-    osInterface->get()->setDrm(&myDrm);
-    hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
-    EXPECT_TRUE(myDrm.obtainDataPortCoherencyPatchActiveCalled);
-}
