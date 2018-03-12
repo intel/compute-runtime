@@ -130,5 +130,8 @@ class Drm {
     static const char *sysFsDefaultGpuPath;
     static const char *maxGpuFrequencyFile;
     static const char *configFileName;
+
+  private:
+    int getParamIoctl(int param, int *dstValue);
 };
 } // namespace OCLRT

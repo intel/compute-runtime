@@ -45,41 +45,32 @@ int Drm::ioctl(unsigned long request, void *arg) {
     return ret;
 }
 
+int Drm::getParamIoctl(int param, int *dstValue) {
+    drm_i915_getparam_t getParam = {};
+    getParam.param = param;
+    getParam.value = dstValue;
+
+    return ioctl(DRM_IOCTL_I915_GETPARAM, &getParam);
+}
+
 int Drm::getDeviceID(int &devId) {
-    int ret = 0;
 #if defined(I915_PARAM_CHIPSET_ID)
-    drm_i915_getparam_t gp;
-
-    gp.param = I915_PARAM_CHIPSET_ID;
-    gp.value = &devId;
-
-    ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
+    return getParamIoctl(I915_PARAM_CHIPSET_ID, &devId);
+#else
+    return 0;
 #endif
-    return ret;
 }
 
 int Drm::getDeviceRevID(int &revId) {
-    int ret = 0;
 #if defined(I915_PARAM_REVISION)
-    drm_i915_getparam_t gp;
-
-    gp.param = I915_PARAM_REVISION;
-    gp.value = &revId;
-
-    ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
+    return getParamIoctl(I915_PARAM_REVISION, &revId);
+#else
+    return 0;
 #endif
-    return ret;
 }
 
 int Drm::getExecSoftPin(int &execSoftPin) {
-    int ret = 0;
-
-    drm_i915_getparam_t gp;
-
-    gp.param = I915_PARAM_HAS_EXEC_SOFTPIN;
-    gp.value = &execSoftPin;
-    ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    return ret;
+    return getParamIoctl(I915_PARAM_HAS_EXEC_SOFTPIN, &execSoftPin);
 }
 
 int Drm::enableTurboBoost() {
@@ -94,14 +85,11 @@ int Drm::enableTurboBoost() {
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
-    int ret = 0;
-    drm_i915_getparam_t gp;
 #if defined(I915_PARAM_HAS_POOLED_EU)
-    gp.value = &enabled;
-    gp.param = I915_PARAM_HAS_POOLED_EU;
-    ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
+    return getParamIoctl(I915_PARAM_HAS_POOLED_EU, &enabled);
+#else
+    return 0;
 #endif
-    return ret;
 }
 
 int Drm::getMaxGpuFrequency(int &maxGpuFrequency) {
@@ -131,17 +119,9 @@ int Drm::getMaxGpuFrequency(int &maxGpuFrequency) {
 }
 
 void Drm::obtainCoherencyDisablePatchActive() {
-    drm_i915_getparam_t GPUParams;
     int value = 0;
-
-    GPUParams.param = I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT;
-    GPUParams.value = &value;
-
-    auto retVal = ioctl(DRM_IOCTL_I915_GETPARAM, &GPUParams);
-
-    if (retVal == 0) {
-        coherencyDisablePatchActive = value != 0 ? 1 : 0;
-    }
+    auto ret = getParamIoctl(I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT, &value);
+    coherencyDisablePatchActive = (ret == 0) && (value != 0);
 }
 
 std::string Drm::getSysFsPciPath(int deviceID) {
@@ -169,25 +149,16 @@ std::string Drm::getSysFsPciPath(int deviceID) {
 }
 
 bool Drm::is48BitAddressRangeSupported() {
-    drm_i915_getparam_t gp;
     int value = 0;
-    gp.value = &value;
-
-    gp.param = I915_PARAM_HAS_ALIASING_PPGTT;
-    int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    if (ret == 0 && *gp.value == 3)
-        return true;
-    return false;
+    auto ret = getParamIoctl(I915_PARAM_HAS_ALIASING_PPGTT, &value);
+    return (ret == 0) && (value == 3);
 }
 
 bool Drm::hasPreemption() {
 #if defined(I915_PARAM_HAS_PREEMPTION)
-    drm_i915_getparam_t gp;
     int value = 0;
-    gp.value = &value;
-    gp.param = I915_PARAM_HAS_PREEMPTION;
-    int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    if (ret == 0 && *gp.value == 1) {
+    auto ret = getParam(I915_PARAM_HAS_PREEMPTION, &value);
+    if (ret == 0 && value == 1) {
         return contextCreate() && setLowPriority();
     }
 #endif
@@ -232,52 +203,30 @@ void Drm::contextDestroy() {
 
 int Drm::getEuTotal(int &euTotal) {
 #if defined(I915_PARAM_EU_TOTAL) || defined(I915_PARAM_EU_COUNT)
-    drm_i915_getparam_t gp;
-
-    memset(&gp, 0, sizeof(gp));
-    gp.value = &euTotal;
-    gp.param =
+    int param =
 #if defined(I915_PARAM_EU_TOTAL)
         I915_PARAM_EU_TOTAL;
 #elif defined(I915_PARAM_EU_COUNT)
         I915_PARAM_EU_COUNT;
 #endif
-
-    int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    return ret;
+    return getParamIoctl(param, &euTotal);
 #else
-    (void)euTotal;
     return 0;
 #endif
 }
 
 int Drm::getSubsliceTotal(int &subsliceTotal) {
 #if defined(I915_PARAM_SUBSLICE_TOTAL)
-    drm_i915_getparam_t gp;
-
-    memset(&gp, 0, sizeof(gp));
-    gp.value = &subsliceTotal;
-    gp.param = I915_PARAM_SUBSLICE_TOTAL;
-
-    int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    return ret;
+    return getParamIoctl(I915_PARAM_SUBSLICE_TOTAL, &subsliceTotal);
 #else
-    (void)subsliceTotal;
     return 0;
 #endif
 }
 
 int Drm::getMinEuInPool(int &minEUinPool) {
 #if defined(I915_PARAM_MIN_EU_IN_POOL)
-    drm_i915_getparam_t gp;
-    memset(&gp, 0, sizeof(gp));
-    gp.value = &minEUinPool;
-    gp.param = I915_PARAM_MIN_EU_IN_POOL;
-
-    int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-    return ret;
+    return getParamIoctl(I915_PARAM_MIN_EU_IN_POOL, &minEUinPool);
 #else
-    (void)minEUinPool;
     return 0;
 #endif
 }
