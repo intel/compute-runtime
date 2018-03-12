@@ -23,8 +23,6 @@
 #pragma once
 
 #include "runtime/helpers/engine_node.h"
-#include "runtime/helpers/hw_info.h"
-#include "drm/i915_drm.h"
 
 #include <cstdint>
 

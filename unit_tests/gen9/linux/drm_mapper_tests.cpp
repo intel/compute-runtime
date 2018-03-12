@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "drm/i915_drm.h"
+#include "runtime/os_interface/linux/drm_engine_mapper.h"
 #include "unit_tests/helpers/gtest_helpers.h"
 #include "test.h"
 #include "hw_cmds.h"
-#include "runtime/os_interface/linux/drm_engine_mapper.h"
 
 using namespace OCLRT;
 using namespace std;
