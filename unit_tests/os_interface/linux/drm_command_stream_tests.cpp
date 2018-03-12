@@ -912,7 +912,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
-    EXPECT_EQ(3, this->mock->ioctl_cnt);
+    EXPECT_EQ(3, this->mock->ioctl_cnt.total);
     uint64_t flags = I915_EXEC_RENDER | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
@@ -965,7 +965,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     EXPECT_EQ(tCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    EXPECT_EQ(4, this->mock->ioctl_cnt);
+    EXPECT_EQ(4, this->mock->ioctl_cnt.total);
 
     EXPECT_EQ(0u, this->mock->execBuffer.flags);
 
@@ -1031,7 +1031,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
         EXPECT_TRUE(handleFound);
     }
 
-    EXPECT_EQ(5, this->mock->ioctl_cnt);
+    EXPECT_EQ(5, this->mock->ioctl_cnt.total);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);
@@ -1157,7 +1157,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsWhenTheyAreMadeResidentThenFragmentsDoNotDuplicate) {
-    mock->ioctl_expected = 9;
+    mock->ioctl_expected.total = 9;
     //3 fragments
     auto ptr = (void *)0x1001;
     auto size = MemoryConstants::pageSize * 10;

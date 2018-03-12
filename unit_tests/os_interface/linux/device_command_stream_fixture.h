@@ -21,14 +21,16 @@
  */
 
 #pragma once
-#include "runtime/os_interface/linux/drm_neo.h"
-#include <atomic>
+
+#include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <iostream>
-#include "drm/i915_drm.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/linux/drm_neo.h"
+#include "unit_tests/helpers/gtest_helpers.h"
+#include <atomic>
+#include <iostream>
 
 #define RENDER_DEVICE_NAME_MATCHER ::testing::StrEq("/dev/dri/renderD128")
 
@@ -80,10 +82,63 @@ class DrmMockCustom : public Drm {
     };
     void overideCoherencyPatchActive(bool newCoherencyPatchActiveValue) { coherencyDisablePatchActive = newCoherencyPatchActiveValue; }
 
-    std::atomic<int> ioctl_cnt;
+    class Ioctls {
+      public:
+        void reset() {
+            total = 0;
+            execbuffer2 = 0;
+            gemUserptr = 0;
+            gemCreate = 0;
+            gemSetTiling = 0;
+            primeFdToHandle = 0;
+            gemGetAperture = 0;
+            gemMmap = 0;
+            gemSetDomain = 0;
+            gemWait = 0;
+            gemClose = 0;
+            regRead = 0;
+        }
+
+        std::atomic<int32_t> total;
+        std::atomic<int32_t> execbuffer2;
+        std::atomic<int32_t> gemUserptr;
+        std::atomic<int32_t> gemCreate;
+        std::atomic<int32_t> gemSetTiling;
+        std::atomic<int32_t> primeFdToHandle;
+        std::atomic<int32_t> gemGetAperture;
+        std::atomic<int32_t> gemMmap;
+        std::atomic<int32_t> gemSetDomain;
+        std::atomic<int32_t> gemWait;
+        std::atomic<int32_t> gemClose;
+        std::atomic<int32_t> regRead;
+    };
+
     std::atomic<int> ioctl_res;
-    std::atomic<int> ioctl_expected;
+    Ioctls ioctl_cnt;
+    Ioctls ioctl_expected;
     std::atomic<IoctlResExt *> ioctl_res_ext;
+
+    void testIoctls() {
+        if (this->ioctl_expected.total == -1)
+            return;
+
+#define NEO_IOCTL_EXPECT_EQ(PARAM)                                    \
+    if (this->ioctl_expected.PARAM >= 0) {                            \
+        EXPECT_EQ(this->ioctl_expected.PARAM, this->ioctl_cnt.PARAM); \
+    }
+        NEO_IOCTL_EXPECT_EQ(execbuffer2);
+        NEO_IOCTL_EXPECT_EQ(gemUserptr);
+        NEO_IOCTL_EXPECT_EQ(gemCreate);
+        NEO_IOCTL_EXPECT_EQ(gemSetTiling);
+        NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
+        NEO_IOCTL_EXPECT_EQ(gemGetAperture);
+        NEO_IOCTL_EXPECT_EQ(gemMmap);
+        NEO_IOCTL_EXPECT_EQ(gemSetDomain);
+        NEO_IOCTL_EXPECT_EQ(gemWait);
+        NEO_IOCTL_EXPECT_EQ(gemClose);
+        NEO_IOCTL_EXPECT_EQ(regRead);
+#undef NEO_IOCTL_EXPECT_EQ
+    }
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
     drm_i915_gem_execbuffer2 execBuffer = {0};
@@ -117,40 +172,47 @@ class DrmMockCustom : public Drm {
         auto ext = ioctl_res_ext.load();
 
         //store flags
-        if (request == DRM_IOCTL_I915_GEM_EXECBUFFER2) {
+        switch (request) {
+        case DRM_IOCTL_I915_GEM_EXECBUFFER2: {
             drm_i915_gem_execbuffer2 *execbuf = (drm_i915_gem_execbuffer2 *)arg;
             this->execBuffer = *execbuf;
-        }
+            ioctl_cnt.execbuffer2++;
+        } break;
 
-        if (request == DRM_IOCTL_I915_GEM_USERPTR) {
+        case DRM_IOCTL_I915_GEM_USERPTR: {
             auto *userPtrParams = (drm_i915_gem_userptr *)arg;
             userPtrParams->handle = returnHandle;
             returnHandle++;
-        }
+            ioctl_cnt.gemUserptr++;
+        } break;
 
-        if (request == DRM_IOCTL_I915_GEM_CREATE) {
+        case DRM_IOCTL_I915_GEM_CREATE: {
             auto *createParams = (drm_i915_gem_create *)arg;
             this->createParamsSize = createParams->size;
             this->createParamsHandle = createParams->handle = 1u;
-        }
-        if (request == DRM_IOCTL_I915_GEM_SET_TILING) {
+            ioctl_cnt.gemCreate++;
+        } break;
+        case DRM_IOCTL_I915_GEM_SET_TILING: {
             auto *setTilingParams = (drm_i915_gem_set_tiling *)arg;
             setTilingMode = setTilingParams->tiling_mode;
             setTilingHandle = setTilingParams->handle;
             setTilingStride = setTilingParams->stride;
-        }
-        if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+            ioctl_cnt.gemSetTiling++;
+        } break;
+        case DRM_IOCTL_PRIME_FD_TO_HANDLE: {
             auto *primeToHandleParams = (drm_prime_handle *)arg;
             //return BO
             primeToHandleParams->handle = outputHandle;
             inputFd = primeToHandleParams->fd;
-        }
-        if (request == DRM_IOCTL_I915_GEM_GET_APERTURE) {
+            ioctl_cnt.primeFdToHandle++;
+        } break;
+        case DRM_IOCTL_I915_GEM_GET_APERTURE: {
             auto aperture = (drm_i915_gem_get_aperture *)arg;
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
-        }
-        if (request == DRM_IOCTL_I915_GEM_MMAP) {
+            ioctl_cnt.gemGetAperture++;
+        } break;
+        case DRM_IOCTL_I915_GEM_MMAP: {
             auto mmapParams = (drm_i915_gem_mmap *)arg;
             mmapHandle = mmapParams->handle;
             mmapPad = mmapParams->pad;
@@ -158,25 +220,47 @@ class DrmMockCustom : public Drm {
             mmapSize = mmapParams->size;
             mmapFlags = mmapParams->flags;
             mmapParams->addr_ptr = mmapAddrPtr;
-        }
-        if (request == DRM_IOCTL_I915_GEM_SET_DOMAIN) {
+            ioctl_cnt.gemMmap++;
+        } break;
+        case DRM_IOCTL_I915_GEM_SET_DOMAIN: {
             auto setDomainParams = (drm_i915_gem_set_domain *)arg;
             setDomainHandle = setDomainParams->handle;
             setDomainReadDomains = setDomainParams->read_domains;
             setDomainWriteDomain = setDomainParams->write_domain;
+            ioctl_cnt.gemSetDomain++;
+        } break;
+
+        case DRM_IOCTL_I915_GEM_WAIT:
+            ioctl_cnt.gemWait++;
+            break;
+
+        case DRM_IOCTL_GEM_CLOSE:
+            ioctl_cnt.gemClose++;
+            break;
+
+        case DRM_IOCTL_I915_REG_READ:
+            ioctl_cnt.regRead++;
+            break;
+
+        default:
+            std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;
+            std::cout << "unexpected IOCTL: " << std::hex << request << std::endl;
+            UNRECOVERABLE_IF(true);
         }
 
-        if (ext->no != -1 && ext->no == ioctl_cnt.load()) {
-            ioctl_cnt.fetch_add(1);
+        if (ext->no != -1 && ext->no == ioctl_cnt.total.load()) {
+            ioctl_cnt.total.fetch_add(1);
             return ext->res;
         }
-        ioctl_cnt.fetch_add(1);
+        ioctl_cnt.total.fetch_add(1);
         return ioctl_res.load();
     };
 
     IoctlResExt NONE = {-1, 0};
     void reset() {
-        ioctl_cnt = ioctl_res = ioctl_expected = 0;
+        ioctl_res = 0;
+        ioctl_cnt.reset();
+        ioctl_expected.reset();
         ioctl_res_ext = &NONE;
     }
 

@@ -62,8 +62,8 @@ class DrmBufferObjectFixture : public MemoryManagementFixture {
 
     void TearDown() override {
         delete bo;
-        if (this->mock->ioctl_expected >= 0) {
-            EXPECT_EQ(this->mock->ioctl_expected, this->mock->ioctl_cnt);
+        if (this->mock->ioctl_expected.total >= 0) {
+            EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
         }
 
         delete this->mock;
@@ -75,7 +75,7 @@ class DrmBufferObjectFixture : public MemoryManagementFixture {
 typedef Test<DrmBufferObjectFixture> DrmBufferObjectTest;
 
 TEST_F(DrmBufferObjectTest, exec) {
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
     auto ret = bo->exec(0, 0, 0);
@@ -84,7 +84,7 @@ TEST_F(DrmBufferObjectTest, exec) {
 }
 
 TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledThenFlagsContainNonCoherentFlag) {
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
     mock->overideCoherencyPatchActive(true);
 
@@ -96,7 +96,7 @@ TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledThen
 }
 
 TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledWithCoherencyRequestThenFlagsDontContainNonCoherentFlag) {
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
     mock->overideCoherencyPatchActive(true);
 
@@ -108,26 +108,26 @@ TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledWith
 }
 
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
     EXPECT_THROW(bo->exec(0, 0, 0), std::exception);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_success) {
-    mock->ioctl_expected = 1; //set_tiling
+    mock->ioctl_expected.total = 1; //set_tiling
     auto ret = bo->setTiling(I915_TILING_X, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_theSameTiling) {
-    mock->ioctl_expected = 0; //set_tiling
+    mock->ioctl_expected.total = 0; //set_tiling
     bo->tileBy(I915_TILING_X);
     auto ret = bo->setTiling(I915_TILING_X, 0);
     EXPECT_TRUE(ret);
 }
 
 TEST_F(DrmBufferObjectTest, setTiling_ioctlFailed) {
-    mock->ioctl_expected = 1; //set_tiling
+    mock->ioctl_expected.total = 1; //set_tiling
     mock->ioctl_res = -1;
     auto ret = bo->setTiling(I915_TILING_X, 0);
     EXPECT_FALSE(ret);
@@ -151,7 +151,7 @@ TEST_F(DrmBufferObjectTest, testExecObjectFlags) {
 
 TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndForceNonCoherent) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
     mock->overideCoherencyPatchActive(true);
@@ -171,7 +171,7 @@ TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndForceNonCoherent) {
 
 TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndNoForceNonCoherent) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = 0;
 
     mock->overideCoherencyPatchActive(false);
@@ -192,7 +192,7 @@ TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndNoForceNonCoherent) {
 TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {
     std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
 
-    mock->ioctl_expected = 1;
+    mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
 
     std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock));
