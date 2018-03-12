@@ -29,6 +29,7 @@
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
 #include <algorithm>
@@ -108,6 +109,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     dc.size = region;
     dc.srcRowPitch = inputRowPitch;
     dc.srcSlicePitch = inputSlicePitch;
+    if (srcImage->getImageDesc().num_mip_levels > 0) {
+        dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, origin);
+    }
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_READ_IMAGE>(

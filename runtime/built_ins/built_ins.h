@@ -249,6 +249,8 @@ class BuiltinDispatchInfoBuilder {
         size_t dstRowPitch = 0;
         size_t srcSlicePitch = 0;
         size_t dstSlicePitch = 0;
+        uint32_t srcMipLevel = 0;
+        uint32_t dstMipLevel = 0;
     };
 
     BuiltinDispatchInfoBuilder(BuiltIns &kernelLib) : kernelsLib(kernelLib) {}
@@ -259,6 +261,7 @@ class BuiltinDispatchInfoBuilder {
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const {
         return false;
     }
+
     virtual bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, Kernel *kernel,
                                     const uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset) const {
         return false;

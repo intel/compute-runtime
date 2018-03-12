@@ -124,7 +124,7 @@ class Image : public MemObj {
                         void *paramValue,
                         size_t *paramValueSizeRet);
 
-    virtual void setImageArg(void *memory, bool isMediaBlockImage) = 0;
+    virtual void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) = 0;
     virtual void setMediaImageArg(void *memory) = 0;
     virtual void setMediaSurfaceRotation(void *memory) = 0;
     virtual void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) = 0;
@@ -165,6 +165,9 @@ class Image : public MemObj {
     cl_uint getMediaPlaneType() const { return mediaPlaneType; }
     int peekMipLevel() { return mipLevel; }
     void setMipLevel(int mipLevelNew) { this->mipLevel = mipLevelNew; }
+
+    uint32_t peekMipCount() { return mipCount; }
+    void setMipCount(uint32_t mipCountNew) { this->mipCount = mipCountNew; }
 
     static const SurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
     static bool validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_mem_object_type &imgType);
@@ -209,6 +212,7 @@ class Image : public MemObj {
     cl_uint mediaPlaneType;
     SurfaceOffsets surfaceOffsets;
     int mipLevel = 0;
+    uint32_t mipCount = 0;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);
@@ -254,7 +258,7 @@ class ImageHw : public Image {
         }
     }
 
-    void setImageArg(void *memory, bool setAsMediaBlockImage) override;
+    void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
     void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
     void setMediaImageArg(void *memory) override;

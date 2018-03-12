@@ -28,6 +28,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include <algorithm>
 #include <new>
@@ -105,6 +106,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteImage(
     dc.size = region;
     dc.dstRowPitch = inputRowPitch;
     dc.dstSlicePitch = inputSlicePitch;
+    if (dstImage->getImageDesc().num_mip_levels > 0) {
+        dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, origin);
+    }
+
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_WRITE_IMAGE>(

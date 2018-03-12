@@ -225,6 +225,7 @@ struct ImageInfo {
     uint32_t yOffsetForUVPlane;
     GMM_YUV_PLANE_ENUM plane;
     int mipLevel;
+    uint32_t mipCount;
     bool preferRenderCompression;
 };
 

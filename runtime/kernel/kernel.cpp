@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -785,6 +785,10 @@ cl_int Kernel::setArg(uint32_t argIndex, cl_mem argVal) {
     return setArg(argIndex, sizeof(argVal), &argVal);
 }
 
+cl_int Kernel::setArg(uint32_t argIndex, cl_mem argVal, uint32_t mipLevel) {
+    return setArgImageWithMipLevel(argIndex, sizeof(argVal), &argVal, mipLevel);
+}
+
 void *Kernel::patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc) {
     if (isInvalidOffset(argInfo.offsetBufferOffset)) {
         return svmPtr;
@@ -1164,6 +1168,12 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
 cl_int Kernel::setArgImage(uint32_t argIndex,
                            size_t argSize,
                            const void *argVal) {
+    return setArgImageWithMipLevel(argIndex, argSize, argVal, 0u);
+}
+
+cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
+                                       size_t argSize,
+                                       const void *argVal, uint32_t mipLevel) {
     auto retVal = CL_INVALID_ARG_VALUE;
     patchBufferOffset(kernelInfo.kernelArgInfo[argIndex], nullptr, nullptr);
 
@@ -1187,10 +1197,8 @@ cl_int Kernel::setArgImage(uint32_t argIndex,
         if (kernelArgInfo.isMediaImage) {
             DEBUG_BREAK_IF(!kernelInfo.isVmeWorkload);
             pImage->setMediaImageArg(const_cast<void *>(surfaceState));
-        } else if (kernelArgInfo.isMediaBlockImage) {
-            pImage->setImageArg(const_cast<void *>(surfaceState), true);
         } else {
-            pImage->setImageArg(const_cast<void *>(surfaceState), false);
+            pImage->setImageArg(const_cast<void *>(surfaceState), kernelArgInfo.isMediaBlockImage, mipLevel);
         }
 
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData());

@@ -69,4 +69,8 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
     Image *srcImage;
     MockContext *context;
 };
-}
+
+struct EnqueueReadImageMipMapTest : public EnqueueReadImageTest,
+                                    public ::testing::WithParamInterface<uint32_t> {
+};
+} // namespace OCLRT

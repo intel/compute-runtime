@@ -539,7 +539,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d> : public BuiltinDisp
         }
 
         // Set-up destination image
-        kernelNoSplit3DBuilder.setArg(1, dstImageRedescribed);
+        kernelNoSplit3DBuilder.setArg(1, dstImageRedescribed, operationParams.dstMipLevel);
 
         // Set-up srcOffset
         kernelNoSplit3DBuilder.setArg(2, static_cast<uint32_t>(operationParams.srcOffset.x));
@@ -618,7 +618,7 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDisp
         kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]);
 
         // Set-up source image
-        kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed);
+        kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
 
         // Set-up destination host ptr / buffer
         if (operationParams.dstPtr) {

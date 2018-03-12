@@ -69,4 +69,8 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
     Image *dstImage;
     MockContext *context;
 };
-}
+
+struct EnqueueWriteImageMipMapTest : public EnqueueWriteImageTest,
+                                     public ::testing::WithParamInterface<uint32_t> {
+};
+} // namespace OCLRT

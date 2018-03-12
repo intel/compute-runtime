@@ -229,6 +229,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     // Helpers
     cl_int setArg(uint32_t argIndex, uint32_t argValue);
     cl_int setArg(uint32_t argIndex, cl_mem argValue);
+    cl_int setArg(uint32_t argIndex, cl_mem argValue, uint32_t mipLevel);
 
     // Handlers
     void setKernelArgHandler(uint32_t argIndex, KernelArgHandler handler);
@@ -250,6 +251,10 @@ class Kernel : public BaseObject<_cl_kernel> {
     cl_int setArgImage(uint32_t argIndex,
                        size_t argSize,
                        const void *argVal);
+
+    cl_int setArgImageWithMipLevel(uint32_t argIndex,
+                                   size_t argSize,
+                                   const void *argVal, uint32_t mipLevel);
 
     cl_int setArgLocal(uint32_t argIndex,
                        size_t argSize,

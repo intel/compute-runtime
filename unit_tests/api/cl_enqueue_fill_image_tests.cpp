@@ -34,8 +34,8 @@ namespace ULT {
 TEST_F(clEnqueueFillImageTests, nullCommandQueueReturnsError) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
     uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
-    size_t origin[4] = {0, 0, 0, 0};
-    size_t region[4] = {2, 2, 1, 0};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 1};
 
     retVal = clEnqueueFillImage(
         nullptr,
@@ -52,8 +52,8 @@ TEST_F(clEnqueueFillImageTests, nullCommandQueueReturnsError) {
 
 TEST_F(clEnqueueFillImageTests, nullImageReturnsError) {
     uint32_t fill_color[4] = {0xaaaaaaaa, 0xbbbbbbbb, 0xcccccccc, 0xdddddddd};
-    size_t origin[4] = {0, 0, 0, 0};
-    size_t region[4] = {2, 2, 1, 0};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 1};
 
     retVal = clEnqueueFillImage(
         pCommandQueue,
@@ -70,8 +70,8 @@ TEST_F(clEnqueueFillImageTests, nullImageReturnsError) {
 
 TEST_F(clEnqueueFillImageTests, nullFillColorReturnsError) {
     auto image = std::unique_ptr<Image>(Image2dHelper<ImageUseHostPtr<Image2dDefaults>>::create(pContext));
-    size_t origin[4] = {0, 0, 0, 0};
-    size_t region[4] = {2, 2, 1, 0};
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {2, 2, 1};
 
     retVal = clEnqueueFillImage(
         pCommandQueue,

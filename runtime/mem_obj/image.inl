@@ -39,7 +39,7 @@ union SURFACE_STATE_BUFFER_LENGTH {
 };
 
 template <typename GfxFamily>
-void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
+void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     auto gmm = getGraphicsAllocation()->gmm;
@@ -109,7 +109,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage) {
     surfaceState->setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
     surfaceState->setRenderTargetViewExtent(renderTargetViewExtent);
     surfaceState->setMinimumArrayElement(minimumArrayElement);
-    surfaceState->setSurfaceMinLod(this->mipLevel);
+    surfaceState->setSurfaceMinLod(this->mipLevel + mipLevel);
+    surfaceState->setMipCountLod(this->mipCount - 1);
 
     // SurfaceQpitch is in rows but must be a multiple of VALIGN
     surfaceState->setSurfaceQpitch(qPitch);

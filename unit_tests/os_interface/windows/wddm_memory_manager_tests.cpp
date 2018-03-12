@@ -253,7 +253,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     EXPECT_EQ(nullptr, gpuAllocation);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevelZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -281,7 +281,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevel
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevelNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -304,7 +304,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipLevel
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
-    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);
@@ -341,7 +341,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLevelZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -370,7 +370,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLeve
     EXPECT_EQ(GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_BUFFER, imageGraphicsAllocation->gmm->resourceParams.Usage);
 }
 
-HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLevelNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
+HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
     context.setMemoryManager(memoryManager);
@@ -392,7 +392,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipLeve
     std::unique_ptr<Image> dstImage(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, dstImage);
-    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipLevel());
+    EXPECT_EQ(static_cast<int>(imageDesc.num_mip_levels), dstImage->peekMipCount());
 
     auto imageGraphicsAllocation = dstImage->getGraphicsAllocation();
     ASSERT_NE(nullptr, imageGraphicsAllocation);

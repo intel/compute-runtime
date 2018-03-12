@@ -144,7 +144,7 @@ Image *Image::create(Context *context,
 
         imgInfo.imgDesc = &imageDescriptor;
         imgInfo.surfaceFormat = surfaceFormat;
-        imgInfo.mipLevel = imageDesc->num_mip_levels;
+        imgInfo.mipCount = imageDesc->num_mip_levels;
         Gmm *gmm = nullptr;
 
         if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY || imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
@@ -325,7 +325,7 @@ Image *Image::create(Context *context,
         image->setImageSlicePitch(imgInfo.slicePitch);
         image->setQPitch(imgInfo.qPitch);
         image->setSurfaceOffsets(imgInfo.offset, imgInfo.xOffset, imgInfo.yOffset, imgInfo.yOffsetForUVPlane);
-        image->setMipLevel(imgInfo.mipLevel);
+        image->setMipCount(imgInfo.mipCount);
         if (parentImage) {
             image->setMediaPlaneType(static_cast<cl_uint>(imageDesc->image_depth));
             image->setParentSharingHandler(parentImage->getSharingHandler());

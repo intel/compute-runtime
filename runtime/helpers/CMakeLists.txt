@@ -53,6 +53,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/options.h
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp

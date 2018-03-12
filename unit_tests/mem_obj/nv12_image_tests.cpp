@@ -419,7 +419,7 @@ HWTEST_F(Nv12ImageTest, setImageArg) {
 
     SurfaceOffsets surfaceOffsets;
     image->getSurfaceOffsets(surfaceOffsets);
-    image->setImageArg(&surfaceState, false);
+    image->setImageArg(&surfaceState, false, 0);
 
     EXPECT_EQ(surfaceOffsets.xOffset, surfaceState.getXOffset());
     EXPECT_EQ(surfaceOffsets.yOffset, surfaceState.getYOffset());
@@ -460,7 +460,7 @@ HWTEST_F(Nv12ImageTest, setImageArgUVPlaneImageSetsOffsetedSurfaceBaseAddressAnd
     SurfaceOffsets surfaceOffsets;
     imageUVPlane->getSurfaceOffsets(surfaceOffsets);
 
-    imageUVPlane->setImageArg(&surfaceState, false);
+    imageUVPlane->setImageArg(&surfaceState, false, 0);
 
     EXPECT_EQ(imageUVPlane->getGraphicsAllocation()->getGpuAddress() + surfaceOffsets.offset, surfaceState.getSurfaceBaseAddress());
 
