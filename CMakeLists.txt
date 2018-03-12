@@ -29,6 +29,8 @@ set(CMAKE_CONFIGURATION_TYPES
 
 project(igdrcl)
 
+set(BRANCH_DIR_SUFFIX "/")
+
 if(TR_DEPRECATED)
     add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 endif(TR_DEPRECATED)
@@ -47,7 +49,6 @@ string(TOLOWER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_lower)
 if("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
 	add_definitions(-D_RELEASE_INTERNAL)
 endif("${BUILD_TYPE_lower}" STREQUAL "releaseinternal")
-
 
 message(STATUS "${CMAKE_BUILD_TYPE} build configuration")
 
@@ -125,10 +126,15 @@ if(NOT KMDAF_HEADERS_DIR)
     endif()
 endif(NOT KMDAF_HEADERS_DIR)
 
-if(NOT LIBDRM_DIR)
-	get_filename_component(LIBDRM_DIR "../libdrm/" ABSOLUTE)
-endif(NOT LIBDRM_DIR)
-message(STATUS "libdrm dir: ${LIBDRM_DIR}")
+if(LIBDRM_DIR)
+  get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
+else()
+  get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party/${BRANCH_DIR_SUFFIX}/uapi" ABSOLUTE)
+  if(NOT IS_DIRECTORY ${I915_INCLUDES_DIR})
+    get_filename_component(I915_INCLUDES_DIR "${IGDRCL_SOURCE_DIR}/third_party/uapi" ABSOLUTE)
+  endif()
+endif()
+message(STATUS "i915 includes dir: ${I915_INCLUDES_DIR}")
 
 if(NOT KHRONOS_HEADERS_DIR)
 	get_filename_component(KHRONOS_HEADERS_DIR "../khronos/opencl21/" ABSOLUTE)
@@ -434,7 +440,6 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
 endif()
 
 # Project-wide include paths
-set(BRANCH_DIR_SUFFIX "/")
 include_directories(${IGDRCL_SOURCE_DIR})
 include_directories(${IGDRCL_BUILD_DIR})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})

@@ -31,10 +31,8 @@
 #include <cstring>
 #include <iostream>
 
-extern "C" {
 #include "drm/i915_drm.h"
 #include "drm/drm.h"
-}
 
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"

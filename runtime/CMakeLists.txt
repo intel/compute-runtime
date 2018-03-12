@@ -94,7 +94,7 @@ else()
   set(IGDRCL_EXTRA_LIBS dl pthread)
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
     os_interface/linux
-    ${LIBDRM_DIR}/include
+    ${I915_INCLUDES_DIR}
   )
 endif()
 

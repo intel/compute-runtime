@@ -23,10 +23,9 @@
 #pragma once
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
-#include <vector>
-extern "C" {
 #include "drm/i915_drm.h"
-}
+
+#include <vector>
 
 namespace OCLRT {
 class BufferObject;

@@ -36,7 +36,7 @@ components:
   internal:
     branch: master
     dest_dir: internal
-    revision: 0dc371fd3bdf3a457fa77d5fb8da2cb5d8ceb1c1
+    revision: 7b713c9b8b5c18feaa222e84ecfcc07ac988dafa
     type: git
   khronos:
     branch: master
@@ -50,13 +50,6 @@ components:
     clean_on_sync: true
     dest_dir: kmdaf
     revision: 9d3c3f92ba35960c111ed4301e8f10219cae2d67
-    type: git
-  libdrm:
-    branch: libdrm-2.4.84
-    clean_on_sync: true
-    dest_dir: libdrm
-    repository: https://anongit.freedesktop.org/git/mesa/drm.git
-    revision: 290d29d9794813a2fe0578dbb905ad09bc810516
     type: git
   wdk:
     branch: wdk
