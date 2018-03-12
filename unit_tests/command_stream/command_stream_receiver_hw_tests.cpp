@@ -330,6 +330,68 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
     EXPECT_EQ(expectedUsedSize, commandStream.getUsed());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    bool found = false;
+    for (auto allocation : cmdBuffer->surfaces) {
+        if (allocation == sipAllocation) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.preemptionMode = PreemptionMode::MidThread;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    bool found = false;
+    for (auto allocation : mockCsr->copyOfAllocations) {
+        if (allocation == sipAllocation) {
+            found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(found);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, sameTaskLevelShouldntSendAPipeControl) {
     WhitelistedRegisters forceRegs = {0};
     pDevice->setForceWhitelistedRegs(true, &forceRegs);

@@ -306,6 +306,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (preemptionCsrAllocation)
         makeResident(*preemptionCsrAllocation);
 
+    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread) {
+        makeResident(*BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *device).getSipAllocation());
+    }
+
     // If the CSR has work in its CS, flush it before the task
     bool submitTask = commandStreamStartTask != commandStreamTask.getUsed();
     bool submitCSR = commandStreamStartCSR != commandStreamCSR.getUsed();
