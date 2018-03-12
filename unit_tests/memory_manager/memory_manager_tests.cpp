@@ -1133,6 +1133,11 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
+TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueriedForInternalHeapBaseThen32BitAllocatorBaseIsReturned) {
+    OsAgnosticMemoryManager memoryManager;
+    auto heapBase = memoryManager.allocator32Bit->getBase();
+    EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
+}
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
     Gmm *gmm = Gmm::create(nullptr, 65536, false);

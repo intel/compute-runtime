@@ -395,6 +395,10 @@ uint64_t WddmMemoryManager::getMaxApplicationAddress() {
     return wddm->getMaxApplicationAddress();
 }
 
+uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
+    return this->wddm->getGfxPartition().Heap32[1].Base;
+}
+
 bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer *allocationsForResidency) {
 
     auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->residencyAllocations;

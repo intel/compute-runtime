@@ -144,6 +144,8 @@ class MemoryManager {
 
     virtual uint64_t getMaxApplicationAddress() = 0;
 
+    virtual uint64_t getInternalHeapBaseAddress() = 0;
+
     virtual bool cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationType);
 
     void freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList);

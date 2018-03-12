@@ -2115,3 +2115,10 @@ TEST(DrmMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedTh
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
+
+TEST(DrmMemoryManager, givenDefaultDrmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenInternalHeapBaseIsReturned) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true));
+    auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
+    auto heapBase = internalAllocator->getBase();
+    EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress());
+}

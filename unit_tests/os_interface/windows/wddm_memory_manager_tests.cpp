@@ -1787,6 +1787,14 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDelete
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 
+TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeap1BaseIsReturned) {
+    WddmMock *wddm = new WddmMock;
+    wddm->callBaseDestroyAllocations = false;
+    MockWddmMemoryManager memoryManager(wddm);
+    auto heapBase = wddm->getGfxPartition().Heap32[1].Base;
+    EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
+}
+
 HWTEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
     WddmMock *wddm = new WddmMock;
     EXPECT_TRUE(wddm->init<FamilyType>());

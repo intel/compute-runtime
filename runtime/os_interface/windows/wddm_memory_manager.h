@@ -67,6 +67,7 @@ class WddmMemoryManager : public MemoryManager {
 
     uint64_t getSystemSharedMemory() override;
     uint64_t getMaxApplicationAddress() override;
+    uint64_t getInternalHeapBaseAddress() override;
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
 

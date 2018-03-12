@@ -462,6 +462,10 @@ uint64_t DrmMemoryManager::getMaxApplicationAddress() {
     return MemoryConstants::max32BitAppAddress + (uint64_t)is64bit * (MemoryConstants::max64BitAppAddress - MemoryConstants::max32BitAppAddress);
 }
 
+uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
+    return this->internal32bitAllocator->getBase();
+}
+
 bool DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         // If there is no fragment it means it already exists.

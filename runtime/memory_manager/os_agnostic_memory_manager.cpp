@@ -167,6 +167,10 @@ uint64_t OsAgnosticMemoryManager::getMaxApplicationAddress() {
     return MemoryConstants::max32BitAppAddress + static_cast<uint64_t>(is64bit) * (MemoryConstants::max64BitAppAddress - MemoryConstants::max32BitAppAddress);
 }
 
+uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
+    return this->allocator32Bit->getBase();
+}
+
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
     auto allocation = new MemoryAllocation(false, 0, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++);
     allocation->fragmentsStorage = handleStorage;
