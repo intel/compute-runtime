@@ -38,16 +38,8 @@ static const int mockFd = 33;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
 class Drm2 : public Drm {
   public:
-    struct IoctlResExt {
-        int32_t no;
-        int32_t res;
-
-        IoctlResExt(int32_t no, int32_t res) : no(no), res(res) {}
-    };
-
     Drm2() : Drm(mockFd) {
         sysFsDefaultGpuPathToRestore = nullptr;
-        reset();
     }
 
     ~Drm2() {
@@ -56,7 +48,6 @@ class Drm2 : public Drm {
         }
     }
     virtual inline int ioctl(unsigned long request, void *arg) {
-        auto ext = ioctl_res_ext.load();
         if ((request == DRM_IOCTL_I915_GETPARAM) && (arg != nullptr)) {
             drm_i915_getparam_t *gp = (drm_i915_getparam_t *)arg;
             if (false
@@ -190,18 +181,7 @@ class Drm2 : public Drm {
             aperture->aper_available_size = gpuMemSize;
             aperture->aper_size = gpuMemSize;
         }
-        if (ext->no != -1 && ext->no == ioctl_cnt.load()) {
-            ioctl_cnt.fetch_add(1);
-            return ext->res;
-        }
-        ioctl_cnt.fetch_add(1);
-        return ioctl_res.load();
-    }
-
-    IoctlResExt NONE = {-1, 0};
-    void reset() {
-        ioctl_cnt = ioctl_res = ioctl_expected = 0;
-        ioctl_res_ext = &NONE;
+        return 0;
     }
 
     void overideCoherencyPatchActive(bool newCoherencyPatchActiveValue) { coherencyDisablePatchActive = newCoherencyPatchActiveValue; }
@@ -270,11 +250,6 @@ class Drm2 : public Drm {
     int StoredMockPreemptionSupport = 0;
     int StoredExecSoftPin = 0;
     uint32_t StoredCtxId = 1;
-
-    std::atomic<int> ioctl_cnt;
-    std::atomic<int> ioctl_res;
-    std::atomic<int> ioctl_expected;
-    std::atomic<IoctlResExt *> ioctl_res_ext;
 
     //DRM_IOCTL_I915_GEM_EXECBUFFER2
     drm_i915_gem_execbuffer2 execBuffer = {0};
