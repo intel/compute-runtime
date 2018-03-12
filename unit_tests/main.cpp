@@ -109,6 +109,20 @@ void handle_SIGSEGV(int signal) {
     std::cout << "SIGSEGV on: " << lastTest << std::endl;
     abort();
 }
+struct sigaction oldSigAbrt;
+void handle_SIGABRT(int signal) {
+    std::cout << "SIGABRT on: " << lastTest << std::endl;
+    // restore signal handler to abort
+    if (sigaction(SIGABRT, &oldSigAbrt, nullptr) == -1) {
+        std::cout << "FATAL: cannot fatal SIGABRT handler" << std::endl;
+        std::cout << "FATAL: try SEGV" << std::endl;
+        uint8_t *ptr = nullptr;
+        *ptr = 0;
+        std::cout << "FATAL: still alive, call exit()" << std::endl;
+        exit(-1);
+    }
+    raise(signal);
+}
 #else
 LONG WINAPI UltExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
@@ -161,6 +175,7 @@ int main(int argc, char **argv) {
     bool useDefaultListener = false;
     bool enable_alarm = true;
     bool enable_segv = true;
+    bool enable_abrt = true;
 
     applyWorkarounds();
 
@@ -381,6 +396,17 @@ int main(int argc, char **argv) {
         sigfillset(&sa.sa_mask);
         if (sigaction(SIGSEGV, &sa, NULL) == -1) {
             printf("FATAL ERROR: cannot intercept SIGSEGV\n");
+            return -2;
+        }
+    }
+
+    if (enable_abrt) {
+        struct sigaction sa;
+        sa.sa_handler = &handle_SIGABRT;
+        sa.sa_flags = SA_RESTART;
+        sigfillset(&sa.sa_mask);
+        if (sigaction(SIGABRT, &sa, &oldSigAbrt) == -1) {
+            printf("FATAL ERROR: cannot intercept SIGABRT\n");
             return -2;
         }
     }
