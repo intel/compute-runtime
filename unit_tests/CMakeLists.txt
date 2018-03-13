@@ -102,19 +102,24 @@ endif()
 
 if(NOT GTEST_REPEAT)
   set(GTEST_REPEAT 1 CACHE STRING "Google test iterations")
-endif(NOT GTEST_REPEAT)
+endif()
 set(GTEST_REPEAT ${GTEST_REPEAT} CACHE STRING "Google test iterations")
 
 message(STATUS "GTest repeat count set to ${GTEST_REPEAT}")
 if(NOT GTEST_SHUFFLE)
   set(GTEST_SHUFFLE --gtest_shuffle --gtest_random_seed=0)
-endif(NOT GTEST_SHUFFLE)
+endif()
 message(STATUS "GTest shuffle set to ${GTEST_SHUFFLE}")
+
+if(NOT GTEST_EXCEPTION_OPTIONS)
+  set(GTEST_EXCEPTION_OPTIONS --gtest_catch_exceptions=1)
+endif()
+message(STATUS "GTest exception options set to ${GTEST_EXCEPTION_OPTIONS}")
 
 if(GTEST_FILTERING_PATTERN)
   set(GTEST_FILTER_OPTION "--gtest_filter=${GTEST_FILTERING_PATTERN}")
   message(STATUS "GTest filter for regular tests: ${GTEST_FILTERING_PATTERN}")
-endif(GTEST_FILTERING_PATTERN)
+endif()
 
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
@@ -472,7 +477,7 @@ function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
       COMMAND ${CMAKE_COMMAND} -E copy_if_different ${SRC} ${DST} ${CMAKE_CURRENT_SOURCE_DIR}/verify.bat ${TargetDir}/verify.bat
       COMMAND WORKING_DIRECTORY ${TargetDir}
       COMMAND echo Running igdrcl_tests with App Verifier
-      COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_catch_exceptions=1 --gtest_throw_on_failure ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
+      COMMAND ${TargetDir}/verify.bat --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
       COMMAND echo App Verifier returned: %errorLevel%
     )
   endif()
@@ -488,7 +493,7 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
     POST_BUILD
     COMMAND WORKING_DIRECTORY ${TargetDir}
     COMMAND echo Running igdrcl_tests ${target} ${slices}x${subslices}x${eu_per_ss} in ${TargetDir}/${product}
-    COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_catch_exceptions=1 --gtest_throw_on_failure --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
+    COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
   )
   add_dependencies(run_unit_tests run_${product}_unit_tests)
 endfunction(gen_run_unit_tests)
