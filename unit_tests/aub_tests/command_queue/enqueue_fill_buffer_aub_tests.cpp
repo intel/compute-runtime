@@ -50,7 +50,7 @@ typedef FillBufferHw AUBFillBuffer;
 HWTEST_P(AUBFillBuffer, simple) {
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     auto pDestMemory = &destMemory[0];
-    MockContext context;
+    MockContext context(&this->pCmdQ->getDevice());
     auto retVal = CL_INVALID_VALUE;
     auto destBuffer = Buffer::create(
         &context,

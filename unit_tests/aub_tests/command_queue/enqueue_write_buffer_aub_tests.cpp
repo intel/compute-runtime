@@ -48,7 +48,7 @@ struct WriteBufferHw
 typedef WriteBufferHw AUBWriteBuffer;
 
 HWTEST_P(AUBWriteBuffer, simple) {
-    MockContext context;
+    MockContext context(&this->pCmdQ->getDevice());
 
     cl_float *srcMemory = new float[1024];
     cl_float *destMemory = new float[1024];

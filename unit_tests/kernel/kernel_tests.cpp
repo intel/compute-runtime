@@ -1534,12 +1534,17 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenDefaultDevic
 
 typedef Test<DeviceFixture> KernelResidencyTest;
 
-TEST_F(KernelResidencyTest, test_MakeArgsResident) {
+HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIsMadeResident) {
     ASSERT_NE(nullptr, pDevice);
     char pCrossThreadData[64];
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    auto memoryManager = commandStreamReceiver.getMemoryManager();
+    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
 
     // setup kernel arg offsets
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -1554,15 +1559,16 @@ TEST_F(KernelResidencyTest, test_MakeArgsResident) {
     pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
 
     MockProgram program;
-    MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
     pKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
 
-    // Currently just a sandbox for testing
+    EXPECT_EQ(0u, commandStreamReceiver.makeResidentAllocations.size());
     pKernel->makeResident(pDevice->getCommandStreamReceiver());
+    EXPECT_EQ(1u, commandStreamReceiver.makeResidentAllocations.size());
+    EXPECT_EQ(commandStreamReceiver.makeResidentAllocations.begin()->first, pKernel->getKernelInfo().getGraphicsAllocation());
 
-    delete pKernel;
-    delete pKernelInfo;
+    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
 HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {

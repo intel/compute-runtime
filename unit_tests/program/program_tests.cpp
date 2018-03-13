@@ -1319,11 +1319,14 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         residency.erase(graphicsAllocation.getUnderlyingBuffer());
         CommandStreamReceiver::makeNonResident(graphicsAllocation);
     }
+    ResidencyContainer &getResidencyContainer() {
+        return this->memoryManager->getResidencyAllocations();
+    }
 
     std::map<const void *, size_t> residency;
 };
 
-HWTEST_F(PatchTokenTests, AllocateConstantSurface) {
+HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResidentIsCalledThenConstantAllocationIsMadeResident) {
     cl_device_id device = pDevice;
 
     CreateProgramFromBinary<Program>(pContext, &device, "test_constant_memory");
@@ -1349,11 +1352,7 @@ HWTEST_F(PatchTokenTests, AllocateConstantSurface) {
     EXPECT_EQ(expected_values[0], constBuff[0]);
     EXPECT_EQ(expected_values[1], constBuff[1]);
 
-    // create a kernel
-    auto pKernel = Kernel::create(
-        pProgram,
-        *pKernelInfo,
-        &retVal);
+    std::unique_ptr<Kernel> pKernel(Kernel::create(pProgram, *pKernelInfo, &retVal));
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
@@ -1365,7 +1364,18 @@ HWTEST_F(PatchTokenTests, AllocateConstantSurface) {
     pCommandStreamReceiver->residency.clear();
 
     pKernel->makeResident(*pCommandStreamReceiver);
-    EXPECT_EQ(1u, pCommandStreamReceiver->residency.size());
+    EXPECT_EQ(2u, pCommandStreamReceiver->residency.size());
+
+    auto &residencyVector = pCommandStreamReceiver->getResidencyContainer();
+
+    //we expect kernel ISA here and constant allocation
+    auto kernelIsa = pKernel->getKernelInfo().getGraphicsAllocation();
+    auto constantAllocation = pProgram->getConstantSurface();
+
+    auto element = std::find(residencyVector.begin(), residencyVector.end(), kernelIsa);
+    EXPECT_NE(residencyVector.end(), element);
+    element = std::find(residencyVector.begin(), residencyVector.end(), constantAllocation);
+    EXPECT_NE(residencyVector.end(), element);
 
     auto crossThreadData = pKernel->getCrossThreadData();
     uint32_t *constBuffGpuAddr = reinterpret_cast<uint32_t *>(pProgram->getConstantSurface()->getGpuAddressToPatch());
@@ -1379,13 +1389,11 @@ HWTEST_F(PatchTokenTests, AllocateConstantSurface) {
 
     std::vector<Surface *> surfaces;
     pKernel->getResidency(surfaces);
-    EXPECT_EQ(1u, surfaces.size());
+    EXPECT_EQ(2u, surfaces.size());
 
     for (Surface *surface : surfaces) {
         delete surface;
     }
-
-    delete pKernel;
 }
 
 TEST_F(PatchTokenTests, DataParamGWS) {

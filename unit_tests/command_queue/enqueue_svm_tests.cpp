@@ -472,7 +472,7 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {
     EXPECT_EQ(1u, kernel->getKernelSvmGfxAllocations().size());
 }
 
-TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfoBlockedOnEvent_success) {
+TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
     GraphicsAllocation *pSvmAlloc = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     EXPECT_NE(nullptr, ptrSVM);
 
@@ -483,7 +483,7 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfoBlockedOnEvent_success) {
 
     std::vector<Surface *> allSurfaces;
     kernel->getResidency(allSurfaces);
-    EXPECT_EQ(0u, allSurfaces.size());
+    EXPECT_EQ(1u, allSurfaces.size());
 
     kernel->setKernelExecInfo(pSvmAlloc);
 
@@ -503,7 +503,7 @@ TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfoBlockedOnEvent_success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     kernel->getResidency(allSurfaces);
-    EXPECT_EQ(1u, allSurfaces.size());
+    EXPECT_EQ(3u, allSurfaces.size());
 
     for (auto &surface : allSurfaces)
         delete surface;

@@ -941,6 +941,11 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
     makeArgsResident(commandStreamReceiver);
 
+    auto kernelIsaAllocation = this->kernelInfo.kernelAllocation;
+    if (kernelIsaAllocation) {
+        commandStreamReceiver.makeResident(*kernelIsaAllocation);
+    }
+
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
 }
 
@@ -978,6 +983,12 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
                 dst.push_back(new MemObjSurface(memObj));
             }
         }
+    }
+
+    auto kernelIsaAllocation = this->kernelInfo.kernelAllocation;
+    if (kernelIsaAllocation) {
+        GeneralSurface *surface = new GeneralSurface(kernelIsaAllocation);
+        dst.push_back(surface);
     }
 
     gtpinNotifyUpdateResidencyList(this, &dst);
