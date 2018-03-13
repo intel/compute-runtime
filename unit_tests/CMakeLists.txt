@@ -523,13 +523,14 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
           list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_64")
         endif()
 
-        if("gen${GEN_NUM}" STREQUAL "gen9" )
-          neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
-          add_dependencies(unit_tests test_kernel_sip_debug_local_${PLATFORM_IT_LOWER})
-        endif()
+        # Temporarily disabled sip kernel generation
+        # if("gen${GEN_NUM}" STREQUAL "gen9" )
+        #   neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
+        #   add_dependencies(unit_tests test_kernel_sip_debug_local_${PLATFORM_IT_LOWER})
+        # endif()
 
-        neo_gen_kernel_from_ll(test_kernel_sip_debug_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
-        add_dependencies(unit_tests test_kernel_sip_debug_${PLATFORM_IT_LOWER})
+        # neo_gen_kernel_from_ll(test_kernel_sip_debug_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
+        # add_dependencies(unit_tests test_kernel_sip_debug_${PLATFORM_IT_LOWER})
 
         if(${PLATFORM_SUPPORTS_2_0})
           neo_gen_kernel_with_options(test_kernel_2_0_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
