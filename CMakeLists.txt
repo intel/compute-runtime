@@ -72,6 +72,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # we force using response files
 set(CMAKE_NINJA_FORCE_RESPONSE_FILE 1)
 
+# set output paths
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/lib)
+
 # We want to build with the static, multithreaded runtime libraries (as opposed
 # to the multithreaded runtime DLLs)
 if(MSVC)
@@ -261,11 +266,6 @@ set(COMPILE_BUILT_INS TRUE CACHE BOOL "Enable built-in kernels compilation")
 
 # Changing the default executable and library output directories
 set(IGDRCL_OUTPUT_DIR "${IGDRCL_OPTION__OUTPUT_DIR}")
-
-# set output paths
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/bin)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${IGDRCL_BINARY_DIR}/lib)
 
 # do not add rpath
 set(CMAKE_SKIP_RPATH YES CACHE BOOL "" FORCE )
