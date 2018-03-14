@@ -66,6 +66,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
         return this->memoryManager;
     }
 
+    bool setPatchInfoData(PatchInfoData &data) override;
+
+    std::vector<PatchInfoData> patchInfoCollection;
+
     static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
 
     struct EngineInfo {
@@ -79,7 +83,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
         uint32_t tailRingBuffer;
     } engineInfoTable[EngineType::NUM_ENGINES];
 
-    AUBCommandStreamReceiver::AubFileStream stream;
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> stream;
     bool standalone;
 
     TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type ppgtt;
@@ -88,5 +92,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     AddressMapper gttRemap;
 
     MOCKABLE_VIRTUAL void *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer);
+    MOCKABLE_VIRTUAL bool addPatchInfoComments();
 };
 } // namespace OCLRT

@@ -26,6 +26,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/preamble.h"
+#include "runtime/helpers/address_patch.h"
 #include "runtime/program/program.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -369,6 +370,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         return 0;
     }
 
+    std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;
@@ -476,5 +479,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool usingSharedObjArgs;
     uint32_t patchedArgumentsNum = 0;
+
+    std::vector<PatchInfoData> patchInfoDataList;
 };
 } // namespace OCLRT

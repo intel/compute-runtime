@@ -28,7 +28,13 @@
 #include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/string.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "gmock/gmock.h"
 #include <vector>
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
 
 using namespace OCLRT;
 
@@ -82,6 +88,8 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     void processEviction() override {
         processEvictionCalled = true;
     }
+
+    MOCK_METHOD1(setPatchInfoData, bool(PatchInfoData &));
 
     ResidencyContainer madeResidentGfxAllocations;
     ResidencyContainer madeNonResidentGfxAllocations;
@@ -141,7 +149,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 };
 
 template <typename GfxFamily>
-struct MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
+class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
+  public:
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
@@ -250,3 +259,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
                  instructionHeapReserveredData.data(), instructionHeapReserveredData.size());
     }
 };
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

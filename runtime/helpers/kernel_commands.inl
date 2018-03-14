@@ -26,6 +26,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/indirect_heap/indirect_heap.h"
@@ -253,7 +254,7 @@ void KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
-    const Kernel &kernel) {
+    Kernel &kernel) {
     typedef typename GfxFamily::GPGPU_WALKER GPGPU_WALKER;
 
     indirectHeap.align(GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
@@ -262,6 +263,13 @@ size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
     auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
     char *pDest = static_cast<char *>(indirectHeap.getSpace(sizeCrossThreadData));
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        for (auto &patchInfoData : kernel.getPatchInfoDataList()) {
+            patchInfoData.targetAllocation = indirectHeap.getGpuBase();
+            patchInfoData.targetAllocationOffset += offsetCrossThreadData;
+        }
+    }
 
     return offsetCrossThreadData;
 }
@@ -327,7 +335,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     size_t ihReservedBlockSize,
     IndirectHeap &ioh,
     IndirectHeap &ssh,
-    const Kernel &kernel,
+    Kernel &kernel,
     uint32_t simd,
     const size_t localWorkSize[3],
     const uint64_t offsetInterfaceDescriptorTable,

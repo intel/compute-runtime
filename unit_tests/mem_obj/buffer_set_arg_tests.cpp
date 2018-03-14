@@ -29,6 +29,7 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -244,4 +245,36 @@ TEST_F(BufferSetArgTest, getKernelArgShouldReturnBuffer) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(memObj, pKernel->getKernelArg(0));
+}
+
+TEST_F(BufferSetArgTest, givenKernelArgBufferWhenAddPathInfoDataIsSetThenPatchInfoDataIsCollected) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    cl_mem memObj = buffer;
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(memObj),
+        &memObj);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(1u, pKernel->getPatchInfoDataList().size());
+
+    EXPECT_EQ(PatchInfoAllocationType::KernelArg, pKernel->getPatchInfoDataList()[0].sourceType);
+    EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, pKernel->getPatchInfoDataList()[0].targetType);
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getGpuAddressToPatch(), pKernel->getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(reinterpret_cast<uint64_t>(pKernel->getCrossThreadData()), pKernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(0u, pKernel->getPatchInfoDataList()[0].sourceAllocationOffset);
+}
+
+TEST_F(BufferSetArgTest, givenKernelArgBufferWhenAddPathInfoDataIsNotSetThenPatchInfoDataIsNotCollected) {
+    cl_mem memObj = buffer;
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(memObj),
+        &memObj);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(0u, pKernel->getPatchInfoDataList().size());
 }

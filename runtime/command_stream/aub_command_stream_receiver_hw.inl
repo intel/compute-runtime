@@ -35,6 +35,7 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone)
     : BaseClass(hwInfoIn),
+      stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
       standalone(standalone) {
     this->dispatchMode = CommandStreamReceiver::DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
@@ -54,7 +55,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
-    stream.close();
+    stream->close();
 
     for (auto &engineInfo : engineInfoTable) {
         alignedFree(engineInfo.pLRCA);
@@ -79,7 +80,7 @@ const AubMemDump::LrcaHelper &AUBCommandStreamReceiverHw<GfxFamily>::getCsTraits
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::initGlobalMMIO() {
     for (auto &mmioPair : AUBFamilyMapper<GfxFamily>::globalMMIO) {
-        stream.writeMMIO(mmioPair.first, mmioPair.second);
+        stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
 }
 
@@ -89,7 +90,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType
 
     DEBUG_BREAK_IF(!mmioList);
     for (auto &mmioPair : *mmioList) {
-        stream.writeMMIO(mmioPair.first, mmioPair.second);
+        stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
 }
 
@@ -113,11 +114,11 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttHWSP;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP);
-        stream.writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP);
+        stream->writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
     }
 
     // Allocate the LRCA
@@ -141,10 +142,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttRingBuffer;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, physRingBuffer);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, physRingBuffer);
     }
 
     // Initialize the ring MMIO registers
@@ -167,12 +168,12 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys);
         AUB::addMemoryWrite(
-            stream,
+            *stream,
             lrcAddressPhys,
             pLRCABase,
             sizeLRCA,
@@ -189,15 +190,15 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, standalone);
 
     // Open our file
-    csr->stream.open(fileName.c_str());
+    csr->stream->open(fileName.c_str());
 
-    if (!csr->stream.fileHandle.is_open()) {
+    if (!csr->stream->fileHandle.is_open()) {
         // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
         // try adding <familycodename>_aub
         DEBUG_BREAK_IF(true);
     }
     // Add the file header.
-    csr->stream.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    csr->stream->init(AubMemDump::SteppingValues::A, AUB::Traits::device);
 
     return csr;
 }
@@ -231,14 +232,14 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ppgtt: " << std::hex << std::showbase << pBatchBuffer;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
         auto physBatchBuffer = ppgtt.map(reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer);
-        AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer);
+        AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer);
 
         AUB::addMemoryWrite(
-            stream,
+            *stream,
             physBatchBuffer,
             pBatchBuffer,
             sizeBatchBuffer,
@@ -256,6 +257,9 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
         }
         processResidency(allocationsForResidency);
+    }
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        addPatchInfoComments();
     }
 
     // Add a batch buffer start to the ring buffer
@@ -282,7 +286,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             // write remaining ring
             auto physDumpStart = ggtt.map(ggttTail, sizeToWrap);
             AUB::addMemoryWrite(
-                stream,
+                *stream,
                 physDumpStart,
                 pTail,
                 sizeToWrap,
@@ -327,12 +331,12 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << ggttDumpStart;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
         auto physDumpStart = ggtt.map(ggttDumpStart, dumpLength);
         AUB::addMemoryWrite(
-            stream,
+            *stream,
             physDumpStart,
             dumpStart,
             dumpLength,
@@ -343,12 +347,12 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         {
             std::ostringstream str;
             str << "ggtt: " << std::hex << std::showbase << engineInfo.ggttLRCA + 0x101c;
-            stream.addComment(str.str().c_str());
+            stream->addComment(str.str().c_str());
         }
 
         auto physLRCA = ggtt.map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRingBuffer));
         AUB::addMemoryWrite(
-            stream,
+            *stream,
             physLRCA + 0x101c,
             &engineInfo.tailRingBuffer,
             sizeof(engineInfo.tailRingBuffer),
@@ -403,12 +407,55 @@ void *AUBCommandStreamReceiverHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &bat
 }
 
 template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
+    std::map<uint64_t, uint64_t> allocationsMap;
+
+    std::ostringstream str;
+    str << "PatchInfoData" << std::endl;
+    for (auto &patchInfoData : this->patchInfoCollection) {
+        str << std::hex << patchInfoData.sourceAllocation << ";";
+        str << std::hex << patchInfoData.sourceAllocationOffset << ";";
+        str << std::hex << patchInfoData.sourceType << ";";
+        str << std::hex << patchInfoData.targetAllocation << ";";
+        str << std::hex << patchInfoData.targetAllocationOffset << ";";
+        str << std::hex << patchInfoData.targetType << ";";
+        str << std::endl;
+
+        if (patchInfoData.sourceAllocation) {
+            allocationsMap.insert(std::pair<uint64_t, uint64_t>(patchInfoData.sourceAllocation,
+                                                                ppgtt.map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1)));
+        }
+
+        if (patchInfoData.targetAllocation) {
+            allocationsMap.insert(std::pair<uint64_t, uintptr_t>(patchInfoData.targetAllocation,
+                                                                 ppgtt.map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1)));
+        }
+    }
+    bool result = stream->addComment(str.str().c_str());
+    this->patchInfoCollection.clear();
+    if (!result) {
+        return false;
+    }
+
+    std::ostringstream allocationStr;
+    allocationStr << "AllocationsList" << std::endl;
+    for (auto &element : allocationsMap) {
+        allocationStr << std::hex << element.first << ";" << element.second << std::endl;
+    }
+    result = stream->addComment(allocationStr.str().c_str());
+    if (!result) {
+        return false;
+    }
+    return true;
+}
+
+template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::submitLRCA(EngineType engineType, const typename AUBCommandStreamReceiverHw<GfxFamily>::MiContextDescriptorReg &contextDescriptor) {
     auto mmioBase = getCsTraits(engineType).mmioBase;
-    stream.writeMMIO(mmioBase + 0x2230, 0);
-    stream.writeMMIO(mmioBase + 0x2230, 0);
-    stream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
-    stream.writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
+    stream->writeMMIO(mmioBase + 0x2230, 0);
+    stream->writeMMIO(mmioBase + 0x2230, 0);
+    stream->writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[1]);
+    stream->writeMMIO(mmioBase + 0x2230, contextDescriptor.ulData[0]);
 }
 
 template <typename GfxFamily>
@@ -417,7 +464,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
 
     auto mmioBase = getCsTraits(engineType).mmioBase;
     bool pollNotEqual = false;
-    this->stream.registerPoll(
+    this->stream->registerPoll(
         mmioBase + 0x2234, //EXECLIST_STATUS
         0x100,
         0x100,
@@ -447,7 +494,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     {
         std::ostringstream str;
         str << "ppgtt: " << std::hex << std::showbase << gpuAddress;
-        stream.addComment(str.str().c_str());
+        stream->addComment(str.str().c_str());
     }
 
     if (cpuAddress == nullptr) {
@@ -457,7 +504,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset);
+        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset);
     };
     ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
 
@@ -498,5 +545,11 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken() {
     // Some simulator versions don't support adding the context token.
     // This hook allows specialization for those that do.
+}
+
+template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::setPatchInfoData(PatchInfoData &data) {
+    patchInfoCollection.push_back(data);
+    return true;
 }
 } // namespace OCLRT

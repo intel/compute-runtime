@@ -231,7 +231,7 @@ void AubFileStream::createContext(const AubPpgttContextCreate &cmd) {
     fileHandle.write(reinterpret_cast<const char *>(&cmd), sizeof(cmd));
 }
 
-void AubFileStream::addComment(const char *message) {
+bool AubFileStream::addComment(const char *message) {
     using CmdServicesMemTraceComment = AubMemDump::CmdServicesMemTraceComment;
     CmdServicesMemTraceComment cmd;
     memset(&cmd, 0, sizeof(cmd));
@@ -251,6 +251,7 @@ void AubFileStream::addComment(const char *message) {
         uint32_t zero = 0;
         fileHandle.write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
     }
+    return true;
 }
 
 } // namespace AubMemDump

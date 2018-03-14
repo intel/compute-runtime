@@ -68,6 +68,15 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override;
     const HardwareInfo &peekHwInfo() const { return hwInfo; }
 
+    void collectStateBaseAddresPatchInfo(
+        uint64_t baseAddress,
+        uint64_t commandOffset,
+        const LinearStream &dsh,
+        const LinearStream &ih,
+        const LinearStream &ioh,
+        const LinearStream &ssh,
+        uint64_t generalStateBase);
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags, const LinearStream &ih);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);

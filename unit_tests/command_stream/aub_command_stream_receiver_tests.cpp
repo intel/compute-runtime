@@ -31,6 +31,10 @@
 
 using namespace OCLRT;
 
+using ::testing::Invoke;
+using ::testing::_;
+using ::testing::Return;
+
 typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 
 template <typename GfxFamily>
@@ -50,6 +54,11 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     }
 
     MOCK_METHOD2(flattenBatchBuffer, void *(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer));
+    MOCK_METHOD0(addPatchInfoComments, bool(void));
+};
+
+struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
+    MOCK_METHOD1(addComment, bool(const char *message));
 };
 
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
@@ -526,6 +535,332 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDispatc
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(chainedBatchBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency;
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+
+    EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(1);
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency;
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+
+    EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    std::vector<std::string> comments;
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
+        comments.push_back(std::string(str));
+        return true;
+    }));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_TRUE(result);
+
+    ASSERT_EQ(2u, comments.size());
+
+    EXPECT_EQ("PatchInfoData\n", comments[0]);
+    EXPECT_EQ("AllocationsList\n", comments[1]);
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(1).WillOnce(Return(false));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_FALSE(result);
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_FALSE(result);
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    PatchInfoData patchInfoData[2] = {{0xAAAAAAAA, 128u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 256u, PatchInfoAllocationType::Default},
+                                      {0xBBBBBBBB, 128u, PatchInfoAllocationType::Default, 0xDDDDDDDD, 256u, PatchInfoAllocationType::Default}};
+
+    EXPECT_TRUE(aubCsr->setPatchInfoData(patchInfoData[0]));
+    EXPECT_TRUE(aubCsr->setPatchInfoData(patchInfoData[1]));
+
+    std::vector<std::string> comments;
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
+        comments.push_back(std::string(str));
+        return true;
+    }));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_TRUE(result);
+
+    ASSERT_EQ(2u, comments.size());
+
+    EXPECT_EQ("PatchInfoData", comments[0].substr(0, 13));
+    EXPECT_EQ("AllocationsList", comments[1].substr(0, 15));
+
+    std::string line;
+    std::istringstream input1;
+    input1.str(comments[0]);
+
+    uint32_t lineNo = 0;
+    while (std::getline(input1, line)) {
+        if (line.substr(0, 13) == "PatchInfoData") {
+            continue;
+        }
+        std::ostringstream ss;
+        ss << std::hex << patchInfoData[lineNo].sourceAllocation << ";" << patchInfoData[lineNo].sourceAllocationOffset << ";" << patchInfoData[lineNo].sourceType << ";";
+        ss << patchInfoData[lineNo].targetAllocation << ";" << patchInfoData[lineNo].targetAllocationOffset << ";" << patchInfoData[lineNo].targetType << ";";
+
+        EXPECT_EQ(ss.str(), line);
+        lineNo++;
+    }
+
+    std::vector<std::string> expectedAddresses = {"aaaaaaaa", "bbbbbbbb", "cccccccc", "dddddddd"};
+    lineNo = 0;
+
+    std::istringstream input2;
+    input2.str(comments[1]);
+    while (std::getline(input2, line)) {
+        if (line.substr(0, 15) == "AllocationsList") {
+            continue;
+        }
+
+        bool foundAddr = false;
+        for (auto &addr : expectedAddresses) {
+            if (line.substr(0, 8) == addr) {
+                foundAddr = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(foundAddr);
+        EXPECT_TRUE(line.size() > 9);
+        lineNo++;
+    }
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 0u, PatchInfoAllocationType::Default};
+    EXPECT_TRUE(aubCsr->setPatchInfoData(patchInfoData));
+
+    std::vector<std::string> comments;
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
+        comments.push_back(std::string(str));
+        return true;
+    }));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_TRUE(result);
+
+    ASSERT_EQ(2u, comments.size());
+
+    ASSERT_EQ("PatchInfoData", comments[0].substr(0, 13));
+    ASSERT_EQ("AllocationsList", comments[1].substr(0, 15));
+
+    std::string line;
+    std::istringstream input;
+    input.str(comments[1]);
+
+    uint32_t lineNo = 0;
+
+    std::vector<std::string> expectedAddresses = {"bbbbbbbb"};
+    while (std::getline(input, line)) {
+        if (line.substr(0, 15) == "AllocationsList") {
+            continue;
+        }
+
+        bool foundAddr = false;
+        for (auto &addr : expectedAddresses) {
+            if (line.substr(0, 8) == addr) {
+                foundAddr = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(foundAddr);
+        EXPECT_TRUE(line.size() > 9);
+        lineNo++;
+    }
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::Default, 0x0, 0u, PatchInfoAllocationType::Default};
+    EXPECT_TRUE(aubCsr->setPatchInfoData(patchInfoData));
+
+    std::vector<std::string> comments;
+
+    EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillRepeatedly(::testing::Invoke([&](const char *str) -> bool {
+        comments.push_back(std::string(str));
+        return true;
+    }));
+    bool result = aubCsr->addPatchInfoComments();
+    EXPECT_TRUE(result);
+
+    ASSERT_EQ(2u, comments.size());
+
+    ASSERT_EQ("PatchInfoData", comments[0].substr(0, 13));
+    ASSERT_EQ("AllocationsList", comments[1].substr(0, 15));
+
+    std::string line;
+    std::istringstream input;
+    input.str(comments[1]);
+
+    uint32_t lineNo = 0;
+
+    std::vector<std::string> expectedAddresses = {"aaaaaaaa"};
+    while (std::getline(input, line)) {
+        if (line.substr(0, 15) == "AllocationsList") {
+            continue;
+        }
+
+        bool foundAddr = false;
+        for (auto &addr : expectedAddresses) {
+            if (line.substr(0, 8) == addr) {
+                foundAddr = true;
+                break;
+            }
+        }
+        EXPECT_TRUE(foundAddr);
+        EXPECT_TRUE(line.size() > 9);
+        lineNo++;
+    }
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryManager {

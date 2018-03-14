@@ -249,6 +249,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             blockQueue,
             commandType);
 
+        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+            for (auto &dispatchInfo : multiDispatchInfo) {
+                for (auto &patchInfoData : dispatchInfo.getKernel()->getPatchInfoDataList()) {
+                    commandStreamReceiver.setPatchInfoData(patchInfoData);
+                }
+            }
+        }
+
         commandStreamReceiver.setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
 
         slmUsed = multiDispatchInfo.usesSlm();

@@ -28,6 +28,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "test.h"
 
@@ -243,4 +244,41 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
 
     event->release();
     mockCmdQ->release();
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenPatchInfoDataIsNotTransferredToCSR) {
+    int32_t tag;
+    auto csr = new MockCsrBase<FamilyType>(tag);
+    pDevice->resetCommandStreamReceiver(csr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+
+    size_t gws[] = {1, 1, 1};
+
+    PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
+
+    EXPECT_CALL(*csr, setPatchInfoData(::testing::_)).Times(0);
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    int32_t tag;
+    auto csr = new MockCsrBase<FamilyType>(tag);
+    pDevice->resetCommandStreamReceiver(csr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
+
+    size_t gws[] = {1, 1, 1};
+
+    PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
+
+    EXPECT_CALL(*csr, setPatchInfoData(::testing::_)).Times(6);
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 }

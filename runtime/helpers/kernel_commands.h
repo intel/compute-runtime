@@ -74,7 +74,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static size_t sendCrossThreadData(
         IndirectHeap &indirectHeap,
-        const Kernel &kernel);
+        Kernel &kernel);
 
     static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const KernelInfo &srcKernelInfo,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
@@ -100,7 +100,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         size_t ihReservedBlockSize,
         IndirectHeap &ioh,
         IndirectHeap &ssh,
-        const Kernel &kernel,
+        Kernel &kernel,
         uint32_t simd,
         const size_t localWorkSize[3],
         const uint64_t offsetInterfaceDescriptorTable,

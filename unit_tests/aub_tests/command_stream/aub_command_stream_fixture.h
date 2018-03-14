@@ -52,7 +52,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
 
         // Write our pseudo-op to the AUB file
         auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
-        aubCsr->stream.fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+        aubCsr->stream->fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
     }
 
     template <typename FamilyType>
@@ -62,9 +62,9 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
             if (offset > length)
                 abort();
 
-            aubCsr->stream.expectMemory(physAddress,
-                                        reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
-                                        size);
+            aubCsr->stream->expectMemory(physAddress,
+                                         reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                         size);
         };
 
         aubCsr->ppgtt.pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, walker);

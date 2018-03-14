@@ -30,6 +30,7 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/execution_model_kernel_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -209,6 +210,67 @@ HWTEST_F(KernelCommandsTest, sendCrossThreadDataResourceUsage) {
 
     auto usedAfter = indirectHeap.getUsed();
     EXPECT_EQ(kernel->getCrossThreadDataSize(), usedAfter - usedBefore);
+}
+
+HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataOffsetsAreNotMoved) {
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
+
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+
+    PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    kernel->getPatchInfoDataList().push_back(patchInfoData);
+
+    KernelCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *kernel);
+
+    ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
+    EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].sourceAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::KernelArg, kernel->getPatchInfoDataList()[0].sourceType);
+    EXPECT_EQ(0xbbbbbbbb, kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
+}
+
+HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
+
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    indirectHeap.getSpace(128u);
+
+    PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    kernel->getPatchInfoDataList().push_back(patchInfoData);
+
+    auto offsetCrossThreadData = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *kernel);
+
+    ASSERT_NE(0u, offsetCrossThreadData);
+    EXPECT_EQ(128u, offsetCrossThreadData);
+
+    ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
+    EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
+    EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].sourceAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::KernelArg, kernel->getPatchInfoDataList()[0].sourceType);
+    EXPECT_NE(0xbbbbbbbb, kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(indirectHeap.getGpuBase(), kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_NE(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(offsetCrossThreadData, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
+    EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
 HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {

@@ -266,12 +266,14 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     return buffer;
 }
 
-void Buffer::setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing) {
+uint64_t Buffer::setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing) {
     // Subbuffers have offset that graphicsAllocation is not aware of
     uintptr_t addressToPatch = ((set32BitAddressing) ? static_cast<uintptr_t>(graphicsAllocation->getGpuAddressToPatch()) : static_cast<uintptr_t>(graphicsAllocation->getGpuAddress())) + this->offset;
     DEBUG_BREAK_IF(!(graphicsAllocation->isLocked() || (this->getCpuAddress() == reinterpret_cast<void *>(addressToPatch)) || (graphicsAllocation->gpuBaseAddress != 0) || (this->getCpuAddress() == nullptr && this->getGraphicsAllocation()->peekSharedHandle())));
 
     patchWithRequiredSize(memory, patchSize, addressToPatch);
+
+    return addressToPatch;
 }
 
 bool Buffer::bufferRectPitchSet(const size_t *bufferOrigin,

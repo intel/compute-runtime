@@ -62,6 +62,7 @@ DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBBufferDump, false, "Avoid dumping buffers in AUB files")
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBImageDump, false, "Avoid dumping images in AUB files")
 DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")
+DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")

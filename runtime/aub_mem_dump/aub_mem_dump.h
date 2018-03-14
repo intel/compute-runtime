@@ -121,6 +121,7 @@ struct AubStream {
     virtual void writeGTT(uint32_t offset, uint64_t entry) = 0;
     virtual void writeMMIO(uint32_t offset, uint32_t value) = 0;
     virtual void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) = 0;
+    virtual ~AubStream() = default;
 };
 
 struct AubFileStream : public AubStream {
@@ -134,8 +135,8 @@ struct AubFileStream : public AubStream {
     void writeGTT(uint32_t offset, uint64_t entry) override;
     void writeMMIO(uint32_t offset, uint32_t value) override;
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
-    void expectMemory(uint64_t physAddress, const void *memory, size_t size);
-    void addComment(const char *message);
+    MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size);
+    MOCKABLE_VIRTUAL bool addComment(const char *message);
 
     std::ofstream fileHandle;
 };

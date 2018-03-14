@@ -260,6 +260,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             GSBAFor32BitProgrammed = true;
         }
 
+        auto stateBaseAddressCmdOffset = commandStreamCSR.getUsed();
+
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             commandStreamCSR,
             dsh,
@@ -268,7 +270,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,
             newGSHbase,
             requiredL3Index);
+
         latestSentStatelessMocsConfig = requiredL3Index;
+
+        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+            collectStateBaseAddresPatchInfo(commandStream.getGpuBase(), stateBaseAddressCmdOffset, dsh, ih, ioh, ssh, newGSHbase);
+        }
     }
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
@@ -638,4 +645,30 @@ template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::updateLastWaitForCompletionTimestamp() {
     lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
 }
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
+    uint64_t baseAddress,
+    uint64_t commandOffset,
+    const LinearStream &dsh,
+    const LinearStream &ih,
+    const LinearStream &ioh,
+    const LinearStream &ssh,
+    uint64_t generalStateBase) {
+
+    typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+
+    PatchInfoData dynamicStatePatchInfo = {dsh.getGpuBase(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::GeneralStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData surfaceStatePatchInfo = {ssh.getGpuBase(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData indirectObjectPatchInfo = {ioh.getGpuBase(), 0u, PatchInfoAllocationType::IndirectObjectHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData instructionPatchInfo = {ih.getGpuBase(), 0u, PatchInfoAllocationType::InstructionHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INSTRUCTIONBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+
+    setPatchInfoData(dynamicStatePatchInfo);
+    setPatchInfoData(generalStatePatchInfo);
+    setPatchInfoData(surfaceStatePatchInfo);
+    setPatchInfoData(indirectObjectPatchInfo);
+    setPatchInfoData(instructionPatchInfo);
+}
+
 } // namespace OCLRT

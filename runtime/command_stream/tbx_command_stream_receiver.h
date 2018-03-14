@@ -40,7 +40,7 @@ class TbxStream : public AubMemDump::AubStream {
 
   public:
     TbxStream();
-    virtual ~TbxStream();
+    ~TbxStream() override;
 
     TbxStream(const TbxStream &) = delete;
     TbxStream &operator=(const TbxStream &) = delete;

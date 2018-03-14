@@ -57,6 +57,9 @@
 
 using namespace OCLRT;
 
+using ::testing::Invoke;
+using ::testing::_;
+
 struct UltCommandStreamReceiverTest
     : public DeviceFixture,
       public BuiltInFixture,
@@ -3424,4 +3427,142 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
     auto cmdBuffer = cmdBufferList.peekHead();
 
     EXPECT_EQ(cmdBuffer->batchBuffer.throttle, QueueThrottle::HIGH);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoDataIsNotCollected) {
+
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    int32_t tag;
+    auto mockCsr = new MockCsrBase<FamilyType>(tag);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.throttle = QueueThrottle::MEDIUM;
+
+    EXPECT_CALL(*mockCsr, setPatchInfoData(_)).Times(0);
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    int32_t tag;
+    auto mockCsr = new MockCsrBase<FamilyType>(tag);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.throttle = QueueThrottle::MEDIUM;
+
+    std::vector<PatchInfoData> patchInfoDataVector;
+    EXPECT_CALL(*mockCsr, setPatchInfoData(_)).Times(5).WillRepeatedly(Invoke([&](PatchInfoData &data) {
+        patchInfoDataVector.push_back(data);
+        return true;
+    }));
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ih,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    EXPECT_EQ(5u, patchInfoDataVector.size());
+
+    for (auto &patchInfoData : patchInfoDataVector) {
+        uint64_t expectedAddress = 0u;
+        switch (patchInfoData.sourceType) {
+        case PatchInfoAllocationType::DynamicStateHeap:
+            expectedAddress = dsh.getGpuBase();
+            break;
+        case PatchInfoAllocationType::SurfaceStateHeap:
+            expectedAddress = ssh.getGpuBase();
+            break;
+        case PatchInfoAllocationType::IndirectObjectHeap:
+            expectedAddress = ioh.getGpuBase();
+            break;
+        case PatchInfoAllocationType::InstructionHeap:
+            expectedAddress = ih.getGpuBase();
+            break;
+        default:
+            expectedAddress = 0u;
+        }
+        EXPECT_EQ(expectedAddress, patchInfoData.sourceAllocation);
+        EXPECT_EQ(0u, patchInfoData.sourceAllocationOffset);
+        EXPECT_EQ(commandStream.getGpuBase(), patchInfoData.targetAllocation);
+        EXPECT_EQ(PatchInfoAllocationType::Default, patchInfoData.targetType);
+        EXPECT_NE(commandStream.getGpuBase(), patchInfoData.targetAllocationOffset);
+    }
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenNonAubCsrWhenSetPatchInfoDataIsCalledThenNoDataIsCollected) {
+    std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*platformDevices[0]));
+    PatchInfoData patchInfoData = {0u, 0u, PatchInfoAllocationType::Default, 0u, 0u, PatchInfoAllocationType::Default};
+    EXPECT_FALSE(mockCsr->setPatchInfoData(patchInfoData));
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenMockCsrWhenCollectStateBaseAddresPatchInfoIsCalledThenAppropriateAddressesAreTaken) {
+    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+
+    int32_t tag;
+    std::unique_ptr<MockCsrBase<FamilyType>> mockCsr(new MockCsrBase<FamilyType>(tag));
+
+    std::vector<PatchInfoData> patchInfoDataVector;
+    EXPECT_CALL(*mockCsr, setPatchInfoData(_)).Times(5).WillRepeatedly(Invoke([&](PatchInfoData &data) {
+        patchInfoDataVector.push_back(data);
+        return true;
+    }));
+
+    uint64_t baseAddress = 0xabcdef;
+    uint64_t commandOffset = 0xa;
+    uint64_t generalStateBase = 0xff;
+
+    mockCsr->collectStateBaseAddresPatchInfo(baseAddress, commandOffset, dsh, ih, ioh, ssh, generalStateBase);
+
+    ASSERT_EQ(patchInfoDataVector.size(), 5u);
+    PatchInfoData dshPatch = patchInfoDataVector[0];
+    PatchInfoData gshPatch = patchInfoDataVector[1];
+    PatchInfoData sshPatch = patchInfoDataVector[2];
+    PatchInfoData iohPatch = patchInfoDataVector[3];
+    PatchInfoData ihPatch = patchInfoDataVector[4];
+
+    for (auto &patch : patchInfoDataVector) {
+        EXPECT_EQ(patch.targetAllocation, baseAddress);
+        EXPECT_EQ(patch.sourceAllocationOffset, 0u);
+    }
+
+    //DSH
+    EXPECT_EQ(dshPatch.sourceAllocation, dsh.getGpuBase());
+    EXPECT_EQ(dshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET);
+
+    //IH
+    EXPECT_EQ(ihPatch.sourceAllocation, ih.getGpuBase());
+    EXPECT_EQ(ihPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INSTRUCTIONBASEADDRESS_BYTEOFFSET);
+
+    //IOH
+    EXPECT_EQ(iohPatch.sourceAllocation, ioh.getGpuBase());
+    EXPECT_EQ(iohPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET);
+
+    //SSH
+    EXPECT_EQ(sshPatch.sourceAllocation, ssh.getGpuBase());
+    EXPECT_EQ(sshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET);
+
+    //GSH
+    EXPECT_EQ(gshPatch.sourceAllocation, generalStateBase);
+    EXPECT_EQ(gshPatch.targetAllocationOffset, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET);
 }

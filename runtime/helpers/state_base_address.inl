@@ -25,7 +25,6 @@
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include <cstddef>
 
 namespace OCLRT {
 template <typename GfxFamily>

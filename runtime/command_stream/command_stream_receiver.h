@@ -26,6 +26,7 @@
 #include "runtime/command_stream/submissions_aggregator.h"
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/address_patch.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include <cstddef>
 #include <cstdint>
@@ -121,6 +122,9 @@ class CommandStreamReceiver {
     MOCKABLE_VIRTUAL void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const;
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
+
+    // Collect patch info data
+    virtual bool setPatchInfoData(PatchInfoData &data) { return false; }
 
   protected:
     void setDisableL3Cache(bool val) {

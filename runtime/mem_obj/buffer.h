@@ -89,7 +89,8 @@ class Buffer : public MemObj {
     BufferCreatFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
-    void setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing = false);
+    uint64_t setArgStateless(void *memory, uint32_t patchSize) { return setArgStateless(memory, patchSize, false); }
+    uint64_t setArgStateless(void *memory, uint32_t patchSize, bool set32BitAddressing);
     virtual void setArgStateful(void *memory) = 0;
     bool bufferRectPitchSet(const size_t *bufferOrigin,
                             const size_t *region,
