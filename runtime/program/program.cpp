@@ -413,7 +413,7 @@ void Program::freeBlockResources() {
 void Program::cleanCurrentKernelInfo() {
     for (auto &kernelInfo : kernelInfoArray) {
         if (kernelInfo->kernelAllocation) {
-            this->pDevice->getMemoryManager()->freeGraphicsMemory(kernelInfo->kernelAllocation);
+            this->pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
         }
         delete kernelInfo;
     }
