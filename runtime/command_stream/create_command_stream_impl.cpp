@@ -46,7 +46,6 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
                              pHwInfo->pWaTable,
                              pHwInfo->pSysInfo);
             commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true);
-            initialHardwareTag = -1;
             break;
         case CSR_TBX:
             Gmm::initContext(pHwInfo->pPlatform,

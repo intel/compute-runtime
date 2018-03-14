@@ -378,6 +378,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
     if (this->standalone) {
         pollForCompletion(engineType);
+        *this->tagAddress = this->peekLatestSentTaskCount();
     }
     return 0;
 }

@@ -55,6 +55,14 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         return this->dispatchMode;
     }
 
+    GraphicsAllocation *getTagAllocation() const {
+        return this->tagAllocation;
+    }
+
+    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+        this->latestSentTaskCount = latestSentTaskCount;
+    }
+
     MOCK_METHOD2(flattenBatchBuffer, void *(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer));
 };
 
@@ -125,8 +133,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -150,10 +161,41 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldUpdateHwTagWithLatestSentTaskCount) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+    EXPECT_EQ(initialHardwareTag, *aubCsr->getTagAddress());
+
+    aubCsr->setLatestSentTaskCount(aubCsr->peekTaskCount() + 1);
+
+    EXPECT_NE(aubCsr->peekLatestSentTaskCount(), *aubCsr->getTagAddress());
+
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+
+    EXPECT_EQ(aubCsr->peekLatestSentTaskCount(), *aubCsr->getTagAddress());
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnCommandBufferAllocation) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -201,10 +243,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnResidencyAllocations) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    ASSERT_NE(nullptr, gfxAllocation);
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -387,10 +433,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefaultDebugConfigThenExpectxpectFlattenBatchBufferIsNotCalled) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefaultDebugConfigThenExpectFlattenBatchBufferIsNotCalled) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -415,6 +464,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
@@ -436,7 +488,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     memoryManager->freeGraphicsMemory(chainedBatchBuffer);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndTheresNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
@@ -444,6 +496,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -466,6 +521,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDispatc
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     aubCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);
