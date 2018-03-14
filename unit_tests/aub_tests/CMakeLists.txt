@@ -54,7 +54,6 @@ target_sources(igdrcl_aub_tests PRIVATE
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/device_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
@@ -62,8 +61,6 @@ target_sources(igdrcl_aub_tests PRIVATE
   ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
 )
 

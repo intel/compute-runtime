@@ -23,4 +23,6 @@ set(IGDRCL_SRCS_tests_d3d_sharing
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d9_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_tests.cpp
 )
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_d3d_sharing})
+if(WIN32)
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_d3d_sharing})
+endif()

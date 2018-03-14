@@ -24,10 +24,10 @@ set(TEST_PROJECTS_FOLDER "opencl runtime")
 set(PLATFORM_SPECIFIC_TARGETS_FOLDER "${TEST_PROJECTS_FOLDER}/test platforms")
 
 add_custom_target(unit_tests)
+add_custom_target(run_unit_tests ALL)
 
 set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/abort.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/custom_event_listener.h
   ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.cpp
@@ -40,6 +40,30 @@ set(IGDRCL_SRCS_tests_local
 )
 
 add_subdirectory(libult)
+
+hide_subdir(libult)
+hide_subdir(linux)
+
+if(UNIX)
+  add_subdirectory(linux)
+  add_custom_command(
+    TARGET run_unit_tests
+    POST_BUILD
+    COMMAND echo running linux specific tests for static library in ${TargetDir}
+    COMMAND igdrcl_linux_tests ${IGDRCL_TESTS_LISTENER_OPTION}
+    COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
+    COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
+    COMMAND WORKING_DIRECTORY ${TargetDir}
+  )
+  if(PRE_ULT_COMMAND)
+    add_custom_command(
+      TARGET unit_tests
+      POST_BUILD
+      COMMAND echo running ${PRE_ULT_COMMAND} utility before ULTs execution
+      COMMAND ${PRE_ULT_COMMAND}
+    )
+  endif()
+endif()
 
 set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
   $<TARGET_OBJECTS:igdrcl_libult>
@@ -55,50 +79,7 @@ add_executable(igdrcl_tests
   ${IGDRCL_SRCS_tests_local}
 )
 
-add_subdirectory(accelerators)
-add_subdirectory(api)
-add_subdirectory(built_ins)
-add_subdirectory(command_queue)
-add_subdirectory(command_stream)
-add_subdirectory(compiler_interface)
-add_subdirectory(context)
-add_subdirectory(device)
-add_subdirectory(device_queue)
-add_subdirectory(event)
-add_subdirectory(execution_model)
-add_subdirectory(fixtures)
-add_subdirectory(gen_common)
-if(GTPIN_HEADERS_DIR)
-add_subdirectory(gtpin)
-endif(GTPIN_HEADERS_DIR)
-add_subdirectory(gmm_helper)
-add_subdirectory(helpers)
-add_subdirectory(indirect_heap)
-add_subdirectory(instrumentation)
-add_subdirectory(kernel)
-add_subdirectory(linux)
-add_subdirectory(mem_obj)
-add_subdirectory(memory_manager)
-add_subdirectory(mocks)
-add_subdirectory(offline_compiler)
-add_subdirectory(os_interface)
-add_subdirectory(platform)
-add_subdirectory(preamble)
-add_subdirectory(preemption)
-add_subdirectory(profiling)
-add_subdirectory(program)
-add_subdirectory(sampler)
-add_subdirectory(scenarios)
-add_subdirectory(scheduler)
-add_subdirectory(sku_info)
-add_subdirectory(sharings)
-add_subdirectory(utilities)
-
-add_subdirectory(test_dynamic_lib)
-if(MSVC)
-  add_subdirectory(mock_gdi)
-  add_subdirectory(d3d_sharing)
-endif()
+add_subdirectories()
 
 if(NOT GTEST_REPEAT)
   set(GTEST_REPEAT 1 CACHE STRING "Google test iterations")
@@ -123,54 +104,33 @@ endif()
 
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
-endif (NOT MSVC)
+endif()
 
 if(NEO_DRIVER_VERSION)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps_tests.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
-endif(NEO_DRIVER_VERSION)
+endif()
 
-if(CLELF_LIB_DIR)
-  link_directories(${CLELF_LIB_DIR})
-endif(CLELF_LIB_DIR)
-
-foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
+foreach(GEN_NUM RANGE ${MAX_GEN})
   GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
-    add_subdirectory(gen${GEN_NUM})
-    list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}})
-    source_group("gen${GEN_NUM}" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}})
-    if(NOT MSVC)
-      list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
-      source_group("gen${GEN_NUM}\\linux" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
-      list (APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SRCS_linux_dll_tests_gen${GEN_NUM}})
-    else(NOT MSVC)
-      list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
-      source_group("gen${GEN_NUM}\\windows" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
-    endif(NOT MSVC)
+    target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}})
+    if(UNIX)
+      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
+      target_sources(igdrcl_linux_dll_tests PRIVATE ${IGDRCL_SRCS_linux_dll_tests_gen${GEN_NUM}})
+    else()
+      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
+    endif()
     GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
     foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
       string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list (APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/hw_info_${PLATFORM_IT_LOWER}.cpp)
-      list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}})
-      source_group("gen${GEN_NUM}\\${PLATFORM_IT_LOWER}" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}})
-      if(NOT MSVC)
-        list (APPEND IGDRCL_SRCS_tests ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}_linux})
-        source_group("gen${GEN_NUM}\\${PLATFORM_IT_LOWER}\\linux" FILES ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}_linux})
-      endif(NOT MSVC)
-    endforeach(PLATFORM_IT)
-  endif(${GENX_HAS_PLATFORMS})
-endforeach(GEN_NUM)
-
-if(GTPIN_HEADERS_DIR)
-	foreach(GEN_NUM RANGE ${MAX_GEN} 0 -1)
-	  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
-	  if(${GENX_HAS_PLATFORMS})
-		list(APPEND IGDRCL_SRCS_tests ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/gtpin_setup_gen${GEN_NUM}.cpp)
-	  endif(${GENX_HAS_PLATFORMS})
-	endforeach(GEN_NUM)
-endif(GTPIN_HEADERS_DIR)
-
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests})
+      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}})
+      if(UNIX)
+        target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}_linux})
+        target_sources(igdrcl_linux_dll_tests PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/hw_info_${PLATFORM_IT_LOWER}.cpp)
+      endif()
+    endforeach()
+  endif()
+endforeach()
 
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
@@ -181,70 +141,23 @@ if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
   set(IGDRCL_TESTS_LISTENER_OPTION "--disable_default_listener")
 endif()
 
-set(BUILT_IN_KERNEL_DIR "${IGDRCL_SOURCE_DIR}/runtime/built_ins")
-
 target_include_directories(igdrcl_tests PRIVATE
-  ${INSTRUMENTATION_INCLUDE_PATH}
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
 )
 
-target_link_libraries (igdrcl_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
-if(MSVC)
-  message(STATUS "TargetDir is: ${TargetDir}")
-else()
-  add_executable(igdrcl_linux
-    ${IGDRCL_SRCS_linux_tests}
-    $<TARGET_OBJECTS:igdrcl_libult_cs>
-    ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
-  )
-  add_executable(igdrcl_linux_dll_tests
-    ${IGDRCL_SRCS_linux_dll_tests}
-    $<TARGET_OBJECTS:igdrcl_libult_cs>
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
-  )
-  target_link_libraries(igdrcl_linux ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gtest gmock)
-  target_link_libraries(igdrcl_linux_dll_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks ${IGDRCL_EXTRA_LIBS} gtest gmock)
+target_link_libraries(igdrcl_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
 
-  set_property(TARGET igdrcl_linux_dll_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-  set_property(TARGET igdrcl_linux APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-  target_include_directories(igdrcl_linux PRIVATE
-    ${GTEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-    ${GMM_INCLUDE_PATHS}
-    ${GMM_SOURCE_DIR}/inc/common
-    ${KHRONOS_HEADERS_DIR}
-    ${IGDRCL__IGC_INCLUDE_DIR}
-    ${THIRD_PARTY_DIR}
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
-  )
-  target_include_directories(igdrcl_linux_dll_tests PRIVATE
-    ${GTEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-    ${GMM_INCLUDE_PATHS}
-    ${GMM_SOURCE_DIR}/inc/common
-    ${KHRONOS_HEADERS_DIR}
-    ${IGDRCL__IGC_INCLUDE_DIR}
-    ${THIRD_PARTY_DIR}
-    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/devices${BRANCH_DIR_SUFFIX}
-  )
-endif(MSVC)
+set(BUILT_IN_KERNEL_DIR "${IGDRCL_SOURCE_DIR}/runtime/built_ins")
 
-function(neo_copy_test_files target gen)
-  set(outputdir "${TargetDir}/${gen}")
+function(neo_copy_test_files target product)
+  set(outputdir "${TargetDir}/${product}")
   add_custom_target(${target})
   add_custom_command(
     TARGET ${target}
     POST_BUILD
-    COMMAND echo deleting and re-creating ${gen} cache directory...
+    COMMAND echo deleting and re-creating ${product} cache directory...
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${outputdir}/cl_cache
     COMMAND ${CMAKE_COMMAND} -E make_directory ${outputdir}/cl_cache
     COMMAND echo copying built-in kernel files from ${BUILT_IN_KERNEL_DIR}/kernels to ${outputdir}/test_files
@@ -254,7 +167,7 @@ function(neo_copy_test_files target gen)
     COMMAND WORKING_DIRECTORY ${TargetDir}
   )
   add_dependencies(${target} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${gen}")
+  set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")
 endfunction()
 
 add_dependencies(unit_tests
@@ -262,34 +175,9 @@ add_dependencies(unit_tests
   test_dynamic_lib
 )
 
-add_custom_target(run_unit_tests ALL)
-
-if(MSVC)
-  add_dependencies(unit_tests mock_gdi)
-else (MSVC)
-  add_dependencies(unit_tests igdrcl_linux igdrcl_linux_dll_tests)
-  add_custom_command(
-    TARGET run_unit_tests
-    POST_BUILD
-    COMMAND echo running linux specific tests for static library in ${TargetDir}
-    COMMAND igdrcl_linux ${IGDRCL_TESTS_LISTENER_OPTION}
-    COMMAND echo running tests for linux dynamic library - .so in ${TargetDir}
-    COMMAND igdrcl_linux_dll_tests ${IGDRCL_TESTS_LISTENER_OPTION}
-    COMMAND WORKING_DIRECTORY ${TargetDir}
-  )
-  if(PRE_ULT_COMMAND)
-    add_custom_command(
-      TARGET unit_tests
-      POST_BUILD
-      COMMAND echo running ${PRE_ULT_COMMAND} utility before ULTs execution
-      COMMAND ${PRE_ULT_COMMAND}
-    )
-  endif(PRE_ULT_COMMAND)
-endif (MSVC)
-
 set_target_properties(igdrcl_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-if(NOT MSVC)
+if(UNIX)
   set_property(TARGET igdrcl_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
 
@@ -298,14 +186,16 @@ set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 target_compile_definitions(igdrcl_tests PUBLIC ${TESTED_GEN_FLAGS_DEFINITONS})
 
-if(NOT MSVC)
-  target_include_directories(igdrcl_linux BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
-  target_include_directories(igdrcl_linux_dll_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
-endif()
-target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
+target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common)
 
-function(neo_gen_kernels target gen)
-  set(outputdir "${TargetDir}/${gen}/test_files/${NEO_ARCH}/")
+if(WIN32)
+  set(cloc_cmd_prefix cloc)
+else()
+  set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+endif()
+
+function(neo_gen_kernels target product)
+  set(outputdir "${TargetDir}/${product}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
   set(results)
@@ -313,113 +203,83 @@ function(neo_gen_kernels target gen)
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
 
-    set(outputpath_base "${outputdir}${basename}_${gen}")
+    set(outputpath_base "${outputdir}${basename}_${product}")
     set(output_files
       ${outputpath_base}.bc
       ${outputpath_base}.bin
       ${outputpath_base}.gen
     )
 
-    if(MSVC)
-      add_custom_command(
-          OUTPUT ${output_files}
-          COMMAND cloc -q -file ${filename} -device ${gen} -${NEO_BITS} -out_dir ${outputdir}
-          WORKING_DIRECTORY ${workdir}
-          DEPENDS ${filepath} cloc
-      )
-    else()
-      add_custom_command(
-          OUTPUT ${output_files}
-          COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -device ${gen} -${NEO_BITS} -out_dir ${outputdir}
-          WORKING_DIRECTORY ${workdir}
-          DEPENDS ${filepath} cloc
-      )
-    endif()
+    add_custom_command(
+      OUTPUT ${output_files}
+      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${product} -${NEO_BITS} -out_dir ${outputdir}
+      WORKING_DIRECTORY ${workdir}
+      DEPENDS ${filepath} cloc
+    )
 
     list(APPEND results ${output_files})
   endforeach()
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${gen}")
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
 
-function(neo_gen_kernel_with_options target gen filepath)
+function(neo_gen_kernel_with_options target product filepath)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
 
-  set(outputdir "${TargetDir}/${gen}/test_files/${NEO_ARCH}/")
+  set(outputdir "${TargetDir}/${product}/test_files/${NEO_ARCH}/")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
   set(results)
   foreach(arg ${ARGN})
     string(REPLACE " " "_" argwospaces ${arg})
 
-    set(outputpath_base "${outputdir}/${basename}_${gen}")
+    set(outputpath_base "${outputdir}/${basename}_${product}")
     set(output_files
       ${outputpath_base}.bc${argwospaces}
       ${outputpath_base}.bin${argwospaces}
       ${outputpath_base}.gen${argwospaces}
     )
-    set(cmd "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name")
 
-    if(MSVC)
-      add_custom_command(
-          OUTPUT ${output_files}
-          COMMAND cloc -q -file ${filename} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
-          WORKING_DIRECTORY ${workdir}
-          DEPENDS ${filepath} cloc
-      )
-    else()
-      add_custom_command(
-          OUTPUT ${output_files}
-          COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
-          WORKING_DIRECTORY ${workdir}
-          DEPENDS ${filepath} cloc
-      )
-    endif()
+    add_custom_command(
+      OUTPUT ${output_files}
+      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${product} -${NEO_BITS} -out_dir ${outputdir} -options ${arg} -options_name
+      WORKING_DIRECTORY ${workdir}
+      DEPENDS ${filepath} cloc
+    )
 
     list(APPEND results ${output_files})
   endforeach()
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${gen}")
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
 
-function(neo_gen_kernel_from_ll target gen filepath output_name compile_options)
+function(neo_gen_kernel_from_ll target product filepath output_name compile_options)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
 
-  set(outputdir "${TargetDir}/${gen}/test_files/${NEO_ARCH}")
+  set(outputdir "${TargetDir}/${product}/test_files/${NEO_ARCH}")
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
   set(results)
-  set(outputpath_base "${outputdir}/${output_name}_${gen}")
+  set(outputpath_base "${outputdir}/${output_name}_${product}")
   set(output_files
     ${outputpath_base}.bin
     ${outputpath_base}.gen
   )
-
   string(CONCAT compile_options \" ${compile_options} \" )
-  set(cmd "LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input")
 
-  if(MSVC)
-    add_custom_command(
-        OUTPUT ${output_files}
-        COMMAND cloc -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
-        WORKING_DIRECTORY ${workdir}
-        DEPENDS ${filepath} cloc
-    )
-  else()
-    add_custom_command(
-        OUTPUT ${output_files}
-        COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${filename} -output ${output_name} -device ${gen} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
-        WORKING_DIRECTORY ${workdir}
-        DEPENDS ${filepath} cloc
-    )
-  endif()
+  add_custom_command(
+    OUTPUT ${output_files}
+    COMMAND ${cloc_cmd_prefix} -q -file ${filename} -output ${output_name} -device ${product} -${NEO_BITS} -out_dir ${outputdir} -internal_options ${compile_options} -llvm_input
+    WORKING_DIRECTORY ${workdir}
+    DEPENDS ${filepath} cloc
+  )
 
   list(APPEND results ${output_files})
 
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
-  set_target_properties(${target} PROPERTIES FOLDER "kernels/${gen}")
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
 
 set(TEST_KERNEL test_files/CopyBuffer_simd8.cl)
@@ -481,7 +341,7 @@ function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
       COMMAND echo App Verifier returned: %errorLevel%
     )
   endif()
-endfunction(gen_run_tests_with_appverifier)
+endfunction()
 
 function(gen_run_unit_tests product slices subslices eu_per_ss)
   add_custom_target(run_${product}_unit_tests ALL DEPENDS unit_tests)
@@ -496,9 +356,9 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
     COMMAND igdrcl_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} ${GTEST_EXCEPTION_OPTIONS} --gtest_repeat=${GTEST_REPEAT} ${GTEST_SHUFFLE} ${IGDRCL_TESTS_LISTENER_OPTION} ${GTEST_FILTER_OPTION}
   )
   add_dependencies(run_unit_tests run_${product}_unit_tests)
-endfunction(gen_run_unit_tests)
+endfunction()
 
-foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
+foreach(GEN_NUM RANGE ${MAX_GEN})
   GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
     GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
@@ -518,15 +378,9 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
         set(sip_kernel_output_file)
         set(sip_debug_kernel_output_file)
         set(sip_debug_local_kernel_output_file)
-        if(${NEO_BITS} EQUAL "32")
-          list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_32.ll")
-          list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_32")
-          list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_32")
-        else()
-          list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_64.ll")
-          list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_64")
-          list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_64")
-        endif()
+        list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_${NEO_BITS}.ll")
+        list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_${NEO_BITS}")
+        list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_${NEO_BITS}")
 
         # Temporarily disabled sip kernel generation
         # if("gen${GEN_NUM}" STREQUAL "gen9" )
@@ -540,8 +394,8 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
         if(${PLATFORM_SUPPORTS_2_0})
           neo_gen_kernel_with_options(test_kernel_2_0_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
           add_dependencies(unit_tests test_kernel_2_0_${PLATFORM_IT_LOWER})
-        endif(${PLATFORM_SUPPORTS_2_0})
-      endif(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
+        endif()
+      endif()
       GET_TEST_CONFIGURATIONS_FOR_PLATFORM("UNIT_TESTS" ${GEN_NUM} ${PLATFORM_IT} PLATFORM_CONFIGURATIONS)
       foreach(PLATFORM_CONFIGURATION ${PLATFORM_CONFIGURATIONS})
         string(REPLACE "/" ";" CONFIGURATION_PARAMS ${PLATFORM_CONFIGURATION})
@@ -551,14 +405,9 @@ foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
         gen_run_unit_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
         if(MSVC AND ${TESTED_WITH_APPVERIFIER})
           gen_run_tests_with_appverifier(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-        endif(MSVC AND ${TESTED_WITH_APPVERIFIER})
-      endforeach(PLATFORM_CONFIGURATION)
-    endforeach(PLATFORM_IT)
-  endif(${GENX_HAS_PLATFORMS})
-endforeach(GEN_NUM)
-
-add_subdirectory(elflib)
-add_subdirectory(mt_tests)
-add_subdirectory(aub_tests)
-add_subdirectory(tbx)
+        endif()
+      endforeach()
+    endforeach()
+  endif()
+endforeach()
 create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)

@@ -22,6 +22,12 @@ set(IGDRCL_SRCS_tests_gtpin
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
 )
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gtpin})
-
-source_group("source files\\gtpin" FILES ${IGDRCL_SRCS_tests_gtpin})
+foreach(GEN_NUM RANGE ${MAX_GEN})
+  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+  if(${GENX_HAS_PLATFORMS})
+    list(APPEND IGDRCL_SRCS_tests_gtpin ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/gtpin_setup_gen${GEN_NUM}.cpp)
+  endif()
+endforeach()
+if(GTPIN_HEADERS_DIR)
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gtpin})
+endif()

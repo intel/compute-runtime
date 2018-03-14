@@ -38,14 +38,12 @@ set(IGDRCL_SRCS_mt_tests_local
   #local files
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   #necessary dependencies from igdrcl_tests
-  ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/main.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
 )
 
 # Setting up our local list of test files

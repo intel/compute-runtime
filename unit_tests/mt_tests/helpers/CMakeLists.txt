@@ -26,7 +26,6 @@ set(IGDRCL_SRCS_mt_tests_helpers
     "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/base_object_tests_mt.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h"
     "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp"
     "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp"
     PARENT_SCOPE
 )

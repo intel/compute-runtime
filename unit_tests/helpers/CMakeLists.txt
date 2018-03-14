@@ -41,8 +41,6 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_binary_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_binary_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_management.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math_tests.cpp

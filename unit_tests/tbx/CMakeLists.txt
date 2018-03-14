@@ -19,12 +19,10 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 project(igdrcl_tbx_tests)
 
-add_executable(igdrcl_tbx_tests 
+add_executable(igdrcl_tbx_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/main_tbx.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/create_command_stream.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   $<TARGET_OBJECTS:igdrcl_libult>
 )
 

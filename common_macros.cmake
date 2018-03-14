@@ -19,13 +19,15 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 macro(hide_subdir subdir)
-  set(${subdir}_hidden TRUE)
+  file(RELATIVE_PATH subdir_relative ${IGDRCL_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+  set(${subdir_relative}_hidden} TRUE)
 endmacro()
 
 macro(add_subdirectories)
   file(GLOB subdirectories RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/*)
   foreach(subdir ${subdirectories})
-    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${subdir} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt AND NOT ${subdir}_hidden)
+    file(RELATIVE_PATH subdir_relative ${IGDRCL_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/${subdir})
+    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${subdir}/CMakeLists.txt AND NOT ${subdir_relative}_hidden})
       add_subdirectory(${subdir})
     endif()
   endforeach()

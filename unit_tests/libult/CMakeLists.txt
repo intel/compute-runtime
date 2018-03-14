@@ -39,9 +39,13 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
 endforeach()
 
 set(IGDRCL_SRCS_LIB_ULT
+  ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/program/evaluate_unhandled_token_ult.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
 )
@@ -60,6 +64,9 @@ set(IGDRCL_SRCS_LIB_ULT_CS
 )
 add_library (igdrcl_libult_cs OBJECT
   ${IGDRCL_SRCS_LIB_ULT_CS}
+)
+target_include_directories(igdrcl_libult PRIVATE
+  ${GTEST_INCLUDE_DIR}
 )
 
 foreach(target_name igdrcl_libult igdrcl_libult_cs)
