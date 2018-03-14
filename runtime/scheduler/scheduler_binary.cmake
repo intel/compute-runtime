@@ -41,7 +41,7 @@ function(compile_kernel target gen_name gen_num kernel)
 
   set(OUTPUTPATH "${OUTPUTDIR}/${BASENAME}_${gen_name}.bin")
 
-  set(SCHEDULER_CPP ${OUTPUTDIR}/${BASENAME}_${gen_name}.cpp PARENT_SCOPE)
+  set(SCHEDULER_CPP "${OUTPUTDIR}/${BASENAME}_${gen_name}.cpp")
 
   if(MSVC)
     add_custom_command(
@@ -58,6 +58,7 @@ function(compile_kernel target gen_name gen_num kernel)
       DEPENDS ${kernel} cloc copy_compiler_files
     )
   endif()
+  set(SCHEDULER_CPP ${SCHEDULER_CPP} PARENT_SCOPE)
 
   add_custom_target(${target} DEPENDS ${OUTPUTPATH})
   set_target_properties(${target} PROPERTIES FOLDER "scheduler/${gen_name}")
