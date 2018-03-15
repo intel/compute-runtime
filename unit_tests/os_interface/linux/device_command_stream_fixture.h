@@ -91,12 +91,12 @@ class DrmMockCustom : public Drm {
             gemCreate = 0;
             gemSetTiling = 0;
             primeFdToHandle = 0;
-            gemGetAperture = 0;
             gemMmap = 0;
             gemSetDomain = 0;
             gemWait = 0;
             gemClose = 0;
             regRead = 0;
+            contextGetParam = 0;
         }
 
         std::atomic<int32_t> total;
@@ -105,12 +105,12 @@ class DrmMockCustom : public Drm {
         std::atomic<int32_t> gemCreate;
         std::atomic<int32_t> gemSetTiling;
         std::atomic<int32_t> primeFdToHandle;
-        std::atomic<int32_t> gemGetAperture;
         std::atomic<int32_t> gemMmap;
         std::atomic<int32_t> gemSetDomain;
         std::atomic<int32_t> gemWait;
         std::atomic<int32_t> gemClose;
         std::atomic<int32_t> regRead;
+        std::atomic<int32_t> contextGetParam;
     };
 
     std::atomic<int> ioctl_res;
@@ -131,12 +131,12 @@ class DrmMockCustom : public Drm {
         NEO_IOCTL_EXPECT_EQ(gemCreate);
         NEO_IOCTL_EXPECT_EQ(gemSetTiling);
         NEO_IOCTL_EXPECT_EQ(primeFdToHandle);
-        NEO_IOCTL_EXPECT_EQ(gemGetAperture);
         NEO_IOCTL_EXPECT_EQ(gemMmap);
         NEO_IOCTL_EXPECT_EQ(gemSetDomain);
         NEO_IOCTL_EXPECT_EQ(gemWait);
         NEO_IOCTL_EXPECT_EQ(gemClose);
         NEO_IOCTL_EXPECT_EQ(regRead);
+        NEO_IOCTL_EXPECT_EQ(contextGetParam);
 #undef NEO_IOCTL_EXPECT_EQ
     }
 
@@ -155,7 +155,6 @@ class DrmMockCustom : public Drm {
     __s32 inputFd = 0;
     //DRM_IOCTL_I915_GEM_USERPTR
     __u32 returnHandle = 0;
-    __u64 gpuMemSize = 3u * MemoryConstants::gigaByte;
     //DRM_IOCTL_I915_GEM_MMAP
     __u32 mmapHandle = 0;
     __u32 mmapPad = 0;
@@ -167,6 +166,9 @@ class DrmMockCustom : public Drm {
     __u32 setDomainHandle = 0;
     __u32 setDomainReadDomains = 0;
     __u32 setDomainWriteDomain = 0;
+    //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
+    drm_i915_gem_context_param recordedGetContextParam = {0};
+    __u64 getContextParamRetValue = 0;
 
     int errnoValue = 0;
 
@@ -208,12 +210,6 @@ class DrmMockCustom : public Drm {
             inputFd = primeToHandleParams->fd;
             ioctl_cnt.primeFdToHandle++;
         } break;
-        case DRM_IOCTL_I915_GEM_GET_APERTURE: {
-            auto aperture = (drm_i915_gem_get_aperture *)arg;
-            aperture->aper_available_size = gpuMemSize;
-            aperture->aper_size = gpuMemSize;
-            ioctl_cnt.gemGetAperture++;
-        } break;
         case DRM_IOCTL_I915_GEM_MMAP: {
             auto mmapParams = (drm_i915_gem_mmap *)arg;
             mmapHandle = mmapParams->handle;
@@ -243,6 +239,13 @@ class DrmMockCustom : public Drm {
         case DRM_IOCTL_I915_REG_READ:
             ioctl_cnt.regRead++;
             break;
+
+        case DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM: {
+            ioctl_cnt.contextGetParam++;
+            auto getContextParam = (drm_i915_gem_context_param *)arg;
+            recordedGetContextParam = *getContextParam;
+            getContextParam->value = getContextParamRetValue;
+        } break;
 
         default:
             std::cout << std::hex << DRM_IOCTL_I915_GEM_WAIT << std::endl;

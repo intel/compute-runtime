@@ -456,11 +456,12 @@ void DrmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation)
 uint64_t DrmMemoryManager::getSystemSharedMemory() {
     uint64_t hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
 
-    drm_i915_gem_get_aperture getAperture;
-    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_GET_APERTURE, &getAperture);
+    drm_i915_gem_context_param getContextParam = {};
+    getContextParam.param = I915_CONTEXT_PARAM_GTT_SIZE;
+    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM, &getContextParam);
     DEBUG_BREAK_IF(ret != 0);
     ((void)(ret));
-    uint64_t gpuMemorySize = getAperture.aper_size;
+    uint64_t gpuMemorySize = getContextParam.value;
 
     return std::min(hostMemorySize, gpuMemorySize);
 }

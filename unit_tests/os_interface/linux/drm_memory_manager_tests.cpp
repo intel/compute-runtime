@@ -524,9 +524,11 @@ TEST_F(DrmMemoryManagerTest, Allocate_HostPtr_UserptrFail) {
     ::alignedFree(ptrT);
 }
 
-TEST_F(DrmMemoryManagerTest, getSystemSharedMemory) {
+TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhengetSystemSharedMemoryIsCalledThenContextGetParamIsCalled) {
+    mock->getContextParamRetValue = 16 * MemoryConstants::gigaByte;
     uint64_t mem = memoryManager->getSystemSharedMemory();
-    mock->ioctl_expected.gemGetAperture = 1;
+    mock->ioctl_expected.contextGetParam = 1;
+    EXPECT_EQ(mock->recordedGetContextParam.param, static_cast<__u64>(I915_CONTEXT_PARAM_GTT_SIZE));
     EXPECT_GT(mem, 0u);
 }
 
@@ -543,17 +545,19 @@ TEST_F(DrmMemoryManagerTest, getMinimumSystemSharedMemory) {
     auto hostMemorySize = MemoryConstants::pageSize * (uint64_t)(sysconf(_SC_PHYS_PAGES));
     // gpuMemSize < hostMemSize
     auto gpuMemorySize = hostMemorySize - 1u;
-    mock->gpuMemSize = gpuMemorySize;
+    mock->getContextParamRetValue = gpuMemorySize;
+
     uint64_t systemSharedMemorySize = memoryManager->getSystemSharedMemory();
-    mock->ioctl_expected.gemGetAperture = 1;
+    mock->ioctl_expected.contextGetParam = 1;
+
     EXPECT_EQ(gpuMemorySize, systemSharedMemorySize);
     mock->testIoctls();
 
     // gpuMemSize > hostMemSize
     gpuMemorySize = hostMemorySize + 1u;
-    mock->gpuMemSize = gpuMemorySize;
+    mock->getContextParamRetValue = gpuMemorySize;
     systemSharedMemorySize = memoryManager->getSystemSharedMemory();
-    mock->ioctl_expected.gemGetAperture = 2; // get aperture again
+    mock->ioctl_expected.contextGetParam = 2;
     EXPECT_EQ(hostMemorySize, systemSharedMemorySize);
     mock->testIoctls();
 }
