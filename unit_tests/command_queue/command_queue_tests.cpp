@@ -762,6 +762,17 @@ HWTEST_F(KmdNotifyTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphi
     EXPECT_EQ(commandStreamGraphicsAllocation, commandStreamGraphicsAllocation2);
 }
 
+HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) {
+    auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    device->resetCommandStreamReceiver(csr);
+
+    EXPECT_TRUE(device->getHardwareInfo().capabilityTable.enableKmdNotify);
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, ::testing::_, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
+    EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
+
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0);
+}
+
 constexpr char sipPattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
 static_assert(false == isAligned<MemoryConstants::cacheLineSize>(sizeof(sipPattern)),
               "Will be checking for automatic cacheline alignment, so pattern length must not be a multiple of cacheline");

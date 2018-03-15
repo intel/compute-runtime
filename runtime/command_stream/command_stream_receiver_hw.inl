@@ -559,7 +559,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) {
-    auto status = waitForCompletionWithTimeout(this->hwInfo.capabilityTable.enableKmdNotify, this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds, taskCountToWait);
+    auto status = waitForCompletionWithTimeout(this->hwInfo.capabilityTable.enableKmdNotify && flushStampToWait != 0,
+                                               this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds,
+                                               taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
