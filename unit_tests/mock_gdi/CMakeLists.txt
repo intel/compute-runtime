@@ -31,11 +31,6 @@ if(WIN32)
     ${DEF_FILE}
   )
 
-  # need to find our static lib
-  link_directories(
-    ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-  )
-
   # this is a DLL
   add_library(mock_gdi SHARED ${IGDRCL_SRCS_tests_mock_gdi})
 
@@ -44,8 +39,6 @@ if(WIN32)
   target_include_directories(mock_gdi PRIVATE
     ${WDK_INCLUDE_PATHS}
     ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-    ${GMM_INCLUDE_PATHS}
-    ${KHRONOS_HEADERS_DIR}
   )
 
   set_target_properties(
