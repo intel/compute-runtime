@@ -106,6 +106,13 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         DrmMemoryManager::unreference(bo);
     }
 
+    void injectPinBB(BufferObject *newPinBB) {
+        BufferObject *currentPinBB = pinBB;
+        pinBB = nullptr;
+        DrmMemoryManager::unreference(currentPinBB);
+        pinBB = newPinBB;
+    }
+
     DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
 
     Allocator32bit *getDrmInternal32BitAllocator() { return internal32bitAllocator.get(); }
@@ -2390,6 +2397,68 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEna
 
     EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
+
+    testedMemoryManager->cleanOsHandles(handleStorage);
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPopulateOsHandlesIsCalledWithFirstFragmentAlreadyAllocatedThenNewBosAreValidated) {
+
+    class PinBufferObject : public BufferObject {
+      public:
+        PinBufferObject(Drm *drm) : BufferObject(drm, 1, true) {
+        }
+
+        int pin(BufferObject *boToPin[], size_t numberOfBos) override {
+            for (size_t i = 0; i < numberOfBos; i++) {
+                pinnedBoArray[i] = boToPin[i];
+            }
+            numberOfBosPinned = numberOfBos;
+            return 0;
+        }
+        BufferObject *pinnedBoArray[5];
+        size_t numberOfBosPinned;
+    };
+
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock, false, true));
+    ASSERT_NE(nullptr, testedMemoryManager.get());
+    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+
+    PinBufferObject *pinBB = new PinBufferObject(this->mock);
+    testedMemoryManager->injectPinBB(pinBB);
+
+    mock->reset();
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.execbuffer2 = 0; // pinning for host memory validation is mocked
+
+    OsHandleStorage handleStorage;
+    OsHandle handle1;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &handle1;
+    handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    handleStorage.fragmentStorageData[0].fragmentSize = 4096;
+
+    handleStorage.fragmentStorageData[1].osHandleStorage = nullptr;
+    handleStorage.fragmentStorageData[1].cpuPtr = (void *)0x2000;
+    handleStorage.fragmentStorageData[1].fragmentSize = 8192;
+
+    handleStorage.fragmentStorageData[2].osHandleStorage = nullptr;
+    handleStorage.fragmentStorageData[2].cpuPtr = (void *)0x4000;
+    handleStorage.fragmentStorageData[2].fragmentSize = 4096;
+
+    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, result);
+
+    mock->testIoctls();
+
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[1].osHandleStorage);
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[2].osHandleStorage);
+
+    EXPECT_EQ(handleStorage.fragmentStorageData[1].osHandleStorage->bo, pinBB->pinnedBoArray[0]);
+    EXPECT_EQ(handleStorage.fragmentStorageData[2].osHandleStorage->bo, pinBB->pinnedBoArray[1]);
+
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[1].freeTheFragment = true;
+    handleStorage.fragmentStorageData[2].freeTheFragment = true;
 
     testedMemoryManager->cleanOsHandles(handleStorage);
 }

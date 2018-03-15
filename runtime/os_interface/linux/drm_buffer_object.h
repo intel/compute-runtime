@@ -58,7 +58,7 @@ class BufferObject {
 
     bool setTiling(uint32_t mode, uint32_t stride);
 
-    int pin(BufferObject *boToPin[], size_t numberOfBos);
+    MOCKABLE_VIRTUAL int pin(BufferObject *boToPin[], size_t numberOfBos);
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency = false, bool lowPriority = false);
 

@@ -492,7 +492,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
                 return AllocationStatus::Error;
             }
 
-            allocatedBos[i] = handleStorage.fragmentStorageData[i].osHandleStorage->bo;
+            allocatedBos[numberOfBosAllocated] = handleStorage.fragmentStorageData[i].osHandleStorage->bo;
             numberOfBosAllocated++;
 
             hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
