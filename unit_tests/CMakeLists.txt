@@ -110,28 +110,6 @@ if(NEO_DRIVER_VERSION)
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps_tests.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
 endif()
 
-foreach(GEN_NUM RANGE ${MAX_GEN})
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}})
-    if(UNIX)
-      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_linux})
-      target_sources(igdrcl_linux_dll_tests PRIVATE ${IGDRCL_SRCS_linux_dll_tests_gen${GEN_NUM}})
-    else()
-      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_windows})
-    endif()
-    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
-    foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}})
-      if(UNIX)
-        target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_gen${GEN_NUM}_${PLATFORM_IT_LOWER}_linux})
-        target_sources(igdrcl_linux_dll_tests PRIVATE ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/hw_info_${PLATFORM_IT_LOWER}.cpp)
-      endif()
-    endforeach()
-  endif()
-endforeach()
-
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 
@@ -183,8 +161,6 @@ endif()
 
 set_target_properties(unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_target_properties(run_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-
-target_compile_definitions(igdrcl_tests PUBLIC ${TESTED_GEN_FLAGS_DEFINITONS})
 
 target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common)
 

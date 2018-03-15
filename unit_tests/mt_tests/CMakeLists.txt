@@ -149,7 +149,6 @@ endfunction()
 
 target_include_directories(igdrcl_mt_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
 
-target_compile_definitions(igdrcl_mt_tests PUBLIC ${TESTED_GEN_FLAGS_DEFINITONS})
 foreach(GEN_NUM RANGE 0 ${MAX_GEN} 1)
   GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})

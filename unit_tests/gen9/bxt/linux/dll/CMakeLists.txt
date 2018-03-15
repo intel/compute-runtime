@@ -18,24 +18,8 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-if(TESTS_GEN9)
-  set(IGDRCL_SRCS_tests_gen9
-    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/test_sample.cpp
-  )
-  target_sources(igdrcl_tests PRIVATE
-    ${IGDRCL_SRCS_tests_gen9}
-  )
-  add_subdirectories()
-endif()
+set(IGDRCL_SRCS_linux_dll_tests_gen9_bxt
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/device_id_tests.cpp
+)
+target_sources(igdrcl_linux_dll_tests PRIVATE ${IGDRCL_SRCS_linux_dll_tests_gen9_bxt})

@@ -22,6 +22,8 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
   GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
     list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
+      ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM}/cmd_parse_gen${GEN_NUM}.cpp
+      ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM}/gen_cmd_parse.h
       ${IGDRCL_SOURCE_DIR}/unit_tests/libult/gen${GEN_NUM}.cpp
       ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/enable_family_full.cpp
     )

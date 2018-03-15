@@ -86,16 +86,12 @@ target_link_libraries(igdrcl_aub_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common)
 
-target_compile_definitions(igdrcl_aub_tests PUBLIC ${TESTED_GEN_FLAGS_DEFINITONS})
 foreach(GEN_NUM RANGE ${MAX_GEN})
   GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
     GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
     foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
       string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      target_sources(igdrcl_aub_tests PRIVATE
-        ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM}/cmd_parse_gen${GEN_NUM}.cpp
-      )
       add_custom_target(${PLATFORM_IT_LOWER}_aub_tests
         DEPENDS igdrcl_aub_tests
         DEPENDS copy_test_files_${PLATFORM_IT_LOWER}

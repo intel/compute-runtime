@@ -18,47 +18,25 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(IGDRCL_SRCS_tests_gen8
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmd_parse_gen8.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h"
-    "${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/scheduler_dispatch_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_preamble.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_preemption.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/test_sample.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bwd.cpp"
-    PARENT_SCOPE
-)
-
-if(NOT MSVC)
-  set(IGDRCL_SRCS_tests_gen8_linux
-    "${CMAKE_CURRENT_SOURCE_DIR}/linux/hw_info_config_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_mapper_tests.cpp"
-    PARENT_SCOPE
+if(TESTS_GEN8)
+  set(IGDRCL_SRCS_tests_gen8
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bwd.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_dispatch_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_sample.cpp
   )
-  
-  list(APPEND IGDRCL_SRCS_linux_dll_tests_gen8
-      ${CMAKE_CURRENT_SOURCE_DIR}/linux/dll/device_id_tests.cpp
+  target_sources(igdrcl_tests PRIVATE
+    ${IGDRCL_SRCS_tests_gen8}
   )
-endif(NOT MSVC)
-
-if(MSVC)
-  set(IGDRCL_SRCS_tests_gen8_windows
-    "${CMAKE_CURRENT_SOURCE_DIR}/windows/wddm_mapper_tests.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/windows/translationtable_callbacks_tests.cpp"
-    PARENT_SCOPE
-  )
-else()
-  set(IGDRCL_SRCS_linux_dll_tests_gen8
-    ${IGDRCL_SRCS_linux_dll_tests_gen8}
-    PARENT_SCOPE
-  )
-endif(MSVC)
+  add_subdirectories()
+endif()
