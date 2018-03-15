@@ -20,10 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/helpers/enable_product.inl"
+#include "runtime/gen_common/hw_cmds.h"
 
 namespace OCLRT {
-static EnableGfxProductHw<IGFX_BROADWELL> enableGfxProductHw;
+
+HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
+
+int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+    return 0;
+}
+
 } // namespace OCLRT

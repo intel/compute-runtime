@@ -80,13 +80,14 @@ foreach(GEN_TYPE ${ALL_GEN_TYPES})
           list(APPEND RUNTIME_SRCS_${GEN_TYPE}_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
         endif()
       endforeach()
-      if(EXISTS ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-      endif()
+
+      # HwInfoConfig implementation
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
 
       # Enable platform
       list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_${PLATFORM_IT_LOWER}.cpp)
-      list(APPEND ${GEN_TYPE}_SRC_LINK_LINUX ${GENX_PREFIX}/linux/enable_${PLATFORM_IT_LOWER}.cpp)
+      list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
     endforeach()
 
     list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full.cpp)

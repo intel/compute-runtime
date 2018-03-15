@@ -21,8 +21,8 @@
  */
 
 #include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/linux/hw_info_config.h"
-#include "runtime/gen9/hw_cmds_skl.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/gen_common/hw_cmds.h"
 
 namespace OCLRT {
 

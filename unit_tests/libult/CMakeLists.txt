@@ -33,9 +33,7 @@ foreach(GEN_TYPE ${ALL_GEN_TYPES})
       string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
       list (APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
         ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
-      )
-      list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX
-        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/linux/enable_${PLATFORM_IT_LOWER}.cpp
+        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp
       )
     endforeach()
   endif()

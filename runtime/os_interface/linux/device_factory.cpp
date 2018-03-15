@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "drm/i915_drm.h"
 #include "runtime/gmm_helper/gmm_helper.h"

@@ -21,9 +21,9 @@
  */
 
 #include "hw_cmds.h"
-
-namespace OCLRT {
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/helpers/enable_product.inl"
 
+namespace OCLRT {
 static EnableGfxProductHw<IGFX_COFFEELAKE> enableGfxProductHw;
 } // namespace OCLRT

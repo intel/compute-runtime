@@ -59,10 +59,10 @@ class HwInfoConfigHw : public HwInfoConfig {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-struct LinuxEnableGfxProductHw {
+struct EnableProductHwInfoConfig {
     typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
 
-    LinuxEnableGfxProductHw() {
+    EnableProductHwInfoConfig() {
         HwInfoConfig *pHwInfoConfig = HwInfoConfigHw<gfxProduct>::get();
         hwInfoConfigFactory[gfxProduct] = pHwInfoConfig;
         pHwInfoConfig->threadsPerEu = GfxProduct::threadsPerEu;

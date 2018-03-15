@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,8 +21,8 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/os_interface/linux/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.h"
 
 namespace OCLRT {
-static LinuxEnableGfxProductHw<IGFX_BROADWELL> enableLinuxGfxProductHw;
+static EnableProductHwInfoConfig<IGFX_KABYLAKE> enable;
 } // namespace OCLRT

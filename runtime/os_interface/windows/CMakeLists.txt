@@ -69,6 +69,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
 )
 
 if(WIN32)

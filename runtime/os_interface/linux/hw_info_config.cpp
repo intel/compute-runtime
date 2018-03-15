@@ -24,11 +24,12 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/linux/os_interface.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/cpu_info.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/gen_common/hw_cmds.h"
 
 #include <cstring>
 

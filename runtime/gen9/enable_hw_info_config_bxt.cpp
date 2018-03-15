@@ -21,8 +21,8 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/os_interface/linux/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.h"
 
 namespace OCLRT {
-static LinuxEnableGfxProductHw<IGFX_COFFEELAKE> enableLinuxGfxProductHw;
+static EnableProductHwInfoConfig<IGFX_BROXTON> enable;
 } // namespace OCLRT
