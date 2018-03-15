@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "runtime/helpers/validators.h"
@@ -89,6 +90,10 @@ cl_int Program::build(
             if (strcmp(sourceCode.c_str(), "") == 0) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
+            }
+
+            if (isKernelDebugEnabled()) {
+                internalOptions.append(CompilerOptions::debugKernelEnable);
             }
 
             internalOptions.append(platform()->peekCompilerExtensions());

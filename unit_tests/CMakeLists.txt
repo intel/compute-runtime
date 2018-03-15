@@ -230,6 +230,37 @@ function(neo_gen_kernel_with_options target product filepath)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
 
+function(neo_gen_kernel_with_internal_options target product filepath)
+  get_filename_component(filename ${filepath} NAME)
+  get_filename_component(basename ${filepath} NAME_WE)
+
+  set(outputdir "${TargetDir}/${product}/test_files/${NEO_ARCH}/")
+  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
+
+  set(results)
+  foreach(arg ${ARGN})
+    string(REPLACE " " "_" argwospaces ${arg})
+
+    set(outputpath_base "${outputdir}/${argwospaces}_${product}")
+    set(output_files
+      ${outputpath_base}.bc
+      ${outputpath_base}.bin
+      ${outputpath_base}.gen
+    )
+
+    add_custom_command(
+      OUTPUT ${output_files}
+      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${product} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${arg} -options_name
+      WORKING_DIRECTORY ${workdir}
+      DEPENDS ${filepath} cloc
+    )
+
+    list(APPEND results ${output_files})
+  endforeach()
+  add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
+  set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
+endfunction()
+
 function(neo_gen_kernel_from_ll target product filepath output_name compile_options)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
@@ -265,6 +296,10 @@ set(TEST_KERNEL_options
   "-cl-finite-math-only"
   "-cl-kernel-arg-info"
   "-x spir -spir-std=1.2"
+)
+
+set(TEST_KERNEL_internal_options
+  "-cl-kernel-debug-enable"
 )
 
 set(TEST_KERNEL_2_0_options
@@ -346,9 +381,11 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNELS})
         neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
+        neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
 
         add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
         add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
+        add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
 
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)

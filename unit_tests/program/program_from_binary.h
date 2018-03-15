@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,16 +82,16 @@ class ProgramFromBinaryTest : public DeviceFixture,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// ProgramFromBinarySimpleTest Test Fixture
+// ProgramSimpleFixture Test Fixture
 //      Used to test the Program class, but not using parameters
 ////////////////////////////////////////////////////////////////////////////////
-class ProgramFromBinarySimpleTest : public DeviceFixture,
-                                    public ContextFixture,
-                                    public ProgramFixture {
+class ProgramSimpleFixture : public DeviceFixture,
+                             public ContextFixture,
+                             public ProgramFixture {
     using ContextFixture::SetUp;
 
-  protected:
-    ProgramFromBinarySimpleTest() : retVal(CL_SUCCESS) {
+  public:
+    ProgramSimpleFixture() : retVal(CL_SUCCESS) {
     }
 
     void SetUp() override {
@@ -109,6 +109,7 @@ class ProgramFromBinarySimpleTest : public DeviceFixture,
         DeviceFixture::TearDown();
     }
 
+  protected:
     cl_int retVal;
 };
 } // namespace OCLRT

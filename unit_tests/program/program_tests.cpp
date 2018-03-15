@@ -49,13 +49,23 @@
 #include "gmock/gmock.h"
 #include "elf/reader.h"
 
+using namespace OCLRT;
+
+void ProgramTests::SetUp() {
+    DeviceFixture::SetUp();
+    cl_device_id device = pDevice;
+    ContextFixture::SetUp(1, &device);
+}
+void ProgramTests::TearDown() {
+    ContextFixture::TearDown();
+    DeviceFixture::TearDown();
+}
+
 void CL_CALLBACK notifyFunc(
     cl_program program,
     void *userData) {
     *((char *)userData) = 'a';
 }
-
-using namespace OCLRT;
 
 std::vector<const char *> BinaryFileNames{
     "CopyBuffer_simd32",
@@ -1300,15 +1310,15 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
 ////////////////////////////////////////////////////////////////////////////////
 // Program::  (PatchToken)
 ////////////////////////////////////////////////////////////////////////////////
-class PatchTokenFromBinaryTest : public ProgramFromBinarySimpleTest,
+class PatchTokenFromBinaryTest : public ProgramSimpleFixture,
                                  public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        ProgramFromBinarySimpleTest::SetUp();
+        ProgramSimpleFixture::SetUp();
     }
     void TearDown() override {
-        ProgramFromBinarySimpleTest::TearDown();
+        ProgramSimpleFixture::TearDown();
         MemoryManagementFixture::TearDown();
     }
 };
@@ -1538,15 +1548,15 @@ TEST_F(PatchTokenTests, VmeKernelArg) {
     delete pKernel;
 }
 
-class ProgramPatchTokenFromBinaryTest : public ProgramFromBinarySimpleTest,
+class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture,
                                         public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        ProgramFromBinarySimpleTest::SetUp();
+        ProgramSimpleFixture::SetUp();
     }
     void TearDown() override {
-        ProgramFromBinarySimpleTest::TearDown();
+        ProgramSimpleFixture::TearDown();
         MemoryManagementFixture::TearDown();
     }
 };
@@ -1696,24 +1706,6 @@ INSTANTIATE_TEST_CASE_P(ProgramFromSourceTests,
                             ::testing::ValuesIn(SourceFileNames),
                             ::testing::ValuesIn(BinaryForSourceFileNames),
                             ::testing::ValuesIn(KernelNames)));
-
-class ProgramTests : public DeviceFixture,
-                     public ::testing::Test,
-                     public ContextFixture {
-
-    using ContextFixture::SetUp;
-
-  public:
-    void SetUp() override {
-        DeviceFixture::SetUp();
-        cl_device_id device = pDevice;
-        ContextFixture::SetUp(1, &device);
-    }
-    void TearDown() override {
-        ContextFixture::TearDown();
-        DeviceFixture::TearDown();
-    }
-};
 
 TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
@@ -2951,34 +2943,4 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
     EXPECT_EQ(dummyDevice, pProgram.getDevicePtr());
     pProgram.SetDevice(nullptr);
     EXPECT_EQ(nullptr, pProgram.getDevicePtr());
-}
-
-TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
-    MockProgram program(pContext, false);
-    EXPECT_FALSE(program.isKernelDebugEnabled());
-}
-
-TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramHasKernelDebugEnabled) {
-    MockProgram program(pContext, false);
-    program.enableKernelDebug();
-    EXPECT_TRUE(program.isKernelDebugEnabled());
-}
-
-TEST_P(ProgramFromSourceTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
-    pProgram->enableKernelDebug();
-    cl_device_id device = pPlatform->getDevice(0);
-    std::string receivedInternalOptions;
-
-    auto debugVars = OCLRT::getFclDebugVars();
-    debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(debugVars);
-
-    cl_int retVal = pProgram->compile(1, &device, nullptr,
-                                      0, nullptr, nullptr,
-                                      nullptr,
-                                      nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
-    gEnvironment->fclPopDebugVars();
 }

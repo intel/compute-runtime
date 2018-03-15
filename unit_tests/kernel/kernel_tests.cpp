@@ -286,15 +286,15 @@ INSTANTIATE_TEST_CASE_P(KernelTests,
                             ::testing::ValuesIn(BinaryFileNames),
                             ::testing::ValuesIn(KernelNames)));
 
-class KernelFromBinaryTest : public ProgramFromBinarySimpleTest,
+class KernelFromBinaryTest : public ProgramSimpleFixture,
                              public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        ProgramFromBinarySimpleTest::SetUp();
+        ProgramSimpleFixture::SetUp();
     }
     void TearDown() override {
-        ProgramFromBinarySimpleTest::TearDown();
+        ProgramSimpleFixture::TearDown();
         MemoryManagementFixture::TearDown();
     }
 };

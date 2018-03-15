@@ -35,6 +35,7 @@ set(IGDRCL_SRCS_tests_program
   ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_block_kernels_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/program_with_kernel_debug_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/program_with_source.h
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_program})

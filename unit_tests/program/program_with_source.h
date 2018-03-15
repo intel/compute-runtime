@@ -79,4 +79,4 @@ class ProgramFromSourceTest : public ContextFixture,
     const char *KernelName;
     cl_int retVal;
 };
-}
+} // namespace OCLRT
