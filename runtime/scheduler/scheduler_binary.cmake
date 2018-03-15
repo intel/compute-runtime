@@ -45,7 +45,7 @@ function(compile_kernel target gen_name gen_num kernel)
 
   if(MSVC)
     add_custom_command(
-      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
+      OUTPUT ${OUTPUTPATH}
       COMMAND cloc -q -file ${kernel} -device ${gen_name} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
       WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
       DEPENDS ${kernel} cloc copy_compiler_files
