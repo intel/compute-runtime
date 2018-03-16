@@ -43,6 +43,7 @@ DECLARE_DEBUG_VARIABLE(bool, ResidencyDebugEnable, 0, "enables debug messages an
 DECLARE_DEBUG_VARIABLE(bool, EventsDebugEnable, 0, "enables debug messages for events, virtual events, blocked enqueues, events trees etc.")
 DECLARE_DEBUG_VARIABLE(bool, PrintEMDebugInformation, false, "prints execution model related debug information")
 DECLARE_DEBUG_VARIABLE(bool, PrintLWSSizes, false, "prints driver choosen local workgroup sizes")
+DECLARE_DEBUG_VARIABLE(bool, PrintDispatchParameters, false, "prints dispatch paramters of kernels passed to clEnqueueNDRangeKernel")
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
 /*PERFORMANCE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNullHardware, false, "works on Windows only, sets the Null Hardware flag that makes all Command buffers completed while GPU does nothing")
@@ -55,9 +56,9 @@ DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocat
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, 0, "Set command stream receiver")
-DECLARE_DEBUG_VARIABLE(std::string, TbxServer, "127.0.0.1", "TCP-IP address of TBX server")
+DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
 DECLARE_DEBUG_VARIABLE(int32_t, TbxPort, 4321, "TCP-IP port of TBX server")
-DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, "unk", "Specify product for use in AUB/TBX")
+DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBBufferDump, false, "Avoid dumping buffers in AUB files")
 DECLARE_DEBUG_VARIABLE(bool, DisableAUBImageDump, false, "Avoid dumping images in AUB files")
 DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")

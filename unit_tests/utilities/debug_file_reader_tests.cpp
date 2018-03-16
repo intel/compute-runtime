@@ -71,14 +71,17 @@ TEST(SettingsFileReader, CreateFileReaderWithoutFile) {
     EXPECT_EQ(0u, reader->getStringSettingsCount());
 }
 
-TEST(SettingsFileReader, CreateFileReaderWithSettingsFile) {
+TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDefaultValuesMatch) {
 
     // Use test settings file
     std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     ASSERT_NE(nullptr, reader);
 
     size_t debugVariableCount = 0;
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    bool compareSuccessful = false;
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)        \
+    compareSuccessful = defaultValue == reader->getSetting(#variableName, defaultValue); \
+    EXPECT_TRUE(compareSuccessful) << #variableName;                                     \
     debugVariableCount++;
 #include "runtime/os_interface/DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE

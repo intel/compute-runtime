@@ -40,10 +40,6 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
 void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 }
 
-TEST(MemObjDebugFlags, givenDefaultDebugFlagsWhenMemObjDestructorIsCalledThenMemObjDestroysAllocationsSynchronously) {
-    EXPECT_TRUE(DebugManager.flags.EnableAsyncDestroyAllocations.get());
-}
-
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {

@@ -109,7 +109,3 @@ TEST(BufferTests, doPinIsSetForHostPtr) {
         alignedFree(bff);
     }
 }
-
-TEST(BufferTests, ForcePinFlagIsTrue) {
-    EXPECT_TRUE(DebugManager.flags.EnableForcePin.get());
-}

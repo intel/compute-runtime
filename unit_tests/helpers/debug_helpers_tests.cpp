@@ -29,7 +29,3 @@ using namespace OCLRT;
 TEST(debugBreak, whenDebugBreakCalledInTestThenNothingIsThrown) {
     DEBUG_BREAK_IF(!false);
 }
-
-TEST(debugBreak, givenEnableDebugBreakWhenFlagIsEnabledThenReturnTrue) {
-    EXPECT_EQ(true, DebugManager.flags.EnableDebugBreak.get());
-}

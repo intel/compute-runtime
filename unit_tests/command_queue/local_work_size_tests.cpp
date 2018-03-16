@@ -665,11 +665,3 @@ TEST(localWorkSizeTest, givenMaxWorkgroupSizeEqualToSimdSizeWhenLwsIsCalculatedT
     EXPECT_EQ(workGroupSize[1], 1u);
     EXPECT_EQ(workGroupSize[2], 1u);
 }
-
-TEST(localWorkSizeTest, givenDebugVariableEnableComputeWorkSizeNDWhenCheckValueExpectTrue) {
-    EXPECT_TRUE(DebugManager.flags.EnableComputeWorkSizeND.get());
-}
-
-TEST(localWorkSizeTest, givenDefaultDebugVariablesWhenEnableComputeWorkSizeSquaredIsCheckdThenTrueIsReturned) {
-    EXPECT_FALSE(DebugManager.flags.EnableComputeWorkSizeSquared.get());
-}

@@ -158,6 +158,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             return err;
     }
 
+    DBG_LOG(PrintDispatchParameters, "Kernel: ", kernel.getKernelInfo().name,
+            ",LWS:, ", localWorkSizeIn ? localWorkSizeIn[0] : 0,
+            ",", localWorkSizeIn ? localWorkSizeIn[1] : 0,
+            ",", localWorkSizeIn ? localWorkSizeIn[2] : 0,
+            ",GWS:,", globalWorkSizeIn[0],
+            ",", globalWorkSizeIn[1],
+            ",", globalWorkSizeIn[2],
+            ",SIMD:, ", kernel.getKernelInfo().getMaxSimdSize());
+
     enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
         surfaces,
         false,
