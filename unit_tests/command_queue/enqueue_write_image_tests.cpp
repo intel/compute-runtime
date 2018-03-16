@@ -309,13 +309,13 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
     delete dstImage2;
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image1dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, 1, 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -337,12 +337,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DAndImageShareTheSameStorageWithHostP
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image2dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -364,13 +364,13 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostP
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image3dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -392,12 +392,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostP
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage1DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image1dArrayHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
-    size_t origin[] = {imageDesc.image_width / 2, imageDesc.image_height / 2, 0};
-    size_t region[] = {imageDesc.image_width - (imageDesc.image_width / 2), imageDesc.image_height - (imageDesc.image_height / 2), imageDesc.image_array_size};
+    size_t origin[] = {imageDesc.image_width / 2, imageDesc.image_array_size / 2, 0};
+    size_t region[] = {imageDesc.image_width - (imageDesc.image_width / 2), imageDesc.image_array_size - (imageDesc.image_array_size / 2), 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
     auto bytesPerPixel = 4;
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -421,7 +421,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DArrayAndImageShareTheSameStorageWith
     EXPECT_EQ(pCmdQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage2DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DArrayAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image2dArrayHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
@@ -448,12 +448,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DArrayAndImageShareTheSameStorageWith
     EXPECT_EQ(pCmdOOQ->taskLevel, 0u);
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image2dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -497,13 +497,13 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DAndImageShareTheSameStorageWithHostP
     pEvent->release();
 }
 
-HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostPtrAndEventsWhenReadWriteImageIsCalledThenImageIsNotWritten) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(Image3dHelper<>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_depth};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -547,12 +547,12 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostP
 
     pEvent->release();
 }
-HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsNotWrited) {
+HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DThenImageWriteIsNeeded) {
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Image> dstImage2(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
     void *ptr = dstImage2->getCpuAddressForMemoryTransfer();
 
     size_t rowPitch = dstImage2->getHostPtrRowPitch();
@@ -571,7 +571,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStora
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 0u);
+    EXPECT_EQ(pCmdQ->taskLevel, 1u);
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
