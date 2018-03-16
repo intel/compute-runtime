@@ -547,9 +547,9 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage3DAndImageShareTheSameStorageWithHostP
 
     pEvent->release();
 }
-HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DThenImageWriteIsNeeded) {
+HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorageWithHostPtrWhenReadWriteImageIsCalledThenImageIsWritten) {
     cl_int retVal = CL_SUCCESS;
-    std::unique_ptr<Image> dstImage2(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    std::unique_ptr<Image> dstImage2(ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context));
     auto imageDesc = dstImage2->getImageDesc();
     size_t origin[] = {0, 0, 0};
     size_t region[] = {imageDesc.image_width, imageDesc.image_height, 1};
@@ -571,7 +571,7 @@ HWTEST_F(EnqueueWriteImageTest, GivenNonZeroCopyImage2DThenImageWriteIsNeeded) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(pCmdQ->taskLevel, 1u);
+    EXPECT_EQ(pCmdQ->taskLevel, 2u);
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;
