@@ -37,6 +37,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include <memory>
 #include <type_traits>
 #include "test.h"
@@ -1279,6 +1280,26 @@ TEST_F(EventTest, givenCmdQueueWithoutProfilingWhenIsCpuProfilingIsCalledThenFal
     MockEvent<Event> ev(this->pCmdQ, CL_COMMAND_MAP_IMAGE, Event::eventNotReady, Event::eventNotReady);
     bool cpuProfiling = ev.isCPUProfilingPath() != 0;
     EXPECT_FALSE(cpuProfiling);
+}
+
+TEST_F(EventTest, givenOutEventWhenBlockingEnqueueHandledOnCpuThenUpdateTaskCountAndFlushStampFromCmdQ) {
+    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(&mockContext));
+    EXPECT_TRUE(image->mappingOnCpuAllowed());
+
+    pCmdQ->flushStamp->setStamp(10);
+    pCmdQ->taskCount = 11;
+
+    size_t origin[3] = {0, 0, 0};
+    size_t region[3] = {1, 1, 1};
+
+    cl_int retVal;
+    cl_event clEvent;
+    pCmdQ->enqueueMapImage(image.get(), CL_TRUE, CL_MAP_READ, origin, region, nullptr, nullptr, 0, nullptr, &clEvent, retVal);
+
+    auto eventObj = castToObject<Event>(clEvent);
+    EXPECT_EQ(pCmdQ->taskCount, eventObj->peekTaskCount());
+    EXPECT_EQ(pCmdQ->flushStamp->peekStamp(), eventObj->flushStamp->peekStamp());
+    eventObj->release();
 }
 
 TEST_F(EventTest, givenCmdQueueWithProfilingWhenIsCpuProfilingIsCalledThenTrueIsReturned) {

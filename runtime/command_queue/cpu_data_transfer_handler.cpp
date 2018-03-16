@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 namespace OCLRT {
 void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &retVal) {
     MapInfo unmapInfo;
+    Event *outEventObj = nullptr;
     void *returnPtr = nullptr;
     EventBuilder eventBuilder;
     bool eventCompleted = false;
@@ -57,9 +58,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     if (eventsRequest.outEvent) {
         eventBuilder.create<Event>(this, transferProperties.cmdType, Event::eventNotReady, Event::eventNotReady);
-        eventBuilder.getEvent()->setQueueTimeStamp();
-        eventBuilder.getEvent()->setCPUProfilingPath(true);
-        *eventsRequest.outEvent = eventBuilder.getEvent();
+        outEventObj = eventBuilder.getEvent();
+        outEventObj->setQueueTimeStamp();
+        outEventObj->setCPUProfilingPath(true);
+        *eventsRequest.outEvent = outEventObj;
     }
 
     TakeOwnershipWrapper<Device> deviceOwnership(*device);
@@ -71,8 +73,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
 
-    if (eventsRequest.outEvent) {
-        eventBuilder.getEvent()->taskLevel = taskLevel;
+    if (outEventObj) {
+        outEventObj->taskLevel = taskLevel;
     }
 
     if (blockQueue &&
@@ -98,8 +100,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     if (!blockQueue || transferProperties.blocking) {
         err.set(Event::waitForEvents(eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList));
 
-        if (eventBuilder.getEvent()) {
-            eventBuilder.getEvent()->setSubmitTimeStamp();
+        if (outEventObj) {
+            outEventObj->setSubmitTimeStamp();
         }
         //wait for the completness of previous commands
         if (transferProperties.cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
@@ -109,8 +111,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             }
         }
 
-        if (eventBuilder.getEvent()) {
-            eventBuilder.getEvent()->setStartTimeStamp();
+        if (outEventObj) {
+            outEventObj->setStartTimeStamp();
         }
 
         switch (transferProperties.cmdType) {
@@ -147,13 +149,15 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         default:
             err.set(CL_INVALID_OPERATION);
         }
-        if (eventBuilder.getEvent()) {
-            eventBuilder.getEvent()->setEndTimeStamp();
-            eventBuilder.getEvent()->updateTaskCount(this->taskCount);
+
+        if (outEventObj) {
+            outEventObj->setEndTimeStamp();
+            outEventObj->updateTaskCount(this->taskCount);
+            outEventObj->flushStamp->setStamp(this->flushStamp->peekStamp());
             if (eventCompleted) {
-                eventBuilder.getEvent()->setStatus(CL_COMPLETE);
+                outEventObj->setStatus(CL_COMPLETE);
             } else {
-                eventBuilder.getEvent()->updateExecutionStatus();
+                outEventObj->updateExecutionStatus();
             }
         }
     }
