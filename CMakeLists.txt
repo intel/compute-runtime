@@ -352,11 +352,6 @@ else()
 		endif()
 	endif()
 
-	include(CheckLibraryExists)
-	CHECK_LIBRARY_EXISTS(rt clock_gettime "time.h" HAVE_CLOCK_GETTIME)
-	if(HAVE_CLOCK_GETTIME)
-		link_libraries(rt)
-	endif(HAVE_CLOCK_GETTIME)
 endif(MSVC)
 
 # setup variables needed for custom configuration type
