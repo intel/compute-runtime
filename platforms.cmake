@@ -18,9 +18,6 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We require cmake 3.2.0 or later
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 set(MAX_GEN 64)
 
 macro(INIT_LIST LIST_TYPE ELEMENT_TYPE)
@@ -124,25 +121,26 @@ set(SUPPORT_GEN_DEFAULT TRUE CACHE BOOL "default value for SUPPORT_GENx")
 set(SUPPORT_PLATFORM_DEFAULT TRUE CACHE BOOL "default value for support platform")
 
 # Define the hardware configurations we support and test
-foreach(GEN_NUM 8 9)
+macro(SET_FLAGS_FOR GEN_NUM)
   set(SUPPORT_GEN${GEN_NUM} ${SUPPORT_GEN_DEFAULT} CACHE BOOL "Support Gen${GEN_NUM} devices")
   set(TESTS_GEN${GEN_NUM} ${SUPPORT_GEN${GEN_NUM}} CACHE BOOL "Build ULTs for Gen${GEN_NUM} devices")
   if(NOT SUPPORT_GEN${GEN_NUM})
     set(TESTS_GEN${GEN_NUM} FALSE)
+  else()
+    foreach(GEN${GEN_NUM}_PLATFORM ${ARGN})
+      set(SUPPORT_${GEN${GEN_NUM}_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support ${GEN${GEN_NUM}_PLATFORM}")
+      if(TESTS_GEN${GEN_NUM})
+        set(TESTS_${GEN${GEN_NUM}_PLATFORM} ${SUPPORT_${GEN${GEN_NUM}_PLATFORM}} CACHE BOOL "Build ULTs for ${GEN${GEN_NUM}_PLATFORM}")
+      endif()
+      if(NOT SUPPORT_${GEN${GEN_NUM}_PLATFORM} OR NOT TESTS_GEN${GEN_NUM})
+        set(TESTS_${GEN${GEN_NUM}_PLATFORM} FALSE)
+      endif()
+    endforeach()
   endif()
-endforeach()
+endmacro()
 
-if(SUPPORT_GEN9)
-  foreach(GEN9_PLATFORM "SKL" "KBL" "BXT" "GLK" "CFL")
-    set(SUPPORT_${GEN9_PLATFORM} ${SUPPORT_PLATFORM_DEFAULT} CACHE BOOL "Support ${GEN9_PLATFORM}")
-    if(TESTS_GEN9)
-      set(TESTS_${GEN9_PLATFORM} ${SUPPORT_${GEN9_PLATFORM}} CACHE BOOL "Build ULTs for ${GEN9_PLATFORM}")
-    endif()
-    if(NOT SUPPORT_${GEN9_PLATFORM} OR NOT TESTS_GEN9)
-      set(TESTS_${GEN9_PLATFORM} FALSE)
-    endif()
-  endforeach()
-endif()
+SET_FLAGS_FOR(8 "BDW")
+SET_FLAGS_FOR(9 "SKL" "KBL" "BXT" "GLK" "CFL")
 
 # Init lists
 INIT_LIST("FAMILY_NAME" "TESTED")
