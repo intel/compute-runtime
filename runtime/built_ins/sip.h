@@ -58,14 +58,6 @@ class SipKernel {
         return type;
     }
 
-    int32_t getDebugSurfaceBti() const {
-        return debugSurfaceBti;
-    }
-
-    size_t getDebugSurfaceSize() const {
-        return debugSurfaceSize;
-    }
-
     static const size_t maxDbgSurfaceSize;
 
     GraphicsAllocation *getSipAllocation() const;
@@ -73,7 +65,5 @@ class SipKernel {
   protected:
     SipKernelType type = SipKernelType::COUNT;
     std::unique_ptr<Program> program;
-    int32_t debugSurfaceBti = -1;
-    size_t debugSurfaceSize = 0;
 };
-}
+} // namespace OCLRT

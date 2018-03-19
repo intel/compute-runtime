@@ -350,6 +350,20 @@ class Kernel : public BaseObject<_cl_kernel> {
         return isParentKernel && getProgram()->getBlockKernelManager()->getIfBlockUsesPrintf();
     }
 
+    int32_t getDebugSurfaceBti() const {
+        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
+            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->BTI;
+        }
+        return -1;
+    }
+
+    size_t getPerThreadSystemThreadSurfaceSize() const {
+        if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
+            return kernelInfo.patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize;
+        }
+        return 0;
+    }
+
   protected:
     struct ObjectCounts {
         uint32_t imageCount;

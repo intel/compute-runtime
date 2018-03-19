@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -53,8 +53,8 @@ GEN9TEST_F(gen9SipTests, DISABLED_givenDebugCsrSipKernelWithLocalMemoryWhenAsked
     auto &builtins = BuiltIns::getInstance();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsrLocal, *mockDevice);
 
-    EXPECT_EQ((int32_t)0, sipKernel.getDebugSurfaceBti());
-    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, sipKernel.getDebugSurfaceSize());
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipKernel.getType());
 
     gEnvironment->igcPopDebugVars();
 }

@@ -97,6 +97,52 @@ class MockKernel : public Kernel {
         if (Kernel::pSshLocal == mockSshLocal.data()) {
             Kernel::pSshLocal = nullptr;
         }
+
+        if (kernelInfoAllocated) {
+            delete kernelInfoAllocated->heapInfo.pKernelHeader;
+            delete kernelInfoAllocated->patchInfo.executionEnvironment;
+            delete kernelInfoAllocated->patchInfo.threadPayload;
+            delete kernelInfoAllocated;
+        }
+    }
+
+    template <typename KernelType = MockKernel>
+    static KernelType *create(Device &device, Program *program) {
+        KernelInfo *info = new KernelInfo();
+        const size_t crossThreadSize = 160;
+
+        SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
+        header->DynamicStateHeapSize = 0;
+        header->GeneralStateHeapSize = 0;
+        header->KernelHeapSize = 0;
+        header->KernelNameSize = 0;
+        header->PatchListSize = 0;
+        header->SurfaceStateHeapSize = 0;
+        info->heapInfo.pKernelHeader = header;
+
+        SPatchThreadPayload *threadPayload = new SPatchThreadPayload;
+        threadPayload->LocalIDXPresent = 0;
+        threadPayload->LocalIDYPresent = 0;
+        threadPayload->LocalIDZPresent = 0;
+        threadPayload->HeaderPresent = 0;
+        threadPayload->Size = 128;
+
+        info->patchInfo.threadPayload = threadPayload;
+
+        SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
+        executionEnvironment->HasDeviceEnqueue = 1;
+        info->patchInfo.executionEnvironment = executionEnvironment;
+
+        info->crossThreadData = new char[crossThreadSize];
+
+        auto kernel = new KernelType(program, *info, device);
+        kernel->crossThreadData = new char[crossThreadSize];
+        memset(kernel->crossThreadData, 0, crossThreadSize);
+        kernel->crossThreadDataSize = crossThreadSize;
+
+        kernel->kernelInfoAllocated = info;
+
+        return kernel;
     }
 
     uint32_t getPatchedArgumentsNum() const { return patchedArgumentsNum; }
@@ -188,6 +234,9 @@ class MockKernel : public Kernel {
 
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
+
+  protected:
+    KernelInfo *kernelInfoAllocated = nullptr;
 };
 
 //class below have enough internals to service Enqueue operation.

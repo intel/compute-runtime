@@ -62,5 +62,4 @@ void MockKernel::getResidency(std::vector<Surface *> &dst) {
     getResidencyCalls++;
     Kernel::getResidency(dst);
 }
-
 } // namespace OCLRT

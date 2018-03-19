@@ -110,16 +110,6 @@ TEST(Sip, getType) {
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
 }
 
-TEST(Sip, givenCsrTypeSipKernelWhenGetDebugSurfaceBtiIsCalledThenInvalidValueIsReturned) {
-    SipKernel csr{SipKernelType::Csr, getSipProgramWithCustomBinary()};
-    EXPECT_EQ(-1, csr.getDebugSurfaceBti());
-}
-
-TEST(Sip, givenCsrTypeSipKernelWhenGetDebugSurfaceSizeIsCalledThenZeroIsReturned) {
-    SipKernel csr{SipKernelType::Csr, getSipProgramWithCustomBinary()};
-    EXPECT_EQ(0u, csr.getDebugSurfaceSize());
-}
-
 TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsReturned) {
     EXPECT_EQ(0x49c000u, SipKernel::maxDbgSurfaceSize);
 }
@@ -136,7 +126,7 @@ TEST(DebugSip, WhenRequestingDbgCsrWithLocalMemorySipKernelThenProperCompilerInt
     EXPECT_STREQ("-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0", opt);
 }
 
-TEST(DebugSip, DISABLED_givenDebugCsrSipKernelWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {
+TEST(DebugSip, DISABLED_givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKernelIsReturned) {
     auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     MockCompilerDebugVars igcDebugVars;
@@ -153,29 +143,9 @@ TEST(DebugSip, DISABLED_givenDebugCsrSipKernelWhenAskedForDebugSurfaceBtiAndSize
     auto &builtins = BuiltIns::getInstance();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
 
-    EXPECT_EQ((int32_t)0, sipKernel.getDebugSurfaceBti());
-    EXPECT_EQ(SipKernel::maxDbgSurfaceSize, sipKernel.getDebugSurfaceSize());
-
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgCsr, sipKernel.getType());
     gEnvironment->igcPopDebugVars();
 }
 
-TEST(DebugSip, givenDbgCsrTypeSipKernelWhenGetDebugSurfaceBtiIsCalledThenInvalidValueIsReturned) {
-    SipKernel csr{SipKernelType::DbgCsr, getSipProgramWithCustomBinary()};
-    EXPECT_EQ(0, csr.getDebugSurfaceBti());
-}
-
-TEST(DebugSip, givenDbgCsrTypeSipKernelWhenGetDebugSurfaceSizeIsCalledThenNonZeroIsReturned) {
-    SipKernel csr{SipKernelType::DbgCsr, getSipProgramWithCustomBinary()};
-    EXPECT_NE(0u, csr.getDebugSurfaceSize());
-}
-
-TEST(DebugSip, givenDbgCsrLocalTypeSipKernelWhenGetDebugSurfaceBtiIsCalledThenInvalidValueIsReturned) {
-    SipKernel csr{SipKernelType::DbgCsrLocal, getSipProgramWithCustomBinary()};
-    EXPECT_EQ(0, csr.getDebugSurfaceBti());
-}
-
-TEST(DebugSip, givenDbgCsrLocalTypeSipKernelWhenGetDebugSurfaceSizeIsCalledThenNonZeroIsReturned) {
-    SipKernel csr{SipKernelType::DbgCsrLocal, getSipProgramWithCustomBinary()};
-    EXPECT_NE(0u, csr.getDebugSurfaceSize());
-}
 } // namespace SipKernelTests
