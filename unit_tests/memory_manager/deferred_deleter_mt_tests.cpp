@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ struct DeferredDeleterTest : public ::testing::Test {
     }
 
     void waitForAsyncThread() {
-        while (!deleter->isThreadLoaded()) {
+        while (!deleter->isWorking()) {
             std::this_thread::yield();
         }
     }
@@ -63,7 +63,6 @@ TEST_F(DeferredDeleterTest, initialValues) {
     EXPECT_EQ(0, deleter->getClientsNum());
     EXPECT_FALSE(deleter->isWorking());
     EXPECT_FALSE(deleter->isThreadRunning());
-    EXPECT_FALSE(deleter->isThreadLoaded());
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0, deleter->clearCalled);
     EXPECT_EQ(0, deleter->areElementsReleasedCalled);

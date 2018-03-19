@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -26,28 +26,39 @@
 namespace OCLRT {
 DeferredDeleter::DeferredDeleter() {
     doWorkInBackground = false;
-    threadLoaded = false;
     elementsToRelease = 0;
 }
 
 void DeferredDeleter::stop() {
-    if (worker) {
-        while (!threadLoaded)
-            ;
-        threadLoaded = false;
+    // Called with threadMutex acquired
+    if (worker != nullptr) {
+        // Working thread was created so we can safely stop it
+        std::unique_lock<std::mutex> lock(queueMutex);
+        // Make sure that working thread really started
+        while (!doWorkInBackground) {
+            lock.unlock();
+            lock.lock();
+        }
+        // Signal working thread to finish its job
         doWorkInBackground = false;
-        queueMutex.lock();
-        queueMutex.unlock();
+        lock.unlock();
         condition.notify_one();
+        // Wait for the working job to exit
         worker->join();
+        // Delete working thread
         delete worker;
         worker = nullptr;
     }
     drain(false);
 }
 
-DeferredDeleter::~DeferredDeleter() {
+void DeferredDeleter::safeStop() {
+    std::lock_guard<std::mutex> lock(threadMutex);
     stop();
+}
+
+DeferredDeleter::~DeferredDeleter() {
+    safeStop();
 }
 
 void DeferredDeleter::deferDeletion(DeferrableDeletion *deletion) {
@@ -73,8 +84,9 @@ void DeferredDeleter::removeClient() {
 }
 
 void DeferredDeleter::ensureThread() {
-    if (worker)
+    if (worker != nullptr) {
         return;
+    }
     worker = new std::thread(run, this);
 }
 
@@ -88,15 +100,18 @@ bool DeferredDeleter::shouldStop() {
 
 void DeferredDeleter::run(DeferredDeleter *self) {
     std::unique_lock<std::mutex> lock(self->queueMutex);
+    // Mark that working thread really started
     self->doWorkInBackground = true;
-    self->threadLoaded = true;
     do {
         if (self->queue.peekIsEmpty()) {
+            // Wait for signal that some items are ready to be deleted
             self->condition.wait(lock);
         }
         lock.unlock();
+        // Delete items placed into deferred delete queue
         self->clearQueue();
         lock.lock();
+        // Check whether working thread should be stopped
     } while (!self->shouldStop());
     lock.unlock();
 }
