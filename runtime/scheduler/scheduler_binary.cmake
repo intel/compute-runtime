@@ -33,9 +33,9 @@ endif()
 
 set(SCHEDULER_INCLUDE_DIR ${TargetDir})
 
-function(compile_kernel target gen_name gen_num kernel)
+function(compile_kernel target gen_name gen_type kernel)
   set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_name}")
-  set(SCHEDULER_INCLUDE_OPTIONS "${SCHEDULER_INCLUDE_OPTIONS} -I ../gen${gen_num}")
+  set(SCHEDULER_INCLUDE_OPTIONS "${SCHEDULER_INCLUDE_OPTIONS} -I ../${gen_type}")
 
   get_filename_component(BASENAME ${kernel} NAME_WE)
 
@@ -64,24 +64,25 @@ function(compile_kernel target gen_name gen_num kernel)
   set_target_properties(${target} PROPERTIES FOLDER "scheduler/${gen_name}")
 endfunction()
 
-foreach(GEN_NUM RANGE ${MAX_GEN})
-  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+foreach(GEN_TYPE ${ALL_GEN_TYPES})
+  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
+  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
-    GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_NUM} SUPPORTED_GENX_PLATFORMS)
+    GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_TYPE} SUPPORTED_GENX_PLATFORMS)
 
     foreach(PLATFORM_IT ${SUPPORTED_GENX_PLATFORMS})
-      PLATFORM_HAS_2_0(${GEN_NUM} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
+      PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
       if(COMPILE_BUILT_INS AND ${PLATFORM_SUPPORTS_2_0})
         string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-        compile_kernel(scheduler_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${GEN_NUM} ${SCHEDULER_KERNEL})
+        compile_kernel(scheduler_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${GEN_TYPE_LOWER} ${SCHEDULER_KERNEL})
         add_dependencies(scheduler scheduler_${PLATFORM_IT_LOWER})
         list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
       endif(COMPILE_BUILT_INS AND ${PLATFORM_SUPPORTS_2_0})
     endforeach(PLATFORM_IT)
 
-    source_group("generated files\\gen${GEN_NUM}" FILES ${GENERATED_SCHEDULER_CPPS})
+    source_group("generated files\\${GEN_TYPE_LOWER}" FILES ${GENERATED_SCHEDULER_CPPS})
   endif(${GENX_HAS_PLATFORMS})
-endforeach(GEN_NUM)
+endforeach(GEN_TYPE)
 
 add_library(${SCHEDULER_BINARY_LIB_NAME} OBJECT CMakeLists.txt)
 

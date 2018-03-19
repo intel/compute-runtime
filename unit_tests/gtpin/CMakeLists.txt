@@ -22,10 +22,11 @@ set(IGDRCL_SRCS_tests_gtpin
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_tests.cpp
 )
-foreach(GEN_NUM RANGE ${MAX_GEN})
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+foreach(GEN_TYPE ${ALL_GEN_TYPES})
+  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
+  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
-    list(APPEND IGDRCL_SRCS_tests_gtpin ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/gtpin_setup_gen${GEN_NUM}.cpp)
+    list(APPEND IGDRCL_SRCS_tests_gtpin ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
   endif()
 endforeach()
 if(GTPIN_HEADERS_DIR)

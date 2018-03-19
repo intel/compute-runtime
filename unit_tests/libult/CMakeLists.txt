@@ -18,23 +18,24 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-foreach(GEN_NUM RANGE ${MAX_GEN})
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_NUM} GENX_HAS_PLATFORMS)
+foreach(GEN_TYPE ${ALL_GEN_TYPES})
+  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
+  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
   if(${GENX_HAS_PLATFORMS})
     list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-      ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM}/cmd_parse_gen${GEN_NUM}.cpp
-      ${IGDRCL_SOURCE_DIR}/unit_tests/gen${GEN_NUM}/gen_cmd_parse.h
-      ${IGDRCL_SOURCE_DIR}/unit_tests/libult/gen${GEN_NUM}.cpp
-      ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/enable_family_full.cpp
+      ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+      ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/gen_cmd_parse.h
+      ${IGDRCL_SOURCE_DIR}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
+      ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full.cpp
     )
-    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_NUM} TESTED_GENX_PLATFORMS)
+    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_TYPE} TESTED_GENX_PLATFORMS)
     foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
       string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
       list (APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-        ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/enable_${PLATFORM_IT_LOWER}.cpp
+        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
       )
       list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW_LINUX
-        ${IGDRCL_SOURCE_DIR}/runtime/gen${GEN_NUM}/linux/enable_${PLATFORM_IT_LOWER}.cpp
+        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/linux/enable_${PLATFORM_IT_LOWER}.cpp
       )
     endforeach()
   endif()
