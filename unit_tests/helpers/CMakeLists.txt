@@ -38,8 +38,6 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_parse.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_binary_helper.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_binary_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_management_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap_tests.cpp
@@ -50,8 +48,6 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/string_to_hash_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_files.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/test_files.h
   ${CMAKE_CURRENT_SOURCE_DIR}/TestDebugVariables.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp

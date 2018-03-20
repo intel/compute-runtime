@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,14 +19,11 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_mt_tests_fixtures
-    #local files
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    #necessary dependencies from igdrcl_tests
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/buffer_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/built_in_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/device_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/image_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/platform_fixture.cpp"
-    PARENT_SCOPE
+  # local files
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+
+  # necessary dependencies from igdrcl_tests
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/image_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/platform_fixture.cpp
 )
+target_sources(igdrcl_mt_tests PRIVATE ${IGDRCL_SRCS_mt_tests_fixtures})

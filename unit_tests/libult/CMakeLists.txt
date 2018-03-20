@@ -72,7 +72,62 @@ target_include_directories(igdrcl_libult PRIVATE
   ${GTEST_INCLUDE_DIR}
 )
 
-foreach(target_name igdrcl_libult igdrcl_libult_cs)
+set(IGDRCL_SRCS_LIB_ULT_ENV
+  ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/custom_event_listener.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/main.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/built_in_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/built_in_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/buffer_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/buffer_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/device_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/device_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.h
+)
+add_library (igdrcl_libult_env OBJECT
+  ${IGDRCL_SRCS_LIB_ULT_ENV}
+)
+
+set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/options.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
+)
+
+set(IGDRCL_SRCS_LIB_ULT_ENV_LINUX
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
+)
+
+if(WIN32)
+  target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS})
+else()
+  target_sources(igdrcl_libult_env PRIVATE ${IGDRCL_SRCS_LIB_ULT_ENV_LINUX})
+endif()
+
+target_include_directories(igdrcl_libult_env PRIVATE
+  ${GTEST_INCLUDE_DIR}
+  ${GMOCK_INCLUDE_DIR}
+  ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+)
+
+foreach(target_name igdrcl_libult igdrcl_libult_cs igdrcl_libult_env)
   set_target_properties(${target_name} PROPERTIES POSITION_INDEPENDENT_CODE ON)
   set_target_properties(${target_name} PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
   set_property(TARGET ${target_name} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})

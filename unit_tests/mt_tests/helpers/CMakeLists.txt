@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -19,13 +19,11 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 set(IGDRCL_SRCS_mt_tests_helpers
-    #local files
-    "${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt"
-    ${CMAKE_CURRENT_SOURCE_DIR}/wddm_helper_mt_tests.cpp
-    #necessary dependencies from igdrcl_tests
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/base_object_tests_mt.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp"
-    "${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp"
-    PARENT_SCOPE
+  # local files
+  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_helper_mt_tests.cpp
+
+  # necessary dependencies from igdrcl_tests
+  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/base_object_tests_mt.cpp
 )
+target_sources(igdrcl_mt_tests PRIVATE ${IGDRCL_SRCS_mt_tests_helpers})

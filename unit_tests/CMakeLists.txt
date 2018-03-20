@@ -28,14 +28,6 @@ add_custom_target(run_unit_tests ALL)
 
 set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/base_object_allocator.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/custom_event_listener.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/global_environment.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_leak_listener.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
 )
 
@@ -68,6 +60,7 @@ endif()
 set(NEO_IGDRCL_TESTS__TARGET_OBJECTS
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
+  $<TARGET_OBJECTS:igdrcl_libult_env>
   $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${BUILTINS_BINARIES_LIB_NAME}>

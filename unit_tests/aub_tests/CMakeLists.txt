@@ -23,12 +23,12 @@ project(igdrcl_aub_tests)
 include(${CMAKE_CURRENT_SOURCE_DIR}/common.cmake)
 
 add_executable(igdrcl_aub_tests
-  ${IGDRCL_SOURCE_DIR}/unit_tests/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
   $<TARGET_OBJECTS:${SCHEDULER_BINARY_LIB_NAME}>
   $<TARGET_OBJECTS:igdrcl_libult>
   $<TARGET_OBJECTS:igdrcl_libult_cs>
+  $<TARGET_OBJECTS:igdrcl_libult_env>
 )
 
 set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
@@ -37,8 +37,8 @@ add_custom_target(run_aub_tests)
 set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
 target_include_directories(igdrcl_aub_tests PRIVATE
-    ${GTEST_INCLUDE_DIR}
-    ${GMOCK_INCLUDE_DIR}
+  ${GTEST_INCLUDE_DIR}
+  ${GMOCK_INCLUDE_DIR}
 )
 
 if(WIN32)
@@ -48,32 +48,12 @@ if(WIN32)
 endif()
 
 target_sources(igdrcl_aub_tests PRIVATE
-  ${IGDRCL_SOURCE_DIR}/unit_tests/command_queue/command_queue_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/buffer_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/built_in_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/device_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/memory_management_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/test_files.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/options.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
 )
 
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/options.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
     ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
-  )
-else()
-  target_sources(igdrcl_aub_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
   )
 endif()
 

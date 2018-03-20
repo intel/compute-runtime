@@ -18,68 +18,35 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 project(igdrcl_mt_tests)
 
-add_subdirectory(api)
-add_subdirectory(command_queue)
-add_subdirectory(device_queue)
-add_subdirectory(event)
-add_subdirectory(fixtures)
-add_subdirectory(helpers)
-add_subdirectory(indirect_heap)
-add_subdirectory(memory_manager)
-add_subdirectory(os_interface)
-add_subdirectory(platform)
-add_subdirectory(utilities)
-
-set(IGDRCL_SRCS_mt_tests_local
-  #local files
+add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  #necessary dependencies from igdrcl_tests
-  ${IGDRCL_SOURCE_DIR}/unit_tests/base_object_allocator.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/global_environment.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/main.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/memory_leak_listener.cpp
+
   ${IGDRCL_SOURCE_DIR}/unit_tests/ult_configuration.cpp
-  ${IGDRCL_SOURCE_DIR}/unit_tests/fixtures/program_fixture.cpp
+
+  $<TARGET_OBJECTS:igdrcl_libult>
+  $<TARGET_OBJECTS:igdrcl_libult_cs>
+  $<TARGET_OBJECTS:igdrcl_libult_env>
+  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
 )
 
+add_subdirectories()
+
 # Setting up our local list of test files
-set(IGDRCL_SRCS_mt_tests
-  ${IGDRCL_SRCS_gtest}
+target_sources(igdrcl_mt_tests PRIVATE
   ${IGDRCL_SRCS_mt_tests_api}
-  ${IGDRCL_SRCS_mt_tests_command_queue}
   ${IGDRCL_SRCS_mt_tests_device_queue}
   ${IGDRCL_SRCS_mt_tests_event}
-  ${IGDRCL_SRCS_mt_tests_fixtures}
-  ${IGDRCL_SRCS_mt_tests_helpers}
-  ${IGDRCL_SRCS_mt_tests_indirect_heap}
-  ${IGDRCL_SRCS_mt_tests_local}
   ${IGDRCL_SRCS_mt_tests_memory_manager}
-  ${IGDRCL_SRCS_mt_tests_os_interface}
   ${IGDRCL_SRCS_mt_tests_platform}
   ${IGDRCL_SRCS_mt_tests_utilities}
 )
-
-if(MSVC)
-  list(APPEND IGDRCL_SRCS_mt_tests
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
-  )
-endif(MSVC)
 
 #these tests fail because of data race, set '*' after fix problem
 set(GTEST_FILTER "-AsyncGPUoperations.MapBufferAfterWriteBuffer")
 MESSAGE(STATUS "GTest filter for mt tests:" ${GTEST_FILTER} )
 
-add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
-  ${IGDRCL_SRCS_mt_tests}
-  $<TARGET_OBJECTS:igdrcl_libult>
-  $<TARGET_OBJECTS:igdrcl_libult_cs>
-  $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
-)
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
 target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gtest gmock)
@@ -102,7 +69,6 @@ if(MSVC)
     ${WDK_INCLUDE_PATHS}
     ${GMM_INCLUDE_PATHS}
     ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
   target_link_libraries (igdrcl_mt_tests Ws2_32.lib)
 else()
