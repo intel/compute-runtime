@@ -74,14 +74,11 @@ int Drm::getExecSoftPin(int &execSoftPin) {
 }
 
 int Drm::enableTurboBoost() {
-    int ret = 0;
-    struct drm_i915_gem_context_param contextParam;
+    drm_i915_gem_context_param contextParam = {};
 
-    memset(&contextParam, 0, sizeof(contextParam));
     contextParam.param = I915_CONTEXT_PRIVATE_PARAM_BOOST;
     contextParam.value = 1;
-    ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
-    return ret;
+    return ioctl(DRM_IOCTL_I915_GEM_CONTEXT_SETPARAM, &contextParam);
 }
 
 int Drm::getEnabledPooledEu(int &enabled) {
@@ -136,8 +133,7 @@ std::string Drm::getSysFsPciPath(int deviceID) {
     std::vector<std::string> files = Directory::getFiles(sysFsPciDirectory);
 
     for (std::vector<std::string>::iterator file = files.begin(); file != files.end(); ++file) {
-        PCIConfig config;
-        memset(&config, 0, sizeof(PCIConfig));
+        PCIConfig config = {};
         std::string configPath = *file + configFileName;
         std::string sysfsPath = *file;
         std::ifstream configFile(configPath, std::ifstream::binary);
@@ -173,7 +169,7 @@ bool Drm::hasPreemption() {
 
 bool Drm::setLowPriority() {
 #if defined(I915_PARAM_HAS_PREEMPTION)
-    struct drm_i915_gem_context_param gcp = {0};
+    struct drm_i915_gem_context_param gcp = {};
     gcp.ctx_id = lowPriorityContextId;
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
     gcp.value = -1023;
@@ -188,10 +184,8 @@ bool Drm::setLowPriority() {
 
 bool Drm::contextCreate() {
 #if defined(I915_PARAM_HAS_PREEMPTION)
-    struct drm_i915_gem_context_create gcc;
-    memset(&gcc, 0, sizeof(gcc));
-    int ret = ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc);
-    if (ret == 0) {
+    drm_i915_gem_context_create gcc = {};
+    if (ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc) == 0) {
         lowPriorityContextId = gcc.ctx_id;
         return true;
     }
@@ -201,7 +195,7 @@ bool Drm::contextCreate() {
 
 void Drm::contextDestroy() {
 #if defined(I915_PARAM_HAS_PREEMPTION)
-    struct drm_i915_gem_context_destroy destroy;
+    drm_i915_gem_context_destroy destroy = {};
     destroy.ctx_id = lowPriorityContextId;
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
 #endif

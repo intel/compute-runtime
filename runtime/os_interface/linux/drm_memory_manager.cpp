@@ -145,17 +145,14 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
 }
 
 OCLRT::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint64_t flags, bool softpin) {
-    struct drm_i915_gem_userptr userptr;
-
-    memset(&userptr, 0, sizeof(userptr));
+    drm_i915_gem_userptr userptr = {};
     userptr.user_ptr = address;
     userptr.user_size = size;
     userptr.flags = static_cast<uint32_t>(flags);
 
-    int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_USERPTR,
-                               &userptr);
-    if (ret != 0)
+    if (this->drm->ioctl(DRM_IOCTL_I915_GEM_USERPTR, &userptr) != 0) {
         return nullptr;
+    }
 
     auto res = new (std::nothrow) BufferObject(this->drm, userptr.handle, false);
     if (!res) {
@@ -546,17 +543,12 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
         return false;
 
     // move a buffer object to the CPU read, and possibly write domain, including waiting on flushes to occur
-    struct drm_i915_gem_set_domain set_domain;
-    memset(&set_domain, 0, sizeof(set_domain));
+    drm_i915_gem_set_domain set_domain = {};
     set_domain.handle = bo->peekHandle();
     set_domain.read_domains = I915_GEM_DOMAIN_CPU;
     set_domain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
-    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN,
-                          &set_domain);
-    if (ret != 0)
-        return false;
 
-    return true;
+    return drm->ioctl(DRM_IOCTL_I915_GEM_SET_DOMAIN, &set_domain) == 0;
 }
 
 void *DrmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
@@ -575,14 +567,12 @@ void *DrmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
     if (bo == nullptr)
         return nullptr;
 
-    struct drm_i915_gem_mmap mmap_arg;
-    memset(&mmap_arg, 0, sizeof(mmap_arg));
+    drm_i915_gem_mmap mmap_arg = {};
     mmap_arg.handle = bo->peekHandle();
     mmap_arg.size = bo->peekSize();
-    auto ret = drm->ioctl(DRM_IOCTL_I915_GEM_MMAP,
-                          &mmap_arg);
-    if (ret != 0)
+    if (drm->ioctl(DRM_IOCTL_I915_GEM_MMAP, &mmap_arg) != 0) {
         return nullptr;
+    }
 
     bo->setLockedAddress(reinterpret_cast<void *>(mmap_arg.addr_ptr));
 

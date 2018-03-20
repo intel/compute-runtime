@@ -70,11 +70,8 @@ bool BufferObject::softPin(uint64_t offset) {
 };
 
 bool BufferObject::close() {
-    struct drm_gem_close close;
-
-    memset(&close, 0, sizeof(close));
+    drm_gem_close close = {};
     close.handle = this->handle;
-    close.pad = 0;
 
     int ret = this->drm->ioctl(DRM_IOCTL_GEM_CLOSE, &close);
     if (ret != 0) {
@@ -90,10 +87,8 @@ bool BufferObject::close() {
 }
 
 int BufferObject::wait(int64_t timeoutNs) {
-    struct drm_i915_gem_wait wait;
-
+    drm_i915_gem_wait wait = {};
     wait.bo_handle = this->handle;
-    wait.flags = 0;
     wait.timeout_ns = -1;
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_WAIT, &wait);
@@ -111,16 +106,12 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
         return true;
     }
 
-    drm_i915_gem_set_tiling set_tiling;
-
-    memset(&set_tiling, 0, sizeof(set_tiling));
-
+    drm_i915_gem_set_tiling set_tiling = {};
     set_tiling.handle = this->handle;
     set_tiling.tiling_mode = mode;
     set_tiling.stride = stride;
 
-    int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling);
-    if (ret != 0) {
+    if (this->drm->ioctl(DRM_IOCTL_I915_GEM_SET_TILING, &set_tiling) != 0) {
         return false;
     }
 
@@ -152,14 +143,13 @@ void BufferObject::processRelocs(int &idx) {
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, bool lowPriority) {
-    drm_i915_gem_execbuffer2 execbuf;
+    drm_i915_gem_execbuffer2 execbuf = {};
 
     int idx = 0;
     processRelocs(idx);
     this->fillExecObject(execObjectsStorage[idx]);
     idx++;
 
-    memset(&execbuf, 0, sizeof(execbuf));
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(execObjectsStorage);
     execbuf.buffer_count = idx;
     execbuf.batch_start_offset = static_cast<uint32_t>(startOffset);
@@ -167,9 +157,9 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.flags = flags;
 
     if (drm->peekCoherencyDisablePatchActive() && !requiresCoherency) {
-        execbuf.flags |= (uint64_t)I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+        execbuf.flags |= I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
     } else if (drm->peekDataPortCoherencyPatchActive() && requiresCoherency) {
-        execbuf.flags |= (uint64_t)I915_EXEC_DATA_PORT_COHERENT;
+        execbuf.flags |= I915_EXEC_DATA_PORT_COHERENT;
     }
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
@@ -186,7 +176,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
 }
 
 int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
-    drm_i915_gem_execbuffer2 execbuf;
+    drm_i915_gem_execbuffer2 execbuf = {};
     StackVec<drm_i915_gem_exec_object2, max_fragments_count + 1> execObject;
 
     reinterpret_cast<uint32_t *>(this->address)[0] = 0x05000000;
@@ -201,7 +191,6 @@ int BufferObject::pin(BufferObject *boToPin[], size_t numberOfBos) {
 
     this->fillExecObject(execObject[boIndex]);
 
-    memset(&execbuf, 0, sizeof(execbuf));
     execbuf.buffers_ptr = reinterpret_cast<uintptr_t>(&execObject[0]);
     execbuf.buffer_count = boIndex + 1;
     execbuf.batch_len = alignUp(static_cast<uint32_t>(sizeof(uint32_t)), 8);
