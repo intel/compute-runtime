@@ -19,10 +19,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(TESTS_GEN9)
-  add_subdirectory(batch_buffer)
-  add_subdirectory(execution_model)
-  add_subdirectory(skl)
-  target_sources(igdrcl_aub_tests PUBLIC
+  target_sources(igdrcl_aub_tests PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   )
-endif(TESTS_GEN9)
+  add_subdirectories()
+endif()

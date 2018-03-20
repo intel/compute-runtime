@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Intel Corporation
+# Copyright (c) 2017 - 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,9 +18,6 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-# We require cmake 3.2.0 or later
-cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
-
 if(TESTS_SKL)
-  add_subdirectory(command_queue)
+  add_subdirectories()
 endif()

@@ -19,7 +19,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(TESTS_GEN8)
-  target_sources(igdrcl_aub_tests PUBLIC
+  target_sources(igdrcl_aub_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/aub_tests_configuration.cpp
   )
-endif(TESTS_GEN8)
+endif()

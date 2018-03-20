@@ -33,16 +33,6 @@ add_executable(igdrcl_mt_tests EXCLUDE_FROM_ALL
 
 add_subdirectories()
 
-# Setting up our local list of test files
-target_sources(igdrcl_mt_tests PRIVATE
-  ${IGDRCL_SRCS_mt_tests_api}
-  ${IGDRCL_SRCS_mt_tests_device_queue}
-  ${IGDRCL_SRCS_mt_tests_event}
-  ${IGDRCL_SRCS_mt_tests_memory_manager}
-  ${IGDRCL_SRCS_mt_tests_platform}
-  ${IGDRCL_SRCS_mt_tests_utilities}
-)
-
 #these tests fail because of data race, set '*' after fix problem
 set(GTEST_FILTER "-AsyncGPUoperations.MapBufferAfterWriteBuffer")
 MESSAGE(STATUS "GTest filter for mt tests:" ${GTEST_FILTER} )
@@ -50,12 +40,11 @@ MESSAGE(STATUS "GTest filter for mt tests:" ${GTEST_FILTER} )
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
 target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gtest gmock)
-target_link_libraries(igdrcl_mt_tests igdrcl_mocks)
+target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(igdrcl_mt_tests PRIVATE
   ${GTEST_INCLUDE_DIR}
   ${GMOCK_INCLUDE_DIR}
-  ${GMM_INCLUDE_PATHS}
 )
 
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
@@ -64,21 +53,7 @@ if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
   set(igdrcl_mt_tests_LISTENER_OPTION "--disable_default_listener")
 endif()
 
-if(MSVC)
-  target_include_directories(igdrcl_mt_tests PRIVATE
-    ${WDK_INCLUDE_PATHS}
-    ${GMM_INCLUDE_PATHS}
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-  )
-  target_link_libraries (igdrcl_mt_tests Ws2_32.lib)
-else()
-  target_include_directories(igdrcl_mt_tests PRIVATE
-    ${UMKM_SHAREDDATA_INCLUDE_PATHS}
-  )
-  target_link_libraries(igdrcl_mt_tests dl pthread)
-endif(MSVC)
-
-if(MSVC)
+if(WIN32)
   add_dependencies(igdrcl_mt_tests mock_gdi igdrcl_tests)
 endif()
 
@@ -90,7 +65,7 @@ create_project_source_tree(igdrcl_mt_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL
 
 set_target_properties(igdrcl_mt_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${TSAN_FLAGS})
-if(NOT MSVC)
+if(NOT WIN32)
   set_property(TARGET igdrcl_mt_tests APPEND_STRING PROPERTY COMPILE_FLAGS " -g")
 endif()
 
@@ -98,7 +73,7 @@ set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER
 
 function(run_mt_tests target slices subslices eu_per_ss)
   add_custom_target(run_${target}_mt_unit_tests DEPENDS igdrcl_mt_tests)
-  if(NOT MSVC)
+  if(NOT WIN32)
     add_dependencies(run_${target}_mt_unit_tests copy_test_files_${target})
   endif()
   add_dependencies(run_mt_unit_tests run_${target}_mt_unit_tests)
