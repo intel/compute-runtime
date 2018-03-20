@@ -472,6 +472,7 @@ uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
 MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     BufferObject *allocatedBos[max_fragments_count];
     size_t numberOfBosAllocated = 0;
+    uint32_t indexesOfAllocatedBos[max_fragments_count];
 
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         // If there is no fragment it means it already exists.
@@ -489,6 +490,7 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
             }
 
             allocatedBos[numberOfBosAllocated] = handleStorage.fragmentStorageData[i].osHandleStorage->bo;
+            indexesOfAllocatedBos[numberOfBosAllocated] = i;
             numberOfBosAllocated++;
 
             hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
@@ -499,6 +501,9 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
         int result = pinBB->pin(allocatedBos, numberOfBosAllocated);
 
         if (result == EFAULT) {
+            for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
+                handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]].freeTheFragment = true;
+            }
             return AllocationStatus::InvalidHostPointer;
         } else if (result != 0) {
             return AllocationStatus::Error;

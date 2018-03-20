@@ -2571,3 +2571,49 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
     ::alignedFree(ptr);
 }
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenEnabledValidateHostMemoryWhenReadOnlyPointerCausesPinningFailWithEfaultThenPopulateOsHandlesMarksFragmentsToFree) {
+    std::unique_ptr<TestedDrmMemoryManager> testedMemoryManager(new TestedDrmMemoryManager(this->mock, false, true));
+    ASSERT_NE(nullptr, testedMemoryManager.get());
+    ASSERT_NE(nullptr, testedMemoryManager->getPinBB());
+
+    mock->reset();
+
+    DrmMockCustom::IoctlResExt ioctlResExt = {2, -1};
+    mock->ioctl_res_ext = &ioctlResExt;
+    mock->errnoValue = EFAULT;
+    mock->ioctl_expected.gemUserptr = 2;
+    mock->ioctl_expected.execbuffer2 = 1;
+
+    OsHandleStorage handleStorage;
+    OsHandle handle1;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &handle1;
+    handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    handleStorage.fragmentStorageData[0].fragmentSize = 4096;
+
+    handleStorage.fragmentStorageData[1].osHandleStorage = nullptr;
+    handleStorage.fragmentStorageData[1].cpuPtr = (void *)0x2000;
+    handleStorage.fragmentStorageData[1].fragmentSize = 8192;
+
+    handleStorage.fragmentStorageData[2].osHandleStorage = nullptr;
+    handleStorage.fragmentStorageData[2].cpuPtr = (void *)0x4000;
+    handleStorage.fragmentStorageData[2].fragmentSize = 4096;
+
+    auto result = testedMemoryManager->populateOsHandles(handleStorage);
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
+
+    mock->testIoctls();
+
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[0].osHandleStorage);
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[1].osHandleStorage);
+    EXPECT_NE(nullptr, handleStorage.fragmentStorageData[2].osHandleStorage);
+
+    EXPECT_TRUE(handleStorage.fragmentStorageData[1].freeTheFragment);
+    EXPECT_TRUE(handleStorage.fragmentStorageData[2].freeTheFragment);
+
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[1].freeTheFragment = true;
+    handleStorage.fragmentStorageData[2].freeTheFragment = true;
+
+    testedMemoryManager->cleanOsHandles(handleStorage);
+}
