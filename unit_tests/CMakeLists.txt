@@ -381,11 +381,19 @@ foreach(GEN_NUM RANGE ${MAX_GEN})
       if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
         neo_gen_kernels(test_kernels_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNELS})
         neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
-        neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
+
+        # Temporarily disabled debug kernel generation on gen8
+        if(NOT ("gen${GEN_NUM}" STREQUAL "gen8"))
+          neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
+        endif()
 
         add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
         add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
-        add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
+
+        # Temporarily disabled debug kernel generation on gen8
+        if(NOT ("gen${GEN_NUM}" STREQUAL "gen8"))
+          add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
+        endif()
 
         set(sip_kernel_file_name)
         set(sip_kernel_output_file)

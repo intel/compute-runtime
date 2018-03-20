@@ -77,40 +77,46 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
 };
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
-    std::string receivedInternalOptions;
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        std::string receivedInternalOptions;
 
-    auto debugVars = OCLRT::getFclDebugVars();
-    debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(debugVars);
+        auto debugVars = OCLRT::getFclDebugVars();
+        debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+        gEnvironment->fclPushDebugVars(debugVars);
 
-    cl_int retVal = pProgram->compile(1, &device, nullptr,
-                                      0, nullptr, nullptr,
-                                      nullptr,
-                                      nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        cl_int retVal = pProgram->compile(1, &device, nullptr,
+                                          0, nullptr, nullptr,
+                                          nullptr,
+                                          nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
-    gEnvironment->fclPopDebugVars();
+        EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
+        gEnvironment->fclPopDebugVars();
+    }
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
-    std::string receivedInternalOptions;
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        std::string receivedInternalOptions;
 
-    auto debugVars = OCLRT::getFclDebugVars();
-    debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
-    gEnvironment->fclPushDebugVars(debugVars);
+        auto debugVars = OCLRT::getFclDebugVars();
+        debugVars.receivedInternalOptionsOutput = &receivedInternalOptions;
+        gEnvironment->fclPushDebugVars(debugVars);
 
-    cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
-    gEnvironment->fclPopDebugVars();
+        EXPECT_THAT(receivedInternalOptions, ::testing::HasSubstr(CompilerOptions::debugKernelEnable));
+        gEnvironment->fclPopDebugVars();
+    }
 }
 
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
-    retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable, nullptr, nullptr, false);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable, nullptr, nullptr, false);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
-    EXPECT_NE(0u, kernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+        auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
+        EXPECT_NE(0u, kernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+    }
 }
