@@ -85,6 +85,8 @@ BXTTEST_F(BxtUsDeviceIdTest, isSimulationCap) {
 }
 
 BXTTEST_F(BxtUsDeviceIdTest, kmdNotifyMechanism) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.enableKmdNotify);
-    EXPECT_EQ(30000, pDevice->getHardwareInfo().capabilityTable.delayKmdNotifyMicroseconds);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
 }

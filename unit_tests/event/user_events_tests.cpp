@@ -151,7 +151,7 @@ TEST(UserEvent, initialUserEventStateIsNotReadyForSubmission) {
 TEST(UserEvent, GIVENUserEventWHENgetTaskLevelTHENSuccess) {
     MyUserEvent uEvent;
     EXPECT_EQ(0U, uEvent.getTaskLevel());
-    EXPECT_FALSE(uEvent.wait(false));
+    EXPECT_FALSE(uEvent.wait(false, false));
 }
 
 TEST(UserEvent, userEventAfterSetingStatusIsReadyForSubmission) {
@@ -930,7 +930,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
 TEST_F(EventTest, UserEvent_Wait_NonBlocking) {
     UserEvent event;
-    auto result = event.wait(false);
+    auto result = event.wait(false, false);
     EXPECT_FALSE(result);
 }
 

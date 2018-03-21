@@ -89,7 +89,7 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
                                     taskLevel,
                                     dispatchFlags);
 
-    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
     if (!memObj.isMemObjZeroCopy()) {
         if (op == MAP) {
@@ -277,7 +277,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     for (auto &surface : surfaces) {
         surface->setCompletionStamp(completionStamp, nullptr, nullptr);
     }
-    commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+    commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
     if (printfHandler) {
         printfHandler.get()->printEnqueueOutput();
@@ -317,7 +317,7 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
                                     taskLevel,
                                     dispatchFlags);
 
-    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+    cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
     return completionStamp;
 }

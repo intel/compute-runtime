@@ -110,9 +110,7 @@ TEST(WddmTestEnumAdapters, expectTrue) {
 }
 
 TEST(WddmTestEnumAdapters, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapabilityTableIsSet) {
-    HardwareInfo outHwInfo;
-
-    memset(&outHwInfo, 0, sizeof(outHwInfo));
+    HardwareInfo outHwInfo = {};
 
     auto hwInfo = *platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
@@ -127,7 +125,10 @@ TEST(WddmTestEnumAdapters, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCapa
 
     EXPECT_EQ(outHwInfo.capabilityTable.defaultProfilingTimerResolution, hwInfo.capabilityTable.defaultProfilingTimerResolution);
     EXPECT_EQ(outHwInfo.capabilityTable.clVersionSupport, hwInfo.capabilityTable.clVersionSupport);
-    EXPECT_EQ(outHwInfo.capabilityTable.delayKmdNotifyMicroseconds, hwInfo.capabilityTable.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify, hwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, hwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep, hwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(outHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, hwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
 
     delete outHwInfo.pPlatform;
     delete outHwInfo.pSkuTable;

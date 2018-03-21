@@ -65,7 +65,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override;
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override;
     const HardwareInfo &peekHwInfo() const { return hwInfo; }
 
   protected:

@@ -102,18 +102,26 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     bool success = DeviceFactory::getDevices(&hwInfoReference, numDevices);
     ASSERT_TRUE(success);
-    auto refEnableKmdNotify = hwInfoReference->capabilityTable.enableKmdNotify;
-    auto refDelayKmdNotifyMicroseconds = hwInfoReference->capabilityTable.delayKmdNotifyMicroseconds;
+    auto refEnableKmdNotify = hwInfoReference->capabilityTable.kmdNotifyProperties.enableKmdNotify;
+    auto refDelayKmdNotifyMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
+    auto refEnableQuickKmdSleep = hwInfoReference->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep;
+    auto refDelayQuickKmdSleepMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
     DeviceFactory::releaseDevices();
 
     DebugManager.flags.OverrideEnableKmdNotify.set(!refEnableKmdNotify);
     DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(static_cast<int32_t>(refDelayKmdNotifyMicroseconds) + 10);
 
+    DebugManager.flags.OverrideEnableQuickKmdSleep.set(!refEnableQuickKmdSleep);
+    DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepMicroseconds) + 11);
+
     success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices);
     ASSERT_TRUE(success);
 
-    EXPECT_EQ(!refEnableKmdNotify, hwInfoOverriden->capabilityTable.enableKmdNotify);
-    EXPECT_EQ(refDelayKmdNotifyMicroseconds + 10, hwInfoOverriden->capabilityTable.delayKmdNotifyMicroseconds);
+    EXPECT_EQ(!refEnableKmdNotify, hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(refDelayKmdNotifyMicroseconds + 10, hwInfoOverriden->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);
+
+    EXPECT_EQ(!refEnableQuickKmdSleep, hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(refDelayQuickKmdSleepMicroseconds + 11, hwInfoOverriden->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
 
     DeviceFactory::releaseDevices();
 }

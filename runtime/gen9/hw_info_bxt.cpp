@@ -66,8 +66,7 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     &isSimulationBXT,
     true,
     false,                    // forceStatelessCompilationFor32Bit
-    false,                    // EnableKmdNotify
-    30000,                    // delayKmdNotifyMicroseconds
+    {false, 0, false, 0},     // KmdNotifyProperties
     false,                    // ftr64KBpages
     EngineType::ENGINE_RCS,   // defaultEngineType
     MemoryConstants::pageSize //requiredPreemptionSurfaceSize

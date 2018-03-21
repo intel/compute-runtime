@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -47,7 +47,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
             this->updateTaskCount(taskCount);
         }
 
-        MOCK_METHOD1(wait, bool(bool blocking));
+        MOCK_METHOD2(wait, bool(bool blocking, bool quickKmdSleep));
     };
 
     static void CL_CALLBACK callbackFcn(cl_event e, cl_int status, void *data) {
@@ -349,19 +349,19 @@ TEST_F(AsyncEventsHandlerTests, givenEventWithoutCallbacksWhenProcessedThenDontR
     event2->setStatus(CL_COMPLETE);
 }
 
-TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWait) {
+TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWithQuickKmdSleepRequest) {
     event1->setTaskStamp(0, 1);
     event1->addCallback(&this->callbackFcn, CL_COMPLETE, &counter);
     handler->registerEvent(event1);
     handler->allowAsyncProcess.store(true);
 
     // break infinite loop after first iteartion
-    auto unsetAsyncFlag = [&](bool arg) {
+    auto unsetAsyncFlag = [&](bool blocking, bool quickKmdSleep) {
         handler->allowAsyncProcess.store(false);
         return true;
     };
 
-    EXPECT_CALL(*event1, wait(true)).Times(1).WillOnce(Invoke(unsetAsyncFlag));
+    EXPECT_CALL(*event1, wait(true, true)).Times(1).WillOnce(Invoke(unsetAsyncFlag));
 
     handler->asyncProcess();
 

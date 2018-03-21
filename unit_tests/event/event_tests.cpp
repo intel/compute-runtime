@@ -388,7 +388,7 @@ TEST_F(EventTest, GetEventInfo_InvalidParam) {
 
 TEST_F(EventTest, Event_Wait_NonBlocking) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, Event::eventNotReady);
-    auto result = event.wait(false);
+    auto result = event.wait(false, false);
     EXPECT_FALSE(result);
 }
 
@@ -1413,6 +1413,54 @@ TEST_F(EventTest, addChildForEventCompleted) {
         event.addChild(virtualEvent);
         EXPECT_EQ(0U, virtualEvent.peekNumEventsBlockingThis());
     }
+}
+
+HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
+    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
+        MyCsr(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<FamilyType>(hwInfo) {}
+        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    };
+    HardwareInfo localHwInfo = pDevice->getHardwareInfo();
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
+    localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 1;
+    localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 2;
+
+    auto csr = new ::testing::NiceMock<MyCsr>(localHwInfo);
+    pDevice->resetCommandStreamReceiver(csr);
+
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
+                                                   localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds, ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(true));
+
+    event.wait(true, true);
+}
+
+HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
+    struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
+        MyCsr(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<FamilyType>(hwInfo) {}
+        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    };
+    HardwareInfo localHwInfo = pDevice->getHardwareInfo();
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
+    localHwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = true;
+    localHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 1;
+    localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = 2;
+
+    auto csr = new ::testing::NiceMock<MyCsr>(localHwInfo);
+    pDevice->resetCommandStreamReceiver(csr);
+
+    Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_,
+                                                   localHwInfo.capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds, ::testing::_))
+        .Times(1)
+        .WillOnce(::testing::Return(true));
+
+    event.wait(true, false);
 }
 
 HWTEST_F(InternalsEventTest, givenCommandWhenSubmitCalledThenUpdateFlushStamp) {

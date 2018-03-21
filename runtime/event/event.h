@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -225,7 +225,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     //returns true on success
     //if(blocking==false), will return with false instead of blocking while waiting for completion
-    virtual bool wait(bool blocking);
+    virtual bool wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {
         return (CL_COMMAND_USER == cmdType);

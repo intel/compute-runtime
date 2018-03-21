@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,8 +88,8 @@ struct InternalsEventTest
 };
 
 struct MyUserEvent : public VirtualEvent {
-    bool wait(bool blocking) override {
-        return VirtualEvent::wait(blocking);
+    bool wait(bool blocking, bool quickKmdSleep) override {
+        return VirtualEvent::wait(blocking, quickKmdSleep);
     };
     uint32_t getTaskLevel() override {
         return VirtualEvent::getTaskLevel();

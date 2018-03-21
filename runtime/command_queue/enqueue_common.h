@@ -325,7 +325,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStreamReceiver.overrideMediaVFEStateDirty(true);
 
                 if (devQueueHw->getSchedulerReturnInstance() > 0) {
-                    waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp);
+                    waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
                     BuiltinKernelsSimulation::SchedulerSimulation<GfxFamily> simulation;
                     simulation.runSchedulerSimulation(devQueueHw->getQueueBuffer(),
@@ -404,9 +404,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (blockQueue) {
             while (isQueueBlocked())
                 ;
-            waitUntilComplete(taskCount, flushStamp->peekStamp());
+            waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
         } else {
-            waitUntilComplete(taskCount, flushStamp->peekStamp());
+            waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
             for (auto sIt = surfacesForResidency, sE = surfacesForResidency + numSurfaceForResidency;
                  sIt != sE; ++sIt) {
                 (*sIt)->setCompletionStamp(completionStamp, nullptr, nullptr);

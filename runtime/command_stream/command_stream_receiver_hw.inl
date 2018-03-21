@@ -558,14 +558,18 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) {
-    auto status = waitForCompletionWithTimeout(this->hwInfo.capabilityTable.enableKmdNotify && flushStampToWait != 0,
-                                               this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds,
-                                               taskCountToWait);
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+    const auto &kmdNotifyProperties = this->hwInfo.capabilityTable.kmdNotifyProperties;
+
+    const auto &kmdNotifyDelay = useQuickKmdSleep && kmdNotifyProperties.enableQuickKmdSleep ? kmdNotifyProperties.delayQuickKmdSleepMicroseconds
+                                                                                             : kmdNotifyProperties.delayKmdNotifyMicroseconds;
+
+    auto status = waitForCompletionWithTimeout(kmdNotifyProperties.enableKmdNotify && flushStampToWait != 0,
+                                               kmdNotifyDelay, taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
-        waitForCompletionWithTimeout(false, this->hwInfo.capabilityTable.delayKmdNotifyMicroseconds, taskCountToWait);
+        waitForCompletionWithTimeout(false, kmdNotifyDelay, taskCountToWait);
     }
 
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);

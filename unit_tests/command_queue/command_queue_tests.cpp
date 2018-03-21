@@ -646,7 +646,7 @@ HWTEST_F(CommandQueueCSTest, getCSShouldReturnACSWithEnoughSizeCSRTraffic) {
 struct KmdNotifyTests : public ::testing::Test {
 
     void SetUp() override {
-        resetObjects(1, 1);
+        resetObjects(1, 1, 1, 2);
         *device->getTagAddress() = taskCountToWait;
     }
 
@@ -656,7 +656,8 @@ struct KmdNotifyTests : public ::testing::Test {
         DeviceFactory::releaseDevices();
     }
 
-    void resetObjects(int32_t overrideEnable, int32_t overrideTimeout) {
+    void resetObjects(int32_t overrideKmdNotifyEnable, int32_t overrideKmdNotifyDelay,
+                      int overrideQuickKmdSleepEnable, int32_t overrideQuickKmdSleepDelay) {
         if (cmdQ) {
             delete cmdQ;
         }
@@ -665,8 +666,10 @@ struct KmdNotifyTests : public ::testing::Test {
             DeviceFactory::releaseDevices();
         }
         DebugManagerStateRestore stateRestore;
-        DebugManager.flags.OverrideEnableKmdNotify.set(overrideEnable);
-        DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(overrideTimeout);
+        DebugManager.flags.OverrideEnableKmdNotify.set(overrideKmdNotifyEnable);
+        DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.set(overrideKmdNotifyDelay);
+        DebugManager.flags.OverrideEnableQuickKmdSleep.set(overrideQuickKmdSleepEnable);
+        DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.set(overrideQuickKmdSleepDelay);
         size_t numDevices;
         HardwareInfo *hwInfo = nullptr;
         DeviceFactory::getDevices(&hwInfo, numDevices);
@@ -702,18 +705,18 @@ HWTEST_F(KmdNotifyTests, givenTaskCountWhenWaitUntilCompletionCalledThenAlwaysTr
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 1, taskCountToWait)).Times(0);
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait);
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompletionCalledThenTryCpuPollingWithoutTimeout) {
-    resetObjects(0, 0);
+    resetObjects(0, 0, 0, 0);
     auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
     device->resetCommandStreamReceiver(csr);
 
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 0, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait);
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndKmdWait) {
@@ -727,7 +730,7 @@ HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThen
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, 1, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
 
     //we have unrecoverable for this case, this will throw.
-    EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait), std::exception);
+    EXPECT_THROW(cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false), std::exception);
 }
 
 HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndDontCallKmdWait) {
@@ -738,7 +741,38 @@ HWTEST_F(KmdNotifyTests, givenReadyTaskCountWhenWaitUntilCompletionCalledThenTry
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 1, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
-    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait);
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+}
+
+HWTEST_F(KmdNotifyTests, givenDefaultArgumentWhenWaitUntilCompleteIsCalledThenDisableQuickKmdSleep) {
+    auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    device->resetCommandStreamReceiver(csr);
+    auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
+
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, false);
+}
+
+HWTEST_F(KmdNotifyTests, givenEnabledQuickSleepWhenWaitUntilCompleteIsCalledThenChangeDelayValue) {
+    auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    device->resetCommandStreamReceiver(csr);
+    auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
+
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, true);
+}
+
+HWTEST_F(KmdNotifyTests, givenDisabledQuickSleepWhenWaitUntilCompleteWithQuickSleepRequestIsCalledThenUseBaseDelayValue) {
+    resetObjects(1, 1, 0, 0);
+    auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    device->resetCommandStreamReceiver(csr);
+    auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
+
+    cmdQ->waitUntilComplete(taskCountToWait, flushStampToWait, true);
 }
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenPollForCompletionCalledThenTimeout) {
@@ -766,11 +800,62 @@ HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) 
     auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
     device->resetCommandStreamReceiver(csr);
 
-    EXPECT_TRUE(device->getHardwareInfo().capabilityTable.enableKmdNotify);
+    EXPECT_TRUE(device->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(false, ::testing::_, taskCountToWait)).Times(1).WillOnce(::testing::Return(true));
     EXPECT_CALL(*csr, waitForFlushStamp(::testing::_)).Times(0);
 
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0);
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 0, false);
+}
+
+struct WaitForQueueCompletionTests : public ::testing::Test {
+    template <typename Family>
+    struct MyCmdQueue : public CommandQueueHw<Family> {
+        MyCmdQueue(Context *context, Device *device) : CommandQueueHw<Family>(context, device, nullptr){};
+        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+            requestedUseQuickKmdSleep = useQuickKmdSleep;
+            waitUntilCompleteCounter++;
+        }
+        bool isQueueBlocked() override {
+            return false;
+        }
+        bool requestedUseQuickKmdSleep = false;
+        uint32_t waitUntilCompleteCounter = 0;
+    };
+
+    void SetUp() override {
+        device.reset(Device::create<MockDevice>(*platformDevices));
+        context.reset(new MockContext(device.get()));
+    }
+
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+};
+
+HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndUnblockedQueueWhenEnqueuedThenCallWaitWithoutQuickKmdSleepRequest) {
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
+    uint32_t tmpPtr = 0;
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
+    EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
+}
+
+HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndBlockedQueueWhenEnqueuedThenCallWaitWithoutQuickKmdSleepRequest) {
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
+    std::unique_ptr<Event> blockingEvent(new Event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0));
+    cl_event clBlockingEvent = blockingEvent.get();
+    uint32_t tmpPtr = 0;
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
+    cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 1, &clBlockingEvent, nullptr);
+    EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
+    EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
+}
+
+HWTEST_F(WaitForQueueCompletionTests, whenFinishIsCalledThenCallWaitWithoutQuickKmdSleepRequest) {
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
+    cmdQ->finish(false);
+    EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
+    EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
 }
 
 constexpr char sipPattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};

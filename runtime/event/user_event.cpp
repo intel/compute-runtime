@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -37,7 +37,7 @@ void UserEvent::updateExecutionStatus() {
     return;
 }
 
-bool UserEvent::wait(bool blocking) {
+bool UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
             return false;
@@ -72,7 +72,7 @@ void VirtualEvent::updateExecutionStatus() {
     ;
 }
 
-bool VirtualEvent::wait(bool blocking) {
+bool VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
     while (updateStatusAndCheckCompletion() == false) {
         if (blocking == false) {
             return false;

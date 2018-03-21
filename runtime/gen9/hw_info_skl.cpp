@@ -69,8 +69,7 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     &isSimulationSKL,
     true,
     true,                     // forceStatelessCompilationFor32Bit
-    false,                    // EnableKmdNotify
-    30000,                    // delayKmdNotifyMicroseconds
+    {false, 0, false, 0},     // KmdNotifyProperties
     true,                     // ftr64KBpages
     EngineType::ENGINE_RCS,   // defaultEngineType
     MemoryConstants::pageSize //requiredPreemptionSurfaceSize

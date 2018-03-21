@@ -444,7 +444,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override {
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep) override {
     }
 
     CompletionStamp flushTask(

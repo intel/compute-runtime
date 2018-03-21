@@ -318,7 +318,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait);
+    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
 
     void flushWaitList(cl_uint numEventsInWaitList,
                        const cl_event *eventWaitList,

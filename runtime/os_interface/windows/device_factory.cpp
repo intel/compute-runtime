@@ -66,13 +66,21 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         // Instrumentation
         tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation;
 
-        tempHwInfos[devNum].capabilityTable.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
-                                                                  ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
-                                                                  : tempHwInfos[devNum].capabilityTable.enableKmdNotify;
+        tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
+                                                                                      ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
+                                                                                      : tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.enableKmdNotify;
 
-        tempHwInfos[devNum].capabilityTable.delayKmdNotifyMicroseconds = DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get() >= 0
-                                                                             ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get())
-                                                                             : tempHwInfos[devNum].capabilityTable.delayKmdNotifyMicroseconds;
+        tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get() >= 0
+                                                                                                 ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get())
+                                                                                                 : tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
+
+        tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = DebugManager.flags.OverrideEnableQuickKmdSleep.get() >= 0
+                                                                                          ? !!DebugManager.flags.OverrideEnableQuickKmdSleep.get()
+                                                                                          : tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.enableQuickKmdSleep;
+
+        tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get() >= 0
+                                                                                                     ? static_cast<int64_t>(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get())
+                                                                                                     : tempHwInfos[devNum].capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
 
         numDevices = 1;
         *pHWInfos = tempHwInfos;

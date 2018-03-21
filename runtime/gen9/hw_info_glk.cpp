@@ -61,8 +61,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     &isSimulationGLK,
     true,
     false,                    // forceStatelessCompilationFor32Bit
-    true,                     // EnableKmdNotify
-    30000,                    // delayKmdNotifyMicroseconds
+    {true, 30000, false, 0},  // KmdNotifyProperties
     false,                    // ftr64KBpages
     EngineType::ENGINE_RCS,   // defaultEngineType
     MemoryConstants::pageSize //requiredPreemptionSurfaceSize

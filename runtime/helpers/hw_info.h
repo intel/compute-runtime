@@ -26,6 +26,7 @@
 #include "sku_info.h"
 
 #include "runtime/helpers/engine_node.h"
+#include "runtime/helpers/kmd_notify_properties.h"
 #include <cstddef>
 
 namespace OCLRT {
@@ -64,8 +65,8 @@ struct RuntimeCapabilityTable {
 
     bool forceStatelessCompilationFor32Bit;
 
-    bool enableKmdNotify;
-    int64_t delayKmdNotifyMicroseconds;
+    KmdNotifyProperties kmdNotifyProperties;
+
     bool ftr64KBpages;
 
     EngineType defaultEngineType;

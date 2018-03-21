@@ -288,14 +288,14 @@ bool Event::calcProfilingData() {
     return dataCalculated;
 }
 
-inline bool Event::wait(bool blocking) {
+inline bool Event::wait(bool blocking, bool useQuickKmdSleep) {
     while (this->taskCount == Event::eventNotReady) {
         if (blocking == false) {
             return false;
         }
     }
 
-    cmdQueue->waitUntilComplete(taskCount.load(), flushStamp->peekStamp());
+    cmdQueue->waitUntilComplete(taskCount.load(), flushStamp->peekStamp(), useQuickKmdSleep);
     updateExecutionStatus();
 
     DEBUG_BREAK_IF(this->taskLevel == Event::eventNotReady && this->executionStatus >= 0);
@@ -495,7 +495,7 @@ cl_int Event::waitForEvents(cl_uint numEvents,
                 return CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
             }
 
-            if (event->wait(false) == false) {
+            if (event->wait(false, false) == false) {
                 pendingEventsLeft->push_back(event);
             }
         }

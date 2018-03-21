@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,39 +21,13 @@
  */
 
 #pragma once
-#include "event.h"
+#include <cstdint>
 
 namespace OCLRT {
-class CommandQueue;
-class Context;
-
-class UserEvent : public Event {
-  public:
-    UserEvent(Context *ctx = nullptr);
-
-    ~UserEvent() override = default;
-
-    bool wait(bool blocking, bool useQuickKmdSleep) override;
-
-    void updateExecutionStatus() override;
-
-    uint32_t getTaskLevel() override;
-
-    bool isInitialEventStatus() const;
-};
-
-class VirtualEvent : public Event {
-  public:
-    VirtualEvent(CommandQueue *cmdQ = nullptr, Context *ctx = nullptr);
-
-    ~VirtualEvent() override = default;
-
-    bool wait(bool blocking, bool useQuickKmdSleep) override;
-
-    bool setStatus(cl_int status) override;
-
-    void updateExecutionStatus() override;
-
-    uint32_t getTaskLevel() override;
+struct KmdNotifyProperties {
+    bool enableKmdNotify;
+    int64_t delayKmdNotifyMicroseconds;
+    bool enableQuickKmdSleep;
+    int64_t delayQuickKmdSleepMicroseconds;
 };
 } // namespace OCLRT
