@@ -31,8 +31,6 @@ constexpr size_t bigAllocation = 1 * MB;
 constexpr uintptr_t dummyAddress = 0xFFFFF000u;
 class MemoryAllocation : public GraphicsAllocation {
   public:
-    bool cpuPtrAllocated;
-    unsigned int refCount;
     unsigned long long id;
     size_t sizeToFree = 0;
     bool dummyAllocation = false;
@@ -40,10 +38,10 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
 
-    MemoryAllocation(bool cpuPtrAllocated, int refCount, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
-                                                                                                                            cpuPtrAllocated(cpuPtrAllocated),
-                                                                                                                            refCount(refCount),
-                                                                                                                            id(count) {}
+    MemoryAllocation(bool cpuPtrAllocated, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
+                                                                                                              id(count) {
+        this->cpuPtrAllocated = cpuPtrAllocated;
+    }
 };
 
 typedef std::map<void *, MemoryAllocation *> PointerMap;
@@ -83,7 +81,6 @@ class OsAgnosticMemoryManager : public MemoryManager {
     void turnOnFakingBigAllocations();
 
   private:
-    PointerMap allocationMap;
     unsigned long long counter = 0;
     bool fakeBigAllocations = false;
 };

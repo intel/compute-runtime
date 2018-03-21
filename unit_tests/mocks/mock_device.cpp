@@ -56,13 +56,7 @@ bool MockDevice::hasDriverInfo() {
 
 void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
     memoryManager->setCommandStreamReceiver(commandStreamReceiver);
-    this->memoryManager->freeGraphicsMemory(tagAllocation);
-    tagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t));
-    auto pTagMemory = reinterpret_cast<uint32_t *>(tagAllocation->getUnderlyingBuffer());
-    *pTagMemory = initialHardwareTag;
-    tagAddress = pTagMemory;
     commandStreamReceiver->setMemoryManager(memoryManager);
-    commandStreamReceiver->setTagAllocation(tagAllocation);
     setMemoryManager(memoryManager);
     memoryManager->setDevice(this);
 }

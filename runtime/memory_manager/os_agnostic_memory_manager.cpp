@@ -44,22 +44,20 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     MemoryAllocation *memoryAllocation = nullptr;
 
     if (fakeBigAllocations && size > bigAllocation) {
-        memoryAllocation = new MemoryAllocation(true, 1, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter);
+        memoryAllocation = new MemoryAllocation(true, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter);
         counter++;
         memoryAllocation->dummyAllocation = true;
         memoryAllocation->uncacheable = uncacheable;
         return memoryAllocation;
     }
     auto ptr = allocateSystemMemory(sizeAligned, alignment ? alignUp(alignment, MemoryConstants::pageSize) : MemoryConstants::pageSize);
-    DEBUG_BREAK_IF(allocationMap.find(ptr) != allocationMap.end());
     if (ptr != nullptr) {
-        memoryAllocation = new MemoryAllocation(true, 1, ptr, reinterpret_cast<uint64_t>(ptr), size, counter);
+        memoryAllocation = new MemoryAllocation(true, ptr, reinterpret_cast<uint64_t>(ptr), size, counter);
         if (!memoryAllocation) {
             alignedFreeWrapper(ptr);
             return nullptr;
         }
         memoryAllocation->uncacheable = uncacheable;
-        allocationMap.emplace(ptr, memoryAllocation);
     }
     counter++;
     return memoryAllocation;
@@ -77,12 +75,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(false, 1, reinterpret_cast<void *>(ptr), Gmm::canonize(reinterpret_cast<uint64_t>(gpuVirtualAddress) + offset), size, counter);
+        MemoryAllocation *memAlloc = new MemoryAllocation(false, reinterpret_cast<void *>(ptr), Gmm::canonize(reinterpret_cast<uint64_t>(gpuVirtualAddress) + offset), size, counter);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
 
-        allocationMap.emplace(const_cast<void *>(ptr), memAlloc);
         counter++;
         return memAlloc;
     }
@@ -94,22 +91,20 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
         ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
     void *gpuPointer = allocator32Bit->allocate(allocationSize);
 
-    DEBUG_BREAK_IF(allocationMap.find(ptrAlloc) != allocationMap.end());
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(true, 1, ptrAlloc, Gmm::canonize(reinterpret_cast<uint64_t>(gpuPointer)), size, counter);
+        memoryAllocation = new MemoryAllocation(true, ptrAlloc, Gmm::canonize(reinterpret_cast<uint64_t>(gpuPointer)), size, counter);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
         memoryAllocation->cpuPtrAllocated = true;
-        allocationMap.emplace(ptrAlloc, memoryAllocation);
     }
     counter++;
     return memoryAllocation;
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) {
-    auto graphicsAllocation = new MemoryAllocation(false, 1, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle));
+    auto graphicsAllocation = new MemoryAllocation(false, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle));
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->is32BitAllocation = requireSpecificBitness;
     return graphicsAllocation;
@@ -131,29 +126,13 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
         return;
     }
 
-    bool freeMemory = false;
-    bool is32BitAllocation = false;
     void *ptr = gfxAllocation->getUnderlyingBuffer();
-    void *gpuPtrToFree = nullptr;
-    size_t sizeToFree = 0;
-    auto it = allocationMap.find(ptr);
 
-    if (it != allocationMap.end()) {
-        it->second->refCount--;
-        if (it->second->refCount == 0) {
-            freeMemory = it->second->cpuPtrAllocated;
-            is32BitAllocation = it->second->is32BitAllocation;
-            gpuPtrToFree = reinterpret_cast<void *>(it->second->getGpuAddress() & ~MemoryConstants::pageMask);
-            sizeToFree = it->second->sizeToFree;
-            allocationMap.erase(it);
-        }
+    if (gfxAllocation->is32BitAllocation) {
+        void *gpuPtrToFree = reinterpret_cast<void *>(gfxAllocation->getGpuAddress() & ~MemoryConstants::pageMask);
+        allocator32Bit->free(gpuPtrToFree, static_cast<MemoryAllocation *>(gfxAllocation)->sizeToFree);
     }
-    if (is32BitAllocation) {
-        allocator32Bit->free(gpuPtrToFree, sizeToFree);
-        if (freeMemory) {
-            alignedFreeWrapper(ptr);
-        }
-    } else if (freeMemory) {
+    if (gfxAllocation->cpuPtrAllocated) {
         alignedFreeWrapper(ptr);
     }
     delete gfxAllocation;
@@ -172,7 +151,7 @@ uint64_t OsAgnosticMemoryManager::getInternalHeapBaseAddress() {
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new MemoryAllocation(false, 0, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++);
+    auto allocation = new MemoryAllocation(false, const_cast<void *>(hostPtr), reinterpret_cast<uint64_t>(hostPtr), hostPtrSize, counter++);
     allocation->fragmentsStorage = handleStorage;
     return allocation;
 }

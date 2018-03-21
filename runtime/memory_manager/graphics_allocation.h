@@ -127,6 +127,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void incReuseCount() { reuseCount++; }
     void decReuseCount() { reuseCount--; }
     uint32_t peekReuseCount() const { return reuseCount; }
+    bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
 
   private:
     int allocationType;

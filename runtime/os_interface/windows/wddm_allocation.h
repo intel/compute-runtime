@@ -40,9 +40,6 @@ const size_t trimListUnusedPosition = (size_t)-1;
 
 class WddmAllocation : public GraphicsAllocation {
   public:
-    // runtime assigned fields
-    bool cpuPtrAllocated; // flag indicating if cpuPtr is driver-allocated
-
     // OS assigned fields
     D3DKMT_HANDLE handle;              // set by createAllocation
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
@@ -50,7 +47,6 @@ class WddmAllocation : public GraphicsAllocation {
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr)
         : GraphicsAllocation(cpuPtrIn, sizeIn),
-          cpuPtrAllocated(false),
           handle(0),
           gpuPtr(0),
           alignedCpuPtr(alignedCpuPtr),
@@ -60,7 +56,6 @@ class WddmAllocation : public GraphicsAllocation {
     }
 
     WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle) : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
-                                                                           cpuPtrAllocated(false),
                                                                            handle(0),
                                                                            gpuPtr(0),
                                                                            alignedCpuPtr(nullptr),
