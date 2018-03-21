@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,7 @@
 
 #include "runtime/event/event.h"
 #include "runtime/memory_manager/surface.h"
-#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -33,21 +33,6 @@
 #include "test.h"
 
 using namespace OCLRT;
-
-class EnqueueHandlerTest : public DeviceFixture,
-                           public testing::Test {
-  public:
-    void SetUp() override {
-        context = new MockContext;
-        DeviceFixture::SetUp();
-    }
-
-    void TearDown() override {
-        DeviceFixture::TearDown();
-        context->decRefInternal();
-    }
-    MockContext *context;
-};
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) {
     int32_t tag;

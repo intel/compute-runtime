@@ -130,7 +130,8 @@ class MockKernel : public Kernel {
         info->patchInfo.threadPayload = threadPayload;
 
         SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
-        executionEnvironment->HasDeviceEnqueue = 1;
+        memset(executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
+        executionEnvironment->HasDeviceEnqueue = 0;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         info->crossThreadData = new char[crossThreadSize];
@@ -219,6 +220,10 @@ class MockKernel : public Kernel {
 
     void *patchBufferOffset(const KernelArgInfo &argInfo, void *svmPtr, GraphicsAllocation *svmAlloc) {
         return Kernel::patchBufferOffset(argInfo, svmPtr, svmAlloc);
+    }
+
+    KernelInfo *getAllocatedKernelInfo() {
+        return kernelInfoAllocated;
     }
 
     std::vector<char> mockCrossThreadData;
@@ -539,6 +544,33 @@ class MockParentKernel : public Kernel {
 class MockSchedulerKernel : public SchedulerKernel {
   public:
     MockSchedulerKernel(Program *programArg, const KernelInfo &kernelInfoArg, const Device &deviceArg) : SchedulerKernel(programArg, kernelInfoArg, deviceArg){};
+};
+
+class MockDebugKernel : public MockKernel {
+  public:
+    MockDebugKernel(Program *program, KernelInfo &kernelInfo, const Device &device) : MockKernel(program, kernelInfo, device) {
+        if (!kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
+            SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
+
+            patchToken->BTI = 0;
+            patchToken->Offset = 0;
+            patchToken->PerThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
+            patchToken->Size = sizeof(SPatchAllocateSystemThreadSurface);
+            patchToken->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
+
+            kernelInfo.patchInfo.pAllocateSystemThreadSurface = patchToken;
+
+            systemThreadSurfaceAllocated = true;
+        }
+    }
+
+    ~MockDebugKernel() override {
+        if (systemThreadSurfaceAllocated) {
+            delete kernelInfo.patchInfo.pAllocateSystemThreadSurface;
+        }
+    }
+    static const uint32_t perThreadSystemThreadSurfaceSize;
+    bool systemThreadSurfaceAllocated = false;
 };
 
 } // namespace OCLRT

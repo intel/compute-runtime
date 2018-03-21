@@ -241,6 +241,9 @@ class Program : public BaseObject<_cl_program> {
 
     static bool isValidLlvmBinary(const void *pBinary, size_t binarySize);
     static bool isValidSpirvBinary(const void *pBinary, size_t binarySize);
+    bool isKernelDebugEnabled() {
+        return kernelDebugEnabled;
+    }
 
   protected:
     Program();
@@ -279,10 +282,6 @@ class Program : public BaseObject<_cl_program> {
 
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
-
-    bool isKernelDebugEnabled() {
-        return kernelDebugEnabled;
-    }
 
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;

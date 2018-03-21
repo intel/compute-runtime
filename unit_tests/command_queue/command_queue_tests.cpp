@@ -39,6 +39,8 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
 
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
@@ -843,4 +845,44 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenRet
 
     result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsCalledThenSurfaceStateIsCorrectlySet) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    MockProgram program;
+    program.enableKernelDebug();
+    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
+    CommandQueue cmdQ(&context, pDevice, 0);
+
+    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
+    kernel->getAllocatedKernelInfo()->usesSsh = true;
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+
+    cmdQ.setupDebugSurface(kernel.get());
+
+    auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
+    ASSERT_NE(nullptr, debugSurface);
+    RENDER_SURFACE_STATE *surfaceState = (RENDER_SURFACE_STATE *)kernel->getSurfaceStateHeap();
+    EXPECT_EQ(debugSurface->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
+}
+
+HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSetupDebugSurfaceIsCalledThenDebugSurfaceIsReused) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    MockProgram program;
+    program.enableKernelDebug();
+    std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*pDevice, &program));
+    CommandQueue cmdQ(&context, pDevice, 0);
+
+    kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + kernel->getAllocatedKernelInfo()->patchInfo.pAllocateSystemThreadSurface->Offset);
+    kernel->getAllocatedKernelInfo()->usesSsh = true;
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+    auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
+    ASSERT_NE(nullptr, debugSurface);
+
+    cmdQ.setupDebugSurface(kernel.get());
+
+    EXPECT_EQ(debugSurface, commandStreamReceiver.getDebugSurfaceAllocation());
+    RENDER_SURFACE_STATE *surfaceState = (RENDER_SURFACE_STATE *)kernel->getSurfaceStateHeap();
+    EXPECT_EQ(debugSurface->getGpuAddress(), surfaceState->getSurfaceBaseAddress());
 }

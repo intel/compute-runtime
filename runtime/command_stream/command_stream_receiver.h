@@ -105,6 +105,8 @@ class CommandStreamReceiver {
 
     void setRequiredScratchSize(uint32_t newRequiredScratchSize);
     GraphicsAllocation *getScratchAllocation() { return scratchAllocation; }
+    GraphicsAllocation *getDebugSurfaceAllocation() { return debugSurface; }
+    GraphicsAllocation *allocateDebugSurface(size_t size);
 
     void setPreemptionCsrAllocation(GraphicsAllocation *allocation) { preemptionCsrAllocation = allocation; }
 
@@ -162,6 +164,7 @@ class CommandStreamReceiver {
 
     GraphicsAllocation *scratchAllocation = nullptr;
     GraphicsAllocation *preemptionCsrAllocation = nullptr;
+    GraphicsAllocation *debugSurface = nullptr;
 
     MemoryManager *memoryManager = nullptr;
     std::unique_ptr<OSInterface> osInterface;

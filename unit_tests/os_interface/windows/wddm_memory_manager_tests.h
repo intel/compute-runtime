@@ -139,7 +139,7 @@ class WddmMemoryManagerFixtureWithGmockWddm {
 
     void SetUp() {
         // wddm is deleted by memory manager
-        wddm = new GmockWddm;
+        wddm = new NiceMock<GmockWddm>;
         ASSERT_NE(nullptr, wddm);
     }
 
@@ -157,7 +157,7 @@ class WddmMemoryManagerFixtureWithGmockWddm {
         wddm = nullptr;
     }
 
-    GmockWddm *wddm;
+    NiceMock<GmockWddm> *wddm;
 };
 
 typedef ::Test<WddmMemoryManagerFixtureWithGmockWddm> WddmMemoryManagerTest2;

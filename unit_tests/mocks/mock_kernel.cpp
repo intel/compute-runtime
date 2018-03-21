@@ -32,6 +32,8 @@ MockKernel::BlockPatchValues MockKernel::ReflectionSurfaceHelperPublic::defaultQ
 MockKernel::BlockPatchValues MockKernel::ReflectionSurfaceHelperPublic::eventPool;
 MockKernel::BlockPatchValues MockKernel::ReflectionSurfaceHelperPublic::printfBuffer;
 
+const uint32_t MockDebugKernel::perThreadSystemThreadSurfaceSize = 0x100;
+
 template <>
 void Kernel::ReflectionSurfaceHelper::patchBlocksCurbe<true>(void *reflectionSurface, uint32_t blockID,
                                                              uint64_t defaultDeviceQueueCurbeOffset, uint32_t patchSizeDefaultQueue, uint64_t defaultDeviceQueueGpuAddress,

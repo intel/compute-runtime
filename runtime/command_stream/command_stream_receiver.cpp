@@ -169,6 +169,11 @@ void CommandStreamReceiver::cleanupResources() {
         scratchAllocation = nullptr;
     }
 
+    if (debugSurface) {
+        memoryManager->freeGraphicsMemory(debugSurface);
+        debugSurface = nullptr;
+    }
+
     if (commandStream.getCpuBase()) {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
         commandStream.replaceGraphicsAllocation(nullptr);
@@ -218,6 +223,12 @@ size_t CommandStreamReceiver::getInstructionHeapCmdStreamReceiverReservedSize() 
 
 void CommandStreamReceiver::initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const {
     return PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(ih, *memoryManager->device);
+}
+
+GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
+    UNRECOVERABLE_IF(debugSurface != nullptr);
+    debugSurface = memoryManager->allocateGraphicsMemory(size);
+    return debugSurface;
 }
 
 } // namespace OCLRT

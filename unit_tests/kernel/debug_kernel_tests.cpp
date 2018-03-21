@@ -30,35 +30,6 @@
 
 using namespace OCLRT;
 
-class MockDebugKernel : public MockKernel {
-  public:
-    MockDebugKernel(Program *program, KernelInfo &kernelInfo, const Device &device) : MockKernel(program, kernelInfo, device) {
-        if (!kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
-            SPatchAllocateSystemThreadSurface *patchToken = new SPatchAllocateSystemThreadSurface;
-
-            patchToken->BTI = 0;
-            patchToken->Offset = 0;
-            patchToken->PerThreadSystemThreadSurfaceSize = MockDebugKernel::perThreadSystemThreadSurfaceSize;
-            patchToken->Size = sizeof(SPatchAllocateSystemThreadSurface);
-            patchToken->Token = iOpenCL::PATCH_TOKEN_ALLOCATE_SIP_SURFACE;
-
-            kernelInfo.patchInfo.pAllocateSystemThreadSurface = patchToken;
-
-            systemThreadSurfaceAllocated = true;
-        }
-    }
-
-    ~MockDebugKernel() override {
-        if (systemThreadSurfaceAllocated) {
-            delete kernelInfo.patchInfo.pAllocateSystemThreadSurface;
-        }
-    }
-    static const uint32_t perThreadSystemThreadSurfaceSize;
-    bool systemThreadSurfaceAllocated = false;
-};
-
-const uint32_t MockDebugKernel::perThreadSystemThreadSurfaceSize = 0x100;
-
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCalledThenCorrectValueIsReturned) {
     std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
     MockProgram program;

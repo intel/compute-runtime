@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/sip.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -627,6 +628,24 @@ void CommandQueue::enqueueBlockedMapUnmapOperation(const cl_event *eventWaitList
         this->virtualEvent->decRefInternal();
     }
     this->virtualEvent = eventBuilder->getEvent();
+}
+
+bool CommandQueue::setupDebugSurface(Kernel *kernel) {
+    auto &commandStreamReceiver = device->getCommandStreamReceiver();
+    auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
+
+    if (!debugSurface) {
+        debugSurface = commandStreamReceiver.allocateDebugSurface(SipKernel::maxDbgSurfaceSize);
+    }
+
+    DEBUG_BREAK_IF(!kernel->requiresSshForBuffers());
+
+    auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(kernel->getSurfaceStateHeap()),
+                                  kernel->getKernelInfo().patchInfo.pAllocateSystemThreadSurface->Offset);
+    void *addressToPatch = reinterpret_cast<void *>(debugSurface->getGpuAddress());
+    size_t sizeToPatch = debugSurface->getUnderlyingBufferSize();
+    Buffer::setSurfaceState(context, surfaceState, sizeToPatch, addressToPatch, debugSurface);
+    return true;
 }
 
 } // namespace OCLRT

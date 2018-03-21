@@ -216,6 +216,12 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             printfHandler.get()->prepareDispatch(multiDispatchInfo);
         }
 
+        if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
+            if (multiDispatchInfo.begin()->getKernel()->getProgram()->isKernelDebugEnabled()) {
+                setupDebugSurface(multiDispatchInfo.begin()->getKernel());
+            }
+        }
+
         if ((this->isProfilingEnabled() && (eventBuilder.getEvent() != nullptr))) {
             // Get allocation for timestamps
             hwTimeStamps = eventBuilder.getEvent()->getHwTimeStamp();

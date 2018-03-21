@@ -24,6 +24,7 @@
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
+#include "unit_tests/helpers/kernel_filename_helper.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_from_binary.h"
@@ -53,12 +54,9 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
         ProgramSimpleFixture::SetUp();
         device = pDevice;
 
-        std::string fullName(CompilerOptions::debugKernelEnable);
-        // remove leading spaces
-        size_t position = fullName.find_first_not_of(" ");
-        std::string filename(fullName, position);
-        // replace space with underscore
-        std::replace(filename.begin(), filename.end(), ' ', '_');
+        std::string filename;
+        std::string kernelOption(CompilerOptions::debugKernelEnable);
+        KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
         kbHelper = new KernelBinaryHelper(filename, false);
         CreateProgramWithSource(

@@ -40,6 +40,7 @@ set(IGDRCL_SRCS_tests_command_queue
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_copy_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_copy_image_to_buffer_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_copy_image_to_buffer_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_debug_kernel_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_fill_buffer_event_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_fill_buffer_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_fill_buffer_negative_tests.cpp

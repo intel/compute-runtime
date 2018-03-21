@@ -390,6 +390,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                          bool readOnly,
                                          EventBuilder &externalEventBuilder);
 
+    MOCKABLE_VIRTUAL bool setupDebugSurface(Kernel *kernel);
+
     // taskCount of last task
     uint32_t taskCount;
 
