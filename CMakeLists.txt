@@ -491,8 +491,6 @@ macro(generate_runtime_lib LIB_NAME MOCKABLE GENERATE_EXEC)
 	endif()
 endmacro(generate_runtime_lib)
 
-set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
-set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
 set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll
 set(NEO_DLL_NAME_BASE "igdrcl")
 
@@ -502,8 +500,18 @@ set(BUILTINS_BINARIES_LIB_NAME "builtins_binaries")
 set(SCHEDULER_BINARY_LIB_NAME "scheduler_binary")
 
 add_subdirectory(elf)
-generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
-generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
+if(DONT_CARE_OF_VIRTUALS)
+    message(STATUS "All targets will use virtuals")
+
+    set(NEO_RELEASE_LIB_NAME "igdrcl_lib")
+    set(NEO_MOCKABLE_LIB_NAME ${NEO_RELEASE_LIB_NAME})
+    generate_runtime_lib(${NEO_RELEASE_LIB_NAME} TRUE TRUE)
+else()
+    set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
+    set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
+    generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
+    generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
+endif()
 
 if(TARGET OpenCL)
 	target_include_directories(OpenCL PRIVATE ${KHRONOS_HEADERS_DIR})
