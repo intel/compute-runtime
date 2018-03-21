@@ -6,7 +6,9 @@
 
 NEO should work on any modern Linux distribution (i.e. Ubuntu, Fedora, etc.)
 with default / stock configuration (no kernel patches), assuming the underlying
-kernel's drm subsystem is 4.7 or higher.
+kernel's drm subsystem is 4.7 or higher. Newer platforms will require a kernel version 
+that provides support for that platform (e.g. Coffee Lake requires kernel 4.14 or higher).
+
 Our default (most frequent) validation config is currently (as of Q1'18) Ubuntu 16.04.3 LTS.
 
 ### Does NEO support Microsoft Windows?
