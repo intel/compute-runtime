@@ -66,4 +66,21 @@ struct EnqueueCopyImageTest : public CommandEnqueueFixture,
     Image *srcImage;
     Image *dstImage;
 };
-}
+
+struct EnqueueCopyImageMipMapTest : public CommandEnqueueFixture,
+                                    public ::testing::Test,
+                                    public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>> {
+
+    void SetUp(void) override {
+        CommandEnqueueFixture::SetUp();
+        context = new MockContext(pDevice);
+    }
+
+    virtual void TearDown(void) override {
+        delete context;
+        CommandEnqueueFixture::TearDown();
+    }
+
+    MockContext *context;
+};
+} // namespace OCLRT

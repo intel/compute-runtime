@@ -688,10 +688,10 @@ class BuiltInOp<HWFamily, EBuiltInOps::CopyImageToImage3d> : public BuiltinDispa
         kernelNoSplit3DBuilder.setKernel(kernel);
 
         // Set-up source image
-        kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed);
+        kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
 
         // Set-up destination image
-        kernelNoSplit3DBuilder.setArg(1, dstImageRedescribed);
+        kernelNoSplit3DBuilder.setArg(1, dstImageRedescribed, operationParams.dstMipLevel);
 
         // Set-up srcOrigin
         {

@@ -24,6 +24,7 @@
 #include "unit_tests/command_queue/enqueue_copy_image_fixture.h"
 #include "test.h"
 #include <algorithm>
+#include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 
 using namespace OCLRT;
 
@@ -262,3 +263,128 @@ HWTEST_F(EnqueueCopyImageTest, mediaVFEState) {
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
 }
+
+typedef EnqueueCopyImageMipMapTest MipMapCopyImageTest;
+
+HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
+    cl_mem_object_type srcImageType, dstImageType;
+    std::tie(srcImageType, dstImageType) = GetParam();
+    auto &origBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImageToImage3d,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice());
+    // substitute original builder with mock builder
+    auto oldBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImageToImage3d,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(BuiltIns::getInstance(), &origBuilder)));
+
+    cl_int retVal = CL_SUCCESS;
+    cl_image_desc srcImageDesc = {};
+    uint32_t expectedSrcMipLevel = 3;
+    uint32_t expectedDstMipLevel = 4;
+    srcImageDesc.image_type = srcImageType;
+    srcImageDesc.num_mip_levels = 10;
+    srcImageDesc.image_width = 4;
+    srcImageDesc.image_height = 1;
+    srcImageDesc.image_depth = 1;
+
+    cl_image_desc dstImageDesc = srcImageDesc;
+    dstImageDesc.image_type = dstImageType;
+
+    size_t srcOrigin[] = {0, 0, 0, 0};
+    size_t dstOrigin[] = {0, 0, 0, 0};
+    size_t region[] = {srcImageDesc.image_width, 1, 1};
+    std::unique_ptr<Image> srcImage;
+    std::unique_ptr<Image> dstImage;
+
+    switch (srcImageType) {
+    case CL_MEM_OBJECT_IMAGE1D:
+        srcOrigin[1] = expectedSrcMipLevel;
+        srcImage = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &srcImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        srcImageDesc.image_array_size = 2;
+        srcOrigin[2] = expectedSrcMipLevel;
+        srcImage = std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(context, &srcImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        srcOrigin[2] = expectedSrcMipLevel;
+        srcImage = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &srcImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        srcImageDesc.image_array_size = 2;
+        srcOrigin[3] = expectedSrcMipLevel;
+        srcImage = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &srcImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE3D:
+        srcOrigin[3] = expectedSrcMipLevel;
+        srcImage = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &srcImageDesc));
+        break;
+    }
+
+    EXPECT_NE(nullptr, srcImage.get());
+
+    switch (dstImageType) {
+    case CL_MEM_OBJECT_IMAGE1D:
+        dstOrigin[1] = expectedDstMipLevel;
+        dstImage = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &dstImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        dstImageDesc.image_array_size = 2;
+        dstOrigin[2] = expectedDstMipLevel;
+        dstImage = std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(context, &dstImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        dstOrigin[2] = expectedDstMipLevel;
+        dstImage = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &dstImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        dstImageDesc.image_array_size = 2;
+        dstOrigin[3] = expectedDstMipLevel;
+        dstImage = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &dstImageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE3D:
+        dstOrigin[3] = expectedDstMipLevel;
+        dstImage = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &dstImageDesc));
+        break;
+    }
+
+    EXPECT_NE(nullptr, dstImage.get());
+
+    retVal = pCmdQ->enqueueCopyImage(srcImage.get(),
+                                     dstImage.get(),
+                                     srcOrigin,
+                                     dstOrigin,
+                                     region,
+                                     0,
+                                     nullptr,
+                                     nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                                                                            pCmdQ->getContext(),
+                                                                                                                            pCmdQ->getDevice()));
+    auto params = mockBuilder.getBuiltinOpParams();
+
+    EXPECT_EQ(expectedSrcMipLevel, params->srcMipLevel);
+    EXPECT_EQ(expectedDstMipLevel, params->dstMipLevel);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImageToImage3d,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
+}
+
+uint32_t types[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+
+INSTANTIATE_TEST_CASE_P(MipMapCopyImageTest_GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet,
+                        MipMapCopyImageTest,
+                        ::testing::Combine(
+                            ::testing::ValuesIn(types),
+                            ::testing::ValuesIn(types)));

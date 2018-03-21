@@ -26,6 +26,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
@@ -61,6 +62,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImageToBuffer(
     dc.srcOffset = srcOrigin;
     dc.dstOffset = {dstOffset, 0, 0};
     dc.size = region;
+    if (srcImage->getImageDesc().num_mip_levels > 0) {
+        dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, srcOrigin);
+    }
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_COPY_IMAGE_TO_BUFFER>(

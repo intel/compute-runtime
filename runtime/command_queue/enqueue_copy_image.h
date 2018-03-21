@@ -27,6 +27,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/surface.h"
 #include <algorithm>
@@ -61,6 +62,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     dc.srcOffset = srcOrigin;
     dc.dstOffset = dstOrigin;
     dc.size = region;
+    if (srcImage->getImageDesc().num_mip_levels > 0) {
+        dc.srcMipLevel = findMipLevel(srcImage->getImageDesc().image_type, srcOrigin);
+    }
+    if (dstImage->getImageDesc().num_mip_levels > 0) {
+        dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
+    }
     builder.buildDispatchInfos(di, dc);
 
     enqueueHandler<CL_COMMAND_COPY_IMAGE>(

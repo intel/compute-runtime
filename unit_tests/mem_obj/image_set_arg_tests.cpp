@@ -292,7 +292,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
     }
 }
 
-HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMipLevelAndMipCounttIsSet) {
+HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMipLevelAndMipCountIsSet) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     cl_mem memObj = srcImage;
     int mipLevel = 2;

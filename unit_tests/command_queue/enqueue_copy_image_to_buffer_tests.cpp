@@ -24,6 +24,7 @@
 #include "unit_tests/command_queue/enqueue_copy_image_to_buffer_fixture.h"
 #include "test.h"
 #include <algorithm>
+#include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 
 using namespace OCLRT;
 
@@ -254,3 +255,86 @@ HWTEST_F(EnqueueCopyImageToBufferTest, mediaVFEState) {
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
 }
+
+typedef EnqueueCopyImageToBufferMipMapTest MipMapCopyImageToBufferTest;
+
+HWTEST_P(MipMapCopyImageToBufferTest, GivenImageWithMipLevelNonZeroWhenCopyImageToBufferIsCalledThenProperMipLevelIsSet) {
+    auto image_type = (cl_mem_object_type)GetParam();
+    auto &origBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImage3dToBuffer,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice());
+
+    // substitute original builder with mock builder
+    auto oldBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImage3dToBuffer,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(BuiltIns::getInstance(), &origBuilder)));
+
+    cl_int retVal = CL_SUCCESS;
+    cl_image_desc imageDesc = {};
+    uint32_t expectedMipLevel = 3;
+    imageDesc.image_type = image_type;
+    imageDesc.num_mip_levels = 10;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 1;
+    imageDesc.image_depth = 1;
+    size_t origin[] = {0, 0, 0, 0};
+    size_t region[] = {imageDesc.image_width, 1, 1};
+    std::unique_ptr<Image> image;
+    switch (image_type) {
+    case CL_MEM_OBJECT_IMAGE1D:
+        origin[1] = expectedMipLevel;
+        image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        imageDesc.image_array_size = 2;
+        origin[2] = expectedMipLevel;
+        image = std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        origin[2] = expectedMipLevel;
+        image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        imageDesc.image_array_size = 2;
+        origin[3] = expectedMipLevel;
+        image = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE3D:
+        origin[3] = expectedMipLevel;
+        image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+        break;
+    }
+    EXPECT_NE(nullptr, image.get());
+
+    retVal = pCmdQ->enqueueCopyImageToBuffer(image.get(),
+                                             dstBuffer,
+                                             origin,
+                                             region,
+                                             0,
+                                             0,
+                                             nullptr,
+                                             nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &mockBuilder = static_cast<MockBuiltinDispatchInfoBuilder &>(BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
+                                                                                                                            pCmdQ->getContext(),
+                                                                                                                            pCmdQ->getDevice()));
+    auto params = mockBuilder.getBuiltinOpParams();
+
+    EXPECT_EQ(expectedMipLevel, params->srcMipLevel);
+
+    // restore original builder and retrieve mock builder
+    auto newBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+        EBuiltInOps::CopyImage3dToBuffer,
+        pCmdQ->getContext(),
+        pCmdQ->getDevice(),
+        std::move(oldBuilder));
+    EXPECT_NE(nullptr, newBuilder);
+}
+
+INSTANTIATE_TEST_CASE_P(MipMapCopyImageToBufferTest_GivenImageWithMipLevelNonZeroWhenCopyImageToBufferIsCalledThenProperMipLevelIsSet,
+                        MipMapCopyImageToBufferTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));

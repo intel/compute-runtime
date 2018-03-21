@@ -68,4 +68,29 @@ struct EnqueueCopyImageToBufferTest : public CommandEnqueueFixture,
     Image *srcImage;
     Buffer *dstBuffer;
 };
-}
+
+struct EnqueueCopyImageToBufferMipMapTest : public CommandEnqueueFixture,
+                                            public ::testing::Test,
+                                            public ::testing::WithParamInterface<uint32_t> {
+
+    EnqueueCopyImageToBufferMipMapTest() : dstBuffer(nullptr) {
+    }
+
+    virtual void SetUp(void) override {
+        CommandEnqueueFixture::SetUp();
+        BufferDefaults::context = new MockContext(pDevice);
+        context = new MockContext(pDevice);
+        dstBuffer = BufferHelper<>::create(context);
+    }
+
+    virtual void TearDown(void) override {
+        delete dstBuffer;
+        delete BufferDefaults::context;
+        delete context;
+        CommandEnqueueFixture::TearDown();
+    }
+
+    MockContext *context;
+    Buffer *dstBuffer;
+};
+} // namespace OCLRT
