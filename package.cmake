@@ -59,29 +59,6 @@ if(UNIX)
   install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION /etc/ld.so.conf.d COMPONENT igdrcl)
   install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION /etc/OpenCL/vendors/ COMPONENT igdrcl)
 
-  # Add Khronos ICD loader - if available
-  if(NOT ICD_LIB_DIR)
-    # Try to find ICD in upper level directory
-    if(EXISTS ${IGDRCL_SOURCE_DIR}/../OpenCL-ICD-Loader/build/lib/libOpenCL.so)
-      set(ICD_LIB_DIR ${IGDRCL_SOURCE_DIR}/../OpenCL-ICD-Loader/build/lib)
-      message(STATUS "Taking ICD library from ${ICD_LIB_DIR}")
-    else()
-      get_filename_component(IGDRCL_PARENT_DIR ${IGDRCL_SOURCE_DIR} DIRECTORY)
-    endif()
-  endif()
-
-  if(ICD_LIB_DIR)
-    get_filename_component(ICD_LIB_DIR ${ICD_LIB_DIR} ABSOLUTE)
-    set(ICD_LIB_NAME "libOpenCL.so*")
-    install(
-      CODE "if(NOT((EXISTS ${ICD_LIB_DIR}/libOpenCL.so) OR (IS_SYMLINK ${ICD_LIB_DIR}/libOpenCL.so)))\n execute_process( COMMAND ln -s ${NEO_BINARY_INSTALL_DIR}/libOpenCL.so.1 ${ICD_LIB_DIR}/libOpenCL.so)\n endif()\n"
-      CODE "file( GLOB _NeoIcdLibFiles \"${ICD_LIB_DIR}/${ICD_LIB_NAME}\" )"
-      CODE "if(NOT _NeoIcdLibFiles)\n message(FATAL_ERROR \"${ICD_LIB_NAME} cannot be found in ${ICD_LIB_DIR}\")\nendif()"
-      CODE "file( INSTALL \${_NeoIcdLibFiles} DESTINATION \"${NEO_BINARY_INSTALL_DIR}\" )"
-      COMPONENT igdrcl
-    )
-  endif()
-
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
   else()
