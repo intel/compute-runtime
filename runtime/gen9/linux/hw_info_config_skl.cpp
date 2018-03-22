@@ -104,6 +104,14 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
         hwInfo->pPlatform->usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 128 * 1024;
     }
+
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.enableQuickKmdSleep = true;
+    kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
+    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 500;
+    kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
     return 0;
 }
 
