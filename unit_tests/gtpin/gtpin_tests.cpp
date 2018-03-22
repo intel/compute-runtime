@@ -49,7 +49,6 @@ using namespace OCLRT;
 using namespace gtpin;
 
 namespace OCLRT {
-extern bool isGTPinInitialized;
 extern std::deque<gtpinkexec_t> kernelExecQueue;
 }
 
@@ -2073,4 +2072,17 @@ TEST_F(GTPinTests, checkWhetherGTPinHwHelperGetterWorksWell) {
     EXPECT_NE(nullptr, pGTPinHelper);
 }
 
+TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAreCalledThenNothingHappens) {
+    ASSERT_FALSE(gtpinIsGTPinInitialized());
+    auto dummyKernel = reinterpret_cast<cl_kernel>(0x1000);
+    auto dummyQueue = reinterpret_cast<void *>(0x1000);
+    uint32_t dummyCompletedTask = 0u;
+
+    //now call gtpin function with dummy data, this must not crash
+    gtpinNotifyKernelSubmit(dummyKernel, dummyQueue);
+    gtpinNotifyPreFlushTask(dummyQueue);
+    gtpinNotifyTaskCompletion(dummyCompletedTask);
+    gtpinNotifyFlushTask(dummyCompletedTask);
+    EXPECT_FALSE(gtpinIsGTPinInitialized());
+}
 } // namespace ULT

@@ -30,6 +30,7 @@
 #include "runtime/device/device_info.h"
 #include "runtime/gtpin/gtpin_defs.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
@@ -42,7 +43,6 @@ using namespace gtpin;
 
 namespace OCLRT {
 
-extern bool isGTPinInitialized;
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
 igc_init_t *pIgcInfo = nullptr;
@@ -241,9 +241,5 @@ void gtpinNotifyPlatformShutdown() {
         // Clear Kernel Execution Queue
         kernelExecQueue.clear();
     }
-}
-
-bool gtpinIsGTPinInitialized() {
-    return isGTPinInitialized;
 }
 }

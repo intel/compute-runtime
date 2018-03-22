@@ -24,6 +24,7 @@
 #include <cstdint>
 
 namespace OCLRT {
+bool isGTPinInitialized = false;
 
 void gtpinNotifyContextCreate(cl_context context) {
 }
@@ -53,9 +54,5 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector) {
 }
 
 void gtpinNotifyPlatformShutdown() {
-}
-
-bool gtpinIsGTPinInitialized() {
-    return false;
 }
 }

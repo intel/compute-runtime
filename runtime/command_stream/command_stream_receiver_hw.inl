@@ -398,7 +398,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     this->taskLevel += levelClosed ? 1 : 0;
 
-    gtpinNotifyFlushTask(completionStamp.taskCount);
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyFlushTask(completionStamp.taskCount);
+    }
 
     return completionStamp;
 }

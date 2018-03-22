@@ -23,6 +23,8 @@
 #pragma once
 
 namespace OCLRT {
+extern bool isGTPinInitialized;
+
 void gtpinNotifyContextCreate(cl_context context);
 void gtpinNotifyContextDestroy(cl_context context);
 void gtpinNotifyKernelCreate(cl_kernel kernel);
@@ -33,5 +35,5 @@ void gtpinNotifyTaskCompletion(uint32_t completedTaskCount);
 void gtpinNotifyMakeResident(void *pKernel, void *pCommandStreamReceiver);
 void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector);
 void gtpinNotifyPlatformShutdown();
-bool gtpinIsGTPinInitialized();
+inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
 }

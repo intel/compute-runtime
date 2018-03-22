@@ -553,7 +553,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
-    gtpinNotifyPreFlushTask(this);
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyPreFlushTask(this);
+    }
 
     CompletionStamp completionStamp = commandStreamReceiver.flushTask(
         commandStream,

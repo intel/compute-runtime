@@ -193,7 +193,9 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
         }
     }
     if (*getTagAddress() >= taskCountToWait) {
-        gtpinNotifyTaskCompletion(taskCountToWait);
+        if (gtpinIsGTPinInitialized()) {
+            gtpinNotifyTaskCompletion(taskCountToWait);
+        }
         return true;
     }
     return false;

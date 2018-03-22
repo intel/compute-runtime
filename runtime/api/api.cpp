@@ -2585,8 +2585,9 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
 
     auto pKernel = castToObjectOrAbort<Kernel>(kernel);
     TakeOwnershipWrapper<Kernel> kernelOwnership(*pKernel, gtpinIsGTPinInitialized());
-
-    gtpinNotifyKernelSubmit(kernel, pCommandQueue);
+    if (gtpinIsGTPinInitialized()) {
+        gtpinNotifyKernelSubmit(kernel, pCommandQueue);
+    }
 
     retVal = pCommandQueue->enqueueKernel(
         kernel,
