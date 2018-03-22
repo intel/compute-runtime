@@ -28,7 +28,7 @@ LibDRM - https://anongit.freedesktop.org/git/mesa/drm.git
 
 ## Supported Platforms
 
-Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.0  
+Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1  
 Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
 Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
 

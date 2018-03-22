@@ -27,9 +27,9 @@ using namespace OCLRT;
 
 typedef Test<DeviceFixture> Gen8DeviceCaps;
 
-GEN8TEST_F(Gen8DeviceCaps, reportsOcl20) {
+GEN8TEST_F(Gen8DeviceCaps, givenGen8DeviceWhenAskedForClVersionThenReport21) {
     const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.0 NEO ", caps.clVersion);
+    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
     EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
 }
 

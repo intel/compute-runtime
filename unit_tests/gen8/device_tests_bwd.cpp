@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,9 +25,9 @@
 #include "test.h"
 
 using namespace OCLRT;
-struct DeviceTest : public DeviceFixture,
-                    public MemoryManagementFixture,
-                    public ::testing::Test {
+struct Gen8DeviceTest : public DeviceFixture,
+                        public MemoryManagementFixture,
+                        public ::testing::Test {
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
@@ -39,7 +39,7 @@ struct DeviceTest : public DeviceFixture,
     }
 };
 
-BDWTEST_F(DeviceTest, getSupportedClVersion20Device) {
+BDWTEST_F(Gen8DeviceTest, givenGen8DeviceWhenAskedForClVersionThenReport21) {
     auto version = pDevice->getSupportedClVersion();
-    EXPECT_EQ(20u, version);
+    EXPECT_EQ(21u, version);
 }
