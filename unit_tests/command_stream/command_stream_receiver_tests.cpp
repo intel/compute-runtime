@@ -127,6 +127,14 @@ TEST_F(CommandStreamReceiverTest, getCommandStreamCanRecycle) {
     EXPECT_GE(commandStream.getMaxAvailableSpace(), requiredSize);
 }
 
+TEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenGetCSIsCalledThenCommandStreamAllocationTypeShouldBeSetToLinearStream) {
+    const auto &commandStream = commandStreamReceiver->getCS();
+    auto commandStreamAllocation = commandStream.getGraphicsAllocation();
+    ASSERT_NE(nullptr, commandStreamAllocation);
+
+    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM, commandStreamAllocation->getAllocationType());
+}
+
 TEST_F(CommandStreamReceiverTest, createAllocationAndHandleResidency) {
     void *host_ptr = (void *)0x1212341;
     auto size = 17262u;

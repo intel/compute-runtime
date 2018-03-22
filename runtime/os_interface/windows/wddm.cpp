@@ -708,6 +708,10 @@ void Wddm::unlockResource(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyUnlock(featureTable->ftrKmdDaf, adapter, device, &wddmAllocation->handle, 1, gdi->escape);
 }
 
+void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
+    kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
+}
+
 D3DKMT_HANDLE Wddm::createContext() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};

@@ -123,7 +123,12 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         break;
     }
 
+    if (wddm->isKmDafEnabled()) {
+        this->kmDafLockAllocations(allocationsForResidency);
+    }
+
     wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader);
+
     return wddm->getMonitoredFence().lastSubmittedFence;
 }
 
@@ -206,6 +211,17 @@ void WddmCommandStreamReceiver<GfxFamily>::initPageTableManagerRegisters(LinearS
         wddm->getPageTableManager()->initContextAuxTableRegister(this, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS);
 
         pageTableManagerInitialized = true;
+    }
+}
+
+template <typename GfxFamily>
+void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer *allocationsForResidency) {
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : getMemoryManager()->getResidencyAllocations();
+
+    for (uint32_t i = 0; i < residencyAllocations.size(); i++) {
+        if (GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM == residencyAllocations[i]->getAllocationType()) {
+            wddm->kmDafLock(static_cast<WddmAllocation *>(residencyAllocations[i]));
+        }
     }
 }
 } // namespace OCLRT

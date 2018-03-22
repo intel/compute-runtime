@@ -383,6 +383,17 @@ TEST_F(CommandQueueCommandStreamTest, CommandQueueWhenAskedForNewCommandStreamSt
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*graphicsAllocation));
 }
 
+TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenCommandStreamAllocationTypeShouldBeSetToLinearStream) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    CommandQueue cmdQ(&context, pDevice, props);
+
+    const auto &commandStream = cmdQ.getCS(100);
+    auto commandStreamAllocation = commandStream.getGraphicsAllocation();
+    ASSERT_NE(nullptr, commandStreamAllocation);
+
+    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM, commandStreamAllocation->getAllocationType());
+}
+
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
                                       public ::testing::TestWithParam<IndirectHeap::Type> {
     void SetUp() override {
@@ -596,6 +607,17 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
 
     memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalledThenIndirectHeapAllocationTypeShouldBeSetToLinearStream) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    CommandQueue cmdQ(&context, pDevice, props);
+
+    const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
+    auto indirectHeapAllocation = indirectHeap.getGraphicsAllocation();
+    ASSERT_NE(nullptr, indirectHeapAllocation);
+
+    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM, indirectHeapAllocation->getAllocationType());
 }
 
 INSTANTIATE_TEST_CASE_P(

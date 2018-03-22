@@ -87,6 +87,8 @@ class Wddm {
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(WddmAllocation *wddmAllocation);
     MOCKABLE_VIRTUAL void unlockResource(WddmAllocation *wddmAllocation);
+    MOCKABLE_VIRTUAL void kmDafLock(WddmAllocation *wddmAllocation);
+    MOCKABLE_VIRTUAL bool isKmDafEnabled() { return featureTable->ftrKmdDaf; };
 
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();

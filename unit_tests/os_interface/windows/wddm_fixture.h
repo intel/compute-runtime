@@ -58,6 +58,9 @@ class WddmMock : public Wddm {
         std::vector<D3DKMT_HANDLE> handlePack;
         uint32_t handleCount = 0;
     };
+    struct KmDafLockCall : public CallResult {
+        std::vector<GraphicsAllocation *> lockedAllocations;
+    };
 
   public:
     using Wddm::adapter;
@@ -238,6 +241,18 @@ class WddmMock : public Wddm {
         unlockResult.success = true;
         Wddm::unlockResource(allocation);
     }
+    void kmDafLock(WddmAllocation *allocation) override {
+        kmDafLockResult.called++;
+        kmDafLockResult.success = true;
+        kmDafLockResult.lockedAllocations.push_back(allocation);
+        Wddm::kmDafLock(allocation);
+    }
+    bool isKmDafEnabled() override {
+        return kmDafEnabled;
+    }
+    void setKmDafEnabled(bool state) {
+        kmDafEnabled = state;
+    }
     void setHwContextId(unsigned long hwContextId) {
         this->hwContextId = hwContextId;
     }
@@ -315,6 +330,7 @@ class WddmMock : public Wddm {
     CallResult createContextResult;
     CallResult lockResult;
     CallResult unlockResult;
+    KmDafLockCall kmDafLockResult;
     CallResult waitFromCpuResult;
     CallResult releaseReservedAddressResult;
     CallResult reserveValidAddressRangeResult;
@@ -325,6 +341,7 @@ class WddmMock : public Wddm {
     bool callBaseMapGpuVa = true;
     std::set<void *> reservedAddresses;
     uintptr_t virtualAllocAddress;
+    bool kmDafEnabled = false;
 };
 
 class WddmMockReserveAddress : public WddmMock {

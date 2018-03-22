@@ -260,6 +260,8 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
             finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
         }
 
+        heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+
         if (IndirectHeap::SURFACE_STATE == heapType) {
             DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
             finalHeapSize = maxSshSize;
@@ -323,6 +325,8 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
         if (!allocation) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
         }
+
+        allocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
 
         // Deallocate the old block, if not null
         auto oldAllocation = commandStream->getGraphicsAllocation();

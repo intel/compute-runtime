@@ -57,6 +57,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         ALLOCATION_TYPE_BUFFER,
         ALLOCATION_TYPE_IMAGE,
         ALLOCATION_TYPE_TAG_BUFFER,
+        ALLOCATION_TYPE_LINEAR_STREAM,
         ALLOCATION_TYPE_NON_AUB_WRITABLE = 0x40000000,
         ALLOCATION_TYPE_WRITABLE = 0x80000000
     };
@@ -107,8 +108,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setSize(size_t size) { this->size = size; }
     osHandle peekSharedHandle() { return sharedHandle; }
 
-    void setAllocationType(int allocationType) { this->allocationType = allocationType; }
-    int getAllocationType() const { return allocationType; }
+    void setAllocationType(uint32_t allocationType) { this->allocationType = allocationType; }
+    uint32_t getAllocationType() const { return allocationType; }
 
     uint32_t taskCount = ObjectNotUsed;
     OsHandleStorage fragmentsStorage;
@@ -130,7 +131,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
 
   private:
-    int allocationType;
+    uint32_t allocationType;
 
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;

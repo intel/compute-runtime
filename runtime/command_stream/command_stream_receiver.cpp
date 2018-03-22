@@ -144,6 +144,8 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
         }
 
+        allocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+
         //pass current allocation to reusable list
         if (commandStream.getCpuBase()) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream.getGraphicsAllocation()), REUSABLE_ALLOCATION);
