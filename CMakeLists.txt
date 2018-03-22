@@ -22,12 +22,13 @@ cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 include(ExternalProject)
 # Include needed macros
 include(common_macros.cmake)
-if(MSVC)
-    # Set the configuration type
-    set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
-endif()
 
 project(igdrcl)
+
+if(CMAKE_CONFIGURATION_TYPES)
+    # Set custom build types for multi-configuration generators
+    set(CMAKE_CONFIGURATION_TYPES ${CMAKE_BUILD_TYPE})
+endif()
 
 set(BRANCH_DIR_SUFFIX "/")
 
@@ -183,33 +184,6 @@ if(WIN32)
 	message(STATUS "WDK include paths: ${WDK_INCLUDE_PATHS}")
 endif()
 
-# GmmLib detection
-if(NOT GMMUMD_LIB_NAME)
-    if(TARGET gmm_umd)
-        set(GMMUMD_LIB_NAME "gmm_umd")
-    else()
-        if(GMM_SOURCE_DIR)
-            get_filename_component(GMM_SOURCE_DIR "${GMM_SOURCE_DIR}" ABSOLUTE)
-        else(GMM_SOURCE_DIR)
-            get_filename_component(GMM_SOURCE_DIR_tmp "${CMAKE_SOURCE_DIR}/../gmmlib" ABSOLUTE)
-            if(IS_DIRECTORY "${GMM_SOURCE_DIR_tmp}")
-                set(GMM_SOURCE_DIR "${GMM_SOURCE_DIR_tmp}")
-            endif()
-        endif()
-        if(NOT IS_DIRECTORY "${GMM_SOURCE_DIR}")
-            message(FATAL_ERROR "GmmLib not found!")
-        endif()
-
-        message(STATUS "GmmLib source dir is: ${GMM_SOURCE_DIR}")
-        add_subdirectory("${GMM_SOURCE_DIR}" "${IGDRCL_BUILD_DIR}/gmmlib")
-
-        if(NOT GMMUMD_LIB_NAME)
-            set(GMMUMD_LIB_NAME "gmm_umd")
-        endif()
-    endif()
-endif()
-set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
-
 # Intel Graphics Compiler detection
 if(NOT IGC__IGC_TARGETS)
     if(IGC_DIR)
@@ -237,6 +211,33 @@ foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
     list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
 endforeach(TARGET_tmp)
 message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
+
+# GmmLib detection
+if(NOT GMMUMD_LIB_NAME)
+    if(TARGET gmm_umd)
+        set(GMMUMD_LIB_NAME "gmm_umd")
+    else()
+        if(GMM_SOURCE_DIR)
+            get_filename_component(GMM_SOURCE_DIR "${GMM_SOURCE_DIR}" ABSOLUTE)
+        else(GMM_SOURCE_DIR)
+            get_filename_component(GMM_SOURCE_DIR_tmp "${CMAKE_SOURCE_DIR}/../gmmlib" ABSOLUTE)
+            if(IS_DIRECTORY "${GMM_SOURCE_DIR_tmp}")
+                set(GMM_SOURCE_DIR "${GMM_SOURCE_DIR_tmp}")
+            endif()
+        endif()
+        if(NOT IS_DIRECTORY "${GMM_SOURCE_DIR}")
+            message(FATAL_ERROR "GmmLib not found!")
+        endif()
+
+        message(STATUS "GmmLib source dir is: ${GMM_SOURCE_DIR}")
+        add_subdirectory("${GMM_SOURCE_DIR}" "${IGDRCL_BUILD_DIR}/gmmlib")
+
+        if(NOT GMMUMD_LIB_NAME)
+            set(GMMUMD_LIB_NAME "gmm_umd")
+        endif()
+    endif()
+endif()
+set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 
 # Instrumentation detection
 if(NOT INSTRUMENTATION_LIB_NAME)
