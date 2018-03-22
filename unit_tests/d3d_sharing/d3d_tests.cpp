@@ -1323,7 +1323,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreati
     EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
-TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
+TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed) {
     mockGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
 
@@ -1331,15 +1331,72 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
+    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_TRUE(gmm->isRenderCompressed);
+}
+
+TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsRenderCompressed) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    mockGmmResInfo->setUnifiedAuxTranslationCapable();
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+
+    std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    ASSERT_NE(nullptr, image.get());
+
+    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_TRUE(gmm->isRenderCompressed);
+}
+
+TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsRenderCompressed) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    mockGmmResInfo->setUnifiedAuxTranslationCapable();
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+
+    mockMM.mapAuxGpuVaRetValue = false;
+    std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    ASSERT_NE(nullptr, image.get());
+
+    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_FALSE(gmm->isRenderCompressed);
+}
+
+TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable) {
+    this->mockSharingFcns->mockTexture3dDesc.MiscFlags = D3DResourceFlags::MISC_SHARED;
+
+    EXPECT_FALSE(gmm->unifiedAuxTranslationCapable());
+
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+
+    std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    ASSERT_NE(nullptr, image.get());
+
     EXPECT_EQ(0u, mockMM.mapAuxGpuVACalled);
     EXPECT_FALSE(gmm->isRenderCompressed);
+}
+
+TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed) {
+    mockGmmResInfo->setUnifiedAuxTranslationCapable();
+    EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
+
+    mockGmmResInfo->setUnifiedAuxTranslationCapable();
+    std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
+    ASSERT_NE(nullptr, image.get());
+
+    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_TRUE(gmm->isRenderCompressed);
 }
 
 REGISTER_TYPED_TEST_CASE_P(D3DAuxTests,
                            given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsRenderCompressed,
                            given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsRenderCompressed,
                            given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
-                           given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable);
+                           given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed,
+                           given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetAsRenderCompressed,
+                           given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAuxMappingThenDontSetAsRenderCompressed,
+                           given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreatingThenDontMapAuxTable,
+                           given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreatingThenMapAuxTableAndSetRenderCompressed);
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DAuxTests, D3DTypes);
 
