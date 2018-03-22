@@ -190,22 +190,33 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true);
 }
 
-HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenInitializedThenUpdateWaitTimestamp) {
-    overrideKmdNotifyParams(true, 3, true, 2, true, 1);
-    auto csr = new UltCommandStreamReceiver<FamilyType>(localHwInfo);
-    device->resetCommandStreamReceiver(csr);
-    EXPECT_NE(0, csr->lastWaitForCompletionTimestamp.time_since_epoch().count());
-}
+template <typename Family>
+struct MyCsrWithTimestampCheck : public UltCommandStreamReceiver<Family> {
+    MyCsrWithTimestampCheck(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<Family>(hwInfo) {}
+    void updateLastWaitForCompletionTimestamp() override {
+        updateLastWaitForCompletionTimestampCalled++;
+    };
+    uint32_t updateLastWaitForCompletionTimestampCalled = 0u;
+};
 
 HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpdateWaitTimestamp) {
     overrideKmdNotifyParams(true, 3, true, 2, true, 1);
-    auto csr = new UltCommandStreamReceiver<FamilyType>(localHwInfo);
+
+    auto csr = new MyCsrWithTimestampCheck<FamilyType>(localHwInfo);
+    EXPECT_NE(0, csr->lastWaitForCompletionTimestamp.time_since_epoch().count());
     device->resetCommandStreamReceiver(csr);
 
-    auto initialTime = csr->lastWaitForCompletionTimestamp.time_since_epoch().count();
+    csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false);
+    EXPECT_EQ(1u, csr->updateLastWaitForCompletionTimestampCalled);
+}
+
+HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWaitOptimizationWhenWaitCalledThenDontUpdateWaitTimestamp) {
+    overrideKmdNotifyParams(true, 3, true, 2, false, 0);
+
+    auto csr = new MyCsrWithTimestampCheck<FamilyType>(localHwInfo);
+    EXPECT_EQ(0, csr->lastWaitForCompletionTimestamp.time_since_epoch().count());
+    device->resetCommandStreamReceiver(csr);
 
     csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false);
-
-    auto updatedTime = csr->lastWaitForCompletionTimestamp.time_since_epoch().count();
-    EXPECT_NE(initialTime, updatedTime);
+    EXPECT_EQ(0u, csr->updateLastWaitForCompletionTimestampCalled);
 }

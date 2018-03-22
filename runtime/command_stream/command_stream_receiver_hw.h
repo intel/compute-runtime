@@ -82,6 +82,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
 
     uint64_t getScratchPatchAddress();
+    MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();
 
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 

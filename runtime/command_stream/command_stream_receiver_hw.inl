@@ -578,7 +578,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
 
     if (kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits) {
-        lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
+        updateLastWaitForCompletionTimestamp();
     }
 }
 
@@ -630,5 +630,10 @@ void CommandStreamReceiverHw<GfxFamily>::programMediaSampler(LinearStream &comma
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaSamplerRequired) const {
     return 0;
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::updateLastWaitForCompletionTimestamp() {
+    lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
 }
 } // namespace OCLRT
