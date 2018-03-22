@@ -384,7 +384,7 @@ foreach(GEN_TYPE ${ALL_GEN_TYPES})
         neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
 
         # Temporarily disabled debug kernel generation on gen8
-        if(NOT ("gen${GEN_NUM}" STREQUAL "gen8"))
+        if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
           neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
         endif()
 
@@ -392,7 +392,7 @@ foreach(GEN_TYPE ${ALL_GEN_TYPES})
         add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
 
         # Temporarily disabled debug kernel generation on gen8
-        if(NOT ("gen${GEN_NUM}" STREQUAL "gen8"))
+        if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
           add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
         endif()
 
