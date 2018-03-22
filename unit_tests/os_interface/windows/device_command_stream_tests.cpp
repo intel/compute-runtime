@@ -532,10 +532,12 @@ TEST_F(WddmCommandStreamTest, createAllocationAndMakeResident) {
 }
 
 TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
-    void *hostPtr = reinterpret_cast<void *>(wddm->virtualAllocAddress - 0x3000);
+    void *hostPtr = reinterpret_cast<void *>(memManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
-    void *expectedReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
+
     WddmAllocation *gfxAllocation = static_cast<WddmAllocation *>(csr->createAllocationAndHandleResidency(hostPtr, size));
+
+    void *expectedReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
     ASSERT_NE(nullptr, gfxAllocation);
 

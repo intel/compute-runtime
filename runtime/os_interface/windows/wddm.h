@@ -66,6 +66,8 @@ class Wddm {
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
+    typedef BOOL(WINAPI *VirtualFreeFcn)(LPVOID ptr, SIZE_T size, DWORD flags);
+    typedef LPVOID(WINAPI *VirtualAllocFcn)(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type);
 
     virtual ~Wddm();
 
@@ -101,12 +103,9 @@ class Wddm {
     void registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);
     MOCKABLE_VIRTUAL void releaseReservedAddress(void *reservedAddress);
     MOCKABLE_VIRTUAL bool reserveValidAddressRange(size_t size, void *&reservedMem);
-    MOCKABLE_VIRTUAL bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
-        return VirtualFree(ptr, size, flags) != 0 ? true : false;
-    }
-    MOCKABLE_VIRTUAL void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
-        return reinterpret_cast<void *>(VirtualAlloc(inPtr, size, flags, type));
-    }
+
+    MOCKABLE_VIRTUAL void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type);
+    MOCKABLE_VIRTUAL int virtualFree(void *ptr, size_t size, unsigned long flags);
 
     template <typename GfxFamily>
     bool configureDeviceAddressSpace();
@@ -258,6 +257,8 @@ class Wddm {
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;
+    static VirtualFreeFcn virtualFreeFnc;
+    static VirtualAllocFcn virtualAllocFnc;
 
     std::unique_ptr<GmmPageTableMngr> pageTableManager;
 

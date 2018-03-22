@@ -618,11 +618,13 @@ HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAligned
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {
     SetUpMm<FamilyType>();
     WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
-    void *cpuPtr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress - 0x3000);
+    void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
-    void *expectReserve = reinterpret_cast<void *>(mockWddm->virtualAllocAddress);
 
     WddmAllocation *allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(size, cpuPtr));
+
+    void *expectReserve = reinterpret_cast<void *>(mockWddm->virtualAllocAddress);
+
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectReserve, allocation->getReservedAddress());
     EXPECT_EQ(expectReserve, reinterpret_cast<void *>(allocation->gpuPtr));

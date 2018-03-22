@@ -43,11 +43,15 @@
 namespace OCLRT {
 extern Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory();
 extern Wddm::GetSystemInfoFcn getGetSystemInfo();
+extern Wddm::VirtualAllocFcn getVirtualAlloc();
+extern Wddm::VirtualFreeFcn getVirtualFree();
 
 class WddmMemoryManager;
 
 Wddm::CreateDXGIFactoryFcn Wddm::createDxgiFactory = getCreateDxgiFactory();
 Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
+Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
+Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
 Wddm::Wddm(Gdi *gdi) : initialized(false),
                        gdiAllocated(false),
@@ -900,7 +904,7 @@ void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, Wdd
 
 void Wddm::releaseReservedAddress(void *reservedAddress) {
     if (reservedAddress) {
-        auto status = virtualFreeWrapper(reservedAddress, 0, MEM_RELEASE);
+        auto status = virtualFree(reservedAddress, 0, MEM_RELEASE);
         DEBUG_BREAK_IF(!status);
     }
 }
@@ -922,14 +926,14 @@ void Wddm::resetPageTableManager(GmmPageTableMngr *newPageTableManager) {
 }
 
 bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
-    reservedMem = virtualAllocWrapper(nullptr, size, MEM_RESERVE, PAGE_READWRITE);
+    reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE, PAGE_READWRITE);
     if (reservedMem == nullptr) {
         return false;
     } else if (minAddress > reinterpret_cast<uintptr_t>(reservedMem)) {
         StackVec<void *, 100> invalidAddrVector;
         invalidAddrVector.push_back(reservedMem);
         do {
-            reservedMem = virtualAllocWrapper(nullptr, size, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
+            reservedMem = virtualAlloc(nullptr, size, MEM_RESERVE | MEM_TOP_DOWN, PAGE_READWRITE);
             if (minAddress > reinterpret_cast<uintptr_t>(reservedMem) && reservedMem != nullptr) {
                 invalidAddrVector.push_back(reservedMem);
             } else {
@@ -937,7 +941,7 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
             }
         } while (1);
         for (auto &it : invalidAddrVector) {
-            auto status = virtualFreeWrapper(it, 0, MEM_RELEASE);
+            auto status = virtualFree(it, 0, MEM_RELEASE);
             DEBUG_BREAK_IF(!status);
         }
         if (reservedMem == nullptr) {
@@ -945,6 +949,13 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
         }
     }
     return true;
+}
+
+void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {
+    return virtualAllocFnc(inPtr, size, flags, type);
+}
+int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
+    return virtualFreeFnc(ptr, size, flags);
 }
 
 } // namespace OCLRT

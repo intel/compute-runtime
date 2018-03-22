@@ -1001,8 +1001,9 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserve
     EXPECT_TRUE(ret);
 
     wddmMock->returnGood = 1;
-    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
+
     ret = wddmMock->reserveValidAddressRange(size, reserve);
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
     wddmMock->releaseReservedAddress(reserve);
@@ -1032,9 +1033,9 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThen
     EXPECT_TRUE(ret);
 
     wddmMock->returnInvalidCount = 1;
-    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
 
     ret = wddmMock->reserveValidAddressRange(size, reserve);
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
     wddmMock->releaseReservedAddress(reserve);
@@ -1050,9 +1051,9 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThen
     EXPECT_TRUE(ret);
 
     wddmMock->returnInvalidCount = 2;
-    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
 
     ret = wddmMock->reserveValidAddressRange(size, reserve);
+    uintptr_t expectedReserve = wddmMock->virtualAllocAddress;
     EXPECT_TRUE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
     wddmMock->releaseReservedAddress(reserve);

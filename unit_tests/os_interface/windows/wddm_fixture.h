@@ -277,16 +277,14 @@ class WddmMock : public Wddm {
         return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue);
     }
 
-    bool virtualFreeWrapper(void *ptr, size_t size, uint32_t flags) {
-        return true;
+    void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override {
+        void *address = Wddm::virtualAlloc(inPtr, size, flags, type);
+        virtualAllocAddress = (uintptr_t)address;
+        return address;
     }
-
-    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
-        void *tmp = reinterpret_cast<void *>(virtualAllocAddress);
-        size += MemoryConstants::pageSize;
-        size -= size % MemoryConstants::pageSize;
-        virtualAllocAddress += size;
-        return tmp;
+    int virtualFree(void *ptr, size_t size, unsigned long flags) override {
+        int success = Wddm::virtualFree(ptr, size, flags);
+        return success;
     }
 
     void releaseReservedAddress(void *reservedAddress) override {
@@ -361,15 +359,15 @@ class WddmMockReserveAddress : public WddmMock {
         returnNullIter = 0;
     }
 
-    void *virtualAllocWrapper(void *inPtr, size_t size, uint32_t flags, uint32_t type) {
+    void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override {
         if (returnGood != 0) {
-            return WddmMock::virtualAllocWrapper(inPtr, size, flags, type);
+            return WddmMock::virtualAlloc(inPtr, size, flags, type);
         }
 
         if (returnInvalidCount != 0) {
             returnInvalidIter++;
             if (returnInvalidIter > returnInvalidCount) {
-                return WddmMock::virtualAllocWrapper(inPtr, size, flags, type);
+                return WddmMock::virtualAlloc(inPtr, size, flags, type);
             }
             if (returnNullCount != 0) {
                 returnNullIter++;
@@ -382,6 +380,15 @@ class WddmMockReserveAddress : public WddmMock {
         }
 
         return nullptr;
+    }
+
+    int virtualFree(void *ptr, size_t size, unsigned long flags) override {
+
+        if ((ptr == reinterpret_cast<void *>(0x1000)) || (ptr == reinterpret_cast<void *>(0x0))) {
+            return 1;
+        }
+
+        return WddmMock::virtualFree(ptr, size, flags);
     }
 
     uint32_t returnGood;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,16 @@
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 
 namespace OCLRT {
+
+BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
+    free(ptr);
+    return 1;
+}
+
+LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
+    return malloc(size);
+}
+
 Wddm *Wddm::createWddm(Gdi *gdi) {
     if (gdi == nullptr)
         return new WddmMock();
@@ -36,5 +46,13 @@ Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
 
 Wddm::GetSystemInfoFcn getGetSystemInfo() {
     return ULTGetSystemInfo;
+}
+
+Wddm::VirtualFreeFcn getVirtualFree() {
+    return ULTVirtualFree;
+}
+
+Wddm::VirtualAllocFcn getVirtualAlloc() {
+    return ULTVirtualAlloc;
 }
 } // namespace OCLRT
