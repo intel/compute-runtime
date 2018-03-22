@@ -27,6 +27,8 @@ if(POLICY CMP0063)
 endif()
 
 project(neo)
+set(MSVC_DEF_ADDITIONAL_EXPORTS "")
+
 if(NOT TARGET ${BIKSIM_LIB_NAME})
   add_subdirectory(builtin_kernels_simulation)
 endif()
@@ -108,14 +110,6 @@ if(INSTRUMENTATION_LIB_NAME)
   add_dependencies(${NEO_STATIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
 endif()
 
-if(WIN32)
-  if(GTPIN_HEADERS_DIR)
-    set( DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/GTPinExports${IGDRCL_OPTION__BITS}.def" )
-  else()
-    set( DEF_FILE "${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLExports${IGDRCL_OPTION__BITS}.def" )
-  endif()
-endif()
-
 list(APPEND LIB_FLAGS_DEFINITIONS -DCIF_HEADERS_ONLY_BUILD ${SUPPORTED_GEN_FLAGS_DEFINITONS})
 
 target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC ${LIB_FLAGS_DEFINITIONS})
@@ -125,6 +119,14 @@ set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES POSITION_INDEPENDENT_COD
 set_property(TARGET ${NEO_STATIC_LIB_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS} ${TSAN_FLAGS})
 
 set_target_properties(${NEO_STATIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
+
+set(EXPORTS_FILENAME "")
+if(WIN32)
+    set(EXPORTS_FILENAME "${CMAKE_CURRENT_BINARY_DIR}/OpenCLExports${IGDRCL_OPTION__BITS}.def")
+    set(MSVC_DEF_LIB_NAME "igdrcl${IGDRCL_OPTION__BITS}")
+    set(MSVC_DEF_HEADER "This file was generated during CMake project configuration - please don't edit")
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/dll/windows/OpenCLExports.def.in" "${EXPORTS_FILENAME}")
+endif(WIN32)
 
 if(${GENERATE_EXECUTABLE})
   if(GTPIN_HEADERS_DIR)
@@ -182,7 +184,7 @@ if(${GENERATE_EXECUTABLE})
     OUTPUT_NAME "${NEO_DLL_NAME_BASE}${IGDRCL_NAME_POSTFIX}${IGDRCL_OPTION__BITS}"
   )
   set_target_properties(${NEO_DYNAMIC_LIB_NAME} PROPERTIES FOLDER "opencl runtime")
-  create_project_source_tree(${NEO_DYNAMIC_LIB_NAME})
+  create_project_source_tree_with_exports(${NEO_DYNAMIC_LIB_NAME} "${EXPORTS_FILENAME}")
 endif(${GENERATE_EXECUTABLE})
 
 create_project_source_tree(${NEO_STATIC_LIB_NAME})

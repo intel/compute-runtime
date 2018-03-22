@@ -37,9 +37,9 @@ set(RUNTIME_SRCS_DLL_BASE
   ${IGDRCL_SOURCE_DIR}/runtime/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/program/evaluate_unhandled_token.cpp
 
-  ${DEF_FILE}
   ${GTPIN_INIT_FILE}
   ${HW_SRC_LINK}
+  ${EXPORTS_FILENAME}
 )
 
 set(RUNTIME_SRCS_DLL_LINUX
