@@ -22,12 +22,25 @@
 
 #pragma once
 #include <cstdint>
+#include <chrono>
 
 namespace OCLRT {
 struct KmdNotifyProperties {
+    // Main switch for KMD Notify optimization - if its disabled, all below are disabled too
     bool enableKmdNotify;
     int64_t delayKmdNotifyMicroseconds;
+    // Use smaller delay in specific situations (ie. from AsyncEventsHandler)
     bool enableQuickKmdSleep;
     int64_t delayQuickKmdSleepMicroseconds;
+    // If waits are called sporadically  use QuickKmdSleep mode, otherwise use standard delay
+    bool enableQuickKmdSleepForSporadicWaits;
+    int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
+
+    bool applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const;
+
+    const int64_t &selectDelay(bool useQuickKmdSleep) const;
+
+    static void overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination);
+    static void overrideFromDebugVariable(int32_t debugVariableValue, bool &destination);
 };
 } // namespace OCLRT

@@ -184,21 +184,13 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                   static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidBatchPreempt) && preemption);
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
 
-    outHwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify = DebugManager.flags.OverrideEnableKmdNotify.get() >= 0
-                                                                         ? !!DebugManager.flags.OverrideEnableKmdNotify.get()
-                                                                         : outHwInfo->capabilityTable.kmdNotifyProperties.enableKmdNotify;
-
-    outHwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds = DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get() >= 0
-                                                                                    ? static_cast<int64_t>(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get())
-                                                                                    : outHwInfo->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
-
-    outHwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep = DebugManager.flags.OverrideEnableQuickKmdSleep.get() >= 0
-                                                                             ? !!DebugManager.flags.OverrideEnableQuickKmdSleep.get()
-                                                                             : outHwInfo->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep;
-
-    outHwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds = DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get() >= 0
-                                                                                        ? static_cast<int64_t>(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get())
-                                                                                        : outHwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
+    auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get(), kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleep.get(), kmdNotifyProperties.enableQuickKmdSleep);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.get(), kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 
     pPlatform.release();
     pSkuTable.release();

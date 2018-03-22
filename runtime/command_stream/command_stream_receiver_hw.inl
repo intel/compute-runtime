@@ -40,6 +40,9 @@ namespace OCLRT {
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
+    if (hwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits) {
+        lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
+    }
 }
 
 template <typename GfxFamily>
@@ -561,18 +564,22 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     const auto &kmdNotifyProperties = this->hwInfo.capabilityTable.kmdNotifyProperties;
 
-    const auto &kmdNotifyDelay = useQuickKmdSleep && kmdNotifyProperties.enableQuickKmdSleep ? kmdNotifyProperties.delayQuickKmdSleepMicroseconds
-                                                                                             : kmdNotifyProperties.delayKmdNotifyMicroseconds;
+    useQuickKmdSleep |= kmdNotifyProperties.applyQuickKmdSleepForSporadicWait(lastWaitForCompletionTimestamp);
+
+    const auto &kmdNotifyDelay = kmdNotifyProperties.selectDelay(useQuickKmdSleep);
 
     auto status = waitForCompletionWithTimeout(kmdNotifyProperties.enableKmdNotify && flushStampToWait != 0,
                                                kmdNotifyDelay, taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
-        waitForCompletionWithTimeout(false, kmdNotifyDelay, taskCountToWait);
+        waitForCompletionWithTimeout(false, 0, taskCountToWait);
     }
-
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
+
+    if (kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits) {
+        lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
+    }
 }
 
 template <typename GfxFamily>

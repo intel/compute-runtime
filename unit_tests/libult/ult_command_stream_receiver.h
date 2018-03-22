@@ -37,6 +37,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::hwInfo;
     using BaseClass::ihState;
     using BaseClass::iohState;
+    using BaseClass::lastWaitForCompletionTimestamp;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::disableL3Cache;
@@ -47,11 +48,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::lastPreemptionMode;
     using BaseClass::CommandStreamReceiver::lastSentCoherencyRequest;
     using BaseClass::CommandStreamReceiver::lastSentL3Config;
-    using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastSentThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::lastVmeSubslicesConfig;
     using BaseClass::CommandStreamReceiver::latestFlushedTaskCount;
     using BaseClass::CommandStreamReceiver::latestSentStatelessMocsConfig;
+    using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
 

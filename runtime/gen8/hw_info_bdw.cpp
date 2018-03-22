@@ -69,11 +69,11 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     {false, false},
     &isSimulationBDW,
     true,
-    true,                     // forceStatelessCompilationFor32Bit
-    {false, 0, false, 0},     // KmdNotifyProperties
-    false,                    // ftr64KBpages
-    EngineType::ENGINE_RCS,   // defaultEngineType
-    MemoryConstants::pageSize //requiredPreemptionSurfaceSize
+    true,                           // forceStatelessCompilationFor32Bit
+    {false, 0, false, 0, false, 0}, // KmdNotifyProperties
+    false,                          // ftr64KBpages
+    EngineType::ENGINE_RCS,         // defaultEngineType
+    MemoryConstants::pageSize       //requiredPreemptionSurfaceSize
 };
 
 const HardwareInfo BDW_1x2x6::hwInfo = {

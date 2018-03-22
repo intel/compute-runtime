@@ -60,11 +60,11 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     {true, false},
     &isSimulationGLK,
     true,
-    false,                    // forceStatelessCompilationFor32Bit
-    {true, 30000, false, 0},  // KmdNotifyProperties
-    false,                    // ftr64KBpages
-    EngineType::ENGINE_RCS,   // defaultEngineType
-    MemoryConstants::pageSize //requiredPreemptionSurfaceSize
+    false,                             // forceStatelessCompilationFor32Bit
+    {true, 30000, false, 0, false, 0}, // KmdNotifyProperties
+    false,                             // ftr64KBpages
+    EngineType::ENGINE_RCS,            // defaultEngineType
+    MemoryConstants::pageSize          //requiredPreemptionSurfaceSize
 };
 
 const HardwareInfo GLK_1x3x6::hwInfo = {

@@ -106,6 +106,8 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
     auto refDelayKmdNotifyMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
     auto refEnableQuickKmdSleep = hwInfoReference->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep;
     auto refDelayQuickKmdSleepMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
+    auto refEnableQuickKmdSleepForSporadicWaits = hwInfoReference->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits;
+    auto refDelayQuickKmdSleepForSporadicWaitsMicroseconds = hwInfoReference->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds;
     DeviceFactory::releaseDevices();
 
     DebugManager.flags.OverrideEnableKmdNotify.set(!refEnableKmdNotify);
@@ -113,6 +115,9 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     DebugManager.flags.OverrideEnableQuickKmdSleep.set(!refEnableQuickKmdSleep);
     DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepMicroseconds) + 11);
+
+    DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.set(!refEnableQuickKmdSleepForSporadicWaits);
+    DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.set(static_cast<int32_t>(refDelayQuickKmdSleepForSporadicWaitsMicroseconds) + 12);
 
     success = DeviceFactory::getDevices(&hwInfoOverriden, numDevices);
     ASSERT_TRUE(success);
@@ -122,6 +127,11 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
 
     EXPECT_EQ(!refEnableQuickKmdSleep, hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableQuickKmdSleep);
     EXPECT_EQ(refDelayQuickKmdSleepMicroseconds + 11, hwInfoOverriden->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+
+    EXPECT_EQ(!refEnableQuickKmdSleepForSporadicWaits,
+              hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    EXPECT_EQ(refDelayQuickKmdSleepForSporadicWaitsMicroseconds + 12,
+              hwInfoOverriden->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 
     DeviceFactory::releaseDevices();
 }

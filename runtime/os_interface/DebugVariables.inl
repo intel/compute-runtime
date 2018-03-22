@@ -79,6 +79,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableKmdNotify, -1, "-1: dont override,
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideKmdNotifyDelayMicroseconds, -1, "-1: dont override, 0: infinite timeout, >0: timeout in microseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableQuickKmdSleep, -1, "-1: dont override, 0: disable, 1: enable. It works only when Kmd Notify is enabled.")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideQuickKmdSleepDelayMicroseconds, -1, "-1: dont override, 0: infinite timeout, >0: timeout in microseconds")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableQuickKmdSleepForSporadicWaits, -1, "-1: dont override, 0: disable, 1: enable. It works only when QuickKmdSleep is enabled.")
+DECLARE_DEBUG_VARIABLE(int32_t, OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds, -1, "-1: dont override, >0: timeout in microseconds")
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")
 DECLARE_DEBUG_VARIABLE(int32_t, CsrDispatchMode, 0, "Chooses DispatchMode for Csr")
 /*DRIVER TOGGLES*/

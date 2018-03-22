@@ -29,21 +29,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_gmm.h"
 
-using OCLRT::AUBCommandStreamReceiver;
-using OCLRT::AUBCommandStreamReceiverHw;
-using OCLRT::BatchBuffer;
-using OCLRT::CommandStreamReceiver;
-using OCLRT::DebugManager;
-using OCLRT::GraphicsAllocation;
-using OCLRT::HardwareInfo;
-using OCLRT::LinearStream;
-using OCLRT::MemoryManager;
-using OCLRT::ObjectNotResident;
-using OCLRT::ResidencyContainer;
-using OCLRT::platformDevices;
-
-using ::testing::Return;
-using ::testing::_;
+using namespace OCLRT;
 
 typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 
@@ -92,9 +78,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDebugSetti
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenMemoryManagerIsNotNull) {
-    HardwareInfo hwInfo;
-
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(hwInfo, true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     EXPECT_NE(nullptr, memoryManager.get());
     aubCsr->setMemoryManager(nullptr);
@@ -449,7 +433,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    EXPECT_CALL(*aubCsr, flattenBatchBuffer(_, _)).Times(0);
+    EXPECT_CALL(*aubCsr, flattenBatchBuffer(::testing::_, ::testing::_)).Times(0);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -481,7 +465,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     std::unique_ptr<void, decltype(alignedFree) *> ptr(alignedMalloc(4096, 4096), alignedFree);
 
-    EXPECT_CALL(*aubCsr, flattenBatchBuffer(_, _)).WillOnce(Return(ptr.release()));
+    EXPECT_CALL(*aubCsr, flattenBatchBuffer(::testing::_, ::testing::_)).WillOnce(::testing::Return(ptr.release()));
     aubCsr->flush(batchBuffer, engineType, nullptr);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -507,7 +491,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
-    EXPECT_CALL(*aubCsr, flattenBatchBuffer(_, _)).Times(1);
+    EXPECT_CALL(*aubCsr, flattenBatchBuffer(::testing::_, ::testing::_)).Times(1);
     aubCsr->flush(batchBuffer, engineType, nullptr);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -537,7 +521,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDispatc
 
     ResidencyContainer allocationsForResidency = {chainedBatchBuffer};
 
-    EXPECT_CALL(*aubCsr, flattenBatchBuffer(_, _)).Times(0);
+    EXPECT_CALL(*aubCsr, flattenBatchBuffer(::testing::_, ::testing::_)).Times(0);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
 
     memoryManager->freeGraphicsMemory(commandBuffer);

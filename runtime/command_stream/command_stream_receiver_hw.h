@@ -92,6 +92,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     const HardwareInfo &hwInfo;
     CsrSizeRequestFlags csrSizeRequestFlags = {};
+
+    std::chrono::high_resolution_clock::time_point lastWaitForCompletionTimestamp;
 };
 
 template <typename GfxFamily>

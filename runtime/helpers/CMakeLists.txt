@@ -54,6 +54,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.h
   ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/options.h
