@@ -55,56 +55,50 @@ set(RUNTIME_SRCS_GENX_BASE
   tbx_command_stream_receiver.cpp
 )
 
-foreach(GEN_TYPE ${ALL_GEN_TYPES})
-  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER})
-    # Add default GEN files
-    foreach(OS_IT "BASE" "WINDOWS" "LINUX")
-      foreach(SRC_IT ${RUNTIME_SRCS_GENX_${OS_IT}})
-        if(EXISTS ${GENX_PREFIX}/${SRC_IT})
-          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_${OS_IT} ${GENX_PREFIX}/${SRC_IT})
-        endif()
-      endforeach()
-    endforeach()
-
-    # Get all supported platforms for this GEN
-    GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_TYPE} SUPPORTED_GENX_PLATFORMS)
-
-    # Add platform-specific files
-    foreach(PLATFORM_IT ${SUPPORTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.cpp")
-        if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
-          list(APPEND RUNTIME_SRCS_${GEN_TYPE}_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
-        endif()
-      endforeach()
-
-      # HwInfoConfig implementation
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-
-      # Enable platform
-      list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_${PLATFORM_IT_LOWER}.cpp)
-      list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-    endforeach()
-
-    list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full.cpp)
-
-    if(GTPIN_HEADERS_DIR)
-      list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
-    endif(GTPIN_HEADERS_DIR)
-
-    list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_BASE})
-    list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
-    list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_WINDOWS})
-    list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_LINUX})
-    if(UNIX)
-      list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_LINUX})
+macro(macro_for_each_platform)
+  string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
+  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.cpp")
+    if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
     endif()
+  endforeach()
+
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+
+  # Enable platform
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_${PLATFORM_IT_LOWER}.cpp)
+  list(APPEND ${GEN_TYPE}_SRC_LINK_LINUX ${GENX_PREFIX}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+endmacro()
+
+macro(macro_for_each_gen)
+  set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER})
+  # Add default GEN files
+  foreach(OS_IT "BASE" "WINDOWS" "LINUX")
+    foreach(SRC_IT ${RUNTIME_SRCS_GENX_${OS_IT}})
+      if(EXISTS ${GENX_PREFIX}/${SRC_IT})
+        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_${OS_IT} ${GENX_PREFIX}/${SRC_IT})
+      endif()
+    endforeach()
+  endforeach()
+
+  apply_macro_for_each_platform()
+
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full.cpp)
+
+  list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_BASE})
+  list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_WINDOWS})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_LINUX})
+  if(UNIX)
+    list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_LINUX})
   endif()
-endforeach()
+  if(GTPIN_HEADERS_DIR)
+    list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
+  endif()
+endmacro()
+
+apply_macro_for_each_gen("SUPPORTED")
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_GENX_ALL_BASE})
 if(WIN32)

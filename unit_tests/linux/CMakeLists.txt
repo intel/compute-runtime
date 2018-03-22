@@ -31,18 +31,13 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
 )
-
-foreach(GEN_TYPE ${ALL_GEN_TYPES})
-  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_TYPE} TESTED_GENX_PLATFORMS)
-    foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list(APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp)
-    endforeach()
-  endif()
-endforeach()
+macro(macro_for_each_platform)
+  list(APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp)
+endmacro()
+macro(macro_for_each_gen)
+  apply_macro_for_each_platform()
+endmacro()
+apply_macro_for_each_gen("TESTED")
 
 foreach(target_name linux_tests linux_dll_tests)
   add_executable(igdrcl_${target_name}

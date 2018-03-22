@@ -130,13 +130,10 @@ endif(WIN32)
 
 if(${GENERATE_EXECUTABLE})
   if(GTPIN_HEADERS_DIR)
-    foreach(GEN_TYPE ${ALL_GEN_TYPES})
-      string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-      GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-      if(${GENX_HAS_PLATFORMS})
-        target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
-      endif(${GENX_HAS_PLATFORMS})
-    endforeach()
+    macro(macro_for_each_gen)
+      target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
+    endmacro()
+    apply_macro_for_each_gen("SUPPORTED")
   endif()
 
   list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS

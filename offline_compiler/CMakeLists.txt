@@ -54,27 +54,24 @@ set(OPTIONAL_RUNTIME_GENX_FILES
   hw_info.cpp
 )
 
-foreach(GEN_TYPE ${ALL_GEN_TYPES})
-  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-  GEN_CONTAINS_PLATFORMS("SUPPORTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    foreach(SRC_IT ${OPTIONAL_RUNTIME_GENX_FILES})
-      set(SRC_FILE ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/${SRC_IT})
-      if(EXISTS ${SRC_FILE})
-        list(APPEND CLOC_SRCS_LIB ${SRC_FILE})
-      endif()
-    endforeach()
+macro(macro_for_each_platform)
+  list(APPEND CLOC_SRCS_LIB
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
+  )
+endmacro()
 
-    GET_PLATFORMS_FOR_GEN("SUPPORTED" ${GEN_TYPE} SUPPORTED_GENX_PLATFORMS)
-    foreach(PLATFORM_IT ${SUPPORTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list(APPEND CLOC_SRCS_LIB
-        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp
-        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
-      )
-    endforeach()
-  endif()
-endforeach()
+macro(macro_for_each_gen)
+  foreach(SRC_IT ${OPTIONAL_RUNTIME_GENX_FILES})
+    set(SRC_FILE ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/${SRC_IT})
+    if(EXISTS ${SRC_FILE})
+      list(APPEND CLOC_SRCS_LIB ${SRC_FILE})
+    endif()
+  endforeach()
+  apply_macro_for_each_platform()
+endmacro()
+
+apply_macro_for_each_gen("SUPPORTED")
 
 set(CLOC_SRCS
   ${CLOC_SRCS_LIB}

@@ -18,26 +18,23 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-foreach(GEN_TYPE ${ALL_GEN_TYPES})
-  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-      ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
-      ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/gen_cmd_parse.h
-      ${IGDRCL_SOURCE_DIR}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
-      ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full.cpp
-    )
-    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_TYPE} TESTED_GENX_PLATFORMS)
-    foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-      list (APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
-        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
-        ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp
-      )
-    endforeach()
-  endif()
-endforeach()
+macro(macro_for_each_platform)
+  list (APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp
+  )
+endmacro()
+macro(macro_for_each_gen)
+  list(APPEND IGDRCL_SRCS_ENABLE_TESTED_HW
+    ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/gen_cmd_parse.h
+    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full.cpp
+  )
+  apply_macro_for_each_platform()
+endmacro()
+
+apply_macro_for_each_gen("TESTED")
 
 set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp

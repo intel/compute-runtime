@@ -363,67 +363,60 @@ function(gen_run_unit_tests product slices subslices eu_per_ss)
   add_dependencies(run_unit_tests run_${product}_unit_tests)
 endfunction()
 
-foreach(GEN_TYPE ${ALL_GEN_TYPES})
-  string(TOLOWER ${GEN_TYPE} GEN_TYPE_LOWER)
-  GEN_CONTAINS_PLATFORMS("TESTED" ${GEN_TYPE} GENX_HAS_PLATFORMS)
-  if(${GENX_HAS_PLATFORMS})
-    GET_PLATFORMS_FOR_GEN("TESTED" ${GEN_TYPE} TESTED_GENX_PLATFORMS)
-    foreach(PLATFORM_IT ${TESTED_GENX_PLATFORMS})
-      PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
-      PLATFORM_TESTED_WITH_APPVERIFIER(${GEN_TYPE} ${PLATFORM_IT} TESTED_WITH_APPVERIFIER)
-      string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-
-      if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
-        neo_gen_kernels(test_kernels_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNELS})
-        neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
-
-        # Temporarily disabled debug kernel generation on gen8
-        if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-          neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
-        endif()
-
-        add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
-        add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
-
-        # Temporarily disabled debug kernel generation on gen8
-        if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-          add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
-        endif()
-
-        set(sip_kernel_file_name)
-        set(sip_kernel_output_file)
-        set(sip_debug_kernel_output_file)
-        set(sip_debug_local_kernel_output_file)
-        list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_${NEO_BITS}.ll")
-        list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_${NEO_BITS}")
-        list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_${NEO_BITS}")
-
-        # Temporarily disabled sip kernel generation
-        # if("${GEN_TYPE_LOWER}" STREQUAL "gen9" )
-        #   neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
-        #   add_dependencies(unit_tests test_kernel_sip_debug_local_${PLATFORM_IT_LOWER})
-        # endif()
-
-        # neo_gen_kernel_from_ll(test_kernel_sip_debug_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
-        # add_dependencies(unit_tests test_kernel_sip_debug_${PLATFORM_IT_LOWER})
-
-        if(${PLATFORM_SUPPORTS_2_0})
-          neo_gen_kernel_with_options(test_kernel_2_0_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
-          add_dependencies(unit_tests test_kernel_2_0_${PLATFORM_IT_LOWER})
-        endif()
-      endif()
-      GET_TEST_CONFIGURATIONS_FOR_PLATFORM("UNIT_TESTS" ${GEN_TYPE} ${PLATFORM_IT} PLATFORM_CONFIGURATIONS)
-      foreach(PLATFORM_CONFIGURATION ${PLATFORM_CONFIGURATIONS})
-        string(REPLACE "/" ";" CONFIGURATION_PARAMS ${PLATFORM_CONFIGURATION})
-        list(GET CONFIGURATION_PARAMS 1 SLICES)
-        list(GET CONFIGURATION_PARAMS 2 SUBSLICES)
-        list(GET CONFIGURATION_PARAMS 3 EU_PER_SS)
-        gen_run_unit_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-        if(MSVC AND ${TESTED_WITH_APPVERIFIER})
-          gen_run_tests_with_appverifier(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
-        endif()
-      endforeach()
-    endforeach()
+macro(macro_for_each_test_config)
+  gen_run_unit_tests(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
+  if(MSVC AND ${TESTED_WITH_APPVERIFIER})
+    gen_run_tests_with_appverifier(${PLATFORM_IT_LOWER} ${SLICES} ${SUBSLICES} ${EU_PER_SS})
   endif()
-endforeach()
+endmacro()
+
+macro(macro_for_each_platform)
+  PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
+  PLATFORM_TESTED_WITH_APPVERIFIER(${GEN_TYPE} ${PLATFORM_IT} TESTED_WITH_APPVERIFIER)
+  if(MSVC OR CMAKE_SIZEOF_VOID_P EQUAL 8)
+    neo_gen_kernels(test_kernels_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNELS})
+    neo_gen_kernel_with_options(test_kernel_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_options})
+
+    # Temporarily disabled debug kernel generation on gen8
+    if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
+      neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
+    endif()
+
+    add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
+    add_dependencies(unit_tests test_kernel_${PLATFORM_IT_LOWER})
+
+    # Temporarily disabled debug kernel generation on gen8
+    if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
+      add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
+    endif()
+
+    set(sip_kernel_file_name)
+    set(sip_kernel_output_file)
+    set(sip_debug_kernel_output_file)
+    set(sip_debug_local_kernel_output_file)
+    list(APPEND sip_kernel_file_name "test_files/sip_dummy_kernel_${NEO_BITS}.ll")
+    list(APPEND sip_debug_kernel_output_file "sip_dummy_kernel_debug_${NEO_BITS}")
+    list(APPEND sip_debug_local_kernel_output_file "sip_dummy_kernel_debug_local_${NEO_BITS}")
+
+    # Temporarily disabled sip kernel generation
+    # if("${GEN_TYPE_LOWER}" STREQUAL "gen9" )
+    #   neo_gen_kernel_from_ll(test_kernel_sip_debug_local_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_local_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_LOCAL_options})
+    #   add_dependencies(unit_tests test_kernel_sip_debug_local_${PLATFORM_IT_LOWER})
+    # endif()
+
+    # neo_gen_kernel_from_ll(test_kernel_sip_debug_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${sip_kernel_file_name} ${sip_debug_kernel_output_file} ${TEST_KERNEL_SIP_DEBUG_options})
+    # add_dependencies(unit_tests test_kernel_sip_debug_${PLATFORM_IT_LOWER})
+
+    if(${PLATFORM_SUPPORTS_2_0})
+      neo_gen_kernel_with_options(test_kernel_2_0_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL_2_0} ${TEST_KERNEL_2_0_options})
+      add_dependencies(unit_tests test_kernel_2_0_${PLATFORM_IT_LOWER})
+    endif()
+  endif()
+  apply_macro_for_each_test_config("UNIT_TESTS")
+endmacro()
+
+macro(macro_for_each_gen)
+  apply_macro_for_each_platform()
+endmacro()
+apply_macro_for_each_gen("TESTED")
 create_project_source_tree(igdrcl_tests ${IGDRCL_SOURCE_DIR}/runtime)
