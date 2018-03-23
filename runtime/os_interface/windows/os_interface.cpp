@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,7 @@
  */
 
 #include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/sys_calls.h"
 #include "os_interface.h"
 
 namespace OCLRT {
@@ -72,5 +73,14 @@ Wddm *OSInterface::OSInterfaceImpl::getWddm() const {
 
 void OSInterface::OSInterfaceImpl::setWddm(Wddm *wddm) {
     this->wddm = wddm;
+}
+
+HANDLE OSInterface::OSInterfaceImpl::createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
+                                                 LPCSTR lpName) {
+    return SysCalls::createEvent(lpEventAttributes, bManualReset, bInitialState, lpName);
+}
+
+BOOL OSInterface::OSInterfaceImpl::closeHandle(HANDLE hObject) {
+    return SysCalls::closeHandle(hObject);
 }
 } // namespace OCLRT

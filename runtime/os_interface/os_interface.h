@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,7 @@ class OSInterface {
   public:
     class OSInterfaceImpl;
     OSInterface();
-    ~OSInterface();
+    virtual ~OSInterface();
     OSInterface(const OSInterface &) = delete;
     OSInterface &operator=(const OSInterface &) = delete;
 
@@ -41,6 +41,6 @@ class OSInterface {
     static bool are64kbPagesEnabled();
 
   protected:
-    OSInterfaceImpl *osInterfaceImpl;
+    OSInterfaceImpl *osInterfaceImpl = nullptr;
 };
 } // namespace OCLRT

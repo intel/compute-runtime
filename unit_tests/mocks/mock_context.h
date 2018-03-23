@@ -28,6 +28,8 @@
 namespace OCLRT {
 class MockContext : public Context {
   public:
+    using Context::sharingFunctions;
+
     MockContext(Device *device, bool noSpecialQueue = false);
     MockContext(
         void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),

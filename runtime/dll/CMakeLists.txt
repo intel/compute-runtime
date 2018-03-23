@@ -47,9 +47,10 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
-  ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm_create.cpp
-  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/sys_calls.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/wddm_create.cpp
 )
 
 target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_DLL_BASE})

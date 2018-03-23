@@ -61,6 +61,7 @@ class WddmMock : public Wddm {
 
   public:
     using Wddm::adapter;
+    using Wddm::context;
     using Wddm::createMonitoredFence;
     using Wddm::device;
     using Wddm::gdi;

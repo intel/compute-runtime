@@ -1105,3 +1105,10 @@ HWTEST_F(WddmWithMockGdiTest, givenReadOnlyMemoryWhenCreateAllocationFailsWithNo
 
     releaseGmm(handleStorage.fragmentStorageData[0].osHandleStorage->gmm);
 }
+
+HWTEST_F(WddmTest, whenGetOsDeviceContextIsCalledThenWddmOsDeviceContextIsReturned) {
+    std::unique_ptr<WddmMock> wddmMock(new WddmMock());
+    D3DKMT_HANDLE ctx = 0xc1;
+    wddmMock->context = ctx;
+    EXPECT_EQ(ctx, wddmMock->getOsDeviceContext());
+}

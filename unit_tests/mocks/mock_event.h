@@ -46,6 +46,7 @@ struct MockEvent : public BaseEventType {
     FORWARD_FUNC(submitCommand, BaseEventType);
 
     using BaseEventType::timeStampNode;
+    using Event::magic;
 };
 
 #undef FORWARD_CONSTRUCTOR

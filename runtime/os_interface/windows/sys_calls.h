@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,30 +21,15 @@
  */
 
 #pragma once
-#include "runtime/os_interface/os_interface.h"
-#include "profileapi.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
-#include <d3dkmthk.h>
+#include <Windows.h>
 
 namespace OCLRT {
-class Wddm;
 
-class OSInterface::OSInterfaceImpl {
-  public:
-    OSInterfaceImpl();
-    virtual ~OSInterfaceImpl() = default;
-    Wddm *getWddm() const;
-    void setWddm(Wddm *wddm);
-    D3DKMT_HANDLE getAdapterHandle() const;
-    D3DKMT_HANDLE getDeviceHandle() const;
-    PFND3DKMT_ESCAPE getEscapeHandle() const;
-    uint32_t getHwContextId() const;
+namespace SysCalls {
 
-    MOCKABLE_VIRTUAL HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
-                                        LPCSTR lpName);
-    MOCKABLE_VIRTUAL BOOL closeHandle(HANDLE hObject);
+HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
+BOOL closeHandle(HANDLE hObject);
 
-  protected:
-    Wddm *wddm;
-};
+} // namespace SysCalls
+
 } // namespace OCLRT

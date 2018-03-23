@@ -203,6 +203,10 @@ class Wddm {
         return this->minAddress;
     }
 
+    D3DKMT_HANDLE getOsDeviceContext() {
+        return context;
+    }
+
   protected:
     bool initialized;
     bool gdiAllocated;

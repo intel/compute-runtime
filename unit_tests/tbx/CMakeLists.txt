@@ -33,6 +33,7 @@ if(WIN32)
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
   )
   target_sources(igdrcl_tbx_tests PRIVATE
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/sys_calls.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/ult_dxgi_factory.cpp
   )

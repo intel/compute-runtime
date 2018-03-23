@@ -51,3 +51,4 @@ endif()
 add_subdirectories()
 
 create_project_source_tree(${SHARINGS_ENABLE_LIB_NAME} ${IGDRCL_SOURCE_DIR}/runtime)
+set(MSVC_DEF_ADDITIONAL_EXPORTS ${MSVC_DEF_ADDITIONAL_EXPORTS} PARENT_SCOPE)

@@ -258,7 +258,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return (peekNumEventsBlockingThis() > 0);
     }
 
-    void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
+    virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
 
     void updateTaskCount(uint32_t taskCount) {
         if (taskCount == Event::eventNotReady) {
