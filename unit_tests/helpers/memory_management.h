@@ -64,7 +64,7 @@ struct AllocationEvent {
     void *callstack[CallStackSize];
     int fastLeakDetectionMode = 0;
 };
-enum : size_t {
+enum : int {
     maxEvents = 1024 * 1024,
     fastEvents = 1024 * 1024
 };

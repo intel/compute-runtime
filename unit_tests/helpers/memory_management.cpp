@@ -68,19 +68,27 @@ size_t breakOnDeallocationEvent = -1;
 const size_t maxAllowedAllocationSize = 128 * 1024 * 1024 + 4096;
 
 static void onAllocationEvent() {
-    //bool setBreakPointHereForLeaks = true;
-
-    if (breakOnAllocationEvent == indexAllocation.load()) {
-        //setBreakPointHereForLeaks = false;
-    }
+    /*
+    //switch to true to turn on dillignet breakpoint setting place
+    bool setBreakPointHereForLeaks = false;
+    if (setBreakPointHereForLeaks) {
+        if (breakOnAllocationEvent == indexAllocation.load()) {
+            //set breakpoint on line below
+            setBreakPointHereForLeaks = false;
+        }
+    }*/
 }
 
 static void onDeallocationEvent(void *) {
-    //bool setBreakPointHereForLeaks = true;
-
-    if (breakOnDeallocationEvent == indexDeallocation.load()) {
-        //setBreakPointHereForLeaks = false;
-    }
+    /*
+    //switch to true to turn on dillignet breakpoint setting place
+    bool setBreakPointHereForLeaks = false;
+    if (setBreakPointHereForLeaks) {
+        if (breakOnDeallocationEvent == indexDeallocation.load()) {
+            //set breakpoint on line below
+            setBreakPointHereForLeaks = false;
+        }
+    }*/
 }
 
 void (*deleteCallback)(void *) = onDeallocationEvent;
@@ -125,8 +133,9 @@ static void *allocate(size_t size) {
     numAllocations++;
 
     if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
-        fastEventsAllocated[fastEventsAllocatedCount++] = p;
-        assert(fastEventsAllocatedCount <= (int)fastEvents);
+        auto currentIndex = fastEventsAllocatedCount++;
+        fastEventsAllocated[currentIndex] = p;
+        assert(currentIndex <= fastEvents);
     }
 
     return p;
@@ -169,8 +178,9 @@ static void *allocate(size_t size, const std::nothrow_t &) {
     numAllocations += p ? 1 : 0;
 
     if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
-        fastEventsAllocated[fastEventsAllocatedCount++] = p;
-        assert(fastEventsAllocatedCount <= (int)fastEvents);
+        auto currentIndex = fastEventsAllocatedCount++;
+        fastEventsAllocated[currentIndex] = p;
+        assert(currentIndex <= fastEvents);
     }
 
     return p;
@@ -208,8 +218,9 @@ static void deallocate(void *p) {
         free(p);
 
         if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
-            fastEventsDeallocated[fastEventsDeallocatedCount++] = p;
-            ASSERT_LE(fastEventsDeallocatedCount, (int)fastEvents);
+            auto currentIndex = fastEventsDeallocatedCount++;
+            fastEventsDeallocated[currentIndex] = p;
+            assert(currentIndex <= fastEvents);
         }
     }
 }
