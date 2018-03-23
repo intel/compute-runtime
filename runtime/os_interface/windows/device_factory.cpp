@@ -22,13 +22,10 @@
 
 #ifdef _WIN32
 
-#include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/hw_helper.h"
-#include "runtime/memory_manager/memory_constants.h"
-#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm.h"
 
 namespace OCLRT {
@@ -40,39 +37,16 @@ HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     HardwareInfo *tempHwInfos = new HardwareInfo[1];
-    unsigned int devNum = 0;
+    constexpr unsigned int devNum = 0;
     numDevices = 0;
 
     if (Wddm::enumAdapters(devNum, tempHwInfos[devNum])) {
-        // Overwrite dynamic parameters
-        tempHwInfos[devNum].capabilityTable.ftrSvm = tempHwInfos[devNum].pSkuTable->ftrSVM;
+        std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
 
-        HwHelper &hwHelper = HwHelper::get(tempHwInfos[devNum].pPlatform->eRenderCoreFamily);
-
-        hwHelper.adjustDefaultEngineType(&tempHwInfos[devNum]);
-        tempHwInfos[devNum].capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
-                                                                    ? tempHwInfos[devNum].capabilityTable.defaultEngineType
-                                                                    : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
-
-        hwHelper.setCapabilityCoherencyFlag(&tempHwInfos[devNum], tempHwInfos[devNum].capabilityTable.ftrSupportsCoherency);
-
-        hwHelper.setupPreemptionRegisters(&tempHwInfos[devNum], !!tempHwInfos[devNum].pWaTable->waEnablePreemptionGranularityControlByUMD);
-        PreemptionHelper::adjustDefaultPreemptionMode(tempHwInfos[devNum].capabilityTable,
-                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuMidThreadLevelPreempt),
-                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuThreadGroupLevelPreempt),
-                                                      static_cast<bool>(tempHwInfos[devNum].pSkuTable->ftrGpGpuMidBatchPreempt));
-        tempHwInfos->capabilityTable.requiredPreemptionSurfaceSize = tempHwInfos->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
-
-        // Instrumentation
-        tempHwInfos[devNum].capabilityTable.instrumentationEnabled &= haveInstrumentation;
-
-        auto &kmdNotifyProperties = tempHwInfos[devNum].capabilityTable.kmdNotifyProperties;
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get(), kmdNotifyProperties.delayKmdNotifyMicroseconds);
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleep.get(), kmdNotifyProperties.enableQuickKmdSleep);
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.get(), kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
-        KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+        HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos->pPlatform->eProductFamily);
+        if (hwConfig->configureHwInfo(tempHwInfos, tempHwInfos, osInterface.get())) {
+            return false;
+        }
 
         numDevices = 1;
         *pHWInfos = tempHwInfos;
@@ -80,11 +54,11 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         DeviceFactory::hwInfos = tempHwInfos;
 
         return true;
+
     } else {
         delete[] tempHwInfos;
+        return false;
     }
-
-    return false;
 }
 
 void DeviceFactory::releaseDevices() {

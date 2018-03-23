@@ -20,16 +20,55 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/instrumentation/instrumentation.h"
+#include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {
 
 HwInfoConfig *hwInfoConfigFactory[IGFX_MAX_PRODUCT] = {};
 
 int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
-    return 0;
+    HwHelper &hwHelper = HwHelper::get(outHwInfo->pPlatform->eRenderCoreFamily);
+
+    outHwInfo->capabilityTable.ftrSvm = outHwInfo->pSkuTable->ftrSVM;
+
+    hwHelper.adjustDefaultEngineType(outHwInfo);
+    const auto nodeOrdinal = DebugManager.flags.NodeOrdinal.get();
+    outHwInfo->capabilityTable.defaultEngineType = nodeOrdinal == -1
+                                                       ? outHwInfo->capabilityTable.defaultEngineType
+                                                       : static_cast<EngineType>(nodeOrdinal);
+
+    hwHelper.setCapabilityCoherencyFlag(outHwInfo, outHwInfo->capabilityTable.ftrSupportsCoherency);
+
+    hwHelper.setupPreemptionRegisters(outHwInfo, outHwInfo->pWaTable->waEnablePreemptionGranularityControlByUMD);
+    PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
+                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidThreadLevelPreempt),
+                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuThreadGroupLevelPreempt),
+                                                  static_cast<bool>(outHwInfo->pSkuTable->ftrGpGpuMidBatchPreempt));
+    outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
+
+    outHwInfo->capabilityTable.instrumentationEnabled &= haveInstrumentation;
+
+    auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideKmdNotifyDelayMicroseconds.get(), kmdNotifyProperties.delayKmdNotifyMicroseconds);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleep.get(), kmdNotifyProperties.enableQuickKmdSleep);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideQuickKmdSleepDelayMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForSporadicWaits.get(), kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    KmdNotifyProperties::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
+
+    // Product specific config
+    int ret = configureHardwareCustom(outHwInfo, osIface);
+    if (ret != 0) {
+        memset(outHwInfo, 0, sizeof(HardwareInfo));
+    }
+    return ret;
 }
 
 } // namespace OCLRT

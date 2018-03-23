@@ -40,10 +40,10 @@ HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     std::vector<HardwareInfo> tHwInfos;
-    int retVal;
     unsigned int devNum = 0;
     Drm *drm = nullptr;
     std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+
     while ((drm = Drm::create(devNum)) != nullptr) {
         const HardwareInfo *pCurrDevice = platformDevices[devNum];
 
@@ -53,8 +53,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         osInterface.get()->get()->setDrm(drm);
 
         HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform->eProductFamily);
-        retVal = hwConfig->configureHwInfo(pCurrDevice, &tmpHwInfo, osInterface.get());
-        if (retVal != 0) {
+        if (hwConfig->configureHwInfo(pCurrDevice, &tmpHwInfo, osInterface.get())) {
             return false;
         }
         tHwInfos.push_back(tmpHwInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,32 +22,23 @@
 
 #pragma once
 
-#include "runtime/os_interface/os_interface.h"
-#include "runtime/os_interface/windows/windows_wrapper.h"
+#include "runtime/os_interface/hw_info_config.h"
 
-#include <d3dkmthk.h>
-#include "profileapi.h"
-#include "umKmInc/sharedata.h"
+#include "unit_tests/os_interface/hw_info_config_tests.h"
+
+#include <memory>
 
 namespace OCLRT {
-class Wddm;
 
-class OSInterface::OSInterfaceImpl {
-  public:
-    OSInterfaceImpl();
-    virtual ~OSInterfaceImpl() = default;
-    Wddm *getWddm() const;
-    void setWddm(Wddm *wddm);
-    D3DKMT_HANDLE getAdapterHandle() const;
-    D3DKMT_HANDLE getDeviceHandle() const;
-    PFND3DKMT_ESCAPE getEscapeHandle() const;
-    uint32_t getHwContextId() const;
-
-    MOCKABLE_VIRTUAL HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,
-                                        LPCSTR lpName);
-    MOCKABLE_VIRTUAL BOOL closeHandle(HANDLE hObject);
-
-  protected:
-    Wddm *wddm;
+struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
 };
+
+struct HwInfoConfigTestWindows : public HwInfoConfigTest {
+    void SetUp() override;
+    void TearDown() override;
+
+    std::unique_ptr<OSInterface> osInterface;
+    DummyHwConfig hwConfig;
+};
+
 } // namespace OCLRT

@@ -20,9 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "os_interface.h"
+
 #include "runtime/os_interface/windows/wddm.h"
 #include "runtime/os_interface/windows/sys_calls.h"
-#include "os_interface.h"
 
 namespace OCLRT {
 
