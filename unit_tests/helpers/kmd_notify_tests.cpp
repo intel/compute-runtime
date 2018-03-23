@@ -165,6 +165,8 @@ HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrid
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_, expectedDelay, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
+    auto now = std::chrono::high_resolution_clock::now();
+    csr->lastWaitForCompletionTimestamp = now - std::chrono::hours(24);
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false);
 }
 
