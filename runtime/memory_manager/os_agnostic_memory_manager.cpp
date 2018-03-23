@@ -186,7 +186,9 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 }
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     auto alloc = allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
-    alloc->gmm = gmm;
+    if (alloc) {
+        alloc->gmm = gmm;
+    }
 
     return alloc;
 }

@@ -431,27 +431,28 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(GmmTestConst::imgTypes));
 
 TEST_P(GmmImgTest, updateImgInfo) {
+    struct MyMockGmmResourceInfo : MockGmmResourceInfo {
+        MyMockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) : MockGmmResourceInfo(resourceCreateParams) {}
+        GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override {
+            givenReqInfo[getOffsetCalled] = reqOffsetInfo;
+            getOffsetCalled++;
+            return MockGmmResourceInfo::getOffset(reqOffsetInfo);
+        }
+
+        uint32_t getOffsetCalled = 0u;
+        GMM_REQ_OFFSET_INFO givenReqInfo[2] = {};
+    };
+
     ImageInfo updateImgInfo = {};
     cl_image_desc updateImgDesc = {};
     updateImgInfo.imgDesc = &updateImgDesc;
     updateImgInfo.plane = GMM_YUV_PLANE::GMM_PLANE_U;
-
-    GMM_REQ_OFFSET_INFO givenReqInfo[2] = {};
 
     uint32_t expectCalls = 1u;
     GMM_REQ_OFFSET_INFO expectedReqInfo[2] = {};
     expectedReqInfo[0].ReqLock = 1;
     expectedReqInfo[1].ReqRender = 1;
     expectedReqInfo[1].Plane = updateImgInfo.plane;
-
-    uint32_t callsCounter = 0u;
-    auto invokeParamCopy = [&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        EXPECT_TRUE(callsCounter < 2);
-        givenReqInfo[callsCounter] = reqOffsetInfo;
-        reqOffsetInfo.Lock.Offset = 1;
-        callsCounter++;
-        return GMM_SUCCESS;
-    };
 
     cl_image_desc imgDesc{};
     imgDesc.image_type = GetParam();
@@ -481,10 +482,12 @@ TEST_P(GmmImgTest, updateImgInfo) {
 
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
-    auto mockResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(queryGmm->gmmResourceInfo.get());
 
-    EXPECT_CALL(*mockResInfo, getOffset(_)).Times(expectCalls).WillRepeatedly(Invoke(invokeParamCopy));
+    auto mockResInfo = new NiceMock<MyMockGmmResourceInfo>(&queryGmm->resourceParams);
+    queryGmm->gmmResourceInfo.reset(mockResInfo);
+
     queryGmm->updateImgInfo(updateImgInfo, updateImgDesc, arrayIndex);
+    EXPECT_EQ(expectCalls, mockResInfo->getOffsetCalled);
 
     EXPECT_EQ(imgDesc.image_width, updateImgDesc.image_width);
     EXPECT_EQ(imgDesc.image_height, updateImgDesc.image_height);
@@ -494,10 +497,10 @@ TEST_P(GmmImgTest, updateImgInfo) {
     EXPECT_GT(updateImgDesc.image_slice_pitch, 0u);
 
     if (expectCalls == 1) {
-        EXPECT_TRUE(memcmp(&expectedReqInfo[1], &givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
+        EXPECT_TRUE(memcmp(&expectedReqInfo[1], &mockResInfo->givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
     } else if (expectCalls == 2u) {
-        EXPECT_TRUE(memcmp(&expectedReqInfo[0], &givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
-        EXPECT_TRUE(memcmp(&expectedReqInfo[1], &givenReqInfo[1], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
+        EXPECT_TRUE(memcmp(&expectedReqInfo[0], &mockResInfo->givenReqInfo[0], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
+        EXPECT_TRUE(memcmp(&expectedReqInfo[1], &mockResInfo->givenReqInfo[1], sizeof(GMM_REQ_OFFSET_INFO)) == 0);
     } else {
         EXPECT_TRUE(false);
     }

@@ -153,11 +153,6 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         return 0;
     }
 
-    GMM_STATUS invokeArrayIndexCopy(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        arrayIndex = reqOffsetInfo.ArrayIndex;
-        return GMM_SUCCESS;
-    }
-
     cl_mem createFromD3DBufferApi(cl_context context, cl_mem_flags flags, ID3D10Buffer *resource, cl_int *errcodeRet) {
         return clCreateFromD3D10BufferKHR(context, flags, resource, errcodeRet);
     }
@@ -219,7 +214,6 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     MockMM mockMM;
 
     uint8_t d3dMode = 0;
-    uint32_t arrayIndex = 0;
 };
 
 TYPED_TEST_CASE_P(D3DTests);
@@ -342,16 +336,13 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndEvenPlaneWhen2dCreatedThenSetPlaneParam
         .Times(1)
         .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
 
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
-
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(2u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(2u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 }
 
 TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams) {
@@ -359,16 +350,14 @@ TYPED_TEST_P(D3DTests, givenNV12FormatAndOddPlaneWhen2dCreatedThenSetPlaneParams
     EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _))
         .Times(1)
         .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
 
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 7, nullptr));
     ASSERT_NE(nullptr, image.get());
 
     auto expectedFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
     EXPECT_TRUE(memcmp(expectedFormat, &image->getSurfaceFormatInfo(), sizeof(SurfaceFormatInfo)) == 0);
-    EXPECT_EQ(3u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(3u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 }
 
 TYPED_TEST_P(D3DTests, createFromD3D2dTextureKHRApi) {
@@ -382,14 +371,12 @@ TYPED_TEST_P(D3DTests, createFromD3D2dTextureKHRApi) {
         .Times(1);
     EXPECT_CALL(*this->mockSharingFcns, getSharedNTHandle(_, _))
         .Times(0);
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
 
     auto memObj = this->createFromD3DTexture2DApi(this->context, CL_MEM_READ_WRITE, (D3DTexture2d *)&this->dummyD3DTexture, 1, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     auto image = castToObject<Image>(memObj);
     ASSERT_NE(nullptr, image);
@@ -416,14 +403,12 @@ TYPED_TEST_P(D3DTests, createFromD3D3dTextureKHRApi) {
     EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _))
         .Times(1)
         .WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
 
     auto memObj = this->createFromD3DTexture3DApi(this->context, CL_MEM_READ_WRITE, (D3DTexture3d *)&this->dummyD3DTexture, 1, &retVal);
     ASSERT_NE(nullptr, memObj);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     auto image = castToObject<Image>(memObj);
     ASSERT_NE(nullptr, image);

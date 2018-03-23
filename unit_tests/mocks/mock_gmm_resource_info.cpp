@@ -58,21 +58,24 @@ void MockGmmResourceInfo::setupDefaultActions() {
     size *= mockResourceCreateParams.Depth ? static_cast<size_t>(mockResourceCreateParams.Depth) : 1;
     size *= mockResourceCreateParams.ArraySize ? static_cast<size_t>(mockResourceCreateParams.ArraySize) : 1;
     size = alignUp(size, MemoryConstants::pageSize);
+}
 
-    ON_CALL(*this, getOffset(_)).WillByDefault(Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        reqOffsetInfo.Lock.Offset = 16;
-        reqOffsetInfo.Lock.Pitch = 2;
-        reqOffsetInfo.Render.YOffset = 1;
-        if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12) {
-            reqOffsetInfo.Render.XOffset = 32;
-            reqOffsetInfo.Render.Offset = 64;
-        }
-        if (reqOffsetInfo.Slice == 1) {
-            reqOffsetInfo.Render.YOffset = mockResourceCreateParams.BaseHeight;
-        }
+GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
+    arrayIndexPassedToGetOffset = reqOffsetInfo.ArrayIndex;
+    getOffsetCalled++;
 
-        return GMM_SUCCESS;
-    }));
+    reqOffsetInfo.Lock.Offset = 16;
+    reqOffsetInfo.Lock.Pitch = 2;
+    reqOffsetInfo.Render.YOffset = 1;
+    if (mockResourceCreateParams.Format == GMM_RESOURCE_FORMAT::GMM_FORMAT_NV12) {
+        reqOffsetInfo.Render.XOffset = 32;
+        reqOffsetInfo.Render.Offset = 64;
+    }
+    if (reqOffsetInfo.Slice == 1) {
+        reqOffsetInfo.Render.YOffset = mockResourceCreateParams.BaseHeight;
+    }
+
+    return GMM_SUCCESS;
 }
 
 void MockGmmResourceInfo::computeRowPitch() {

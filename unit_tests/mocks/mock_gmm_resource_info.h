@@ -34,7 +34,7 @@ struct SurfaceFormatInfo;
 
 class MockGmmResourceInfo : public GmmResourceInfo {
   public:
-    ~MockGmmResourceInfo();
+    virtual ~MockGmmResourceInfo();
 
     MockGmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams);
 
@@ -72,7 +72,7 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     GMM_RESOURCE_FLAG *getResourceFlags() override { return &mockResourceCreateParams.Flags; }
 
-    MOCK_METHOD1(getOffset, GMM_STATUS(GMM_REQ_OFFSET_INFO &reqOffsetInfo));
+    GMM_STATUS getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) override;
 
     MOCK_METHOD1(cpuBlt, uint8_t(GMM_RES_COPY_BLT *resCopyBlt));
 
@@ -92,6 +92,9 @@ class MockGmmResourceInfo : public GmmResourceInfo {
     void overrideReturnedRenderPitch(size_t newPitch) { rowPitch = newPitch; }
 
     void setUnifiedAuxTranslationCapable();
+
+    uint32_t getOffsetCalled = 0u;
+    uint32_t arrayIndexPassedToGetOffset = 0;
 
   protected:
     MockGmmResourceInfo();

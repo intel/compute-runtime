@@ -120,11 +120,6 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         delete dbgRestore;
     }
 
-    GMM_STATUS invokeArrayIndexCopy(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        arrayIndex = reqOffsetInfo.ArrayIndex;
-        return GMM_SUCCESS;
-    }
-
     NiceMock<MockD3DSharingFunctions<D3D9>> *mockSharingFcns;
     MockContext *context;
     MockCommandQueue *cmdQ;
@@ -136,8 +131,6 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     Gmm *gmm = nullptr;
     NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
     NiceMock<MockMM> mockMM;
-
-    uint32_t arrayIndex = 0;
 };
 
 TEST_F(D3D9Tests, givenD3DDeviceParamWhenContextCreationThenSetProperValues) {
@@ -189,10 +182,10 @@ TEST_F(D3D9Tests, createSurface) {
 
     EXPECT_CALL(*mockSharingFcns, updateDevice((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(0);
 
     auto memObj = clCreateFromDX9MediaSurfaceKHR(context, CL_MEM_READ_WRITE, 0, &surfaceInfo, 0, &retVal);
     ASSERT_NE(nullptr, memObj);
+    EXPECT_EQ(0u, mockGmmResInfo->getOffsetCalled);
 
     auto image = castToObject<Image>(memObj);
     EXPECT_NE(nullptr, image->getSharingHandler());
@@ -475,15 +468,13 @@ TEST_F(D3D9Tests, givenSharedHandleWhenCreateThenDontCreateStagingSurface) {
 
     ::testing::InSequence is;
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
     EXPECT_CALL(*mockSharingFcns, createTexture2d(_, _, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, addRef(_)).Times(1);
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
-    EXPECT_EQ(0u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
 
     auto surface = static_cast<D3DSurface *>(sharedImg->getSharingHandler().get());
     EXPECT_TRUE(surface->isSharedResource());
@@ -496,11 +487,11 @@ TEST_F(D3D9Tests, givenZeroSharedHandleAndLockableFlagWhenCreateThenDontCreateSt
 
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, createTexture2d(_, _, _)).Times(0);
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, addRef(_)).Times(1);
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    EXPECT_EQ(0u, mockGmmResInfo->getOffsetCalled);
 
     auto surface = static_cast<D3DSurface *>(sharedImg->getSharingHandler().get());
     EXPECT_FALSE(surface->isSharedResource());
@@ -514,11 +505,11 @@ TEST_F(D3D9Tests, givenZeroSharedHandleAndNonLockableFlagWhenCreateThenCreateSta
 
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, createTexture2d(_, _, _)).Times(1).WillOnce(SetArgPointee<0>((D3DTexture2d *)&dummyD3DSurfaceStaging));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(0);
     EXPECT_CALL(*mockSharingFcns, addRef(_)).Times(1);
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    EXPECT_EQ(0u, mockGmmResInfo->getOffsetCalled);
 
     auto surface = static_cast<D3DSurface *>(sharedImg->getSharingHandler().get());
     EXPECT_FALSE(surface->isSharedResource());
@@ -533,9 +524,6 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndEnabledInteropUserSync
     ::testing::InSequence is;
     EXPECT_CALL(*mockSharingFcns, updateDevice((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1).WillRepeatedly(::testing::Invoke([&](GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
-        return invokeArrayIndexCopy(reqOffsetInfo);
-    }));
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect(_, _, _)).Times(0);
     EXPECT_CALL(mockMM, lockResource(_)).Times(0);
@@ -547,7 +535,8 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndEnabledInteropUserSync
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg);
-    EXPECT_EQ(0u, arrayIndex);
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
+    EXPECT_EQ(0u, mockGmmResInfo->arrayIndexPassedToGetOffset);
     cl_mem clMem = sharedImg.get();
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
@@ -564,7 +553,6 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
     ::testing::InSequence is;
     EXPECT_CALL(*mockSharingFcns, updateDevice((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getRenderTargetData(_, _)).Times(0);
     EXPECT_CALL(*mockSharingFcns, lockRect(_, _, _)).Times(0);
     EXPECT_CALL(mockMM, lockResource(_)).Times(0);
@@ -576,6 +564,7 @@ TEST_F(D3D9Tests, acquireReleaseOnSharedResourceSurfaceAndDisabledInteropUserSyn
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    EXPECT_EQ(1u, mockGmmResInfo->getOffsetCalled);
     cl_mem clMem = sharedImg.get();
 
     auto retVal = clEnqueueAcquireDX9MediaSurfacesKHR(cmdQ, 1, &clMem, 0, nullptr, nullptr);
@@ -620,10 +609,10 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndLockable) {
     ::testing::InSequence is;
     EXPECT_CALL(*mockSharingFcns, updateDevice((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(0);
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    EXPECT_EQ(0u, mockGmmResInfo->getOffsetCalled);
     cl_mem clMem = sharedImg.get();
     auto imgHeight = static_cast<ULONG>(sharedImg->getImageDesc().image_height);
     void *returnedLockedRes = (void *)100;
@@ -726,10 +715,10 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndNonLockable) {
     EXPECT_CALL(*mockSharingFcns, updateDevice((IDirect3DSurface9 *)&dummyD3DSurface)).Times(1);
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
     EXPECT_CALL(*mockSharingFcns, createTexture2d(_, _, _)).Times(1).WillOnce(SetArgPointee<0>((D3DTexture2d *)&dummyD3DSurfaceStaging));
-    EXPECT_CALL(*mockGmmResInfo, getOffset(_)).Times(0);
 
     auto sharedImg = std::unique_ptr<Image>(D3DSurface::create(context, &surfaceInfo, CL_MEM_READ_WRITE, 0, 0, nullptr));
     ASSERT_NE(nullptr, sharedImg.get());
+    EXPECT_EQ(0u, mockGmmResInfo->getOffsetCalled);
     cl_mem clMem = sharedImg.get();
     auto imgHeight = static_cast<ULONG>(sharedImg->getImageDesc().image_height);
     void *returnedLockedRes = (void *)100;
