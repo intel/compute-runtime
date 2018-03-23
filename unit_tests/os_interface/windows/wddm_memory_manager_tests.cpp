@@ -2047,3 +2047,20 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUn
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
+
+HWTEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenPopulateOsHandlesReturnsInvalidPointer) {
+    SetUpMm<FamilyType>();
+    OsHandleStorage handleStorage;
+    handleStorage.fragmentCount = 1;
+    handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    handleStorage.fragmentStorageData[0].fragmentSize = 0x1000;
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+
+    EXPECT_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillOnce(::testing::Return(STATUS_GRAPHICS_NO_VIDEO_MEMORY));
+
+    auto result = memoryManager->populateOsHandles(handleStorage);
+
+    EXPECT_EQ(MemoryManager::AllocationStatus::InvalidHostPointer, result);
+    handleStorage.fragmentStorageData[0].freeTheFragment = true;
+    memoryManager->cleanOsHandles(handleStorage);
+}

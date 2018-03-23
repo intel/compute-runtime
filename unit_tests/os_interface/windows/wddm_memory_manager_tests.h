@@ -125,8 +125,12 @@ class GmockWddm : public Wddm {
         return tmp;
     }
     uintptr_t virtualAllocAddress;
-
     MOCK_METHOD4(makeResident, bool(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim));
+    MOCK_METHOD1(createAllocationsAndMapGpuVa, NTSTATUS(OsHandleStorage &osHandles));
+
+    NTSTATUS baseCreateAllocationAndMapGpuVa(OsHandleStorage &osHandles) {
+        return Wddm::createAllocationsAndMapGpuVa(osHandles);
+    }
 };
 
 class WddmMemoryManagerFixtureWithGmockWddm {
@@ -145,6 +149,8 @@ class WddmMemoryManagerFixtureWithGmockWddm {
         memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
+
+        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm, &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
     void TearDown() {
         delete memoryManager;

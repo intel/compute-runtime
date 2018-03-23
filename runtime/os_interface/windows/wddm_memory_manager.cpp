@@ -347,7 +347,11 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
         }
     }
-    wddm->createAllocationsAndMapGpuVa(handleStorage);
+    NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
+
+    if (result == STATUS_GRAPHICS_NO_VIDEO_MEMORY) {
+        return AllocationStatus::InvalidHostPointer;
+    }
     return AllocationStatus::Success;
 }
 

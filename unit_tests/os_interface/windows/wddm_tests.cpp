@@ -1075,3 +1075,33 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturn
     EXPECT_FALSE(ret);
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }
+
+HWTEST_F(WddmWithMockGdiTest, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemoryThenCorrectStatusIsReturned) {
+    class MockCreateAllocation {
+      public:
+        static NTSTATUS APIENTRY mockCreateAllocation(D3DKMT_CREATEALLOCATION *param) {
+            return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+        };
+    };
+    Gdi *gdi = wddm->getGdi();
+    gdi->createAllocation = MockCreateAllocation::mockCreateAllocation;
+    wddm->init<FamilyType>();
+
+    OsHandleStorage handleStorage;
+    OsHandle handle = {0};
+    ResidencyData residency;
+
+    handleStorage.fragmentCount = 1;
+    handleStorage.fragmentStorageData[0].cpuPtr = (void *)0x1000;
+    handleStorage.fragmentStorageData[0].fragmentSize = 0x1000;
+    handleStorage.fragmentStorageData[0].freeTheFragment = false;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &handle;
+    handleStorage.fragmentStorageData[0].residency = &residency;
+    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = getGmm(nullptr, 0);
+
+    NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
+
+    EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, result);
+
+    releaseGmm(handleStorage.fragmentStorageData[0].osHandleStorage->gmm);
+}

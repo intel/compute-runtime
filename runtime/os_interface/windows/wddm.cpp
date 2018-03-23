@@ -516,11 +516,10 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
     return true;
 }
 
-bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
-    NTSTATUS status = STATUS_SUCCESS;
+NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
+    NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DDDI_ALLOCATIONINFO AllocationInfo[max_fragments_count] = {{0}};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
-    bool success = false;
 
     auto allocationCount = 0;
     for (unsigned int i = 0; i < max_fragments_count; i++) {
@@ -538,8 +537,9 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             allocationCount++;
         }
     }
-    if (allocationCount == 0)
-        return true;
+    if (allocationCount == 0) {
+        return STATUS_SUCCESS;
+    }
 
     CreateAllocation.hGlobalShare = 0;
     CreateAllocation.PrivateRuntimeDataSize = 0;
@@ -555,7 +555,7 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     CreateAllocation.pAllocationInfo = AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    while (!success) {
+    while (status == STATUS_UNSUCCESSFUL) {
         status = gdi->createAllocation(&CreateAllocation);
 
         if (status != STATUS_SUCCESS) {
@@ -569,7 +569,7 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
                 allocationIndex++;
             }
             osHandles.fragmentStorageData[allocationIndex].osHandleStorage->handle = AllocationInfo[i].hAllocation;
-            success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex], false, false);
+            bool success = mapGpuVirtualAddress(&osHandles.fragmentStorageData[allocationIndex], false, false);
             allocationIndex++;
 
             if (!success) {
@@ -581,9 +581,9 @@ bool Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
             kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, AllocationInfo[i].hAllocation, gdi->escape);
         }
 
-        success = true;
+        status = STATUS_SUCCESS;
     }
-    return success;
+    return status;
 }
 
 bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle) {
