@@ -96,6 +96,35 @@ void GLK_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
     gtSysInfo->IsDynamicallyPopulated = false;
 };
 
+const HardwareInfo GLK_1x2x6::hwInfo = {
+    &GLK::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &GLK_1x2x6::gtSystemInfo,
+    GLK::capabilityTable,
+};
+GT_SYSTEM_INFO GLK_1x2x6::gtSystemInfo = {0};
+void GLK_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 12;
+    gtSysInfo->ThreadCount = 12 * GLK::threadsPerEu;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->SubSliceCount = 2;
+    gtSysInfo->L3CacheSizeInKb = 384;
+    gtSysInfo->L3BankCount = 2;
+    gtSysInfo->MaxFillRate = 8;
+    gtSysInfo->TotalVsThreads = 112;
+    gtSysInfo->TotalHsThreads = 112;
+    gtSysInfo->TotalDsThreads = 112;
+    gtSysInfo->TotalGsThreads = 112;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = GLK::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = GLK::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = GLK::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+
 const HardwareInfo GLK::hwInfo = GLK_1x3x6::hwInfo;
 void (*GLK::setupGtSystemInfo)(GT_SYSTEM_INFO *) = GLK_1x3x6::setupGtSystemInfo;
 } // namespace OCLRT

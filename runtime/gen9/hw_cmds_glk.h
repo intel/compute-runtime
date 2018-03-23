@@ -46,4 +46,13 @@ class GLK_1x3x6 : public GLK {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
+
+class GLK_1x2x6 : public GLK {
+  public:
+    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static const HardwareInfo hwInfo;
+
+  private:
+    static GT_SYSTEM_INFO gtSystemInfo;
+};
 } // namespace OCLRT

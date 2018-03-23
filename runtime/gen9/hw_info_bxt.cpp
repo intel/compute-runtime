@@ -113,7 +113,7 @@ void BXT_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
-    gtSysInfo->SubSliceCount = 6;
+    gtSysInfo->SubSliceCount = 3;
     gtSysInfo->L3CacheSizeInKb = 384;
     gtSysInfo->L3BankCount = 1;
     gtSysInfo->MaxFillRate = 8;

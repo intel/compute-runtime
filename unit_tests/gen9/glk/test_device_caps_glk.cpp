@@ -57,20 +57,18 @@ GLKTEST_F(Gen9DeviceCaps, GlkIs32BitOsAllocatorAvailable) {
 typedef Test<DeviceFixture> GlkUsDeviceIdTest;
 
 GLKTEST_F(GlkUsDeviceIdTest, isSimulationCap) {
-#ifdef IGLK_GT2_ULT_18EU_DEVICE_F0_ID
     unsigned short glkSimulationIds[3] = {
         IGLK_GT2_ULT_18EU_DEVICE_F0_ID,
+        IGLK_GT2_ULT_12EU_DEVICE_F0_ID,
         0, // default, non-simulation
     };
     OCLRT::MockDevice *mockDevice = nullptr;
-
     for (auto id : glkSimulationIds) {
         mockDevice = createWithUsDeviceId(id);
         ASSERT_NE(mockDevice, nullptr);
         EXPECT_FALSE(mockDevice->isSimulation());
         delete mockDevice;
     }
-#endif
 }
 
 GLKTEST_F(GlkUsDeviceIdTest, GivenGLKWhenCheckftr64KBpagesThenFalse) {

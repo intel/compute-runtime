@@ -26,7 +26,6 @@
 using namespace OCLRT;
 using namespace std;
 
-#if defined IGLK_GT2_ULT_12EU_DEVICE_F0_ID
 struct HwInfoConfigTestLinuxGlk : HwInfoConfigTestLinux {
     void SetUp() override {
         HwInfoConfigTestLinux::SetUp();
@@ -109,7 +108,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
 
     ReleaseOutHwInfoStructs();
 
-    drm->StoredDeviceID = IGLK_GT2_ULT_18EU_DEVICE_F0_ID;
+    drm->StoredDeviceID = IGLK_GT2_ULT_12EU_DEVICE_F0_ID;
     drm->setGtType(GTTYPE_GTX); //IGLK_GT2_ULT_18EU_DEVICE_F0_ID is GTA, but fot test sake make it GTX
     drm->StoredMinEUinPool = 9;
     ret = hwInfoConfig->configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
@@ -255,7 +254,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoWaFlags) {
 template <typename T>
 class GlkHwInfoTests : public ::testing::Test {
 };
-typedef ::testing::Types<GLK_1x3x6> glkTestTypes;
+typedef ::testing::Types<GLK_1x3x6, GLK_1x2x6> glkTestTypes;
 TYPED_TEST_CASE(GlkHwInfoTests, glkTestTypes);
 TYPED_TEST(GlkHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
@@ -269,4 +268,3 @@ TYPED_TEST(GlkHwInfoTests, gtSetupIsCorrect) {
     EXPECT_EQ(gtSystemInfo.CsrSizeInMb, 8u);
     EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
 }
-#endif
