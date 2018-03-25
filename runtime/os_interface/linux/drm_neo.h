@@ -39,6 +39,9 @@ namespace OCLRT {
 
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
+#define I915_EXEC_DATA_PORT_COHERENT (1 << 20)
+#define I915_PARAM_HAS_EXEC_DATA_PORT_COHERENCY 52
+
 class DeviceFactory;
 struct HardwareInfo;
 
@@ -74,8 +77,10 @@ class Drm {
     bool is48BitAddressRangeSupported();
     MOCKABLE_VIRTUAL bool hasPreemption();
     bool setLowPriority();
-    bool peekCoherencyDisablePatchActive() { return coherencyDisablePatchActive; }
+    bool peekCoherencyDisablePatchActive() const { return coherencyDisablePatchActive; }
+    bool peekDataPortCoherencyPatchActive() const { return dataPortCoherencyPatchActive; }
     virtual void obtainCoherencyDisablePatchActive();
+    MOCKABLE_VIRTUAL void obtainDataPortCoherencyPatchActive();
     int getFileDescriptor() const { return fd; }
     bool contextCreate();
     void contextDestroy();
@@ -90,6 +95,7 @@ class Drm {
     int revisionId;
     GTTYPE eGtType;
     bool coherencyDisablePatchActive = false;
+    bool dataPortCoherencyPatchActive = false;
     Drm(int fd) : lowPriorityContextId(0), fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
     virtual ~Drm();
 
