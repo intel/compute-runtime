@@ -91,6 +91,14 @@ int HwInfoConfigHw<IGFX_GEMINILAKE>::configureHardwareCustom(HardwareInfo *hwInf
         pSysInfo->EuCountPerPoolMax = pSysInfo->EUCount - pSysInfo->EuCountPerPoolMin;
     }
 
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.enableQuickKmdSleep = true;
+    kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
+    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 500;
+    kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
+
     return 0;
 }
 } // namespace OCLRT

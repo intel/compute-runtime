@@ -76,6 +76,15 @@ int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInf
         hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
     }
+
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.enableQuickKmdSleep = true;
+    kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
+    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 500;
+    kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
+
     return 0;
 }
 

@@ -85,6 +85,15 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
         hwInfo->pPlatform->usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
     }
+
+    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
+    kmdNotifyProperties.enableKmdNotify = true;
+    kmdNotifyProperties.enableQuickKmdSleep = true;
+    kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = true;
+    kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
+    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 500;
+    kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
+
     return 0;
 }
 

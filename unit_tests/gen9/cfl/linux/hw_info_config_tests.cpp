@@ -121,6 +121,14 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfo) {
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTA);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTC);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGTX);
+
+    auto &outKmdNotifyProperties = outHwInfo.capabilityTable.kmdNotifyProperties;
+    EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
+    EXPECT_EQ(50000, outKmdNotifyProperties.delayKmdNotifyMicroseconds);
+    EXPECT_TRUE(outKmdNotifyProperties.enableQuickKmdSleep);
+    EXPECT_EQ(500, outKmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    EXPECT_TRUE(outKmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
+    EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
 
 CFLTEST_F(HwInfoConfigTestLinuxCfl, negativeUnknownDevId) {
