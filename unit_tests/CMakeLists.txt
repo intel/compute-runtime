@@ -318,6 +318,7 @@ set(TEST_KERNELS
   test_files/CopyBuffer_simd32.cl
   test_files/CopyBuffer_simd8.cl
   test_files/copybuffer_with_header.cl
+  test_files/emptykernel.cl
   test_files/kernel_data_param.cl
   test_files/kernel_num_args.cl
   test_files/media_kernels_backend.cl

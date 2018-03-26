@@ -488,6 +488,27 @@ TEST(OfflineCompilerTest, buildSourceCode) {
     EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
 }
 
+TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuccess) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    auto retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
+
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/emptykernel.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = mockOfflineCompiler->buildSourceCode();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
 TEST(OfflineCompilerTest, generateElfBinary) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
