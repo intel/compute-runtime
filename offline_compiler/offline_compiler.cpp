@@ -290,30 +290,23 @@ int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
 
     if (options.empty()) {
         // try to read options from file if not provided by commandline
-        std::string optionsFileName = inputFile;
-        size_t ext_start = optionsFileName.find(".cl");
+        size_t ext_start = inputFile.find(".cl");
         if (ext_start != std::string::npos) {
-            optionsFileName.replace(ext_start, strlen(".cl"), "_options.txt");
-            void *pOptions = nullptr;
-            size_t optionsSize = loadDataFromFile(optionsFileName.c_str(), pOptions);
-            if (optionsSize > 0) {
-                options = (char *)pOptions;
-                // Remove comment containing copyright header
-                size_t commentBegin = options.find_first_of("/*");
-                size_t commentEnd = options.find_last_of("*/");
-                if (commentBegin != std::string::npos && commentEnd != std::string::npos) {
-                    options = options.replace(commentBegin, commentEnd - commentBegin + 1, "");
-                    size_t optionsBegin = options.find_first_not_of(" \t\n\r");
-                    if (optionsBegin != std::string::npos) {
-                        options = options.substr(optionsBegin, options.length());
-                    }
-                }
-                auto trimPos = options.find_last_not_of(" \n\r");
-                options = options.substr(0, trimPos + 1);
-                if (!isQuiet())
-                    printf("Building with options:\n%s\n", options.c_str());
+            std::string optionsFileName = inputFile.substr(0, ext_start);
+            optionsFileName.append("_options.txt");
+
+            bool optionsRead = readOptionsFromFile(options, optionsFileName);
+            if (optionsRead && !isQuiet()) {
+                printf("Building with options:\n%s\n", options.c_str());
             }
-            deleteDataReadFromFile(pOptions);
+
+            std::string internalOptionsFileName = inputFile.substr(0, ext_start);
+            internalOptionsFileName.append("_internal_options.txt");
+
+            bool internalOptionsRead = readOptionsFromFile(internalOptions, internalOptionsFileName);
+            if (internalOptionsRead && !isQuiet()) {
+                printf("Building with internal options:\n%s\n", internalOptions.c_str());
+            }
         }
     }
 
@@ -814,4 +807,30 @@ void OfflineCompiler::writeOutAllFiles() {
             elfBinarySize);
     }
 }
+
+bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::string &file) {
+    if (!fileExists(file)) {
+        return false;
+    }
+    void *pOptions = nullptr;
+    size_t optionsSize = loadDataFromFile(file.c_str(), pOptions);
+    if (optionsSize > 0) {
+        // Remove comment containing copyright header
+        options = (char *)pOptions;
+        size_t commentBegin = options.find_first_of("/*");
+        size_t commentEnd = options.find_last_of("*/");
+        if (commentBegin != std::string::npos && commentEnd != std::string::npos) {
+            options = options.replace(commentBegin, commentEnd - commentBegin + 1, "");
+            size_t optionsBegin = options.find_first_not_of(" \t\n\r");
+            if (optionsBegin != std::string::npos) {
+                options = options.substr(optionsBegin, options.length());
+            }
+        }
+        auto trimPos = options.find_last_not_of(" \n\r");
+        options = options.substr(0, trimPos + 1);
+    }
+    deleteDataReadFromFile(pOptions);
+    return true;
+}
+
 } // namespace OCLRT

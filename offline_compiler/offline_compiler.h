@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,6 +57,7 @@ class OfflineCompiler {
     }
 
     std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &deviceName, std::string &fileName);
+    static bool readOptionsFromFile(std::string &optionsOut, const std::string &file);
 
   protected:
     OfflineCompiler();

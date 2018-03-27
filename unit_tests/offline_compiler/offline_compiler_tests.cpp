@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -650,6 +650,45 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
 
     std::string internalOptions = mockOfflineCompiler->getInternalOptions();
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("myInternalOptions")));
+}
+
+TEST(OfflineCompilerTest, givenInputOtpionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    ASSERT_TRUE(fileExists("test_files/shouldfail_options.txt"));
+    ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
+
+    const char *argv[] = {
+        "cloc",
+        "-q",
+        "-file",
+        "test_files/shouldfail.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto &options = mockOfflineCompiler->getOptions();
+    auto &internalOptions = mockOfflineCompiler->getInternalOptions();
+    EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
+    EXPECT_STREQ(internalOptions.c_str(), "-shouldfailInternalOptions");
+
+    mockOfflineCompiler->build();
+
+    EXPECT_STREQ(options.c_str(), "-shouldfailOptions");
+    EXPECT_STREQ(internalOptions.c_str(), "-shouldfailInternalOptions");
+}
+
+TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadOptionsFromFileReturnsFalse) {
+    std::string options;
+    std::string file("non_existing_file");
+    ASSERT_FALSE(fileExists(file.c_str()));
+
+    bool result = OfflineCompiler::readOptionsFromFile(options, file);
+
+    EXPECT_FALSE(result);
 }
 
 } // namespace OCLRT
