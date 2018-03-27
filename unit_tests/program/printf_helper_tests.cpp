@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -747,6 +747,12 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
     storeData(PRINTF_DATA_TYPE::POINTER);
     // channel count
     storeData(reinterpret_cast<void *>(&temp));
+
+    // on 32bit configurations add extra 4 bytes when storing pointers, IGC always stores pointers on 8 bytes
+    if (!is64bit) {
+        uint32_t padding = 0;
+        storeData(padding);
+    }
 
     char actualOutput[PrintFormatter::maxPrintfOutputLength];
     char referenceOutput[PrintFormatter::maxPrintfOutputLength];

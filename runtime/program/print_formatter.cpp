@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,6 +119,7 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
 
 size_t PrintFormatter::printToken(char *output, size_t size, const char *formatString) {
     PRINTF_DATA_TYPE type(PRINTF_DATA_TYPE::INVALID);
+    size_t ret = 0;
     read(&type);
 
     switch (type) {
@@ -133,7 +134,10 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
     case PRINTF_DATA_TYPE::LONG:
         return typedPrintToken<int64_t>(output, size, formatString);
     case PRINTF_DATA_TYPE::POINTER:
-        return typedPrintToken<void *>(output, size, formatString);
+        ret = typedPrintToken<void *>(output, size, formatString);
+        // always pad read data to 8 bytes when handling pointers
+        offset += 8 - sizeof(void *);
+        return ret;
     case PRINTF_DATA_TYPE::DOUBLE:
         return typedPrintToken<double>(output, size, formatString);
     case PRINTF_DATA_TYPE::VECTOR_BYTE:
