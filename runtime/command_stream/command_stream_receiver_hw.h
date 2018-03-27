@@ -78,7 +78,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         uint64_t generalStateBase);
 
   protected:
-    void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags, const LinearStream &ih);
+    void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPreamble(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
     void programPipelineSelect(LinearStream &csr, DispatchFlags &dispatchFlags);

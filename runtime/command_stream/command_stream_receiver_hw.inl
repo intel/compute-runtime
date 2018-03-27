@@ -194,7 +194,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     initPageTableManagerRegisters(commandStreamCSR);
-    programPreemption(commandStreamCSR, dispatchFlags, ih);
+    programPreemption(commandStreamCSR, dispatchFlags);
     programCoherency(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags);
@@ -592,10 +592,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags,
-                                                                  const LinearStream &ih) {
+inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
     PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionCsrAllocation,
-                                                  ih, *memoryManager->device);
+                                                  *memoryManager->device);
     this->lastPreemptionMode = dispatchFlags.preemptionMode;
 }
 

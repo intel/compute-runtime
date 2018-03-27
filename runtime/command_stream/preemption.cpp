@@ -127,16 +127,6 @@ void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStr
     UNRECOVERABLE_IF(err != 0);
 }
 
-// verify that SIP CSR kernel resides at the begining of the InstructionHeap
-bool PreemptionHelper::isValidInstructionHeapForMidThreadPreemption(const LinearStream &ih, Device &device) {
-    const SipKernel &sip = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device);
-    if (ih.getUsed() < sip.getBinarySize()) {
-        return false;
-    }
-
-    return (0 == memcmp(ih.getCpuBase(), sip.getBinary(), sip.getBinarySize()));
-}
-
 PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {
     return DebugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode

@@ -46,7 +46,7 @@ struct PreemptionConfig<GfxFamily> {
 template void PreemptionHelper::programCmdStream<GfxFamily>(LinearStream &cmdStream,
                                                             PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode,
                                                             GraphicsAllocation *preemptionCsr,
-                                                            const LinearStream &ih, Device &device);
+                                                            Device &device);
 template void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, const Device &device, const GraphicsAllocation *preemptionCsr);
 template size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device);
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
