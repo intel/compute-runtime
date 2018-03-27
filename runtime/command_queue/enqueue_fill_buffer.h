@@ -53,6 +53,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         patternAllocation = memoryManager->allocateGraphicsMemory(alignUp(patternSize, MemoryConstants::cacheLineSize), MemoryConstants::preferredAlignment);
     }
 
+    patternAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN);
+
     if (patternSize == 1) {
         int patternInt = (uint32_t)((*(uint8_t *)pattern << 24) | (*(uint8_t *)pattern << 16) | (*(uint8_t *)pattern << 8) | *(uint8_t *)pattern);
         memcpy_s(patternAllocation->getUnderlyingBuffer(), sizeof(int), &patternInt, sizeof(int));

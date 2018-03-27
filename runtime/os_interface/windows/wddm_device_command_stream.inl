@@ -219,8 +219,10 @@ void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContain
     auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : getMemoryManager()->getResidencyAllocations();
 
     for (uint32_t i = 0; i < residencyAllocations.size(); i++) {
-        if (GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM == residencyAllocations[i]->getAllocationType()) {
-            wddm->kmDafLock(static_cast<WddmAllocation *>(residencyAllocations[i]));
+        auto graphicsAllocation = residencyAllocations[i];
+        if ((GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM == graphicsAllocation->getAllocationType()) ||
+            (GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN == graphicsAllocation->getAllocationType())) {
+            wddm->kmDafLock(static_cast<WddmAllocation *>(graphicsAllocation));
         }
     }
 }

@@ -389,6 +389,28 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     memManager->freeGraphicsMemory(linearStreamAllocation);
 }
 
+TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenFillPatternAllocationsShouldBeKmDafLocked) {
+    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+
+    auto fillPatternAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    ASSERT_NE(nullptr, fillPatternAllocation);
+    fillPatternAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN);
+    ResidencyContainer allocationsForResidency = {fillPatternAllocation};
+
+    wddm->setKmDafEnabled(true);
+    auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, &allocationsForResidency);
+
+    EXPECT_EQ(1u, wddm->kmDafLockResult.called);
+    EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
+    EXPECT_EQ(fillPatternAllocation, wddm->kmDafLockResult.lockedAllocations[0]);
+
+    memManager->freeGraphicsMemory(commandBuffer);
+    memManager->freeGraphicsMemory(fillPatternAllocation);
+}
+
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenNonLinearStreamAllocationShouldNotBeKmDafLocked) {
     GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096, 4096);
     ASSERT_NE(nullptr, commandBuffer);

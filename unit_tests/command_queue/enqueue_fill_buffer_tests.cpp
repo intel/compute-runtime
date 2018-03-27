@@ -543,3 +543,33 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeTwoBytesShouldGetPreparedForMid
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
 }
+
+HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
+    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
+    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
+
+    auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    const uint8_t pattern[1] = {0x55};
+    const size_t patternSize = sizeof(pattern);
+    const size_t offset = 0;
+    const size_t size = patternSize;
+
+    auto retVal = clEnqueueFillBuffer(
+        pCmdQ,
+        dstBuffer.get(),
+        pattern,
+        patternSize,
+        offset,
+        size,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_FALSE(mmgr->allocationsForReuse.peekIsEmpty());
+
+    GraphicsAllocation *patternAllocation = mmgr->allocationsForReuse.peekHead();
+    ASSERT_NE(nullptr, patternAllocation);
+
+    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN, patternAllocation->getAllocationType());
+}
