@@ -423,7 +423,6 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
-    auto ihBefore = pIH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
     size_t workSize[] = {256};
@@ -439,12 +438,10 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     auto usedAfterCS = commandStream.getUsed();
     auto dshAfter = pDSH->getUsed();
     auto iohAfter = pIOH->getUsed();
-    auto ihAfter = pIH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(false, false, *pCmdQ, nullptr);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*KernelFixture::pKernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, workSize[0]);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
 
@@ -454,7 +451,6 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, dshAfter - dshBefore);
-    EXPECT_GE(expectedSizeIH, ihAfter - ihBefore);
     EXPECT_GE(expectedSizeIOH, iohAfter - iohBefore);
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
 }
@@ -466,7 +462,6 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
-    auto ihBefore = pIH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
     size_t workSize[] = {256};
@@ -482,12 +477,10 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
     auto usedAfterCS = commandStream.getUsed();
     auto dshAfter = pDSH->getUsed();
     auto iohAfter = pIOH->getUsed();
-    auto ihAfter = pIH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(false, false, *pCmdQ, nullptr);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*KernelFixture::pKernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, workSize[0]);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
 
@@ -500,7 +493,6 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, dshAfter - dshBefore);
-    EXPECT_GE(expectedSizeIH, ihAfter - ihBefore);
     EXPECT_GE(expectedSizeIOH, iohAfter - iohBefore);
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
 }

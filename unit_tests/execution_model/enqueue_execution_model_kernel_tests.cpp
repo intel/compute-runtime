@@ -71,14 +71,11 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDS
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
-        auto ish = &getIndirectHeap<FamilyType, IndirectHeap::INSTRUCTION>(*pCmdQ, multiDispatchInfo);
+        auto graphicsAllocation = pKernel->getKernelInfo().getGraphicsAllocation();
+        auto kernelIsaAddress = graphicsAllocation->getGpuAddressToPatch();
 
-        size_t initialIsh = ish->getUsed();
-        // instruction heap is aligned o 64 bytes
-        initialIsh = alignUp(initialIsh, 64);
-
-        uint64_t lowPart = initialIsh & 0xffffffff;
-        uint64_t hightPart = (initialIsh & 0xffffffff00000000) >> 32;
+        uint64_t lowPart = kernelIsaAddress & 0xffffffff;
+        uint64_t hightPart = (kernelIsaAddress & 0xffffffff00000000) >> 32;
 
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
 
@@ -94,8 +91,6 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDS
         EXPECT_EQ((uint32_t)hightPart, idData[0].getKernelStartPointerHigh());
 
         const uint32_t blockFirstIndex = 1;
-
-        uint64_t kernelAddressPrevious = hightPart | lowPart;
 
         for (uint32_t i = 0; i < blockCount; i++) {
             const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
@@ -117,9 +112,7 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDS
             EXPECT_NE((uint64_t)0u, ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer());
 
             uint64_t kernelAddress = ((uint64_t)idData[blockFirstIndex + i].getKernelStartPointerHigh() << 32) | (uint64_t)idData[blockFirstIndex + i].getKernelStartPointer();
-
-            EXPECT_LT(kernelAddressPrevious, kernelAddress);
-            kernelAddressPrevious = kernelAddress;
+            EXPECT_EQ(pBlockInfo->getGraphicsAllocation()->getGpuAddressToPatch(), kernelAddress);
         }
     }
 }

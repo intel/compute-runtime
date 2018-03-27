@@ -139,7 +139,6 @@ HWTEST_F(EnqueueWriteBufferTypeTest, addsCommands) {
 HWTEST_F(EnqueueWriteBufferTypeTest, addsIndirectData) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
-    auto ihBefore = pIH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -162,7 +161,6 @@ HWTEST_F(EnqueueWriteBufferTypeTest, addsIndirectData) {
 
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    EXPECT_NE(ihBefore, pIH->getUsed());
     if (kernel->requiresSshForBuffers()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
@@ -195,6 +193,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, StateBaseAddress) {
 
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueWriteBuffer<FamilyType>();
+    auto internalHeapBase = this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress();
 
     // All state should be programmed before walker
     auto itorCmd = find<STATE_BASE_ADDRESS *>(itorPipelineSelect, itorWalker);
@@ -214,7 +213,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, StateBaseAddress) {
     EXPECT_EQ(0u, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ((uintptr_t)pSSH->getCpuBase(), cmd->getSurfaceStateBaseAddress());
     EXPECT_EQ((uintptr_t)pIOH->getCpuBase(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ((uintptr_t)pIH->getCpuBase(), cmd->getInstructionBaseAddress());
+    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
     EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
@@ -225,7 +224,7 @@ HWTEST_F(EnqueueWriteBufferTypeTest, StateBaseAddress) {
     EXPECT_EQ(pDSH->getMaxAvailableSpace(), cmd->getDynamicStateBufferSize() * MemoryConstants::pageSize);
     EXPECT_NE(0u, cmd->getGeneralStateBufferSize());
     EXPECT_EQ(pIOH->getMaxAvailableSpace(), cmd->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
-    EXPECT_EQ(pIH->getMaxAvailableSpace(), cmd->getInstructionBufferSize() * MemoryConstants::pageSize);
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
 
     // Generically validate this command
     FamilyType::PARSE::template validateCommand<STATE_BASE_ADDRESS *>(cmdList.begin(), itorCmd);

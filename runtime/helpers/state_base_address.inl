@@ -31,11 +31,11 @@ template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     LinearStream &commandStream,
     const LinearStream &dsh,
-    const LinearStream &ih,
     const LinearStream &ioh,
     const LinearStream &ssh,
     uint64_t generalStateBase,
-    uint32_t statelessMocsIndex) {
+    uint32_t statelessMocsIndex,
+    uint64_t internalHeapBase) {
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     auto pCmd = (STATE_BASE_ADDRESS *)commandStream.getSpace(sizeof(STATE_BASE_ADDRESS));
@@ -52,7 +52,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setGeneralStateBaseAddress(generalStateBase);
     pCmd->setSurfaceStateBaseAddress(reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
     pCmd->setIndirectObjectBaseAddress(reinterpret_cast<uintptr_t>(ioh.getCpuBase()));
-    pCmd->setInstructionBaseAddress(reinterpret_cast<uintptr_t>(ih.getCpuBase()));
+    pCmd->setInstructionBaseAddress(internalHeapBase);
 
     pCmd->setDynamicStateBufferSizeModifyEnable(true);
     pCmd->setGeneralStateBufferSizeModifyEnable(true);
@@ -62,7 +62,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setDynamicStateBufferSize(static_cast<uint32_t>((dsh.getMaxAvailableSpace() + MemoryConstants::pageMask) / MemoryConstants::pageSize));
     pCmd->setGeneralStateBufferSize(static_cast<uint32_t>(-1));
     pCmd->setIndirectObjectBufferSize(static_cast<uint32_t>((ioh.getMaxAvailableSpace() + MemoryConstants::pageMask) / MemoryConstants::pageSize));
-    pCmd->setInstructionBufferSize(static_cast<uint32_t>((ih.getMaxAvailableSpace() + +MemoryConstants::pageMask) / MemoryConstants::pageSize));
+
+    pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
     //set cache settings
     pCmd->setStatelessDataPortAccessMemoryObjectControlState(Gmm::getMOCS(statelessMocsIndex));

@@ -325,6 +325,11 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &instructionHeap,
     for (uint32_t i = 0; i < blockCount; i++) {
         const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
 
+        auto blockAllocation = pBlockInfo->getGraphicsAllocation();
+        DEBUG_BREAK_IF(!blockAllocation);
+
+        auto gpuAddress = blockAllocation ? blockAllocation->getGpuAddressToPatch() : 0llu;
+
         auto bindingTableCount = pBlockInfo->patchInfo.bindingTableState->Count;
         maxBindingTableCount = std::max(maxBindingTableCount, bindingTableCount);
 
@@ -336,17 +341,14 @@ void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &instructionHeap,
 
         // Determine SIMD size
         uint32_t simd = pBlockInfo->getMaxSimdSize();
-        // Copy the kernel over to the ISH
-        uint64_t kernelStartOffset = (uint64_t)KernelCommandsHelper<GfxFamily>::copyKernelBinary(instructionHeap, *pBlockInfo);
-
         DEBUG_BREAK_IF(pBlockInfo->patchInfo.interfaceDescriptorData == nullptr);
 
         uint32_t idOffset = pBlockInfo->patchInfo.interfaceDescriptorData->Offset;
         const INTERFACE_DESCRIPTOR_DATA *pBlockID = static_cast<const INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(pBlockInfo->heapInfo.pDsh, idOffset));
 
         pIDDestination[blockIndex + i] = *pBlockID;
-        pIDDestination[blockIndex + i].setKernelStartPointerHigh(kernelStartOffset >> 32);
-        pIDDestination[blockIndex + i].setKernelStartPointer((uint32_t)kernelStartOffset);
+        pIDDestination[blockIndex + i].setKernelStartPointerHigh(gpuAddress >> 32);
+        pIDDestination[blockIndex + i].setKernelStartPointer((uint32_t)gpuAddress);
         pIDDestination[blockIndex + i].setBarrierEnable(pBlockInfo->patchInfo.executionEnvironment->HasBarriers > 0);
         pIDDestination[blockIndex + i].setDenormMode(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL);
 

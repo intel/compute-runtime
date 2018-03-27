@@ -559,7 +559,7 @@ struct DrmCsrVfeTests : ::testing::Test {
 
     void flushTask(CommandStreamReceiver &csr, LinearStream &stream, bool lowPriority) {
         dispatchFlags.lowPriority = lowPriority;
-        csr.flushTask(stream, 0, stream, stream, stream, stream, 0, dispatchFlags);
+        csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags);
     }
 
     HardwareParse hwParser;
@@ -988,7 +988,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     tCsr->setTagAllocation(tagAllocation);
 
     DispatchFlags dispatchFlags;
-    tCsr->flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     //make sure command buffer is recorded
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
@@ -1041,7 +1041,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
-    tCsr->flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();

@@ -45,10 +45,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static uint32_t computeSlmValues(uint32_t valueIn);
 
-    static size_t copyKernelBinary(
-        IndirectHeap &indirectHeap,
-        const KernelInfo &kernelInfo);
-
     static size_t sendInterfaceDescriptorData(
         const IndirectHeap &indirectHeap,
         uint64_t offsetInterfaceDescriptor,
@@ -96,8 +92,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static size_t sendIndirectState(
         LinearStream &commandStream,
         IndirectHeap &dsh,
-        IndirectHeap &ih,
-        size_t ihReservedBlockSize,
         IndirectHeap &ioh,
         IndirectHeap &ssh,
         Kernel &kernel,

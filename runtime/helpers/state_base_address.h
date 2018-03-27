@@ -32,10 +32,10 @@ struct StateBaseAddressHelper {
     static void programStateBaseAddress(
         LinearStream &commandStream,
         const LinearStream &dsh,
-        const LinearStream &ih,
         const LinearStream &ioh,
         const LinearStream &ssh,
         uint64_t generalStateBase,
-        uint32_t statelessMocsIndex);
+        uint32_t statelessMocsIndex,
+        uint64_t internalHeapBase);
 };
 }

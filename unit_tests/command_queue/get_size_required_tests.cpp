@@ -40,12 +40,10 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
         MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
         dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ih = &pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
         ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
         ssh = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
 
         usedBeforeDSH = dsh->getUsed();
-        usedBeforeIH = ih->getUsed();
         usedBeforeIOH = ioh->getUsed();
         usedBeforeSSH = ssh->getUsed();
         WhitelistedRegisters regs = {0};
@@ -60,12 +58,10 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
     MockContext context;
     IndirectHeap *dsh;
     IndirectHeap *ioh;
-    IndirectHeap *ih;
     IndirectHeap *ssh;
 
     size_t usedBeforeDSH;
     size_t usedBeforeIOH;
-    size_t usedBeforeIH;
     size_t usedBeforeSSH;
 };
 
@@ -78,7 +74,6 @@ HWTEST_F(GetSizeRequiredTest, finish) {
 
     EXPECT_EQ(0u, commandStream.getUsed() - usedBeforeCS);
     EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
-    EXPECT_EQ(0u, ih->getUsed() - usedBeforeIH);
     EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 }
@@ -98,7 +93,6 @@ HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
 
     EXPECT_EQ(0u, commandStream.getUsed() - usedBeforeCS);
     EXPECT_EQ(0u, dsh->getUsed() - usedBeforeDSH);
-    EXPECT_EQ(0u, ih->getUsed() - usedBeforeIH);
     EXPECT_EQ(0u, ioh->getUsed() - usedBeforeIOH);
     EXPECT_EQ(0u, ssh->getUsed() - usedBeforeSSH);
 

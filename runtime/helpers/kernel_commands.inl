@@ -145,24 +145,6 @@ size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::copyKernelBinary(
-    IndirectHeap &indirectHeap,
-    const KernelInfo &kernelInfo) {
-    const auto alignKernelBinary = 64 * sizeof(uint8_t);
-    indirectHeap.align(alignKernelBinary);
-
-    auto kernelStartOffset = indirectHeap.getUsed();
-
-    auto pKernelHeap = kernelInfo.heapInfo.pKernelHeap;
-    auto kernelHeapSize = kernelInfo.heapInfo.pKernelHeader->KernelHeapSize;
-
-    auto pKernelDataDst = indirectHeap.getSpace(kernelHeapSize);
-    memcpy_s(pKernelDataDst, kernelHeapSize, pKernelHeap, kernelHeapSize);
-
-    return kernelStartOffset;
-}
-
-template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     const IndirectHeap &indirectHeap,
     uint64_t offsetInterfaceDescriptor,
@@ -331,8 +313,6 @@ template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     LinearStream &commandStream,
     IndirectHeap &dsh,
-    IndirectHeap &ih,
-    size_t ihReservedBlockSize,
     IndirectHeap &ioh,
     IndirectHeap &ssh,
     Kernel &kernel,
@@ -349,9 +329,14 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
 
     // Copy the kernel over to the ISH
-    auto kernelStartOffset = copyKernelBinary(ih, kernel.getKernelInfo());
-
+    auto kernelStartOffset = 0llu;
     const auto &kernelInfo = kernel.getKernelInfo();
+    auto kernelAllocation = kernelInfo.getGraphicsAllocation();
+    DEBUG_BREAK_IF(!kernelAllocation);
+    if (kernelAllocation) {
+        kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
+    }
+
     const auto &patchInfo = kernelInfo.patchInfo;
 
     auto dstBindingTablePointer = pushBindingTableAndSurfaceStates(ssh, kernel);
@@ -416,7 +401,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         dsh,
         offsetInterfaceDescriptor,
-        kernelStartOffset + ihReservedBlockSize,
+        kernelStartOffset,
         kernel.getCrossThreadDataSize(),
         sizePerThreadData,
         dstBindingTablePointer,

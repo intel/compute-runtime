@@ -411,13 +411,11 @@ HWTEST_P(EnqueueWorkItemTests, addsCommands) {
 HWTEST_P(EnqueueWorkItemTests, addsIndirectData) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
-    auto ihBefore = pIH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
     enqueueKernel<FamilyType>();
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    EXPECT_NE(ihBefore, pIH->getUsed());
     if (pKernel->requiresSshForBuffers() || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
@@ -448,6 +446,7 @@ HWTEST_P(EnqueueWorkItemTests, StateBaseAddress) {
     typedef typename FamilyType::PARSE PARSE;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     enqueueKernel<FamilyType>();
+    auto internalHeapBase = this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress();
 
     // All state should be programmed before walker
     auto itorCmd = find<STATE_BASE_ADDRESS *>(itorPipelineSelect, itorWalker);
@@ -473,7 +472,7 @@ HWTEST_P(EnqueueWorkItemTests, StateBaseAddress) {
     }
     EXPECT_EQ((uintptr_t)pSSH->getCpuBase(), cmd->getSurfaceStateBaseAddress());
     EXPECT_EQ((uintptr_t)pIOH->getCpuBase(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ((uintptr_t)pIH->getCpuBase(), cmd->getInstructionBaseAddress());
+    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
     EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
@@ -484,7 +483,7 @@ HWTEST_P(EnqueueWorkItemTests, StateBaseAddress) {
     EXPECT_EQ(pDSH->getMaxAvailableSpace(), cmd->getDynamicStateBufferSize() * MemoryConstants::pageSize);
     EXPECT_NE(0u, cmd->getGeneralStateBufferSize());
     EXPECT_EQ(pIOH->getMaxAvailableSpace(), cmd->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
-    EXPECT_EQ(pIH->getMaxAvailableSpace(), cmd->getInstructionBufferSize() * MemoryConstants::pageSize);
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
 
     // Generically validate this command
     PARSE::template validateCommand<STATE_BASE_ADDRESS *>(cmdList.begin(), itorCmd);
@@ -1107,7 +1106,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
-    EXPECT_EQ(6u + csrSurfaceCount, cmdBuffer->surfaces.size());
+    EXPECT_EQ(5u + csrSurfaceCount, cmdBuffer->surfaces.size());
 }
 
 HWTEST_F(EnqueueKernelTest, givenDefaultCommandStreamReceiverWhenClFlushIsCalledThenSuccessIsReturned) {

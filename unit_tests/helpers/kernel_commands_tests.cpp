@@ -70,40 +70,6 @@ struct KernelCommandsTest : DeviceFixture,
     size_t sizeRequiredISH;
 };
 
-HWTEST_F(KernelCommandsTest, copyKernelBinaryResourceUsage) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
-
-    std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
-    ASSERT_NE(nullptr, srcImage.get());
-    std::unique_ptr<Image> dstImage(Image2dHelper<>::create(pContext));
-    ASSERT_NE(nullptr, dstImage.get());
-
-    MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
-    ASSERT_NE(nullptr, &builder);
-
-    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
-    dc.srcMemObj = srcImage.get();
-    dc.dstMemObj = dstImage.get();
-    dc.srcOffset = {0, 0, 0};
-    dc.dstOffset = {0, 0, 0};
-    dc.size = {1, 1, 1};
-    builder.buildDispatchInfos(multiDispatchInfo, dc);
-    EXPECT_NE(0u, multiDispatchInfo.size());
-
-    auto kernel = multiDispatchInfo.begin()->getKernel();
-    ASSERT_NE(nullptr, kernel);
-
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, kernel->getKernelHeapSize());
-    auto usedIndirectHeapBefore = indirectHeap.getUsed();
-
-    KernelCommandsHelper<FamilyType>::copyKernelBinary(indirectHeap, kernel->getKernelInfo());
-    auto usedIndirectHeapAfter = indirectHeap.getUsed();
-
-    EXPECT_EQ(kernel->getKernelHeapSize(), usedIndirectHeapAfter - usedIndirectHeapBefore);
-}
-
 HWTEST_F(KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
@@ -306,11 +272,9 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
     auto &commandStream = cmdQ.getCS();
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ih = cmdQ.getIndirectHeap(IndirectHeap::INSTRUCTION, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -326,8 +290,6 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
     KernelCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
-        ih,
-        0,
         ioh,
         ssh,
         *kernel,
@@ -341,15 +303,12 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
     // estimation purposes to avoid OOM.
     auto usedAfterDSH = dsh.getUsed();
     auto usedAfterIOH = ioh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterSSH = ssh.getUsed();
     auto sizeRequiredDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto sizeRequiredIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto sizeRequiredIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel, localWorkSize);
     auto sizeRequiredSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
     EXPECT_GE(sizeRequiredDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(sizeRequiredIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(sizeRequiredIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(sizeRequiredSSH, usedAfterSSH - usedBeforeSSH);
 
@@ -388,7 +347,6 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
     auto &commandStream = cmdQ.getCS();
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ih = cmdQ.getIndirectHeap(IndirectHeap::INSTRUCTION, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     // Obtain where the pointers will be stored
@@ -409,8 +367,6 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
     KernelCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
-        ih,
-        0,
         ioh,
         ssh,
         *kernel,
@@ -546,7 +502,6 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
         auto &commandStream = cmdQ.getCS();
         auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
         auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-        auto &ih = cmdQ.getIndirectHeap(IndirectHeap::INSTRUCTION, 8192);
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
         // Initialize binding table state pointers with pattern
@@ -564,8 +519,6 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
         KernelCommandsHelper<FamilyType>::sendIndirectState(
             commandStream,
             dsh,
-            ih,
-            0,
             ioh,
             ssh,
             *pKernel,
@@ -757,7 +710,6 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
     auto &commandStream = cmdQ.getCS();
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
-    auto &ih = cmdQ.getIndirectHeap(IndirectHeap::INSTRUCTION, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
 
     const uint32_t borderColorSize = 64;
@@ -799,8 +751,6 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
     KernelCommandsHelper<FamilyType>::sendIndirectState(
         commandStream,
         dsh,
-        ih,
-        0,
         ioh,
         ssh,
         *kernel,

@@ -60,8 +60,7 @@ class CommandStreamReceiver {
     virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                                      const LinearStream &dsh, const LinearStream &ih,
-                                      const LinearStream &ioh, const LinearStream &ssh,
+                                      const LinearStream &dsh, const LinearStream &ioh, const LinearStream &ssh,
                                       uint32_t taskLevel, DispatchFlags &dispatchFlags) = 0;
 
     virtual void flushBatchedSubmissions() = 0;

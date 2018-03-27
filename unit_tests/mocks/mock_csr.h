@@ -120,7 +120,6 @@ class MockCsr : public MockCsrBase<GfxFamily> {
         LinearStream &commandStream,
         size_t commandStreamStart,
         const LinearStream &dsh,
-        const LinearStream &ih,
         const LinearStream &ioh,
         const LinearStream &ssh,
         uint32_t taskLevel,
@@ -135,7 +134,6 @@ class MockCsr : public MockCsrBase<GfxFamily> {
             commandStream,
             commandStreamStart,
             dsh,
-            ih,
             ioh,
             ssh,
             taskLevel,
@@ -191,11 +189,11 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const LinearStream &dsh, const LinearStream &ih, const LinearStream &ioh,
+                              const LinearStream &dsh, const LinearStream &ioh,
                               const LinearStream &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags) override {
         passedDispatchFlags = dispatchFlags;
         return CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
-                                                             dsh, ih, ioh, ssh, taskLevel, dispatchFlags);
+                                                             dsh, ioh, ssh, taskLevel, dispatchFlags);
     }
 
     int flushCalledCount = 0;
@@ -220,7 +218,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         LinearStream &commandStream,
         size_t commandStreamStart,
         const LinearStream &dsh,
-        const LinearStream &ih,
         const LinearStream &ioh,
         const LinearStream &ssh,
         uint32_t taskLevel,

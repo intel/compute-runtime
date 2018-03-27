@@ -29,6 +29,5 @@ void IndirectHeapFixture::SetUp(CommandQueue *pCmdQ) {
     pDSH = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     pSSH = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096);
     pIOH = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096);
-    pIH = &pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096);
 }
 }

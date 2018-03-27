@@ -109,7 +109,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
     const LinearStream &dsh,
-    const LinearStream &ih,
     const LinearStream &ioh,
     const LinearStream &ssh,
     uint32_t taskLevel,
@@ -229,11 +228,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programVFEState(commandStreamCSR, dispatchFlags);
 
     bool dshDirty = dshState.updateAndCheck(&dsh);
-    bool ihDirty = ihState.updateAndCheck(&ih);
     bool iohDirty = iohState.updateAndCheck(&ioh);
     bool sshDirty = sshState.updateAndCheck(&ssh);
 
-    auto isStateBaseAddressDirty = dshDirty || ihDirty || iohDirty || sshDirty || stateBaseAddressDirty;
+    auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
     auto requiredL3Index = CacheSettings::l3CacheOn;
     if (this->disableL3Cache) {
@@ -265,16 +263,16 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             commandStreamCSR,
             dsh,
-            ih,
             ioh,
             ssh,
             newGSHbase,
-            requiredL3Index);
+            requiredL3Index,
+            memoryManager->getInternalHeapBaseAddress());
 
         latestSentStatelessMocsConfig = requiredL3Index;
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            collectStateBaseAddresPatchInfo(commandStream.getGpuBase(), stateBaseAddressCmdOffset, dsh, ih, ioh, ssh, newGSHbase);
+            collectStateBaseAddresPatchInfo(commandStream.getGpuBase(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase, memoryManager->getInternalHeapBaseAddress());
         }
     }
 
@@ -299,12 +297,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     auto dshAllocation = dsh.getGraphicsAllocation();
-    auto ihAllocation = ih.getGraphicsAllocation();
     auto iohAllocation = ioh.getGraphicsAllocation();
     auto sshAllocation = ssh.getGraphicsAllocation();
 
     this->makeResident(*dshAllocation);
-    this->makeResident(*ihAllocation);
     this->makeResident(*iohAllocation);
     this->makeResident(*sshAllocation);
 
@@ -650,10 +646,10 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     uint64_t baseAddress,
     uint64_t commandOffset,
     const LinearStream &dsh,
-    const LinearStream &ih,
     const LinearStream &ioh,
     const LinearStream &ssh,
-    uint64_t generalStateBase) {
+    uint64_t generalStateBase,
+    uint64_t internalHeapOffset) {
 
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
@@ -661,7 +657,7 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::GeneralStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
     PatchInfoData surfaceStatePatchInfo = {ssh.getGpuBase(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
     PatchInfoData indirectObjectPatchInfo = {ioh.getGpuBase(), 0u, PatchInfoAllocationType::IndirectObjectHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData instructionPatchInfo = {ih.getGpuBase(), 0u, PatchInfoAllocationType::InstructionHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INSTRUCTIONBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData instructionPatchInfo = {internalHeapOffset, 0u, PatchInfoAllocationType::InstructionHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INSTRUCTIONBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
 
     setPatchInfoData(dynamicStatePatchInfo);
     setPatchInfoData(generalStatePatchInfo);

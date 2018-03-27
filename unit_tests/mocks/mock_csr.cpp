@@ -32,7 +32,6 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     LinearStream &commandStream,
     size_t commandStreamStart,
     const LinearStream &dsh,
-    const LinearStream &ih,
     const LinearStream &ioh,
     const LinearStream &ssh,
     uint32_t taskLevel,

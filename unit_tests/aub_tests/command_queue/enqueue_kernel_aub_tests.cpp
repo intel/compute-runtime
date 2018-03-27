@@ -127,11 +127,7 @@ HWTEST_F(AUBHelloWorld, simple) {
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISH = pSBA->getInstructionBaseAddress();
-    auto pInterfaceDescriptorData = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdInterfaceDescriptorData);
-    auto offsetKSP = pInterfaceDescriptorData->getKernelStartPointer() + ((uint64_t)pInterfaceDescriptorData->getKernelStartPointerHigh() << 32);
-
-    auto pISA = (void *)ptrOffset(pISH, (uintptr_t)offsetKSP);
+    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
@@ -264,11 +260,7 @@ HWTEST_F(AUBSimpleArg, simple) {
 
     auto pSBA = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStateBaseAddress);
     ASSERT_NE(nullptr, pSBA);
-    auto pISH = pSBA->getInstructionBaseAddress();
-    auto pInterfaceDescriptorData = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(cmdInterfaceDescriptorData);
-    auto offsetKSP = pInterfaceDescriptorData->getKernelStartPointer() + ((uint64_t)pInterfaceDescriptorData->getKernelStartPointerHigh() << 32);
-
-    auto pISA = (void *)ptrOffset(pISH, (uintptr_t)offsetKSP);
+    auto pISA = pKernel->getKernelInfo().getGraphicsAllocation()->getUnderlyingBuffer();
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 

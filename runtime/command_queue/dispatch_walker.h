@@ -579,8 +579,6 @@ void dispatchWalker(
         auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
             *commandStream,
             *dsh,
-            *ish,
-            cmdQInstructionHeapReservedBlockSize,
             *ioh,
             *ssh,
             kernel,
@@ -750,8 +748,6 @@ void dispatchScheduler(
     auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
         *commandStream,
         *dsh,
-        *ish,
-        0,
         *ioh,
         *ssh,
         scheduler,

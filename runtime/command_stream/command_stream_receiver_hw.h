@@ -46,8 +46,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const LinearStream &dsh, const LinearStream &ih,
-                              const LinearStream &ioh, const LinearStream &ssh,
+                              const LinearStream &dsh, const LinearStream &ioh, const LinearStream &ssh,
                               uint32_t taskLevel, DispatchFlags &dispatchFlags) override;
 
     void flushBatchedSubmissions() override;
@@ -72,10 +71,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         uint64_t baseAddress,
         uint64_t commandOffset,
         const LinearStream &dsh,
-        const LinearStream &ih,
         const LinearStream &ioh,
         const LinearStream &ssh,
-        uint64_t generalStateBase);
+        uint64_t generalStateBase,
+        uint64_t internalHeapBaseAddress);
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
@@ -96,7 +95,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 
     HeapDirtyState dshState;
-    HeapDirtyState ihState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;
 

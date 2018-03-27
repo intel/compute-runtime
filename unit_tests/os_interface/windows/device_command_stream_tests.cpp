@@ -676,7 +676,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
-    mockCsr->flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    mockCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();
@@ -809,12 +809,12 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     EXPECT_CALL(*mockMngr, initContextTRTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS)).Times(1).WillOnce(Return(GMM_SUCCESS));
 
     DispatchFlags dispatchFlags;
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     EXPECT_TRUE(mockWddmCsr.pageTableManagerInitialized);
 
     // flush again to check if PT manager was initialized once
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     memManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -836,7 +836,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
     DispatchFlags dispatchFlags;
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 

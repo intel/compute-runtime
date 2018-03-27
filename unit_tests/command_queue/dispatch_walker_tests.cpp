@@ -96,7 +96,6 @@ struct DispatchWalkerTest : public CommandQueueFixture, public DeviceFixture, pu
     SPatchSamplerStateArray samplerArray;
 
     KernelInfo kernelInfo;
-
     KernelInfo kernelInfoWithSampler;
 
     uint32_t kernelIsa[32];
@@ -769,6 +768,14 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
 HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsInterfaceDesriptors) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
+    auto memoryManager = this->pDevice->getMemoryManager();
+    auto kernelIsaAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
+    auto kernelIsaWithSamplerAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
+    kernelInfo.kernelAllocation = kernelIsaAllocation;
+    kernelInfoWithSampler.kernelAllocation = kernelIsaWithSamplerAllocation;
+    auto gpuAddress1 = kernelIsaAllocation->getGpuAddressToPatch();
+    auto gpuAddress2 = kernelIsaWithSamplerAllocation->getGpuAddressToPatch();
+
     MockKernel kernel1(&program, kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
     MockKernel kernel2(&program, kernelInfoWithSampler, *pDevice);
@@ -804,6 +811,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
     for (uint32_t index = 0; index < multiDispatchInfo.size(); index++) {
         uint32_t addressLow = pID[index].getKernelStartPointer();
         uint32_t addressHigh = pID[index].getKernelStartPointerHigh();
+        uint64_t fullAddress = ((uint64_t)addressHigh << 32) | addressLow;
 
         if (index > 0) {
             uint32_t addressLowOfPrevious = pID[index - 1].getKernelStartPointer();
@@ -820,6 +828,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
             auto samplerCount = pID[index].getSamplerCount();
             EXPECT_EQ(0u, samplerPointer);
             EXPECT_EQ(0u, samplerCount);
+            EXPECT_EQ(fullAddress, gpuAddress1);
         }
 
         if (index == 1) {
@@ -827,6 +836,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
             auto samplerCount = pID[index].getSamplerCount();
             EXPECT_NE(0u, samplerPointer);
             EXPECT_EQ(1u, samplerCount);
+            EXPECT_EQ(fullAddress, gpuAddress2);
         }
     }
 
@@ -844,6 +854,9 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
     auto IDSize = cmd->getInterfaceDescriptorTotalLength();
     EXPECT_EQ(dshBeforeMultiDisptach, IDStartAddress);
     EXPECT_EQ(interfaceDesriptorTableSize, IDSize);
+
+    memoryManager->freeGraphicsMemory(kernelIsaAllocation);
+    memoryManager->freeGraphicsMemory(kernelIsaWithSamplerAllocation);
 }
 
 HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsGpgpuWalkerIDOffset) {

@@ -42,6 +42,7 @@ static const uintptr_t pageMask = (pageSize - 1);
 static const uintptr_t page64kMask = (pageSize64k - 1);
 static const uint64_t max32BitAppAddress = ((1ULL << 31) - 1);
 static const uint64_t max64BitAppAddress = ((1ULL << 47) - 1);
+static const uint32_t sizeOf4GBinPageEntities = (MemoryConstants::gigaByte * 4 - MemoryConstants::pageSize) / MemoryConstants::pageSize;
 }
 
 const bool is32bit = (sizeof(void *) == 4) ? true : false;

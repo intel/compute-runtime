@@ -568,7 +568,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         commandStream,
         commandStreamStart,
         *dsh,
-        getIndirectHeap(IndirectHeap::INSTRUCTION),
         *ioh,
         getIndirectHeap(IndirectHeap::SURFACE_STATE),
         taskLevel,

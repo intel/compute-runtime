@@ -30,7 +30,6 @@ class CommandQueue;
 
 struct IndirectHeapFixture {
     IndirectHeapFixture() : pDSH(nullptr),
-                            pIH(nullptr),
                             pIOH(nullptr),
                             pSSH(nullptr) {
     }
@@ -40,7 +39,6 @@ struct IndirectHeapFixture {
     }
 
     IndirectHeap *pDSH;
-    IndirectHeap *pIH;
     IndirectHeap *pIOH;
     IndirectHeap *pSSH;
 };
