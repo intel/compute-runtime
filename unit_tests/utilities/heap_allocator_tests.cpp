@@ -34,8 +34,8 @@ const size_t sizeThreshold = 16 * 4096;
 
 class HeapAllocatorUnderTest : public HeapAllocator {
   public:
-    HeapAllocatorUnderTest(void *address, uint64_t size, size_t threshold) : HeapAllocator(address, size, threshold) {}
-    HeapAllocatorUnderTest(void *address, uint64_t size) : HeapAllocator(address, size) {}
+    HeapAllocatorUnderTest(uint64_t address, uint64_t size, size_t threshold) : HeapAllocator(address, size, threshold) {}
+    HeapAllocatorUnderTest(uint64_t address, uint64_t size) : HeapAllocator(address, size) {}
 
     uint64_t getLeftBound() { return this->pLeftBound; }
     uint64_t getRightBound() { return this->pRightBound; }
@@ -43,11 +43,11 @@ class HeapAllocatorUnderTest : public HeapAllocator {
     size_t getThresholdSize() { return this->sizeThreshold; }
     void defragment() { return HeapAllocator::defragment(); }
 
-    void *getFromFreedChunks(size_t size, std::vector<HeapChunk> &vec) {
+    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &vec) {
         size_t sizeOfFreedChunk;
         return HeapAllocator::getFromFreedChunks(size, vec, sizeOfFreedChunk);
     }
-    void storeInFreedChunks(void *ptr, size_t size, std::vector<HeapChunk> &vec) { return HeapAllocator::storeInFreedChunks(ptr, size, vec); }
+    void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &vec) { return HeapAllocator::storeInFreedChunks(ptr, size, vec); }
 
     std::vector<HeapChunk> &getFreedChunksSmall() { return this->freedChunksSmall; };
     std::vector<HeapChunk> &getFreedChunksBig() { return this->freedChunksBig; };
@@ -57,7 +57,7 @@ class HeapAllocatorUnderTest : public HeapAllocator {
 };
 
 TEST(HeapAllocatorTest, DefaultCtorHasThresholdSet) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size);
     EXPECT_NE(0u, heapAllocator->getThresholdSize());
@@ -67,10 +67,10 @@ TEST(HeapAllocatorTest, DefaultCtorHasThresholdSet) {
 
 //this test is no longer valid as pt
 TEST(HeapAllocatorTest, DISABLED_FreeNotAllocatedPointer) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size);
-    heapAllocator->free(reinterpret_cast<void *>(0x123000), size);
+    heapAllocator->free(0x123000llu, size);
 
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
     EXPECT_EQ(0u, heapAllocator->getFreedChunksSmall().size());
@@ -78,7 +78,7 @@ TEST(HeapAllocatorTest, DISABLED_FreeNotAllocatedPointer) {
 }
 
 TEST(HeapAllocatorTest, StatisticsMethods) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size);
     EXPECT_EQ(heapAllocator->getavailableSize(), heapAllocator->getLeftSize());
@@ -86,7 +86,7 @@ TEST(HeapAllocatorTest, StatisticsMethods) {
     EXPECT_EQ((double)0.0, heapAllocator->getUsage());
 
     size_t ptrSize = 4096;
-    void *ptr = heapAllocator->allocate(ptrSize);
+    auto ptr = heapAllocator->allocate(ptrSize);
     EXPECT_EQ(4096u, heapAllocator->getUsedSize());
     EXPECT_LT((double)0.0, heapAllocator->getUsage());
 
@@ -96,16 +96,16 @@ TEST(HeapAllocatorTest, StatisticsMethods) {
 }
 
 TEST(HeapAllocatorTest, GivenExactSizeChunkInFreedChunksWhenGetIsCalledThenChunkIsReturned) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
-    void *ptrFreed = reinterpret_cast<void *>(0x101000);
+    uint64_t ptrFreed = 0x101000llu;
     size_t sizeFreed = MemoryConstants::pageSize * 2;
     freedChunks.emplace_back(ptrFreed, sizeFreed);
 
-    void *ptrReturned = heapAllocator->getFromFreedChunks(sizeFreed, freedChunks);
+    auto ptrReturned = heapAllocator->getFromFreedChunks(sizeFreed, freedChunks);
 
     EXPECT_EQ(ptrFreed, ptrReturned);  // ptr returned is the one that was stored
     EXPECT_EQ(0u, freedChunks.size()); // entry in freed container is removed
@@ -114,56 +114,56 @@ TEST(HeapAllocatorTest, GivenExactSizeChunkInFreedChunksWhenGetIsCalledThenChunk
 }
 
 TEST(HeapAllocatorTest, GivenOnlySmallerSizeChunksInFreedChunksWhenGetIsCalledThenNullptrIsReturned) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x100000), 4096);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x101000), 4096);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x105000), 4096);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x104000), 4096);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x102000), 8192);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x109000), 8192);
-    freedChunks.emplace_back(reinterpret_cast<void *>(0x107000), 4096);
+    freedChunks.emplace_back(0x100000llu, 4096);
+    freedChunks.emplace_back(0x101000llu, 4096);
+    freedChunks.emplace_back(0x105000llu, 4096);
+    freedChunks.emplace_back(0x104000llu, 4096);
+    freedChunks.emplace_back(0x102000llu, 8192);
+    freedChunks.emplace_back(0x109000llu, 8192);
+    freedChunks.emplace_back(0x107000llu, 4096);
 
     EXPECT_EQ(7u, freedChunks.size());
 
-    void *ptrReturned = heapAllocator->getFromFreedChunks(4 * 4096, freedChunks);
+    auto ptrReturned = heapAllocator->getFromFreedChunks(4 * 4096, freedChunks);
 
-    EXPECT_EQ(nullptr, ptrReturned);
+    EXPECT_EQ(0llu, ptrReturned);
     EXPECT_EQ(7u, freedChunks.size());
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, GivenOnlyBiggerSizeChunksInFreedChunksWhenGetIsCalledThenBestFitChunkIsReturned) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    uintptr_t pUpperBound = reinterpret_cast<uintptr_t>(ptrBase) + size;
+    auto pUpperBound = ptrBase + size;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
-    void *ptrExpected = nullptr;
+    uint64_t ptrExpected = 0llu;
 
     pUpperBound -= 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pUpperBound), 4096);
+    freedChunks.emplace_back(pUpperBound, 4096);
     pUpperBound -= 5 * 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pUpperBound), 5 * 4096);
+    freedChunks.emplace_back(pUpperBound, 5 * 4096);
     pUpperBound -= 4 * 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pUpperBound), 4 * 4096);
-    ptrExpected = reinterpret_cast<void *>(pUpperBound);
+    freedChunks.emplace_back(pUpperBound, 4 * 4096);
+    ptrExpected = pUpperBound;
 
     pUpperBound -= 5 * 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pUpperBound), 5 * 4096);
+    freedChunks.emplace_back(pUpperBound, 5 * 4096);
     pUpperBound -= 4 * 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pUpperBound), 4 * 4096);
+    freedChunks.emplace_back(pUpperBound, 4 * 4096);
 
     EXPECT_EQ(5u, freedChunks.size());
 
-    void *ptrReturned = heapAllocator->getFromFreedChunks(3 * 4096, freedChunks);
+    auto ptrReturned = heapAllocator->getFromFreedChunks(3 * 4096, freedChunks);
 
     EXPECT_EQ(ptrExpected, ptrReturned);
     EXPECT_EQ(4u, freedChunks.size());
@@ -172,53 +172,53 @@ TEST(HeapAllocatorTest, GivenOnlyBiggerSizeChunksInFreedChunksWhenGetIsCalledThe
 }
 
 TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledThenSplittedChunkIsReturned) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    uintptr_t pLowerBound = reinterpret_cast<uintptr_t>(ptrBase);
+    auto pLowerBound = ptrBase;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
-    void *ptrExpected = nullptr;
+    uint64_t ptrExpected = 0llu;
     size_t requestedSize = 3 * 4096;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 4096);
+    freedChunks.emplace_back(pLowerBound, 4096);
     pLowerBound += 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 9 * 4096);
+    freedChunks.emplace_back(pLowerBound, 9 * 4096);
     pLowerBound += 9 * 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 7 * 4096);
+    freedChunks.emplace_back(pLowerBound, 7 * 4096);
 
     size_t deltaSize = 7 * 4096 - requestedSize;
-    ptrExpected = reinterpret_cast<void *>(pLowerBound + deltaSize);
+    ptrExpected = pLowerBound + deltaSize;
 
     EXPECT_EQ(3u, freedChunks.size());
 
-    void *ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks);
+    auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks);
 
     EXPECT_EQ(ptrExpected, ptrReturned);
     EXPECT_EQ(3u, freedChunks.size());
 
-    EXPECT_EQ(reinterpret_cast<void *>(pLowerBound), freedChunks[2].ptr);
+    EXPECT_EQ(pLowerBound, freedChunks[2].ptr);
     EXPECT_EQ(deltaSize, freedChunks[2].size);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    uintptr_t pLowerBound = reinterpret_cast<uintptr_t>(ptrBase);
+    auto pLowerBound = ptrBase;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
-    void *ptrExpected = nullptr;
+    uint64_t ptrExpected = 0llu;
     size_t expectedSize = 9 * 4096;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 4096);
+    freedChunks.emplace_back(pLowerBound, 4096);
     pLowerBound += 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 9 * 4096);
-    ptrExpected = reinterpret_cast<void *>(pLowerBound);
+    freedChunks.emplace_back(pLowerBound, 9 * 4096);
+    ptrExpected = pLowerBound;
     pLowerBound += 9 * 4096;
 
     EXPECT_EQ(ptrExpected, freedChunks[1].ptr);
@@ -226,7 +226,7 @@ TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhe
 
     EXPECT_EQ(2u, freedChunks.size());
 
-    void *ptrToStore = reinterpret_cast<void *>(pLowerBound);
+    auto ptrToStore = pLowerBound;
     size_t sizeToStore = 2 * 4096;
 
     expectedSize += sizeToStore;
@@ -242,26 +242,26 @@ TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhe
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToRightBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    uintptr_t pLowerBound = reinterpret_cast<uintptr_t>(ptrBase);
+    auto pLowerBound = ptrBase;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
-    void *ptrExpected = nullptr;
+    uint64_t ptrExpected = 0llu;
     size_t expectedSize = 9 * 4096;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 4096);
+    freedChunks.emplace_back(pLowerBound, 4096);
     pLowerBound += 4096;
     pLowerBound += 4096; // space between stored chunk and chunk to store
 
-    void *ptrToStore = reinterpret_cast<void *>(pLowerBound);
+    auto ptrToStore = pLowerBound;
     size_t sizeToStore = 2 * 4096;
     pLowerBound += sizeToStore;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 9 * 4096);
-    ptrExpected = reinterpret_cast<void *>(pLowerBound);
+    freedChunks.emplace_back(pLowerBound, 9 * 4096);
+    ptrExpected = pLowerBound;
 
     EXPECT_EQ(ptrExpected, freedChunks[1].ptr);
     EXPECT_EQ(expectedSize, freedChunks[1].size);
@@ -282,22 +282,22 @@ TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToRightBoundaryOfIncomingChunkWh
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkNotAdjacentToIncomingChunkWhenStoreIsCalledThenNewFreeChunkIsCreated) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
-    uintptr_t pLowerBound = reinterpret_cast<uintptr_t>(ptrBase);
+    auto pLowerBound = ptrBase;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     std::vector<HeapChunk> freedChunks;
 
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 4096);
+    freedChunks.emplace_back(pLowerBound, 4096);
     pLowerBound += 4096;
-    freedChunks.emplace_back(reinterpret_cast<void *>(pLowerBound), 9 * 4096);
+    freedChunks.emplace_back(pLowerBound, 9 * 4096);
     pLowerBound += 9 * 4096;
 
     pLowerBound += 9 * 4096;
 
-    void *ptrToStore = reinterpret_cast<void *>(pLowerBound);
+    uint64_t ptrToStore = pLowerBound;
     size_t sizeToStore = 4096;
 
     EXPECT_EQ(2u, freedChunks.size());
@@ -313,43 +313,41 @@ TEST(HeapAllocatorTest, GivenStoredChunkNotAdjacentToIncomingChunkWhenStoreIsCal
 }
 
 TEST(HeapAllocatorTest, AllocateReturnsPointerAndAddsEntryToMap) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize = 4096;
-    void *ptr = heapAllocator->allocate(ptrSize);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
 
-    EXPECT_NE(nullptr, ptr);
+    EXPECT_NE(0llu, ptr);
     EXPECT_LE(ptrBase, ptr);
 
     size_t ptrSize2 = sizeThreshold + 4096;
     ptr = heapAllocator->allocate(ptrSize2);
 
-    EXPECT_NE(nullptr, ptr);
+    EXPECT_NE(0llu, ptr);
     EXPECT_LE(ptrBase, ptr);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, FreeReclaimsSpaceAndRemovesEntriesFromMap) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024u * 4096u;
-    uintptr_t pLeftBound = reinterpret_cast<uintptr_t>(ptrBase);
-    uintptr_t pRightBound = pLeftBound + size;
+    auto pLeftBound = ptrBase;
+    auto pRightBound = pLeftBound + size;
 
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize = 4096;
-    void *ptr = heapAllocator->allocate(ptrSize);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
 
-    EXPECT_NE(nullptr, ptr);
+    EXPECT_NE(0llu, ptr);
     EXPECT_LE(ptrBase, ptr);
 
     size_t ptrSize2 = sizeThreshold + 4096;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
 
     EXPECT_EQ(heapAllocator->getLeftBound(), pLeftBound + sizeThreshold + 4096u);
     EXPECT_EQ(heapAllocator->getRightBound(), pRightBound - 4096u);
@@ -368,8 +366,7 @@ TEST(HeapAllocatorTest, FreeReclaimsSpaceAndRemovesEntriesFromMap) {
 }
 
 TEST(HeapAllocatorTest, AllocateMultiple) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
 
     size_t allocSize = 4096;
@@ -378,21 +375,21 @@ TEST(HeapAllocatorTest, AllocateMultiple) {
     for (uint32_t i = 0u; i < 2u; i++) {
         HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
         doubleAllocSize = allocSize * 2;
-        uintptr_t pLeftBound = reinterpret_cast<uintptr_t>(ptrBase);
-        uintptr_t pRightBound = pLeftBound + size;
+        auto pLeftBound = ptrBase;
+        auto pRightBound = pLeftBound + size;
 
-        void *ptr1 = heapAllocator->allocate(allocSize);
-        EXPECT_NE(nullptr, ptr1);
+        uint64_t ptr1 = heapAllocator->allocate(allocSize);
+        EXPECT_NE(0llu, ptr1);
         EXPECT_LE(ptrBase, ptr1);
 
-        void *ptr2 = heapAllocator->allocate(allocSize);
-        EXPECT_NE(nullptr, ptr2);
+        uint64_t ptr2 = heapAllocator->allocate(allocSize);
+        EXPECT_NE(0llu, ptr2);
 
-        void *ptr3 = heapAllocator->allocate(doubleAllocSize);
-        EXPECT_NE(nullptr, ptr3);
+        uint64_t ptr3 = heapAllocator->allocate(doubleAllocSize);
+        EXPECT_NE(0llu, ptr3);
 
-        void *ptr4 = heapAllocator->allocate(allocSize);
-        EXPECT_NE(nullptr, ptr4);
+        uint64_t ptr4 = heapAllocator->allocate(allocSize);
+        EXPECT_NE(0llu, ptr4);
 
         EXPECT_NE(ptr1, ptr2);
         EXPECT_NE(ptr1, ptr3);
@@ -416,51 +413,49 @@ TEST(HeapAllocatorTest, AllocateMultiple) {
 }
 
 TEST(HeapAllocatorTest, AllocateWholeSpace) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize = 4096;
-    void *ptr1 = heapAllocator->allocate(ptrSize);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     size_t ptrSize2 = 1023 * 4096;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_NE(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_NE(0llu, ptr2);
 
     EXPECT_EQ(heapAllocator->getLeftBound(), heapAllocator->getRightBound());
     EXPECT_EQ(0u, heapAllocator->getavailableSize());
 
     size_t ptrSize3 = 8192;
-    void *ptr3 = heapAllocator->allocate(ptrSize3);
-    EXPECT_EQ(nullptr, ptr3);
+    uint64_t ptr3 = heapAllocator->allocate(ptrSize3);
+    EXPECT_EQ(0llu, ptr3);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, FreeInReverseOrder) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
-    uintptr_t pLeftBound = reinterpret_cast<uintptr_t>(ptrBase);
-    uintptr_t pRightBound = pLeftBound + size;
+    auto pLeftBound = ptrBase;
+    auto pRightBound = pLeftBound + size;
 
     size_t ptr1Size = 4096;
-    void *ptr1 = heapAllocator->allocate(ptr1Size);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptr1Size);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     size_t ptrSize2 = sizeThreshold + 4096;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_NE(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_NE(0llu, ptr2);
 
     size_t ptrSize3 = 8192;
-    void *ptr3 = heapAllocator->allocate(ptrSize3);
-    EXPECT_NE(nullptr, ptr3);
+    uint64_t ptr3 = heapAllocator->allocate(ptrSize3);
+    EXPECT_NE(0llu, ptr3);
 
     heapAllocator->free(ptr3, ptrSize3);
     heapAllocator->free(ptr2, ptrSize2);
@@ -478,47 +473,47 @@ TEST(HeapAllocatorTest, FreeInReverseOrder) {
 }
 
 TEST(HeapAllocatorTest, SizeNotAvailable) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 0;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize = 4096;
-    void *ptr = heapAllocator->allocate(ptrSize);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
 
-    EXPECT_EQ(nullptr, ptr);
+    EXPECT_EQ(0llu, ptr);
     EXPECT_EQ(0u, heapAllocator->getavailableSize());
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, SizeAvailableButInsufficient) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 11 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, 3 * 4096);
     size_t remainingSize = size;
 
     // first small succeeds
     size_t ptrSize = 4096;
-    void *ptr = heapAllocator->allocate(ptrSize);
-    EXPECT_NE(nullptr, ptr);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
+    EXPECT_NE(0llu, ptr);
     // second small suceeds
     size_t ptrSize1 = 4096;
-    void *ptr1 = heapAllocator->allocate(ptrSize1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
     // free first to store on free list
     heapAllocator->free(ptr, ptrSize);
     remainingSize -= 4096;
 
-    EXPECT_NE(nullptr, ptr1);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_EQ(remainingSize, heapAllocator->getavailableSize());
 
     // first big succeeds
     size_t ptrSize2 = 4 * 4096;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_NE(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_NE(0llu, ptr2);
     // second big succeeds
     size_t ptrSize3 = 4 * 4096;
-    void *ptr3 = heapAllocator->allocate(ptrSize3);
-    EXPECT_NE(nullptr, ptr3);
+    uint64_t ptr3 = heapAllocator->allocate(ptrSize3);
+    EXPECT_NE(0llu, ptr3);
     // free first big to store on free list
     heapAllocator->free(ptr2, 4 * 4096);
     remainingSize -= 4 * 4096;
@@ -527,21 +522,21 @@ TEST(HeapAllocatorTest, SizeAvailableButInsufficient) {
 
     // third small fails
     size_t ptrSize4 = 2 * 4096;
-    void *ptr4 = heapAllocator->allocate(ptrSize4);
-    EXPECT_EQ(nullptr, ptr4);
+    uint64_t ptr4 = heapAllocator->allocate(ptrSize4);
+    EXPECT_EQ(0llu, ptr4);
     // third big fails
     size_t ptrSize5 = 5 * 4096;
-    void *ptr5 = heapAllocator->allocate(ptrSize5);
-    EXPECT_EQ(nullptr, ptr5);
+    uint64_t ptr5 = heapAllocator->allocate(ptrSize5);
+    EXPECT_EQ(0llu, ptr5);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, FreeNullDoesNothing) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, sizeThreshold, sizeThreshold);
 
-    heapAllocator->free(nullptr, 0);
+    heapAllocator->free(0llu, 0);
 
     EXPECT_EQ(0u, heapAllocator->getFreedChunksSmall().size());
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
@@ -550,27 +545,26 @@ TEST(HeapAllocatorTest, FreeNullDoesNothing) {
 }
 
 TEST(HeapAllocatorTest, AllocateAfterFree) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
-    uintptr_t pLeftBound = reinterpret_cast<uintptr_t>(ptrBase);
-    uintptr_t pRightBound = pLeftBound + size;
+    auto pLeftBound = ptrBase;
+    auto pRightBound = pLeftBound + size;
 
     size_t ptrSize = 8192;
-    void *ptr = heapAllocator->allocate(ptrSize);
-    EXPECT_NE(nullptr, ptr);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
+    EXPECT_NE(0llu, ptr);
     EXPECT_LE(ptrBase, ptr);
 
     size_t ptrSize1 = 8192;
-    void *ptr1 = heapAllocator->allocate(ptrSize1);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     size_t ptrSize2 = 8192;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_NE(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_NE(0llu, ptr2);
 
     heapAllocator->free(ptr1, ptrSize1);
 
@@ -578,8 +572,8 @@ TEST(HeapAllocatorTest, AllocateAfterFree) {
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
 
     size_t ptrSize3 = 8192;
-    void *ptr3 = heapAllocator->allocate(ptrSize3);
-    EXPECT_NE(nullptr, ptr3);
+    uint64_t ptr3 = heapAllocator->allocate(ptrSize3);
+    EXPECT_NE(0llu, ptr3);
 
     EXPECT_EQ(0u, heapAllocator->getFreedChunksSmall().size());
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
@@ -603,33 +597,32 @@ TEST(HeapAllocatorTest, AllocateAfterFree) {
 }
 
 TEST(HeapAllocatorTest, AllocateFromFreedBiggerChunk) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
-    uintptr_t pLeftBound = reinterpret_cast<uintptr_t>(ptrBase);
-    uintptr_t pRightBound = pLeftBound + size;
+    auto pLeftBound = ptrBase;
+    auto pRightBound = pLeftBound + size;
 
     size_t sizeAllocated = 0;
 
     size_t ptrSize = 8192;
-    void *ptr = heapAllocator->allocate(ptrSize);
-    EXPECT_NE(nullptr, ptr);
+    uint64_t ptr = heapAllocator->allocate(ptrSize);
+    EXPECT_NE(0llu, ptr);
     EXPECT_LE(ptrBase, ptr);
 
     sizeAllocated += 8192;
 
     size_t ptrSize1 = 4 * 4096;
-    void *ptr1 = heapAllocator->allocate(ptrSize1);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     sizeAllocated += 4 * 4096;
 
     size_t ptrSize2 = 8192;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_NE(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_NE(0llu, ptr2);
 
     sizeAllocated += 8192;
     EXPECT_EQ(size - sizeAllocated, heapAllocator->getavailableSize());
@@ -643,8 +636,8 @@ TEST(HeapAllocatorTest, AllocateFromFreedBiggerChunk) {
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
 
     size_t ptrSize3 = 3 * 4096;
-    void *ptr3 = heapAllocator->allocate(ptrSize3);
-    EXPECT_NE(nullptr, ptr3);
+    uint64_t ptr3 = heapAllocator->allocate(ptrSize3);
+    EXPECT_NE(0llu, ptr3);
 
     EXPECT_EQ(0u, heapAllocator->getFreedChunksSmall().size());
     EXPECT_EQ(0u, heapAllocator->getFreedChunksBig().size());
@@ -672,41 +665,39 @@ TEST(HeapAllocatorTest, AllocateFromFreedBiggerChunk) {
 }
 
 TEST(HeapAllocatorTest, AllocateWhenNoSpaceForSmallAllocation) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize1 = size - 4096;
-    void *ptr1 = heapAllocator->allocate(ptrSize1);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     EXPECT_EQ(4096u, heapAllocator->getavailableSize());
 
     size_t ptrSize2 = 8192;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_EQ(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_EQ(0llu, ptr2);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, AllocateWhenNoSpaceForBigAllocation) {
-
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
+    uint64_t ptrBase = 0x100000llu;
     size_t size = 1024 * 4096;
     HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(ptrBase, size, sizeThreshold);
 
     size_t ptrSize1 = 8192;
-    void *ptr1 = heapAllocator->allocate(ptrSize1);
-    EXPECT_NE(nullptr, ptr1);
+    uint64_t ptr1 = heapAllocator->allocate(ptrSize1);
+    EXPECT_NE(0llu, ptr1);
     EXPECT_LE(ptrBase, ptr1);
 
     EXPECT_EQ(size - 8192u, heapAllocator->getavailableSize());
 
     size_t ptrSize2 = size - 4096;
-    void *ptr2 = heapAllocator->allocate(ptrSize2);
-    EXPECT_EQ(nullptr, ptr2);
+    uint64_t ptr2 = heapAllocator->allocate(ptrSize2);
+    EXPECT_EQ(0llu, ptr2);
 
     delete heapAllocator;
 }
@@ -716,10 +707,10 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
 
     const uint32_t maxIndex = 2000;
 
-    unique_ptr<void *[]> ptrs(new void *[maxIndex]);
+    unique_ptr<uint64_t[]> ptrs(new uint64_t[maxIndex]);
     unique_ptr<size_t[]> sizes(new size_t[maxIndex]);
 
-    memset(ptrs.get(), 0, sizeof(void *) * maxIndex);
+    memset(ptrs.get(), 0, sizeof(uint64_t) * maxIndex);
     memset(sizes.get(), 0, sizeof(size_t) * maxIndex);
 
     uint16_t *freeIndexes = new uint16_t[maxIndex];
@@ -740,11 +731,12 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
     delete[] freeIndexes;
     uint64_t allocatorSize = 1024llu * 1024llu; // 1 MB
     void *pBasePtr = alignedMalloc(static_cast<size_t>(allocatorSize), 4096);
+    uint64_t basePtr = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pBasePtr));
     constexpr size_t reqAlignment = 4;
     size_t bigAllocationThreshold = (512 + 256) * reqAlignment;
 
     memset(pBasePtr, 0, static_cast<size_t>(allocatorSize));
-    HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(pBasePtr, allocatorSize, bigAllocationThreshold);
+    HeapAllocatorUnderTest *heapAllocator = new HeapAllocatorUnderTest(basePtr, allocatorSize, bigAllocationThreshold);
 
     heapAllocator->overrideAlignement(reqAlignment);
 
@@ -755,7 +747,7 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
             sizes[i] = sizeToAllocate;
             ptrs[i] = heapAllocator->allocate(sizes[i]);
 
-            if (ptrs[i] == nullptr)
+            if (ptrs[i] == 0llu)
                 break;
 
             uint8_t *pTemp = reinterpret_cast<uint8_t *>(ptrs[i]);
@@ -765,14 +757,12 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
             }
 
             uint32_t indexToFree = indexes[i] % (i * 2 + 1);
-            //if (indexToFree < i) {
-            if (ptrs[indexToFree] != nullptr) {
-                memset(ptrs[indexToFree], 0, sizes[indexToFree]);
+            if (ptrs[indexToFree]) {
+                memset(reinterpret_cast<void *>(ptrs[indexToFree]), 0, sizes[indexToFree]);
                 heapAllocator->free(ptrs[indexToFree], sizes[indexToFree]);
-                ptrs[indexToFree] = nullptr;
+                ptrs[indexToFree] = 0llu;
                 sizes[indexToFree] = 0;
             }
-            //}
         }
     }
 
@@ -793,22 +783,18 @@ TEST(HeapAllocatorTest, AllocationsDoNotOverlap) {
     //at this point we should be able to allocate full size
     size_t totalSize = (size_t)(allocatorSize - reqAlignment);
     auto finalPtr = heapAllocator->allocate(totalSize);
-    EXPECT_NE(nullptr, finalPtr);
+    EXPECT_NE(0llu, finalPtr);
 
     heapAllocator->free(finalPtr, totalSize);
 
     alignedFree(pBasePtr);
 
-    //  delete[] indexes;
-    //    delete[] ptrs;
-    //  delete[] sizes;
-
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, defragmentBig) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
-    uintptr_t basePtr = 0x100000;
+    uint64_t ptrBase = 0x100000llu;
+    uint64_t basePtr = 0x100000llu;
     size_t size = 1024 * 4096;
 
     size_t threshold = 4096;
@@ -823,17 +809,17 @@ TEST(HeapAllocatorTest, defragmentBig) {
     // 0, 1, 2 - can be merged to one
     // 6,7,8,10 - can be merged to one
 
-    void *ptrs[12];
+    uint64_t ptrs[12];
     ptrs[0] = heapAllocator->allocate(allocSize);
     ptrs[1] = heapAllocator->allocate(allocSize);
     ptrs[2] = heapAllocator->allocate(allocSize);
     ptrs[3] = heapAllocator->allocate(tripleallocSize);
-    ptrs[4] = nullptr;
-    ptrs[5] = nullptr;
+    ptrs[4] = 0llu;
+    ptrs[5] = 0llu;
     ptrs[6] = heapAllocator->allocate(allocSize);
     ptrs[7] = heapAllocator->allocate(allocSize);
     ptrs[8] = heapAllocator->allocate(doubleallocSize);
-    ptrs[9] = nullptr;
+    ptrs[9] = 0llu;
     ptrs[10] = heapAllocator->allocate(allocSize);
     ptrs[11] = heapAllocator->allocate(allocSize);
 
@@ -855,21 +841,21 @@ TEST(HeapAllocatorTest, defragmentBig) {
 
     ASSERT_EQ(2u, freedChunks.size());
 
-    EXPECT_EQ(reinterpret_cast<void *>(basePtr), freedChunks[0].ptr);
+    EXPECT_EQ(basePtr, freedChunks[0].ptr);
     EXPECT_EQ(3 * allocSize, freedChunks[0].size);
 
-    EXPECT_EQ(reinterpret_cast<void *>(basePtr + 6 * allocSize), freedChunks[1].ptr);
+    EXPECT_EQ((basePtr + 6 * allocSize), freedChunks[1].ptr);
     EXPECT_EQ(5 * allocSize, freedChunks[1].size);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, defragmentSmall) {
-    void *ptrBase = reinterpret_cast<void *>(0x100000);
-    uintptr_t basePtr = 0x100000;
+    uint64_t ptrBase = 0x100000llu;
+    uint64_t basePtr = 0x100000;
 
     size_t size = 1024 * 4096;
-    uintptr_t upperLimitPtr = basePtr + size;
+    uint64_t upperLimitPtr = basePtr + size;
 
     size_t threshold = 2 * MemoryConstants::pageSize;
     size_t allocSize = MemoryConstants::pageSize;
@@ -882,17 +868,17 @@ TEST(HeapAllocatorTest, defragmentSmall) {
     // 0, 1, 2 - can be merged to one
     // 6,7,8,10 - can be merged to one
 
-    void *ptrs[12];
+    uint64_t ptrs[12];
     ptrs[0] = heapAllocator->allocate(allocSize);
     ptrs[1] = heapAllocator->allocate(allocSize);
     ptrs[2] = heapAllocator->allocate(allocSize);
     ptrs[3] = heapAllocator->allocate(doubleallocSize);
-    ptrs[4] = nullptr;
-    ptrs[5] = nullptr;
+    ptrs[4] = 0llu;
+    ptrs[5] = 0llu;
     ptrs[6] = heapAllocator->allocate(allocSize);
     ptrs[7] = heapAllocator->allocate(allocSize);
     ptrs[8] = heapAllocator->allocate(doubleallocSize);
-    ptrs[9] = nullptr;
+    ptrs[9] = 0llu;
     ptrs[10] = heapAllocator->allocate(allocSize);
     ptrs[11] = heapAllocator->allocate(allocSize);
 
@@ -914,17 +900,17 @@ TEST(HeapAllocatorTest, defragmentSmall) {
 
     ASSERT_EQ(2u, freedChunks.size());
 
-    EXPECT_EQ(reinterpret_cast<void *>(upperLimitPtr - 3 * allocSize), freedChunks[0].ptr);
+    EXPECT_EQ((upperLimitPtr - 3 * allocSize), freedChunks[0].ptr);
     EXPECT_EQ(3 * allocSize, freedChunks[0].size);
 
-    EXPECT_EQ(reinterpret_cast<void *>(upperLimitPtr - 10 * allocSize), freedChunks[1].ptr);
+    EXPECT_EQ((upperLimitPtr - 10 * allocSize), freedChunks[1].ptr);
     EXPECT_EQ(5 * allocSize, freedChunks[1].size);
 
     delete heapAllocator;
 }
 
 TEST(HeapAllocatorTest, Given10SmallAllocationsWhenFreedInTheSameOrderThenLastChunkFreedReturnsWholeSpaceToFreeRange) {
-    void *ptrBase = reinterpret_cast<void *>(0);
+    uint64_t ptrBase = 0llu;
     size_t size = 1024 * 4096;
     size_t threshold = 2 * 4096;
 
@@ -932,7 +918,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenFreedInTheSameOrderThenLastCh
 
     std::vector<HeapChunk> &freedChunks = heapAllocator->getFreedChunksSmall();
 
-    void *ptrs[10];
+    uint64_t ptrs[10];
     size_t sizes[10];
 
     for (uint32_t i = 0; i < 10; i++) {
@@ -956,7 +942,7 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenFreedInTheSameOrderThenLastCh
 }
 
 TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSplittedAndReleasedThenItDoesNotGoToFreedBigChunksList) {
-    void *ptrBase = reinterpret_cast<void *>(0);
+    uint64_t ptrBase = 0llu;
     uintptr_t basePtr = 0;
 
     // Size for 10 small allocs plus one single 2 page plus some space
@@ -970,12 +956,12 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSp
     std::vector<HeapChunk> &freedChunksSmall = heapAllocator->getFreedChunksSmall();
     std::vector<HeapChunk> &freedChunksBig = heapAllocator->getFreedChunksBig();
 
-    void *ptrs[10];
+    uint64_t ptrs[10];
     size_t sizes[10];
 
     // size smaller than threshold
     size_t sizeOfSmallAlloc = 2 * 4096;
-    void *smallAlloc = nullptr;
+    uint64_t smallAlloc = 0llu;
 
     for (uint32_t i = 0; i < 10; i++) {
         sizes[i] = 4096;
@@ -993,8 +979,8 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSp
     // Allocate small chunk, should be taken from freed list
     smallAlloc = heapAllocator->allocate(sizeOfSmallAlloc);
 
-    EXPECT_NE(nullptr, smallAlloc);
-    EXPECT_LE(upperLimitPtr - (8 * 4096), reinterpret_cast<uintptr_t>(smallAlloc));
+    EXPECT_NE(0llu, smallAlloc);
+    EXPECT_LE(upperLimitPtr - (8 * 4096), smallAlloc);
 
     EXPECT_EQ(1u, freedChunksSmall.size());
 
@@ -1019,12 +1005,12 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallSp
 }
 
 TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNotSplittedAndReleasedThenItDoesNotGoToFreedBigChunksList) {
-    void *ptrBase = reinterpret_cast<void *>(0);
+    uint64_t ptrBase = 0llu;
     uintptr_t basePtr = 0;
 
     // Size for 10 small allocs plus one single 3 page plus some space
     size_t size = (10 + 3 + 1) * 4096;
-    uintptr_t upperLimitPtr = basePtr + size;
+    uint64_t upperLimitPtr = basePtr + size;
 
     size_t threshold = 4 * 4096;
 
@@ -1033,12 +1019,12 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNo
     std::vector<HeapChunk> &freedChunksSmall = heapAllocator->getFreedChunksSmall();
     std::vector<HeapChunk> &freedChunksBig = heapAllocator->getFreedChunksBig();
 
-    void *ptrs[10];
+    uint64_t ptrs[10];
     size_t sizes[10];
 
     // size smaller than threshold
     size_t sizeOfSmallAlloc = 3 * 4096;
-    void *smallAlloc = nullptr;
+    uint64_t smallAlloc = 0llu;
 
     for (uint32_t i = 0; i < 10; i++) {
         sizes[i] = 4096;
@@ -1056,8 +1042,8 @@ TEST(HeapAllocatorTest, Given10SmallAllocationsWhenMergedToBigAllocatedAsSmallNo
     // Allocate small chunk, should be taken from freed list
     smallAlloc = heapAllocator->allocate(sizeOfSmallAlloc);
 
-    EXPECT_NE(nullptr, smallAlloc);
-    EXPECT_LE(upperLimitPtr - (5 * 4096), reinterpret_cast<uintptr_t>(smallAlloc));
+    EXPECT_NE(0llu, smallAlloc);
+    EXPECT_LE(upperLimitPtr - (5 * 4096), smallAlloc);
 
     EXPECT_EQ(0u, freedChunksSmall.size());
 

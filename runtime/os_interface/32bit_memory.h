@@ -38,9 +38,9 @@ class Allocator32bit {
     Allocator32bit();
     ~Allocator32bit();
 
-    void *allocate(size_t &size);
+    uint64_t allocate(size_t &size);
     uintptr_t getBase();
-    int free(void *ptr, size_t size);
+    int free(uint64_t ptr, size_t size);
 
   protected:
     std::unique_ptr<OsInternals> osInternals;

@@ -33,8 +33,8 @@
 namespace OCLRT {
 
 struct HeapChunk {
-    HeapChunk(void *ptr, size_t size) : ptr(ptr), size(size) {}
-    void *ptr;
+    HeapChunk(uint64_t ptr, size_t size) : ptr(ptr), size(size) {}
+    uint64_t ptr;
     size_t size;
 };
 
@@ -42,16 +42,16 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2);
 
 class HeapAllocator {
   public:
-    HeapAllocator(void *address, uint64_t size) : address(address), size(size), availableSize(size), sizeThreshold(defaultSizeThreshold) {
-        pLeftBound = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
-        pRightBound = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address) + (size_t)size);
+    HeapAllocator(uint64_t address, uint64_t size) : address(address), size(size), availableSize(size), sizeThreshold(defaultSizeThreshold) {
+        pLeftBound = address;
+        pRightBound = address + size;
         freedChunksBig.reserve(10);
         freedChunksSmall.reserve(50);
     }
 
-    HeapAllocator(void *address, uint64_t size, size_t threshold) : address(address), size(size), availableSize(size), sizeThreshold(threshold) {
-        pLeftBound = reinterpret_cast<uint64_t>(address);
-        pRightBound = reinterpret_cast<uint64_t>(address) + size;
+    HeapAllocator(uint64_t address, uint64_t size, size_t threshold) : address(address), size(size), availableSize(size), sizeThreshold(threshold) {
+        pLeftBound = address;
+        pRightBound = address + size;
         freedChunksBig.reserve(10);
         freedChunksSmall.reserve(50);
     }
@@ -59,40 +59,40 @@ class HeapAllocator {
     ~HeapAllocator() {
     }
 
-    void *allocate(size_t &sizeToAllocate) {
+    uint64_t allocate(size_t &sizeToAllocate) {
         std::lock_guard<std::mutex> lock(mtx);
         sizeToAllocate = alignUp(sizeToAllocate, allocationAlignment);
-        void *ptrReturn = nullptr;
+        uint64_t ptrReturn = 0llu;
 
         DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
 
         if (availableSize < sizeToAllocate) {
-            return nullptr;
+            return 0llu;
         }
 
         std::vector<HeapChunk> &freedChunks = (sizeToAllocate > sizeThreshold) ? freedChunksBig : freedChunksSmall;
         size_t sizeOfFreedChunk = 0;
         uint32_t defragmentCount = 0;
 
-        while (ptrReturn == nullptr) {
+        while (ptrReturn == 0llu) {
 
             ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk);
 
-            if (ptrReturn == nullptr) {
+            if (ptrReturn == 0llu) {
                 if (sizeToAllocate > sizeThreshold) {
                     if (pLeftBound + sizeToAllocate <= pRightBound) {
-                        ptrReturn = reinterpret_cast<void *>(pLeftBound);
+                        ptrReturn = pLeftBound;
                         pLeftBound += sizeToAllocate;
                     }
                 } else {
                     if (pRightBound - sizeToAllocate >= pLeftBound) {
                         pRightBound -= sizeToAllocate;
-                        ptrReturn = reinterpret_cast<void *>(pRightBound);
+                        ptrReturn = pRightBound;
                     }
                 }
             }
 
-            if (ptrReturn != nullptr) {
+            if (ptrReturn != 0llu) {
                 if (sizeOfFreedChunk > 0) {
                     availableSize -= sizeOfFreedChunk;
                     sizeToAllocate = sizeOfFreedChunk;
@@ -101,7 +101,7 @@ class HeapAllocator {
                 }
             }
 
-            if (ptrReturn == nullptr) {
+            if (ptrReturn == 0llu) {
                 if (defragmentCount == 1)
                     break;
                 defragment();
@@ -112,10 +112,10 @@ class HeapAllocator {
         return ptrReturn;
     }
 
-    void free(void *ptr, size_t size) {
+    void free(uint64_t ptr, size_t size) {
         std::lock_guard<std::mutex> lock(mtx);
-        uintptr_t ptrIn = reinterpret_cast<uintptr_t>(ptr);
-        if (ptrIn == 0u)
+        auto ptrIn = ptr;
+        if (ptrIn == 0llu)
             return;
 
         DBG_LOG(PrintDebugMessages, __FUNCTION__, "Allocator usage == ", this->getUsage());
@@ -151,7 +151,7 @@ class HeapAllocator {
     }
 
   protected:
-    void *address;
+    uint64_t address;
     uint64_t size;
     uint64_t availableSize;
     uint64_t pLeftBound, pRightBound;
@@ -163,7 +163,7 @@ class HeapAllocator {
     std::vector<HeapChunk> freedChunksBig;
     std::mutex mtx;
 
-    void *getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk) {
+    uint64_t getFromFreedChunks(size_t size, std::vector<HeapChunk> &freedChunks, size_t &sizeOfFreedChunk) {
         size_t elements = freedChunks.size();
         size_t bestFitIndex = -1;
         size_t bestFitSize = 0;
@@ -171,7 +171,7 @@ class HeapAllocator {
 
         for (size_t i = 0; i < elements; i++) {
             if (freedChunks[i].size == size) {
-                void *ptr = freedChunks[i].ptr;
+                auto ptr = freedChunks[i].ptr;
                 freedChunks.erase(freedChunks.begin() + i);
                 return ptr;
             }
@@ -186,7 +186,7 @@ class HeapAllocator {
 
         if (bestFitSize != 0) {
             if (bestFitSize < (size << 1)) {
-                void *ptr = freedChunks[bestFitIndex].ptr;
+                auto ptr = freedChunks[bestFitIndex].ptr;
                 sizeOfFreedChunk = freedChunks[bestFitIndex].size;
                 freedChunks.erase(freedChunks.begin() + bestFitIndex);
                 return ptr;
@@ -195,26 +195,26 @@ class HeapAllocator {
 
                 DEBUG_BREAK_IF(!((size <= sizeThreshold) || ((size > sizeThreshold) && (sizeDelta > sizeThreshold))));
 
-                void *ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(freedChunks[bestFitIndex].ptr) + sizeDelta);
+                auto ptr = freedChunks[bestFitIndex].ptr + sizeDelta;
                 freedChunks[bestFitIndex].size = sizeDelta;
                 return ptr;
             }
         }
-        return nullptr;
+        return 0llu;
     }
 
-    void storeInFreedChunks(void *ptr, size_t size, std::vector<HeapChunk> &freedChunks) {
+    void storeInFreedChunks(uint64_t ptr, size_t size, std::vector<HeapChunk> &freedChunks) {
         size_t elements = freedChunks.size();
-        uintptr_t pLeft = reinterpret_cast<uintptr_t>(ptr);
-        uintptr_t pRight = reinterpret_cast<uintptr_t>(ptr) + size;
+        uint64_t pLeft = ptr;
+        uint64_t pRight = ptr + size;
         bool freedChunkStored = false;
 
         for (size_t i = 0; i < elements; i++) {
-            if (freedChunks[i].ptr == reinterpret_cast<void *>(pRight)) {
-                freedChunks[i].ptr = reinterpret_cast<void *>(pLeft);
+            if (freedChunks[i].ptr == pRight) {
+                freedChunks[i].ptr = pLeft;
                 freedChunks[i].size += size;
                 freedChunkStored = true;
-            } else if ((reinterpret_cast<uintptr_t>(freedChunks[i].ptr) + freedChunks[i].size) == pLeft) {
+            } else if ((freedChunks[i].ptr + freedChunks[i].size) == pLeft) {
                 freedChunks[i].size += size;
                 freedChunkStored = true;
             }
@@ -234,7 +234,7 @@ class HeapAllocator {
         size_t maxSizeOfSmallChunks = freedChunksSmall.size();
 
         if (maxSizeOfSmallChunks > 0) {
-            uintptr_t ptr = reinterpret_cast<uintptr_t>(freedChunksSmall[maxSizeOfSmallChunks - 1].ptr);
+            auto ptr = freedChunksSmall[maxSizeOfSmallChunks - 1].ptr;
             size_t chunkSize = freedChunksSmall[maxSizeOfSmallChunks - 1].size;
             if (ptr == pRightBound) {
                 pRightBound = ptr + chunkSize;
@@ -247,7 +247,7 @@ class HeapAllocator {
         size_t maxSizeOfBigChunks = freedChunksBig.size();
 
         if (maxSizeOfBigChunks > 0) {
-            uintptr_t ptr = reinterpret_cast<uintptr_t>(freedChunksBig[maxSizeOfBigChunks - 1].ptr);
+            auto ptr = freedChunksBig[maxSizeOfBigChunks - 1].ptr;
             size_t chunkSize = freedChunksBig[maxSizeOfBigChunks - 1].size;
 
             if (ptr == (pLeftBound - chunkSize)) {
@@ -263,11 +263,11 @@ class HeapAllocator {
             std::sort(freedChunksSmall.rbegin(), freedChunksSmall.rend());
             size_t maxSize = freedChunksSmall.size();
             for (size_t i = maxSize - 1; i > 0; --i) {
-                uintptr_t ptr = reinterpret_cast<uintptr_t>(freedChunksSmall[i].ptr);
+                auto ptr = freedChunksSmall[i].ptr;
                 size_t chunkSize = freedChunksSmall[i].size;
 
-                if (reinterpret_cast<uintptr_t>(freedChunksSmall[i - 1].ptr) == ptr + chunkSize) {
-                    freedChunksSmall[i - 1].ptr = reinterpret_cast<void *>(ptr);
+                if (freedChunksSmall[i - 1].ptr == ptr + chunkSize) {
+                    freedChunksSmall[i - 1].ptr = ptr;
                     freedChunksSmall[i - 1].size += chunkSize;
                     freedChunksSmall.erase(freedChunksSmall.begin() + i);
                 }
@@ -279,9 +279,9 @@ class HeapAllocator {
 
             size_t maxSize = freedChunksBig.size();
             for (size_t i = maxSize - 1; i > 0; --i) {
-                uintptr_t ptr = reinterpret_cast<uintptr_t>(freedChunksBig[i].ptr);
+                auto ptr = freedChunksBig[i].ptr;
                 size_t chunkSize = freedChunksBig[i].size;
-                if ((reinterpret_cast<uintptr_t>(freedChunksBig[i - 1].ptr) + freedChunksBig[i - 1].size) == ptr) {
+                if ((freedChunksBig[i - 1].ptr + freedChunksBig[i - 1].size) == ptr) {
                     freedChunksBig[i - 1].size += chunkSize;
                     freedChunksBig.erase(freedChunksBig.begin() + i);
                 }

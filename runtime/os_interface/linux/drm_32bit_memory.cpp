@@ -96,7 +96,7 @@ bool OCLRT::is32BitOsAllocatorAvailable = true;
 Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) {
     this->base = base;
     this->size = size;
-    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator((void *)base, size));
+    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, size));
 }
 
 OCLRT::Allocator32bit::Allocator32bit() : Allocator32bit(new OsInternals) {
@@ -133,7 +133,7 @@ OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn
         base = (uint64_t)ptr;
         size = sizeToMap;
 
-        heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(ptr, sizeToMap));
+        heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, sizeToMap));
     } else {
         this->osInternals->drmAllocator = new Allocator32bit::OsInternals::Drm32BitAllocator(*this->osInternals);
     }
@@ -149,24 +149,24 @@ OCLRT::Allocator32bit::~Allocator32bit() {
     }
 }
 
-void *OCLRT::Allocator32bit::allocate(size_t &size) {
-    void *ptr = nullptr;
+uint64_t OCLRT::Allocator32bit::allocate(size_t &size) {
+    uint64_t ptr = 0llu;
     if (DebugManager.flags.UseNewHeapAllocator.get()) {
         ptr = this->heapAllocator->allocate(size);
     } else {
-        ptr = this->osInternals->drmAllocator->allocate(size);
+        ptr = reinterpret_cast<uint64_t>(this->osInternals->drmAllocator->allocate(size));
     }
     return ptr;
 }
 
-int Allocator32bit::free(void *ptr, size_t size) {
-    if ((ptr == MAP_FAILED) || (ptr == nullptr))
+int Allocator32bit::free(uint64_t ptr, size_t size) {
+    if ((ptr == reinterpret_cast<uint64_t>(MAP_FAILED)) || (ptr == 0llu))
         return 0;
 
     if (DebugManager.flags.UseNewHeapAllocator.get()) {
         this->heapAllocator->free(ptr, size);
     } else {
-        return this->osInternals->drmAllocator->free(ptr, size);
+        return this->osInternals->drmAllocator->free(reinterpret_cast<void *>(ptr), size);
     }
     return 0;
 }

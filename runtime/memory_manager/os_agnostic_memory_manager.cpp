@@ -75,7 +75,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(false, reinterpret_cast<void *>(ptr), Gmm::canonize(reinterpret_cast<uint64_t>(gpuVirtualAddress) + offset), size, counter);
+        MemoryAllocation *memAlloc = new MemoryAllocation(false, reinterpret_cast<void *>(ptr), Gmm::canonize(gpuVirtualAddress + offset), size, counter);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
@@ -89,11 +89,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
 
     if (size < 0xfffff000)
         ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
-    void *gpuPointer = allocator32Bit->allocate(allocationSize);
+    auto gpuAddress = allocator32Bit->allocate(allocationSize);
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
-        memoryAllocation = new MemoryAllocation(true, ptrAlloc, Gmm::canonize(reinterpret_cast<uint64_t>(gpuPointer)), size, counter);
+        memoryAllocation = new MemoryAllocation(true, ptrAlloc, Gmm::canonize(gpuAddress), size, counter);
         memoryAllocation->is32BitAllocation = true;
         memoryAllocation->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
         memoryAllocation->sizeToFree = allocationSize;
@@ -129,8 +129,8 @@ void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllo
     void *ptr = gfxAllocation->getUnderlyingBuffer();
 
     if (gfxAllocation->is32BitAllocation) {
-        void *gpuPtrToFree = reinterpret_cast<void *>(gfxAllocation->getGpuAddress() & ~MemoryConstants::pageMask);
-        allocator32Bit->free(gpuPtrToFree, static_cast<MemoryAllocation *>(gfxAllocation)->sizeToFree);
+        auto gpuAddressToFree = gfxAllocation->getGpuAddress() & ~MemoryConstants::pageMask;
+        allocator32Bit->free(gpuAddressToFree, static_cast<MemoryAllocation *>(gfxAllocation)->sizeToFree);
     }
     if (gfxAllocation->cpuPtrAllocated) {
         alignedFreeWrapper(ptr);

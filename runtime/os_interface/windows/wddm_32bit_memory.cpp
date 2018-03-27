@@ -34,7 +34,7 @@ class Allocator32bit::OsInternals {
 Allocator32bit::Allocator32bit(uint64_t base, uint64_t size) {
     this->base = base;
     this->size = size;
-    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator((void *)base, size));
+    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(base, size));
 }
 
 OCLRT::Allocator32bit::Allocator32bit() {
@@ -43,7 +43,7 @@ OCLRT::Allocator32bit::Allocator32bit() {
     osInternals = std::unique_ptr<OsInternals>(new OsInternals);
     osInternals.get()->allocatedRange = (void *)((uintptr_t)this->base);
 
-    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator((void *)this->base, sizeToMap));
+    heapAllocator = std::unique_ptr<HeapAllocator>(new HeapAllocator(this->base, sizeToMap));
 }
 
 OCLRT::Allocator32bit::~Allocator32bit() {
@@ -52,13 +52,13 @@ OCLRT::Allocator32bit::~Allocator32bit() {
     }
 }
 
-void *Allocator32bit::allocate(size_t &size) {
+uint64_t Allocator32bit::allocate(size_t &size) {
     if (size >= 0xfffff000)
-        return nullptr;
+        return 0llu;
     return this->heapAllocator->allocate(size);
 }
 
-int Allocator32bit::free(void *ptr, size_t size) {
+int Allocator32bit::free(uint64_t ptr, size_t size) {
     this->heapAllocator->free(ptr, size);
     return 0;
 }
