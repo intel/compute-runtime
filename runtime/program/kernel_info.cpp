@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -303,6 +303,8 @@ void KernelInfo::storeKernelArgument(
     kernelArgInfo[argNum].accessQualifier = pImageMemObjKernelArg->Writeable
                                                 ? CL_KERNEL_ARG_ACCESS_READ_WRITE
                                                 : CL_KERNEL_ARG_ACCESS_READ_ONLY;
+
+    kernelArgInfo[argNum].isTransformable = pImageMemObjKernelArg->Transformable != 0;
     patchInfo.imageMemObjKernelArgs.push_back(pImageMemObjKernelArg);
 }
 

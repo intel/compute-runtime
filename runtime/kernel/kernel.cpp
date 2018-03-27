@@ -41,6 +41,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/pipe.h"
+#include "runtime/kernel/image_transformer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -105,6 +106,7 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Devic
       kernelReflectionSurface(nullptr),
       usingSharedObjArgs(false) {
     program->retain();
+    imageTransformer.reset(new ImageTransformer);
 }
 
 Kernel::~Kernel() {
@@ -773,6 +775,7 @@ cl_int Kernel::setArg(uint32_t argIndex, size_t argSize, const void *argVal) {
             patchedArgumentsNum++;
             kernelArguments[argIndex].isPatched = true;
         }
+        resolveArgs();
     }
     return retVal;
 }
@@ -1209,6 +1212,10 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData());
         auto &imageDesc = pImage->getImageDesc();
         auto &imageFormat = pImage->getImageFormat();
+
+        if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D) {
+            imageTransformer->registerImage3d(argIndex);
+        }
 
         patch<uint32_t, size_t>(imageDesc.image_width, crossThreadData, kernelArgInfo.offsetImgWidth);
         patch<uint32_t, size_t>(imageDesc.image_height, crossThreadData, kernelArgInfo.offsetImgHeight);
@@ -2044,5 +2051,32 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
         }
     }
     return CL_SUCCESS;
+}
+
+void Kernel::resolveArgs() {
+    if (!Kernel::isPatched() || !imageTransformer->hasRegisteredImages3d() || !canTransformImages())
+        return;
+    bool canTransformImageTo2dArray = true;
+    for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
+        if (kernelInfo.kernelArgInfo.at(i).isSampler) {
+            auto clSamplerObj = *(static_cast<const cl_sampler *>(kernelArguments.at(i).value));
+            auto sampler = castToObjectOrAbort<Sampler>(clSamplerObj);
+            if (sampler->isTransformable()) {
+                canTransformImageTo2dArray = true;
+            } else {
+                canTransformImageTo2dArray = false;
+                break;
+            }
+        }
+    }
+    if (canTransformImageTo2dArray) {
+        imageTransformer->transformImagesTo2dArray(kernelInfo, kernelArguments, getSurfaceStateHeap());
+    } else if (imageTransformer->didTransform()) {
+        imageTransformer->transformImagesTo3d(kernelInfo, kernelArguments, getSurfaceStateHeap());
+    }
+}
+
+bool Kernel::canTransformImages() const {
+    return device.getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE;
 }
 } // namespace OCLRT

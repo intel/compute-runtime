@@ -139,6 +139,8 @@ struct MockImage : public OCLRT::Image {
     }
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {
     }
+    void transformImage2dArrayTo3d(void *memory) override {}
+    void transformImage3dTo2dArray(void *memory) override {}
 };
 
 TEST(MipmapHelper, givenImageWithoutMipLevelsWhenIsMipMappedIsCalledThenFalseIsReturned) {

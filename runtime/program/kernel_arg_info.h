@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,6 +69,7 @@ struct KernelArgInfo {
     uint32_t offsetBufferOffset = undefinedOffset;
 
     bool needPatch = false;
+    bool isTransformable = false;
 
     cl_kernel_arg_access_qualifier accessQualifier = CL_KERNEL_ARG_ACCESS_NONE;
     cl_kernel_arg_address_qualifier addressQualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL;

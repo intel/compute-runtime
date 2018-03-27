@@ -182,6 +182,9 @@ class Image : public MemObj {
     const McsSurfaceInfo &getMcsSurfaceInfo() { return mcsSurfaceInfo; }
     size_t calculateOffsetForMapping(const MemObjOffsetArray &origin) const override;
 
+    virtual void transformImage2dArrayTo3d(void *memory) = 0;
+    virtual void transformImage3dTo2dArray(void *memory) = 0;
+
     const bool isTiledImage;
 
   protected:
@@ -272,7 +275,8 @@ class ImageHw : public Image {
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
     void appendSurfaceStateParams(RENDER_SURFACE_STATE *surfaceState);
-
+    void transformImage2dArrayTo3d(void *memory) override;
+    void transformImage3dTo2dArray(void *memory) override;
     static Image *create(Context *context,
                          cl_mem_flags flags,
                          size_t size,

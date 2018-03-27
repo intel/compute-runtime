@@ -153,6 +153,8 @@ class MockKernel : public Kernel {
     }
     bool isPatched() const override;
 
+    bool canTransformImages() const override;
+
     ////////////////////////////////////////////////////////////////////////////////
     void setCrossThreadData(const void *crossThreadDataPattern, uint32_t newCrossThreadDataSize) {
         if ((Kernel::crossThreadData != nullptr) && (Kernel::crossThreadData != mockCrossThreadData.data())) {
@@ -239,6 +241,8 @@ class MockKernel : public Kernel {
 
     uint32_t makeResidentCalls = 0;
     uint32_t getResidencyCalls = 0;
+
+    bool canKernelTransformImages = true;
 
   protected:
     KernelInfo *kernelInfoAllocated = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #include "runtime/program/kernel_info.h"
 #include "gtest/gtest.h"
 #include <type_traits>
+#include <memory>
 
 using OCLRT::KernelInfo;
 using OCLRT::SPatchStatelessConstantMemoryObjectKernelArgument;
@@ -211,4 +212,28 @@ TEST(KernelInfo_resolveKernelInfo, complexArgumentType) {
     EXPECT_EQ(static_cast<cl_kernel_arg_type_qualifier>(CL_KERNEL_ARG_TYPE_RESTRICT | CL_KERNEL_ARG_TYPE_CONST), kernelArgInfo.typeQualifier);
 
     delete pKernelInfo;
+}
+
+TEST(KernelInfo, givenKernelInfoWhenStoreTransformableArgThenArgInfoIsTransformable) {
+    uint32_t argumentNumber = 1;
+    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    SPatchImageMemoryObjectKernelArgument arg;
+    arg.ArgumentNumber = argumentNumber;
+    arg.Transformable = true;
+
+    kernelInfo->storeKernelArgument(&arg);
+    const auto &argInfo = kernelInfo->kernelArgInfo[argumentNumber];
+    EXPECT_TRUE(argInfo.isTransformable);
+}
+
+TEST(KernelInfo, givenKernelInfoWhenStoreNonTransformableArgThenArgInfoIsNotTransformable) {
+    uint32_t argumentNumber = 1;
+    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    SPatchImageMemoryObjectKernelArgument arg;
+    arg.ArgumentNumber = argumentNumber;
+    arg.Transformable = false;
+
+    kernelInfo->storeKernelArgument(&arg);
+    const auto &argInfo = kernelInfo->kernelArgInfo[argumentNumber];
+    EXPECT_FALSE(argInfo.isTransformable);
 }

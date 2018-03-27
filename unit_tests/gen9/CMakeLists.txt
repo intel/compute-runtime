@@ -26,6 +26,7 @@ if(TESTS_GEN9)
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps.cpp

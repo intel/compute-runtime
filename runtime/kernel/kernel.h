@@ -35,6 +35,7 @@
 namespace OCLRT {
 struct CompletionStamp;
 class GraphicsAllocation;
+class ImageTransformer;
 class Surface;
 class PrintfHandler;
 
@@ -126,6 +127,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     cl_int cloneKernel(Kernel *pSourceKernel);
 
+    MOCKABLE_VIRTUAL bool canTransformImages() const;
     MOCKABLE_VIRTUAL bool isPatched() const;
 
     // API entry points
@@ -455,6 +457,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void patchBlocksCurbeWithConstantValues();
 
+    void resolveArgs();
+
     Program *program;
     Context *context;
     const Device &device;
@@ -481,5 +485,6 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t patchedArgumentsNum = 0;
 
     std::vector<PatchInfoData> patchInfoDataList;
+    std::unique_ptr<ImageTransformer> imageTransformer;
 };
 } // namespace OCLRT
