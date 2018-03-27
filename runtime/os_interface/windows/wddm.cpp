@@ -799,7 +799,7 @@ bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
     return success;
 }
 
-bool Wddm::getDeviceState() {
+void Wddm::getDeviceState() {
 #ifdef _DEBUG
     D3DKMT_GETDEVICESTATE GetDevState;
     memset(&GetDevState, 0, sizeof(GetDevState));
@@ -809,13 +809,11 @@ bool Wddm::getDeviceState() {
     GetDevState.StateType = D3DKMT_DEVICESTATE_EXECUTION;
 
     status = gdi->getDeviceState(&GetDevState);
+    DEBUG_BREAK_IF(status != STATUS_SUCCESS);
     if (status == STATUS_SUCCESS) {
-        if (GetDevState.ExecutionState == D3DKMT_DEVICEEXECUTION_ERROR_OUTOFMEMORY) {
-            DEBUG_BREAK_IF(true);
-        }
+        DEBUG_BREAK_IF(GetDevState.ExecutionState != D3DKMT_DEVICEEXECUTION_ACTIVE);
     }
 #endif
-    return true;
 }
 
 void Wddm::handleCompletion() {

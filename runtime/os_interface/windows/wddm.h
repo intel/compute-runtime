@@ -252,7 +252,7 @@ class Wddm {
     bool destroyDevice();
     bool closeAdapter();
     bool createMonitoredFence();
-    bool getDeviceState();
+    void getDeviceState();
     void handleCompletion();
     unsigned int readEnablePreemptionRegKey();
 
