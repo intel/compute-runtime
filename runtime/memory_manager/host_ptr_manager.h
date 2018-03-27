@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 
 namespace OCLRT {
 
-typedef std::map<void *, FragmentStorage> HostPtrFragmentsContainer;
+typedef std::map<const void *, FragmentStorage> HostPtrFragmentsContainer;
 
 class HostPtrManager {
   public:
@@ -38,14 +38,14 @@ class HostPtrManager {
     void storeFragment(AllocationStorageData &storageData);
 
     void releaseHandleStorage(OsHandleStorage &fragments);
-    bool releaseHostPtr(void *ptr);
+    bool releaseHostPtr(const void *ptr);
 
-    FragmentStorage *getFragment(void *inputPtr);
+    FragmentStorage *getFragment(const void *inputPtr);
     size_t getFragmentCount() { return partialAllocations.size(); }
     FragmentStorage *getFragmentAndCheckForOverlaps(const void *inputPtr, size_t size, OverlapStatus &overlappingStatus);
 
   private:
-    std::map<void *, FragmentStorage>::iterator findElement(void *ptr);
+    std::map<const void *, FragmentStorage>::iterator findElement(const void *ptr);
 
     HostPtrFragmentsContainer partialAllocations;
     std::mutex allocationsMutex;

@@ -471,7 +471,7 @@ uint64_t DrmMemoryManager::getInternalHeapBaseAddress() {
 
 MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
     BufferObject *allocatedBos[max_fragments_count];
-    size_t numberOfBosAllocated = 0;
+    uint32_t numberOfBosAllocated = 0;
     uint32_t indexesOfAllocatedBos[max_fragments_count];
 
     for (unsigned int i = 0; i < max_fragments_count; i++) {
@@ -492,8 +492,6 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
             allocatedBos[numberOfBosAllocated] = handleStorage.fragmentStorageData[i].osHandleStorage->bo;
             indexesOfAllocatedBos[numberOfBosAllocated] = i;
             numberOfBosAllocated++;
-
-            hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
         }
     }
 
@@ -510,8 +508,12 @@ MemoryManager::AllocationStatus DrmMemoryManager::populateOsHandles(OsHandleStor
         }
     }
 
+    for (uint32_t i = 0; i < numberOfBosAllocated; i++) {
+        hostPtrManager.storeFragment(handleStorage.fragmentStorageData[indexesOfAllocatedBos[i]]);
+    }
     return AllocationStatus::Success;
 }
+
 void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
@@ -523,7 +525,9 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
                 ((void)(refCount));
             }
             delete handleStorage.fragmentStorageData[i].osHandleStorage;
+            handleStorage.fragmentStorageData[i].osHandleStorage = nullptr;
             delete handleStorage.fragmentStorageData[i].residency;
+            handleStorage.fragmentStorageData[i].residency = nullptr;
         }
     }
 }

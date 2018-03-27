@@ -337,6 +337,9 @@ bool WddmMemoryManager::validateAllocation(WddmAllocation *alloc) {
 }
 
 MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleStorage &handleStorage) {
+    uint32_t allocatedFragmentIndexes[max_fragments_count];
+    uint32_t allocatedFragmentsCounter = 0;
+
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         // If no fragment is present it means it already exists.
         if (!handleStorage.fragmentStorageData[i].osHandleStorage && handleStorage.fragmentStorageData[i].cpuPtr) {
@@ -344,7 +347,8 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
 
             handleStorage.fragmentStorageData[i].osHandleStorage->gmm = Gmm::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
-            hostPtrManager.storeFragment(handleStorage.fragmentStorageData[i]);
+            allocatedFragmentIndexes[allocatedFragmentsCounter] = i;
+            allocatedFragmentsCounter++;
         }
     }
     NTSTATUS result = wddm->createAllocationsAndMapGpuVa(handleStorage);
@@ -352,6 +356,11 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
     if (result == STATUS_GRAPHICS_NO_VIDEO_MEMORY) {
         return AllocationStatus::InvalidHostPointer;
     }
+
+    for (uint32_t i = 0; i < allocatedFragmentsCounter; i++) {
+        hostPtrManager.storeFragment(handleStorage.fragmentStorageData[allocatedFragmentIndexes[i]]);
+    }
+
     return AllocationStatus::Success;
 }
 

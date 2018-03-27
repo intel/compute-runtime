@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,7 @@
 
 using namespace OCLRT;
 
-std::map<void *, FragmentStorage>::iterator OCLRT::HostPtrManager::findElement(void *ptr) {
+std::map<const void *, FragmentStorage>::iterator OCLRT::HostPtrManager::findElement(const void *ptr) {
     auto nextElement = partialAllocations.lower_bound(ptr);
     auto element = nextElement;
     if (element != partialAllocations.end()) {
@@ -155,7 +155,7 @@ void OCLRT::HostPtrManager::storeFragment(FragmentStorage &fragment) {
         element->second.refCount++;
     } else {
         fragment.refCount++;
-        partialAllocations.insert(std::pair<void *, FragmentStorage>(fragment.fragmentCpuPointer, fragment));
+        partialAllocations.insert(std::pair<const void *, FragmentStorage>(fragment.fragmentCpuPointer, fragment));
     }
 }
 
@@ -171,12 +171,12 @@ void OCLRT::HostPtrManager::storeFragment(AllocationStorageData &storageData) {
 void OCLRT::HostPtrManager::releaseHandleStorage(OsHandleStorage &fragments) {
     for (int i = 0; i < max_fragments_count; i++) {
         if (fragments.fragmentStorageData[i].fragmentSize || fragments.fragmentStorageData[i].cpuPtr) {
-            fragments.fragmentStorageData[i].freeTheFragment = releaseHostPtr(const_cast<void *>(fragments.fragmentStorageData[i].cpuPtr));
+            fragments.fragmentStorageData[i].freeTheFragment = releaseHostPtr(fragments.fragmentStorageData[i].cpuPtr);
         }
     }
 }
 
-bool OCLRT::HostPtrManager::releaseHostPtr(void *ptr) {
+bool OCLRT::HostPtrManager::releaseHostPtr(const void *ptr) {
     std::lock_guard<std::mutex> lock(allocationsMutex);
     bool fragmentReadyToBeReleased = false;
 
@@ -193,7 +193,7 @@ bool OCLRT::HostPtrManager::releaseHostPtr(void *ptr) {
     return fragmentReadyToBeReleased;
 }
 
-FragmentStorage *OCLRT::HostPtrManager::getFragment(void *inputPtr) {
+FragmentStorage *OCLRT::HostPtrManager::getFragment(const void *inputPtr) {
     std::lock_guard<std::mutex> lock(allocationsMutex);
     auto element = findElement(inputPtr);
     if (element != partialAllocations.end()) {
