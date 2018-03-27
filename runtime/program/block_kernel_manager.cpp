@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/program/kernel_info.h"
@@ -60,5 +61,18 @@ GraphicsAllocation *BlockKernelManager::getPrivateSurface(size_t ordinal) {
     if (ordinal < blockPrivateSurfaceArray.size())
         return blockPrivateSurfaceArray[ordinal];
     return nullptr;
+}
+void BlockKernelManager::makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver) {
+    auto blockCount = blockKernelInfoArray.size();
+    for (uint32_t surfaceIndex = 0; surfaceIndex < blockCount; surfaceIndex++) {
+        auto surface = getPrivateSurface(surfaceIndex);
+        if (surface) {
+            commandStreamReceiver.makeResident(*surface);
+        }
+        surface = blockKernelInfoArray[surfaceIndex]->getGraphicsAllocation();
+        if (surface) {
+            commandStreamReceiver.makeResident(*surface);
+        }
+    }
 }
 } // namespace OCLRT

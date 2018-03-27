@@ -125,7 +125,6 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDS
 }
 
 HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueueKernelCalledThenResidencyCountIncreased) {
-
     if (pDevice->getSupportedClVersion() >= 20) {
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
@@ -138,6 +137,89 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueue
         pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
 
         EXPECT_NE(ObjectNotResident, privateSurface->residencyTaskCount);
+    }
+}
+
+HWTEST_P(ParentKernelEnqueueTest, GivenBlocksWithPrivateMemoryWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenPrivateAllocationIsMadeResidentWhenEventUnblocks) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        size_t offset[3] = {0, 0, 0};
+        size_t gws[3] = {1, 1, 1};
+
+        auto blockKernelManager = pKernel->getProgram()->getBlockKernelManager();
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.storeMakeResidentAllocations = true;
+
+        auto privateAllocation = csr.getMemoryManager()->allocateGraphicsMemory(10);
+        blockKernelManager->pushPrivateSurface(privateAllocation, 0);
+
+        UserEvent uEvent(pContext);
+        auto clEvent = static_cast<cl_event>(&uEvent);
+
+        pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 1, &clEvent, nullptr);
+
+        EXPECT_FALSE(csr.isMadeResident(privateAllocation));
+        uEvent.setStatus(CL_COMPLETE);
+        EXPECT_TRUE(csr.isMadeResident(privateAllocation));
+    }
+}
+
+HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelIsCalledThenBlockKernelIsaAllocationIsMadeResident) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        size_t offset[3] = {0, 0, 0};
+        size_t gws[3] = {1, 1, 1};
+
+        auto blockKernelManager = pKernel->getProgram()->getBlockKernelManager();
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.storeMakeResidentAllocations = true;
+
+        pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
+
+        auto blockCount = blockKernelManager->getCount();
+        for (auto blockId = 0u; blockId < blockCount; blockId++) {
+            EXPECT_TRUE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
+        }
+    }
+}
+
+HWTEST_P(ParentKernelEnqueueTest, GivenBlockKernelManagerFilledWithBlocksWhenMakeInternalAllocationsResidentIsCalledThenAllSurfacesAreMadeResident) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        auto blockKernelManager = pKernel->getProgram()->getBlockKernelManager();
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.storeMakeResidentAllocations = true;
+
+        blockKernelManager->makeInternalAllocationsResident(csr);
+
+        auto blockCount = blockKernelManager->getCount();
+        for (auto blockId = 0u; blockId < blockCount; blockId++) {
+            EXPECT_TRUE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
+        }
+    }
+}
+
+HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithBlocksWhenEnqueueKernelThatIsBlockedByUserEventIsCalledThenBlockKernelIsaAllocationIsMadeResidentWhenEventUnblocks) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        size_t offset[3] = {0, 0, 0};
+        size_t gws[3] = {1, 1, 1};
+
+        auto blockKernelManager = pKernel->getProgram()->getBlockKernelManager();
+        auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+        csr.storeMakeResidentAllocations = true;
+
+        UserEvent uEvent(pContext);
+        auto clEvent = static_cast<cl_event>(&uEvent);
+
+        pCmdQ->enqueueKernel(pKernel, 1, offset, gws, gws, 1, &clEvent, nullptr);
+
+        auto blockCount = blockKernelManager->getCount();
+        for (auto blockId = 0u; blockId < blockCount; blockId++) {
+            EXPECT_FALSE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
+        }
+
+        uEvent.setStatus(CL_COMPLETE);
+
+        for (auto blockId = 0u; blockId < blockCount; blockId++) {
+            EXPECT_TRUE(csr.isMadeResident(blockKernelManager->getBlockKernelInfo(blockId)->getGraphicsAllocation()));
+        }
     }
 }
 

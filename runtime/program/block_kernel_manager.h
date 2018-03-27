@@ -26,6 +26,7 @@
 
 namespace OCLRT {
 class GraphicsAllocation;
+class CommandStreamReceiver;
 struct KernelInfo;
 
 class BlockKernelManager {
@@ -43,6 +44,8 @@ class BlockKernelManager {
 
     void pushPrivateSurface(GraphicsAllocation *allocation, size_t ordinal);
     GraphicsAllocation *getPrivateSurface(size_t ordinal);
+
+    void makeInternalAllocationsResident(CommandStreamReceiver &);
 
   protected:
     bool blockUsesPrintf = false;

@@ -249,6 +249,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
         // Update SLM usage
         slmUsed |= scheduler.slmTotalSize > 0;
+
+        this->kernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
     }
 
     DispatchFlags dispatchFlags;

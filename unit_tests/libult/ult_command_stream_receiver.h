@@ -99,6 +99,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         BaseClass::makeResident(gfxAllocation);
     }
 
+    bool isMadeResident(GraphicsAllocation *graphicsAllocation) {
+        return makeResidentAllocations.find(graphicsAllocation) != makeResidentAllocations.end();
+    }
+
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
     bool storeMakeResidentAllocations;
 

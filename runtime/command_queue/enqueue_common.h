@@ -306,14 +306,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             // Update SLM usage
             slmUsed |= scheduler.slmTotalSize > 0;
 
-            size_t count = parentKernel->getProgram()->getBlockKernelManager()->getCount();
-
-            for (uint32_t surfaceIndex = 0; surfaceIndex < count; surfaceIndex++) {
-                auto surface = parentKernel->getProgram()->getBlockKernelManager()->getPrivateSurface(surfaceIndex);
-                if (surface) {
-                    commandStreamReceiver.makeResident(*surface);
-                }
-            }
+            parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
         }
 
         auto submissionRequired = isCommandWithoutKernel(commandType) ? false : true;
