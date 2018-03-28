@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2017, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,15 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "compiler.config.h"
 #include "runtime/os_interface/os_library.h"
 
 namespace Os {
+#if defined(__linux__)
 // Compiler library names
-const char *frontEndDllName = FCL_LIBRARY_NAME;
-const char *igcDllName = IGC_LIBRARY_NAME;
+const char *frontEndDllName = "libigdfcl.so";
+const char *igcDllName = "libigdccl.so";
 const char *libvaDllName = "libva.so.1";
-
+#endif //__linux__
 const char *sysFsPciPath = "/sys/bus/pci/devices/";
 const char *tbxLibName = "libtbxAccess.so";
 }
