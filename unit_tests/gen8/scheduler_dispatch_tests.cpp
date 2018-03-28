@@ -45,12 +45,10 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
         SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*context);
 
-        size_t minRequiredSizeForSchedulerIH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         // Setup heaps in pCmdQ
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
-        pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, minRequiredSizeForSchedulerIH);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
         dispatchScheduler<FamilyType>(

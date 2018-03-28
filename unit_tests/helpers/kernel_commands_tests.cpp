@@ -800,48 +800,7 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
     delete[] mockDsh;
 }
 
-HWTEST_F(KernelCommandsTest, getSizeRequiredIHForExecutionModelReturnsZeroForNonParentKernel) {
-    // define kernel info
-    std::unique_ptr<KernelInfo> pKernelInfo = std::unique_ptr<KernelInfo>(KernelInfo::create());
-
-    // create program with valid context
-    MockContext context;
-    MockProgram program(&context, false);
-
-    // create kernel
-    std::unique_ptr<MockKernel> pKernel = std::unique_ptr<MockKernel>(new MockKernel(&program, *pKernelInfo.get(), *pDevice));
-
-    EXPECT_FALSE(pKernel->isParentKernel);
-    EXPECT_EQ(0u, KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*pKernel.get()));
-}
-
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
-
-HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelReturnsTotalBlockBinarySizeAndSchedulerBinarySize) {
-    if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
-        EXPECT_TRUE(pKernel->isParentKernel);
-
-        size_t totalSize = 0;
-
-        BlockKernelManager *blockManager = pKernel->getProgram()->getBlockKernelManager();
-        uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
-
-        totalSize = Kernel::kernelBinaryAlignement - 1; // for initial alignment
-
-        for (uint32_t i = 0; i < blockCount; i++) {
-            const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-
-            totalSize += pBlockInfo->heapInfo.pKernelHeader->KernelHeapSize;
-            totalSize = alignUp(totalSize, Kernel::kernelBinaryAlignement);
-        }
-
-        BuiltIns &builtIns = BuiltIns::getInstance();
-        auto &scheduler = builtIns.getSchedulerKernel(*pContext);
-        totalSize += KernelCommandsHelper<FamilyType>::getSizeRequiredIH(scheduler);
-
-        EXPECT_EQ(totalSize, KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*pKernel));
-    }
-}
 
 HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {
     using BINDING_TABLE_STATE = typename FamilyType::BINDING_TABLE_STATE;

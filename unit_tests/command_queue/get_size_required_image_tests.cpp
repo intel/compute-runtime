@@ -75,11 +75,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -105,13 +103,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_COPY_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
@@ -121,7 +117,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
@@ -130,11 +125,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -158,13 +151,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_COPY_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel.get());
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel.get());
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel.get());
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel.get());
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel.get());
 
@@ -176,7 +167,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
@@ -185,11 +175,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -219,13 +207,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_READ_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
@@ -235,7 +221,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
@@ -244,11 +229,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -278,13 +261,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_READ_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
@@ -294,7 +275,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
@@ -303,11 +283,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -337,13 +315,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_WRITE_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
@@ -353,7 +329,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
@@ -362,11 +337,9 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
     auto &commandStream = pCmdQ->getCS();
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    auto &ih = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
     auto usedBeforeDSH = dsh.getUsed();
-    auto usedBeforeIH = ih.getUsed();
     auto usedBeforeIOH = ioh.getUsed();
     auto usedBeforeSSH = ssh.getUsed();
 
@@ -396,13 +369,11 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterDSH = dsh.getUsed();
-    auto usedAfterIH = ih.getUsed();
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
     auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_WRITE_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
-    auto expectedSizeIH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
 
@@ -412,7 +383,6 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
 
     EXPECT_EQ(expectedSizeCS, usedAfterCS - usedBeforeCS);
     EXPECT_GE(expectedSizeDSH, usedAfterDSH - usedBeforeDSH);
-    EXPECT_GE(expectedSizeIH, usedAfterIH - usedBeforeIH);
     EXPECT_GE(expectedSizeIOH, usedAfterIOH - usedBeforeIOH);
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }

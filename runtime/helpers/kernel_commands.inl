@@ -94,13 +94,6 @@ size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredIOH(
 }
 
 template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredIH(
-    const Kernel &kernel) {
-    typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-    return kernel.getKernelHeapSize() + INTERFACE_DESCRIPTOR_DATA::KERNELSTARTPOINTER_ALIGN_SIZE;
-}
-
-template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getSizeRequiredSSH(
     const Kernel &kernel) {
     typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
@@ -124,12 +117,6 @@ template <typename GfxFamily>
 size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(
     const MultiDispatchInfo &multiDispatchInfo) {
     return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredDSH(*dispatchInfo.getKernel()); });
-}
-
-template <typename GfxFamily>
-size_t KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIH(
-    const MultiDispatchInfo &multiDispatchInfo) {
-    return getSizeRequired(multiDispatchInfo, [](const DispatchInfo &dispatchInfo) { return getSizeRequiredIH(*dispatchInfo.getKernel()); });
 }
 
 template <typename GfxFamily>

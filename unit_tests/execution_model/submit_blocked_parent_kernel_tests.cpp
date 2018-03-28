@@ -65,9 +65,9 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         return igilCmdQueue->m_controls.m_CriticalSection == DeviceQueueHw<GfxFamily>::ExecutionModelCriticalSection::Free;
     }
 
-    void setupIndirectState(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override {
+    void setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override {
         indirectStateSetup = true;
-        return BaseClass::setupIndirectState(instructionHeap, surfaceStateHeap, parentKernel, parentIDCount);
+        return BaseClass::setupIndirectState(surfaceStateHeap, parentKernel, parentIDCount);
     }
     void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) override {
         cleanupSectionAdded = true;
@@ -103,16 +103,13 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
         IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -166,13 +163,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -211,13 +205,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -251,13 +242,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -294,13 +282,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -326,7 +311,6 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmitte
 
         MockCommandQueue cmdQ(context, device, properties);
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         size_t heapSize = 20;
@@ -343,10 +327,8 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmitte
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;
@@ -370,7 +352,6 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
 
-        size_t minSizeISHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(*parentKernel);
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         size_t heapSize = 20;
@@ -392,10 +373,8 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
                                                                   std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
                                                                   std::unique_ptr<IndirectHeap>(ssh));
 
-        blockedCommandData->instructionHeapSizeEM = minSizeISHForEM;
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
         std::vector<Surface *> surfaces;

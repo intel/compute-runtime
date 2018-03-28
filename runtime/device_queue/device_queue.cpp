@@ -156,12 +156,12 @@ void DeviceQueue::initDeviceQueue() {
     igilEventPool->m_size = caps.maxOnDeviceEvents;
 }
 
-void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, HwTimeStamps *hwTimeStamp) {
-    setupIndirectState(instructionHeap, surfaceStateHeap, parentKernel, parentCount);
+void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, HwTimeStamps *hwTimeStamp) {
+    setupIndirectState(surfaceStateHeap, parentKernel, parentCount);
     addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
 }
 
-void DeviceQueue::setupIndirectState(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+void DeviceQueue::setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
     return;
 }
 

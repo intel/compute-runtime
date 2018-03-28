@@ -413,8 +413,7 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     mockKernelWithInternals.kernelHeader.KernelHeapSize = sizeof(mockKernelWithInternals.kernelIsa);
     auto mockKernel = mockKernelWithInternals.mockKernel;
 
-    IndirectHeap::Type heaps[] = {IndirectHeap::INSTRUCTION, IndirectHeap::INDIRECT_OBJECT,
-                                  IndirectHeap::DYNAMIC_STATE, IndirectHeap::SURFACE_STATE};
+    IndirectHeap::Type heaps[] = {IndirectHeap::INDIRECT_OBJECT, IndirectHeap::DYNAMIC_STATE, IndirectHeap::SURFACE_STATE};
 
     size_t prealocatedHeapSize = 2 * 64 * KB;
     for (auto heapType : heaps) {
@@ -428,14 +427,8 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     DebugManager.flags.DisableResourceRecycling.set(false);
 
     std::set<void *> reusableHeaps;
-    for (unsigned int i = 0; i < 5; ++i) {
+    for (unsigned int i = 0; i < 4; ++i) {
         auto allocSize = prealocatedHeapSize;
-
-        //make sure that one of those allocations is larger so ISH can be recycled.
-        if (i == 4) {
-            allocSize = optimalInstructionHeapSize;
-        }
-
         void *mem = alignedMalloc(allocSize, 64);
         reusableHeaps.insert(mem);
         memset(mem, 0, allocSize);
@@ -452,7 +445,6 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     userEvent.setStatus(CL_COMPLETE);
 
     // make sure used heaps are from preallocated pool
-    EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getCpuBase()));
     EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0).getCpuBase()));
     EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0).getCpuBase()));
     EXPECT_NE(reusableHeaps.end(), reusableHeaps.find(pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getCpuBase()));
@@ -479,8 +471,6 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUsedHeapsWhenBloc
     }
 
     // expecting blocked command to be programmed indentically to a non-blocked counterpart
-    EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::INSTRUCTION)],
-                testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::INSTRUCTION)]));
     EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::INDIRECT_OBJECT)],
                 testing::ContainerEq(blockedCommandHeaps[static_cast<int>(IndirectHeap::INDIRECT_OBJECT)]));
     EXPECT_THAT(nonblockedCommandHeaps[static_cast<int>(IndirectHeap::DYNAMIC_STATE)],
@@ -506,12 +496,10 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
 
     cl_event blockedEvent = &userEvent;
 
-    auto &ish = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096u);
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096u);
     auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096u);
 
-    auto ishBase = ish.getCpuBase();
     auto iohBase = ioh.getCpuBase();
     auto dshBase = dsh.getCpuBase();
     auto sshBase = ssh.getCpuBase();
@@ -519,7 +507,6 @@ HWTEST_F(BlockedCommandQueueTest, givenCommandQueueWhichHasSomeUnusedHeapsWhenBl
     pCmdQ->enqueueKernel(mockKernel, 1, &offset, &size, &size, 1, &blockedEvent, nullptr);
     userEvent.setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(ishBase, ish.getCpuBase());
     EXPECT_EQ(iohBase, ioh.getCpuBase());
     EXPECT_EQ(dshBase, dsh.getCpuBase());
     EXPECT_EQ(sshBase, ssh.getCpuBase());

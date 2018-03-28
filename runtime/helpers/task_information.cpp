@@ -36,7 +36,6 @@
 namespace OCLRT {
 KernelOperation::~KernelOperation() {
     alignedFree(dsh->getCpuBase());
-    alignedFree(ish->getCpuBase());
     if (doNotFreeISH) {
         ioh.release();
     } else {
@@ -165,7 +164,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     memcpy_s(pDst, commandsSize, commandStream.getCpuBase(), commandsSize);
 
     size_t requestedDshSize = kernelOperation->dsh->getUsed();
-    size_t requestedIshSize = kernelOperation->ish->getUsed() + kernelOperation->instructionHeapSizeEM;
     size_t requestedIohSize = kernelOperation->ioh->getUsed();
     size_t requestedSshSize = kernelOperation->ssh->getUsed() + kernelOperation->surfaceStateHeapSizeEM;
 
@@ -178,10 +176,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         if (commandQueue.getIndirectHeap(trackedHeaps[trackedHeap], 0).getUsed() > 0) {
             commandQueue.releaseIndirectHeap(trackedHeaps[trackedHeap]);
         }
-    }
-
-    if (commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION, 0).getUsed() > commandQueue.getInstructionHeapReservedBlockSize()) {
-        commandQueue.releaseIndirectHeap(IndirectHeap::INSTRUCTION);
     }
 
     if (executionModelKernel) {
@@ -202,11 +196,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         ioh->getSpace(requestedIohSize);
     }
 
-    IndirectHeap &ish = commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION, requestedIshSize);
     IndirectHeap &ssh = commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, requestedSshSize);
-
-    memcpy_s(ptrOffset(ish.getCpuBase(), commandQueue.getInstructionHeapReservedBlockSize()), requestedIshSize, kernelOperation->ish->getCpuBase(), kernelOperation->ish->getUsed());
-    ish.getSpace(kernelOperation->ish->getUsed());
 
     memcpy_s(ssh.getCpuBase(), requestedSshSize, kernelOperation->ssh->getCpuBase(), kernelOperation->ssh->getUsed());
     ssh.getSpace(kernelOperation->ssh->getUsed());
@@ -224,7 +214,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
-        devQueue->setupExecutionModelDispatch(ish, ssh, kernel, kernelCount, taskCount, timestamp);
+        devQueue->setupExecutionModelDispatch(ssh, kernel, kernelCount, taskCount, timestamp);
 
         BuiltIns &builtIns = BuiltIns::getInstance();
         SchedulerKernel &scheduler = builtIns.getSchedulerKernel(commandQueue.getContext());

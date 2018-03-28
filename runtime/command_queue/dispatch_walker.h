@@ -438,7 +438,7 @@ void dispatchWalker(
     unsigned int commandType = 0) {
 
     OCLRT::LinearStream *commandStream = nullptr;
-    OCLRT::IndirectHeap *dsh = nullptr, *ish = nullptr, *ioh = nullptr, *ssh = nullptr;
+    OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     bool executionModelKernel = multiDispatchInfo.begin()->getKernel()->isParentKernel;
 
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -450,7 +450,6 @@ void dispatchWalker(
     }
 
     // Allocate command stream and indirect heaps
-    size_t cmdQInstructionHeapReservedBlockSize = 0;
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
         commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize), MemoryConstants::pageSize);
@@ -465,13 +464,10 @@ void dispatchWalker(
             dsh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredDSH(multiDispatchInfo); });
             ioh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredIOH(multiDispatchInfo); });
         }
-        ish = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredIH(multiDispatchInfo); });
-        cmdQInstructionHeapReservedBlockSize = commandQueue.getInstructionHeapReservedBlockSize();
 
         ssh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredSSH(multiDispatchInfo); });
         using UniqueIH = std::unique_ptr<IndirectHeap>;
-        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh),
-                                                   UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh), UniqueIH(ssh));
         if (executionModelKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
@@ -481,7 +477,6 @@ void dispatchWalker(
             commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
         }
         dsh = &getIndirectHeap<GfxFamily, IndirectHeap::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
-        ish = &getIndirectHeap<GfxFamily, IndirectHeap::INSTRUCTION>(commandQueue, multiDispatchInfo);
         ioh = &getIndirectHeap<GfxFamily, IndirectHeap::INDIRECT_OBJECT>(commandQueue, multiDispatchInfo);
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
@@ -680,13 +675,12 @@ void dispatchScheduler(
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     OCLRT::LinearStream *commandStream = nullptr;
-    OCLRT::IndirectHeap *dsh = nullptr, *ish = nullptr, *ioh = nullptr, *ssh = nullptr;
+    OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
 
     commandStream = &commandQueue.getCS(0);
     // note : below code assumes that caller to dispatchScheduler "preallocated" memory
     //        required for execution model in below heap managers
     dsh = devQueueHw.getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    ish = &commandQueue.getIndirectHeap(IndirectHeap::INSTRUCTION);
     ssh = &commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE);
 
     bool dcFlush = false;
@@ -919,14 +913,13 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     // clang-format off
     switch(heapType) {
     case IndirectHeap::DYNAMIC_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo); break;
-    case IndirectHeap::INSTRUCTION:     expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIH( multiDispatchInfo); break;
     case IndirectHeap::INDIRECT_OBJECT: expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo); break;
     case IndirectHeap::SURFACE_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(multiDispatchInfo); break;
     }
     // clang-format on
 
     if (multiDispatchInfo.begin()->getKernel()->isParentKernel) {
-        if (heapType == IndirectHeap::INSTRUCTION || heapType == IndirectHeap::SURFACE_STATE) {
+        if (heapType == IndirectHeap::SURFACE_STATE) {
             expectedSize += KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
         } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
         {

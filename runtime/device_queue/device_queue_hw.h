@@ -72,7 +72,7 @@ class DeviceQueueHw : public DeviceQueue {
 
     size_t setSchedulerCrossThreadData(SchedulerKernel &scheduler);
 
-    void setupIndirectState(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override;
+    void setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override;
 
     void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) override;
     void resetDeviceQueue() override;

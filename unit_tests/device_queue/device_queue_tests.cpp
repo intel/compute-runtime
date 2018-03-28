@@ -39,11 +39,9 @@ TEST(DeviceQueueSimpleTest, setupExecutionModelDispatchDoesNothing) {
     memset(buffer, 1, 20);
 
     size_t size = 20;
-    IndirectHeap ih(buffer, size);
     IndirectHeap ssh(buffer, size);
-    devQueue.setupExecutionModelDispatch(ih, ssh, nullptr, 0, 0, 0);
+    devQueue.setupExecutionModelDispatch(ssh, nullptr, 0, 0, 0);
 
-    EXPECT_EQ(0u, ih.getUsed());
     EXPECT_EQ(0u, ssh.getUsed());
 
     for (uint32_t i = 0; i < 20; i++) {

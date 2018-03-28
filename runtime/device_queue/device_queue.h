@@ -81,9 +81,9 @@ class DeviceQueue : public BaseObject<_device_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    void setupExecutionModelDispatch(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, HwTimeStamps *hwTimeStamp);
+    void setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, HwTimeStamps *hwTimeStamp);
 
-    virtual void setupIndirectState(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount);
+    virtual void setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount);
     virtual void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount);
 
     MOCKABLE_VIRTUAL bool isEMCriticalSectionFree() {

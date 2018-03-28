@@ -528,29 +528,21 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectState) {
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t instructionHeapSize = pKernel->getInstructionHeapSizeForExecutionModel();
         size_t surfaceStateHeapSize = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
 
-        auto ish = new IndirectHeap(alignedMalloc(instructionHeapSize, MemoryConstants::pageSize), instructionHeapSize);
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
-        ASSERT_NE(nullptr, ish);
-        auto usedBeforeISH = ish->getUsed();
         auto usedBeforeSSH = ssh->getUsed();
         auto usedBeforeDSH = dsh->getUsed();
 
-        devQueueHw->setupIndirectState(*ish, *ssh, pKernel, 1);
-        auto usedAfterISH = ish->getUsed();
+        devQueueHw->setupIndirectState(*ssh, pKernel, 1);
         auto usedAfterSSH = ssh->getUsed();
         auto usedAfterDSH = dsh->getUsed();
 
-        EXPECT_GE(instructionHeapSize, usedAfterISH - usedBeforeISH);
         EXPECT_GE(surfaceStateHeapSize, usedAfterSSH - usedBeforeSSH);
 
         EXPECT_EQ(0u, usedAfterDSH - usedBeforeDSH);
 
-        alignedFree(ish->getCpuBase());
         alignedFree(ssh->getCpuBase());
-        delete ish;
         delete ssh;
     }
 }
@@ -566,22 +558,18 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t instructionHeapSize = pKernel->getInstructionHeapSizeForExecutionModel();
         size_t surfaceStateHeapSize = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
 
-        auto ish = new IndirectHeap(alignedMalloc(instructionHeapSize, MemoryConstants::pageSize), instructionHeapSize);
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
         uint32_t parentCount = 4;
 
-        devQueueHw->setupIndirectState(*ish, *ssh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, pKernel, parentCount);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
 
-        alignedFree(ish->getCpuBase());
         alignedFree(ssh->getCpuBase());
-        delete ish;
         delete ssh;
     }
 }
@@ -600,15 +588,13 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectDSHValues) {
         auto dsh = devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ASSERT_NE(nullptr, dsh);
 
-        size_t instructionHeapSize = pKernel->getInstructionHeapSizeForExecutionModel();
         size_t surfaceStateHeapSize = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*pKernel));
 
-        auto ish = new IndirectHeap(alignedMalloc(instructionHeapSize, MemoryConstants::pageSize), instructionHeapSize);
         auto ssh = new IndirectHeap(alignedMalloc(surfaceStateHeapSize, MemoryConstants::pageSize), surfaceStateHeapSize);
 
         uint32_t parentCount = 1;
 
-        devQueueHw->setupIndirectState(*ish, *ssh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, pKernel, parentCount);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapStart, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
@@ -616,9 +602,7 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectDSHValues) {
         EXPECT_EQ(igilQueue->m_controls.m_CurrentDSHoffset, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));
         EXPECT_EQ(igilQueue->m_controls.m_ParentDSHOffset, devQueueHw->offsetDsh);
 
-        alignedFree(ish->getCpuBase());
         alignedFree(ssh->getCpuBase());
-        delete ish;
         delete ssh;
         delete devQueueHw;
     }

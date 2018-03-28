@@ -271,12 +271,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     CompletionStamp completionStamp;
     if (!blockQueue) {
         if (executionModelKernel) {
-            size_t minSizeISHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
             size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
 
             uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
-            devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::INSTRUCTION, minSizeISHForEM),
-                                                    getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
+            devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
                                                     multiDispatchInfo.begin()->getKernel(),
                                                     (uint32_t)multiDispatchInfo.size(),
                                                     taskCount,
@@ -385,9 +383,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (blockQueue) {
         if (executionModelKernel) {
-            size_t minSizeISHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::INSTRUCTION>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
             size_t minSizeSSHForEM = KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
-            blockedCommandsData->instructionHeapSizeEM = minSizeISHForEM;
             blockedCommandsData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         }
 

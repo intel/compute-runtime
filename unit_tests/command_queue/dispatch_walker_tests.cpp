@@ -651,7 +651,6 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     EXPECT_NE(nullptr, blockedCommandsData);
     EXPECT_NE(nullptr, blockedCommandsData->commandStream);
     EXPECT_NE(nullptr, blockedCommandsData->dsh);
-    EXPECT_NE(nullptr, blockedCommandsData->ish);
     EXPECT_NE(nullptr, blockedCommandsData->ioh);
     EXPECT_NE(nullptr, blockedCommandsData->ssh);
 
@@ -691,13 +690,11 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
 
     auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(kernel);
-    auto expectedSizeISH = KernelCommandsHelper<FamilyType>::getSizeRequiredIH(kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(kernel, Math::computeTotalElementsCount(localWorkgroupSize));
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeISH, blockedCommandsData->ish->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
 
@@ -728,13 +725,11 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
 
     auto expectedSizeCS = MemoryConstants::pageSize; //can get estimated more precisely
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredDSH(multiDispatchInfo);
-    auto expectedSizeISH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIH(multiDispatchInfo);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredIOH(multiDispatchInfo);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeISH, blockedCommandsData->ish->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
 

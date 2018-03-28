@@ -105,8 +105,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static bool isPipeControlWArequired();
     static size_t getSizeRequiredDSH(
         const Kernel &kernel);
-    static size_t getSizeRequiredIH(
-        const Kernel &kernel);
     static size_t getSizeRequiredIOH(
         const Kernel &kernel,
         size_t localWorkSize = 256);
@@ -114,8 +112,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         const Kernel &kernel);
 
     static size_t getTotalSizeRequiredDSH(
-        const MultiDispatchInfo &multiDispatchInfo);
-    static size_t getTotalSizeRequiredIH(
         const MultiDispatchInfo &multiDispatchInfo);
     static size_t getTotalSizeRequiredIOH(
         const MultiDispatchInfo &multiDispatchInfo);
@@ -127,46 +123,33 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
 
         size_t totalSize = 0;
-        if (kernel.isParentKernel) {
-            BlockKernelManager *blockManager = kernel.getProgram()->getBlockKernelManager();
-            uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
-            uint32_t maxBindingTableCount = 0;
+        BlockKernelManager *blockManager = kernel.getProgram()->getBlockKernelManager();
+        uint32_t blockCount = static_cast<uint32_t>(blockManager->getCount());
+        uint32_t maxBindingTableCount = 0;
 
-            if (heapType == IndirectHeap::SURFACE_STATE || heapType == IndirectHeap::INSTRUCTION) {
-                if (heapType == IndirectHeap::SURFACE_STATE) {
-                    totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1;
-                } else {
-                    totalSize = Kernel::kernelBinaryAlignement - 1;
-                }
+        if (heapType == IndirectHeap::SURFACE_STATE) {
+            totalSize = BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE - 1;
 
-                for (uint32_t i = 0; i < blockCount; i++) {
-                    const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
-                    if (heapType == IndirectHeap::SURFACE_STATE) {
-                        totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
-                        totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            for (uint32_t i = 0; i < blockCount; i++) {
+                const KernelInfo *pBlockInfo = blockManager->getBlockKernelInfo(i);
+                totalSize += pBlockInfo->heapInfo.pKernelHeader->SurfaceStateHeapSize;
+                totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-                        maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
-                    } else {
-                        totalSize += pBlockInfo->heapInfo.pKernelHeader->KernelHeapSize;
-                        totalSize = alignUp(totalSize, Kernel::kernelBinaryAlignement);
-                    }
-                }
+                maxBindingTableCount = std::max(maxBindingTableCount, pBlockInfo->patchInfo.bindingTableState->Count);
             }
+        }
 
-            if (heapType == IndirectHeap::INSTRUCTION || heapType == IndirectHeap::INDIRECT_OBJECT || heapType == IndirectHeap::SURFACE_STATE) {
-                BuiltIns &builtIns = BuiltIns::getInstance();
-                SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
+        if (heapType == IndirectHeap::INDIRECT_OBJECT || heapType == IndirectHeap::SURFACE_STATE) {
+            BuiltIns &builtIns = BuiltIns::getInstance();
+            SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
 
-                if (heapType == IndirectHeap::INSTRUCTION) {
-                    totalSize += getSizeRequiredIH(scheduler);
-                } else if (heapType == IndirectHeap::INDIRECT_OBJECT) {
-                    totalSize += getSizeRequiredIOH(scheduler);
-                } else {
-                    totalSize += getSizeRequiredSSH(scheduler);
+            if (heapType == IndirectHeap::INDIRECT_OBJECT) {
+                totalSize += getSizeRequiredIOH(scheduler);
+            } else {
+                totalSize += getSizeRequiredSSH(scheduler);
 
-                    totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
-                    totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
-                }
+                totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
+                totalSize = alignUp(totalSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             }
         }
         return totalSize;

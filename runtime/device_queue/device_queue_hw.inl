@@ -291,7 +291,7 @@ IndirectHeap *DeviceQueueHw<GfxFamily>::getIndirectHeap(IndirectHeap::Type type)
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &instructionHeap, IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
     void *pDSH = dshBuffer->getUnderlyingBuffer();
 
     // Heap and dshBuffer shoud be the same if heap is created

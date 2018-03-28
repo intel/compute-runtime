@@ -452,7 +452,6 @@ class SurfaceMock : public Surface {
 TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger) {
     CommandQueue *pCmdQ = new CommandQueue(mockContext, pDevice, 0);
     IndirectHeap &cmdQueueDsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 4096);
-    IndirectHeap &cmdQueueIsh = pCmdQ->getIndirectHeap(IndirectHeap::INSTRUCTION, 4096);
     IndirectHeap &cmdQueueIoh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096);
     IndirectHeap &cmdQueueSsh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096);
 
@@ -466,13 +465,12 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
     };
 
     auto dsh = createFullHeap(requestedSize);
-    auto ish = createFullHeap(requestedSize);
     auto ioh = createFullHeap(requestedSize);
     auto ssh = createFullHeap(maxSshSize);
 
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto kernelOperation = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                               UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+                                               UniqueIH(ioh), UniqueIH(ssh));
     std::vector<Surface *> v;
     SurfaceMock *surface = new SurfaceMock;
     v.push_back(surface);
@@ -481,14 +479,12 @@ TEST_F(InternalsEventTest, resizeCmdQueueHeapsWhenKernelOparationHeapsAreBigger)
                                                      std::unique_ptr<KernelOperation>(kernelOperation), v, false, false, false, nullptr, preemptionMode);
 
     EXPECT_LT(cmdQueueDsh.getMaxAvailableSpace(), dsh->getMaxAvailableSpace());
-    EXPECT_EQ(requestedSize, ish->getMaxAvailableSpace());
     EXPECT_LT(cmdQueueIoh.getMaxAvailableSpace(), ioh->getMaxAvailableSpace());
     EXPECT_EQ(maxSshSize, ssh->getMaxAvailableSpace());
 
     cmdComputeKernel->submit(0, false);
 
     EXPECT_GE(cmdQueueDsh.getMaxAvailableSpace(), dsh->getMaxAvailableSpace());
-    EXPECT_GE(cmdQueueIsh.getMaxAvailableSpace(), ish->getMaxAvailableSpace());
     EXPECT_GE(cmdQueueIoh.getMaxAvailableSpace(), ioh->getMaxAvailableSpace());
     EXPECT_GE(cmdQueueSsh.getMaxAvailableSpace(), ssh->getMaxAvailableSpace());
 
@@ -502,12 +498,11 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
 
     auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
     auto dsh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
-    auto ish = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ioh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ssh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+                                                   UniqueIH(ioh), UniqueIH(ssh));
 
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
@@ -540,12 +535,11 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
 
     auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
     auto dsh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
-    auto ish = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ioh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ssh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+                                                   UniqueIH(ioh), UniqueIH(ssh));
 
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
@@ -572,12 +566,11 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
 
     auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
     auto dsh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
-    auto ish = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ioh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ssh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+                                                   UniqueIH(ioh), UniqueIH(ssh));
 
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
     pPrintfSurface->DataParamOffset = 0;
@@ -1485,12 +1478,11 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
 
     auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
     auto dsh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
-    auto ish = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ioh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     auto ssh = new IndirectHeap(alignedMalloc(4096, 4096), 4096);
     using UniqueIH = std::unique_ptr<IndirectHeap>;
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
-                                                   UniqueIH(ish), UniqueIH(ioh), UniqueIH(ssh));
+                                                   UniqueIH(ioh), UniqueIH(ssh));
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
     auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
