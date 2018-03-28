@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,6 @@
 #include "runtime/os_interface/device_factory.h"
 #include "unit_tests/mocks/mock_device_factory.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/gen_common/test.h"
 #include "gtest/gtest.h"
 
@@ -38,11 +37,8 @@ void popDrmMock();
 
 using namespace OCLRT;
 
-struct DeviceFactoryLinuxTest : public MemoryManagementFixture,
-                                public ::testing::Test {
+struct DeviceFactoryLinuxTest : public ::testing::Test {
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
-
         pDrm = new Drm2;
         pDrm->setGtType(GTTYPE_GT2);
         pushDrmMock(pDrm);
@@ -51,8 +47,6 @@ struct DeviceFactoryLinuxTest : public MemoryManagementFixture,
     void TearDown() override {
         popDrmMock();
         delete pDrm;
-
-        MemoryManagementFixture::TearDown();
     }
 
     Drm2 *pDrm;

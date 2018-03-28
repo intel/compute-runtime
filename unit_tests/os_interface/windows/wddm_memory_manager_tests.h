@@ -26,7 +26,6 @@
 #include "gmock/gmock.h"
 #include "test.h"
 
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_gmm.h"
@@ -37,7 +36,7 @@
 using namespace OCLRT;
 using namespace ::testing;
 
-class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixture {
+class WddmMemoryManagerFixture : public WddmFixture {
   public:
     WddmMemoryManager *memoryManager = nullptr;
 
@@ -63,7 +62,6 @@ class WddmMemoryManagerFixture : public MemoryManagementFixture, public WddmFixt
         delete memoryManager;
         this->wddm = nullptr;
         WddmFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 };
 

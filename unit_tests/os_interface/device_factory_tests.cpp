@@ -25,7 +25,6 @@
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/memory_manager/memory_constants.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
 
@@ -33,17 +32,14 @@ using namespace OCLRT;
 
 OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
 
-struct DeviceFactoryTest : public MemoryManagementFixture,
-                           public ::testing::Test {
+struct DeviceFactoryTest : public ::testing::Test {
   public:
     void SetUp() override {
         const HardwareInfo hwInfo = *platformDevices[0];
         mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
-        MemoryManagementFixture::SetUp();
     }
 
     void TearDown() override {
-        MemoryManagementFixture::TearDown();
         delete mockGdiDll;
     }
 

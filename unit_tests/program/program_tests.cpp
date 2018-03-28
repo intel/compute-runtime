@@ -1310,16 +1310,13 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
 ////////////////////////////////////////////////////////////////////////////////
 // Program::  (PatchToken)
 ////////////////////////////////////////////////////////////////////////////////
-class PatchTokenFromBinaryTest : public ProgramSimpleFixture,
-                                 public MemoryManagementFixture {
+class PatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         ProgramSimpleFixture::SetUp();
     }
     void TearDown() override {
         ProgramSimpleFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 };
 typedef Test<PatchTokenFromBinaryTest> PatchTokenTests;
@@ -1548,16 +1545,13 @@ TEST_F(PatchTokenTests, VmeKernelArg) {
     delete pKernel;
 }
 
-class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture,
-                                        public MemoryManagementFixture {
+class ProgramPatchTokenFromBinaryTest : public ProgramSimpleFixture {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         ProgramSimpleFixture::SetUp();
     }
     void TearDown() override {
         ProgramSimpleFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 };
 typedef Test<ProgramPatchTokenFromBinaryTest> ProgramPatchTokenTests;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,6 @@
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_sampler.h"
@@ -45,7 +44,7 @@
 
 using namespace OCLRT;
 
-class CloneKernelFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class CloneKernelFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;
 
   public:
@@ -53,8 +52,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture, public M
     }
 
   protected:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -117,7 +115,6 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture, public M
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

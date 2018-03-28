@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,6 @@
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
 
@@ -32,7 +31,7 @@ namespace OCLRT {
 
 using namespace SplitDispatch;
 
-class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;
 
   public:
@@ -42,8 +41,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture, 
     }
 
   protected:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -102,7 +100,6 @@ class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture, 
 
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     KernelInfo *pKernelInfo = nullptr;

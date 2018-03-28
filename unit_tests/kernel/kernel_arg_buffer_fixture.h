@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -38,7 +37,7 @@
 
 using namespace OCLRT;
 
-class KernelArgBufferFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class KernelArgBufferFixture : public ContextFixture, public DeviceFixture {
 
     using ContextFixture::SetUp;
 
@@ -48,8 +47,8 @@ class KernelArgBufferFixture : public ContextFixture, public DeviceFixture, publ
     }
 
   protected:
-    void SetUp() override;
-    void TearDown() override;
+    void SetUp();
+    void TearDown();
 
     cl_int retVal;
     MockProgram *pProgram;

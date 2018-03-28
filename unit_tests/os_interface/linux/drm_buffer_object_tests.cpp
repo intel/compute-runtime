@@ -22,7 +22,6 @@
 
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 #include "drm/i915_drm.h"
 #include "test.h"
@@ -48,14 +47,13 @@ class TestedBufferObject : public BufferObject {
     drm_i915_gem_exec_object2 *execObjectPointerFilled = nullptr;
 };
 
-class DrmBufferObjectFixture : public MemoryManagementFixture {
+class DrmBufferObjectFixture {
   public:
     DrmMockCustom *mock;
     TestedBufferObject *bo;
     drm_i915_gem_exec_object2 execObjectsStorage[256];
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         this->mock = new DrmMockCustom;
         ASSERT_NE(nullptr, this->mock);
         bo = new TestedBufferObject(this->mock);
@@ -63,7 +61,7 @@ class DrmBufferObjectFixture : public MemoryManagementFixture {
         bo->setExecObjectsStorage(execObjectsStorage);
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete bo;
         if (this->mock->ioctl_expected.total >= 0) {
             EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);
@@ -71,7 +69,6 @@ class DrmBufferObjectFixture : public MemoryManagementFixture {
 
         delete this->mock;
         this->mock = nullptr;
-        MemoryManagementFixture::TearDown();
     }
 };
 

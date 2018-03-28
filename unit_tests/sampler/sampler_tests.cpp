@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,38 +23,31 @@
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_sampler.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 #include "patch_list.h"
 #include <tuple>
 
 using namespace OCLRT;
 
-struct CreateSampler : public MemoryManagementFixture,
-                       public ::testing::TestWithParam<
+struct CreateSampler : public ::testing::TestWithParam<
                            std::tuple<uint32_t /*cl_bool*/, uint32_t /*cl_addressing_mode*/, uint32_t /*cl_filter_mode*/>> {
     CreateSampler() {
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         std::tie(normalizedCoords, addressingMode, filterMode) = GetParam();
         context = new MockContext();
     }
 
     void TearDown() override {
         delete context;
-        MemoryManagementFixture::TearDown();
     }
 
-    // clang-format off
-    MockContext * context;
-    cl_int             retVal = CL_INVALID_VALUE;
-    cl_bool            normalizedCoords;
+    MockContext *context;
+    cl_int retVal = CL_INVALID_VALUE;
+    cl_bool normalizedCoords;
     cl_addressing_mode addressingMode;
-    cl_filter_mode     filterMode;
-    // clang-format on
+    cl_filter_mode filterMode;
 };
 
 TEST_P(CreateSampler, shouldReturnSuccess) {
@@ -77,12 +70,10 @@ TEST_P(CreateSampler, shouldPropagateSamplerState) {
         filterMode);
     ASSERT_NE(nullptr, sampler);
 
-    // clang-format off
-    EXPECT_EQ(context,         sampler->getContext());
+    EXPECT_EQ(context, sampler->getContext());
     EXPECT_EQ(normalizedCoords, sampler->getNormalizedCoordinates());
-    EXPECT_EQ(addressingMode,   sampler->getAddressingMode());
-    EXPECT_EQ(filterMode,       sampler->getFilterMode());
-    // clang-format on
+    EXPECT_EQ(addressingMode, sampler->getAddressingMode());
+    EXPECT_EQ(filterMode, sampler->getFilterMode());
 
     //check for SnapWA
     bool snapWaNeeded = addressingMode == CL_ADDRESS_CLAMP && filterMode == CL_FILTER_NEAREST;

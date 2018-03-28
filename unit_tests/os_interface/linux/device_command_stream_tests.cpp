@@ -30,28 +30,13 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "hw_cmds.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 using namespace OCLRT;
 
-class DeviceCommandStreamLeaksFixture : public DeviceFixture,
-                                        public MemoryManagementFixture {
-  public:
-    void SetUp() override {
-        DeviceFixture::SetUp();
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-        DeviceFixture::TearDown();
-    }
-};
-
-typedef Test<DeviceCommandStreamLeaksFixture> DeviceCommandStreamLeaksTest;
+typedef Test<DeviceFixture> DeviceCommandStreamLeaksTest;
 
 HWTEST_F(DeviceCommandStreamLeaksTest, Create) {
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false));

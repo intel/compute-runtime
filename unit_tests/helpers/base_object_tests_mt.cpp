@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,21 +23,12 @@
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/platform/platform.h"
 #include "runtime/accelerators/intel_accelerator.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
+#include "gtest/gtest.h"
 
 namespace OCLRT {
 
 template <typename TypeParam>
-struct BaseObjectTestsMt : public MemoryManagementFixture,
-                           public ::testing::Test {
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-    }
-
+struct BaseObjectTestsMt : public ::testing::Test {
     static void takeOwnerFailThreadFunc(TypeParam *obj) {
         auto ret = obj->takeOwnership(false);
         EXPECT_EQ(false, ret);

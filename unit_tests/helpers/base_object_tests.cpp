@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,7 +33,6 @@
 #include "runtime/sampler/sampler.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "runtime/api/api.h"
@@ -59,15 +58,7 @@ struct ObjectForTest2 : public OCLRT::BaseObject<_cl_object_for_test2> {
 };
 
 template <typename TypeParam>
-struct BaseObjectTests : public MemoryManagementFixture,
-                         public ::testing::Test {
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-    }
+struct BaseObjectTests : public ::testing::Test {
 };
 
 template <typename BaseType>
@@ -161,7 +152,7 @@ TYPED_TEST(BaseObjectTests, retain) {
 
     object->release();
 
-    // MemoryManagementFixture will detect a leak
+    // MemoryLeakListener will detect a leak
     // if release doesn't delete memory.
 }
 

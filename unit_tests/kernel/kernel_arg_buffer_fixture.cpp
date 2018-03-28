@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -40,7 +39,6 @@
 using namespace OCLRT;
 
 void KernelArgBufferFixture::SetUp() {
-    MemoryManagementFixture::SetUp();
     DeviceFixture::SetUp();
     cl_device_id device = pDevice;
     ContextFixture::SetUp(1, &device);
@@ -78,5 +76,4 @@ void KernelArgBufferFixture::TearDown() {
     delete pProgram;
     ContextFixture::TearDown();
     DeviceFixture::TearDown();
-    MemoryManagementFixture::TearDown();
 }

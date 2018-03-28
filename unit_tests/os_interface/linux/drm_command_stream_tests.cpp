@@ -32,10 +32,8 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/os_interface.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/gen_common/gen_cmd_parse_base.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
@@ -696,7 +694,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaul
 /* **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
  * **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** ****
  * **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** **** */
-class DrmCommandStreamEnhancedFixture : public MemoryManagementFixture
+class DrmCommandStreamEnhancedFixture
 
 {
   public:
@@ -705,8 +703,7 @@ class DrmCommandStreamEnhancedFixture : public MemoryManagementFixture
     DrmMemoryManager *mm = nullptr;
     DebugManagerStateRestore *dbgState;
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
 
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
@@ -720,14 +717,12 @@ class DrmCommandStreamEnhancedFixture : public MemoryManagementFixture
         ASSERT_NE(nullptr, mm);
     }
 
-    void TearDown() override {
+    void TearDown() {
         //And close at destruction
         delete csr;
         delete mm;
         delete mock;
         delete dbgState;
-
-        MemoryManagementFixture::TearDown();
     }
 
     bool isResident(BufferObject *bo) {

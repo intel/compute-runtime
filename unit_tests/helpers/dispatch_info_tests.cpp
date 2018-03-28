@@ -24,7 +24,6 @@
 #include "gtest/gtest.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/fixtures/context_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include <type_traits>
@@ -33,15 +32,14 @@
 
 using namespace OCLRT;
 
-class DispatchInfoFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
     using ContextFixture::SetUp;
 
   public:
     DispatchInfoFixture() {}
 
   protected:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -67,7 +65,6 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture, public 
 
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     KernelInfo *pKernelInfo = nullptr;

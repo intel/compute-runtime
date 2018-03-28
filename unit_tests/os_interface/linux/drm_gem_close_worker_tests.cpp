@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,8 +36,6 @@
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_gem_close_worker.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/helpers/memory_management.h"
 #include "test.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
@@ -66,7 +64,7 @@ class DrmMockForWorker : public Drm {
     };
 };
 
-class DrmGemCloseWorkerFixture : public MemoryManagementFixture {
+class DrmGemCloseWorkerFixture {
   public:
     //max loop count for while
     static const uint32_t deadCntInit = 10 * 1000 * 1000;
@@ -75,8 +73,7 @@ class DrmGemCloseWorkerFixture : public MemoryManagementFixture {
     DrmMockForWorker *drmMock;
     uint32_t deadCnt = deadCntInit;
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         this->drmMock = new DrmMockForWorker;
 
         this->drmMock->gem_close_cnt = 0;
@@ -85,7 +82,7 @@ class DrmGemCloseWorkerFixture : public MemoryManagementFixture {
         this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false, false);
     }
 
-    void TearDown() override {
+    void TearDown() {
         if (this->drmMock->gem_close_expected >= 0) {
             EXPECT_EQ(this->drmMock->gem_close_expected, this->drmMock->gem_close_cnt);
         }
@@ -93,7 +90,6 @@ class DrmGemCloseWorkerFixture : public MemoryManagementFixture {
         delete this->mm;
         delete this->drmMock;
         this->drmMock = nullptr;
-        MemoryManagementFixture::TearDown();
     }
 
   protected:

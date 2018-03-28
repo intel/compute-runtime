@@ -33,7 +33,6 @@ using namespace OCLRT;
 using namespace ::testing;
 
 void WddmMemoryManagerFixture::SetUp() {
-    MemoryManagementFixture::SetUp();
     WddmFixture::SetUp();
     ASSERT_NE(nullptr, wddm);
     if (platformDevices[0]->capabilityTable.ftrCompression) {

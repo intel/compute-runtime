@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,6 @@
 #pragma once
 #include "gtest/gtest.h"
 #include "runtime/helpers/ptr_math.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
@@ -65,7 +64,6 @@ struct EnqueueCopyBufferRectHelper {
 
 struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
                                    public EnqueueCopyBufferRectHelper,
-                                   public MemoryManagementFixture,
                                    public ::testing::Test {
 
     EnqueueCopyBufferRectTest(void) : srcBuffer(nullptr),
@@ -77,7 +75,6 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
     };
 
     virtual void SetUp(void) override {
-        MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
         BufferDefaults::context = new MockContext;
 
@@ -90,7 +87,6 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
         delete dstBuffer;
         delete BufferDefaults::context;
         CommandEnqueueFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
   protected:
