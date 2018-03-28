@@ -91,7 +91,7 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     kmdNotifyProperties.enableQuickKmdSleep = true;
     kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits = true;
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
-    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 500;
+    kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 5000;
     kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
 
     return 0;
