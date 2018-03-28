@@ -20,19 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/sharings/sharing.h"
 #include "gtest/gtest.h"
+#include "runtime/mem_obj/mem_obj.h"
+#include "runtime/sharings/sharing.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 
 using namespace OCLRT;
 
 TEST(sharingHandler, givenBasicSharingHandlerWhenSynchronizeObjectThenErrorIsReturned) {
     struct SH : SharingHandler {
-        void synchronizeObjectMock(UpdateData *updateData) { return synchronizeObject(updateData); }
+        void synchronizeHandlerMock(UpdateData *updateData) { return synchronizeHandler(updateData); }
 
     } sharingHandler;
 
     UpdateData updateData;
-    sharingHandler.synchronizeObjectMock(&updateData);
+    sharingHandler.synchronizeHandlerMock(&updateData);
     EXPECT_EQ(SynchronizeStatus::SYNCHRONIZE_ERROR, updateData.synchronizationStatus);
 
     size_t paramSize = 0;
@@ -41,4 +44,29 @@ TEST(sharingHandler, givenBasicSharingHandlerWhenSynchronizeObjectThenErrorIsRet
     sharingHandler.getMemObjectInfo(paramSize, paramValue);
     EXPECT_EQ(paramSize, 0u);
     EXPECT_EQ(paramValue, nullptr);
+}
+
+TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecrementIt) {
+    char buffer[64];
+    MockContext context;
+    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                                              sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
+
+    struct MockSharingHandler : SharingHandler {
+        unsigned int acquire(MemObj *memObj) {
+            SharingHandler::acquire(memObj);
+            return acquireCount;
+        }
+        unsigned int release(MemObj *memObj) {
+            SharingHandler::release(memObj);
+            return acquireCount;
+        }
+        void synchronizeObject(UpdateData *updateData) override {
+            updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+        }
+    } sharingHandler;
+
+    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 1u);
+    EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
 }
