@@ -110,6 +110,36 @@ TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledWith
     EXPECT_EQ(expectedFlag, currentFlag);
 }
 
+TEST_F(DrmBufferObjectTest, givenDrmWithDataPortCoherencyPatchActiveWhenExecWithCoherencyRequestCalledThenSetExecFlag) {
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+    mock->overideDataPortCoherencyPatchActive(true);
+
+    auto ret = bo->exec(0, 0, 0, true);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_NE(0u, mock->execBuffer.flags & I915_EXEC_DATA_PORT_COHERENT);
+}
+
+TEST_F(DrmBufferObjectTest, givenDrmWithoutDataPortCoherencyPatchActiveWhenExecWithCoherencyRequestCalledThenDontSetExecFlag) {
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+    mock->overideDataPortCoherencyPatchActive(false);
+
+    auto ret = bo->exec(0, 0, 0, true);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_EQ(0u, mock->execBuffer.flags & I915_EXEC_DATA_PORT_COHERENT);
+}
+
+TEST_F(DrmBufferObjectTest, givenDrmWithDataPortCoherencyPatchActiveWhenExecWithoutCoherencyRequestCalledThenDontSetExecFlag) {
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+    mock->overideDataPortCoherencyPatchActive(true);
+
+    auto ret = bo->exec(0, 0, 0, false);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    EXPECT_EQ(0u, mock->execBuffer.flags & I915_EXEC_DATA_PORT_COHERENT);
+}
+
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
