@@ -131,7 +131,6 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     }
     pSysInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
 
-    drm->obtainCoherencyDisablePatchActive();
     pSkuTable->ftrSVM = drm->is48BitAddressRangeSupported();
 
     int maxGpuFreq = 0;
@@ -164,10 +163,8 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = pSkuTable->ftrSVM;
 
-    bool platformCoherency = false;
     HwHelper &hwHelper = HwHelper::get(pPlatform->eRenderCoreFamily);
-    hwHelper.setCapabilityCoherencyFlag(const_cast<const HardwareInfo *>(outHwInfo), platformCoherency);
-    outHwInfo->capabilityTable.ftrSupportsCoherency = (platformCoherency && drm->peekCoherencyDisablePatchActive());
+    outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     outHwInfo->capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
                                                        ? outHwInfo->capabilityTable.defaultEngineType

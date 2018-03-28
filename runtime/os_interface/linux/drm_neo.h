@@ -33,10 +33,6 @@
 struct GT_SYSTEM_INFO;
 
 namespace OCLRT {
-
-#define I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT (-1)
-#define I915_PRIVATE_EXEC_FORCE_NON_COHERENT (1 << 31)
-
 #define I915_CONTEXT_PRIVATE_PARAM_BOOST 0x80000000
 
 class DeviceFactory;
@@ -74,8 +70,6 @@ class Drm {
     bool is48BitAddressRangeSupported();
     MOCKABLE_VIRTUAL bool hasPreemption();
     bool setLowPriority();
-    bool peekCoherencyDisablePatchActive() { return coherencyDisablePatchActive; }
-    virtual void obtainCoherencyDisablePatchActive();
     int getFileDescriptor() const { return fd; }
     bool contextCreate();
     void contextDestroy();
@@ -89,7 +83,6 @@ class Drm {
     int deviceId;
     int revisionId;
     GTTYPE eGtType;
-    bool coherencyDisablePatchActive = false;
     Drm(int fd) : lowPriorityContextId(0), fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
     virtual ~Drm();
 

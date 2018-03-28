@@ -80,7 +80,6 @@ class DrmMockCustom : public Drm {
 
         IoctlResExt(int32_t no, int32_t res) : no(no), res(res) {}
     };
-    void overideCoherencyPatchActive(bool newCoherencyPatchActiveValue) { coherencyDisablePatchActive = newCoherencyPatchActiveValue; }
 
     class Ioctls {
       public:

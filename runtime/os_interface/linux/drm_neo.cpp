@@ -115,12 +115,6 @@ int Drm::getMaxGpuFrequency(int &maxGpuFrequency) {
     return 0;
 }
 
-void Drm::obtainCoherencyDisablePatchActive() {
-    int value = 0;
-    auto ret = getParamIoctl(I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT, &value);
-    coherencyDisablePatchActive = (ret == 0) && (value != 0);
-}
-
 std::string Drm::getSysFsPciPath(int deviceID) {
     std::string nullPath;
     std::string sysFsPciDirectory = Os::sysFsPciPath;
