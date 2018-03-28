@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -119,10 +119,6 @@ class Drm2 : public Drm {
                 return this->StoredRetVal;
             }
 #endif
-            if (gp->param == I915_PRIVATE_PARAM_HAS_EXEC_FORCE_NON_COHERENT) {
-                *((int *)(gp->value)) = this->StoredDisableCoherencyPatchActive;
-                return this->StoredRetVal;
-            }
             if (gp->param == I915_PARAM_HAS_ALIASING_PPGTT) {
                 *((int *)(gp->value)) = this->StoredPPGTT;
                 return this->StoredRetVal;
@@ -184,8 +180,6 @@ class Drm2 : public Drm {
         return 0;
     }
 
-    void overideCoherencyPatchActive(bool newCoherencyPatchActiveValue) { coherencyDisablePatchActive = newCoherencyPatchActiveValue; }
-
     void setSysFsDefaultGpuPath(const char *path) {
         sysFsDefaultGpuPathToRestore = sysFsDefaultGpuPath;
         sysFsDefaultGpuPath = path;
@@ -244,7 +238,6 @@ class Drm2 : public Drm {
     int StoredRetValForDeviceRevID = 0;
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
-    int StoredDisableCoherencyPatchActive = 1;
     int StoredPPGTT = 3;
     int StoredPreemptionSupport = 1;
     int StoredMockPreemptionSupport = 0;

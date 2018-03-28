@@ -131,46 +131,6 @@ TEST(DrmTest, GetRevisionID) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenMockDrmWhenAskedForCoherencyStatusThenProperBitIsSet) {
-    Drm2 *pDrm = new Drm2;
-    EXPECT_NE(nullptr, pDrm);
-
-    EXPECT_FALSE(pDrm->peekCoherencyDisablePatchActive());
-
-    pDrm->obtainCoherencyDisablePatchActive();
-
-    EXPECT_TRUE(pDrm->peekCoherencyDisablePatchActive());
-    delete pDrm;
-}
-
-TEST(DrmTest, GivenMockDrmWhenAskedForCoherencyStatusThatPassThenDisabledIsReturned) {
-    Drm2 *pDrm = new Drm2;
-    pDrm->StoredDisableCoherencyPatchActive = 0;
-    EXPECT_NE(nullptr, pDrm);
-
-    EXPECT_FALSE(pDrm->peekCoherencyDisablePatchActive());
-
-    pDrm->obtainCoherencyDisablePatchActive();
-
-    EXPECT_FALSE(pDrm->peekCoherencyDisablePatchActive());
-    pDrm->StoredDisableCoherencyPatchActive = 1;
-    delete pDrm;
-}
-
-TEST(DrmTest, GivenMockDrmWhenAskedForCoherencyStatusThatFailsThenFalseIsReturned) {
-    Drm2 *pDrm = new Drm2;
-    pDrm->StoredRetVal = -1;
-    EXPECT_NE(nullptr, pDrm);
-
-    EXPECT_FALSE(pDrm->peekCoherencyDisablePatchActive());
-
-    pDrm->obtainCoherencyDisablePatchActive();
-
-    EXPECT_FALSE(pDrm->peekCoherencyDisablePatchActive());
-    pDrm->StoredRetVal = 0;
-    delete pDrm;
-}
-
 TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
     Drm2 *pDrm = new Drm2;
     pDrm->StoredPPGTT = 3;
