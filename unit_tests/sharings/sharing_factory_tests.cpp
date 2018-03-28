@@ -20,10 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/sharings/sharing_factory.h"
 #include "gtest/gtest.h"
-
 #include "runtime/helpers/string.h"
+#include "runtime/sharings/sharing.h"
+#include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/fixtures/memory_management_fixture.h"
 
 using namespace OCLRT;
 
@@ -84,6 +85,20 @@ TestedSharingBuilderFactory *SharingFactoryStateRestore::getSharing() {
     return reinterpret_cast<TestedSharingBuilderFactory *>(sharingContextBuilder[SharingType::CLGL_SHARING]);
 }
 
+void dummyHandler() {
+}
+
+class MockSharingBuilderFactory : public TestedSharingBuilderFactory {
+  public:
+    void *getExtensionFunctionAddress(const std::string &functionName) override {
+        if (functionName == "dummyHandler") {
+            return reinterpret_cast<void *>(dummyHandler);
+        } else {
+            return nullptr;
+        }
+    }
+};
+
 TEST(SharingFactoryTests, givenFactoryWithEmptyTableWhenAskedForExtensionThenEmptyStringIsReturned) {
     SharingFactoryStateRestore stateRestore;
 
@@ -129,4 +144,17 @@ TEST(SharingFactoryTests, givenFactoryWithSharingWhenAskedThenAddressIsReturned)
     EXPECT_EQ(nullptr, ptr);
 
     EXPECT_EQ(1u, sharing->invocationCount);
+}
+
+TEST(SharingFactoryTests, givenMockFactoryWithSharingWhenAskedThenAddressIsReturned) {
+    SharingFactoryStateRestore stateRestore;
+
+    stateRestore.clearCurrentState();
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
+    auto ptr = stateRestore.getExtensionFunctionAddress("dummyHandler");
+
+    EXPECT_EQ(reinterpret_cast<void *>(dummyHandler), ptr);
+
+    ptr = clGetExtensionFunctionAddress("dummyHandler");
+    EXPECT_EQ(reinterpret_cast<void *>(dummyHandler), ptr);
 }
