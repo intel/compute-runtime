@@ -1586,6 +1586,7 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     cl_int retVal;
     MockContext context;
     std::unique_ptr<OCLRT::Image> imageNV12(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(imageNV12->getMediaPlaneType(), 0u);
 
     //create Y plane
     imageFormat.image_channel_order = CL_R;
@@ -1598,6 +1599,8 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     imageDesc.mem_object = imageNV12.get();
 
     std::unique_ptr<OCLRT::Image> imageY(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
+    EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
+
     std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
     KernelArgInfo kernelArgInfo;
     kernelArgInfo.isImage = true;
