@@ -31,6 +31,11 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
 )
+
+if(LIBVA_FOUND)
+  list(APPEND IGDRCL_SRCS_linux_dll_tests ${CMAKE_CURRENT_SOURCE_DIR}/va_tests.cpp)
+endif(LIBVA_FOUND)
+
 macro(macro_for_each_platform)
   list(APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp)
 endmacro()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,15 +20,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/os_library.h"
+#include "test.h"
+#include "runtime/sharings/va/va_sharing_functions.h"
+#include "unit_tests/helpers/variable_backup.h"
 
-namespace Os {
-#if defined(__linux__)
-// Compiler library names
-const char *frontEndDllName = "libigdfcl.so";
-const char *igcDllName = "libigdccl.so";
-const char *libvaDllName = "libva.so.2";
-#endif //__linux__
-const char *sysFsPciPath = "/sys/bus/pci/devices/";
-const char *tbxLibName = "libtbxAccess.so";
+using namespace OCLRT;
+
+TEST(VaTests, whenLibvaSo2IsNotInstalledThenFail) {
+    VariableBackup<decltype(VASharingFunctions::fdlopen)> dlopenBackup(&VASharingFunctions::fdlopen);
+    VariableBackup<decltype(VASharingFunctions::fdlclose)> dlcloseBackup(&VASharingFunctions::fdlclose);
+    VariableBackup<decltype(VASharingFunctions::fdlsym)> dlsymBackup(&VASharingFunctions::fdlsym);
+
+    VASharingFunctions::fdlopen = [&](const char *filename, int flag) -> void * {
+        if (!strncmp(filename, "libva.so.2", 10)) {
+            return (void *)0xdeadbeef;
+        } else
+            return 0;
+    };
+    VASharingFunctions::fdlclose = [&](void *handle) -> int {
+        return 0;
+    };
+
+    VASharingFunctions::fdlsym = [&](void *handle, const char *symbol) -> void * {
+        return nullptr;
+    };
+
+    VADisplay vaDisplay = nullptr;
+    VASharingFunctions va(vaDisplay);
+
+    EXPECT_EQ(true, va.isVaLibraryAvailable());
 }
