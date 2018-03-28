@@ -672,7 +672,11 @@ TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenRet
     tempName += familyName[platformDevices[0]->pPlatform->eRenderCoreFamily];
     tempName += " HD Graphics NEO";
 
-    const std::string expectedVersion = NEO_DRIVER_VERSION;
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+    const std::string expectedVersion = TOSTR(NEO_DRIVER_VERSION);
+#undef QTR
+#undef TOSTR
 
     EXPECT_STREQ(tempName.c_str(), caps.name);
     EXPECT_STREQ(expectedVersion.c_str(), caps.driverVersion);

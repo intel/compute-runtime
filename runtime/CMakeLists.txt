@@ -57,7 +57,7 @@ endif()
 
 # Put Driver version into define
 if(NEO_DRIVER_VERSION)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps.cpp PROPERTIES COMPILE_DEFINITIONS NEO_DRIVER_VERSION="${NEO_DRIVER_VERSION}")
+  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps.cpp PROPERTIES COMPILE_DEFINITIONS "NEO_DRIVER_VERSION=${NEO_DRIVER_VERSION}")
 endif()
 
 if(WIN32)

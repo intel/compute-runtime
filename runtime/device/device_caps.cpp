@@ -41,7 +41,9 @@ static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
 static const char *spirvVersion = "SPIR-V_1.0 ";
-static std::string driverVersion = NEO_DRIVER_VERSION;
+#define QTR(a) #a
+#define TOSTR(b) QTR(b)
+static std::string driverVersion;
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 
@@ -70,7 +72,7 @@ void Device::initializeCaps() {
     DEBUG_BREAK_IF(tempName.size() > name.size());
     name = tempName;
 
-    driverVersion = NEO_DRIVER_VERSION;
+    driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
     if (driverInfo) {
         name.assign(driverInfo.get()->getDeviceName(tempName).c_str());
