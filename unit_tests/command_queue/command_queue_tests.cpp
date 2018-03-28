@@ -32,6 +32,7 @@
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -735,6 +736,32 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSucces
     cl_mem *memObjects = nullptr;
 
     cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+}
+
+class MockSharingHandler : public SharingHandler {
+  public:
+    void synchronizeObject(UpdateData *updateData) override {
+        updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+    }
+};
+
+TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageUsingSharingHandlerThenReturnSuccess) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, nullptr, 0);
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
