@@ -184,15 +184,25 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigEdramDetection) {
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEDram);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, givenEnabledPlatformCoherencyWhenConfiguringHwInfoThenIgnoreAndSetAsDisabled) {
+TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigCoherencyEnabled) {
     drm->StoredDeviceID = 21;
+    drm->StoredDisableCoherencyPatchActive = 1;
+    int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
+    EXPECT_EQ(0, ret);
+    EXPECT_TRUE(outHwInfo.capabilityTable.ftrSupportsCoherency);
+}
+
+TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigCoherencyDisabledByPlatform) {
+    drm->StoredDeviceID = 20;
+    drm->StoredDisableCoherencyPatchActive = 1;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 
-TEST_F(HwInfoConfigTestLinuxDummy, givenDisabledPlatformCoherencyWhenConfiguringHwInfoThenSetValidCapability) {
-    drm->StoredDeviceID = 20;
+TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigCoherencyDisabledByDrm) {
+    drm->StoredDeviceID = 21;
+    drm->StoredDisableCoherencyPatchActive = 0;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);

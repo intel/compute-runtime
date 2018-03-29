@@ -86,6 +86,30 @@ TEST_F(DrmBufferObjectTest, exec) {
     EXPECT_EQ(0u, mock->execBuffer.flags);
 }
 
+TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledThenFlagsContainNonCoherentFlag) {
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+    mock->overideCoherencyPatchActive(true);
+
+    auto ret = bo->exec(0, 0, 0);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    uint64_t expectedFlag = I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+    uint64_t currentFlag = mock->execBuffer.flags;
+    EXPECT_EQ(expectedFlag, currentFlag);
+}
+
+TEST_F(DrmBufferObjectTest, givenDrmWithCoherencyPatchActiveWhenExecIsCalledWithCoherencyRequestThenFlagsDontContainNonCoherentFlag) {
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+    mock->overideCoherencyPatchActive(true);
+
+    auto ret = bo->exec(0, 0, 0, true);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    uint64_t expectedFlag = 0;
+    uint64_t currentFlag = mock->execBuffer.flags;
+    EXPECT_EQ(expectedFlag, currentFlag);
+}
+
 TEST_F(DrmBufferObjectTest, exec_ioctlFailed) {
     mock->ioctl_expected.total = 1;
     mock->ioctl_res = -1;
@@ -126,6 +150,48 @@ TEST_F(DrmBufferObjectTest, testExecObjectFlags) {
     bo->setAddress((void *)((uint64_t)1u << 31)); //anything below 4GB
     bo->fillExecObject(execObject);
     EXPECT_FALSE(execObject.flags & EXEC_OBJECT_SUPPORTS_48B_ADDRESS);
+}
+
+TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndForceNonCoherent) {
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+
+    mock->overideCoherencyPatchActive(true);
+    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock));
+    ASSERT_NE(nullptr, boToPin.get());
+
+    bo->setAddress(buff.get());
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    uint32_t bb_end = 0x05000000;
+    EXPECT_EQ(buff[0], bb_end);
+    EXPECT_GT(mock->execBuffer.batch_len, 0u);
+    uint32_t flag = I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+    EXPECT_TRUE((mock->execBuffer.flags & flag) == flag);
+    bo->setAddress(nullptr);
+}
+
+TEST_F(DrmBufferObjectTest, onPinBBhasOnlyBbEndAndNoForceNonCoherent) {
+    std::unique_ptr<uint32_t[]> buff(new uint32_t[1024]);
+    mock->ioctl_expected.total = 1;
+    mock->ioctl_res = 0;
+
+    mock->overideCoherencyPatchActive(false);
+    std::unique_ptr<BufferObject> boToPin(new TestedBufferObject(this->mock));
+    ASSERT_NE(nullptr, boToPin.get());
+
+    bo->setAddress(buff.get());
+    BufferObject *boArray[1] = {boToPin.get()};
+    auto ret = bo->pin(boArray, 1);
+    EXPECT_EQ(mock->ioctl_res, ret);
+    uint32_t bb_end = 0x05000000;
+    EXPECT_EQ(buff[0], bb_end);
+    EXPECT_GT(mock->execBuffer.batch_len, 0u);
+    uint32_t flag = I915_PRIVATE_EXEC_FORCE_NON_COHERENT;
+    EXPECT_TRUE((mock->execBuffer.flags & flag) == 0);
+    bo->setAddress(nullptr);
 }
 
 TEST_F(DrmBufferObjectTest, onPinIoctlFailed) {

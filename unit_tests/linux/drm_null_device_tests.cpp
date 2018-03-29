@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2017, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,6 +74,13 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProper
     int ret = drmNullDevice->getDeviceID(deviceId);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(0x1916, deviceId);
+}
+
+TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENpeekAndObtainCoherencyDisablePatchActiveTHENreturnNullDeviceValues) {
+    EXPECT_EQ(drmNullDevice->peekCoherencyDisablePatchActive(), false);
+
+    drmNullDevice->obtainCoherencyDisablePatchActive();
+    EXPECT_EQ(drmNullDevice->peekCoherencyDisablePatchActive(), true);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {
