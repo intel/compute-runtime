@@ -21,21 +21,17 @@
  */
 
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
 struct Gen8DeviceTest : public DeviceFixture,
-                        public MemoryManagementFixture,
                         public ::testing::Test {
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
     }
 
     void TearDown() override {
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 };
 

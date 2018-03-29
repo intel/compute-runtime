@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,18 +26,15 @@
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/event/event.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 
 using namespace OCLRT;
 
 struct GetSizeRequiredTest : public CommandEnqueueFixture,
-                             public MemoryManagementFixture,
                              public ::testing::Test {
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
         dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
         ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
@@ -52,7 +49,6 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
 
     void TearDown() override {
         CommandEnqueueFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext context;

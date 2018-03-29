@@ -33,9 +33,9 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -51,8 +51,7 @@
 using namespace OCLRT;
 
 struct CommandQueueHwTest
-    : public MemoryManagementFixture,
-      public DeviceFixture,
+    : public DeviceFixture,
       public ContextFixture,
       public CommandQueueHwFixture,
       ::testing::Test {
@@ -60,7 +59,6 @@ struct CommandQueueHwTest
     using ContextFixture::SetUp;
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -71,7 +69,6 @@ struct CommandQueueHwTest
         CommandQueueHwFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     cl_command_queue_properties properties;

@@ -22,7 +22,6 @@
 
 #pragma once
 #include "gtest/gtest.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "runtime/api/api.h"
@@ -38,8 +37,7 @@ class MockKernel;
 class MockProgram;
 class MockAlignedMallocManagerDevice;
 
-struct api_fixture : public MemoryManagementFixture,
-                     public PlatformFixture,
+struct api_fixture : public PlatformFixture,
                      public BuiltInFixture {
     using BuiltInFixture::SetUp;
     using PlatformFixture::SetUp;
@@ -70,8 +68,7 @@ struct api_tests : public api_fixture,
     }
 };
 
-struct api_fixture_using_aligned_memory_manager : public MemoryManagementFixture,
-                                                  public BuiltInFixture {
+struct api_fixture_using_aligned_memory_manager : public BuiltInFixture {
     using BuiltInFixture::SetUp;
 
   public:

@@ -36,7 +36,6 @@ api_fixture::api_fixture()
 }
 
 void api_fixture::SetUp() {
-    MemoryManagementFixture::SetUp();
     PlatformFixture::SetUp(numPlatformDevices, platformDevices);
 
     ASSERT_EQ(retVal, CL_SUCCESS);
@@ -63,14 +62,11 @@ void api_fixture::TearDown() {
 
     BuiltInFixture::TearDown();
     PlatformFixture::TearDown();
-    MemoryManagementFixture::TearDown();
 }
 
 void api_fixture_using_aligned_memory_manager::SetUp() {
     retVal = CL_SUCCESS;
     retSize = 0;
-
-    MemoryManagementFixture::SetUp();
 
     device = Device::create<MockAlignedMallocManagerDevice>(*platformDevices);
     Device *devPtr = reinterpret_cast<Device *>(device);
@@ -98,6 +94,5 @@ void api_fixture_using_aligned_memory_manager::TearDown() {
     delete device;
 
     BuiltInFixture::TearDown();
-    MemoryManagementFixture::TearDown();
 }
 } // namespace OCLRT

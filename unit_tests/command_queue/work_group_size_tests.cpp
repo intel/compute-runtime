@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,23 +23,19 @@
 #include "hw_cmds.h"
 #include "runtime/command_queue/dispatch_walker.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
 using namespace OCLRT;
 
-struct WorkGroupSizeBase : public DeviceFixture,
-                           public MemoryManagementFixture {
+struct WorkGroupSizeBase : public DeviceFixture {
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     template <typename FamilyType>

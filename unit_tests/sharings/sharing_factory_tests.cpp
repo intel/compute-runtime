@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,6 @@
  */
 
 #include "runtime/sharings/sharing_factory.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 #include "runtime/helpers/string.h"
@@ -58,18 +57,6 @@ class SharingFactoryStateRestore : public SharingFactory {
     std::vector<std::unique_ptr<SharingBuilderFactory>> sharings;
 };
 
-class SharingFactoryTests : public MemoryManagementFixture,
-                            public ::testing::Test {
-  public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-    }
-};
-
 class TestedSharingBuilderFactory : public SharingBuilderFactory {
   public:
     std::unique_ptr<SharingContextBuilder> createContextBuilder() override {
@@ -97,7 +84,7 @@ TestedSharingBuilderFactory *SharingFactoryStateRestore::getSharing() {
     return reinterpret_cast<TestedSharingBuilderFactory *>(sharingContextBuilder[SharingType::CLGL_SHARING]);
 }
 
-TEST_F(SharingFactoryTests, givenFactoryWithEmptyTableWhenAskedForExtensionThenEmptyStringIsReturned) {
+TEST(SharingFactoryTests, givenFactoryWithEmptyTableWhenAskedForExtensionThenEmptyStringIsReturned) {
     SharingFactoryStateRestore stateRestore;
 
     stateRestore.clearCurrentState();
@@ -106,7 +93,7 @@ TEST_F(SharingFactoryTests, givenFactoryWithEmptyTableWhenAskedForExtensionThenE
     EXPECT_STREQ("", ext.c_str());
 }
 
-TEST_F(SharingFactoryTests, givenFactoryWithSharingWhenAskedForExtensionThenStringIsReturned) {
+TEST(SharingFactoryTests, givenFactoryWithSharingWhenAskedForExtensionThenStringIsReturned) {
     SharingFactoryStateRestore stateRestore;
 
     stateRestore.clearCurrentState();
@@ -117,7 +104,7 @@ TEST_F(SharingFactoryTests, givenFactoryWithSharingWhenAskedForExtensionThenStri
     EXPECT_STREQ(TestedSharingBuilderFactory::extension.c_str(), ext.c_str());
 }
 
-TEST_F(SharingFactoryTests, givenFactoryWithSharingWhenDispatchFillRequestedThenMethodsAreInvoked) {
+TEST(SharingFactoryTests, givenFactoryWithSharingWhenDispatchFillRequestedThenMethodsAreInvoked) {
     SharingFactoryStateRestore stateRestore;
 
     stateRestore.clearCurrentState();
@@ -130,7 +117,7 @@ TEST_F(SharingFactoryTests, givenFactoryWithSharingWhenDispatchFillRequestedThen
     EXPECT_EQ(1u, sharing->invocationCount);
 }
 
-TEST_F(SharingFactoryTests, givenFactoryWithSharingWhenAskedThenAddressIsReturned) {
+TEST(SharingFactoryTests, givenFactoryWithSharingWhenAskedThenAddressIsReturned) {
     SharingFactoryStateRestore stateRestore;
 
     stateRestore.clearCurrentState();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -34,8 +33,6 @@
 namespace OCLRT {
 
 struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
-                                    //    public EnqueueWriteBufferRectHelper,
-                                    public MemoryManagementFixture,
                                     public ::testing::Test {
     EnqueueWriteBufferRectTest(void)
         : buffer(nullptr),
@@ -43,7 +40,6 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
 
         contextMemoryManager = context.getMemoryManager();
@@ -74,7 +70,6 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
 
         context.setMemoryManager(contextMemoryManager);
         CommandEnqueueFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
   protected:

@@ -27,6 +27,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/helpers/base_object.h"
+#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
 using namespace OCLRT;
@@ -56,16 +57,19 @@ struct CommandQueueWithPropertiesTest : public api_fixture,
 };
 
 struct clCreateCommandQueueWithPropertiesApi : public api_fixture,
+                                               public MemoryManagementFixture,
                                                public ::testing::Test {
     clCreateCommandQueueWithPropertiesApi() {
     }
 
     void SetUp() override {
+        MemoryManagementFixture::SetUp();
         api_fixture::SetUp();
     }
 
     void TearDown() override {
         api_fixture::TearDown();
+        MemoryManagementFixture::TearDown();
     }
 };
 

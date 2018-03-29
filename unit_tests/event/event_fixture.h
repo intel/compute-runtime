@@ -31,7 +31,6 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "gtest/gtest.h"
 
@@ -42,7 +41,6 @@ struct EventTest
       public CommandQueueFixture,
       public CommandStreamFixture,
       public IndirectHeapFixture,
-      public MemoryManagementFixture,
       public ::testing::Test {
 
     using CommandQueueFixture::SetUp;
@@ -66,22 +64,19 @@ struct EventTest
 
 struct InternalsEventTest
     : public DeviceFixture,
-      public MemoryManagementFixture,
       public ::testing::Test {
 
     InternalsEventTest() {
     }
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         mockContext = new MockContext(pDevice);
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete mockContext;
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext *mockContext;

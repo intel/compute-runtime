@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,6 @@
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -42,8 +41,7 @@ static OOMSetting oomSettings[] = {
     {false, true},
     {true, true}};
 
-struct OOMCommandQueueImageTest : public MemoryManagementFixture,
-                                  public DeviceFixture,
+struct OOMCommandQueueImageTest : public DeviceFixture,
                                   public CommandQueueFixture,
                                   public BuiltInFixture,
                                   public ::testing::TestWithParam<OOMSetting> {
@@ -55,7 +53,6 @@ struct OOMCommandQueueImageTest : public MemoryManagementFixture,
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         context = new MockContext(pDevice);
         CommandQueueFixture::SetUp(context, pDevice, 0);
@@ -91,7 +88,6 @@ struct OOMCommandQueueImageTest : public MemoryManagementFixture,
         BuiltInFixture::TearDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext *context;

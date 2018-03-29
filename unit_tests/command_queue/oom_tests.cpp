@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 
@@ -41,8 +40,7 @@ static OOMSetting oomSettings[] = {
     {false, true},
     {true, true}};
 
-struct OOMCommandQueueTest : public MemoryManagementFixture,
-                             public DeviceFixture,
+struct OOMCommandQueueTest : public DeviceFixture,
                              public CommandQueueFixture,
                              public ::testing::TestWithParam<OOMSetting> {
 
@@ -52,7 +50,6 @@ struct OOMCommandQueueTest : public MemoryManagementFixture,
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         context = new MockContext(pDevice);
         CommandQueueFixture::SetUp(context, pDevice, 0);
@@ -80,7 +77,6 @@ struct OOMCommandQueueTest : public MemoryManagementFixture,
         CommandQueueFixture::TearDown();
         context->release();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext *context;

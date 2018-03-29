@@ -30,7 +30,6 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
 
@@ -77,12 +76,10 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 };
 
 struct EnqueueThreadingFixture : public DeviceFixture,
-                                 public BuiltInFixture,
-                                 public MemoryManagementFixture {
+                                 public BuiltInFixture {
     using BuiltInFixture::SetUp;
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         BuiltInFixture::SetUp(pDevice);
         context = new MockContext(pDevice);
@@ -90,12 +87,11 @@ struct EnqueueThreadingFixture : public DeviceFixture,
         pCmdQ = nullptr;
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete pCmdQ;
         BuiltInFixture::TearDown();
         context->release();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     template <typename FamilyType>

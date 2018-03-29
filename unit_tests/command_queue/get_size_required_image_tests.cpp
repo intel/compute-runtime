@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,21 +36,18 @@
 #include "unit_tests/command_queue/enqueue_write_image_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
 
 using namespace OCLRT;
 
 struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
-                                  public MemoryManagementFixture,
                                   public ::testing::Test {
 
     GetSizeRequiredImageTest() {
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
 
         srcImage = Image2dHelper<>::create(context);
@@ -64,7 +61,6 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
         delete srcImage;
 
         CommandEnqueueFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     Image *srcImage = nullptr;

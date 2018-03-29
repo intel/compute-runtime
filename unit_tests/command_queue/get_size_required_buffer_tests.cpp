@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,6 @@
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 #include "test.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
@@ -42,7 +41,6 @@ using namespace OCLRT;
 struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
                                    public SimpleArgKernelFixture,
                                    public HelloWorldKernelFixture,
-                                   public MemoryManagementFixture,
                                    public ::testing::Test {
 
     using SimpleArgKernelFixture::SetUp;
@@ -52,7 +50,6 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandEnqueueFixture::SetUp();
         SimpleArgKernelFixture::SetUp(pDevice);
         HelloWorldKernelFixture::SetUp(pDevice, "CopyBuffer_simd", "CopyBuffer");
@@ -71,7 +68,6 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
         HelloWorldKernelFixture::TearDown();
         SimpleArgKernelFixture::TearDown();
         CommandEnqueueFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     Buffer *srcBuffer = nullptr;
