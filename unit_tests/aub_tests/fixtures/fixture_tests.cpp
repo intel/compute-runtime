@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "gtest/gtest.h"
 
@@ -33,13 +32,11 @@ using namespace OCLRT;
 
 struct SimpleTest : public CommandDeviceFixture,
                     public AUBCommandStreamFixture,
-                    public MemoryManagementFixture,
                     public ::testing::Test {
 
     using AUBCommandStreamFixture::SetUp;
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         AUBCommandStreamFixture::SetUp(pCmdQ);
         context = new MockContext(pDevice);
@@ -48,7 +45,6 @@ struct SimpleTest : public CommandDeviceFixture,
         delete context;
         AUBCommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
     MockContext *context;
 };

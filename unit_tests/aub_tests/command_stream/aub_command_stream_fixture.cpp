@@ -32,7 +32,6 @@
 namespace OCLRT {
 
 void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
 

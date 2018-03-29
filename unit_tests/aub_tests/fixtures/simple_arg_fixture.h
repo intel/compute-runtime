@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,6 @@
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/fixtures/simple_arg_fixture.h"
 #include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 
 namespace OCLRT {
 
@@ -51,8 +50,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
                           public FixtureFactory::CommandStreamFixture,
                           public FixtureFactory::CommandQueueFixture,
                           public FixtureFactory::KernelFixture,
-                          public DeviceFixture,
-                          public MemoryManagementFixture {
+                          public DeviceFixture {
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
     typedef typename FixtureFactory::CommandQueueFixture CommandQueueFixture;
@@ -71,7 +69,6 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     virtual void SetUp() {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pDevice);
         CommandQueueFixture::SetUp(pDevice, 0);
@@ -109,7 +106,6 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     void *pDestMemory;

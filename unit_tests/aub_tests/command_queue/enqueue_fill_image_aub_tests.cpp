@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/aub_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
 #include <algorithm>
@@ -96,7 +95,6 @@ struct FillChannelType {
 struct AubFillImage
     : public CommandDeviceFixture,
       public AUBCommandStreamFixture,
-      public MemoryManagementFixture,
       public ::testing::WithParamInterface<std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, FillImageParams>>,
       public ::testing::Test {
 
@@ -108,7 +106,6 @@ struct AubFillImage
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
         context = new MockContext(pDevice);
@@ -119,7 +116,6 @@ struct AubFillImage
         delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext *context;
