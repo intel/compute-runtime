@@ -25,6 +25,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_write_buffer_rect_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -203,45 +204,10 @@ HWTEST_F(EnqueueWriteBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
     EXPECT_NE(0u, L3ClientPool);
 }
 
-HWTEST_F(EnqueueWriteBufferRectTest, 2D_StateBaseAddress) {
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-
+HWTEST_F(EnqueueWriteBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueWriteBufferRect2D<FamilyType>();
-    auto internalHeapBase = this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress();
-
-    // All state should be programmed before walker
-    auto itorCmd = find<STATE_BASE_ADDRESS *>(itorPipelineSelect, itorWalker);
-    ASSERT_NE(itorWalker, itorCmd);
-
-    auto *cmd = (STATE_BASE_ADDRESS *)*itorCmd;
-
-    // Verify all addresses are getting programmed
-    EXPECT_TRUE(cmd->getDynamicStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmd->getGeneralStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmd->getSurfaceStateBaseAddressModifyEnable());
-    EXPECT_TRUE(cmd->getIndirectObjectBaseAddressModifyEnable());
-    EXPECT_TRUE(cmd->getInstructionBaseAddressModifyEnable());
-
-    EXPECT_EQ((uintptr_t)pDSH->getCpuBase(), cmd->getDynamicStateBaseAddress());
-    // Stateless accesses require GSH.base to be 0.
-    EXPECT_EQ(0u, cmd->getGeneralStateBaseAddress());
-    EXPECT_EQ((uintptr_t)pSSH->getCpuBase(), cmd->getSurfaceStateBaseAddress());
-    EXPECT_EQ((uintptr_t)pIOH->getCpuBase(), cmd->getIndirectObjectBaseAddress());
-    EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
-
-    // Verify all sizes are getting programmed
-    EXPECT_TRUE(cmd->getDynamicStateBufferSizeModifyEnable());
-    EXPECT_TRUE(cmd->getGeneralStateBufferSizeModifyEnable());
-    EXPECT_TRUE(cmd->getIndirectObjectBufferSizeModifyEnable());
-    EXPECT_TRUE(cmd->getInstructionBufferSizeModifyEnable());
-
-    EXPECT_EQ(pDSH->getMaxAvailableSpace(), cmd->getDynamicStateBufferSize() * MemoryConstants::pageSize);
-    EXPECT_NE(0u, cmd->getGeneralStateBufferSize());
-    EXPECT_EQ(pIOH->getMaxAvailableSpace(), cmd->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
-    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
-
-    // Generically validate this command
-    FamilyType::PARSE::template validateCommand<STATE_BASE_ADDRESS *>(cmdList.begin(), itorCmd);
+    validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
+                                         pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
 HWTEST_F(EnqueueWriteBufferRectTest, 2D_MediaInterfaceDescriptorLoad) {

@@ -22,6 +22,7 @@ set(IGDRCL_SRCS_tests_gen_common
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gen_cmd_parse_base.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gen_commands_common_validation.h
   ${CMAKE_CURRENT_SOURCE_DIR}/matchers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/test.h
 )
