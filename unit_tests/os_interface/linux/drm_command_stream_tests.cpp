@@ -536,6 +536,24 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 }
 
+HWTEST_F(DrmCommandStreamTest, givenDrmCsrWhenAskedForTimeoutMultiplierThenReturnCorrectValueDependingOnRequest) {
+    struct MyDrmCsr : public DrmCommandStreamReceiver<FamilyType> {
+        using DrmCommandStreamReceiver<FamilyType>::computeTimeoutMultiplier;
+        using DrmCommandStreamReceiver<FamilyType>::tagAddress;
+
+        MyDrmCsr(const HardwareInfo &hwInfoIn) : DrmCommandStreamReceiver<FamilyType>(hwInfoIn, nullptr) {
+            tagAddress = &hwTag;
+        };
+        uint32_t hwTag = 2;
+    } myDrmCsr(**platformDevices);
+
+    uint32_t taskCountToWait = 5;
+
+    EXPECT_EQ(taskCountToWait - myDrmCsr.hwTag, myDrmCsr.computeTimeoutMultiplier(false, taskCountToWait));
+    EXPECT_EQ(1u, myDrmCsr.computeTimeoutMultiplier(true, taskCountToWait));
+    EXPECT_EQ(1u, myDrmCsr.computeTimeoutMultiplier(true, 1));
+}
+
 struct DrmCsrVfeTests : ::testing::Test {
     template <typename FamilyType>
     struct MyCsr : public DrmCommandStreamReceiver<FamilyType> {

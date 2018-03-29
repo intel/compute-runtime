@@ -26,6 +26,11 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
 
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
+
 using namespace OCLRT;
 
 struct KmdNotifyTests : public ::testing::Test {
@@ -50,10 +55,15 @@ struct KmdNotifyTests : public ::testing::Test {
     }
 
     template <typename Family>
-    struct MyCsr : public UltCommandStreamReceiver<Family> {
+    class MyCsr : public UltCommandStreamReceiver<Family> {
+      public:
         MyCsr(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<Family>(hwInfo) {}
         MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
         MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+        int64_t computeTimeoutMultiplierRetValue = 1u;
+
+      protected:
+        int64_t computeTimeoutMultiplier(bool useQuickKmdSleep, uint32_t taskCountDiff) const override { return computeTimeoutMultiplierRetValue; };
     };
 
     HardwareInfo localHwInfo = **platformDevices;
@@ -192,6 +202,19 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true);
 }
 
+HWTEST_F(KmdNotifyTests, givenComputeTimeoutMultiplierWhenWaitCalledThenUseNewTimeout) {
+    auto csr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    csr->computeTimeoutMultiplierRetValue = 3;
+    device->resetCommandStreamReceiver(csr);
+
+    auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds *
+                           csr->computeTimeoutMultiplierRetValue;
+
+    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
+
+    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false);
+}
+
 template <typename Family>
 struct MyCsrWithTimestampCheck : public UltCommandStreamReceiver<Family> {
     MyCsrWithTimestampCheck(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<Family>(hwInfo) {}
@@ -222,3 +245,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWa
     csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false);
     EXPECT_EQ(0u, csr->updateLastWaitForCompletionTimestampCalled);
 }
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif

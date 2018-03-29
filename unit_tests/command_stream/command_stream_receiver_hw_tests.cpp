@@ -56,8 +56,8 @@
 
 using namespace OCLRT;
 
-using ::testing::Invoke;
 using ::testing::_;
+using ::testing::Invoke;
 
 struct UltCommandStreamReceiverTest
     : public DeviceFixture,
@@ -1498,6 +1498,12 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousNOSL
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected) {
     MockCsrHw<FamilyType> commandStreamReceiver(*platformDevices[0]);
     EXPECT_EQ(PreambleHelper<FamilyType>::getDefaultThreadArbitrationPolicy(), commandStreamReceiver.peekThreadArbitrationPolicy());
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverWhenAskedForTimeoutMultiplierThenAlwaysReturnOne) {
+    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*platformDevices[0]);
+    EXPECT_EQ(1u, commandStreamReceiver.computeTimeoutMultiplier(false, 5));
+    EXPECT_EQ(1u, commandStreamReceiver.computeTimeoutMultiplier(true, 5));
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {

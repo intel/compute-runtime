@@ -568,10 +568,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     const auto &kmdNotifyProperties = this->hwInfo.capabilityTable.kmdNotifyProperties;
-
     useQuickKmdSleep |= kmdNotifyProperties.applyQuickKmdSleepForSporadicWait(lastWaitForCompletionTimestamp);
 
-    const auto &kmdNotifyDelay = kmdNotifyProperties.selectDelay(useQuickKmdSleep);
+    int64_t kmdNotifyDelay = kmdNotifyProperties.selectDelay(useQuickKmdSleep) * computeTimeoutMultiplier(useQuickKmdSleep, taskCountToWait);
 
     auto status = waitForCompletionWithTimeout(kmdNotifyProperties.enableKmdNotify && flushStampToWait != 0,
                                                kmdNotifyDelay, taskCountToWait);
