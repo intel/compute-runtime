@@ -37,7 +37,6 @@
 #include "runtime/gen_common/reg_configs.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -63,12 +62,10 @@ using ::testing::_;
 struct UltCommandStreamReceiverTest
     : public DeviceFixture,
       public BuiltInFixture,
-      public MemoryManagementFixture,
       public HardwareParse,
       ::testing::Test {
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         BuiltInFixture::SetUp(pDevice);
         HardwareParse::SetUp();
@@ -117,7 +114,6 @@ struct UltCommandStreamReceiverTest
         HardwareParse::TearDown();
         BuiltInFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     template <typename CommandStreamReceiverType>

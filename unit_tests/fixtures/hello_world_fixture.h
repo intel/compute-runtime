@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 
@@ -53,8 +52,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
                            public FixtureFactory::CommandQueueFixture,
                            public FixtureFactory::KernelFixture,
                            public DeviceFixture,
-                           public BuiltInFixture,
-                           public MemoryManagementFixture {
+                           public BuiltInFixture {
 
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
@@ -79,7 +77,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     virtual void SetUp() {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pDevice);
         BuiltInFixture::SetUp(pDevice);
@@ -120,7 +117,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandQueueFixture::TearDown();
         BuiltInFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     void *pSrcMemory;

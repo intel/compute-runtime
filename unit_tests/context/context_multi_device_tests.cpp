@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,15 +24,12 @@
 #include "hw_cmds.h"
 #include "runtime/helpers/array_count.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
-typedef Test<MemoryManagementFixture> ContextMultiDevice;
-
-TEST_F(ContextMultiDevice, singleDevice) {
+TEST(ContextMultiDevice, singleDevice) {
     cl_device_id devices[] = {
         DeviceHelper<>::create()};
     auto numDevices = ARRAY_COUNT(devices);
@@ -61,7 +58,7 @@ TEST_F(ContextMultiDevice, singleDevice) {
     }
 }
 
-TEST_F(ContextMultiDevice, eightDevices) {
+TEST(ContextMultiDevice, eightDevices) {
     cl_device_id devices[] = {
         DeviceHelper<>::create(),
         DeviceHelper<>::create(),

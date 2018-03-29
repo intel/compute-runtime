@@ -22,25 +22,14 @@
 
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
 
-class DrmCommandStreamMMFixture : public MemoryManagementFixture {
-  public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-    }
-
-    void TearDown() override {
-        MemoryManagementFixture::TearDown();
-    }
+class DrmCommandStreamMMTest : public ::testing::Test {
 };
-
-typedef Test<DrmCommandStreamMMFixture> DrmCommandStreamMMTest;
 
 HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     DebugManagerStateRestore dbgRestorer;

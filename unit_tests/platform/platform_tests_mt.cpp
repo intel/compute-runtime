@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,13 +21,12 @@
  */
 
 #include "runtime/helpers/options.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
-struct PlatformTestMt : public MemoryManagementFixture, public ::testing::Test {
+struct PlatformTestMt : public ::testing::Test {
     PlatformTestMt() {}
 
     void SetUp() override { pPlatform = platform(); }

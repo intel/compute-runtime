@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,6 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -46,22 +45,19 @@ bool containsHint(const char *providedHint, char *userData);
 
 void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, size_t size, void *userData);
 
-struct DriverDiagnosticsTest : public MemoryManagementFixture,
-                               public PlatformFixture,
+struct DriverDiagnosticsTest : public PlatformFixture,
                                public ::testing::Test {
     using PlatformFixture::SetUp;
     DriverDiagnosticsTest() : retVal(CL_SUCCESS) {
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         PlatformFixture::SetUp(numPlatformDevices, platformDevices);
         memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
 
     void TearDown() override {
         PlatformFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     cl_int retVal;

@@ -28,7 +28,6 @@
 #include <runtime/helpers/aligned_memory.h>
 #include <unit_tests/global_environment.h>
 #include <unit_tests/fixtures/device_fixture.h>
-#include <unit_tests/fixtures/memory_management_fixture.h>
 #include <unit_tests/mocks/mock_context.h>
 #include <unit_tests/mocks/mock_program.h>
 
@@ -41,18 +40,16 @@
 using namespace OCLRT;
 using namespace std;
 
-class BinaryCacheFixture : public MemoryManagementFixture
+class BinaryCacheFixture
 
 {
   public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         cache = new BinaryCache;
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete cache;
-        MemoryManagementFixture::TearDown();
     }
     BinaryCache *cache;
 };
@@ -102,20 +99,17 @@ class BinaryCacheMock : public BinaryCache {
     bool loadResult = false;
 };
 
-class CompilerInterfaceCachedFixture : public MemoryManagementFixture,
-                                       public DeviceFixture {
+class CompilerInterfaceCachedFixture : public DeviceFixture {
   public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         pCompilerInterface = TestedCompilerInterface::getInstance();
         ASSERT_NE(pCompilerInterface, nullptr);
     }
 
-    void TearDown() override {
+    void TearDown() {
         TestedCompilerInterface::shutdown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     CompilerInterface *pCompilerInterface;

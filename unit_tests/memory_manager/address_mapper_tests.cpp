@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,23 +26,20 @@
 #include "runtime/memory_manager/address_mapper.h"
 #include "test.h"
 #include "gtest/gtest.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 
 #include <memory>
 
 using namespace OCLRT;
 
-class AddressMapperFixture : public MemoryManagementFixture {
+class AddressMapperFixture {
   public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         mapper = new AddressMapper();
     }
 
-    void TearDown() override {
+    void TearDown() {
         delete mapper;
-        MemoryManagementFixture::TearDown();
     }
     AddressMapper *mapper;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,7 +29,6 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/global_environment.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
@@ -46,8 +45,7 @@
 using namespace OCLRT;
 
 class BuiltInTests
-    : public MemoryManagementFixture,
-      public BuiltInFixture,
+    : public BuiltInFixture,
       public DeviceFixture,
       public ContextFixture,
       public ::testing::Test {
@@ -63,7 +61,6 @@ class BuiltInTests
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -75,7 +72,6 @@ class BuiltInTests
         BuiltInFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {

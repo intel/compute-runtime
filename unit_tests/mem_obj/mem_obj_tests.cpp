@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,6 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -324,9 +323,6 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
     MockContext context;
     context.setMemoryManager(&memoryManager);
 
-    MemoryManagementFixture memoryLeaksCheck;
-    memoryLeaksCheck.SetUp();
-
     auto allocation = memoryManager.allocateGraphicsMemory(1);
 
     std::unique_ptr<MemObj> memObj1(new MemObj(&context, CL_MEM_OBJECT_BUFFER, 0, 1, nullptr, nullptr, allocation, true, false, false));
@@ -346,7 +342,4 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
     EXPECT_EQ(1u, allocation->peekReuseCount());
 
     memObj2.reset(nullptr);
-
-    // GraphicsAllocation should be removed by last memObj
-    memoryLeaksCheck.TearDown();
 }

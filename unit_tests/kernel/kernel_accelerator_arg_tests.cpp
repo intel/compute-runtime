@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,6 @@
 #include "runtime/accelerators/intel_motion_estimation.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -41,7 +40,7 @@
 
 using namespace OCLRT;
 
-class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture {
 
     using ContextFixture::SetUp;
 
@@ -50,14 +49,13 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture,
     }
 
   protected:
-    void SetUp() override {
+    void SetUp() {
         desc = {
             CL_ME_MB_TYPE_4x4_INTEL,
             CL_ME_SUBPIXEL_MODE_QPEL_INTEL,
             CL_ME_SAD_ADJUST_MODE_HAAR_INTEL,
             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL};
 
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -98,7 +96,6 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture,
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     cl_motion_estimation_desc_intel desc;

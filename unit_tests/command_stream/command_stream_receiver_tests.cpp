@@ -30,7 +30,6 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -42,10 +41,8 @@
 using namespace OCLRT;
 
 struct CommandStreamReceiverTest : public DeviceFixture,
-                                   public MemoryManagementFixture,
                                    public ::testing::Test {
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
 
         commandStreamReceiver = &pDevice->getCommandStreamReceiver();
@@ -54,7 +51,6 @@ struct CommandStreamReceiverTest : public DeviceFixture,
 
     void TearDown() override {
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     CommandStreamReceiver *commandStreamReceiver;

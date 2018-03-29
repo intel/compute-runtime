@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/memory_manager/page_table.h"
 #include "test.h"
 #include "gtest/gtest.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 
 #include <memory>
@@ -87,19 +86,17 @@ class GGTTPageTable : public PDPE {
     }
 };
 
-class PageTableFixture : public MemoryManagementFixture, public PTEFixture {
+class PageTableFixture : public PTEFixture {
   protected:
     const uintptr_t refAddr = (uintptr_t(1) << IntSelector<46, 31, is64Bit>::value);
 
   public:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         PTEFixture::SetUp();
     }
 
-    void TearDown() override {
+    void TearDown() {
         PTEFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 };
 

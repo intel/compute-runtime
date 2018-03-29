@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/helpers/file_io.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/helpers/memory_management.h"
@@ -47,8 +46,7 @@ const char *gCBadDompilerDllName = "libbad_compiler.so";
 #error "Unknown OS!"
 #endif
 
-class CompilerInterfaceTest : public MemoryManagementFixture,
-                              public DeviceFixture,
+class CompilerInterfaceTest : public DeviceFixture,
                               public ::testing::Test {
   public:
     CompilerInterfaceTest() {
@@ -56,7 +54,6 @@ class CompilerInterfaceTest : public MemoryManagementFixture,
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
 
         retVal = CL_SUCCESS;
@@ -102,7 +99,6 @@ class CompilerInterfaceTest : public MemoryManagementFixture,
         pCompilerInterface.reset();
 
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     std::unique_ptr<MockCompilerInterface> pCompilerInterface = nullptr;

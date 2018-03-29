@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,7 +26,6 @@
 #include "runtime/mem_obj/pipe.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_pipe.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -39,7 +38,7 @@
 
 using namespace OCLRT;
 
-class KernelArgPipeFixture : public ContextFixture, public DeviceFixture, public MemoryManagementFixture {
+class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
 
     using ContextFixture::SetUp;
 
@@ -48,8 +47,7 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture, public
     }
 
   protected:
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void SetUp() {
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -87,7 +85,6 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture, public
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

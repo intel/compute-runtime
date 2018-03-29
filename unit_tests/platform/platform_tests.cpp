@@ -24,7 +24,6 @@
 #include "runtime/device/device.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -34,7 +33,7 @@
 
 using namespace OCLRT;
 
-struct PlatformTest : public MemoryManagementFixture, public ::testing::Test {
+struct PlatformTest : public ::testing::Test {
     PlatformTest() {}
 
     void SetUp() override { pPlatform = platform(); }
