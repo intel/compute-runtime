@@ -62,7 +62,7 @@ size_t PreemptionHelper::getRequiredPreambleSize<GfxFamily>(const Device &device
 }
 
 template <>
-void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, const Device &device,
+void PreemptionHelper::programPreamble<GfxFamily>(LinearStream &preambleCmdStream, Device &device,
                                                   const GraphicsAllocation *preemptionCsr) {
 }
 

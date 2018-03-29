@@ -45,10 +45,10 @@ struct PreambleHelper {
     static void programPipelineSelect(LinearStream *pCommandStream, bool mediaSamplerRequired);
     static uint32_t getDefaultThreadArbitrationPolicy();
     static void programThreadArbitration(LinearStream *pCommandStream, uint32_t requiredThreadArbitrationPolicy);
-    static void programPreemption(LinearStream *pCommandStream, const Device &device, GraphicsAllocation *preemptionCsr);
+    static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo);
     static void programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress);
-    static void programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
+    static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static size_t getAdditionalCommandsSize(const Device &device);

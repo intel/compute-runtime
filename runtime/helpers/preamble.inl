@@ -79,7 +79,7 @@ void PreambleHelper<GfxFamily>::programL3(LinearStream *pCommandStream, uint32_t
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, const Device &device, uint32_t l3Config,
+void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr) {
     programL3(pCommandStream, l3Config);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
@@ -88,7 +88,7 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, co
 }
 
 template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, const Device &device, GraphicsAllocation *preemptionCsr) {
+void PreambleHelper<GfxFamily>::programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr) {
     PreemptionHelper::programPreamble<GfxFamily>(*pCommandStream, device, preemptionCsr);
 }
 

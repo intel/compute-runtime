@@ -79,7 +79,8 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     typedef SKLFamily::PIPE_CONTROL PIPE_CONTROL;
     LinearStream &cs = linearStream;
     uint32_t l3Config = PreambleHelper<FamilyType>::getL3Config(**platformDevices, true);
-    PreambleHelper<SKLFamily>::programPreamble(&linearStream, MockDevice(**platformDevices), l3Config,
+    MockDevice mockDevice(**platformDevices);
+    PreambleHelper<SKLFamily>::programPreamble(&linearStream, mockDevice, l3Config,
                                                ThreadArbitrationPolicy::RoundRobin,
                                                nullptr);
 

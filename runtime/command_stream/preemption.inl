@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/sip.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/command_queue/dispatch_walker_helper.h"
@@ -72,7 +74,7 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, co
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, const Device &device,
+void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, Device &device,
                                        const GraphicsAllocation *preemptionCsr) {
     if (device.getPreemptionMode() != PreemptionMode::MidThread) {
         return;
@@ -88,7 +90,7 @@ void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, const De
 
     auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
     sip->init();
-    sip->setSystemInstructionPointer(0);
+    sip->setSystemInstructionPointer(BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device).getSipAllocation()->getGpuAddressToPatch());
 }
 
 template <typename GfxFamily>
