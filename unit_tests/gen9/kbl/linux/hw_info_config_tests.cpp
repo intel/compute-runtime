@@ -42,6 +42,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform->usRevId);
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
+    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT2, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
@@ -88,6 +89,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
     EXPECT_EQ(1u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrGT1);
@@ -109,6 +111,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ((unsigned short)drm->StoredDeviceRevID, outHwInfo.pPlatform->usRevId);
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
+    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT1_5, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
@@ -132,6 +135,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
     EXPECT_EQ(2u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT3, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);
@@ -155,6 +159,7 @@ KBLTEST_F(HwInfoConfigTestLinuxKbl, configureHwInfo) {
     EXPECT_EQ((uint32_t)drm->StoredEUVal, outHwInfo.pSysInfo->EUCount);
     EXPECT_EQ((uint32_t)drm->StoredSSVal, outHwInfo.pSysInfo->SubSliceCount);
     EXPECT_EQ(2u, outHwInfo.pSysInfo->SliceCount);
+    EXPECT_EQ(EngineType::ENGINE_RCS, outHwInfo.capabilityTable.defaultEngineType);
 
     EXPECT_EQ(GTTYPE_GT4, outHwInfo.pPlatform->eGTType);
     EXPECT_EQ(0u, outHwInfo.pSkuTable->ftrGT1);

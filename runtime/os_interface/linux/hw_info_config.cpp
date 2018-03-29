@@ -166,6 +166,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     HwHelper &hwHelper = HwHelper::get(pPlatform->eRenderCoreFamily);
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
+    hwHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = DebugManager.flags.NodeOrdinal.get() == -1
                                                        ? outHwInfo->capabilityTable.defaultEngineType
                                                        : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());

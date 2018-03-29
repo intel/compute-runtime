@@ -43,7 +43,7 @@ static std::string spirVersions = "1.2 ";
 static const char *spirvVersion = "SPIR-V_1.0 ";
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
-static std::string driverVersion;
+static std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 
