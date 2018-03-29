@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,23 +21,11 @@
  */
 
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
-struct DeviceTest : public DeviceFixture,
-                    public MemoryManagementFixture,
-                    public ::testing::Test {
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-        DeviceFixture::SetUp();
-    }
 
-    void TearDown() override {
-        DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
-    }
-};
+typedef Test<DeviceFixture> DeviceTest;
 
 SKLTEST_F(DeviceTest, getSupportedClVersion21Device) {
     auto version = pDevice->getSupportedClVersion();

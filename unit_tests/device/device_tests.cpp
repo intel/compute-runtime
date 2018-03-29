@@ -25,7 +25,6 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/libult/create_command_stream.h"
@@ -34,19 +33,8 @@
 #include "runtime/device/device.h"
 
 using namespace OCLRT;
-struct DeviceTest : public DeviceFixture,
-                    public MemoryManagementFixture,
-                    public ::testing::Test {
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-        DeviceFixture::SetUp();
-    }
 
-    void TearDown() override {
-        DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
-    }
-};
+typedef Test<DeviceFixture> DeviceTest;
 
 TEST_F(DeviceTest, Create) {
     EXPECT_NE(nullptr, pDevice);
