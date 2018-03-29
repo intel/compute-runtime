@@ -30,7 +30,6 @@ namespace OCLRT {
 class GraphicsAllocation;
 
 constexpr size_t defaultHeapSize = 64 * KB;
-constexpr size_t optimalInstructionHeapSize = 512 * KB;
 constexpr size_t maxSshSize = defaultHeapSize - MemoryConstants::pageSize;
 
 class IndirectHeap : public LinearStream {
@@ -41,7 +40,6 @@ class IndirectHeap : public LinearStream {
         DYNAMIC_STATE = 0,
         GENERAL_STATE,
         INDIRECT_OBJECT,
-        INSTRUCTION,
         SURFACE_STATE,
         NUM_TYPES
     };

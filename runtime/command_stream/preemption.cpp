@@ -104,29 +104,6 @@ void PreemptionHelper::adjustDefaultPreemptionMode(RuntimeCapabilityTable &devic
     }
 }
 
-size_t PreemptionHelper::getInstructionHeapSipKernelReservedSize(Device &device) {
-    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
-        return 0;
-    }
-
-    return BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device).getBinarySize();
-}
-
-void PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(LinearStream &ih, Device &device) {
-    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
-        return;
-    }
-
-    const SipKernel &sip = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device);
-    size_t sipSize = sip.getBinarySize();
-    UNRECOVERABLE_IF(sipSize > ih.getAvailableSpace());
-    UNRECOVERABLE_IF(0 != ih.getUsed());
-    void *blockForSip = ih.getSpace(sipSize);
-    UNRECOVERABLE_IF(nullptr == blockForSip);
-    auto err = memcpy_s(blockForSip, sipSize, sip.getBinary(), sipSize);
-    UNRECOVERABLE_IF(err != 0);
-}
-
 PreemptionMode PreemptionHelper::getDefaultPreemptionMode(const HardwareInfo &hwInfo) {
     return DebugManager.flags.ForcePreemptionMode.get() == -1
                ? hwInfo.capabilityTable.defaultPreemptionMode

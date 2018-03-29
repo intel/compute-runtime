@@ -2763,6 +2763,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
                        dispatchFlags);
 
     EXPECT_EQ(expectedUsed + additionalSize, mockCsr->peekTotalMemoryUsed());
+    mockCsr->flushBatchedSubmissions();
 }
 
 struct MockedMemoryManager : public OsAgnosticMemoryManager {

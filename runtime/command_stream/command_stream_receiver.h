@@ -116,12 +116,6 @@ class CommandStreamReceiver {
     virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) = 0;
     MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
 
-    // returns size of block that needs to be reserved at the beginning of each instruction heap for CommandStreamReceiver
-    MOCKABLE_VIRTUAL size_t getInstructionHeapCmdStreamReceiverReservedSize() const;
-
-    // allows CommandStreamReceiver to prepopulate reserved block in instruction heap
-    MOCKABLE_VIRTUAL void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const;
-
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
     // Collect patch info data

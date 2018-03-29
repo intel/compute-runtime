@@ -313,27 +313,6 @@ TEST(PreemptionTest, defaultMode) {
     EXPECT_EQ(-1, preemptionModeFromDebugManager);
 }
 
-TEST(PreemptionTest, whenPreemptionModeIsNotMidThreadThenInstructionHeapSipKernelReservedSizeIsEmpty) {
-    char buffer[4096];
-    LinearStream instructionHeap(buffer, sizeof(buffer));
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
-
-    mockDevice->setPreemptionMode(PreemptionMode::Disabled);
-    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
-    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
-    ASSERT_EQ(0U, instructionHeap.getUsed());
-
-    mockDevice->setPreemptionMode(PreemptionMode::MidBatch);
-    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
-    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
-    ASSERT_EQ(0U, instructionHeap.getUsed());
-
-    mockDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
-    EXPECT_EQ(0U, PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice));
-    PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(instructionHeap, *mockDevice);
-    ASSERT_EQ(0U, instructionHeap.getUsed());
-}
-
 struct PreemptionHwTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {
 };
 

@@ -219,14 +219,6 @@ void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSi
     }
 }
 
-size_t CommandStreamReceiver::getInstructionHeapCmdStreamReceiverReservedSize() const {
-    return PreemptionHelper::getInstructionHeapSipKernelReservedSize(*memoryManager->device);
-}
-
-void CommandStreamReceiver::initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const {
-    return PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(ih, *memoryManager->device);
-}
-
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     debugSurface = memoryManager->allocateGraphicsMemory(size);

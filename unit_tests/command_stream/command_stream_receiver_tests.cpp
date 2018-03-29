@@ -261,35 +261,3 @@ HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefault
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, csr.dispatchMode);
 }
-
-TEST(CommandStreamReceiver, cmdStreamReceiverReservedBlockInInstructionHeapIsBasedOnPreemptionHelper) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
-    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    {
-        MockBuiltins mockBuiltins;
-        mockBuiltins.overrideGlobalBuiltins();
-        {
-            auto sipOverride = std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel(OCLRT::SipKernelType::Csr, getSipProgramWithCustomBinary()));
-            mockBuiltins.overrideSipKernel(std::move(sipOverride));
-        }
-
-        size_t reservedSize = mockDevice->getCommandStreamReceiver().getInstructionHeapCmdStreamReceiverReservedSize();
-        size_t expectedSize = OCLRT::PreemptionHelper::getInstructionHeapSipKernelReservedSize(*mockDevice);
-        EXPECT_NE(0U, expectedSize);
-        EXPECT_EQ(expectedSize, reservedSize);
-        ASSERT_LE(expectedSize, reservedSize);
-
-        StackVec<char, 4096> cmdStreamIhBuffer;
-        cmdStreamIhBuffer.resize(reservedSize);
-        LinearStream cmdStreamReceiverInstrucionHeap{cmdStreamIhBuffer.begin(), cmdStreamIhBuffer.size()};
-        mockDevice->getCommandStreamReceiver().initializeInstructionHeapCmdStreamReceiverReservedBlock(cmdStreamReceiverInstrucionHeap);
-
-        StackVec<char, 4096> preemptionHelperIhBuffer;
-        preemptionHelperIhBuffer.resize(expectedSize);
-        LinearStream preemptionHelperInstrucionHeap{preemptionHelperIhBuffer.begin(), preemptionHelperIhBuffer.size()};
-        PreemptionHelper::initializeInstructionHeapSipKernelReservedBlock(preemptionHelperInstrucionHeap, *mockDevice);
-
-        cmdStreamIhBuffer.resize(expectedSize);
-        EXPECT_THAT(preemptionHelperIhBuffer, testing::ContainerEq(cmdStreamIhBuffer));
-    }
-}

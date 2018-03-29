@@ -236,25 +236,6 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     void setOSInterface(OSInterface *osInterface);
-
-    size_t getInstructionHeapCmdStreamReceiverReservedSize() const override {
-        if (instructionHeapReserveredData.size() == 0) {
-            return CommandStreamReceiver::getInstructionHeapCmdStreamReceiverReservedSize();
-        }
-
-        return instructionHeapReserveredData.size();
-    }
-
-    void initializeInstructionHeapCmdStreamReceiverReservedBlock(LinearStream &ih) const override {
-        if (instructionHeapReserveredData.size() == 0) {
-            CommandStreamReceiver::initializeInstructionHeapCmdStreamReceiverReservedBlock(ih);
-            return;
-        }
-
-        void *block = ih.getSpace(instructionHeapReserveredData.size());
-        memcpy_s(block, instructionHeapReserveredData.size(),
-                 instructionHeapReserveredData.data(), instructionHeapReserveredData.size());
-    }
 };
 
 #if defined(__clang__)

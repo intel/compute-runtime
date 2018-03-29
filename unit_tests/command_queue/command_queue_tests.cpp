@@ -421,8 +421,6 @@ TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         EXPECT_EQ(64 * KB - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
-    } else if (this->GetParam() == IndirectHeap::INSTRUCTION) {
-        EXPECT_EQ(optimalInstructionHeapSize, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
     }
@@ -478,9 +476,6 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
 
     auto memoryManager = pDevice->getMemoryManager();
     auto allocationSize = defaultHeapSize * 2;
-    if (this->GetParam() == IndirectHeap::INSTRUCTION) {
-        allocationSize = optimalInstructionHeapSize * 2;
-    }
 
     auto allocation = memoryManager->allocateGraphicsMemory(allocationSize);
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
@@ -627,7 +622,6 @@ INSTANTIATE_TEST_CASE_P(
         IndirectHeap::DYNAMIC_STATE,
         IndirectHeap::GENERAL_STATE,
         IndirectHeap::INDIRECT_OBJECT,
-        IndirectHeap::INSTRUCTION,
         IndirectHeap::SURFACE_STATE));
 
 typedef Test<DeviceFixture> CommandQueueCSTest;
@@ -731,40 +725,6 @@ HWTEST_F(WaitForQueueCompletionTests, whenFinishIsCalledThenCallWaitWithoutQuick
     cmdQ->finish(false);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
-}
-
-constexpr char sipPattern[] = {2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 39, 41};
-static_assert(false == isAligned<MemoryConstants::cacheLineSize>(sizeof(sipPattern)),
-              "Will be checking for automatic cacheline alignment, so pattern length must not be a multiple of cacheline");
-constexpr size_t alignedPatternSize = alignUp(sizeof(sipPattern), MemoryConstants::cacheLineSize);
-
-TEST(CommandQueueGetIndirectHeap, whenNewInstructionHeapIsBeingCreatedThenCommandStreamReceiverCanReserveAMemoryBlockAtItsBegining) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
-    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver;
-    mockDevice->resetCommandStreamReceiver(csr);
-
-    csr->instructionHeapReserveredData.assign(sipPattern, sipPattern + sizeof(sipPattern));
-    MockCommandQueue cmdQ{nullptr, mockDevice.get(), nullptr};
-    IndirectHeap &heap = cmdQ.getIndirectHeap(OCLRT::IndirectHeap::INSTRUCTION, 8192);
-    EXPECT_LE(8192U, heap.getAvailableSpace());
-    EXPECT_EQ(alignedPatternSize, heap.getUsed());
-
-    ASSERT_LE(sizeof(sipPattern), heap.getMaxAvailableSpace());
-    char *reservedBlock = reinterpret_cast<char *>(heap.getCpuBase());
-    auto dataFoundInReservedBlock = ArrayRef<char>(reservedBlock, sizeof(sipPattern));
-    auto expectedData = ArrayRef<char>(csr->instructionHeapReserveredData);
-    EXPECT_THAT(dataFoundInReservedBlock, testing::ContainerEq(expectedData));
-}
-
-TEST(CommandQueueGetIndirectHeap, whenCheckingForCsrInstructionHeapReservedBlockSizeThenCachelineAlignmentIsExpected) {
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
-    MockCommandStreamReceiver *csr = new MockCommandStreamReceiver;
-    mockDevice->resetCommandStreamReceiver(csr);
-    csr->instructionHeapReserveredData.assign(sipPattern, sipPattern + sizeof(sipPattern));
-    MockCommandQueue cmdQ{nullptr, mockDevice.get(), nullptr};
-
-    EXPECT_GE(alignedPatternSize, csr->getInstructionHeapCmdStreamReceiverReservedSize());
-    EXPECT_EQ(alignedPatternSize, cmdQ.getInstructionHeapReservedBlockSize());
 }
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSuccess) {
