@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -95,9 +95,9 @@ void PerformanceCountersFixture::createOsTime() {
     osTimeBase = std::unique_ptr<MockOSTimeLinux>(new MockOSTimeLinux(osInterfaceBase.get()));
 }
 void PerformanceCountersFixture::fillOsInterface() {
-    osInterfaceBase->get()->setDrm(new Drm2());
+    osInterfaceBase->get()->setDrm(new DrmMock());
 }
 void PerformanceCountersFixture::releaseOsInterface() {
-    delete static_cast<Drm2 *>(osInterfaceBase->get()->getDrm());
+    delete static_cast<DrmMock *>(osInterfaceBase->get()->getDrm());
 }
 } // namespace OCLRT

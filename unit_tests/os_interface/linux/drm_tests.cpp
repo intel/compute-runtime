@@ -34,7 +34,7 @@ using namespace OCLRT;
 using namespace std;
 
 TEST(DrmTest, GetDeviceID) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x1234;
@@ -46,7 +46,7 @@ TEST(DrmTest, GetDeviceID) {
 }
 
 TEST(DrmTest, GivenConfigFileWithWrongDeviceIDWhenFrequencyIsQueriedThenReturnZero) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x4321;
@@ -60,7 +60,7 @@ TEST(DrmTest, GivenConfigFileWithWrongDeviceIDWhenFrequencyIsQueriedThenReturnZe
 }
 
 TEST(DrmTest, GivenConfigFileWithWrongDeviceIDFailIoctlWhenFrequencyIsQueriedThenReturnZero) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x4321;
@@ -78,7 +78,7 @@ TEST(DrmTest, GivenValidConfigFileWhenFrequencyIsQueriedThenValidValueIsReturned
 
     int expectedMaxFrequency = 1000;
 
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x1234;
@@ -98,7 +98,7 @@ TEST(DrmTest, GivenValidConfigFileWhenFrequencyIsQueriedThenValidValueIsReturned
 }
 
 TEST(DrmTest, GivenNoConfigFileWhenFrequencyIsQueriedThenReturnZero) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x1234;
@@ -113,7 +113,7 @@ TEST(DrmTest, GivenNoConfigFileWhenFrequencyIsQueriedThenReturnZero) {
 }
 
 TEST(DrmTest, GetRevisionID) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     pDrm->StoredDeviceID = 0x1234;
@@ -132,7 +132,7 @@ TEST(DrmTest, GetRevisionID) {
 }
 
 TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     pDrm->StoredPPGTT = 3;
     EXPECT_TRUE(pDrm->is48BitAddressRangeSupported());
     pDrm->StoredPPGTT = 2;
@@ -142,7 +142,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
 
 #if defined(I915_PARAM_HAS_PREEMPTION)
 TEST(DrmTest, GivenMockDrmWhenAskedForPreemptionCorrectValueReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     pDrm->StoredPreemptionSupport = 1;
     EXPECT_TRUE(pDrm->hasPreemption());
     pDrm->StoredPreemptionSupport = 0;
@@ -151,7 +151,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForPreemptionCorrectValueReturned) {
 }
 
 TEST(DrmTest, GivenMockDrmWhenAskedForContextThatPassedThenValidContextIdsReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_EQ(0u, pDrm->lowPriorityContextId);
     pDrm->StoredRetVal = 0;
     pDrm->StoredCtxId = 2;
@@ -163,7 +163,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForContextThatPassedThenValidContextIdsReturn
 }
 
 TEST(DrmTest, GivenMockDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     pDrm->StoredRetVal = -1;
     EXPECT_FALSE(pDrm->contextCreate());
     pDrm->StoredRetVal = 0;
@@ -171,7 +171,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
 }
 
 TEST(DrmTest, GivenMockDrmWhenAskedForContextWithLowPriorityThatFailsThenFalseIsReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_TRUE(pDrm->contextCreate());
     pDrm->StoredRetVal = -1;
     EXPECT_FALSE(pDrm->setLowPriority());
@@ -181,7 +181,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForContextWithLowPriorityThatFailsThenFalseIs
 #endif
 
 TEST(DrmTest, getExecSoftPin) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     int execSoftPin = 0;
 
     int ret = pDrm->getExecSoftPin(execSoftPin);
@@ -197,7 +197,7 @@ TEST(DrmTest, getExecSoftPin) {
 }
 
 TEST(DrmTest, enableTurboBoost) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
 
     int ret = pDrm->enableTurboBoost();
     EXPECT_EQ(0, ret);
@@ -206,7 +206,7 @@ TEST(DrmTest, enableTurboBoost) {
 }
 
 TEST(DrmTest, getEnabledPooledEu) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
 
     int enabled = 0;
     int ret = 0;
@@ -239,7 +239,7 @@ TEST(DrmTest, getEnabledPooledEu) {
 }
 
 TEST(DrmTest, getMinEuInPool) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
 
     pDrm->StoredMinEUinPool = -1;
     int minEUinPool = 0;
@@ -272,7 +272,7 @@ TEST(DrmTest, getMinEuInPool) {
 }
 
 TEST(DrmTest, givenDrmWhenGetErrnoIsCalledThenErrnoValueIsReturned) {
-    Drm2 *pDrm = new Drm2;
+    DrmMock *pDrm = new DrmMock;
     EXPECT_NE(nullptr, pDrm);
 
     auto errnoFromDrm = pDrm->getErrno();

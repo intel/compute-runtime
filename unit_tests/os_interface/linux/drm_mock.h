@@ -36,13 +36,13 @@ using namespace OCLRT;
 
 static const int mockFd = 33;
 // Mock DRM class that responds to DRM_IOCTL_I915_GETPARAMs
-class Drm2 : public Drm {
+class DrmMock : public Drm {
   public:
-    Drm2() : Drm(mockFd) {
+    DrmMock() : Drm(mockFd) {
         sysFsDefaultGpuPathToRestore = nullptr;
     }
 
-    ~Drm2() {
+    ~DrmMock() {
         if (sysFsDefaultGpuPathToRestore != nullptr) {
             sysFsDefaultGpuPath = sysFsDefaultGpuPathToRestore;
         }

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@ struct PerformanceCountersLinuxTest : public PerformanceCountersFixture,
         PerformanceCountersFixture::SetUp();
         PerfCounterFlagsLinux::resetPerfCountersFlags();
 
-        drm = static_cast<Drm2 *>(osInterfaceBase->get()->getDrm());
+        drm = static_cast<DrmMock *>(osInterfaceBase->get()->getDrm());
         osTimeLinux = static_cast<MockOSTimeLinux *>(osTimeBase.get());
     }
     void TearDown() override {
@@ -46,7 +46,7 @@ struct PerformanceCountersLinuxTest : public PerformanceCountersFixture,
         performanceCountersLinux = static_cast<MockPerformanceCountersLinux *>(performanceCountersBase.get());
     }
 
-    Drm2 *drm;
+    DrmMock *drm;
     MockOSTimeLinux *osTimeLinux;
     MockPerformanceCountersLinux *performanceCountersLinux;
 };

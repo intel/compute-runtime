@@ -39,7 +39,7 @@ using namespace OCLRT;
 
 struct DeviceFactoryLinuxTest : public ::testing::Test {
     void SetUp() override {
-        pDrm = new Drm2;
+        pDrm = new DrmMock;
         pDrm->setGtType(GTTYPE_GT2);
         pushDrmMock(pDrm);
     }
@@ -49,5 +49,5 @@ struct DeviceFactoryLinuxTest : public ::testing::Test {
         delete pDrm;
     }
 
-    Drm2 *pDrm;
+    DrmMock *pDrm;
 };

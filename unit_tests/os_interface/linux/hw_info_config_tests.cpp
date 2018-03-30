@@ -70,7 +70,7 @@ void HwInfoConfigTestLinux::SetUp() {
     HwInfoConfigTest::SetUp();
 
     osInterface = new OSInterface();
-    drm = new Drm2();
+    drm = new DrmMock();
     osInterface->get()->setDrm(static_cast<Drm *>(drm));
 
     drm->StoredDeviceID = pOldPlatform->usDeviceID;
