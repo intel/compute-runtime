@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 
-#include "runtime/command_queue/dispatch_walker_helper.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/helpers/kernel_commands.h"
 
 #include <memory>
@@ -330,7 +330,7 @@ HWTEST_F(DeviceQueueSlb, cleanupSection) {
 
     if (mockParentKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages) {
 
-        cleanupSectionOffsetToParse += getSizeForWADisableLSQCROPERFforOCL<FamilyType>(mockParentKernel) / 2;
+        cleanupSectionOffsetToParse += GpgpuWalkerHelper<FamilyType>::getSizeForWADisableLSQCROPERFforOCL(mockParentKernel) / 2;
     }
 
     hwParser.parseCommands<FamilyType>(*slbCS, cleanupSectionOffsetToParse);
@@ -394,7 +394,7 @@ HWTEST_F(DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
 
     auto pipeControlItor = find<PIPE_CONTROL *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
 
-    if (mockParentKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages && getSizeForWADisableLSQCROPERFforOCL<FamilyType>(mockParentKernel) > 0) {
+    if (mockParentKernel->getKernelInfo().patchInfo.executionEnvironment->UsesFencesForReadWriteImages && GpgpuWalkerHelper<FamilyType>::getSizeForWADisableLSQCROPERFforOCL(mockParentKernel) > 0) {
         auto loadRegImmItor = find<MI_LOAD_REGISTER_IMM *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
         EXPECT_NE(hwParser.cmdList.end(), loadRegImmItor);
 

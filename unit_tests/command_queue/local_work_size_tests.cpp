@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_device.h"

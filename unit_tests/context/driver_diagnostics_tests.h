@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"

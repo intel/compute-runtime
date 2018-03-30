@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/enqueue_fill_buffer.h"
 #include "runtime/command_queue/enqueue_kernel.h"
 #include "runtime/command_queue/enqueue_read_buffer.h"
@@ -43,8 +43,8 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
                                    public HelloWorldKernelFixture,
                                    public ::testing::Test {
 
-    using SimpleArgKernelFixture::SetUp;
     using HelloWorldKernelFixture::SetUp;
+    using SimpleArgKernelFixture::SetUp;
 
     GetSizeRequiredBufferTest() {
     }

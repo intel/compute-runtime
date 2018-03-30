@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 
 namespace OCLRT {
 
@@ -67,7 +67,7 @@ enum class RegionCoordZ : uint32_t {
     Middle = 1,
     Back = 2
 };
-}
+} // namespace SplitDispatch
 
 // Compute power in compile time
 static constexpr uint32_t powConst(uint32_t base, uint32_t currExp) {
@@ -453,4 +453,4 @@ class DispatchInfoBuilder {
         return x % y ? 1 : 0;
     }
 };
-}
+} // namespace OCLRT

@@ -53,19 +53,19 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
 
         size_t executionModelDSHUsedBefore = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *pKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false);
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *pKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false);
 
         size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE).getUsed();
         EXPECT_EQ(0u, dshUsedAfter);
@@ -109,19 +109,19 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
 
         auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *pKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false);
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *pKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false);
 
         auto iohUsed = ioh.getUsed();
         EXPECT_EQ(0u, iohUsed);
@@ -136,19 +136,19 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *pKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false);
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *pKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false);
 
         auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
 
@@ -172,19 +172,19 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *pKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   true); // blockQueue
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *pKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      true); // blockQueue
         ASSERT_NE(nullptr, blockedCommandsData);
 
         size_t minRequiredSize = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
@@ -269,19 +269,19 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *mockParentKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   true); // blockQueue
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *mockParentKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      true); // blockQueue
 
         ASSERT_NE(nullptr, blockedCommandsData);
 
@@ -302,19 +302,19 @@ HWTEST_F(MockParentKernelDispatch, GivenParentKernelWhenDispatchedThenMediaInter
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *mockParentKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false); // blockQueue
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *mockParentKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false); // blockQueue
 
         LinearStream *commandStream = &pCmdQ->getCS(0);
 
@@ -358,19 +358,19 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
         // If parent is not using SSH, then heap obtained has zero usage and the same buffer
         ASSERT_EQ(0u, mockParentKernel->getKernelInfo().heapInfo.pKernelHeader->SurfaceStateHeapSize);
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *mockParentKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false); // blockQueue
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *mockParentKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false); // blockQueue
 
         EXPECT_EQ(0u, ssh.getUsed());
 
@@ -393,19 +393,19 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
 
         auto *bufferMemory = ssh.getCpuBase();
 
-        dispatchWalker<FamilyType>(*pCmdQ,
-                                   *mockParentKernel,
-                                   1,
-                                   globalOffsets,
-                                   workItems,
-                                   nullptr,
-                                   0,
-                                   nullptr,
-                                   &blockedCommandsData,
-                                   nullptr,
-                                   nullptr,
-                                   pDevice->getPreemptionMode(),
-                                   false); // blockQueue
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *mockParentKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      pDevice->getPreemptionMode(),
+                                                      false); // blockQueue
 
         EXPECT_EQ(bufferMemory, ssh.getCpuBase());
 

@@ -22,8 +22,7 @@
 
 #pragma once
 #include "runtime/device_queue/device_queue_hw.h"
-#include "runtime/command_queue/dispatch_walker.h"
-#include "runtime/command_queue/dispatch_walker_helper.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/string.h"
@@ -217,7 +216,7 @@ void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKer
     offset = slbCS.getUsed();
 
     igilQueue->m_controls.m_CleanupSectionAddress = ptrOffset(slbBuffer->getGpuAddress(), slbCS.getUsed());
-    applyWADisableLSQCROPERFforOCL<GfxFamily>(&slbCS, *parentKernel, true);
+    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(&slbCS, *parentKernel, true);
 
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
@@ -388,10 +387,10 @@ size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &sc
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) {
-    OCLRT::dispatchScheduler<GfxFamily>(cmdQ,
-                                        *this,
-                                        preemptionMode,
-                                        scheduler);
+    GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(cmdQ,
+                                                    *this,
+                                                    preemptionMode,
+                                                    scheduler);
     return;
 }
 

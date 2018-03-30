@@ -22,7 +22,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/enqueue_kernel.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -51,7 +51,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
-        dispatchScheduler<FamilyType>(
+        GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),

@@ -32,7 +32,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "command_stream_receiver_hw.h"
 
 namespace OCLRT {

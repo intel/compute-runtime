@@ -24,7 +24,7 @@
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -243,7 +243,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        dispatchWalker<GfxFamily>(
+        GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
             *this,
             multiDispatchInfo,
             numEventsInWaitList,
@@ -293,7 +293,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                               this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation(),
                               devQueueHw->getDebugQueue());
 
-            dispatchScheduler<GfxFamily>(
+            GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
                 *this,
                 *devQueueHw,
                 preemption,

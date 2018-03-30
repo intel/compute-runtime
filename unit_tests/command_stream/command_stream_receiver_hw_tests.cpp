@@ -52,7 +52,7 @@
 #include "gtest/gtest.h"
 #include "runtime/utilities/linux/debug_env_reader.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 
 using namespace OCLRT;
 

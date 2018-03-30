@@ -37,6 +37,7 @@ set(RUNTIME_SRCS_GENX_BASE
   device_enqueue.h
   device_queue.cpp
   command_stream_receiver_hw.cpp
+  gpgpu_walker.cpp
   hw_cmds.h
   hw_cmds_generated.h
   hw_helper.cpp

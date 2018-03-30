@@ -21,24 +21,17 @@
  */
 
 #pragma once
-#include "runtime/context/context.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/local_id_gen.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/command_queue/dispatch_walker_helper.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/preemption.h"
 #include "runtime/device/device_info.h"
-#include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/helpers/task_information.h"
 #include "runtime/helpers/validators.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include <algorithm>
@@ -46,57 +39,81 @@
 
 namespace OCLRT {
 
-void computeWorkgroupSize1D(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize);
+// Performs ReadModifyWrite operation on value of a register: Register = Register Operation Mask
+template <typename GfxFamily>
+void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
+    OCLRT::LinearStream *pCommandStream,
+    uint32_t aluRegister,
+    uint32_t operation,
+    uint32_t mask) {
+    // Load "Register" value into CS_GPR_R0
+    typedef typename GfxFamily::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
+    typedef typename GfxFamily::MI_MATH MI_MATH;
+    typedef typename GfxFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
+    auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_REG)));
+    *pCmd = MI_LOAD_REGISTER_REG::sInit();
+    pCmd->setSourceRegisterAddress(aluRegister);
+    pCmd->setDestinationRegisterAddress(CS_GPR_R0);
 
-void computeWorkgroupSizeND(
-    WorkSizeInfo wsInfo,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    const uint32_t workDim);
+    // Load "Mask" into CS_GPR_R1
+    typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    auto pCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
+    *pCmd2 = MI_LOAD_REGISTER_IMM::sInit();
+    pCmd2->setRegisterOffset(CS_GPR_R1);
+    pCmd2->setDataDword(mask);
 
-void computeWorkgroupSize2D(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize);
+    // Add instruction MI_MATH with 4 MI_MATH_ALU_INST_INLINE operands
+    auto pCmd3 = reinterpret_cast<uint32_t *>(pCommandStream->getSpace(sizeof(MI_MATH) + NUM_ALU_INST_FOR_READ_MODIFY_WRITE * sizeof(MI_MATH_ALU_INST_INLINE)));
+    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.Value = 0x0;
+    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
+    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
+    // 0x3 - 5 Dwords length cmd (-2): 1 for MI_MATH, 4 for MI_MATH_ALU_INST_INLINE
+    reinterpret_cast<MI_MATH *>(pCmd3)->DW0.BitField.DwordLength = NUM_ALU_INST_FOR_READ_MODIFY_WRITE - 1;
+    pCmd3++;
+    MI_MATH_ALU_INST_INLINE *pAluParam = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(pCmd3);
 
-void computeWorkgroupSizeSquared(
-    uint32_t maxWorkGroupSize,
-    size_t workGroupSize[3],
-    const size_t workItems[3],
-    size_t simdSize,
-    const uint32_t workDim);
+    // Setup first operand of MI_MATH - load CS_GPR_R0 into register A
+    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
+    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCA;
+    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_0;
+    pAluParam++;
 
-Vec3<size_t> computeWorkgroupSize(
-    const DispatchInfo &dispatchInfo);
+    // Setup second operand of MI_MATH - load CS_GPR_R1 into register B
+    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_LOAD;
+    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_SRCB;
+    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_1;
+    pAluParam++;
 
-Vec3<size_t> generateWorkgroupSize(
-    const DispatchInfo &dispatchInfo);
+    // Setup third operand of MI_MATH - "Operation" on registers A and B
+    pAluParam->DW0.BitField.ALUOpcode = operation;
+    pAluParam->DW0.BitField.Operand1 = 0;
+    pAluParam->DW0.BitField.Operand2 = 0;
+    pAluParam++;
 
-Vec3<size_t> computeWorkgroupsNumber(
-    const Vec3<size_t> gws,
-    const Vec3<size_t> lws);
+    // Setup fourth operand of MI_MATH - store result into CS_GPR_R0
+    pAluParam->DW0.BitField.ALUOpcode = ALU_OPCODE_STORE;
+    pAluParam->DW0.BitField.Operand1 = ALU_REGISTER_R_0;
+    pAluParam->DW0.BitField.Operand2 = ALU_REGISTER_R_ACCU;
 
-Vec3<size_t> generateWorkgroupsNumber(
-    const Vec3<size_t> gws,
-    const Vec3<size_t> lws);
+    // LOAD value of CS_GPR_R0 into "Register"
+    auto pCmd4 = reinterpret_cast<MI_LOAD_REGISTER_REG *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_REG)));
+    *pCmd4 = MI_LOAD_REGISTER_REG::sInit();
+    pCmd4->setSourceRegisterAddress(CS_GPR_R0);
+    pCmd4->setDestinationRegisterAddress(aluRegister);
 
-Vec3<size_t> generateWorkgroupsNumber(
-    const DispatchInfo &dispatchInfo);
-
-Vec3<size_t> canonizeWorkgroup(
-    Vec3<size_t> workgroup);
-
-inline uint32_t calculateDispatchDim(Vec3<size_t> dispatchSize, Vec3<size_t> dispatchOffset) {
-    return std::max(1U, std::max(dispatchSize.getSimplifiedDim(), dispatchOffset.getSimplifiedDim()));
+    // Add PIPE_CONTROL to flush caches
+    typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
+    auto pCmd5 = reinterpret_cast<PIPE_CONTROL *>(pCommandStream->getSpace(sizeof(PIPE_CONTROL)));
+    *pCmd5 = PIPE_CONTROL::sInit();
+    pCmd5->setCommandStreamerStallEnable(true);
+    pCmd5->setDcFlushEnable(true);
+    pCmd5->setTextureCacheInvalidationEnable(true);
+    pCmd5->setPipeControlFlushEnable(true);
+    pCmd5->setStateCacheInvalidationEnable(true);
 }
 
 template <typename GfxFamily>
-inline size_t setGpgpuWalkerThreadData(
+inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     typename GfxFamily::GPGPU_WALKER *pCmd,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
@@ -132,21 +149,8 @@ inline size_t setGpgpuWalkerThreadData(
     return localWorkSize;
 }
 
-inline cl_uint computeDimensions(const size_t workItems[3]) {
-    return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2 : 1;
-}
-
-void provideLocalWorkGroupSizeHints(Context *context, uint32_t maxWorkGroupSize, DispatchInfo dispatchInfo);
-
-template <typename SizeAndAllocCalcT, typename... CalcArgsT>
-IndirectHeap *allocateIndirectHeap(SizeAndAllocCalcT &&calc, CalcArgsT &&... args) {
-    size_t alignment = MemoryConstants::pageSize;
-    size_t size = calc(std::forward<CalcArgsT>(args)...);
-    return new IndirectHeap(alignedMalloc(size, alignment), size);
-}
-
 template <typename GfxFamily>
-void dispatchProfilingCommandsStart(
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     HwTimeStamps &hwTimeStamps,
     OCLRT::LinearStream *commandStream) {
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
@@ -173,7 +177,7 @@ void dispatchProfilingCommandsStart(
 }
 
 template <typename GfxFamily>
-void dispatchProfilingCommandsEnd(
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     HwTimeStamps &hwTimeStamps,
     OCLRT::LinearStream *commandStream) {
 
@@ -196,7 +200,7 @@ void dispatchProfilingCommandsEnd(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersNoopidRegisterCommands(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream,
@@ -214,7 +218,7 @@ void dispatchPerfCountersNoopidRegisterCommands(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersReadFreqRegisterCommands(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream,
@@ -232,7 +236,7 @@ void dispatchPerfCountersReadFreqRegisterCommands(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersGeneralPurposeCounterCommands(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream,
@@ -256,7 +260,7 @@ void dispatchPerfCountersGeneralPurposeCounterCommands(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersUserCounterCommands(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream,
@@ -297,7 +301,7 @@ void dispatchPerfCountersUserCounterCommands(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersOABufferStateCommands(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream) {
@@ -328,7 +332,7 @@ void dispatchPerfCountersOABufferStateCommands(
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersCommandsStart(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream) {
@@ -347,12 +351,12 @@ void dispatchPerfCountersCommandsStart(
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
     //Store value of NOOPID register
-    dispatchPerfCountersNoopidRegisterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
     //Read Core Frequency
-    dispatchPerfCountersReadFreqRegisterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
-    dispatchPerfCountersGeneralPurposeCounterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
     auto pReportPerfCount = (MI_REPORT_PERF_COUNT *)commandStream->getSpace(sizeof(MI_REPORT_PERF_COUNT));
     *pReportPerfCount = MI_REPORT_PERF_COUNT::sInit();
@@ -369,13 +373,13 @@ void dispatchPerfCountersCommandsStart(
     pPipeControlCmd->setAddress(static_cast<uint32_t>(address & ((uint64_t)UINT32_MAX)));
     pPipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
 
-    dispatchPerfCountersUserCounterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, true);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, true);
 
     commandQueue.sendPerfCountersConfig();
 }
 
 template <typename GfxFamily>
-void dispatchPerfCountersCommandsEnd(
+void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     CommandQueue &commandQueue,
     OCLRT::HwPerfCounter &hwPerfCounter,
     OCLRT::LinearStream *commandStream) {
@@ -394,7 +398,7 @@ void dispatchPerfCountersCommandsEnd(
     *pPipeControlCmd = PIPE_CONTROL::sInit();
     pPipeControlCmd->setCommandStreamerStallEnable(true);
 
-    dispatchPerfCountersOABufferStateCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersOABufferStateCommands(commandQueue, hwPerfCounter, commandStream);
 
     //Timestamp: Global End
     pPipeControlCmd = (PIPE_CONTROL *)commandStream->getSpace(sizeof(PIPE_CONTROL));
@@ -411,21 +415,21 @@ void dispatchPerfCountersCommandsEnd(
     address = reinterpret_cast<uint64_t>(&(hwPerfCounter.HWPerfCounters.HwPerfReportEnd.Oa));
     pReportPerfCount->setMemoryAddress(address);
 
-    dispatchPerfCountersGeneralPurposeCounterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersGeneralPurposeCounterCommands(commandQueue, hwPerfCounter, commandStream, false);
 
     //Store value of NOOPID register
-    dispatchPerfCountersNoopidRegisterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersNoopidRegisterCommands(commandQueue, hwPerfCounter, commandStream, false);
 
     //Read Core Frequency
-    dispatchPerfCountersReadFreqRegisterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersReadFreqRegisterCommands(commandQueue, hwPerfCounter, commandStream, false);
 
-    dispatchPerfCountersUserCounterCommands<GfxFamily>(commandQueue, hwPerfCounter, commandStream, false);
+    GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, false);
 
     perfCounters->setCpuTimestamp();
 }
 
 template <typename GfxFamily>
-void dispatchWalker(
+void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
     cl_uint numEventsInWaitList,
@@ -435,7 +439,7 @@ void dispatchWalker(
     OCLRT::HwPerfCounter *hwPerfCounter,
     PreemptionMode preemptionMode,
     bool blockQueue,
-    unsigned int commandType = 0) {
+    unsigned int commandType) {
 
     OCLRT::LinearStream *commandStream = nullptr;
     OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
@@ -586,17 +590,17 @@ void dispatchWalker(
         if (&dispatchInfo == &*multiDispatchInfo.begin()) {
             // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
             if (hwTimeStamps != nullptr) {
-                dispatchProfilingCommandsStart<GfxFamily>(*hwTimeStamps, commandStream);
+                GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
             }
             if (hwPerfCounter != nullptr) {
-                dispatchPerfCountersCommandsStart<GfxFamily>(commandQueue, *hwPerfCounter, commandStream);
+                GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
             }
         }
 
         PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
 
         // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-        applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, kernel, true);
+        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, true);
 
         // Program the walker.  Invokes execution so all state should already be programmed
         typedef typename GfxFamily::GPGPU_WALKER GPGPU_WALKER;
@@ -606,7 +610,7 @@ void dispatchWalker(
         size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
-        auto localWorkSize = setGpgpuWalkerThreadData<GfxFamily>(pGpGpuWalkerCmd, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizes, simd);
+        auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizes, simd);
 
         pGpGpuWalkerCmd->setIndirectDataStartAddress((uint32_t)offsetCrossThreadData);
         DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
@@ -627,22 +631,22 @@ void dispatchWalker(
         pGpGpuWalkerCmd->setIndirectDataLength(IndirectDataLength);
 
         // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-        applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, kernel, false);
+        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, false);
 
         PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
     }
 
     // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
-        dispatchProfilingCommandsEnd<GfxFamily>(*hwTimeStamps, commandStream);
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream);
     }
     if (hwPerfCounter != nullptr) {
-        dispatchPerfCountersCommandsEnd<GfxFamily>(commandQueue, *hwPerfCounter, commandStream);
+        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
     }
 }
 
 template <typename GfxFamily>
-void dispatchWalker(
+void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const Kernel &kernel,
     cl_uint workDim,
@@ -658,12 +662,12 @@ void dispatchWalker(
     bool blockQueue) {
 
     DispatchInfo dispatchInfo(const_cast<Kernel *>(&kernel), workDim, workItems, localWorkSizesIn, globalOffsets);
-    dispatchWalker<GfxFamily>(commandQueue, dispatchInfo, numEventsInWaitList, eventWaitList,
-                              blockedCommandsData, hwTimeStamps, hwPerfCounter, preemptionMode, blockQueue);
+    GpgpuWalkerHelper<GfxFamily>::dispatchWalker(commandQueue, dispatchInfo, numEventsInWaitList, eventWaitList,
+                                                 blockedCommandsData, hwTimeStamps, hwPerfCounter, preemptionMode, blockQueue);
 }
 
 template <typename GfxFamily>
-void dispatchScheduler(
+void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     CommandQueue &commandQueue,
     DeviceQueueHw<GfxFamily> &devQueueHw,
     PreemptionMode preemptionMode,
@@ -752,7 +756,7 @@ void dispatchScheduler(
         preemptionMode);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-    applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, scheduler, true);
+    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);
 
     // Program the walker.  Invokes execution so all state should already be programmed
     auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
@@ -760,7 +764,7 @@ void dispatchScheduler(
 
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
-    auto localWorkSize = setGpgpuWalkerThreadData<GfxFamily>(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd);
+    auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd);
 
     pGpGpuWalkerCmd->setIndirectDataStartAddress((uint32_t)offsetCrossThreadData);
     DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
@@ -781,7 +785,7 @@ void dispatchScheduler(
     pGpGpuWalkerCmd->setIndirectDataLength(IndirectDataLength);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-    applyWADisableLSQCROPERFforOCL<GfxFamily>(commandStream, scheduler, false);
+    GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, false);
 
     // Do not put BB_START only when returning in first Scheduler run
     if (devQueueHw.getSchedulerReturnInstance() != 1) {
@@ -797,141 +801,13 @@ void dispatchScheduler(
     }
 }
 
-template <typename GfxFamily, unsigned int eventType>
-struct EnqueueOperation {
-    static_assert(eventType != CL_COMMAND_NDRANGE_KERNEL, "for eventType CL_COMMAND_NDRANGE_KERNEL use specialization class");
-    static_assert(eventType != CL_COMMAND_MARKER, "for eventType CL_COMMAND_MARKER use specialization class");
-    static_assert(eventType != CL_COMMAND_MIGRATE_MEM_OBJECTS, "for eventType CL_COMMAND_MIGRATE_MEM_OBJECTS use specialization class");
-    static size_t getTotalSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
-        size_t size = KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                      sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
-        if (reserveProfilingCmdsSpace) {
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        }
-        if (reservePerfCounters) {
-            //start cmds
-            //P_C: flush CS & TimeStamp BEGIN
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
-            //SRM NOOPID & Frequency
-            size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //gp registers
-            size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //report perf count
-            size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-            //user registers
-            size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-
-            //end cmds
-            //P_C: flush CS & TimeStamp END;
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
-            //OA buffer (status head, tail)
-            size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //report perf count
-            size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-            //gp registers
-            size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //SRM NOOPID & Frequency
-            size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //user registers
-            size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        }
-        Device &device = commandQueue.getDevice();
-        for (auto &dispatchInfo : multiDispatchInfo) {
-            auto &kernel = *dispatchInfo.getKernel();
-            size += sizeof(typename GfxFamily::GPGPU_WALKER);
-            size += getSizeForWADisableLSQCROPERFforOCL<GfxFamily>(&kernel);
-            size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(device);
-        }
-        return size;
-    }
-
-    static size_t getSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
-        size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                      sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
-        size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
-        if (reserveProfilingCmdsSpace) {
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        }
-        if (reservePerfCounters) {
-            //start cmds
-            //P_C: flush CS & TimeStamp BEGIN
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
-            //SRM NOOPID & Frequency
-            size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //gp registers
-            size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //report perf count
-            size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-            //user registers
-            size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-
-            //end cmds
-            //P_C: flush CS & TimeStamp END;
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
-            //OA buffer (status head, tail)
-            size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //report perf count
-            size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
-            //gp registers
-            size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //SRM NOOPID & Frequency
-            size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-            //user registers
-            size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        }
-        size += getSizeForWADisableLSQCROPERFforOCL<GfxFamily>(pKernel);
-
-        return size;
-    }
-};
-
-template <typename GfxFamily, unsigned int eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const Kernel *pKernel) {
-    auto expectedSizeCS = EnqueueOperation<GfxFamily, eventType>::getSizeRequiredCS(reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, pKernel);
-    return commandQueue.getCS(expectedSizeCS);
+template <typename GfxFamily>
+void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearStream *pCommandStream, const Kernel &kernel, bool disablePerfMode) {
 }
 
-template <typename GfxFamily, unsigned int eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const MultiDispatchInfo &multiDispatchInfo) {
-    size_t expectedSizeCS = 0;
-    Kernel *parentKernel = multiDispatchInfo.size() > 0 ? multiDispatchInfo.begin()->getKernel() : nullptr;
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        expectedSizeCS += EnqueueOperation<GfxFamily, eventType>::getSizeRequiredCS(reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, dispatchInfo.getKernel());
-    }
-    if (parentKernel && parentKernel->isParentKernel) {
-        SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(parentKernel->getContext());
-        expectedSizeCS += EnqueueOperation<GfxFamily, eventType>::getSizeRequiredCS(reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
-    }
-    return commandQueue.getCS(expectedSizeCS);
+template <typename GfxFamily>
+size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
+    return (size_t)0;
 }
 
-template <typename GfxFamily, IndirectHeap::Type heapType>
-IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
-    size_t expectedSize = 0;
-    IndirectHeap *ih = nullptr;
-
-    // clang-format off
-    switch(heapType) {
-    case IndirectHeap::DYNAMIC_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredDSH(multiDispatchInfo); break;
-    case IndirectHeap::INDIRECT_OBJECT: expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredIOH(multiDispatchInfo); break;
-    case IndirectHeap::SURFACE_STATE:   expectedSize = KernelCommandsHelper<GfxFamily>::getTotalSizeRequiredSSH(multiDispatchInfo); break;
-    }
-    // clang-format on
-
-    if (multiDispatchInfo.begin()->getKernel()->isParentKernel) {
-        if (heapType == IndirectHeap::SURFACE_STATE) {
-            expectedSize += KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
-        } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
-        {
-            DeviceQueueHw<GfxFamily> *pDevQueue = castToObject<DeviceQueueHw<GfxFamily>>(commandQueue.getContext().getDefaultDeviceQueue());
-            DEBUG_BREAK_IF(pDevQueue == nullptr);
-            ih = pDevQueue->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        }
-    }
-
-    if (ih == nullptr)
-        ih = &commandQueue.getIndirectHeap(heapType, expectedSize);
-
-    return *ih;
-}
 } // namespace OCLRT

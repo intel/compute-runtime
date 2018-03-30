@@ -72,7 +72,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchScheduler) {
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
-        dispatchScheduler<FamilyType>(
+        GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
@@ -188,7 +188,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQ
         getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
-        dispatchScheduler<FamilyType>(
+        GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
@@ -219,7 +219,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToF
         LinearStream &commandStream = getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*pCmdQ, false, false, &scheduler);
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, minRequiredSizeForSchedulerSSH);
 
-        dispatchScheduler<FamilyType>(
+        GpgpuWalkerHelper<FamilyType>::dispatchScheduler(
             *pCmdQ,
             mockDevQueue,
             device->getPreemptionMode(),

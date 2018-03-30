@@ -25,9 +25,6 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_hw.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/cpu_data_transfer_handler.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_helper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_barrier.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_common.h
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_copy_buffer.h
@@ -49,6 +46,8 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_write_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/finish.h
   ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.h
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.inl

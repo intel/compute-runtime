@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 #include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_queue/dispatch_walker.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
 #include "runtime/mem_obj/buffer.h"
@@ -69,7 +69,7 @@ struct EnqueueOperation<GfxFamily, CL_COMMAND_NDRANGE_KERNEL> {
             //user registers
             size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
         }
-        size += getSizeForWADisableLSQCROPERFforOCL<GfxFamily>(pKernel);
+        size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(pKernel);
 
         return size;
     }
