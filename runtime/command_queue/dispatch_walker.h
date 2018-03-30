@@ -434,7 +434,7 @@ void dispatchWalker(
     HwTimeStamps *hwTimeStamps,
     OCLRT::HwPerfCounter *hwPerfCounter,
     PreemptionMode preemptionMode,
-    bool blockQueue = false,
+    bool blockQueue,
     unsigned int commandType = 0) {
 
     OCLRT::LinearStream *commandStream = nullptr;
@@ -655,7 +655,7 @@ void dispatchWalker(
     HwTimeStamps *hwTimeStamps,
     HwPerfCounter *hwPerfCounter,
     PreemptionMode preemptionMode,
-    bool blockQueue = false) {
+    bool blockQueue) {
 
     DispatchInfo dispatchInfo(const_cast<Kernel *>(&kernel), workDim, workItems, localWorkSizesIn, globalOffsets);
     dispatchWalker<GfxFamily>(commandQueue, dispatchInfo, numEventsInWaitList, eventWaitList,
