@@ -21,10 +21,14 @@
  */
 
 #include "gtest/gtest.h"
+#include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/string.h"
+#include "runtime/platform/platform.h"
 #include "runtime/sharings/sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/mocks/mock_device.h"
 
 using namespace OCLRT;
 
@@ -88,8 +92,41 @@ TestedSharingBuilderFactory *SharingFactoryStateRestore::getSharing() {
 void dummyHandler() {
 }
 
+const cl_context_properties mockContextPassFinalize = 1;
+const cl_context_properties mockContextFailFinalize = 2;
+const cl_context_properties clContextPropertyMock = 0x2000;
+
+class MockSharingContextBuilder : public SharingContextBuilder {
+    cl_context_properties value;
+
+  public:
+    bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) override;
+    bool finalizeProperties(Context &context, int32_t &errcodeRet) override;
+};
+
+bool MockSharingContextBuilder::processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet) {
+    if (propertyType == clContextPropertyMock) {
+        if (propertyValue) {
+            value = propertyValue;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool MockSharingContextBuilder::finalizeProperties(Context &context, int32_t &errcodeRet) {
+    if (value == mockContextPassFinalize) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 class MockSharingBuilderFactory : public TestedSharingBuilderFactory {
   public:
+    std::unique_ptr<SharingContextBuilder> createContextBuilder() override {
+        return std::unique_ptr<SharingContextBuilder>(new MockSharingContextBuilder());
+    }
     void *getExtensionFunctionAddress(const std::string &functionName) override {
         if (functionName == "dummyHandler") {
             return reinterpret_cast<void *>(dummyHandler);
@@ -158,3 +195,34 @@ TEST(SharingFactoryTests, givenMockFactoryWithSharingWhenAskedThenAddressIsRetur
     ptr = clGetExtensionFunctionAddress("dummyHandler");
     EXPECT_EQ(reinterpret_cast<void *>(dummyHandler), ptr);
 }
+
+TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContextCreateShouldFail) {
+    SharingFactoryStateRestore stateRestore;
+
+    stateRestore.clearCurrentState();
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
+
+    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    cl_device_id clDevice = static_cast<cl_device_id>(device.get());
+    DeviceVector deviceVector((cl_device_id *)&clDevice, 1);
+    cl_int retVal;
+
+    auto pPlatform = OCLRT::platform();
+    cl_platform_id platformId[1];
+    platformId[0] = pPlatform;
+
+    cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, mockContextPassFinalize, 0};
+    cl_context_properties inValidProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, 0, 0};
+    cl_context_properties inValidPropertiesFailFinalize[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0], clContextPropertyMock, mockContextFailFinalize, 0};
+
+    std::unique_ptr<Context> context;
+
+    context.reset(Context::create<Context>(inValidProperties, deviceVector, nullptr, nullptr, retVal));
+    EXPECT_EQ(nullptr, context.get());
+
+    context.reset(Context::create<Context>(inValidPropertiesFailFinalize, deviceVector, nullptr, nullptr, retVal));
+    EXPECT_EQ(nullptr, context.get());
+
+    context.reset(Context::create<Context>(validProperties, deviceVector, nullptr, nullptr, retVal));
+    EXPECT_NE(nullptr, context.get());
+};
