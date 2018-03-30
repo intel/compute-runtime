@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -45,14 +45,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     cl_event *event) {
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
-    TakeOwnershipWrapper<Device> deviceOwnership(getDevice());
-    auto patternAllocation = memoryManager->obtainReusableAllocation(patternSize).release();
-    deviceOwnership.unlock();
 
-    if (!patternAllocation) {
-        patternAllocation = memoryManager->allocateGraphicsMemory(alignUp(patternSize, MemoryConstants::cacheLineSize), MemoryConstants::preferredAlignment);
-    }
-
+    auto patternAllocation = memoryManager->allocateGraphicsMemory(alignUp(patternSize, MemoryConstants::cacheLineSize), MemoryConstants::preferredAlignment);
     patternAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN);
 
     if (patternSize == 1) {
@@ -93,7 +87,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         eventWaitList,
         event);
 
-    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), REUSABLE_ALLOCATION, taskCount);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
 
     builder.releaseOwnership();
 
