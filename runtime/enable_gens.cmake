@@ -68,7 +68,7 @@ macro(macro_for_each_platform)
 
   # Enable platform
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_${PLATFORM_IT_LOWER}.cpp)
-  list(APPEND ${GEN_TYPE}_SRC_LINK_LINUX ${GENX_PREFIX}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
 endmacro()
 
 macro(macro_for_each_gen)
