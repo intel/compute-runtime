@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -202,4 +202,23 @@ TEST_F(EnqueueUnmapMemObjTest, UnmapMemObjWaitEvent) {
 
     clReleaseEvent(waitEvent);
     clReleaseEvent(retEvent);
+}
+
+HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBufferObjectMappedToHostPtrForWritingThenItShouldBeResetToAubWritable) {
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
+    ASSERT_NE(nullptr, buffer);
+    buffer->getGraphicsAllocation()->setTypeAubNonWritable();
+
+    auto mappedForWritingPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, retVal);
+    ASSERT_NE(nullptr, mappedForWritingPtr);
+
+    retVal = pCmdQ->enqueueUnmapMemObject(
+        buffer.get(),
+        mappedForWritingPtr,
+        0,
+        nullptr,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isTypeAubNonWritable());
 }

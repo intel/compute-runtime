@@ -307,7 +307,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
-    EXPECT_FALSE(!!(gfxAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE));
+    EXPECT_FALSE(gfxAllocation->isTypeAubNonWritable());
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -322,7 +322,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_FALSE(!!(gfxDefaultAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE));
+    EXPECT_FALSE(gfxDefaultAllocation->isTypeAubNonWritable());
 
     memoryManager->freeGraphicsMemory(gfxDefaultAllocation);
 }
@@ -341,8 +341,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_TRUE(!!(gfxBufferAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE));
-    EXPECT_TRUE(!!(gfxImageAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE));
+    EXPECT_TRUE(gfxBufferAllocation->isTypeAubNonWritable());
+    EXPECT_TRUE(gfxImageAllocation->isTypeAubNonWritable());
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -367,7 +367,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
-    gfxAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+    gfxAllocation->setTypeAubNonWritable();
     EXPECT_FALSE(aubCsr->writeMemory(*gfxAllocation));
 
     memoryManager->freeGraphicsMemory(gfxAllocation);

@@ -133,6 +133,16 @@ TEST(GraphicsAllocationTest, GivenGraphicsAllocationWhenLockingThenIsLocked) {
     EXPECT_NE(0ULL, gpuAddr);
 }
 
+TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenChangingTypeAubNonWritableThenItIsSetCorrectly) {
+    GraphicsAllocation gfxAllocation((void *)0x30000, 0x1000);
+
+    gfxAllocation.setTypeAubNonWritable();
+    EXPECT_TRUE(gfxAllocation.isTypeAubNonWritable());
+
+    gfxAllocation.clearTypeAubNonWritable();
+    EXPECT_FALSE(gfxAllocation.isTypeAubNonWritable());
+}
+
 TEST_F(MemoryAllocatorTest, allocateSystem) {
     auto ptr = memoryManager->allocateSystemMemory(sizeof(char), 0);
     EXPECT_NE(nullptr, ptr);

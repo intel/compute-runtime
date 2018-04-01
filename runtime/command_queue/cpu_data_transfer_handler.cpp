@@ -135,6 +135,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                 }
                 eventCompleted = true;
             }
+            if (!unmapInfo.readOnly) {
+                auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation();
+                graphicsAllocation->clearTypeAubNonWritable();
+            }
             break;
         case CL_COMMAND_READ_BUFFER:
             memcpy_s(transferProperties.ptr, transferProperties.size[0], ptrOffset(transferProperties.memObj->getCpuAddressForMemoryTransfer(), transferProperties.offset[0]), transferProperties.size[0]);

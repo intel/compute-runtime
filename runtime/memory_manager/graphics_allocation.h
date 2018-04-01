@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -111,6 +111,10 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     void setAllocationType(uint32_t allocationType) { this->allocationType = allocationType; }
     uint32_t getAllocationType() const { return allocationType; }
+
+    void setTypeAubNonWritable() { this->allocationType |= GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE; }
+    void clearTypeAubNonWritable() { this->allocationType &= ~GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE; }
+    bool isTypeAubNonWritable() const { return !!(this->allocationType & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE); }
 
     uint32_t taskCount = ObjectNotUsed;
     OsHandleStorage fragmentsStorage;

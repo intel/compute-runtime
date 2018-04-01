@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 -2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -392,7 +392,7 @@ void *AUBCommandStreamReceiverHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &bat
     void *flatBatchBuffer = nullptr;
 
     if (batchBuffer.chainedBatchBuffer) {
-        batchBuffer.chainedBatchBuffer->setAllocationType(batchBuffer.chainedBatchBuffer->getAllocationType() | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+        batchBuffer.chainedBatchBuffer->setTypeAubNonWritable();
         auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
         auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
         flatBatchBuffer = this->getMemoryManager()->alignedMallocWrapper(flatBatchBufferSize, MemoryConstants::pageSize);
@@ -488,7 +488,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     auto size = gfxAllocation.getUnderlyingBufferSize();
     auto allocType = gfxAllocation.getAllocationType();
 
-    if ((size == 0) || !!(allocType & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE))
+    if ((size == 0) || gfxAllocation.isTypeAubNonWritable())
         return false;
 
     {
@@ -515,7 +515,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 
     if (!!(allocType & GraphicsAllocation::ALLOCATION_TYPE_BUFFER) ||
         !!(allocType & GraphicsAllocation::ALLOCATION_TYPE_IMAGE))
-        gfxAllocation.setAllocationType(allocType | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+        gfxAllocation.setTypeAubNonWritable();
 
     return true;
 }
@@ -526,8 +526,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 
     for (auto &gfxAllocation : residencyAllocations) {
         if (!writeMemory(*gfxAllocation)) {
-            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) ||
-                             !!(gfxAllocation->getAllocationType() & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE)));
+            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || gfxAllocation->isTypeAubNonWritable()));
         }
         gfxAllocation->residencyTaskCount = this->taskCount + 1;
     }
