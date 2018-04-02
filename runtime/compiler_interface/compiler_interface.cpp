@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,12 @@ CompilerInterface *CompilerInterface::pInstance = nullptr;
 bool CompilerInterface::useLlvmText = false;
 std::mutex CompilerInterface::mtx;
 
+enum CachingMode {
+    None,
+    Direct,
+    PreProcess
+};
+
 CompilerInterface::CompilerInterface() = default;
 CompilerInterface::~CompilerInterface() = default;
 NO_SANITIZE
@@ -69,16 +75,39 @@ cl_int CompilerInterface::build(
         }
     }
 
+    CachingMode cachingMode = None;
+
+    if (enableCaching) {
+        if ((highLevelCodeType == IGC::CodeType::oclC) && (std::strstr(inputArgs.pInput, "#include") == nullptr)) {
+            cachingMode = CachingMode::Direct;
+        } else {
+            cachingMode = CachingMode::PreProcess;
+        }
+    }
+
     uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
     for (uint32_t i = 0; i < numDevices; i++) {
         const auto &device = program.getDevice(i);
         UNRECOVERABLE_IF(intermediateCodeType == IGC::CodeType::undefined);
+
+        bool binaryLoaded = false;
+        std::string kernelFileHash;
+        if (cachingMode == CachingMode::Direct) {
+            kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(),
+                                                      ArrayRef<const char>(inputArgs.pInput, inputArgs.InputSize),
+                                                      ArrayRef<const char>(inputArgs.pOptions, inputArgs.OptionsSize),
+                                                      ArrayRef<const char>(inputArgs.pInternalOptions, inputArgs.InternalOptionsSize));
+            if (cache->loadCachedBinary(kernelFileHash, program)) {
+                continue;
+            }
+        }
 
         auto inSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInput, inputArgs.InputSize);
         auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
         auto fclInternalOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
 
         CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> intermediateRepresentation;
+
         if (highLevelCodeType != IGC::CodeType::undefined) {
             auto fclTranslationCtx = createFclTranslationCtx(device, highLevelCodeType, intermediateCodeType);
             auto fclOutput = translate(fclTranslationCtx.get(), inSrc.get(),
@@ -103,9 +132,7 @@ cl_int CompilerInterface::build(
             intermediateRepresentation.reset(inSrc.get());
         }
 
-        bool binaryLoaded = false;
-        std::string kernelFileHash;
-        if (enableCaching) {
+        if (cachingMode == CachingMode::PreProcess) {
             kernelFileHash = cache->getCachedFileName(device.getHardwareInfo(), ArrayRef<const char>(intermediateRepresentation->GetMemory<char>(), intermediateRepresentation->GetSize<char>()),
                                                       ArrayRef<const char>(fclOptions->GetMemory<char>(), fclOptions->GetSize<char>()),
                                                       ArrayRef<const char>(fclInternalOptions->GetMemory<char>(), fclInternalOptions->GetSize<char>()));

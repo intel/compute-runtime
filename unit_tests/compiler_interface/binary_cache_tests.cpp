@@ -357,7 +357,7 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     TranslationArgs inputArgs;
 
     inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
     inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
 
     MockCompilerDebugVars fclDebugVars;
@@ -388,7 +388,7 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
     TranslationArgs inputArgs;
 
     inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
     inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
 
     MockCompilerDebugVars fclDebugVars;
@@ -419,7 +419,7 @@ TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
     TranslationArgs inputArgs;
 
     inputArgs.pInput = new char[128];
-    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    strcpy_s(inputArgs.pInput, 128, "#include \"header.h\"\n__kernel k() {}");
     inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
 
     MockCompilerDebugVars fclDebugVars;
@@ -440,4 +440,64 @@ TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
 
     gEnvironment->fclPopDebugVars();
     gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
+    MockContext context(pDevice, true);
+    MockProgram program(&context, false);
+    BinaryCacheMock cache;
+    TranslationArgs inputArgs;
+
+    inputArgs.pInput = new char[128];
+    strcpy_s(inputArgs.pInput, 128, "__kernel k() {}");
+    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+
+    // we force both compilers to fail compilation request
+    // at the end we expect CL_SUCCESS which means compilation ends in cache
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
+    fclDebugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    MockCompilerDebugVars igcDebugVars;
+    igcDebugVars.fileName = gEnvironment->igcGetMockFile();
+    igcDebugVars.forceBuildFailure = true;
+    gEnvironment->igcPushDebugVars(igcDebugVars);
+
+    auto res = pCompilerInterface->replaceBinaryCache(&cache);
+    cache.loadResult = true;
+    auto retVal = pCompilerInterface->build(program, inputArgs, true);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pCompilerInterface->replaceBinaryCache(res);
+    delete[] inputArgs.pInput;
+
+    gEnvironment->fclPopDebugVars();
+    gEnvironment->igcPopDebugVars();
+}
+
+TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
+    MockContext context(pDevice, true);
+    MockProgram program(&context, false);
+    BinaryCacheMock cache;
+    TranslationArgs inputArgs;
+
+    inputArgs.pInput = new char[128];
+    strcpy_s(inputArgs.pInput, 128, "#include \"file.h\"\n__kernel k() {}");
+    inputArgs.InputSize = static_cast<uint32_t>(strlen(inputArgs.pInput));
+
+    MockCompilerDebugVars fclDebugVars;
+    fclDebugVars.fileName = gEnvironment->fclGetMockFile();
+    fclDebugVars.forceBuildFailure = true;
+    gEnvironment->fclPushDebugVars(fclDebugVars);
+
+    auto res = pCompilerInterface->replaceBinaryCache(&cache);
+    cache.loadResult = true;
+    auto retVal = pCompilerInterface->build(program, inputArgs, true);
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
+
+    pCompilerInterface->replaceBinaryCache(res);
+    delete[] inputArgs.pInput;
+
+    gEnvironment->fclPopDebugVars();
 }
