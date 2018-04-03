@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -151,14 +151,15 @@ HWTEST_F(PerThreadDataXYZTests, getThreadPayloadSize) {
 
 typedef PerThreadDataTests<false, false, false, false> PerThreadDataNoIdsTests;
 
-HWTEST_F(PerThreadDataNoIdsTests, getLocalIdSizePerThread) {
-    EXPECT_EQ(0u, PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels));
+HWTEST_F(PerThreadDataNoIdsTests, givenZeroChannelsWhenPassedTogetLocalIdSizePerThreadThenSizeOfOneGrfIsReturned) {
+    EXPECT_EQ(32u, PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels));
 }
 
-HWTEST_F(PerThreadDataNoIdsTests, getPerThreadDataSizeTotal) {
-    size_t localWorkSize = 256;
-
-    EXPECT_EQ(0u, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize));
+HWTEST_F(PerThreadDataNoIdsTests, givenZeroChannelsAndHighWkgSizeWhengetPerThreadDataSizeTotalIsCalledThenReturnedSizeContainsUnusedGrfPerEachThread) {
+    size_t localWorkSize = 256u;
+    auto threadCount = localWorkSize / simd;
+    auto expectedSize = threadCount * sizeof(GRF);
+    EXPECT_EQ(expectedSize, PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize));
 }
 
 HWTEST_F(PerThreadDataNoIdsTests, sendPerThreadDataDoesntSendAnyData) {

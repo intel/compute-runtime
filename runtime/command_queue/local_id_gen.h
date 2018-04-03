@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,8 +54,9 @@ inline size_t getThreadsPerWG(uint32_t simd, size_t lws) {
 
 inline size_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t numChannels = 3) {
     auto numGRFSPerThread = getGRFsPerThread(simd);
-
-    return numChannels * numGRFSPerThread * sizeof(GRF);
+    auto returnSize = numChannels * numGRFSPerThread * sizeof(GRF);
+    returnSize = std::max(returnSize, sizeof(GRF));
+    return returnSize;
 }
 
 struct LocalIDHelper {
