@@ -136,7 +136,7 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfo) {
     EXPECT_TRUE(outKmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(50000, outKmdNotifyProperties.delayKmdNotifyMicroseconds);
     EXPECT_TRUE(outKmdNotifyProperties.enableQuickKmdSleep);
-    EXPECT_EQ(500, outKmdNotifyProperties.delayQuickKmdSleepMicroseconds);
+    EXPECT_EQ(5000, outKmdNotifyProperties.delayQuickKmdSleepMicroseconds);
     EXPECT_TRUE(outKmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     EXPECT_EQ(200000, outKmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
 }
