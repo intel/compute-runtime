@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -65,7 +65,7 @@ TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenE
     cl_platform_id pid[1];
     pid[0] = pPlatform;
     cl_context_properties invalidProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], CL_CGL_SHAREGROUP_KHR, 0x10000, 0};
-    cl_context_properties invalidProperties2[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], 0x200D, 0x10000, 0};
+    cl_context_properties invalidProperties2[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)pid[0], (cl_context_properties)0xdeadbeef, 0x10000, 0};
 
     cl_int retVal = 0;
     auto context = Context::create<Context>(invalidProperties, DeviceVector(&deviceID, 1), nullptr,

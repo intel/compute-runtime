@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -128,7 +128,6 @@ class Context : public BaseObject<_cl_context> {
             void *userData = nullptr);
 
     // OS specific implementation
-    cl_int createContextOsProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue);
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
 
     const cl_context_properties *properties;

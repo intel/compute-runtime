@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -131,7 +131,7 @@ bool Context::createImpl(const cl_context_properties *properties,
             break;
         default:
             if (!sharingBuilder->processProperties(propertyType, propertyValue, errcodeRet)) {
-                errcodeRet = createContextOsProperties(propertyType, propertyValue);
+                errcodeRet = CL_INVALID_PROPERTY;
             }
             break;
         }

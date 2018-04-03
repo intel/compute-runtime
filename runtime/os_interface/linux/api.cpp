@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,10 +50,6 @@ void OCLRT::Image::getOsSpecificImageInfo(const cl_image_info &paramName, size_t
     default:
         break;
     }
-}
-
-cl_int OCLRT::Context::createContextOsProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue) {
-    return CL_INVALID_PROPERTY;
 }
 
 void *OCLRT::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize) {
