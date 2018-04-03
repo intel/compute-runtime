@@ -358,6 +358,10 @@ class Kernel : public BaseObject<_cl_kernel> {
         return isParentKernel && getProgram()->getBlockKernelManager()->getIfBlockUsesPrintf();
     }
 
+    bool is32Bit() const {
+        return kernelInfo.gpuPointerSize == 4;
+    }
+
     int32_t getDebugSurfaceBti() const {
         if (kernelInfo.patchInfo.pAllocateSystemThreadSurface) {
             return kernelInfo.patchInfo.pAllocateSystemThreadSurface->BTI;

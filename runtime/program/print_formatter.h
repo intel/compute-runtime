@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,6 +63,8 @@ class PrintFormatter {
   protected:
     void printString(const char *formatString, const std::function<void(char *)> &print);
     size_t printToken(char *output, size_t size, const char *formatString);
+    size_t printStringToken(char *output, size_t size, const char *formatString);
+    size_t printPointerToken(char *output, size_t size, const char *formatString);
 
     char escapeChar(char escape);
     bool isConversionSpecifier(char c);
@@ -108,8 +110,9 @@ class PrintFormatter {
         for (int i = 0; i < valueCount; i++) {
             read(&value);
             charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
-            if (i < valueCount - 1)
+            if (i < valueCount - 1) {
                 charactersPrinted += simple_sprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
+            }
         }
 
         if (sizeof(T) < 4) {
@@ -119,18 +122,6 @@ class PrintFormatter {
         return charactersPrinted;
     }
 
-    size_t printStringToken(char *output, size_t size, const char *formatString) {
-        int index = 0;
-        int type = 0;
-        // additional read to discard the data type
-        read(&type);
-        read(&index);
-        if (type == static_cast<int>(PRINTF_DATA_TYPE::STRING))
-            return simple_sprintf(output, size, formatString, kernel.getKernelInfo().queryPrintfString(index));
-        else
-            return simple_sprintf(output, size, formatString, 0);
-    }
-
     Kernel &kernel;
     GraphicsAllocation &data;
 
@@ -138,4 +129,4 @@ class PrintFormatter {
     uint32_t bufferSize; // size of the data contained in the buffer
     uint32_t offset;     // current position in currently parsed buffer
 };
-};
+}; // namespace OCLRT

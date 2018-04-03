@@ -119,7 +119,6 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
 
 size_t PrintFormatter::printToken(char *output, size_t size, const char *formatString) {
     PRINTF_DATA_TYPE type(PRINTF_DATA_TYPE::INVALID);
-    size_t ret = 0;
     read(&type);
 
     switch (type) {
@@ -134,10 +133,7 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
     case PRINTF_DATA_TYPE::LONG:
         return typedPrintToken<int64_t>(output, size, formatString);
     case PRINTF_DATA_TYPE::POINTER:
-        ret = typedPrintToken<void *>(output, size, formatString);
-        // always pad read data to 8 bytes when handling pointers
-        offset += 8 - sizeof(void *);
-        return ret;
+        return printPointerToken(output, size, formatString);
     case PRINTF_DATA_TYPE::DOUBLE:
         return typedPrintToken<double>(output, size, formatString);
     case PRINTF_DATA_TYPE::VECTOR_BYTE:
@@ -155,6 +151,30 @@ size_t PrintFormatter::printToken(char *output, size_t size, const char *formatS
     default:
         return 0;
     }
+}
+
+size_t PrintFormatter::printStringToken(char *output, size_t size, const char *formatString) {
+    int index = 0;
+    int type = 0;
+    // additional read to discard the token
+    read(&type);
+    read(&index);
+    if (type == static_cast<int>(PRINTF_DATA_TYPE::STRING)) {
+        return simple_sprintf(output, size, formatString, kernel.getKernelInfo().queryPrintfString(index));
+    } else {
+        return simple_sprintf(output, size, formatString, 0);
+    }
+}
+
+size_t PrintFormatter::printPointerToken(char *output, size_t size, const char *formatString) {
+    uint64_t value = {0};
+    read(&value);
+
+    if (kernel.is32Bit()) {
+        value &= 0x00000000FFFFFFFF;
+    }
+
+    return simple_sprintf(output, size, formatString, value);
 }
 
 char PrintFormatter::escapeChar(char escape) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,10 +77,6 @@ size_t simple_sprintf(char *output, size_t outputSize, const char *format, T val
 }
 
 size_t simple_sprintf(char *output, size_t outputSize, const char *format, const char *value) {
-    return sprintf_s(output, outputSize, format, value);
-}
-
-size_t simple_sprintf(char *output, size_t outputSize, const char *format, void *value) {
     return sprintf_s(output, outputSize, format, value);
 }
 

@@ -2128,3 +2128,27 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     kernel.mockKernel->getWorkGroupInfo(device.get(), CL_KERNEL_WORK_GROUP_SIZE, sizeof(size_t), &maxKernelWkgSize, nullptr);
     EXPECT_EQ(256u, maxKernelWkgSize);
 }
+
+TEST(KernelTest, givenKernelWithKernelInfoWith32bitPointerSizeThenReport32bit) {
+    KernelInfo info;
+    info.gpuPointerSize = 4;
+
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
+
+    EXPECT_TRUE(kernel->is32Bit());
+}
+
+TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
+    KernelInfo info;
+    info.gpuPointerSize = 8;
+
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
+
+    EXPECT_FALSE(kernel->is32Bit());
+}

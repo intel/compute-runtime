@@ -749,7 +749,7 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
     storeData(reinterpret_cast<void *>(&temp));
 
     // on 32bit configurations add extra 4 bytes when storing pointers, IGC always stores pointers on 8 bytes
-    if (!is64bit) {
+    if (is32bit) {
         uint32_t padding = 0;
         storeData(padding);
     }
@@ -758,6 +758,33 @@ TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerThenInsertAddress) {
     char referenceOutput[PrintFormatter::maxPrintfOutputLength];
 
     snprintf(referenceOutput, sizeof(referenceOutput), "%p", reinterpret_cast<void *>(&temp));
+
+    printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
+
+    EXPECT_STREQ(referenceOutput, actualOutput);
+}
+
+TEST_F(PrintFormatterTest, GivenPrintfFormatWhenPointerWith32BitKernelThenPrint32BitPointer) {
+    auto stringIndex = injectFormatString("%p");
+    storeData(stringIndex);
+    kernelInfo->gpuPointerSize = 4;
+
+    storeData(PRINTF_DATA_TYPE::POINTER);
+
+    // store pointer
+    uint32_t addressValue = 0;
+    storeData(addressValue);
+
+    void *pointer = nullptr;
+
+    // store non zero padding
+    uint32_t padding = 0xdeadbeef;
+    storeData(padding);
+
+    char actualOutput[PrintFormatter::maxPrintfOutputLength];
+    char referenceOutput[PrintFormatter::maxPrintfOutputLength];
+
+    snprintf(referenceOutput, sizeof(referenceOutput), "%p", pointer);
 
     printFormatter->printKernelOutput([&actualOutput](char *str) { strncpy_s(actualOutput, PrintFormatter::maxPrintfOutputLength, str, PrintFormatter::maxPrintfOutputLength); });
 
