@@ -142,7 +142,9 @@ volatile uint32_t *CommandQueue::getHwTagAddress() const {
     DEBUG_BREAK_IF(!this->device);
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto tag_address = commandStreamReceiver.getTagAddress();
-    commandStreamReceiver.makeCoherent((void *)tag_address, sizeof(tag_address));
+    auto allocation = commandStreamReceiver.getTagAllocation();
+    UNRECOVERABLE_IF(allocation == nullptr);
+    commandStreamReceiver.makeCoherent(*allocation);
     return tag_address;
 }
 

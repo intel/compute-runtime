@@ -65,7 +65,7 @@ class CommandStreamReceiver {
 
     virtual void flushBatchedSubmissions() = 0;
 
-    virtual void makeCoherent(void *address, size_t length){};
+    virtual void makeCoherent(GraphicsAllocation &gfxAllocation){};
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     void makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency);
@@ -86,6 +86,9 @@ class CommandStreamReceiver {
     OSInterface *getOSInterface() { return osInterface.get(); };
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
+    GraphicsAllocation *getTagAllocation() const {
+        return tagAllocation;
+    }
     volatile uint32_t *getTagAddress() const { return tagAddress; }
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };

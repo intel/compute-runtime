@@ -66,7 +66,7 @@ void CommandStreamReceiver::processEviction() {
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
-        makeCoherent(gfxAllocation.getUnderlyingBuffer(), gfxAllocation.getUnderlyingBufferSize());
+        makeCoherent(gfxAllocation);
         getMemoryManager()->pushAllocationForEviction(&gfxAllocation);
     }
 

@@ -257,3 +257,15 @@ HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefault
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, csr.dispatchMode);
 }
+
+TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
+    MockCommandStreamReceiver csr;
+    EXPECT_EQ(nullptr, csr.getTagAllocation());
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
+    MockCommandStreamReceiver csr;
+    GraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
+    csr.setTagAllocation(&allocation);
+    EXPECT_EQ(&allocation, csr.getTagAllocation());
+}

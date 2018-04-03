@@ -361,14 +361,18 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(void *address, size_t length) {
+void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfxAllocation) {
+    auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
+    auto gpuAddress = gfxAllocation.getGpuAddress();
+    auto length = gfxAllocation.getUnderlyingBufferSize();
+
     if (length) {
         PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
             DEBUG_BREAK_IF(offset > length);
-            stream.readMemory(physAddress, ptrOffset(address, offset), size);
+            stream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
         };
 
-        ppgtt.pageWalk(reinterpret_cast<uintptr_t>(address), length, 0, walker);
+        ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, walker);
     }
 }
 } // namespace OCLRT
