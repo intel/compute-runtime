@@ -25,6 +25,7 @@
 #include "runtime/context/context.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 
@@ -41,10 +42,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
 
     if (mapOperation) {
         returnPtr = ptrOffset(transferProperties.memObj->getCpuAddressForMapping(),
-                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset));
+                              transferProperties.memObj->calculateOffsetForMapping(transferProperties.offset) + transferProperties.mipPtrOffset);
 
         if (!transferProperties.memObj->addMappedPtr(returnPtr, transferProperties.memObj->calculateMappedPtrLength(transferProperties.size),
-                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset)) {
+                                                     transferProperties.mapFlags, transferProperties.size, transferProperties.offset, transferProperties.mipLevel)) {
             err.set(CL_INVALID_OPERATION);
             return nullptr;
         }
@@ -115,6 +116,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             outEventObj->setStartTimeStamp();
         }
 
+        UNRECOVERABLE_IF((transferProperties.memObj->isMemObjZeroCopy() == false) && isMipMapped(transferProperties.memObj));
         switch (transferProperties.cmdType) {
         case CL_COMMAND_MAP_BUFFER:
             if (!transferProperties.memObj->isMemObjZeroCopy()) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -92,7 +92,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());
 
-    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0);
+    auto image = Image::createSharedImage(context, vaSurface, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
     image->setMediaPlaneType(plane);
     return image;
 }

@@ -311,9 +311,9 @@ HWTEST_F(MultipleMapBufferTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrect
     auto cmdQ = createMockCmdQ<FamilyType>();
 
     MapInfo mappedPtrs[3] = {
-        {nullptr, 1, {{1, 0, 0}}, {{1, 0, 0}}},
-        {nullptr, 1, {{2, 0, 0}}, {{2, 0, 0}}},
-        {nullptr, 1, {{5, 0, 0}}, {{5, 0, 0}}},
+        {nullptr, 1, {{1, 0, 0}}, {{1, 0, 0}}, 0},
+        {nullptr, 1, {{2, 0, 0}}, {{2, 0, 0}}, 0},
+        {nullptr, 1, {{5, 0, 0}}, {{5, 0, 0}}, 0},
     };
 
     for (size_t i = 0; i < 3; i++) {

@@ -544,6 +544,14 @@ TEST(Device_GetCaps, deviceReportsThrottleHintsExtension) {
     EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_throttle_hints")));
 }
 
+TEST(Device_GetCaps, deviceReportsMipmapImageExtensions) {
+    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image")));
+    EXPECT_THAT(caps.deviceExtensions, testing::HasSubstr(std::string("cl_khr_mipmap_image_writes")));
+}
+
 TEST(Device_GetCaps, givenDeviceThatDoesntHaveFp64ThenExtensionIsNotReported) {
     HardwareInfo nonFp64Device = *platformDevices[0];
     nonFp64Device.capabilityTable.ftrSupportsFP64 = false;

@@ -41,10 +41,6 @@ using namespace OCLRT;
 
 static const unsigned int g_scTestBufferSizeInBytes = 16;
 
-TEST(Buffer, FromCL_nullptr_returnsNullPtr) {
-    EXPECT_EQ(nullptr, castToObject<Buffer>(nullptr));
-}
-
 TEST(Buffer, giveBufferWhenAskedForPtrOffsetForMappingThenReturnCorrectValue) {
     MockContext ctx;
     cl_int retVal;

@@ -108,7 +108,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
         auto img = new MockImage<FamilyType>(context, Traits::flags, 1024, Traits::hostPtr,
                                              Traits::imageFormat, Traits::imageDesc, false, mockAlloc, false,
-                                             tiledImage, 0, surfaceFormat);
+                                             tiledImage, 0, 0, *surfaceFormat);
         return std::unique_ptr<MockImage<FamilyType>>(img);
     }
 
@@ -321,9 +321,9 @@ HWTEST_F(MultipleMapImageTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrectP
     auto cmdQ = createMockCmdQ<FamilyType>();
 
     MapInfo mappedPtrs[3] = {
-        {nullptr, 1, {{1, 1, 1}}, {{1, 1, 1}}},
-        {nullptr, 1, {{4, 4, 2}}, {{4, 4, 4}}},
-        {nullptr, 1, {{10, 10, 10}}, {{10, 10, 10}}}};
+        {nullptr, 1, {{1, 1, 1}}, {{1, 1, 1}}, 0},
+        {nullptr, 1, {{4, 4, 2}}, {{4, 4, 4}}, 0},
+        {nullptr, 1, {{10, 10, 10}}, {{10, 10, 10}}, 0}};
 
     for (size_t i = 0; i < 3; i++) {
         mappedPtrs[i].ptr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE, &mappedPtrs[i].offset[0], &mappedPtrs[i].size[0],

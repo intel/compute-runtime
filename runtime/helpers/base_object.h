@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -71,6 +71,11 @@ inline DerivedType *castToObjectOrAbort(typename DerivedType::BaseType *object) 
     } else {
         return derivedObject;
     }
+}
+
+template <typename DerivedType>
+inline const DerivedType *castToObject(const typename DerivedType::BaseType *object) {
+    return const_cast<const DerivedType *>(castToObject<DerivedType>(const_cast<typename DerivedType::BaseType *>(object)));
 }
 
 extern std::thread::id invalidThreadID;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -74,7 +74,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
     MemObjSizeArray region = {{1, 1, 1}};
     image->setAllocatedMapPtr(ptr);
     cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(ptr, commandQueue->passedPtr);
     EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
@@ -88,7 +88,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
@@ -99,7 +99,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithoutMemUseHostPtrTh
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 2, mapFlags, region, origin);
+    image->addMappedPtr(ptr, 2, mapFlags, region, origin, 0);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }
@@ -125,7 +125,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
     MemObjOffsetArray origin = {{0, 0, 0}};
     MemObjSizeArray region = {{1, 1, 1}};
     cl_map_flags mapFlags = CL_MAP_WRITE;
-    image->addMappedPtr(ptr, 1, mapFlags, region, origin);
+    image->addMappedPtr(ptr, 1, mapFlags, region, origin, 0);
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 1, &clEvent, nullptr);
     EXPECT_EQ(1u, commandQueue->finishCalled);
 }

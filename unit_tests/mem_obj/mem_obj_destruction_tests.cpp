@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -192,7 +192,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
                             CL_MEM_READ_WRITE,
                             size,
                             storage, nullptr, allocation, true, false, false);
-        memObj->addMappedPtr(storage, 1, mapFlags, region, origin);
+        memObj->addMappedPtr(storage, 1, mapFlags, region, origin, 0);
     } else {
         memObj->setAllocatedMapPtr(storage);
     }

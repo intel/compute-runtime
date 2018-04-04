@@ -54,23 +54,28 @@ struct TransferProperties {
     TransferProperties(MemObj *memObj, cl_command_type cmdType, cl_map_flags mapFlags, bool blocking, size_t *offsetPtr, size_t *sizePtr,
                        void *ptr);
 
-    MemObj *memObj;
-    cl_command_type cmdType;
-    cl_map_flags mapFlags;
-    bool blocking;
-    MemObjOffsetArray offset = {{0, 0, 0}};
-    MemObjSizeArray size = {{0, 0, 0}};
-    void *ptr;
+    MemObj *memObj = nullptr;
+    cl_command_type cmdType = 0;
+    cl_map_flags mapFlags = 0;
+    bool blocking = false;
+    MemObjOffsetArray offset = {};
+    MemObjSizeArray size = {};
+    void *ptr = nullptr;
+    uint32_t mipLevel = 0;
+    uint32_t mipPtrOffset = 0;
 };
 
 struct MapInfo {
     MapInfo() = default;
-    MapInfo(void *ptr, size_t ptrLength, MemObjSizeArray size, MemObjOffsetArray offset) : ptr(ptr), ptrLength(ptrLength), size(size), offset(offset) {}
+    MapInfo(void *ptr, size_t ptrLength, MemObjSizeArray size, MemObjOffsetArray offset, uint32_t mipLevel)
+        : ptr(ptr), ptrLength(ptrLength), size(size), offset(offset), mipLevel(mipLevel) {
+    }
 
     void *ptr = nullptr;
     size_t ptrLength = 0;
-    MemObjSizeArray size = {{0, 0, 0}};
-    MemObjOffsetArray offset = {{0, 0, 0}};
+    MemObjSizeArray size = {};
+    MemObjOffsetArray offset = {};
     bool readOnly = false;
+    uint32_t mipLevel = 0;
 };
 } // namespace OCLRT

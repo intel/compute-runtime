@@ -48,7 +48,8 @@ typedef Image *(*ImageCreatFunc)(Context *context,
                                  GraphicsAllocation *graphicsAllocation,
                                  bool isImageRedescribed,
                                  bool createTiledImage,
-                                 int mipLevel,
+                                 uint32_t baseMipLevel,
+                                 uint32_t mipCount,
                                  const SurfaceFormatInfo *surfaceFormatInfo,
                                  const SurfaceOffsets *surfaceOffsets);
 
@@ -80,11 +81,11 @@ class Image : public MemObj {
     static Image *createImageHw(Context *context, cl_mem_flags flags, size_t size, void *hostPtr,
                                 const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                                 bool zeroCopy, GraphicsAllocation *graphicsAllocation,
-                                bool isObjectRedescribed, bool createTiledImage, int mipLevel, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
+                                bool isObjectRedescribed, bool createTiledImage, uint32_t baseMipLevel, uint32_t mipCount, const SurfaceFormatInfo *surfaceFormatInfo = nullptr);
 
     static Image *createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
                                     GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
-                                    cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, int mipLevel);
+                                    cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount);
 
     static cl_int validate(Context *context,
                            cl_mem_flags flags,
@@ -118,6 +119,10 @@ class Image : public MemObj {
     static bool isImage2dOr2dArray(cl_mem_object_type imageType);
 
     static bool isDepthFormat(const cl_image_format &imageFormat);
+
+    static bool hasSlices(cl_mem_object_type type) {
+        return (type == CL_MEM_OBJECT_IMAGE3D) || (type == CL_MEM_OBJECT_IMAGE1D_ARRAY) || (type == CL_MEM_OBJECT_IMAGE2D_ARRAY);
+    }
 
     cl_int getImageInfo(cl_image_info paramName,
                         size_t paramValueSize,
@@ -163,14 +168,14 @@ class Image : public MemObj {
     uint32_t getCubeFaceIndex() { return cubeFaceIndex; }
     void setMediaPlaneType(cl_uint type) { mediaPlaneType = type; }
     cl_uint getMediaPlaneType() const { return mediaPlaneType; }
-    int peekMipLevel() { return mipLevel; }
-    void setMipLevel(int mipLevelNew) { this->mipLevel = mipLevelNew; }
+    int peekBaseMipLevel() { return baseMipLevel; }
+    void setBaseMipLevel(int level) { this->baseMipLevel = level; }
 
     uint32_t peekMipCount() { return mipCount; }
     void setMipCount(uint32_t mipCountNew) { this->mipCount = mipCountNew; }
 
     static const SurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
-    static bool validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_mem_object_type &imgType);
+    static bool validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }
@@ -190,8 +195,9 @@ class Image : public MemObj {
           GraphicsAllocation *graphicsAllocation,
           bool isObjectRedescribed,
           bool createTiledImage,
-          int mipLevel,
-          const SurfaceFormatInfo *surfaceFormatInfo = nullptr,
+          uint32_t baseMipLevel,
+          uint32_t mipCount,
+          const SurfaceFormatInfo &surfaceFormatInfo,
           const SurfaceOffsets *surfaceOffsets = nullptr);
 
     void getOsSpecificImageInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam);
@@ -211,8 +217,8 @@ class Image : public MemObj {
     uint32_t cubeFaceIndex;
     cl_uint mediaPlaneType;
     SurfaceOffsets surfaceOffsets;
-    int mipLevel = 0;
-    uint32_t mipCount = 0;
+    uint32_t baseMipLevel = 0;
+    uint32_t mipCount = 1;
 
     static bool isValidSingleChannelFormat(const cl_image_format *imageFormat);
     static bool isValidIntensityFormat(const cl_image_format *imageFormat);
@@ -244,11 +250,12 @@ class ImageHw : public Image {
             GraphicsAllocation *graphicsAllocation,
             bool isObjectRedescribed,
             bool createTiledImage,
-            int mipLevel,
-            const SurfaceFormatInfo *surfaceFormatInfo = nullptr,
+            uint32_t baseMipLevel,
+            uint32_t mipCount,
+            const SurfaceFormatInfo &surfaceFormatInfo,
             const SurfaceOffsets *surfaceOffsets = nullptr)
         : Image(context, flags, size, hostPtr, imageFormat, imageDesc,
-                zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, mipLevel, surfaceFormatInfo, surfaceOffsets) {
+                zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, baseMipLevel, mipCount, surfaceFormatInfo, surfaceOffsets) {
         if (getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER ||
             getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D ||
@@ -276,9 +283,11 @@ class ImageHw : public Image {
                          GraphicsAllocation *graphicsAllocation,
                          bool isObjectRedescribed,
                          bool createTiledImage,
-                         int mipLevel,
+                         uint32_t baseMipLevel,
+                         uint32_t mipCount,
                          const SurfaceFormatInfo *surfaceFormatInfo,
                          const SurfaceOffsets *surfaceOffsets) {
+        UNRECOVERABLE_IF(surfaceFormatInfo == nullptr);
         auto image = new ImageHw<GfxFamily>(context,
                                             flags,
                                             size,
@@ -289,8 +298,9 @@ class ImageHw : public Image {
                                             graphicsAllocation,
                                             isObjectRedescribed,
                                             createTiledImage,
-                                            mipLevel,
-                                            surfaceFormatInfo,
+                                            baseMipLevel,
+                                            mipCount,
+                                            *surfaceFormatInfo,
                                             surfaceOffsets);
 
         switch (imageDesc.image_type) {

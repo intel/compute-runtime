@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,9 +42,9 @@ class MockGmm : public Gmm {
         return std::unique_ptr<Gmm>(Gmm::createGmmAndQueryImgParams(imgInfo, *queryHwInfo));
     }
 
-    static ImageInfo initImgInfo(cl_image_desc &imgDesc, int mipLevel, const SurfaceFormatInfo *surfaceFormat) {
+    static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {
         ImageInfo imgInfo = {0};
-        imgInfo.mipLevel = mipLevel;
+        imgInfo.baseMipLevel = baseMipLevel;
         imgInfo.imgDesc = &imgDesc;
         if (!surfaceFormat) {
             MockGmmParams::mockSurfaceFormat = readWriteSurfaceFormats[0]; // any valid format

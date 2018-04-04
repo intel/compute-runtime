@@ -298,8 +298,9 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
 }
 
 TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
+    char mem[64];
     MemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
-                  MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
+                  MemoryConstants::pageSize, mem, nullptr, nullptr, true, false, false);
 
     EXPECT_FALSE(memObj.allowTiling());
     EXPECT_FALSE(memObj.peekSharingHandler());

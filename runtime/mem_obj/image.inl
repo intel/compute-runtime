@@ -109,7 +109,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setSurfaceBaseAddress(getGraphicsAllocation()->getGpuAddress() + this->surfaceOffsets.offset);
     surfaceState->setRenderTargetViewExtent(renderTargetViewExtent);
     surfaceState->setMinimumArrayElement(minimumArrayElement);
-    surfaceState->setSurfaceMinLod(this->mipLevel + mipLevel);
+    surfaceState->setSurfaceMinLod(this->baseMipLevel + mipLevel);
     surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
 
     // SurfaceQpitch is in rows but must be a multiple of VALIGN

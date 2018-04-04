@@ -67,6 +67,10 @@ struct EnqueueMapImageTest : public DeviceFixture,
     char srcMemory[128];
 };
 
+struct EnqueueMapImageParamsTest : public EnqueueMapImageTest,
+                                   public ::testing::WithParamInterface<uint32_t> {
+};
+
 TEST_F(EnqueueMapImageTest, reuseMappedPtrForTiledImg) {
     if (!image->allowTiling()) {
         return;
@@ -118,6 +122,71 @@ TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalle
     EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
 }
 
+typedef EnqueueMapImageParamsTest MipMapMapImageParamsTest;
+
+TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers) {
+    auto image_type = (cl_mem_object_type)GetParam();
+    cl_int retVal = CL_SUCCESS;
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = image_type;
+    imageDesc.num_mip_levels = 10;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 1;
+    imageDesc.image_depth = 1;
+    const size_t origin1[4] = {0, 0, 0, 0};
+    size_t origin2[4] = {0, 0, 0, 0};
+    std::unique_ptr<Image> image;
+    switch (image_type) {
+    case CL_MEM_OBJECT_IMAGE1D:
+        origin2[1] = 1;
+        image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
+        origin2[2] = 1;
+        imageDesc.image_array_size = 2;
+        image = std::unique_ptr<Image>(ImageHelper<Image1dArrayDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        origin2[2] = 1;
+        image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+        origin2[3] = 1;
+        imageDesc.image_array_size = 2;
+        image = std::unique_ptr<Image>(ImageHelper<Image2dArrayDefaults>::create(context, &imageDesc));
+        break;
+    case CL_MEM_OBJECT_IMAGE3D:
+        origin2[3] = 1;
+        image = std::unique_ptr<Image>(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
+        break;
+    }
+    EXPECT_NE(nullptr, image.get());
+
+    auto mapFlags = CL_MAP_READ;
+    const size_t region[3] = {1, 1, 1};
+
+    auto ptr1 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin1,
+                                       region, nullptr, nullptr, 0,
+                                       nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto ptr2 = pCmdQ->enqueueMapImage(image.get(), true, mapFlags, origin2,
+                                       region, nullptr, nullptr, 0,
+                                       nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(ptr1, ptr2);
+    if (image->mappingOnCpuAllowed() == false) {
+        EXPECT_NE(nullptr, image->getAllocatedMapPtr());
+    }
+
+    size_t mapOffset = 16u;
+    EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
+}
+
+INSTANTIATE_TEST_CASE_P(MipMapMapImageParamsTest_givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers,
+                        MipMapMapImageParamsTest, ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+
 template <typename GfxFamily>
 struct mockedImage : public ImageHw<GfxFamily> {
     using ImageHw<GfxFamily>::ImageHw;
@@ -146,7 +215,8 @@ HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSe
                                       true,
                                       true,
                                       0,
-                                      &surfaceFormatInfo,
+                                      0,
+                                      surfaceFormatInfo,
                                       nullptr);
 
     mockImage.createFunction = image->createFunction;
@@ -699,7 +769,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingCpuMapIsCalledTh
         }
     };
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(context));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
 
     MyMockUserEvent blockingEvent;
@@ -712,6 +782,15 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingCpuMapIsCalledTh
 
     EXPECT_NE(0u, retImageRowPitch);
     EXPECT_NE(0u, retImageSlicePitch);
+
+    image.reset(ImageHelper<Image1dDefaults>::create(context));
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           1, &blockingClEvent, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_NE(0u, retImageRowPitch);
+    EXPECT_EQ(0u, retImageSlicePitch);
 }
 
 TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnCpuThenReturnImageRowAndSlicePitch) {
@@ -720,7 +799,7 @@ TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnCpuThenReturnImageRowA
     size_t retImageRowPitch = 0;
     size_t retImageSlicePitch = 0;
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(context));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
     EXPECT_TRUE(image->isMemObjZeroCopy());
 
@@ -739,7 +818,7 @@ TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnCpuThenReturnHostRo
     size_t retImageRowPitch = 0;
     size_t retImageSlicePitch = 0;
 
-    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dArrayDefaults>>::create(context));
     EXPECT_TRUE(image->mappingOnCpuAllowed());
     EXPECT_FALSE(image->isMemObjZeroCopy());
 
@@ -758,7 +837,7 @@ TEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenMappedOnGpuThenReturnHostRowAn
     size_t retImageRowPitch = 0;
     size_t retImageSlicePitch = 0;
 
-    std::unique_ptr<Image> image(ImageHelper<Image1dDefaults>::create(context));
+    std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(context));
     image->setSharingHandler(new SharingHandler());
     EXPECT_FALSE(image->mappingOnCpuAllowed());
     EXPECT_TRUE(image->isMemObjZeroCopy());
@@ -778,7 +857,32 @@ TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnGpuThenReturnHostRo
     size_t retImageRowPitch = 0;
     size_t retImageSlicePitch = 0;
 
-    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dDefaults>>::create(context));
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dArrayDefaults>>::create(context));
+    image->setSharingHandler(new SharingHandler());
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+    EXPECT_FALSE(image->isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+}
+
+TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitch) {
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.num_mip_levels = 10;
+    imageDesc.image_width = 4;
+
+    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dArrayDefaults>>::create(context, &imageDesc));
     image->setSharingHandler(new SharingHandler());
     EXPECT_FALSE(image->mappingOnCpuAllowed());
     EXPECT_FALSE(image->isMemObjZeroCopy());

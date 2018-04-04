@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -334,7 +334,10 @@ void *MemObj::getBasePtrForMap() {
     }
 }
 
-bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset) {
-    return mapOperationsHandler.add(ptr, ptrLength, mapFlags, size, offset);
+bool MemObj::addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags,
+                          MemObjSizeArray &size, MemObjOffsetArray &offset,
+                          uint32_t mipLevel) {
+    return mapOperationsHandler.add(ptr, ptrLength, mapFlags, size, offset,
+                                    mipLevel);
 }
 } // namespace OCLRT

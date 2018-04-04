@@ -21,30 +21,26 @@
 */
 
 #pragma once
-#include <cstdint>
+#include "config.h"
 #include "CL/cl.h"
+
+#include <cstdint>
 
 namespace OCLRT {
 
-inline uint32_t findMipLevel(cl_mem_object_type imageType, const size_t *origin) {
-    size_t mipLevel = 0;
-    switch (imageType) {
-    case CL_MEM_OBJECT_IMAGE1D:
-        mipLevel = origin[1];
-        break;
-    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-    case CL_MEM_OBJECT_IMAGE2D:
-        mipLevel = origin[2];
-        break;
-    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
-    case CL_MEM_OBJECT_IMAGE3D:
-        mipLevel = origin[3];
-        break;
-    default:
-        mipLevel = 0;
-    }
+class MemObj;
+class Image;
 
-    return static_cast<uint32_t>(mipLevel);
+uint32_t getMipLevelOriginIdx(cl_mem_object_type imageType);
+
+uint32_t findMipLevel(cl_mem_object_type imageType, const size_t *origin);
+
+inline bool isMipMapped(const cl_image_desc &imgDesc) {
+    return (imgDesc.num_mip_levels > 1);
 }
+
+bool isMipMapped(const MemObj *memObj);
+
+uint32_t getMipOffset(Image *image, const size_t *origin);
 
 } // namespace OCLRT

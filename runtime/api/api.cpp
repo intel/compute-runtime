@@ -2057,7 +2057,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             if (retVal != CL_SUCCESS)
                 return retVal;
         }
-        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2113,7 +2113,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             if (retVal != CL_SUCCESS)
                 return retVal;
         }
-        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2159,7 +2159,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
                    "numEventsInWaitList", numEventsInWaitList, "event", event);
 
     if (CL_SUCCESS == retVal) {
-        if (!Image::validateRegionAndOrigin(origin, region, dstImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(origin, region, dstImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2217,10 +2217,10 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             if (pDstImage->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE2D && dstOrigin[2] != 0)
                 return CL_INVALID_VALUE;
         }
-        if (!Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
-        if (!Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2271,7 +2271,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
             if (retVal != CL_SUCCESS)
                 return retVal;
         }
-        if (!Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(srcOrigin, region, pSrcImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2323,7 +2323,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
             if (retVal != CL_SUCCESS)
                 return retVal;
         }
-        if (!Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(dstOrigin, region, pDstImage->getImageDesc())) {
             return CL_INVALID_VALUE;
         }
 
@@ -2452,7 +2452,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
             }
         }
 
-        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc().image_type)) {
+        if (!Image::validateRegionAndOrigin(origin, region, pImage->getImageDesc())) {
             retVal = CL_INVALID_VALUE;
             break;
         }

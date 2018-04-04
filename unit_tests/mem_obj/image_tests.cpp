@@ -26,6 +26,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/built_ins/built_ins.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -1070,3 +1071,39 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
 
     EXPECT_EQ(expectedLength, retLength);
 }
+
+typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;
+
+TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsCalledThenAdditionalOriginCoordinateIsAnalyzed) {
+    size_t origin[4]{};
+    size_t region[3] = {1, 1, 1};
+    cl_image_desc desc = {};
+    desc.image_type = GetParam();
+    desc.num_mip_levels = 2;
+    origin[getMipLevelOriginIdx(desc.image_type)] = 1;
+    EXPECT_TRUE(Image::validateRegionAndOrigin(origin, region, desc));
+    origin[getMipLevelOriginIdx(desc.image_type)] = 2;
+    EXPECT_FALSE(Image::validateRegionAndOrigin(origin, region, desc));
+}
+
+INSTANTIATE_TEST_CASE_P(MipLevelCoordinate,
+                        MipLevelCoordinateTest,
+                        ::testing::Values(CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE2D,
+                                          CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D));
+
+typedef ::testing::TestWithParam<std::pair<uint32_t, bool>> HasSlicesTest;
+
+TEST_P(HasSlicesTest, givenMemObjectTypeWhenHasSlicesIsCalledThenReturnsTrueIfTypeDefinesObjectWithSlicePitch) {
+    auto pair = GetParam();
+    EXPECT_EQ(pair.second, Image::hasSlices(pair.first));
+}
+
+INSTANTIATE_TEST_CASE_P(HasSlices,
+                        HasSlicesTest,
+                        ::testing::Values(std::make_pair(CL_MEM_OBJECT_IMAGE1D, false),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_ARRAY, true),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D, false),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, true),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE3D, true),
+                                          std::make_pair(CL_MEM_OBJECT_BUFFER, false),
+                                          std::make_pair(CL_MEM_OBJECT_PIPE, false)));

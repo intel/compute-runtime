@@ -46,7 +46,9 @@ const char *deviceExtensionsList = "cl_khr_3d_image_writes "
                                    "cl_intel_device_side_avc_motion_estimation "
                                    "cl_khr_priority_hints "
                                    "cl_khr_throttle_hints "
-                                   "cl_khr_create_command_queue ";
+                                   "cl_khr_create_command_queue "
+                                   "cl_khr_mipmap_image "
+                                   "cl_khr_mipmap_image_writes ";
 
 std::string getExtensionsList(const HardwareInfo &hwInfo) {
     std::string allExtensionsList;

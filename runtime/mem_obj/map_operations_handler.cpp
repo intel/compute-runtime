@@ -30,9 +30,9 @@ size_t MapOperationsHandler::size() const {
     return mappedPointers.size();
 }
 
-bool MapOperationsHandler::add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset) {
+bool MapOperationsHandler::add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel) {
     std::lock_guard<std::mutex> lock(mtx);
-    MapInfo mapInfo(ptr, ptrLength, size, offset);
+    MapInfo mapInfo(ptr, ptrLength, size, offset, mipLevel);
     mapInfo.readOnly = (mapFlags == CL_MAP_READ);
 
     if (isOverlapping(mapInfo)) {

@@ -29,6 +29,7 @@
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/mem_obj/image.h"
@@ -54,8 +55,9 @@ Image::Image(Context *context,
              GraphicsAllocation *graphicsAllocation,
              bool isObjectRedescribed,
              bool createTiledImage,
-             int mipLevel,
-             const SurfaceFormatInfo *surfaceFormatInfo,
+             uint32_t baseMipLevel,
+             uint32_t mipCount,
+             const SurfaceFormatInfo &surfaceFormatInfo,
              const SurfaceOffsets *surfaceOffsets)
     : MemObj(context,
              imageDesc.image_type,
@@ -71,10 +73,11 @@ Image::Image(Context *context,
       isTiledImage(createTiledImage),
       imageFormat(std::move(imageFormat)),
       imageDesc(imageDesc),
-      surfaceFormatInfo(*surfaceFormatInfo),
+      surfaceFormatInfo(surfaceFormatInfo),
       cubeFaceIndex(__GMM_NO_CUBE_MAP),
       mediaPlaneType(0),
-      mipLevel(mipLevel) {
+      baseMipLevel(baseMipLevel),
+      mipCount(mipCount) {
     magic = objectMagic;
     if (surfaceOffsets)
         setSurfaceOffsets(surfaceOffsets->offset, surfaceOffsets->xOffset, surfaceOffsets->yOffset, surfaceOffsets->yOffsetForUVplane);
@@ -305,7 +308,7 @@ Image *Image::create(Context *context,
         }
 
         image = createImageHw(context, flags, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
-                              imageDescriptor, zeroCopy, memory, imageRedescribed, isTilingAllowed, 0, surfaceFormat);
+                              imageDescriptor, zeroCopy, memory, imageRedescribed, isTilingAllowed, 0, 0, surfaceFormat);
 
         if (imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_ARRAY && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D_ARRAY) {
             image->imageDesc.image_array_size = 0;
@@ -377,14 +380,15 @@ Image *Image::create(Context *context,
 Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, void *hostPtr,
                             const cl_image_format &imageFormat, const cl_image_desc &imageDesc,
                             bool zeroCopy, GraphicsAllocation *graphicsAllocation,
-                            bool isObjectRedescribed, bool createTiledImage, int mipLevel, const SurfaceFormatInfo *surfaceFormatInfo) {
+                            bool isObjectRedescribed, bool createTiledImage, uint32_t baseMipLevel, uint32_t mipCount,
+                            const SurfaceFormatInfo *surfaceFormatInfo) {
     const auto device = castToObject<Context>(context)->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
     auto funcCreate = imageFactory[hwInfo.pPlatform->eRenderCoreFamily].createImageFunction;
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto image = funcCreate(context, flags, size, hostPtr, imageFormat, imageDesc,
-                            zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, mipLevel, surfaceFormatInfo, nullptr);
+                            zeroCopy, graphicsAllocation, isObjectRedescribed, createTiledImage, baseMipLevel, mipCount, surfaceFormatInfo, nullptr);
     DEBUG_BREAK_IF(nullptr == image);
     image->createFunction = funcCreate;
     return image;
@@ -392,13 +396,13 @@ Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, v
 
 Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler, McsSurfaceInfo &mcsSurfaceInfo,
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
-                                cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, int mipLevel) {
+                                cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
     auto tileWalk = graphicsAllocation->gmm->gmmResourceInfo->getTileType();
     auto tileMode = Gmm::getRenderTileMode(tileWalk);
     bool isTiledImage = tileMode ? true : false;
 
     auto sharedImage = createImageHw(context, flags, graphicsAllocation->getUnderlyingBufferSize(),
-                                     nullptr, imgInfo.surfaceFormat->OCLImageFormat, *imgInfo.imgDesc, false, graphicsAllocation, false, isTiledImage, mipLevel, imgInfo.surfaceFormat);
+                                     nullptr, imgInfo.surfaceFormat->OCLImageFormat, *imgInfo.imgDesc, false, graphicsAllocation, false, isTiledImage, baseMipLevel, mipCount, imgInfo.surfaceFormat);
     sharedImage->setSharingHandler(sharingHandler);
     sharedImage->setMcsAllocation(mcsAllocation);
     sharedImage->setQPitch(imgInfo.qPitch);
@@ -712,8 +716,8 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     case CL_IMAGE_WIDTH:
         srcParamSize = sizeof(size_t);
         retParam = imageDesc.image_width;
-        if (this->mipLevel) {
-            retParam = imageDesc.image_width >> this->mipLevel;
+        if (this->baseMipLevel) {
+            retParam = imageDesc.image_width >> this->baseMipLevel;
             retParam = std::max(retParam, (size_t)1);
         }
         srcParam = &retParam;
@@ -722,8 +726,8 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     case CL_IMAGE_HEIGHT:
         srcParamSize = sizeof(size_t);
         retParam = imageDesc.image_height * !((imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D) || (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) || (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER));
-        if ((retParam != 0) && (this->mipLevel > 0)) {
-            retParam = retParam >> this->mipLevel;
+        if ((retParam != 0) && (this->baseMipLevel > 0)) {
+            retParam = retParam >> this->baseMipLevel;
             retParam = std::max(retParam, (size_t)1);
         }
         srcParam = &retParam;
@@ -732,8 +736,8 @@ cl_int Image::getImageInfo(cl_image_info paramName,
     case CL_IMAGE_DEPTH:
         srcParamSize = sizeof(size_t);
         retParam = imageDesc.image_depth * (imageDesc.image_type == CL_MEM_OBJECT_IMAGE3D);
-        if ((retParam != 0) && (this->mipLevel > 0)) {
-            retParam = retParam >> this->mipLevel;
+        if ((retParam != 0) && (this->baseMipLevel > 0)) {
+            retParam = retParam >> this->baseMipLevel;
             retParam = std::max(retParam, (size_t)1);
         }
         srcParam = &retParam;
@@ -803,7 +807,8 @@ Image *Image::redescribeFillImage() {
                                 this->getGraphicsAllocation(),
                                 true,
                                 isTiledImage,
-                                this->mipLevel,
+                                this->baseMipLevel,
+                                this->mipCount,
                                 surfaceFormat,
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
@@ -847,7 +852,8 @@ Image *Image::redescribe() {
                                 this->getGraphicsAllocation(),
                                 true,
                                 isTiledImage,
-                                this->mipLevel,
+                                this->baseMipLevel,
+                                this->mipCount,
                                 surfaceFormat,
                                 &this->surfaceOffsets);
     image->setQPitch(this->getQPitch());
@@ -1207,30 +1213,47 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     size_t slicePitch = mappingOnCpuAllowed() ? imageDesc.image_slice_pitch : getHostPtrSlicePitch();
 
     size_t offset = getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0];
-    if (imageDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+
+    switch (imageDesc.image_type) {
+    case CL_MEM_OBJECT_IMAGE1D_ARRAY:
         offset += slicePitch * origin[1];
-    } else {
+        break;
+    case CL_MEM_OBJECT_IMAGE2D:
+        offset += rowPitch * origin[1];
+        break;
+    case CL_MEM_OBJECT_IMAGE2D_ARRAY:
+    case CL_MEM_OBJECT_IMAGE3D:
         offset += rowPitch * origin[1] + slicePitch * origin[2];
+        break;
+    default:
+        break;
     }
 
     return offset;
 }
 
-bool Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_mem_object_type &imgType) {
+bool Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc) {
     if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
         return false;
     }
 
-    if ((imgType == CL_MEM_OBJECT_IMAGE1D || imgType == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
-        (origin[1] > 0 || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
+    bool notMippMapped = (false == isMipMapped(imgDesc));
+
+    if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
+        (((origin[1] > 0) && notMippMapped) || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
         return false;
     }
 
-    if ((imgType == CL_MEM_OBJECT_IMAGE2D || imgType == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
-        (origin[2] > 0 || region[2] > 1)) {
+    if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
+        (((origin[2] > 0) && notMippMapped) || region[2] > 1)) {
         return false;
     }
 
-    return true;
+    if (notMippMapped) {
+        return true;
+    }
+
+    uint32_t mipLevel = findMipLevel(imgDesc.image_type, origin);
+    return mipLevel < imgDesc.num_mip_levels;
 }
 } // namespace OCLRT

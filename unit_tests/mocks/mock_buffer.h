@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,6 +40,8 @@ class MockBufferStorage {
 
 class MockBuffer : public MockBufferStorage, public Buffer {
   public:
+    using Buffer::magic;
+
     MockBuffer(GraphicsAllocation &alloc)
         : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(), &alloc, true, false, false),
           externalAlloc(&alloc) {

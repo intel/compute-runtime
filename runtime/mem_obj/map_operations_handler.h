@@ -32,7 +32,7 @@ class MapOperationsHandler {
   public:
     virtual ~MapOperationsHandler() = default;
 
-    bool add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset);
+    bool add(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
     void remove(void *mappedPtr);
     bool find(void *mappedPtr, MapInfo &outMapInfo);
     size_t size() const;

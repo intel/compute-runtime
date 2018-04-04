@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -224,7 +224,7 @@ struct ImageInfo {
     uint32_t yOffset;
     uint32_t yOffsetForUVPlane;
     GMM_YUV_PLANE_ENUM plane;
-    int mipLevel;
+    uint32_t baseMipLevel;
     uint32_t mipCount;
     bool preferRenderCompression;
 };

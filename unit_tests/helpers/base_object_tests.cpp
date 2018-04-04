@@ -157,7 +157,8 @@ TYPED_TEST(BaseObjectTests, retain) {
 }
 
 TYPED_TEST(BaseObjectTests, castToObjectFromNullptr) {
-    auto object = castToObject<TypeParam>(nullptr);
+    typename TypeParam::BaseType *handle = nullptr;
+    auto object = castToObject<TypeParam>(handle);
     EXPECT_EQ(nullptr, object);
 }
 

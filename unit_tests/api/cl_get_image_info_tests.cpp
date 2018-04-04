@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -170,7 +170,7 @@ TEST_F(clGetImageInfoTests, givenImageWithMipMapsWhenAskedForSziesItIsShiftedByM
     size_t paramRetSize = sizeof(size_t);
 
     for (int mipLevel = 0; mipLevel < 10; mipLevel++) {
-        pImage->setMipLevel(mipLevel);
+        pImage->setBaseMipLevel(mipLevel);
         auto expectedWidth = initialWidth >> mipLevel;
         expectedWidth = expectedWidth == 0 ? 1 : expectedWidth;
         auto expectedHeight = initialHeight >> mipLevel;
@@ -230,7 +230,7 @@ TEST_F(clGetImageInfoTests, CheckImage3DWidthAndHeightAndDepthWithMipmaps) {
 
     auto pImgObj = castToObject<Image>(image2);
     for (cl_uint n = 0; n <= imageDesc2.num_mip_levels; n++) {
-        pImgObj->setMipLevel(n);
+        pImgObj->setBaseMipLevel(n);
 
         retVal = clGetImageInfo(image2, CL_IMAGE_WIDTH, sizeof(widthRet), &widthRet, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -285,7 +285,7 @@ TEST_F(clGetImageInfoTests, CheckImage1DWidthAndHeightAndDepthWithMipmaps) {
 
     auto pImgObj = castToObject<Image>(image2);
     for (cl_uint n = 0; n <= imageDesc2.num_mip_levels; n++) {
-        pImgObj->setMipLevel(n);
+        pImgObj->setBaseMipLevel(n);
 
         retVal = clGetImageInfo(image2, CL_IMAGE_WIDTH, sizeof(widthRet), &widthRet, NULL);
         EXPECT_EQ(CL_SUCCESS, retVal);

@@ -298,9 +298,9 @@ HWTEST_F(ImageSetArgTest, givenImage2DWithMipMapsWhenSetKernelArgIsCalledThenMip
     cl_mem memObj = srcImage;
     int mipLevel = 2;
     uint32_t mipCount = 3;
-    srcImage->setMipLevel(mipLevel);
+    srcImage->setBaseMipLevel(mipLevel);
     srcImage->setMipCount(mipCount);
-    EXPECT_EQ(mipLevel, srcImage->peekMipLevel());
+    EXPECT_EQ(mipLevel, srcImage->peekBaseMipLevel());
     EXPECT_EQ(3u, srcImage->peekMipCount());
 
     retVal = clSetKernelArg(

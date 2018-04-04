@@ -40,14 +40,16 @@
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_with_source.h"
 #include "test.h"
-#include <memory>
-#include <vector>
-#include <map>
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "elf/reader.h"
+
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 using namespace OCLRT;
 
@@ -1018,16 +1020,20 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
         ~MyCompilerInterface2() override{};
 
         cl_int compile(Program &program, const TranslationArgs &inputArgs) override {
-            strcpy_s(&buildOptions[0], sizeof(buildOptions), inputArgs.pOptions);
-            strcpy_s(&buildInternalOptions[0], sizeof(buildInternalOptions), inputArgs.pInternalOptions);
+            if ((inputArgs.OptionsSize > 0) && (inputArgs.pOptions != nullptr)) {
+                buildOptions.assign(inputArgs.pOptions, inputArgs.pOptions + inputArgs.OptionsSize);
+            }
+            if ((inputArgs.OptionsSize > 0) && (inputArgs.pOptions != nullptr)) {
+                buildInternalOptions.assign(inputArgs.pInternalOptions, inputArgs.pInternalOptions + inputArgs.InternalOptionsSize);
+            }
             return CL_SUCCESS;
         }
         void getBuildOptions(std::string &s) { s = buildOptions; }
         void getBuildInternalOptions(std::string &s) { s = buildInternalOptions; }
 
       protected:
-        char buildOptions[256];
-        char buildInternalOptions[1024];
+        std::string buildOptions;
+        std::string buildInternalOptions;
     };
 
     class MyProgram2 : public Program {

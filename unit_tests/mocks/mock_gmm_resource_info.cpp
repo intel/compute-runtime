@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -73,6 +73,9 @@ GMM_STATUS MockGmmResourceInfo::getOffset(GMM_REQ_OFFSET_INFO &reqOffsetInfo) {
     }
     if (reqOffsetInfo.Slice == 1) {
         reqOffsetInfo.Render.YOffset = mockResourceCreateParams.BaseHeight;
+    }
+    if (reqOffsetInfo.MipLevel > 0) {
+        reqOffsetInfo.Lock.Offset = 32;
     }
 
     return GMM_SUCCESS;

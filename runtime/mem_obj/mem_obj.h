@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/completion_stamp.h"
+#include "runtime/helpers/mipmap.h"
 #include "runtime/sharings/sharing.h"
 #include "runtime/mem_obj/map_operations_handler.h"
 #include <atomic>
@@ -75,7 +76,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ);
     CompletionStamp getCompletionStamp() const;
 
-    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset);
+    bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
     bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
     void removeMappedPtr(void *mappedPtr) { return mapOperationsHandler.remove(mappedPtr); }
     void *getBasePtrForMap();
@@ -118,7 +119,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void waitForCsrCompletion();
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);
     bool checkIfMemoryTransferIsRequired(size_t offsetInMemObjest, size_t offsetInHostPtr, const void *ptr, cl_command_type cmdType);
-    bool mappingOnCpuAllowed() const { return !allowTiling() && !peekSharingHandler(); }
+    bool mappingOnCpuAllowed() const { return !allowTiling() && !peekSharingHandler() && !isMipMapped(this); }
     virtual size_t calculateOffsetForMapping(const MemObjOffsetArray &offset) const { return offset[0]; }
     size_t calculateMappedPtrLength(const MemObjSizeArray &size) const { return calculateOffsetForMapping(size); }
     cl_mem_object_type peekClMemObjType() const { return memObjectType; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
 #include "unit_tests/command_queue/enqueue_map_buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -583,6 +584,27 @@ TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCal
 
     retVal = clReleaseMemObject(buffer);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(EnqueueMapBufferTest, GivenWrongMemObjectWhenMapIsCalledThenInvalidMemObjectErrorCodeIsReturned) {
+    MockBuffer buffer;
+    cl_mem mem = &buffer;
+    buffer.magic = -1;
+
+    auto ptrResult = clEnqueueMapBuffer(
+        pCmdQ,
+        mem,
+        CL_FALSE,
+        CL_MAP_READ,
+        0,
+        8,
+        0,
+        nullptr,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(nullptr, ptrResult);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
 HWTEST_F(EnqueueMapBufferTest, MapBufferEventProperties) {

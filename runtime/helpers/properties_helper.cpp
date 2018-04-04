@@ -20,7 +20,9 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/mem_obj/image.h"
 #include "runtime/mem_obj/mem_obj.h"
 
 namespace OCLRT {
@@ -36,6 +38,15 @@ TransferProperties::TransferProperties(MemObj *memObj, cl_command_type cmdType, 
         } else {
             size = {{sizePtr[0], sizePtr[1], sizePtr[2]}};
             offset = {{offsetPtr[0], offsetPtr[1], offsetPtr[2]}};
+            if (isMipMapped(memObj)) {
+                // decompose origin to coordinates and miplevel
+                mipLevel = findMipLevel(memObj->peekClMemObjType(), offsetPtr);
+                mipPtrOffset = getMipOffset(castToObjectOrAbort<Image>(memObj), offsetPtr);
+                auto mipLevelIdx = getMipLevelOriginIdx(memObj->peekClMemObjType());
+                if (mipLevelIdx < offset.size()) {
+                    offset[mipLevelIdx] = 0;
+                }
+            }
         }
     }
 }
