@@ -248,3 +248,31 @@ TEST_F(KernelImageArgTest, givenNullKernelWhenClSetKernelArgCalledThenInvalidKer
 
     EXPECT_EQ(retVal, CL_INVALID_KERNEL);
 }
+
+class MockSharingHandler : public SharingHandler {
+  public:
+    void synchronizeObject(UpdateData *updateData) override {
+        updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+    }
+};
+
+TEST_F(KernelImageArgTest, givenKernelWithSharedImageWhenSetArgCalledThenUsingSharedObjArgsShouldBeTrue) {
+    cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
+    cl_image_desc imgDesc = {};
+    imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+    cl_mem_flags flags = CL_MEM_WRITE_ONLY;
+    imgDesc.image_width = 5;
+    imgDesc.image_height = 5;
+    auto surfaceFormat = Image::getSurfaceFormatFromTable(0, &imgFormat);
+    std::unique_ptr<Image> img(Image::create(context.get(), flags, surfaceFormat, &imgDesc, nullptr, retVal));
+    cl_mem memObj = img.get();
+
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+    img->setSharingHandler(mockSharingHandler);
+
+    retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(1u, pKernel->getPatchedArgumentsNum());
+    EXPECT_TRUE(pKernel->getKernelArguments()[0].isPatched);
+    EXPECT_TRUE(pKernel->isUsingSharedObjArgs());
+}
