@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -141,6 +141,16 @@ TEST(NonZeroBufferSizeValidator, zero) {
 TEST(NonZeroBufferSizeValidator, nonZero) {
     auto bsv = (NonZeroBufferSize)~0;
     EXPECT_EQ(CL_SUCCESS, validateObjects(bsv));
+}
+
+TEST(Platform, givenNullPlatformThenReturnInvalidPlatform) {
+    cl_platform_id platform = nullptr;
+    EXPECT_EQ(CL_INVALID_PLATFORM, validateObjects(platform));
+}
+
+TEST(Platform, givenPlatformThenReturnSUCCESS) {
+    _cl_platform_id clPlatform;
+    EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatform));
 }
 
 typedef ::testing::TestWithParam<size_t> PatternSizeValid;
