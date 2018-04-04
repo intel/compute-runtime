@@ -127,6 +127,9 @@ MemoryManager *CommandStreamReceiver::getMemoryManager() {
 
 void CommandStreamReceiver::setMemoryManager(MemoryManager *mm) {
     memoryManager = mm;
+    if (flatBatchBufferHelper) {
+        flatBatchBufferHelper->setMemoryManager(mm);
+    }
 }
 
 LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {

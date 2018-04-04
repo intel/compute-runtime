@@ -628,7 +628,11 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphi
     auto kernelIsa = graphicsAllocation->getUnderlyingBuffer();
     EXPECT_NE(kernelInfo->heapInfo.pKernelHeap, kernelIsa);
     EXPECT_EQ(0, memcmp(kernelIsa, kernelInfo->heapInfo.pKernelHeap, kernelInfo->heapInfo.pKernelHeader->KernelHeapSize));
-    EXPECT_NE(0u, graphicsAllocation->gpuBaseAddress);
+    if (sizeof(void *) == sizeof(uint32_t)) {
+        EXPECT_EQ(0u, graphicsAllocation->gpuBaseAddress);
+    } else {
+        EXPECT_NE(0u, graphicsAllocation->gpuBaseAddress);
+    }
 }
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelAllocationIsFreed) {

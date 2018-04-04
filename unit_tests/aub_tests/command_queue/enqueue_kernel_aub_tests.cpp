@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -276,7 +276,7 @@ HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIs
 
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
-    pCmdQ->getDevice().getCommandStreamReceiver().overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+    pCmdQ->getDevice().getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto retVal = pCmdQ->enqueueKernel(
         pKernel,

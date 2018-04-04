@@ -484,7 +484,7 @@ struct SubmissionsAggregatorTests : public ::testing::Test {
     template <typename T>
     void overrideCsr(T *newCsr) {
         device->resetCommandStreamReceiver(newCsr);
-        newCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+        newCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     }
 
     std::unique_ptr<MockDevice> device;

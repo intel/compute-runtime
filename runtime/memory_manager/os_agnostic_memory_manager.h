@@ -54,7 +54,7 @@ class OsAgnosticMemoryManager : public MemoryManager {
     OsAgnosticMemoryManager(bool enable64kbPages = false) : MemoryManager(enable64kbPages) {
         uint64_t heap32Base = 0x80000000000ul;
         if (sizeof(uintptr_t) == 4) {
-            heap32Base = 0xC0000000;
+            heap32Base = 0x0;
         }
         allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(heap32Base, GB - 2 * 4096));
     };

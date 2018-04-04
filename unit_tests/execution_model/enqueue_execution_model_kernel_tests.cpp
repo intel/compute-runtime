@@ -564,7 +564,7 @@ HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueuedWithSchedulerReturnInst
 HWTEST_F(ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKernelIsSubmittedThenItIsFlushed) {
     if (pDevice->getSupportedClVersion() >= 20) {
         auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
-        mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+        mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
         auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();

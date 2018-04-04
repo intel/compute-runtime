@@ -25,6 +25,7 @@
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/cache_policy.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/state_base_address.h"
@@ -41,6 +42,7 @@ template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
+    flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));
 }
 
 template <typename GfxFamily>
@@ -64,6 +66,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUF
     *commandBufferMemory = GfxFamily::cmdInitBatchBufferStart;
     commandBufferMemory->setBatchBufferStartAddressGraphicsaddress472(startAddress);
     commandBufferMemory->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+        flatBatchBufferHelper->registerBatchBufferStartAddress(reinterpret_cast<uint64_t>(commandBufferMemory), startAddress);
+    }
 }
 
 template <typename GfxFamily>
@@ -135,7 +140,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     Device *device = this->getMemoryManager()->device;
 
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
-        if (this->dispatchMode == ImmediateDispatch) {
+        if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
             //for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
             levelClosed = true;
@@ -178,6 +183,18 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         this->latestSentTaskCount = taskCount + 1;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", taskCount);
+        if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+            flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
+                                                                  PatchInfoAllocationType::TagAddress,
+                                                                  commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
+                                                                  commandStreamTask.getUsed() - 2 * sizeof(uint64_t),
+                                                                  PatchInfoAllocationType::Default));
+            flatBatchBufferHelper->setPatchInfoData(PatchInfoData(address, 0u,
+                                                                  PatchInfoAllocationType::TagValue,
+                                                                  commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
+                                                                  commandStreamTask.getUsed() - sizeof(uint64_t),
+                                                                  PatchInfoAllocationType::Default));
+        }
     }
 
     if (DebugManager.flags.ForceSLML3Config.get()) {
@@ -277,7 +294,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         latestSentStatelessMocsConfig = requiredL3Index;
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            collectStateBaseAddresPatchInfo(commandStream.getGpuBase(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase, memoryManager->getInternalHeapBaseAddress());
+            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase);
         }
     }
 
@@ -344,6 +361,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
             auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
             addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask));
+            if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+                flatBatchBufferHelper->registerCommandChunk(commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
+                                                            reinterpret_cast<uint64_t>(commandStreamTask.getCpuBase()),
+                                                            commandStreamStartTask,
+                                                            static_cast<uint64_t>(ptrDiff(bbEndLocation,
+                                                                                          commandStreamTask.getGraphicsAllocation()->getGpuAddress())) +
+                                                                sizeof(MI_BATCH_BUFFER_START));
+            }
 
             auto commandStreamAllocation = commandStreamTask.getGraphicsAllocation();
             DEBUG_BREAK_IF(commandStreamAllocation == nullptr);
@@ -418,7 +443,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
-    if (this->dispatchMode == this->ImmediateDispatch) {
+    if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
         return;
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
@@ -449,9 +474,15 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             currentPipeControlForNooping = primaryCmdBuffer->pipeControlThatMayBeErasedLocation;
             epiloguePipeControlLocation = primaryCmdBuffer->epiloguePipeControlLocation;
 
+            if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+                flatBatchBufferHelper->registerCommandChunk(primaryCmdBuffer.get()->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
+            }
             while (nextCommandBuffer && nextCommandBuffer->inspectionId == primaryCmdBuffer->inspectionId) {
                 //noop pipe control
                 if (currentPipeControlForNooping) {
+                    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+                        flatBatchBufferHelper->removePipeControlData(pipeControlLocationSize, currentPipeControlForNooping);
+                    }
                     memset(currentPipeControlForNooping, 0, pipeControlLocationSize);
                 }
                 //obtain next candidate for nooping
@@ -463,6 +494,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer();
                 auto offsetedCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
                 addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer);
+                if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+                    flatBatchBufferHelper->registerCommandChunk(nextCommandBuffer->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
+                }
+
                 currentBBendLocation = nextCommandBuffer->batchBufferEndLocation;
                 lastTaskCount = nextCommandBuffer->taskCount;
                 nextCommandBuffer = nextCommandBuffer->next;
@@ -659,22 +694,19 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     const LinearStream &dsh,
     const LinearStream &ioh,
     const LinearStream &ssh,
-    uint64_t generalStateBase,
-    uint64_t internalHeapOffset) {
+    uint64_t generalStateBase) {
 
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    PatchInfoData dynamicStatePatchInfo = {dsh.getGpuBase(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData dynamicStatePatchInfo = {dsh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::DynamicStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::DYNAMICSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
     PatchInfoData generalStatePatchInfo = {generalStateBase, 0u, PatchInfoAllocationType::GeneralStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::GENERALSTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData surfaceStatePatchInfo = {ssh.getGpuBase(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData indirectObjectPatchInfo = {ioh.getGpuBase(), 0u, PatchInfoAllocationType::IndirectObjectHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
-    PatchInfoData instructionPatchInfo = {internalHeapOffset, 0u, PatchInfoAllocationType::InstructionHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INSTRUCTIONBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData surfaceStatePatchInfo = {ssh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::SurfaceStateHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::SURFACESTATEBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
+    PatchInfoData indirectObjectPatchInfo = {ioh.getGraphicsAllocation()->getGpuAddress(), 0u, PatchInfoAllocationType::IndirectObjectHeap, baseAddress, commandOffset + STATE_BASE_ADDRESS::PATCH_CONSTANTS::INDIRECTOBJECTBASEADDRESS_BYTEOFFSET, PatchInfoAllocationType::Default};
 
-    setPatchInfoData(dynamicStatePatchInfo);
-    setPatchInfoData(generalStatePatchInfo);
-    setPatchInfoData(surfaceStatePatchInfo);
-    setPatchInfoData(indirectObjectPatchInfo);
-    setPatchInfoData(instructionPatchInfo);
+    flatBatchBufferHelper->setPatchInfoData(dynamicStatePatchInfo);
+    flatBatchBufferHelper->setPatchInfoData(generalStatePatchInfo);
+    flatBatchBufferHelper->setPatchInfoData(surfaceStatePatchInfo);
+    flatBatchBufferHelper->setPatchInfoData(indirectObjectPatchInfo);
 }
 
 template <typename GfxFamily>

@@ -44,6 +44,10 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper_hw.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info.h

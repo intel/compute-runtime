@@ -37,9 +37,9 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     : BaseClass(hwInfoIn),
       stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
       standalone(standalone) {
-    this->dispatchMode = CommandStreamReceiver::DispatchMode::BatchedDispatch;
+    this->dispatchMode = DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
-        this->dispatchMode = (CommandStreamReceiver::DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+        this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
@@ -221,8 +221,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
 
     std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(nullptr, [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
-    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get() && (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch)) {
-        flatBatchBuffer.reset(flattenBatchBuffer(batchBuffer, sizeBatchBuffer));
+    if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
+        flatBatchBuffer.reset(this->flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, this->dispatchMode));
         if (flatBatchBuffer.get() != nullptr) {
             pBatchBuffer = flatBatchBuffer.get();
         }
@@ -248,7 +248,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     if (this->standalone) {
-        if (this->dispatchMode == CommandStreamReceiver::DispatchMode::ImmediateDispatch) {
+        if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             if (!DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                 makeResident(*batchBuffer.commandBufferAllocation);
             }
@@ -259,6 +259,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         processResidency(allocationsForResidency);
     }
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(pBatchBuffer)), engineType);
         addPatchInfoComments();
     }
 
@@ -388,31 +389,12 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 }
 
 template <typename GfxFamily>
-void *AUBCommandStreamReceiverHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer) {
-    void *flatBatchBuffer = nullptr;
-
-    if (batchBuffer.chainedBatchBuffer) {
-        batchBuffer.chainedBatchBuffer->setTypeAubNonWritable();
-        auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
-        auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-        flatBatchBuffer = this->getMemoryManager()->alignedMallocWrapper(flatBatchBufferSize, MemoryConstants::pageSize);
-        UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
-        // Copy FLB
-        memcpy_s(flatBatchBuffer, sizeMainBatchBuffer, ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset), sizeMainBatchBuffer);
-        // Copy SLB
-        memcpy_s(ptrOffset(flatBatchBuffer, sizeMainBatchBuffer), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), batchBuffer.chainedBatchBuffer->getUnderlyingBuffer(), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize());
-        sizeBatchBuffer = flatBatchBufferSize;
-    }
-    return flatBatchBuffer;
-}
-
-template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
     std::map<uint64_t, uint64_t> allocationsMap;
 
     std::ostringstream str;
     str << "PatchInfoData" << std::endl;
-    for (auto &patchInfoData : this->patchInfoCollection) {
+    for (auto &patchInfoData : this->flatBatchBufferHelper->getPatchInfoCollection()) {
         str << std::hex << patchInfoData.sourceAllocation << ";";
         str << std::hex << patchInfoData.sourceAllocationOffset << ";";
         str << std::hex << patchInfoData.sourceType << ";";
@@ -432,7 +414,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
         }
     }
     bool result = stream->addComment(str.str().c_str());
-    this->patchInfoCollection.clear();
+    this->flatBatchBufferHelper->getPatchInfoCollection().clear();
     if (!result) {
         return false;
     }
@@ -547,8 +529,41 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addContextToken() {
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::setPatchInfoData(PatchInfoData &data) {
-    patchInfoCollection.push_back(data);
-    return true;
+void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType) {
+    typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
+
+    auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
+
+    std::unique_ptr<void, std::function<void(void *)>> buffer(this->getMemoryManager()->alignedMallocWrapper(bufferSize, MemoryConstants::pageSize), [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
+    LinearStream linearStream(buffer.get(), bufferSize);
+
+    uint32_t *header = static_cast<uint32_t *>(linearStream.getSpace(sizeof(uint32_t)));
+    *header = getGUCWorkQueueItemHeader(engineType);
+
+    MI_BATCH_BUFFER_START *miBatchBufferStart = linearStream.getSpaceForCmd<MI_BATCH_BUFFER_START>();
+    DEBUG_BREAK_IF(bufferSize != linearStream.getUsed());
+    miBatchBufferStart->init();
+    miBatchBufferStart->setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
+    miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+
+    auto physBufferAddres = ppgtt.map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize);
+    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres);
+
+    AUB::addMemoryWrite(
+        *stream,
+        physBufferAddres,
+        buffer.get(),
+        bufferSize,
+        AubMemDump::AddressSpaceValues::TraceNonlocal);
+
+    PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::Default, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::GUCStartMessage);
+    this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
 }
+
+template <typename GfxFamily>
+uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader(EngineType engineType) {
+    uint32_t GUCWorkQueueItemHeader = 0x00030001;
+    return GUCWorkQueueItemHeader;
+}
+
 } // namespace OCLRT

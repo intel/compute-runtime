@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -138,7 +138,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmitt
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChnage) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -153,7 +153,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDone
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsThenTheyHaveHigherTaskLevel) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -172,7 +172,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndBarrierThenCsrTaskLevelIncreases) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -192,7 +192,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndMarkerThenCsrTaskLevelIsNotIncreasing) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
 
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel);
@@ -212,7 +212,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqueueThenSecondHasHigherTaskLevelThenFirst) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     auto currentTaskLevel = this->pCmdQ->taskLevel;
     cl_event retEvent;
     EnqueueKernelHelper<>::enqueueKernel(this->pCmdQ, pKernel, EnqueueKernelTraits::workDim,

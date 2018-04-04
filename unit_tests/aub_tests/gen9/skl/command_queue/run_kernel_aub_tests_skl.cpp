@@ -189,7 +189,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     ASSERT_NE(nullptr, pCmdQ2);
 
     auto &csr = pCmdQ2->getDevice().getCommandStreamReceiver();
-    csr.overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+    csr.overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     retVal = pCmdQ2->enqueueKernel(
         pKernel0,

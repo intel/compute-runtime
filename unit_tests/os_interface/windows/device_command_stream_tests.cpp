@@ -66,7 +66,7 @@ class WddmCommandStreamFixture : public WddmFixtureMock {
         WddmFixtureMock::SetUp();
         ASSERT_NE(wddm, nullptr);
 
-        DebugManager.flags.CsrDispatchMode.set(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+        DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], wddm);
         ASSERT_NE(nullptr, csr);
@@ -105,7 +105,7 @@ class WddmCommandStreamWithMockGdiFixture : public WddmFixture {
     void SetUp() {
         WddmFixture::SetUp(&gdi);
         ASSERT_NE(wddm, nullptr);
-        DebugManager.flags.CsrDispatchMode.set(CommandStreamReceiver::DispatchMode::ImmediateDispatch);
+        DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], wddm);
         ASSERT_NE(nullptr, csr);
 
@@ -651,7 +651,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
     using CommandStreamReceiver::getCS;
     using WddmCommandStreamReceiver<GfxFamily>::pageTableManagerInitialized;
 
-    void overrideDispatchPolicy(CommandStreamReceiver::DispatchMode overrideValue) {
+    void overrideDispatchPolicy(DispatchMode overrideValue) {
         this->dispatchMode = overrideValue;
     }
 
@@ -670,7 +670,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
 HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm));
     mockCsr->setMemoryManager(memManager);
-    mockCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -747,7 +747,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 HWTEST_F(WddmDefaultTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {
     DebugManager.flags.CsrDispatchMode.set(0);
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm));
-    EXPECT_EQ(CommandStreamReceiver::DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
+    EXPECT_EQ(DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
 }
 
 struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
@@ -819,7 +819,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTranslationTableOnce) {
     createMockWddm();
     MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
-    mockWddmCsr.overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockWddmCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
     mockWddmCsr.setMemoryManager(memManager);
@@ -854,7 +854,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     setCompressionEnabled(false);
     createMockWddm();
     MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
-    mockWddmCsr.overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    mockWddmCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 

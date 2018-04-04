@@ -255,7 +255,7 @@ TEST_F(CommandStreamReceiverTest, givenForced32BitAddressingWhenDebugSurfaceIsAl
 
 HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefaultDispatchingPolicyIsImmediateSubmission) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {

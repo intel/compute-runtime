@@ -155,6 +155,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     // Program the kernel start pointer
     pInterfaceDescriptor->setKernelStartPointerHigh(kernelStartOffset >> 32);
     pInterfaceDescriptor->setKernelStartPointer((uint32_t)kernelStartOffset);
+
     // # of threads in thread group should be based on LWS.
     pInterfaceDescriptor->setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
 
@@ -234,10 +235,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
     memcpy_s(pDest, sizeCrossThreadData, kernel.getCrossThreadData(), sizeCrossThreadData);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        for (auto &patchInfoData : kernel.getPatchInfoDataList()) {
-            patchInfoData.targetAllocation = indirectHeap.getGpuBase();
-            patchInfoData.targetAllocationOffset += offsetCrossThreadData;
-        }
+        FlatBatchBufferHelper::fixCrossThreadDataInfo(kernel.getPatchInfoDataList(), offsetCrossThreadData, indirectHeap.getGraphicsAllocation()->getGpuAddress());
     }
 
     return offsetCrossThreadData + static_cast<size_t>(indirectHeap.getHeapGpuStartOffset());
@@ -398,6 +396,11 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         kernel.slmTotalSize,
         !!patchInfo.executionEnvironment->HasBarriers,
         preemptionMode);
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);
+        kernel.getPatchInfoDataList().push_back(patchInfoData);
+    }
 
     // Program media state flush to set interface descriptor offset
     KernelCommandsHelper<GfxFamily>::sendMediaStateFlush(

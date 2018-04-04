@@ -20,22 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_stream/aub_command_stream_receiver_hw.h"
-#include "runtime/command_stream/aub_command_stream_receiver_hw.inl"
-#include "runtime/helpers/base_object.h"
-#include "runtime/helpers/array_count.h"
+#include "hw_cmds.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 
 namespace OCLRT {
 
-typedef BDWFamily Family;
-static auto gfxCore = IGFX_GEN8_CORE;
+typedef SKLFamily Family;
 
 template <>
-void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
-    extern AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE];
-    UNRECOVERABLE_IF(!isInRange(gfxCore, aubCommandStreamReceiverFactory));
-    aubCommandStreamReceiverFactory[gfxCore] = AUBCommandStreamReceiverHw<Family>::create;
+void FlatBatchBufferHelperHw<Family>::sdiSetAddress(typename Family::MI_STORE_DATA_IMM *sdiCommand, uint64_t address) {
+    sdiCommand->setAddressGraphicsaddress472(address);
 }
 
-template class AUBCommandStreamReceiverHw<Family>;
+template <>
+void FlatBatchBufferHelperHw<Family>::sdiSetStoreQword(typename Family::MI_STORE_DATA_IMM *sdiCommand, bool setQword) {
+    sdiCommand->setStoreQword(setQword);
+}
+
+template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

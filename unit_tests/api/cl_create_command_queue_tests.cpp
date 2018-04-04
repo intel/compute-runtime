@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,10 +78,10 @@ HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenComma
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
-    EXPECT_EQ(CommandStreamReceiver::DispatchMode::ImmediateDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 
     auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
-    EXPECT_EQ(CommandStreamReceiver::DispatchMode::BatchedDispatch, csr.dispatchMode);
+    EXPECT_EQ(DispatchMode::BatchedDispatch, csr.dispatchMode);
     retVal = clReleaseCommandQueue(cmdq);
 }
 } // namespace ULT

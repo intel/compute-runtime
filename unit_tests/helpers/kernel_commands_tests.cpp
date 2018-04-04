@@ -245,8 +245,11 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     indirectHeap.getSpace(128u);
 
-    PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
-    kernel->getPatchInfoDataList().push_back(patchInfoData);
+    PatchInfoData patchInfoData1 = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
+    PatchInfoData patchInfoData2 = {0xcccccccc, 0, PatchInfoAllocationType::IndirectObjectHeap, 0xdddddddd, 0, PatchInfoAllocationType::Default};
+
+    kernel->getPatchInfoDataList().push_back(patchInfoData1);
+    kernel->getPatchInfoDataList().push_back(patchInfoData2);
 
     auto offsetCrossThreadData = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
@@ -255,12 +258,12 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     ASSERT_NE(0u, offsetCrossThreadData);
     EXPECT_EQ(128u, offsetCrossThreadData);
 
-    ASSERT_EQ(1u, kernel->getPatchInfoDataList().size());
+    ASSERT_EQ(2u, kernel->getPatchInfoDataList().size());
     EXPECT_EQ(0xaaaaaaaa, kernel->getPatchInfoDataList()[0].sourceAllocation);
     EXPECT_EQ(0u, kernel->getPatchInfoDataList()[0].sourceAllocationOffset);
     EXPECT_EQ(PatchInfoAllocationType::KernelArg, kernel->getPatchInfoDataList()[0].sourceType);
     EXPECT_NE(0xbbbbbbbb, kernel->getPatchInfoDataList()[0].targetAllocation);
-    EXPECT_EQ(indirectHeap.getGpuBase(), kernel->getPatchInfoDataList()[0].targetAllocation);
+    EXPECT_EQ(indirectHeap.getGraphicsAllocation()->getGpuAddress(), kernel->getPatchInfoDataList()[0].targetAllocation);
     EXPECT_NE(0u, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
     EXPECT_EQ(offsetCrossThreadData, kernel->getPatchInfoDataList()[0].targetAllocationOffset);
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);

@@ -27,6 +27,7 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/address_patch.h"
+#include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include <cstddef>
 #include <cstdint>
@@ -40,16 +41,16 @@ class MemoryManager;
 class OSInterface;
 class GraphicsAllocation;
 
+enum class DispatchMode {
+    DeviceDefault = 0,          //default for given device
+    ImmediateDispatch,          //everything is submitted to the HW immediately
+    AdaptiveDispatch,           //dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
+    BatchedDispatchWithCounter, //dispatching is batched, after n commands there is implicit flush (not implemented)
+    BatchedDispatch             // dispatching is batched, explicit clFlush is required
+};
+
 class CommandStreamReceiver {
   public:
-    enum DispatchMode {
-        DeviceDefault = 0,          //default for given device
-        ImmediateDispatch,          //everything is submitted to the HW immediately
-        AdaptiveDispatch,           //dispatching is handled to async thread, which combines batch buffers basing on load (not implemented)
-        BatchedDispatchWithCounter, //dispatching is batched, after n commands there is implicit flush (not implemented)
-        BatchedDispatch             // dispatching is batched, explicit clFlush is required
-    };
-
     enum class SamplerCacheFlushState {
         samplerCacheFlushNotRequired,
         samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image
@@ -102,7 +103,7 @@ class CommandStreamReceiver {
 
     uint32_t peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
 
-    void overrideDispatchPolicy(CommandStreamReceiver::DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
+    void overrideDispatchPolicy(DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
 
     virtual void overrideMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
 
@@ -122,8 +123,8 @@ class CommandStreamReceiver {
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
-    // Collect patch info data
-    virtual bool setPatchInfoData(PatchInfoData &data) { return false; }
+    FlatBatchBufferHelper &getFlatBatchBufferHelper() { return *flatBatchBufferHelper.get(); }
+    void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
   protected:
     void setDisableL3Cache(bool val) {
@@ -167,11 +168,12 @@ class CommandStreamReceiver {
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
-    DispatchMode dispatchMode = ImmediateDispatch;
+    DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
     bool disableL3Cache = false;
     uint32_t requiredScratchSize = 0;
     uint64_t totalMemoryUsed = 0u;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
+    std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);

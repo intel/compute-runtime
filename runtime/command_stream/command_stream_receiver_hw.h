@@ -55,7 +55,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     int getRequiredPipeControlSize() const;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
-    static void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress);
+    void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress);
     static void alignToCacheLine(LinearStream &commandStream);
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
@@ -71,13 +71,12 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     const HardwareInfo &peekHwInfo() const { return hwInfo; }
 
     void collectStateBaseAddresPatchInfo(
-        uint64_t baseAddress,
+        uint64_t commandBufferAddress,
         uint64_t commandOffset,
         const LinearStream &dsh,
         const LinearStream &ioh,
         const LinearStream &ssh,
-        uint64_t generalStateBase,
-        uint64_t internalHeapBaseAddress);
+        uint64_t generalStateBase);
 
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 

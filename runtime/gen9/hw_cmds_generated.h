@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -4162,4 +4162,33 @@ typedef struct tagSTATE_SIP {
     }
 } STATE_SIP;
 STATIC_ASSERT(12 == sizeof(STATE_SIP));
+struct MI_USER_INTERRUPT {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t Reserved_0 : BITFIELD_RANGE(0, 22);
+            uint32_t MICommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+        } Common;
+        uint32_t RawData[1];
+    } TheStructure;
+    enum MI_COMMAND_OPCODE {
+        MI_COMMAND_OPCODE_MI_USER_INTERRUPT = 2,
+    };
+    enum COMMAND_TYPE {
+        COMMAND_TYPE_MI_COMMAND = 0,
+    };
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.MICommandOpcode = MI_COMMAND_OPCODE_MI_USER_INTERRUPT;
+    }
+    static MI_USER_INTERRUPT sInit(void) {
+        MI_USER_INTERRUPT state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        return TheStructure.RawData[index];
+    }
+};
+STATIC_ASSERT(4 == sizeof(MI_USER_INTERRUPT));
 #pragma pack()

@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/flush_stamp.h"
@@ -88,8 +89,6 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     void processEviction() override {
         processEvictionCalled = true;
     }
-
-    MOCK_METHOD1(setPatchInfoData, bool(PatchInfoData &));
 
     ResidencyContainer madeResidentGfxAllocations;
     ResidencyContainer madeNonResidentGfxAllocations;
@@ -200,6 +199,17 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     CommandBuffer recordedCommandBuffer;
     ResidencyContainer copyOfAllocations;
     DispatchFlags passedDispatchFlags = {};
+};
+
+template <typename GfxFamily>
+class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
+  public:
+    MockFlatBatchBufferHelper(MemoryManager *memoryManager) : FlatBatchBufferHelperHw<GfxFamily>(memoryManager) {}
+    MOCK_METHOD1(setPatchInfoData, bool(const PatchInfoData &));
+    MOCK_METHOD1(removePatchInfoData, bool(uint64_t));
+    MOCK_METHOD1(registerCommandChunk, bool(CommandChunk &));
+    MOCK_METHOD2(registerBatchBufferStartAddress, bool(uint64_t, uint64_t));
+    MOCK_METHOD3(flattenBatchBuffer, void *(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode));
 };
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {

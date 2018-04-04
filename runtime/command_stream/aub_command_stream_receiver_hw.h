@@ -63,12 +63,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     MemoryManager *createMemoryManager(bool enable64kbPages) override {
         this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages);
+        this->flatBatchBufferHelper->setMemoryManager(this->memoryManager);
         return this->memoryManager;
     }
-
-    bool setPatchInfoData(PatchInfoData &data) override;
-
-    std::vector<PatchInfoData> patchInfoCollection;
 
     static const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType);
 
@@ -91,7 +88,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;
 
-    MOCKABLE_VIRTUAL void *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer);
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
+    void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);
+    uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
 };
 } // namespace OCLRT

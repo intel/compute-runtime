@@ -232,8 +232,9 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenPatchInfoDataIsNotTransferredToCSR) {
-    int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
+    csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -244,16 +245,18 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
 
-    EXPECT_CALL(*csr, setPatchInfoData(::testing::_)).Times(0);
+    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(0);
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsSetThenPatchInfoDataIsTransferredToCSR) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
+    DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
-    int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
+    csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -264,7 +267,9 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     PatchInfoData patchInfoData = {0xaaaaaaaa, 0, PatchInfoAllocationType::KernelArg, 0xbbbbbbbb, 0, PatchInfoAllocationType::IndirectObjectHeap};
     mockKernel.mockKernel->getPatchInfoDataList().push_back(patchInfoData);
 
-    EXPECT_CALL(*csr, setPatchInfoData(::testing::_)).Times(6);
+    EXPECT_CALL(*mockHelper, setPatchInfoData(::testing::_)).Times(8);
+    EXPECT_CALL(*mockHelper, registerCommandChunk(::testing::_)).Times(1);
+    EXPECT_CALL(*mockHelper, registerBatchBufferStartAddress(::testing::_, ::testing::_)).Times(1);
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 }
 

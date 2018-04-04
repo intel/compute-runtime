@@ -259,7 +259,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 for (auto &patchInfoData : dispatchInfo.getKernel()->getPatchInfoDataList()) {
-                    commandStreamReceiver.setPatchInfoData(patchInfoData);
+                    commandStreamReceiver.getFlatBatchBufferHelper().setPatchInfoData(patchInfoData);
                 }
             }
         }

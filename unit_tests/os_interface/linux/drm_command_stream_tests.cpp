@@ -752,7 +752,7 @@ class DrmCommandStreamEnhancedFixture
             this->gemCloseWorkerOperationMode = overrideValue;
         }
 
-        void overrideDispatchPolicy(CommandStreamReceiver::DispatchMode overrideValue) {
+        void overrideDispatchPolicy(DispatchMode overrideValue) {
             this->dispatchMode = overrideValue;
         }
 
@@ -986,7 +986,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
 }
 
 TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingThenCommandBufferIsNotSubmitted) {
-    tCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
@@ -1046,7 +1046,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 }
 
 TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
-    tCsr->overrideDispatchPolicy(CommandStreamReceiver::DispatchMode::BatchedDispatch);
+    tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
