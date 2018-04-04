@@ -765,6 +765,33 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageUsingSharingHandlerThen
     EXPECT_EQ(result, CL_SUCCESS);
 }
 
+TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageUsingSharingHandlerWithEventThenReturnSuccess) {
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+    MockSharingHandler *mockSharingHandler = new MockSharingHandler;
+
+    auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
+    image->setSharingHandler(mockSharingHandler);
+
+    cl_mem memObject = image.get();
+    cl_uint numObjects = 1;
+    cl_mem *memObjects = &memObject;
+
+    Event *eventAcquire = new Event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
+    cl_event clEventAquire = eventAcquire;
+    cl_int result = cmdQ.enqueueAcquireSharedObjects(numObjects, memObjects, 0, nullptr, &clEventAquire, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    ASSERT_NE(clEventAquire, nullptr);
+    eventAcquire->release();
+
+    Event *eventRelease = new Event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
+    cl_event clEventRelease = eventRelease;
+    result = cmdQ.enqueueReleaseSharedObjects(numObjects, memObjects, 0, nullptr, &clEventRelease, 0);
+    EXPECT_EQ(result, CL_SUCCESS);
+    ASSERT_NE(clEventRelease, nullptr);
+    eventRelease->release();
+}
+
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenIncorrectArgumentsThenReturnProperError) {
     MockContext context;
     CommandQueue cmdQ(&context, nullptr, 0);
