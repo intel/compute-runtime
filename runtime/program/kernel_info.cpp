@@ -27,6 +27,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
 #include "runtime/helpers/string.h"
@@ -499,4 +500,17 @@ size_t KernelInfo::getBorderColorOffset() const {
 uint32_t KernelInfo::getConstantBufferSize() const {
     return patchInfo.dataParameterStream ? patchInfo.dataParameterStream->DataParameterStreamSize : 0;
 }
+
+bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
+    UNRECOVERABLE_IF(kernelAllocation);
+    auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
+    kernelAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, kernelIsaSize);
+    if (kernelAllocation) {
+        memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, heapInfo.pKernelHeap, kernelIsaSize);
+    } else {
+        return false;
+    }
+    return true;
+}
+
 } // namespace OCLRT

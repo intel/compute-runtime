@@ -807,15 +807,7 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
     }
 
     if (kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && this->pDevice) {
-        auto memoryManager = this->pDevice->getMemoryManager();
-        auto kernelIsaSize = kernelInfo.heapInfo.pKernelHeader->KernelHeapSize;
-        auto kernelAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, kernelIsaSize);
-        if (kernelAllocation) {
-            memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, kernelInfo.heapInfo.pKernelHeap, kernelIsaSize);
-            kernelInfo.kernelAllocation = kernelAllocation;
-        } else {
-            retVal = CL_OUT_OF_HOST_MEMORY;
-        }
+        retVal = kernelInfo.createKernelAllocation(this->pDevice->getMemoryManager()) ? CL_SUCCESS : CL_OUT_OF_HOST_MEMORY;
     }
 
     DEBUG_BREAK_IF(kernelInfo.heapInfo.pKernelHeader->KernelHeapSize && !this->pDevice);

@@ -697,6 +697,16 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
     SKernelBinaryHeaderCommon *pHeader = const_cast<SKernelBinaryHeaderCommon *>(pKernelInfo->heapInfo.pKernelHeader);
     pHeader->KernelHeapSize = static_cast<uint32_t>(newKernelHeapSize);
     pKernelInfo->isKernelHeapSubstituted = true;
+
+    auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
+    if (currentAllocationSize >= newKernelHeapSize) {
+        memcpy_s(pKernelInfo->kernelAllocation->getUnderlyingBuffer(), newKernelHeapSize, newKernelHeap, newKernelHeapSize);
+    } else {
+        auto memoryManager = device.getMemoryManager();
+        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(pKernelInfo->kernelAllocation);
+        pKernelInfo->kernelAllocation = nullptr;
+        pKernelInfo->createKernelAllocation(memoryManager);
+    }
 }
 
 bool Kernel::isKernelHeapSubstituted() const {

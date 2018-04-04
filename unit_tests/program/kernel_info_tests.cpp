@@ -21,16 +21,12 @@
  */
 
 #include "runtime/program/kernel_info.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "gtest/gtest.h"
 #include <type_traits>
 #include <memory>
 
-using OCLRT::KernelInfo;
-using OCLRT::SPatchStatelessConstantMemoryObjectKernelArgument;
-using OCLRT::SPatchStatelessGlobalMemoryObjectKernelArgument;
-using OCLRT::SPatchGlobalMemoryObjectKernelArgument;
-using OCLRT::SPatchImageMemoryObjectKernelArgument;
-using OCLRT::SPatchSamplerKernelArgument;
+using namespace OCLRT;
 
 TEST(KernelInfo, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<KernelInfo>::value);
@@ -127,6 +123,42 @@ TEST(KernelInfo, decodeImageKernelArgument) {
     //EXPECT_EQ(CL_KERNEL_ARG_TYPE_NONE, argInfo.typeQualifier);
 
     delete pKernelInfo;
+}
+
+TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
+    KernelInfo kernelInfo;
+    OsAgnosticMemoryManager memoryManager;
+    SKernelBinaryHeaderCommon kernelHeader;
+    const size_t heapSize = 0x40;
+    char heap[heapSize];
+    kernelHeader.KernelHeapSize = heapSize;
+    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    kernelInfo.heapInfo.pKernelHeap = &heap;
+
+    for (size_t i = 0; i < heapSize; i++) {
+        heap[i] = static_cast<char>(i);
+    }
+
+    auto retVal = kernelInfo.createKernelAllocation(&memoryManager);
+    EXPECT_TRUE(retVal);
+    auto allocation = kernelInfo.kernelAllocation;
+    EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
+    EXPECT_EQ(heapSize, allocation->getUnderlyingBufferSize());
+    memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(allocation);
+}
+
+class MyMemoryManager : public OsAgnosticMemoryManager {
+  public:
+    GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) override { return nullptr; }
+};
+
+TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
+    KernelInfo kernelInfo;
+    MyMemoryManager memoryManager;
+    SKernelBinaryHeaderCommon kernelHeader;
+    kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
+    auto retVal = kernelInfo.createKernelAllocation(&memoryManager);
+    EXPECT_FALSE(retVal);
 }
 
 TEST(KernelInfo, decodeGlobalMemObjectKernelArgument) {

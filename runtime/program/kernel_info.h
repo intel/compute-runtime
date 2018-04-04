@@ -43,6 +43,7 @@ struct KernelInfo;
 class DispatchInfo;
 struct KernelArgumentType;
 class GraphicsAllocation;
+class MemoryManager;
 
 extern std::unordered_map<std::string, uint32_t> accessQualifierMap;
 extern std::unordered_map<std::string, uint32_t> addressQualifierMap;
@@ -218,6 +219,8 @@ struct KernelInfo {
         }
         return -1;
     }
+
+    bool createKernelAllocation(MemoryManager *memoryManager);
 
     std::string name;
     std::string attributes;

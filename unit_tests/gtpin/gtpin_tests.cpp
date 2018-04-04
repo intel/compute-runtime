@@ -2044,7 +2044,7 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
 
     // Substitute new kernel code
     constexpr size_t newCodeSize = 64;
-    uint8_t newCode[newCodeSize];
+    uint8_t newCode[newCodeSize] = {0x0, 0x1, 0x2, 0x3, 0x4};
     pKernel->substituteKernelHeap(&newCode[0], newCodeSize);
 
     // Verify that substitution went properly
@@ -2052,6 +2052,10 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_TRUE(isKernelCodeSubstituted);
     uint8_t *pBin2 = reinterpret_cast<uint8_t *>(const_cast<void *>(pKernel->getKernelHeap()));
     EXPECT_EQ(pBin2, &newCode[0]);
+
+    auto kernelIsa = pKernel->getKernelInfo().kernelAllocation->getUnderlyingBuffer();
+
+    EXPECT_EQ(0, memcmp(kernelIsa, newCode, newCodeSize));
 
     // Cleanup
     retVal = clReleaseKernel(kernel);
