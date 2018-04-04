@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -171,6 +171,14 @@ BDWTEST_F(HwInfoConfigTestLinuxBdw, configureHwInfoEdram) {
     EXPECT_EQ(0, ret);
     EXPECT_EQ_VAL((128u * 1024u), outHwInfo.pSysInfo->EdramSizeInKb);
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEDram);
+}
+
+BDWTEST_F(HwInfoConfigTestLinuxBdw, whenCallAdjustPlatformThenDoNothing) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+
+    int ret = memcmp(testHwInfo.pPlatform, pInHwInfo->pPlatform, sizeof(PLATFORM));
+    EXPECT_EQ(0, ret);
 }
 
 template <typename T>

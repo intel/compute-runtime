@@ -251,6 +251,14 @@ GLKTEST_F(HwInfoConfigTestLinuxGlk, configureHwInfoWaFlags) {
     ReleaseOutHwInfoStructs();
 }
 
+GLKTEST_F(HwInfoConfigTestLinuxGlk, whenCallAdjustPlatformThenDoNothing) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+
+    int ret = memcmp(testHwInfo.pPlatform, pInHwInfo->pPlatform, sizeof(PLATFORM));
+    EXPECT_EQ(0, ret);
+}
+
 template <typename T>
 class GlkHwInfoTests : public ::testing::Test {
 };

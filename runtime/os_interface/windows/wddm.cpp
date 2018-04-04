@@ -28,6 +28,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -130,6 +131,9 @@ bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
         outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
         outHardwareInfo.capabilityTable.maxRenderFrequency = wddm->maxRenderFrequency;
         outHardwareInfo.capabilityTable.instrumentationEnabled &= wddm->instrumentationEnabled;
+
+        HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
+        hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
     }
     return success;
 }

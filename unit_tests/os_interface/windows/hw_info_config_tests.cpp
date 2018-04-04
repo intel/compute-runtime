@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_info_config_tests.h"
+#include "unit_tests/os_interface/windows/hw_info_config_tests.h"
 
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm.h"
@@ -35,16 +35,20 @@ int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, 
     return 0;
 }
 
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
+}
+
 void HwInfoConfigTestWindows::SetUp() {
     HwInfoConfigTest::SetUp();
 
-    osInterface = std::make_unique<OSInterface>();
+    osInterface.reset(new OSInterface());
     Wddm::enumAdapters(0, outHwInfo);
+
+    testHwInfo = outHwInfo;
 }
 
 void HwInfoConfigTestWindows::TearDown() {
-    ReleaseOutHwInfoStructs();
-
     HwInfoConfigTest::TearDown();
 }
 

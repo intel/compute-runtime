@@ -204,6 +204,14 @@ CFLTEST_F(HwInfoConfigTestLinuxCfl, configureHwInfoEdram) {
     EXPECT_EQ(1u, outHwInfo.pSkuTable->ftrEDram);
 }
 
+CFLTEST_F(HwInfoConfigTestLinuxCfl, whenCallAdjustPlatformThenDoNothing) {
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+
+    int ret = memcmp(testHwInfo.pPlatform, pInHwInfo->pPlatform, sizeof(PLATFORM));
+    EXPECT_EQ(0, ret);
+}
+
 template <typename T>
 class CflHwInfoTests : public ::testing::Test {
 };

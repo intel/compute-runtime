@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ class HwInfoConfig {
     }
     int configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface);
     virtual int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) = 0;
-
+    virtual void adjustPlatformForProductFamily(HardwareInfo *hwInfo) = 0;
     uint32_t threadsPerEu;
 };
 
@@ -53,6 +53,7 @@ class HwInfoConfigHw : public HwInfoConfig {
         return &instance;
     }
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) override;
+    void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
 
   protected:
     HwInfoConfigHw() {}

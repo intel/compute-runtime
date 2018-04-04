@@ -56,6 +56,10 @@ int HwInfoConfigHw<IGFX_UNKNOWN>::configureHardwareCustom(HardwareInfo *hwInfo, 
     return (pPlatform->usDeviceID == 10) ? -1 : 0;
 }
 
+template <>
+void HwInfoConfigHw<IGFX_UNKNOWN>::adjustPlatformForProductFamily(HardwareInfo *hwInfo) {
+}
+
 } // namespace OCLRT
 
 struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
@@ -80,6 +84,7 @@ void HwInfoConfigTestLinux::SetUp() {
 
     rt_cpuidex_func = CpuInfo::cpuidexFunc;
     CpuInfo::cpuidexFunc = mockCpuidex;
+    testHwInfo = *pInHwInfo;
 }
 
 void HwInfoConfigTestLinux::TearDown() {

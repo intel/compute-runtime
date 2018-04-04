@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.inl"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
 
@@ -113,4 +114,5 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     return 0;
 }
 
+template class HwInfoConfigHw<IGFX_BROXTON>;
 } // namespace OCLRT

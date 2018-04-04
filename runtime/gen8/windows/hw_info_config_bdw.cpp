@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.inl"
 
 namespace OCLRT {
 
@@ -30,4 +31,5 @@ int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo
     return 0;
 }
 
+template class HwInfoConfigHw<IGFX_BROADWELL>;
 } // namespace OCLRT

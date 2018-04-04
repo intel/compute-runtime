@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.inl"
 #include "runtime/gen_common/hw_cmds.h"
 
 namespace OCLRT {
@@ -115,4 +116,5 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     return 0;
 }
 
+template class HwInfoConfigHw<IGFX_SKYLAKE>;
 } // namespace OCLRT

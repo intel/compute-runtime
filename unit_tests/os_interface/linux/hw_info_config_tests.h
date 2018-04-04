@@ -41,4 +41,6 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     DrmMock *drm;
 
     void (*rt_cpuidex_func)(int *, int, int);
+
+    HardwareInfo testHwInfo;
 };

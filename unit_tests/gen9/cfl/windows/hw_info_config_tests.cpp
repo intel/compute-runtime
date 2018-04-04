@@ -20,25 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "runtime/os_interface/windows/os_interface.h"
+#include "unit_tests/os_interface/windows/hw_info_config_tests.h"
 
-#include "runtime/os_interface/hw_info_config.h"
-#include "unit_tests/os_interface/hw_info_config_tests.h"
+using namespace OCLRT;
+using namespace std;
 
-#include <memory>
+using HwInfoConfigTestWindowsCfl = HwInfoConfigTestWindows;
 
-namespace OCLRT {
+CFLTEST_F(HwInfoConfigTestWindowsCfl, whenCallAdjustPlatformThenDoNothing) {
+    EXPECT_EQ(IGFX_COFFEELAKE, productFamily);
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
 
-struct DummyHwConfig : HwInfoConfigHw<IGFX_UNKNOWN> {
-};
-
-struct HwInfoConfigTestWindows : public HwInfoConfigTest {
-    void SetUp() override;
-    void TearDown() override;
-
-    std::unique_ptr<OSInterface> osInterface;
-    HardwareInfo testHwInfo;
-    DummyHwConfig hwConfig;
-};
-
-} // namespace OCLRT
+    int ret = memcmp(outHwInfo.pPlatform, testHwInfo.pPlatform, sizeof(PLATFORM));
+    EXPECT_EQ(0, ret);
+}
