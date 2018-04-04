@@ -9,7 +9,7 @@
 Example:
 
 ```shell
-sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev 
+sudo apt-get install build-essential ccache flex bison clang-4.0 cmake g++ git patch python zlib1g-dev 
 ```
 
 See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md) for other requirements and dependencies, when building and installing NEO.
