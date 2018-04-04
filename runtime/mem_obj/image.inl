@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -110,7 +110,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     surfaceState->setRenderTargetViewExtent(renderTargetViewExtent);
     surfaceState->setMinimumArrayElement(minimumArrayElement);
     surfaceState->setSurfaceMinLod(this->mipLevel + mipLevel);
-    surfaceState->setMipCountLod(this->mipCount - 1);
+    surfaceState->setMipCountLod((this->mipCount > 0) ? (this->mipCount - 1) : 0);
 
     // SurfaceQpitch is in rows but must be a multiple of VALIGN
     surfaceState->setSurfaceQpitch(qPitch);
