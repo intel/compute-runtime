@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -624,6 +624,33 @@ TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_SAMPLES) {
     EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_NUM_SAMPLES, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
 
     EXPECT_EQ(offsetNumSamples, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumSamples);
+}
+
+TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS) {
+    uint32_t argumentNumber = 1;
+    uint32_t alignment = 16;
+    uint32_t offsetNumMipLevels = 60;
+
+    SPatchDataParameterBuffer dataParameterToken;
+    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
+    dataParameterToken.Type = DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS;
+    dataParameterToken.ArgumentNumber = argumentNumber;
+    dataParameterToken.Offset = offsetNumMipLevels;
+    dataParameterToken.DataSize = sizeof(uint32_t);
+    dataParameterToken.SourceOffset = alignment;
+    dataParameterToken.LocationIndex = 0x0;
+    dataParameterToken.LocationIndex2 = 0x0;
+
+    pPatchList = &dataParameterToken;
+    patchListSize = dataParameterToken.Size;
+
+    buildAndDecode();
+
+    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
+    EXPECT_EQ_VAL(DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+
+    EXPECT_EQ(offsetNumMipLevels, pKernelInfo->kernelArgInfo[argumentNumber].offsetNumMipLevels);
 }
 
 TEST_F(KernelDataTest, DATA_PARAMETER_IMAGE_DATA_TYPE) {

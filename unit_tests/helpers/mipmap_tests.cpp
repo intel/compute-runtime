@@ -24,6 +24,7 @@
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_image.h"
 
 #include "gtest/gtest.h"
 
@@ -107,40 +108,17 @@ struct MockMipMapGmmResourceInfo : GmmResourceInfo {
     }
 };
 
-struct MockImage : public OCLRT::Image {
-    using Image::imageDesc;
-    using Image::graphicsAllocation;
-
+struct MockImage : MockImageBase {
     MockGmm mockGmm;
 
-    MockImage() : Image(nullptr, cl_mem_flags{}, 0, nullptr, cl_image_format{},
-                        cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false, false,
-                        0, 0, SurfaceFormatInfo{}, nullptr) {
+    MockImage() : MockImageBase() {
         graphicsAllocation->gmm = &mockGmm;
         mockGmm.gmmResourceInfo.reset(new MockMipMapGmmResourceInfo());
-    }
-    ~MockImage() override {
-        delete this->graphicsAllocation;
-    }
-
-    MockGraphicsAllocation *getAllocation() {
-        return static_cast<MockGraphicsAllocation *>(graphicsAllocation);
     }
 
     MockMipMapGmmResourceInfo *getResourceInfo() {
         return static_cast<MockMipMapGmmResourceInfo *>(mockGmm.gmmResourceInfo.get());
     }
-
-    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) override {
-    }
-    void setMediaImageArg(void *memory) override {
-    }
-    void setMediaSurfaceRotation(void *memory) override {
-    }
-    void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {
-    }
-    void transformImage2dArrayTo3d(void *memory) override {}
-    void transformImage3dTo2dArray(void *memory) override {}
 };
 
 TEST(MipmapHelper, givenImageWithoutMipLevelsWhenIsMipMappedIsCalledThenFalseIsReturned) {

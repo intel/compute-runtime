@@ -430,6 +430,11 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                 break;
 
             case DATA_PARAMETER_IMAGE_NUM_MIP_LEVELS:
+                DBG_LOG(LogPatchTokens, "\n  .Type", "IMAGE_NUM_MIP_LEVELS");
+                kernelInfo.resizeKernelArgInfoAndRegisterParameter(argNum);
+                kernelInfo.kernelArgInfo[argNum].offsetNumMipLevels = pDataParameterBuffer->Offset;
+                DEBUG_BREAK_IF(pDataParameterBuffer->DataSize != sizeof(uint32_t));
+                break;
             case DATA_PARAMETER_IMAGE_SRGB_CHANNEL_ORDER:
             case DATA_PARAMETER_STAGE_IN_GRID_ORIGIN:
             case DATA_PARAMETER_STAGE_IN_GRID_SIZE:

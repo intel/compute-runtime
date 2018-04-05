@@ -67,6 +67,7 @@ struct KernelArgInfo {
     uint32_t offsetVmeSearchPathType = undefinedOffset;
     uint32_t offsetObjectId = undefinedOffset;
     uint32_t offsetBufferOffset = undefinedOffset;
+    uint32_t offsetNumMipLevels = undefinedOffset;
 
     bool needPatch = false;
     bool isTransformable = false;
