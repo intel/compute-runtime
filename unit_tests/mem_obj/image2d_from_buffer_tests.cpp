@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -91,12 +91,12 @@ TEST_F(Image2dFromBufferTest, CreateImage2dFromBuffer) {
     EXPECT_EQ(1, buffer->getRefInternalCount());
 }
 
-TEST_F(Image2dFromBufferTest, InvalidImageType) {
+TEST_F(Image2dFromBufferTest, givenBufferWhenCreateImage2dArrayFromBufferThenImageDescriptorIsInvalid) {
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
     retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
-    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
 }
 TEST_F(Image2dFromBufferTest, CalculateRowPitch) {
     auto imageFromBuffer = createImage();

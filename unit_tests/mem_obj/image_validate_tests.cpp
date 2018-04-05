@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,11 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/helpers/convert_color.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -769,3 +771,124 @@ INSTANTIATE_TEST_CASE_P(
     NormalizingFactorTests,
     NormalizingFactorTests,
     ::testing::ValuesIn(normalizingFactorValues));
+
+using ValidParentImageFormatTest = ::testing::TestWithParam<std::tuple<uint32_t, uint32_t>>;
+
+cl_channel_order allChannelOrders[] = {CL_R, CL_A, CL_RG, CL_RA, CL_RGB, CL_RGBA, CL_BGRA, CL_ARGB, CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx, CL_DEPTH, CL_DEPTH_STENCIL, CL_sRGB,
+                                       CL_sRGBx, CL_sRGBA, CL_sBGRA, CL_ABGR, CL_NV12_INTEL};
+
+struct NullImage : public Image {
+    using Image::imageDesc;
+    using Image::imageFormat;
+
+    NullImage() : Image(nullptr, cl_mem_flags{}, 0, nullptr, cl_image_format{},
+                        cl_image_desc{}, false, new MockGraphicsAllocation(nullptr, 0), false, false,
+                        0, 0, SurfaceFormatInfo{}, nullptr) {
+    }
+    ~NullImage() override {
+        delete this->graphicsAllocation;
+    }
+    void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) override {}
+    void setMediaImageArg(void *memory) override {}
+    void setMediaSurfaceRotation(void *memory) override {}
+    void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
+    void transformImage2dArrayTo3d(void *memory) override {}
+    void transformImage3dTo2dArray(void *memory) override {}
+};
+
+TEST_P(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannelOrdersThenReturnTrueForValidChannelOrder) {
+    cl_image_format parentImageFormat;
+    cl_image_format imageFormat;
+    cl_channel_order validChannelOrder;
+    NullImage image;
+    std::tie(parentImageFormat.image_channel_order, validChannelOrder) = GetParam();
+    parentImageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    image.imageFormat = parentImageFormat;
+
+    bool retVal;
+    for (unsigned int i = 0; i < ARRAY_COUNT(allChannelOrders); i++) {
+        imageFormat.image_channel_order = allChannelOrders[i];
+        retVal = image.hasValidParentImageFormat(imageFormat);
+        EXPECT_EQ(imageFormat.image_channel_order == validChannelOrder, retVal);
+    }
+};
+std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
+    std::make_tuple(CL_BGRA, CL_sBGRA),
+    std::make_tuple(CL_sBGRA, CL_BGRA),
+    std::make_tuple(CL_RGBA, CL_sRGBA),
+    std::make_tuple(CL_sRGBA, CL_RGBA),
+    std::make_tuple(CL_RGB, CL_sRGB),
+    std::make_tuple(CL_sRGB, CL_RGB),
+    std::make_tuple(CL_RGBx, CL_sRGBx),
+    std::make_tuple(CL_sRGBx, CL_RGBx),
+    std::make_tuple(CL_R, CL_DEPTH),
+    std::make_tuple(CL_A, 0),
+    std::make_tuple(CL_RG, 0),
+    std::make_tuple(CL_RA, 0),
+    std::make_tuple(CL_ARGB, 0),
+    std::make_tuple(CL_INTENSITY, 0),
+    std::make_tuple(CL_LUMINANCE, 0),
+    std::make_tuple(CL_Rx, 0),
+    std::make_tuple(CL_RGx, 0),
+    std::make_tuple(CL_DEPTH, 0),
+    std::make_tuple(CL_DEPTH_STENCIL, 0),
+    std::make_tuple(CL_ABGR, 0),
+    std::make_tuple(CL_NV12_INTEL, 0)};
+
+INSTANTIATE_TEST_CASE_P(
+    ValidParentImageFormatTests,
+    ValidParentImageFormatTest,
+    ::testing::ValuesIn(imageFromImageValidChannelOrderPairs));
+
+TEST(ImageDescriptorComparatorTest, givenImageWhenCallHasSameDescriptorWithSameDescriptorThenReturnTrueOtherwiseFalse) {
+    NullImage image;
+    cl_image_desc descriptor = image.imageDesc;
+    image.imageDesc.image_row_pitch = image.getHostPtrRowPitch() + 10; // to make sure we compare host ptr row/slice pitches
+    image.imageDesc.image_slice_pitch = image.getHostPtrSlicePitch() + 10;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_type++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_type--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_width++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_width--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_height++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_height--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_depth++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_depth--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_array_size++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_array_size--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_row_pitch++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_row_pitch--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.image_slice_pitch++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.image_slice_pitch--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.num_mip_levels++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+    descriptor.num_mip_levels--;
+    EXPECT_TRUE(image.hasSameDescriptor(descriptor));
+    descriptor.num_samples++;
+    EXPECT_FALSE(image.hasSameDescriptor(descriptor));
+};
+
+TEST(ImageFormatValidatorTest, givenValidParentChannelOrderAndChannelOrderWhenFormatsHaveDifferentDataTypeThenHasValidParentImageFormatReturnsFalse) {
+    cl_image_format imageFormat;
+    NullImage image;
+    image.imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    image.imageFormat.image_channel_order = CL_BGRA;
+    imageFormat.image_channel_data_type = CL_UNORM_INT16;
+    imageFormat.image_channel_order = CL_sBGRA;
+    EXPECT_FALSE(image.hasValidParentImageFormat(imageFormat));
+};

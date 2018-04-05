@@ -187,6 +187,9 @@ class Image : public MemObj {
 
     const bool isTiledImage;
 
+    bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
+    bool hasValidParentImageFormat(const cl_image_format &imageFormat) const;
+
   protected:
     Image(Context *context,
           cl_mem_flags flags,

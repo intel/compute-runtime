@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -675,4 +675,200 @@ TEST_F(clCreateImage3DTest, GivenInvalidContextsWhenImageIsCreatedThenReturnsFai
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
     EXPECT_EQ(nullptr, image);
 }
-} // namespace ULT
+
+typedef clCreateImageTests<::testing::Test> clCreateImageFromImageTest;
+
+TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithTheSameDescriptorAndValidFormatThenReturnsSuccess) {
+
+    imageFormat.image_channel_order = CL_BGRA;
+
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_width), &imageDesc.image_width, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_height), &imageDesc.image_height, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_DEPTH, sizeof(imageDesc.image_depth), &imageDesc.image_depth, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ROW_PITCH, sizeof(imageDesc.image_row_pitch), &imageDesc.image_row_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_SLICE_PITCH, sizeof(imageDesc.image_slice_pitch), &imageDesc.image_slice_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_MIP_LEVELS, sizeof(imageDesc.num_mip_levels), &imageDesc.num_mip_levels, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_SAMPLES, sizeof(imageDesc.num_samples), &imageDesc.num_samples, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ARRAY_SIZE, sizeof(imageDesc.image_array_size), &imageDesc.image_array_size, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    imageDesc.mem_object = image;
+    imageFormat.image_channel_order = CL_sBGRA;
+
+    auto imageFromImageObject = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, imageFromImageObject);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseMemObject(imageFromImageObject);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithDifferentDescriptorAndValidFormatThenReturnsError) {
+
+    imageFormat.image_channel_order = CL_BGRA;
+
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_width), &imageDesc.image_width, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_height), &imageDesc.image_height, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_DEPTH, sizeof(imageDesc.image_depth), &imageDesc.image_depth, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ROW_PITCH, sizeof(imageDesc.image_row_pitch), &imageDesc.image_row_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_SLICE_PITCH, sizeof(imageDesc.image_slice_pitch), &imageDesc.image_slice_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_MIP_LEVELS, sizeof(imageDesc.num_mip_levels), &imageDesc.num_mip_levels, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_SAMPLES, sizeof(imageDesc.num_samples), &imageDesc.num_samples, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ARRAY_SIZE, sizeof(imageDesc.image_array_size), &imageDesc.image_array_size, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    imageDesc.mem_object = image;
+    imageDesc.image_width++;
+    imageFormat.image_channel_order = CL_sBGRA;
+
+    auto imageFromImageObject = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, imageFromImageObject);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithTheSameDescriptorAndNotValidFormatThenReturnsError) {
+
+    imageFormat.image_channel_order = CL_BGRA;
+
+    auto image = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, image);
+
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_width), &imageDesc.image_width, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_WIDTH, sizeof(imageDesc.image_height), &imageDesc.image_height, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_DEPTH, sizeof(imageDesc.image_depth), &imageDesc.image_depth, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ROW_PITCH, sizeof(imageDesc.image_row_pitch), &imageDesc.image_row_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_SLICE_PITCH, sizeof(imageDesc.image_slice_pitch), &imageDesc.image_slice_pitch, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_MIP_LEVELS, sizeof(imageDesc.num_mip_levels), &imageDesc.num_mip_levels, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_NUM_SAMPLES, sizeof(imageDesc.num_samples), &imageDesc.num_samples, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    retVal = clGetImageInfo(image, CL_IMAGE_ARRAY_SIZE, sizeof(imageDesc.image_array_size), &imageDesc.image_array_size, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    imageDesc.mem_object = image;
+    imageFormat.image_channel_order = CL_BGRA;
+
+    auto imageFromImageObject = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, imageFromImageObject);
+
+    retVal = clReleaseMemObject(image);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+uint32_t non2dImageTypes[] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER, CL_MEM_OBJECT_IMAGE2D_ARRAY, CL_MEM_OBJECT_IMAGE3D};
+
+struct clCreateNon2dImageFromImageTest : public clCreateImageFromImageTest,
+                                         public ::testing::WithParamInterface<uint32_t /*image type*/> {
+    void SetUp() override {
+        clCreateImageFromImageTest::SetUp();
+        image = clCreateImage(
+            pContext,
+            CL_MEM_READ_ONLY,
+            &imageFormat,
+            &imageDesc,
+            nullptr,
+            &retVal);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, image);
+        imageDesc.mem_object = image;
+    }
+    void TearDown() override {
+        retVal = clReleaseMemObject(image);
+        clCreateImageFromImageTest::TearDown();
+    }
+    cl_mem image;
+};
+
+TEST_P(clCreateNon2dImageFromImageTest, givenImage2dWhenCreateImageFromNon2dImageThenReturnsError) {
+
+    imageDesc.image_type = GetParam();
+    auto imageFromImageObject = clCreateImage(
+        pContext,
+        CL_MEM_READ_ONLY,
+        &imageFormat,
+        &imageDesc,
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(nullptr, imageFromImageObject);
+}
+
+INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
+                        clCreateNon2dImageFromImageTest,
+                        ::testing::ValuesIn(non2dImageTypes));
+}

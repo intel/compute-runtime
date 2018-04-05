@@ -171,17 +171,17 @@ Image *Image::create(Context *context,
         }
 
         if (parentImage) {
-            DEBUG_BREAK_IF(!IsNV12Image(&parentImage->getImageFormat()));
             imageWidth = parentImage->getImageDesc().image_width;
             imageHeight = parentImage->getImageDesc().image_height;
             imageDepth = 1;
-
-            if (imageDesc->image_depth == 1) { // UV Plane
-                imageWidth /= 2;
-                imageHeight /= 2;
-                imgInfo.plane = GMM_PLANE_U;
-            } else {
-                imgInfo.plane = GMM_PLANE_Y;
+            if (IsNV12Image(&parentImage->getImageFormat())) {
+                if (imageDesc->image_depth == 1) { // UV Plane
+                    imageWidth /= 2;
+                    imageHeight /= 2;
+                    imgInfo.plane = GMM_PLANE_U;
+                } else {
+                    imgInfo.plane = GMM_PLANE_Y;
+                }
             }
 
             imgInfo.surfaceFormat = &parentImage->surfaceFormatInfo;
@@ -215,10 +215,7 @@ Image *Image::create(Context *context,
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
                 }
             }
-        }
-        // NV12 image planes
-        else if (parentImage != nullptr) {
-            DEBUG_BREAK_IF(!IsNV12Image(&parentImage->getImageFormat()));
+        } else if (parentImage != nullptr) {
             memory = parentImage->getGraphicsAllocation();
             memory->gmm->queryImageParams(imgInfo, hwInfo);
             isTilingAllowed = parentImage->allowTiling();
@@ -430,6 +427,9 @@ cl_int Image::validate(Context *context,
     if (!surfaceFormat) {
         return CL_IMAGE_FORMAT_NOT_SUPPORTED;
     }
+
+    Image *parentImage = castToObject<Image>(imageDesc->mem_object);
+    Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     switch (imageDesc->image_type) {
 
     case CL_MEM_OBJECT_IMAGE2D:
@@ -439,20 +439,21 @@ cl_int Image::validate(Context *context,
             imageDesc->image_height > *maxHeight) {
             retVal = CL_INVALID_IMAGE_SIZE;
         }
-        if (imageDesc->mem_object != nullptr) {
-            // Image2d from buffer
-            Buffer *inputBuffer = castToObject<Buffer>(imageDesc->mem_object);
-            if (inputBuffer != nullptr) {
-                pDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
-                pDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
+        if (parentBuffer) { // Image 2d from buffer
+            pDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
+            pDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
 
-                if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
-                    ((inputBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(inputBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
-                    (imageDesc->image_height * (imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : imageDesc->image_width) > inputBuffer->getSize())) {
-                    retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
-                } else if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
-                    retVal = CL_INVALID_VALUE;
-                }
+            if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
+                ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
+                (imageDesc->image_height * (imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : imageDesc->image_width) > parentBuffer->getSize())) {
+                retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+            } else if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
+                retVal = CL_INVALID_VALUE;
+            }
+        }
+        if (parentImage && !IsNV12Image(&parentImage->getImageFormat())) { // Image 2d from image 2d
+            if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
+                retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
         } else if (imageDesc->image_width == 0 ||
                    imageDesc->image_height == 0) {
@@ -460,6 +461,9 @@ cl_int Image::validate(Context *context,
         }
         break;
     default:
+        if (parentImage) {
+            retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+        }
         break;
     }
     if (hostPtr == nullptr) {
@@ -475,8 +479,12 @@ cl_int Image::validate(Context *context,
         }
     }
 
-    if ((imageDesc->mem_object != nullptr) && (imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER) && (imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D)) {
-        retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    if (parentBuffer && imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+        retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+    }
+
+    if (parentImage && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
+        retVal = CL_INVALID_IMAGE_DESCRIPTOR;
     }
 
     if (retVal != CL_SUCCESS) {
@@ -1256,4 +1264,44 @@ bool Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, 
     uint32_t mipLevel = findMipLevel(imgDesc.image_type, origin);
     return mipLevel < imgDesc.num_mip_levels;
 }
-} // namespace OCLRT
+
+bool Image::hasSameDescriptor(const cl_image_desc &imageDesc) const {
+    return this->imageDesc.image_type == imageDesc.image_type &&
+           this->imageDesc.image_width == imageDesc.image_width &&
+           this->imageDesc.image_height == imageDesc.image_height &&
+           this->imageDesc.image_depth == imageDesc.image_depth &&
+           this->imageDesc.image_array_size == imageDesc.image_array_size &&
+           this->hostPtrRowPitch == imageDesc.image_row_pitch &&
+           this->hostPtrSlicePitch == imageDesc.image_slice_pitch &&
+           this->imageDesc.num_mip_levels == imageDesc.num_mip_levels &&
+           this->imageDesc.num_samples == imageDesc.num_samples;
+}
+
+bool Image::hasValidParentImageFormat(const cl_image_format &imageFormat) const {
+    if (this->imageFormat.image_channel_data_type != imageFormat.image_channel_data_type) {
+        return false;
+    }
+    switch (this->imageFormat.image_channel_order) {
+    case CL_BGRA:
+        return imageFormat.image_channel_order == CL_sBGRA;
+    case CL_sBGRA:
+        return imageFormat.image_channel_order == CL_BGRA;
+    case CL_RGBA:
+        return imageFormat.image_channel_order == CL_sRGBA;
+    case CL_sRGBA:
+        return imageFormat.image_channel_order == CL_RGBA;
+    case CL_RGB:
+        return imageFormat.image_channel_order == CL_sRGB;
+    case CL_sRGB:
+        return imageFormat.image_channel_order == CL_RGB;
+    case CL_RGBx:
+        return imageFormat.image_channel_order == CL_sRGBx;
+    case CL_sRGBx:
+        return imageFormat.image_channel_order == CL_RGBx;
+    case CL_R:
+        return imageFormat.image_channel_order == CL_DEPTH;
+    default:
+        return false;
+    }
+}
+}
