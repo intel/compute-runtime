@@ -24,7 +24,6 @@ Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler
 Google Test v1.7.0 - https://github.com/google/googletest  
 Google Mock v1.7.0 - https://github.com/google/googlemock  
 Khronos OpenCL Headers - https://github.com/KhronosGroup/OpenCL-Headers  
-LibDRM - https://anongit.freedesktop.org/git/mesa/drm.git  
 
 ## Supported Platforms
 
