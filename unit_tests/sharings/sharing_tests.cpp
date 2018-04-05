@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -69,4 +69,39 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
 
     EXPECT_EQ(sharingHandler.acquire(memObj.get()), 1u);
     EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
+}
+
+TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoTimesToReleaseObject) {
+    char buffer[64];
+    MockContext context;
+    MockGraphicsAllocation *mockAllocation = new MockGraphicsAllocation(buffer, sizeof(buffer));
+    std::unique_ptr<MemObj> memObj(new MemObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                                              sizeof(buffer), buffer, buffer, mockAllocation, true, false, false));
+
+    struct MockSharingHandler : SharingHandler {
+        MockSharingHandler() {
+            releaseCount = 0;
+        }
+        unsigned int acquire(MemObj *memObj) {
+            SharingHandler::acquire(memObj);
+            return acquireCount;
+        }
+        unsigned int release(MemObj *memObj) {
+            SharingHandler::release(memObj);
+            return acquireCount;
+        }
+        void synchronizeObject(UpdateData *updateData) override {
+            updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+        }
+        void releaseResource(MemObj *memObject) override {
+            releaseCount++;
+        };
+        int releaseCount;
+    } sharingHandler;
+
+    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 1u);
+    EXPECT_EQ(sharingHandler.acquire(memObj.get()), 2u);
+    EXPECT_EQ(sharingHandler.release(memObj.get()), 1u);
+    EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
+    EXPECT_EQ(sharingHandler.releaseCount, 1);
 }
