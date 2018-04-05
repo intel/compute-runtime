@@ -239,35 +239,7 @@ IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
     }
 
     if (!heapMemory) {
-        size_t reservedSize = 0;
-        auto finalHeapSize = defaultHeapSize;
-
-        minRequiredSize += reservedSize;
-
-        finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
-
-        heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize).release();
-
-        if (!heapMemory) {
-            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
-        } else {
-            finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
-        }
-
-        heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
-
-        if (IndirectHeap::SURFACE_STATE == heapType) {
-            DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
-            finalHeapSize = maxSshSize;
-        }
-
-        if (heap) {
-            heap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
-            heap->replaceGraphicsAllocation(heapMemory);
-        } else {
-            heap = new IndirectHeap(heapMemory);
-            heap->overrideMaxSize(finalHeapSize);
-        }
+        allocateHeapMemory(heapType, minRequiredSize, heap);
     }
 
     return *heap;
@@ -650,4 +622,37 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     return true;
 }
 
+void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType,
+                                      size_t minRequiredSize, IndirectHeap *&indirectHeap) {
+    auto memoryManager = device->getMemoryManager();
+    size_t reservedSize = 0;
+    auto finalHeapSize = defaultHeapSize;
+
+    minRequiredSize += reservedSize;
+
+    finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
+
+    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize).release();
+
+    if (!heapMemory) {
+        heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
+    } else {
+        finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
+    }
+
+    heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+
+    if (IndirectHeap::SURFACE_STATE == heapType) {
+        DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
+        finalHeapSize = maxSshSize;
+    }
+
+    if (indirectHeap) {
+        indirectHeap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
+        indirectHeap->replaceGraphicsAllocation(heapMemory);
+    } else {
+        indirectHeap = new IndirectHeap(heapMemory);
+        indirectHeap->overrideMaxSize(finalHeapSize);
+    }
+}
 } // namespace OCLRT

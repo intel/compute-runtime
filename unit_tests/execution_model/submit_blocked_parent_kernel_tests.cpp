@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
@@ -65,18 +66,18 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
         return igilCmdQueue->m_controls.m_CriticalSection == DeviceQueueHw<GfxFamily>::ExecutionModelCriticalSection::Free;
     }
 
-    void setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override {
+    void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override {
         indirectStateSetup = true;
-        return BaseClass::setupIndirectState(surfaceStateHeap, parentKernel, parentIDCount);
+        return BaseClass::setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentIDCount);
     }
     void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) override {
         cleanupSectionAdded = true;
         timestampAddedInCleanupSection = hwTimeStamp;
         return BaseClass::addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
     }
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) override {
+    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override {
         schedulerDispatched = true;
-        return BaseClass::dispatchScheduler(cmdQ, scheduler, preemptionMode);
+        return BaseClass::dispatchScheduler(cmdQ, scheduler, preemptionMode, ssh, dsh);
     }
 
     uint32_t criticalSectioncheckCounter = 0;
@@ -98,17 +99,22 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
         mockDevQueue.acquireEMCriticalSection();
 
         size_t heapSize = 20;
-        size_t alignement = 64;
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -124,7 +130,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenDeviceQueueDshIsUsed) {
+HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*device);
@@ -135,14 +141,19 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         auto *dshOfDevQueue = mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+
         // add initial offset of colorCalState
         dsh->getSpace(DeviceQueue::colorCalcStateSize);
 
         uint64_t ValueToFillDsh = 5;
         uint64_t *dshVal = (uint64_t *)dsh->getSpace(sizeof(uint64_t));
+
         // Fill Interface Descriptor Data
         *dshVal = ValueToFillDsh;
 
@@ -155,15 +166,15 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         *dshVal = ValueToFillDsh;
 
         size_t usedDSHBeforeSubmit = dshOfDevQueue->getUsed();
-        uint64_t *devQueueDshValue = (uint64_t *)dshOfDevQueue->getSpace(0);
 
         uint32_t colorCalcSizeDevQueue = DeviceQueue::colorCalcStateSize;
         EXPECT_EQ(colorCalcSizeDevQueue, usedDSHBeforeSubmit);
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -175,13 +186,9 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 
         cmdComputeKernel->submit(0, false);
 
+        //device queue dsh is not changed
         size_t usedDSHAfterSubmit = dshOfDevQueue->getUsed();
-
-        EXPECT_EQ(mockDevQueue.getDshOffset() + sizeof(uint64_t), usedDSHAfterSubmit);
-        EXPECT_EQ(ValueToFillDsh, *devQueueDshValue);
-
-        uint64_t *devQueueDshParent = (uint64_t *)ptrOffset((char *)dshOfDevQueue->getCpuBase(), mockDevQueue.getDshOffset());
-        EXPECT_EQ(ValueToFillDsh, *devQueueDshParent);
+        EXPECT_EQ(usedDSHAfterSubmit, usedDSHAfterSubmit);
 
         delete cmdComputeKernel;
         delete parentKernel;
@@ -197,15 +204,20 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         context->setDefaultDeviceQueue(&mockDevQueue);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -234,15 +246,18 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
         context->setDefaultDeviceQueue(&mockDevQueue);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -274,15 +289,19 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
         context->setDefaultDeviceQueue(&mockDevQueue);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
         dsh->getSpace(mockDevQueue.getDshOffset());
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
@@ -301,7 +320,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmittedThenNewSSHIsAllocated) {
+HWTEST_F(ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*device);
@@ -314,20 +333,30 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmitte
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
 
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, heapSize, ssh);
+
         dsh->getSpace(mockDevQueue.getDshOffset());
 
-        cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
-        // use some SSH
-        cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE).getSpace(4);
+        auto &queueSsh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 100);
+        auto &queueDsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 100);
+        auto &queueIoh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 100);
+
+        size_t usedSize = 4u;
+
+        queueSsh.getSpace(usedSize);
+        queueDsh.getSpace(usedSize);
+        queueIoh.getSpace(usedSize);
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -337,7 +366,10 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedSSHWhenParentKernelIsSubmitte
 
         cmdComputeKernel->submit(0, false);
 
-        EXPECT_TRUE(cmdQ.releaseIndirectHeapCalled);
+        EXPECT_FALSE(cmdQ.releaseIndirectHeapCalled);
+        EXPECT_EQ(usedSize, queueDsh.getUsed());
+        EXPECT_EQ(usedSize, queueIoh.getUsed());
+        EXPECT_EQ(usedSize, queueSsh.getUsed());
 
         delete cmdComputeKernel;
         delete parentKernel;
@@ -355,14 +387,14 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
         size_t minSizeSSHForEM = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 
         size_t heapSize = 20;
-        size_t alignement = 64;
 
-        size_t dshSize = heapSize + mockDevQueue.getDshOffset();
-        IndirectHeap *dsh = new IndirectHeap(alignedMalloc(dshSize, alignement), dshSize);
-        dsh->getSpace(mockDevQueue.getDshOffset());
-
+        size_t dshSize = mockDevQueue.getDshBuffer()->getUnderlyingBufferSize();
         size_t sshSize = 1000;
-        IndirectHeap *ssh = new IndirectHeap(alignedMalloc(sshSize, 4096), sshSize);
+        IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+        pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, dshSize, dsh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, heapSize, ioh);
+        pCmdQ->allocateHeapMemory(IndirectHeap::SURFACE_STATE, sshSize, ssh);
+        dsh->getSpace(mockDevQueue.getDshOffset());
 
         EXPECT_EQ(0u, ssh->getUsed());
 
@@ -372,8 +404,9 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
-                                                                  std::unique_ptr<IndirectHeap>(new IndirectHeap(alignedMalloc(heapSize, alignement), heapSize)),
-                                                                  std::unique_ptr<IndirectHeap>(ssh));
+                                                                  std::unique_ptr<IndirectHeap>(ioh),
+                                                                  std::unique_ptr<IndirectHeap>(ssh),
+                                                                  *pCmdQ->getDevice().getMemoryManager());
 
         blockedCommandData->surfaceStateHeapSizeEM = minSizeSSHForEM;
         PreemptionMode preemptionMode = device->getPreemptionMode();
@@ -389,5 +422,45 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
 
         delete cmdComputeKernel;
         delete parentKernel;
+    }
+}
+
+HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
+    if (device->getSupportedClVersion() >= 20) {
+        cl_queue_properties properties[3] = {0};
+        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*device));
+
+        MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
+        parentKernel->createReflectionSurface();
+        context->setDefaultDeviceQueue(&mockDevQueue);
+
+        KernelOperation *blockedCommandsData = nullptr;
+        const size_t globalOffsets[3] = {0, 0, 0};
+        const size_t workItems[3] = {1, 1, 1};
+
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
+                                                      *parentKernel,
+                                                      1,
+                                                      globalOffsets,
+                                                      workItems,
+                                                      nullptr,
+                                                      0,
+                                                      nullptr,
+                                                      &blockedCommandsData,
+                                                      nullptr,
+                                                      nullptr,
+                                                      device->getPreemptionMode(),
+                                                      true);
+
+        EXPECT_NE(nullptr, blockedCommandsData);
+        EXPECT_EQ(blockedCommandsData->dsh->getMaxAvailableSpace(), mockDevQueue.getDshBuffer()->getUnderlyingBufferSize());
+        EXPECT_EQ(blockedCommandsData->dsh, blockedCommandsData->ioh);
+
+        EXPECT_NE(nullptr, blockedCommandsData->dsh->getGraphicsAllocation());
+        EXPECT_NE(nullptr, blockedCommandsData->ioh->getGraphicsAllocation());
+        EXPECT_NE(nullptr, blockedCommandsData->ssh->getGraphicsAllocation());
+        EXPECT_EQ(blockedCommandsData->dsh->getGraphicsAllocation(), blockedCommandsData->ioh->getGraphicsAllocation());
+
+        delete blockedCommandsData;
     }
 }

@@ -275,6 +275,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
             uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
             devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
+                                                    *devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
                                                     multiDispatchInfo.begin()->getKernel(),
                                                     (uint32_t)multiDispatchInfo.size(),
                                                     taskCount,
@@ -297,7 +298,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 *this,
                 *devQueueHw,
                 preemption,
-                scheduler);
+                scheduler,
+                &getIndirectHeap(IndirectHeap::SURFACE_STATE),
+                devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
 
             scheduler.makeResident(commandStreamReceiver);
 

@@ -119,13 +119,6 @@ inline cl_uint computeDimensions(const size_t workItems[3]) {
     return (workItems[2] > 1) ? 3 : (workItems[1] > 1) ? 2 : 1;
 }
 
-template <typename SizeAndAllocCalcT, typename... CalcArgsT>
-IndirectHeap *allocateIndirectHeap(SizeAndAllocCalcT &&calc, CalcArgsT &&... args) {
-    size_t alignment = MemoryConstants::pageSize;
-    size_t size = calc(std::forward<CalcArgsT>(args)...);
-    return new IndirectHeap(alignedMalloc(size, alignment), size);
-}
-
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
   public:
@@ -227,7 +220,9 @@ class GpgpuWalkerHelper {
         CommandQueue &commandQueue,
         DeviceQueueHw<GfxFamily> &devQueueHw,
         PreemptionMode preemptionMode,
-        SchedulerKernel &scheduler);
+        SchedulerKernel &scheduler,
+        IndirectHeap *ssh,
+        IndirectHeap *dsh);
 };
 
 template <typename GfxFamily, uint32_t eventType>

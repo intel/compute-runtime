@@ -76,7 +76,9 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchScheduler) {
             *pCmdQ,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
-            scheduler);
+            scheduler,
+            &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE),
+            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
 
         EXPECT_EQ(0u, *scheduler.globalWorkOffsetX);
         EXPECT_EQ(0u, *scheduler.globalWorkOffsetY);
@@ -192,7 +194,9 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQ
             *pCmdQ,
             *pDevQueueHw,
             pDevice->getPreemptionMode(),
-            scheduler);
+            scheduler,
+            &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE),
+            pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
 
         auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
 
@@ -223,7 +227,9 @@ HWTEST_F(ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToF
             *pCmdQ,
             mockDevQueue,
             device->getPreemptionMode(),
-            scheduler);
+            scheduler,
+            &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE),
+            mockDevQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream, 0);

@@ -458,20 +458,27 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         using KCH = KernelCommandsHelper<GfxFamily>;
         commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize), MemoryConstants::pageSize);
         if (executionModelKernel) {
-            uint32_t offsetDsh = commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset();
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
 
-            dsh = allocateIndirectHeap([&multiDispatchInfo, offsetDsh] { return KCH::getTotalSizeRequiredDSH(multiDispatchInfo) + KCH::getTotalSizeRequiredIOH(multiDispatchInfo) + offsetDsh; });
+            commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE,
+                                            commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize(),
+                                            dsh);
+
             dsh->getSpace(colorCalcSize);
             ioh = dsh;
+            commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE,
+                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*(multiDispatchInfo.begin()->getKernel())) +
+                                                KCH::getTotalSizeRequiredSSH(multiDispatchInfo),
+                                            ssh);
         } else {
-            dsh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredDSH(multiDispatchInfo); });
-            ioh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredIOH(multiDispatchInfo); });
+            commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, KCH::getTotalSizeRequiredDSH(multiDispatchInfo), dsh);
+            commandQueue.allocateHeapMemory(IndirectHeap::INDIRECT_OBJECT, KCH::getTotalSizeRequiredIOH(multiDispatchInfo), ioh);
+            commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE, KCH::getTotalSizeRequiredSSH(multiDispatchInfo), ssh);
         }
 
-        ssh = allocateIndirectHeap([&multiDispatchInfo] { return KCH::getTotalSizeRequiredSSH(multiDispatchInfo); });
         using UniqueIH = std::unique_ptr<IndirectHeap>;
-        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh), UniqueIH(ssh));
+        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh), UniqueIH(ssh),
+                                                   *commandQueue.getDevice().getMemoryManager());
         if (executionModelKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
@@ -671,7 +678,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     CommandQueue &commandQueue,
     DeviceQueueHw<GfxFamily> &devQueueHw,
     PreemptionMode preemptionMode,
-    SchedulerKernel &scheduler) {
+    SchedulerKernel &scheduler,
+    IndirectHeap *ssh,
+    IndirectHeap *dsh) {
 
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
@@ -679,13 +688,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
 
     OCLRT::LinearStream *commandStream = nullptr;
-    OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    OCLRT::IndirectHeap *ioh = nullptr;
 
     commandStream = &commandQueue.getCS(0);
-    // note : below code assumes that caller to dispatchScheduler "preallocated" memory
-    //        required for execution model in below heap managers
-    dsh = devQueueHw.getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-    ssh = &commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE);
 
     bool dcFlush = false;
     commandQueue.getDevice().getCommandStreamReceiver().addPipeControl(*commandStream, dcFlush);

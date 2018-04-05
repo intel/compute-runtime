@@ -28,6 +28,7 @@
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/mem_obj/mem_obj.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
@@ -35,13 +36,14 @@
 
 namespace OCLRT {
 KernelOperation::~KernelOperation() {
-    alignedFree(dsh->getCpuBase());
-    if (doNotFreeISH) {
+    memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(dsh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    if (ioh.get() == dsh.get()) {
         ioh.release();
-    } else {
-        alignedFree(ioh->getCpuBase());
     }
-    alignedFree(ssh->getCpuBase());
+    if (ioh) {
+        memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(ioh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+    }
+    memoryManager.storeAllocation(std::unique_ptr<GraphicsAllocation>(ssh->getGraphicsAllocation()), REUSABLE_ALLOCATION);
     alignedFree(commandStream->getCpuBase());
 }
 
@@ -163,43 +165,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     //transfer the memory to commandStream of the queue.
     memcpy_s(pDst, commandsSize, commandStream.getCpuBase(), commandsSize);
 
-    size_t requestedDshSize = kernelOperation->dsh->getUsed();
-    size_t requestedIohSize = kernelOperation->ioh->getUsed();
-    size_t requestedSshSize = kernelOperation->ssh->getUsed() + kernelOperation->surfaceStateHeapSizeEM;
-
-    IndirectHeap *dsh = nullptr;
-    IndirectHeap *ioh = nullptr;
-
-    IndirectHeap::Type trackedHeaps[] = {IndirectHeap::SURFACE_STATE, IndirectHeap::INDIRECT_OBJECT, IndirectHeap::DYNAMIC_STATE};
-
-    for (auto trackedHeap = 0u; trackedHeap < ARRAY_COUNT(trackedHeaps); trackedHeap++) {
-        if (commandQueue.getIndirectHeap(trackedHeaps[trackedHeap], 0).getUsed() > 0) {
-            commandQueue.releaseIndirectHeap(trackedHeaps[trackedHeap]);
-        }
-    }
-
-    if (executionModelKernel) {
-        dsh = devQueue->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        // In ExecutionModel IOH is the same as DSH to eliminate StateBaseAddress reprogramming for scheduler kernel and blocks.
-        ioh = dsh;
-
-        memcpy_s(dsh->getSpace(0), dsh->getAvailableSpace(), ptrOffset(kernelOperation->dsh->getCpuBase(), devQueue->colorCalcStateSize), kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
-        dsh->getSpace(kernelOperation->dsh->getUsed() - devQueue->colorCalcStateSize);
-    } else {
-        dsh = &commandQueue.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, requestedDshSize);
-        ioh = &commandQueue.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, requestedIohSize);
-
-        memcpy_s(dsh->getCpuBase(), requestedDshSize, kernelOperation->dsh->getCpuBase(), kernelOperation->dsh->getUsed());
-        dsh->getSpace(requestedDshSize);
-
-        memcpy_s(ioh->getCpuBase(), requestedIohSize, kernelOperation->ioh->getCpuBase(), kernelOperation->ioh->getUsed());
-        ioh->getSpace(requestedIohSize);
-    }
-
-    IndirectHeap &ssh = commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, requestedSshSize);
-
-    memcpy_s(ssh.getCpuBase(), requestedSshSize, kernelOperation->ssh->getCpuBase(), kernelOperation->ssh->getUsed());
-    ssh.getSpace(kernelOperation->ssh->getUsed());
+    IndirectHeap *dsh = kernelOperation->dsh.get();
+    IndirectHeap *ioh = kernelOperation->ioh.get();
+    IndirectHeap *ssh = kernelOperation->ssh.get();
 
     auto requiresCoherency = false;
     for (auto &surface : surfaces) {
@@ -214,7 +182,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (executionModelKernel) {
         uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
-        devQueue->setupExecutionModelDispatch(ssh, kernel, kernelCount, taskCount, timestamp);
+        devQueue->setupExecutionModelDispatch(*ssh, *dsh, kernel, kernelCount, taskCount, timestamp);
 
         BuiltIns &builtIns = BuiltIns::getInstance();
         SchedulerKernel &scheduler = builtIns.getSchedulerKernel(commandQueue.getContext());
@@ -223,16 +191,18 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                           devQueue->getStackBuffer(),
                           devQueue->getEventPoolBuffer(),
                           devQueue->getSlbBuffer(),
-                          devQueue->getDshBuffer(),
+                          dsh->getGraphicsAllocation(),
                           kernel->getKernelReflectionSurface(),
                           devQueue->getQueueStorageBuffer(),
-                          ssh.getGraphicsAllocation(),
+                          ssh->getGraphicsAllocation(),
                           devQueue->getDebugQueue());
 
         devQueue->dispatchScheduler(
             commandQueue,
             scheduler,
-            preemptionMode);
+            preemptionMode,
+            ssh,
+            dsh);
 
         scheduler.makeResident(commandStreamReceiver);
 
@@ -261,14 +231,13 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       offset,
                                                       *dsh,
                                                       *ioh,
-                                                      ssh,
+                                                      *ssh,
                                                       taskLevel,
                                                       dispatchFlags);
     for (auto &surface : surfaces) {
         surface->setCompletionStamp(completionStamp, nullptr, nullptr);
     }
     commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
-
     if (printfHandler) {
         printfHandler.get()->printEnqueueOutput();
     }

@@ -534,7 +534,7 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectState) {
         auto usedBeforeSSH = ssh->getUsed();
         auto usedBeforeDSH = dsh->getUsed();
 
-        devQueueHw->setupIndirectState(*ssh, pKernel, 1);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, 1);
         auto usedAfterSSH = ssh->getUsed();
         auto usedAfterDSH = dsh->getUsed();
 
@@ -564,7 +564,7 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectStartBlockID) {
 
         uint32_t parentCount = 4;
 
-        devQueueHw->setupIndirectState(*ssh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(parentCount, igilQueue->m_controls.m_StartBlockID);
@@ -594,7 +594,7 @@ HWTEST_P(DeviceQueueHwWithKernel, setupIndirectStateSetsCorrectDSHValues) {
 
         uint32_t parentCount = 1;
 
-        devQueueHw->setupIndirectState(*ssh, pKernel, parentCount);
+        devQueueHw->setupIndirectState(*ssh, *dsh, pKernel, parentCount);
         auto *igilQueue = reinterpret_cast<IGIL_CommandQueue *>(devQueueHw->getQueueBuffer()->getUnderlyingBuffer());
 
         EXPECT_EQ(igilQueue->m_controls.m_DynamicHeapStart, devQueueHw->offsetDsh + alignUp((uint32_t)pKernel->getDynamicStateHeapSize(), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE));

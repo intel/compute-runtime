@@ -336,6 +336,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
                                   size_t minRequiredSize = 0u);
 
+    void allocateHeapMemory(IndirectHeap::Type heapType,
+                            size_t minRequiredSize, IndirectHeap *&indirectHeap);
+
     MOCKABLE_VIRTUAL void releaseIndirectHeap(IndirectHeap::Type heapType);
 
     cl_command_queue_properties getCommandQueueProperties() const {

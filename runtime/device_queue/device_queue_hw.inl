@@ -290,11 +290,8 @@ IndirectHeap *DeviceQueueHw<GfxFamily>::getIndirectHeap(IndirectHeap::Type type)
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
-    void *pDSH = dshBuffer->getUnderlyingBuffer();
-
-    // Heap and dshBuffer shoud be the same if heap is created
-    DEBUG_BREAK_IF(!((heaps[IndirectHeap::DYNAMIC_STATE] == nullptr) || (heaps[IndirectHeap::DYNAMIC_STATE]->getCpuBase() == pDSH)));
+void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+    void *pDSH = dynamicStateHeap.getCpuBase();
 
     // Set scheduler ID to last entry in first table, it will have ID == 0, blocks will have following entries.
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());
@@ -386,11 +383,13 @@ size_t DeviceQueueHw<GfxFamily>::setSchedulerCrossThreadData(SchedulerKernel &sc
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) {
+void DeviceQueueHw<GfxFamily>::dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) {
     GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(cmdQ,
                                                     *this,
                                                     preemptionMode,
-                                                    scheduler);
+                                                    scheduler,
+                                                    ssh,
+                                                    dsh);
     return;
 }
 

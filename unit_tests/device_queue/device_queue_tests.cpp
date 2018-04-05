@@ -40,7 +40,8 @@ TEST(DeviceQueueSimpleTest, setupExecutionModelDispatchDoesNothing) {
 
     size_t size = 20;
     IndirectHeap ssh(buffer, size);
-    devQueue.setupExecutionModelDispatch(ssh, nullptr, 0, 0, 0);
+    IndirectHeap dsh(buffer, size);
+    devQueue.setupExecutionModelDispatch(ssh, dsh, nullptr, 0, 0, 0);
 
     EXPECT_EQ(0u, ssh.getUsed());
 
@@ -320,7 +321,7 @@ TEST_F(DeviceQueueTest, dispatchScheduler) {
     CommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);
-    devQueue.dispatchScheduler(cmdQ, *kernel, device->getPreemptionMode());
+    devQueue.dispatchScheduler(cmdQ, *kernel, device->getPreemptionMode(), nullptr, nullptr);
     delete kernel;
 }
 

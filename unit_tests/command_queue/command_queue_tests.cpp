@@ -616,6 +616,33 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetIndirectHeapIsCalle
     EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM, indirectHeapAllocation->getAllocationType());
 }
 
+TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledThenHeapIsCreated) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    CommandQueue cmdQ(&context, pDevice, props);
+
+    IndirectHeap *indirectHeap = nullptr;
+    cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);
+    EXPECT_NE(nullptr, indirectHeap);
+    EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
+    delete indirectHeap;
+}
+
+TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledWithAlreadyAllocatedHeapThenGraphicsAllocationIsCreated) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    CommandQueue cmdQ(&context, pDevice, props);
+
+    IndirectHeap heap(nullptr, 100);
+
+    IndirectHeap *indirectHeap = &heap;
+    cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);
+    EXPECT_EQ(&heap, indirectHeap);
+    EXPECT_NE(nullptr, indirectHeap->getGraphicsAllocation());
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(indirectHeap->getGraphicsAllocation());
+}
+
 INSTANTIATE_TEST_CASE_P(
     Device,
     CommandQueueIndirectHeapTest,

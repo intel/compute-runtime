@@ -39,6 +39,7 @@ class MemObj;
 class Surface;
 class PrintfHandler;
 struct HwTimeStamps;
+class MemoryManager;
 
 enum MapOperationType {
     MAP,
@@ -77,10 +78,11 @@ class CommandMapUnmap : public Command {
 };
 
 struct KernelOperation {
-    KernelOperation(std::unique_ptr<LinearStream> commandStream, std::unique_ptr<IndirectHeap> dsh, std::unique_ptr<IndirectHeap> ioh, std::unique_ptr<IndirectHeap> ssh)
+    KernelOperation(std::unique_ptr<LinearStream> commandStream, std::unique_ptr<IndirectHeap> dsh, std::unique_ptr<IndirectHeap> ioh, std::unique_ptr<IndirectHeap> ssh,
+                    MemoryManager &memoryManager)
         : commandStream(std::move(commandStream)), dsh(std::move(dsh)),
           ioh(std::move(ioh)), ssh(std::move(ssh)),
-          surfaceStateHeapSizeEM(0), doNotFreeISH(false) {
+          surfaceStateHeapSizeEM(0), doNotFreeISH(false), memoryManager(memoryManager) {
     }
 
     ~KernelOperation();
@@ -92,6 +94,7 @@ struct KernelOperation {
 
     size_t surfaceStateHeapSizeEM;
     bool doNotFreeISH;
+    MemoryManager &memoryManager;
 };
 
 class CommandComputeKernel : public Command {

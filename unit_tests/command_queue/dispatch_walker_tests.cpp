@@ -710,9 +710,9 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(kernel);
 
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
 
     delete blockedCommandsData;
 }
@@ -745,9 +745,9 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getTotalSizeRequiredSSH(multiDispatchInfo);
 
     EXPECT_EQ(expectedSizeCS, blockedCommandsData->commandStream->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
-    EXPECT_EQ(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeDSH, blockedCommandsData->dsh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeIOH, blockedCommandsData->ioh->getMaxAvailableSpace());
+    EXPECT_LE(expectedSizeSSH, blockedCommandsData->ssh->getMaxAvailableSpace());
 
     delete blockedCommandsData;
 }

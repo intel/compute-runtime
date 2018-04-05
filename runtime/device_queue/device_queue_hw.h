@@ -72,11 +72,11 @@ class DeviceQueueHw : public DeviceQueue {
 
     size_t setSchedulerCrossThreadData(SchedulerKernel &scheduler);
 
-    void setupIndirectState(IndirectHeap &surfaceStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override;
+    void setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) override;
 
     void addExecutionModelCleanUpSection(Kernel *parentKernel, HwTimeStamps *hwTimeStamp, uint32_t taskCount) override;
     void resetDeviceQueue() override;
-    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode) override;
+    void dispatchScheduler(CommandQueue &cmdQ, SchedulerKernel &scheduler, PreemptionMode preemptionMode, IndirectHeap *ssh, IndirectHeap *dsh) override;
 
     uint32_t getSchedulerReturnInstance() {
         return igilQueue->m_controls.m_SchedulerEarlyReturn;
