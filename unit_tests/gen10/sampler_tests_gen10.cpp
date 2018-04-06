@@ -20,13 +20,23 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/sampler/sampler.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "test.h"
+#include <memory>
+
+using namespace OCLRT;
+
+typedef Test<DeviceFixture> Gen10SamplerTest;
+
+GEN10TEST_F(Gen10SamplerTest, appendSamplerStateParamsDoesNothing) {
+    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+    std::unique_ptr<MockContext> context(new MockContext());
+    std::unique_ptr<SamplerHw<FamilyType>> sampler(new SamplerHw<FamilyType>(context.get(), CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST));
+    auto stateWithoutAppendedParams = SAMPLER_STATE::sInit();
+    auto stateWithAppendedParams = SAMPLER_STATE::sInit();
+    EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
+    sampler->appendSamplerStateParams(&stateWithAppendedParams);
+    EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
+}

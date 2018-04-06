@@ -20,13 +20,31 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_helper.inl"
+
+namespace OCLRT {
+typedef CNLFamily Family;
+
+template <>
+size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
+    return 32;
+}
+
+template <>
+void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
+    if (pHwInfo->pPlatform->usRevId < 0x4) {
+        coherencyFlag = false;
+    } else {
+        coherencyFlag = true;
+    }
+}
+
+template <>
+bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
+    pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
+    return pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580;
+}
+
+template class HwHelperHw<Family>;
+} // namespace OCLRT

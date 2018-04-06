@@ -1,0 +1,222 @@
+/*
+ * Copyright (c) 2017 - 2018, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "hw_info.h"
+#include "hw_cmds.h"
+#include "runtime/aub_mem_dump/aub_services.h"
+#include "runtime/helpers/engine_node.h"
+#include "runtime/memory_manager/memory_constants.h"
+
+namespace OCLRT {
+
+const char *HwMapper<IGFX_CANNONLAKE>::abbreviation = "cnl";
+
+bool isSimulationCNL(unsigned short deviceId) {
+    switch (deviceId) {
+    case ICNL_3x8_DESK_DEVICE_F0_ID:
+    case ICNL_5x8_DESK_DEVICE_F0_ID:
+    case ICNL_9x8_DESK_DEVICE_F0_ID:
+    case ICNL_13x8_DESK_DEVICE_F0_ID:
+        return true;
+    }
+    return false;
+};
+
+const PLATFORM CNL::platform = {
+    IGFX_CANNONLAKE,
+    PCH_UNKNOWN,
+    IGFX_GEN10_CORE,
+    IGFX_GEN10_CORE,
+    PLATFORM_NONE, // default init
+    0,             // usDeviceID
+    0,             // usRevId. 0 sets the stepping to A0
+    0,             // usDeviceID_PCH
+    0,             // usRevId_PCH
+    GTTYPE_UNDEFINED};
+
+const RuntimeCapabilityTable CNL::capabilityTable{
+    0,
+    83.333,
+    21,
+    true,
+    true,
+    true,
+    true,
+    true, // ftrSupportsVmeAvcTextureSampler
+    true, // ftrSupportsVmeAvcPreemption
+    false,
+    PreemptionMode::MidThread,
+    {true, true},
+    &isSimulationCNL,
+    true,
+    true,                           // forceStatelessCompilationFor32Bit
+    {false, 0, false, 0, false, 0}, // KmdNotifyProperties
+    true,                           // ftr64KBpages
+    EngineType::ENGINE_RCS,         // defaultEngineType
+    MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
+    true,
+    true, // sourceLevelDebuggerSupported
+    CmdServicesMemTraceVersion::DeviceValues::Cnl};
+
+const HardwareInfo CNL_2x5x8::hwInfo = {
+    &CNL::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &CNL_2x5x8::gtSystemInfo,
+    CNL::capabilityTable,
+};
+GT_SYSTEM_INFO CNL_2x5x8::gtSystemInfo = {0};
+void CNL_2x5x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 39;
+    gtSysInfo->ThreadCount = 39 * CNL::threadsPerEu;
+    gtSysInfo->SliceCount = 2;
+    gtSysInfo->SubSliceCount = 5;
+    gtSysInfo->L3CacheSizeInKb = 1536;
+    gtSysInfo->L3BankCount = 6;
+    gtSysInfo->MaxFillRate = 16;
+    gtSysInfo->TotalVsThreads = 336;
+    gtSysInfo->TotalHsThreads = 336;
+    gtSysInfo->TotalDsThreads = 336;
+    gtSysInfo->TotalGsThreads = 336;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = CNL::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = CNL::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = CNL::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+const HardwareInfo CNL_2x4x8::hwInfo = {
+    &CNL::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &CNL_2x4x8::gtSystemInfo,
+    CNL::capabilityTable,
+};
+GT_SYSTEM_INFO CNL_2x4x8::gtSystemInfo = {0};
+void CNL_2x4x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 31;
+    gtSysInfo->ThreadCount = 31 * CNL::threadsPerEu;
+    gtSysInfo->SliceCount = 2;
+    gtSysInfo->SubSliceCount = 4;
+    gtSysInfo->L3CacheSizeInKb = 1536;
+    gtSysInfo->L3BankCount = 6;
+    gtSysInfo->MaxFillRate = 16;
+    gtSysInfo->TotalVsThreads = 336;
+    gtSysInfo->TotalHsThreads = 336;
+    gtSysInfo->TotalDsThreads = 336;
+    gtSysInfo->TotalGsThreads = 336;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = CNL::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = CNL::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = CNL::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+const HardwareInfo CNL_1x3x8::hwInfo = {
+    &CNL::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &CNL_1x3x8::gtSystemInfo,
+    CNL::capabilityTable,
+};
+GT_SYSTEM_INFO CNL_1x3x8::gtSystemInfo = {0};
+void CNL_1x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 23;
+    gtSysInfo->ThreadCount = 23 * CNL::threadsPerEu;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->SubSliceCount = 3;
+    gtSysInfo->L3CacheSizeInKb = 1536;
+    gtSysInfo->L3BankCount = 6;
+    gtSysInfo->MaxFillRate = 16;
+    gtSysInfo->TotalVsThreads = 336;
+    gtSysInfo->TotalHsThreads = 336;
+    gtSysInfo->TotalDsThreads = 336;
+    gtSysInfo->TotalGsThreads = 336;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = CNL::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = CNL::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = CNL::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+const HardwareInfo CNL_1x2x8::hwInfo = {
+    &CNL::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &CNL_1x2x8::gtSystemInfo,
+    CNL::capabilityTable,
+};
+GT_SYSTEM_INFO CNL_1x2x8::gtSystemInfo = {0};
+void CNL_1x2x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 15;
+    gtSysInfo->ThreadCount = 15 * CNL::threadsPerEu;
+    gtSysInfo->SliceCount = 1;
+    gtSysInfo->SubSliceCount = 2;
+    gtSysInfo->L3CacheSizeInKb = 1536;
+    gtSysInfo->L3BankCount = 6;
+    gtSysInfo->MaxFillRate = 16;
+    gtSysInfo->TotalVsThreads = 336;
+    gtSysInfo->TotalHsThreads = 336;
+    gtSysInfo->TotalDsThreads = 336;
+    gtSysInfo->TotalGsThreads = 336;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = CNL::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = CNL::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = CNL::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+const HardwareInfo CNL_4x9x8::hwInfo = {
+    &CNL::platform,
+    &emptySkuTable,
+    &emptyWaTable,
+    &CNL_4x9x8::gtSystemInfo,
+    CNL::capabilityTable,
+};
+GT_SYSTEM_INFO CNL_4x9x8::gtSystemInfo = {0};
+void CNL_4x9x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+    gtSysInfo->EUCount = 71;
+    gtSysInfo->ThreadCount = 71 * CNL::threadsPerEu;
+    gtSysInfo->SliceCount = 4;
+    gtSysInfo->SubSliceCount = 9;
+    gtSysInfo->L3CacheSizeInKb = 1536;
+    gtSysInfo->L3BankCount = 6;
+    gtSysInfo->MaxFillRate = 16;
+    gtSysInfo->TotalVsThreads = 336;
+    gtSysInfo->TotalHsThreads = 336;
+    gtSysInfo->TotalDsThreads = 336;
+    gtSysInfo->TotalGsThreads = 336;
+    gtSysInfo->TotalPsThreadsWindowerRange = 64;
+    gtSysInfo->CsrSizeInMb = 8;
+    gtSysInfo->MaxEuPerSubSlice = CNL::maxEuPerSubslice;
+    gtSysInfo->MaxSlicesSupported = CNL::maxSlicesSupported;
+    gtSysInfo->MaxSubSlicesSupported = CNL::maxSubslicesSupported;
+    gtSysInfo->IsL3HashModeEnabled = false;
+    gtSysInfo->IsDynamicallyPopulated = false;
+};
+const HardwareInfo CNL::hwInfo = CNL_2x5x8::hwInfo;
+void (*CNL::setupGtSystemInfo)(GT_SYSTEM_INFO *) = CNL_2x5x8::setupGtSystemInfo;
+} // namespace OCLRT

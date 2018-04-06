@@ -20,13 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/os_interface/linux/device_command_stream.inl"
+#include "runtime/os_interface/linux/drm_command_stream.inl"
+#include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+
+namespace OCLRT {
+
+template class DeviceCommandStreamReceiver<CNLFamily>;
+template class DrmCommandStreamReceiver<CNLFamily>;
+template class CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<CNLFamily>>;
+} // namespace OCLRT

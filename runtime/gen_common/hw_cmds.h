@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,4 +26,7 @@
 #endif
 #ifdef SUPPORT_GEN9
 #include "runtime/gen9/hw_cmds.h"
+#endif
+#ifdef SUPPORT_GEN10
+#include "runtime/gen10/hw_cmds.h"
 #endif

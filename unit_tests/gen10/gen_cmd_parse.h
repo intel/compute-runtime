@@ -21,12 +21,13 @@
  */
 
 #pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "unit_tests/gen_common/gen_cmd_parse_base.h"
+
+struct CnlParse : public OCLRT::CNL {
+    static size_t getCommandLength(void *cmd);
+
+    static bool parseCommandBuffer(GenCmdList &_cmds, void *_buffer, size_t _length);
+
+    template <typename CmdType>
+    static void validateCommand(GenCmdList::iterator itorBegin, GenCmdList::iterator itorEnd);
+};

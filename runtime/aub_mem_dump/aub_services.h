@@ -98,6 +98,7 @@ struct CmdServicesMemTraceVersion {
             Hsw = 9,
             Bxt = 14,
             Sbr = 6,
+            Cnl = 15,
             Ivb = 7,
             Chv = 13,
             El = 4,

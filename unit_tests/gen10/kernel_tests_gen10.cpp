@@ -20,13 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "test.h"
+
+using namespace OCLRT;
+
+using Gen10KernelTest = Test<DeviceFixture>;
+GEN10TEST_F(Gen10KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsTrue) {
+    MockKernelWithInternals mockKernel(*pDevice);
+    auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
+    EXPECT_TRUE(retVal);
+}

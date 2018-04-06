@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,4 +26,7 @@
 #endif
 #ifdef TESTS_GEN9
 #include "unit_tests/gen9/gen_cmd_parse.h"
+#endif
+#ifdef TESTS_GEN10
+#include "unit_tests/gen10/gen_cmd_parse.h"
 #endif

@@ -20,13 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "hw_cmds.h"
+#include "runtime/sampler/sampler.h"
+#include "runtime/sampler/sampler.inl"
+
+namespace OCLRT {
+
+typedef CNLFamily Family;
+static auto gfxCore = IGFX_GEN10_CORE;
+
+#include "runtime/sampler/sampler_factory_init.inl"
+} // namespace OCLRT

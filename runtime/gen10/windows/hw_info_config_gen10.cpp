@@ -20,13 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/hw_info_config.inl"
+
+namespace OCLRT {
+
+#ifdef SUPPORT_CNL
+template <>
+int HwInfoConfigHw<IGFX_CANNONLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    return 0;
+}
+
+template class HwInfoConfigHw<IGFX_CANNONLAKE>;
 #endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+
+} // namespace OCLRT

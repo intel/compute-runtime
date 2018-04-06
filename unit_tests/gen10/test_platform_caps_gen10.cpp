@@ -20,13 +20,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/helpers/options.h"
+#include "unit_tests/fixtures/platform_fixture.h"
+#include "test.h"
+
+using namespace OCLRT;
+
+struct Gen10PlatformCaps : public PlatformFixture, public ::testing::Test {
+    void SetUp() override {
+        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+    }
+
+    void TearDown() override {
+        PlatformFixture::TearDown();
+    }
+};
+
+GEN10TEST_F(Gen10PlatformCaps, hpSkusSupportFP64) {
+    const auto &caps = pPlatform->getPlatformInfo();
+
+    EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
+}

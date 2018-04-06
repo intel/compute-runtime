@@ -20,13 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/os_interface/windows/os_interface.h"
+#include "unit_tests/os_interface/windows/hw_info_config_win_tests.h"
+
+using namespace OCLRT;
+using namespace std;
+
+using HwInfoConfigTestWindowsCnl = HwInfoConfigTestWindows;
+
+CNLTEST_F(HwInfoConfigTestWindowsCnl, whenCallAdjustPlatformThenDoNothing) {
+    EXPECT_EQ(IGFX_CANNONLAKE, productFamily);
+    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    hwInfoConfig->adjustPlatformForProductFamily(&testHwInfo);
+
+    int ret = memcmp(outHwInfo.pPlatform, testHwInfo.pPlatform, sizeof(PLATFORM));
+    EXPECT_EQ(0, ret);
+}

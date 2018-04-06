@@ -20,13 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
+#include "hw_cmds.h"
+#include "runtime/os_interface/hw_info_config.h"
+#include "runtime/helpers/enable_product.inl"
+
+namespace OCLRT {
+
+#ifdef SUPPORT_CNL
+static EnableGfxProductHw<IGFX_CANNONLAKE> enableGfxProductHwCNL;
 #endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+
+} // namespace OCLRT

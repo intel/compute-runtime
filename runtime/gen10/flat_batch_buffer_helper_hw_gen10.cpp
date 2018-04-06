@@ -20,13 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "hw_cmds.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
+
+namespace OCLRT {
+
+typedef CNLFamily Family;
+
+template <>
+void FlatBatchBufferHelperHw<Family>::sdiSetAddress(typename Family::MI_STORE_DATA_IMM *sdiCommand, uint64_t address) {
+    sdiCommand->setAddressGraphicsaddress472(address);
+}
+
+template <>
+void FlatBatchBufferHelperHw<Family>::sdiSetStoreQword(typename Family::MI_STORE_DATA_IMM *sdiCommand, bool setQword) {
+    sdiCommand->setStoreQword(setQword);
+}
+
+template class FlatBatchBufferHelperHw<Family>;
+} // namespace OCLRT

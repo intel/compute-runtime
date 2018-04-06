@@ -20,13 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
+#ifdef SUPPORT_CNL
+#include "hw_info_cnl.inl"
 #endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+
+namespace OCLRT {
+const char *GfxFamilyMapper<IGFX_GEN10_CORE>::name = "Gen10";
+} // namespace OCLRT

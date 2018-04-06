@@ -20,13 +20,28 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "unit_tests/helpers/gtest_helpers.h"
+#include "test.h"
+#include "hw_cmds.h"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
+
+using namespace OCLRT;
+using namespace std;
+
+struct WddmMapperTestsGen10 : public ::testing::Test {
+    void SetUp() override {}
+    void TearDown() override {}
+};
+
+GEN10TEST_F(WddmMapperTestsGen10, engineNodeMapPass) {
+    GPUNODE_ORDINAL gpuNode = GPUNODE_MAX;
+    bool ret = WddmEngineMapper<CNLFamily>::engineNodeMap(EngineType::ENGINE_RCS, gpuNode);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(GPUNODE_3D, gpuNode);
+}
+
+GEN10TEST_F(WddmMapperTestsGen10, engineNodeMapNegative) {
+    GPUNODE_ORDINAL gpuNode = GPUNODE_MAX;
+    bool ret = WddmEngineMapper<CNLFamily>::engineNodeMap(EngineType::ENGINE_BCS, gpuNode);
+    EXPECT_FALSE(ret);
+}

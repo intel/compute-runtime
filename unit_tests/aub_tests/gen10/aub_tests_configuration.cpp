@@ -20,13 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "unit_tests/aub_tests/aub_tests_configuration.inl"
+#include "runtime/gen_common/hw_cmds.h"
+
+using namespace OCLRT;
+
+template AubTestsConfig GetAubTestsConfig<CNLFamily>();

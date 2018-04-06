@@ -21,12 +21,22 @@
  */
 
 #pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/gen_common/aub_mapper_base.h"
+
+namespace OCLRT {
+struct CNLFamily;
+
+template <>
+struct AUBFamilyMapper<CNLFamily> {
+    enum { device = AubMemDump::DeviceValues::Cnl };
+
+    typedef AubMemDump::Traits<device, GfxAddressBits::value> AubTraits;
+
+    static const AubMemDump::LrcaHelper *csTraits[EngineType::NUM_ENGINES];
+
+    static const MMIOList globalMMIO;
+    static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];
+
+    typedef AubMemDump::AubDump<AubTraits> AUB;
+};
+} // namespace OCLRT

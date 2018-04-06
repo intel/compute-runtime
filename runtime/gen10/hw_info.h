@@ -21,12 +21,25 @@
  */
 
 #pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/helpers/hw_info.h"
+
+namespace OCLRT {
+
+struct CNLFamily;
+struct CNL;
+
+template <>
+struct GfxFamilyMapper<IGFX_GEN10_CORE> {
+    typedef CNLFamily GfxFamily;
+    static const char *name;
+};
+
+template <>
+struct HwMapper<IGFX_CANNONLAKE> {
+    enum { gfxFamily = IGFX_GEN10_CORE };
+
+    static const char *abbreviation;
+    typedef GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily GfxFamily;
+    typedef CNL GfxProduct;
+};
+} // namespace OCLRT

@@ -20,13 +20,26 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "unit_tests/os_interface/windows/os_interface_win_tests.h"
+#include "unit_tests/gen_common/test.h"
+
+typedef OsInterfaceTest OsInterfaceTestCnl;
+
+GEN10TEST_F(OsInterfaceTestCnl, askKmdIfPreemptionRegisterWhitelisted) {
+    HardwareInfo *hwInfo = nullptr;
+    const HardwareInfo *refHwinfo = *platformDevices;
+    size_t numDevices = 0;
+
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    EXPECT_TRUE(success);
+
+    for (size_t i = 0u; i < numDevices; i++) {
+        if (hwInfo[i].pWaTable->waEnablePreemptionGranularityControlByUMD) {
+            EXPECT_TRUE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+        } else {
+            EXPECT_FALSE(hwInfo[i].capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+        }
+    }
+
+    DeviceFactory::releaseDevices();
+}

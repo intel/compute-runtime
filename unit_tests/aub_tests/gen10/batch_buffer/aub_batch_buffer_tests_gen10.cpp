@@ -20,13 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "aub_batch_buffer_tests_gen10.h"
+#include "unit_tests/fixtures/device_fixture.h"
+
+typedef Test<DeviceFixture> Gen10AubBatchBufferTests;
+
+static constexpr auto gpuBatchBufferAddr = 0x800400001000; // 48-bit GPU address
+
+GEN10TEST_F(Gen10AubBatchBufferTests, givenSimpleRCSWithBatchBufferWhenItHasMSBSetInGpuAddressThenAUBShouldBeSetupSuccessfully) {
+    setupAUBWithBatchBuffer<FamilyType>(pDevice, OCLRT::EngineType::ENGINE_RCS, gpuBatchBufferAddr);
+}

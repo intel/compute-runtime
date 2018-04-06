@@ -20,13 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/gen10/hw_info.h"
+#include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_queue/gpgpu_walker.inl"
+
+namespace OCLRT {
+
+template class GpgpuWalkerHelper<CNLFamily>;
+
+template struct EnqueueOperation<CNLFamily>;
+
+} // namespace OCLRT

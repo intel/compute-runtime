@@ -21,12 +21,22 @@
  */
 
 #pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/helpers/preamble.h"
+
+namespace OCLRT {
+
+struct CNLFamily;
+template <>
+struct L3CNTLREGConfig<IGFX_CANNONLAKE> {
+    static const uint32_t valueForSLM = 0xA0000121u;
+    static const uint32_t valueForNoSLM = 0xc0000140u;
+};
+
+template <>
+struct L3CNTLRegisterOffset<CNLFamily> {
+    static const uint32_t registerOffset = 0x7034;
+};
+
+const uint32_t gen10HdcModeRegisterAddresss = 0xE5F0;
+
+} // namespace OCLRT

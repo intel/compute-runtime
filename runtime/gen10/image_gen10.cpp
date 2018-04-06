@@ -20,36 +20,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/reg_configs.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/reg_configs.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/reg_configs.h"
-#endif
+#include "hw_cmds.h"
+#include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/image.inl"
+#include <map>
+
 namespace OCLRT {
-namespace ThreadArbitrationPolicy {
-const uint32_t RoundRobinAfterDependency = 2;
+
+typedef CNLFamily Family;
+static auto gfxCore = IGFX_GEN10_CORE;
+
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *memory) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
+
+    surfaceState->setRotation(MEDIA_SURFACE_STATE::ROTATION_NO_ROTATION_OR_0_DEGREE);
+    surfaceState->setXOffset(0);
+    surfaceState->setYOffset(0);
 }
-namespace RowChickenReg4 {
-const uint32_t address = 0xE48C;
-const uint32_t regDataForArbitrationPolicy[3] = {
-    0xC0000, // Age Based
-    0xC0004, // Round Robin
-    0xC0008, // Round Robin after dependency
-};
-} // namespace RowChickenReg4
-namespace FfSliceCsChknReg2 {
-constexpr uint32_t address = 0x20E4;
 
-constexpr uint32_t regUpdate = (1 << 5);
-constexpr uint32_t maskShift = 16;
-constexpr uint32_t maskUpdate = regUpdate << maskShift;
+template <typename GfxFamily>
+void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) {
+    using MEDIA_SURFACE_STATE = typename GfxFamily::MEDIA_SURFACE_STATE;
+    using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
 
-constexpr uint32_t regVal = regUpdate | maskUpdate;
+    auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
 
-} // namespace FfSliceCsChknReg2
+    surfaceState->setSurfaceMemoryObjectControlStateIndexToMocsTables(value);
+}
+
+#include "runtime/mem_obj/image_factory_init.inl"
 } // namespace OCLRT

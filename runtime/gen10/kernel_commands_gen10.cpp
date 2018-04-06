@@ -20,13 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#ifdef SUPPORT_GEN8
-#include "runtime/gen8/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN9
-#include "runtime/gen9/aub_mapper.h"
-#endif
-#ifdef SUPPORT_GEN10
-#include "runtime/gen10/aub_mapper.h"
-#endif
+#include "runtime/helpers/kernel_commands.h"
+#include "hw_cmds.h"
+#include "runtime/helpers/kernel_commands.inl"
+
+namespace OCLRT {
+template struct KernelCommandsHelper<CNLFamily>;
+
+template <>
+bool KernelCommandsHelper<CNLFamily>::isPipeControlWArequired() { return true; }
+} // namespace OCLRT
