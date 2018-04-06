@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,5 @@ using namespace OCLRT;
 typedef Test<DeviceFixture> Gen9OnlyTest;
 
 GEN9TEST_F(Gen9OnlyTest, shouldPassOnGen9) {
-    EXPECT_NE(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
     EXPECT_EQ(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
 }

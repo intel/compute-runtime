@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,5 +35,4 @@ typedef Test<DeviceFixture> Gen8OnlyTest;
 
 GEN8TEST_F(Gen8OnlyTest, shouldPassOnGen8) {
     EXPECT_EQ(IGFX_GEN8_CORE, pDevice->getRenderCoreFamily());
-    EXPECT_NE(IGFX_GEN9_CORE, pDevice->getRenderCoreFamily());
 }
