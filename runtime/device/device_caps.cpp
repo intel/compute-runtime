@@ -352,5 +352,7 @@ void Device::initializeCaps() {
     deviceInfo.preferredGlobalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
+
+    deviceInfo.sourceLevelDebuggerActive = false;
 }
 } // namespace OCLRT

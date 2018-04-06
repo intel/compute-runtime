@@ -58,4 +58,9 @@ GEN9TEST_F(gen9SipTests, DISABLED_givenDebugCsrSipKernelWithLocalMemoryWhenAsked
 
     gEnvironment->igcPopDebugVars();
 }
+
+GEN9TEST_F(gen9SipTests, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrLocalIsReturned) {
+    auto sipType = SipKernel::getSipKernelType(renderCoreFamily, true);
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
+}
 } // namespace SipKernelTests

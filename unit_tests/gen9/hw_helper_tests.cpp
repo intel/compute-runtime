@@ -64,3 +64,10 @@ GEN9TEST_F(HwHelperTestSkl, givenGen9PlatformWhenSetupHardwareCapabilitiesIsCall
     // Test default method implementation
     testDefaultImplementationOfSetupHardwareCapabilities(helper);
 }
+
+GEN9TEST_F(HwHelperTestSkl, givenDebuggingActiveWhenSipKernelTypeIsQueriedThenDbgCsrLocalTypeIsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+
+    auto sipType = helper.getSipKernelType(true);
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, sipType);
+}

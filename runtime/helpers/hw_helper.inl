@@ -39,4 +39,11 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     caps->image3DMaxWidth = 16384;
 }
 
+template <typename Family>
+SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
+    if (!debuggingActive) {
+        return SipKernelType::Csr;
+    }
+    return SipKernelType::DbgCsr;
+}
 } // namespace OCLRT

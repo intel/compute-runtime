@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,14 @@ template <>
 bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580;
+}
+
+template <>
+SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
+    if (!debuggingActive) {
+        return SipKernelType::Csr;
+    }
+    return SipKernelType::DbgCsrLocal;
 }
 
 template class HwHelperHw<Family>;

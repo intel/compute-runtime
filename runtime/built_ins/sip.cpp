@@ -22,6 +22,7 @@
 
 #include "runtime/built_ins/sip.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/program/program.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -93,5 +94,10 @@ const char *SipKernel::getBinary() const {
 size_t SipKernel::getBinarySize() const {
     auto kernelInfo = program->getKernelInfo(size_t{0});
     return kernelInfo->heapInfo.pKernelHeader->KernelHeapSize - kernelInfo->systemKernelOffset;
+}
+
+SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive) {
+    auto &hwHelper = HwHelper::get(family);
+    return hwHelper.getSipKernelType(debuggingActive);
 }
 }

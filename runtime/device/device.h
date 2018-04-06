@@ -133,6 +133,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     bool getEnabled64kbPages();
+    bool isSourceLevelDebuggerActive();
 
   protected:
     Device() = delete;

@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "runtime/helpers/hw_info.h"
 
 #include <cinttypes>
 #include <memory>
@@ -61,6 +62,7 @@ class SipKernel {
     static const size_t maxDbgSurfaceSize;
 
     GraphicsAllocation *getSipAllocation() const;
+    static SipKernelType getSipKernelType(GFXCORE_FAMILY family, bool debuggingActive);
 
   protected:
     SipKernelType type = SipKernelType::COUNT;

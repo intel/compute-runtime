@@ -90,7 +90,8 @@ void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, Device &
 
     auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
     sip->init();
-    sip->setSystemInstructionPointer(BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, device).getSipAllocation()->getGpuAddressToPatch());
+    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, device.isSourceLevelDebuggerActive());
+    sip->setSystemInstructionPointer(BuiltIns::getInstance().getSipKernel(sipType, device).getSipAllocation()->getGpuAddressToPatch());
 }
 
 template <typename GfxFamily>

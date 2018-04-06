@@ -25,6 +25,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
+#include "runtime/helpers/options.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -112,6 +113,16 @@ TEST(Sip, getType) {
 
 TEST(Sip, givenSipKernelClassWhenAskedForMaxDebugSurfaceSizeThenCorrectValueIsReturned) {
     EXPECT_EQ(0x49c000u, SipKernel::maxDbgSurfaceSize);
+}
+
+TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
+    auto sipType = SipKernel::getSipKernelType(renderCoreFamily, false);
+    EXPECT_EQ(SipKernelType::Csr, sipType);
+}
+
+TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturned) {
+    auto sipType = SipKernel::getSipKernelType(renderCoreFamily, true);
+    EXPECT_LE(SipKernelType::DbgCsr, sipType);
 }
 
 TEST(DebugSip, WhenRequestingDbgCsrSipKernelThenProperCompilerInternalOptionsAreReturned) {

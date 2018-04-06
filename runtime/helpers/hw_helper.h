@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/built_ins/sip.h"
 
 #include <cstdint>
 #include <type_traits>
@@ -42,6 +43,7 @@ class HwHelper {
     virtual bool setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) = 0;
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps) = 0;
+    virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
 
   protected:
     HwHelper(){};
@@ -86,6 +88,8 @@ class HwHelperHw : public HwHelper {
     void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
 
     void setupHardwareCapabilities(HardwareCapabilities *caps) override;
+
+    SipKernelType getSipKernelType(bool debuggingActive) override;
 
   private:
     HwHelperHw(){};

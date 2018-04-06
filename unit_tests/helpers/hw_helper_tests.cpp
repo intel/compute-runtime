@@ -75,6 +75,14 @@ HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsCorrectSize) {
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), helper.getInterfaceDescriptorDataSize());
 }
 
+HWTEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTypeIsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_NE(nullptr, &helper);
+
+    auto sipType = helper.getSipKernelType(false);
+    EXPECT_EQ(SipKernelType::Csr, sipType);
+}
+
 TEST(DwordBuilderTest, setNonMaskedBits) {
     uint32_t dword = 0;
 

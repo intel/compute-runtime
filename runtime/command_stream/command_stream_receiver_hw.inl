@@ -313,7 +313,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*preemptionCsrAllocation);
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread) {
-        makeResident(*BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *device).getSipAllocation());
+        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, device->isSourceLevelDebuggerActive());
+        makeResident(*BuiltIns::getInstance().getSipKernel(sipType, *device).getSipAllocation());
     }
 
     // If the CSR has work in its CS, flush it before the task

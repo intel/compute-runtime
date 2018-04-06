@@ -254,4 +254,8 @@ double Device::getPlatformHostTimerResolution() const {
 GFXCORE_FAMILY Device::getRenderCoreFamily() const {
     return this->getHardwareInfo().pPlatform->eRenderCoreFamily;
 }
+
+bool Device::isSourceLevelDebuggerActive() {
+    return deviceInfo.sourceLevelDebuggerActive;
+}
 } // namespace OCLRT
