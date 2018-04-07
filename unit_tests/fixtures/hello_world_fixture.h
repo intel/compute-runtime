@@ -106,7 +106,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 
     virtual void TearDown() {
         pCmdQ->flush();
-        delete BufferDefaults::context;
 
         alignedFree(pSrcMemory);
         alignedFree(pDestMemory);
@@ -115,6 +114,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         IndirectHeapFixture::TearDown();
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
+        delete BufferDefaults::context;
         BuiltInFixture::TearDown();
         DeviceFixture::TearDown();
     }

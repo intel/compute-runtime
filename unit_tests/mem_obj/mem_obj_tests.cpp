@@ -344,3 +344,13 @@ TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThe
 
     memObj2.reset(nullptr);
 }
+
+TEST(MemObj, givenMemObjectWhenContextIsNotNullThenContextOutlivesMemobjects) {
+    MockContext context;
+    EXPECT_EQ(1, context.getRefInternalCount());
+    {
+        MemObj memObj(&context, 0, 0, 0, nullptr, nullptr, nullptr, false, false, false);
+        EXPECT_EQ(2, context.getRefInternalCount());
+    }
+    EXPECT_EQ(1, context.getRefInternalCount());
+}

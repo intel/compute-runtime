@@ -50,6 +50,7 @@ MemObj::MemObj(Context *context,
     completionStamp = {};
 
     if (context) {
+        context->incRefInternal();
         memoryManager = context->getMemoryManager();
     }
 }
@@ -99,6 +100,10 @@ MemObj::~MemObj() {
             (*iter)->invoke(this);
             delete *iter;
         }
+    }
+
+    if (context) {
+        context->decRefInternal();
     }
 }
 
