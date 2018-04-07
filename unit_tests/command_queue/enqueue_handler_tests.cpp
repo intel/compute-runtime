@@ -267,3 +267,35 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     EXPECT_CALL(*csr, setPatchInfoData(::testing::_)).Times(6);
     mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 }
+
+HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestingEnqueueWithoutGpuSubmissionThenTaskCountIsNotInherited) {
+    struct ExternallySynchEvent : Event {
+        ExternallySynchEvent() : Event(nullptr, CL_COMMAND_MARKER, 0, 0) {
+            transitionExecutionStatus(CL_COMPLETE);
+            this->updateTaskCount(7);
+        }
+        bool isExternallySynchronized() const override {
+            return true;
+        }
+    };
+    ExternallySynchEvent synchEvent;
+    cl_event inEv = &synchEvent;
+    cl_event outEv = nullptr;
+
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
+    bool blocking = false;
+    MultiDispatchInfo emptyDispatchInfo;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr,
+                                                         0,
+                                                         blocking,
+                                                         emptyDispatchInfo,
+                                                         1U,
+                                                         &inEv,
+                                                         &outEv);
+    Event *ouputEvent = castToObject<Event>(outEv);
+    ASSERT_NE(nullptr, ouputEvent);
+    EXPECT_EQ(0U, ouputEvent->peekTaskCount());
+
+    ouputEvent->release();
+    mockCmdQ->release();
+}

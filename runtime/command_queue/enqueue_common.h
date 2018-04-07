@@ -351,7 +351,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             auto maxTaskCount = this->taskCount;
             for (auto eventId = 0u; eventId < numEventsInWaitList; eventId++) {
                 auto event = castToObject<Event>(eventWaitList[eventId]);
-                if (!event->isUserEvent()) {
+                if (!event->isUserEvent() && !event->isExternallySynchronized()) {
                     maxTaskCount = std::max(maxTaskCount, event->peekTaskCount());
                 }
             }
