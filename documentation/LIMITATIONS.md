@@ -23,12 +23,6 @@ The driver has the following functional delta compared to previously released dr
 * Intel's former open-source Beignet driver
   https://01.org/beignet
 
-#### Generic extensions
-* cl_khr_mipmap
-* cl_khr_mipmap_writes
-
-_Currently under development_
-
 #### Preview extensions
 * cl_intelx_video_enhancement
 * cl_intelx_video_enhancement_camera_pipeline
