@@ -128,7 +128,7 @@ class CommandComputeKernel : public Command {
 
 class CommandMarker : public Command {
   public:
-    CommandMarker(CommandQueue &cmdQ, CommandStreamReceiver &csr, unsigned int clCommandType, unsigned int commandSize)
+    CommandMarker(CommandQueue &cmdQ, CommandStreamReceiver &csr, uint32_t clCommandType, uint32_t commandSize)
         : cmdQ(cmdQ), csr(csr), clCommandType(clCommandType), commandSize(commandSize) {
     }
 
@@ -137,7 +137,7 @@ class CommandMarker : public Command {
   private:
     CommandQueue &cmdQ;
     CommandStreamReceiver &csr;
-    unsigned int clCommandType;
-    unsigned int commandSize;
+    uint32_t clCommandType;
+    uint32_t commandSize;
 };
 } // namespace OCLRT

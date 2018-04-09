@@ -22,12 +22,14 @@
 
 #pragma once
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device_info.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/event/user_event.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "instrumentation.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -439,7 +441,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     OCLRT::HwPerfCounter *hwPerfCounter,
     PreemptionMode preemptionMode,
     bool blockQueue,
-    unsigned int commandType) {
+    uint32_t commandType) {
 
     OCLRT::LinearStream *commandStream = nullptr;
     OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
@@ -813,6 +815,111 @@ void GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(OCLRT::LinearS
 template <typename GfxFamily>
 size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel) {
     return (size_t)0;
+}
+
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo) {
+    size_t size = KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
+                  sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
+    if (reserveProfilingCmdsSpace) {
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+    }
+    if (reservePerfCounters) {
+        //start cmds
+        //P_C: flush CS & TimeStamp BEGIN
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
+        //SRM NOOPID & Frequency
+        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //gp registers
+        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //report perf count
+        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
+        //user registers
+        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+
+        //end cmds
+        //P_C: flush CS & TimeStamp END;
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
+        //OA buffer (status head, tail)
+        size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //report perf count
+        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
+        //gp registers
+        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //SRM NOOPID & Frequency
+        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //user registers
+        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+    }
+    Device &device = commandQueue.getDevice();
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        auto &kernel = *dispatchInfo.getKernel();
+        size += sizeof(typename GfxFamily::GPGPU_WALKER);
+        size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(&kernel);
+        size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(device);
+    }
+    return size;
+}
+
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
+    switch (cmdType) {
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+    case CL_COMMAND_MARKER:
+        return EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
+    case CL_COMMAND_NDRANGE_KERNEL:
+    default:
+        return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel);
+    }
+}
+
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
+    size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + KernelCommandsHelper<GfxFamily>::getSizeRequiredCS() +
+                  sizeof(typename GfxFamily::PIPE_CONTROL) * (KernelCommandsHelper<GfxFamily>::isPipeControlWArequired() ? 2 : 1);
+    size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
+    if (reserveProfilingCmdsSpace) {
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+    }
+    if (reservePerfCounters) {
+        //start cmds
+        //P_C: flush CS & TimeStamp BEGIN
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
+        //SRM NOOPID & Frequency
+        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //gp registers
+        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //report perf count
+        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
+        //user registers
+        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+
+        //end cmds
+        //P_C: flush CS & TimeStamp END;
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
+        //OA buffer (status head, tail)
+        size += 3 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //report perf count
+        size += sizeof(typename GfxFamily::MI_REPORT_PERF_COUNT);
+        //gp registers
+        size += OCLRT::INSTR_GENERAL_PURPOSE_COUNTERS_COUNT * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //SRM NOOPID & Frequency
+        size += 2 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+        //user registers
+        size += commandQueue.getPerfCountersUserRegistersNumber() * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+    }
+    size += GpgpuWalkerHelper<GfxFamily>::getSizeForWADisableLSQCROPERFforOCL(pKernel);
+
+    return size;
+}
+
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue) {
+    size_t size = 0;
+    if (reserveProfilingCmdsSpace) {
+        size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
+    }
+    return size;
 }
 
 } // namespace OCLRT

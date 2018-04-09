@@ -283,7 +283,7 @@ class CommandQueueHw : public CommandQueue {
     cl_int finish(bool dcFlush) override;
     cl_int flush() override;
 
-    template <unsigned int enqueueType>
+    template <uint32_t enqueueType>
     void enqueueHandler(Surface **surfacesForResidency,
                         size_t numSurfaceForResidency,
                         bool blocking,
@@ -292,7 +292,7 @@ class CommandQueueHw : public CommandQueue {
                         const cl_event *eventWaitList,
                         cl_event *event);
 
-    template <unsigned int enqueueType, size_t size>
+    template <uint32_t enqueueType, size_t size>
     void enqueueHandler(Surface *(&surfacesForResidency)[size],
                         bool blocking,
                         const MultiDispatchInfo &dispatchInfo,
@@ -302,7 +302,7 @@ class CommandQueueHw : public CommandQueue {
         enqueueHandler<enqueueType>(surfacesForResidency, size, blocking, dispatchInfo, numEventsInWaitList, eventWaitList, event);
     }
 
-    template <unsigned int enqueueType, size_t size>
+    template <uint32_t enqueueType, size_t size>
     void enqueueHandler(Surface *(&surfacesForResidency)[size],
                         bool blocking,
                         Kernel *kernel,
@@ -314,7 +314,7 @@ class CommandQueueHw : public CommandQueue {
                         const cl_event *eventWaitList,
                         cl_event *event);
 
-    template <unsigned int commandType>
+    template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
                                       size_t surfaceCount,
                                       LinearStream &commandStream,
@@ -326,7 +326,7 @@ class CommandQueueHw : public CommandQueue {
                                       bool slmUsed,
                                       PrintfHandler *printfHandler);
 
-    template <unsigned int commandType>
+    template <uint32_t commandType>
     void enqueueBlocked(Surface **surfacesForResidency,
                         size_t surfacesCount,
                         bool &blocking,

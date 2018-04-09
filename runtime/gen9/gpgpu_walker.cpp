@@ -68,4 +68,6 @@ size_t GpgpuWalkerHelper<SKLFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
 
 template class GpgpuWalkerHelper<SKLFamily>;
 
+template struct EnqueueOperation<SKLFamily>;
+
 } // namespace OCLRT

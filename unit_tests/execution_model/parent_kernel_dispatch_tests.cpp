@@ -222,13 +222,13 @@ HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhen
         DispatchInfo dispatchInfo(mockParentKernel, 1, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{0, 0, 0});
         MultiDispatchInfo multiDispatchInfo;
 
-        size_t size = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(false, false, *pCmdQ, mockParentKernel);
+        size_t size = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, mockParentKernel);
         size_t numOfKernels = MemoryConstants::pageSize / size;
 
         size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
 
         SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*mockParentKernel->getContext());
-        size_t schedulerSize = EnqueueOperation<FamilyType, CL_COMMAND_NDRANGE_KERNEL>::getSizeRequiredCS(false, false, *pCmdQ, &scheduler);
+        size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
 
         while (rest >= schedulerSize) {
             numOfKernels++;

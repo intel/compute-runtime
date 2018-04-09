@@ -33,18 +33,6 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-struct EnqueueOperation<GfxFamily, CL_COMMAND_MARKER> {
-    static size_t getSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
-        size_t size = 0;
-        if (reserveProfilingCmdsSpace) {
-            size += 2 * sizeof(typename GfxFamily::PIPE_CONTROL) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
-        }
-
-        return size;
-    }
-};
-
-template <typename GfxFamily>
 cl_int CommandQueueHw<GfxFamily>::enqueueMarkerWithWaitList(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,

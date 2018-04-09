@@ -46,7 +46,7 @@
 
 namespace OCLRT {
 
-inline bool shouldFlushDC(unsigned int commandType, PrintfHandler *printfHandler) {
+inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) {
     return (commandType == CL_COMMAND_READ_BUFFER ||
             commandType == CL_COMMAND_READ_BUFFER_RECT ||
             commandType == CL_COMMAND_READ_IMAGE ||
@@ -54,7 +54,7 @@ inline bool shouldFlushDC(unsigned int commandType, PrintfHandler *printfHandler
             printfHandler);
 }
 
-inline bool isCommandWithoutKernel(unsigned int commandType) {
+inline bool isCommandWithoutKernel(uint32_t commandType) {
     return ((commandType == CL_COMMAND_BARRIER) || (commandType == CL_COMMAND_MARKER) ||
             (commandType == CL_COMMAND_MIGRATE_MEM_OBJECTS) ||
             (commandType == CL_COMMAND_SVM_MAP) ||
@@ -66,7 +66,7 @@ template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) {}
 
 template <typename GfxFamily>
-template <unsigned int commandType, size_t surfaceCount>
+template <uint32_t commandType, size_t surfaceCount>
 void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount],
                                                bool blocking,
                                                Kernel *kernel,
@@ -131,7 +131,7 @@ void CommandQueueHw<GfxFamily>::forceDispatchScheduler(OCLRT::MultiDispatchInfo 
 }
 
 template <typename GfxFamily>
-template <unsigned int commandType>
+template <uint32_t commandType>
 void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                size_t numSurfaceForResidency,
                                                bool blocking,
@@ -469,7 +469,7 @@ bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const uint32_t &taskLe
 }
 
 template <typename GfxFamily>
-template <unsigned int commandType>
+template <uint32_t commandType>
 CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     Surface **surfaces,
     size_t surfaceCount,
@@ -584,7 +584,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 }
 
 template <typename GfxFamily>
-template <unsigned int commandType>
+template <uint32_t commandType>
 void CommandQueueHw<GfxFamily>::enqueueBlocked(
     Surface **surfaces,
     size_t surfaceCount,
@@ -626,10 +626,11 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
 
     if (multiDispatchInfo.empty()) {
         DEBUG_BREAK_IF(!isCommandWithoutKernel(commandType));
-        auto cmdSize = (unsigned int)EnqueueOperation<GfxFamily, commandType>::getSizeRequiredCS(isProfilingEnabled(),
-                                                                                                 isPerfCountersEnabled(),
-                                                                                                 *this,
-                                                                                                 nullptr);
+        auto cmdSize = static_cast<uint32_t>(EnqueueOperation<GfxFamily>::getSizeRequiredCS(commandType,
+                                                                                            isProfilingEnabled(),
+                                                                                            isPerfCountersEnabled(),
+                                                                                            *this,
+                                                                                            nullptr));
         auto cmd = std::unique_ptr<Command>(new CommandMarker(
             *this, commandStreamReceiver, commandType, cmdSize));
         eventBuilder->getEvent()->setCommand(std::move(cmd));

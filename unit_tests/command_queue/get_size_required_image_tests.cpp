@@ -102,7 +102,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_COPY_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_COPY_IMAGE, false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
@@ -150,7 +150,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_COPY_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel.get());
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_COPY_IMAGE, false, false, *pCmdQ, kernel.get());
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel.get());
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel.get());
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel.get());
@@ -206,7 +206,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_READ_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_READ_IMAGE, false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
@@ -260,7 +260,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_READ_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_READ_IMAGE, false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
@@ -314,7 +314,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_WRITE_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_WRITE_IMAGE, false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
@@ -368,7 +368,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
     auto usedAfterIOH = ioh.getUsed();
     auto usedAfterSSH = ssh.getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType, CL_COMMAND_WRITE_IMAGE>::getSizeRequiredCS(false, false, *pCmdQ, kernel);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_WRITE_IMAGE, false, false, *pCmdQ, kernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*kernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*kernel);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*kernel);
