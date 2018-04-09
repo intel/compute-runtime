@@ -1500,12 +1500,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverT
     EXPECT_EQ(PreambleHelper<FamilyType>::getDefaultThreadArbitrationPolicy(), commandStreamReceiver.peekThreadArbitrationPolicy());
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverWhenAskedForTimeoutMultiplierThenAlwaysReturnOne) {
-    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*platformDevices[0]);
-    EXPECT_EQ(1u, commandStreamReceiver.computeTimeoutMultiplier(false, 5));
-    EXPECT_EQ(1u, commandStreamReceiver.computeTimeoutMultiplier(true, 5));
-}
-
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML3WasSentThenDontProgramL3) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t GWS = 1;

@@ -21,6 +21,8 @@
  */
 
 #pragma once
+#include "runtime/helpers/completion_stamp.h"
+
 #include <cstdint>
 #include <chrono>
 
@@ -36,9 +38,12 @@ struct KmdNotifyProperties {
     bool enableQuickKmdSleepForSporadicWaits;
     int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
 
-    bool applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const;
+    bool timeoutEnabled(FlushStamp flushStampToWait) const;
 
-    const int64_t &selectDelay(bool useQuickKmdSleep) const;
+    int64_t pickTimeoutValue(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp,
+                             bool quickKmdSleepRequest, uint32_t currentHwTag, uint32_t taskCountToWait) const;
+
+    bool applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const;
 
     static void overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination);
     static void overrideFromDebugVariable(int32_t debugVariableValue, bool &destination);

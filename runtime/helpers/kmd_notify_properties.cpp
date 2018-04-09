@@ -25,6 +25,23 @@
 
 using namespace OCLRT;
 
+bool KmdNotifyProperties::timeoutEnabled(FlushStamp flushStampToWait) const {
+    return enableKmdNotify && flushStampToWait != 0;
+}
+
+int64_t KmdNotifyProperties::pickTimeoutValue(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp,
+                                              bool quickKmdSleepRequest, uint32_t currentHwTag, uint32_t taskCountToWait) const {
+    quickKmdSleepRequest |= applyQuickKmdSleepForSporadicWait(lastWaitTimestamp);
+
+    if (quickKmdSleepRequest && enableQuickKmdSleep) {
+        return delayQuickKmdSleepMicroseconds;
+    }
+
+    int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
+
+    return delayKmdNotifyMicroseconds * multiplier;
+}
+
 bool KmdNotifyProperties::applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const {
     if (enableQuickKmdSleepForSporadicWaits) {
         auto now = std::chrono::high_resolution_clock::now();
@@ -34,11 +51,6 @@ bool KmdNotifyProperties::applyQuickKmdSleepForSporadicWait(std::chrono::high_re
         }
     }
     return false;
-}
-
-const int64_t &KmdNotifyProperties::selectDelay(bool useQuickKmdSleep) const {
-    return (useQuickKmdSleep && enableQuickKmdSleep) ? delayQuickKmdSleepMicroseconds
-                                                     : delayKmdNotifyMicroseconds;
 }
 
 void KmdNotifyProperties::overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination) {

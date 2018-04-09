@@ -33,7 +33,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
 
   public:
-    using BaseClass::computeTimeoutMultiplier;
     using BaseClass::dshState;
     using BaseClass::hwInfo;
     using BaseClass::iohState;

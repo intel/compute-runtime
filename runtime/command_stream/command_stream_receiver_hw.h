@@ -85,8 +85,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     virtual void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags);
     virtual void initPageTableManagerRegisters(LinearStream &csr){};
 
-    virtual int64_t computeTimeoutMultiplier(bool useQuickKmdSleep, uint32_t taskCountToWait) const { return 1u; };
-
     void addPipeControlWA(LinearStream &commandStream, bool flushDC);
     void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);

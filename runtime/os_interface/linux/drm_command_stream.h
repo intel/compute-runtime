@@ -67,7 +67,6 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
   protected:
     void makeResident(BufferObject *bo);
     void programVFEState(LinearStream &csr, DispatchFlags &dispatchFlags) override;
-    int64_t computeTimeoutMultiplier(bool useQuickKmdSleep, uint32_t taskCountToWait) const override;
 
     std::vector<BufferObject *> residency;
     std::vector<drm_i915_gem_exec_object2> execObjectsStorage;

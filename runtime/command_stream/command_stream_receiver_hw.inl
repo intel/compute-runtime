@@ -569,12 +569,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     const auto &kmdNotifyProperties = this->hwInfo.capabilityTable.kmdNotifyProperties;
-    useQuickKmdSleep |= kmdNotifyProperties.applyQuickKmdSleepForSporadicWait(lastWaitForCompletionTimestamp);
 
-    int64_t kmdNotifyDelay = kmdNotifyProperties.selectDelay(useQuickKmdSleep) * computeTimeoutMultiplier(useQuickKmdSleep, taskCountToWait);
+    int64_t waitTimeout = kmdNotifyProperties.pickTimeoutValue(lastWaitForCompletionTimestamp, useQuickKmdSleep, *getTagAddress(), taskCountToWait);
 
-    auto status = waitForCompletionWithTimeout(kmdNotifyProperties.enableKmdNotify && flushStampToWait != 0,
-                                               kmdNotifyDelay, taskCountToWait);
+    auto status = waitForCompletionWithTimeout(kmdNotifyProperties.timeoutEnabled(flushStampToWait),
+                                               waitTimeout,
+                                               taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached

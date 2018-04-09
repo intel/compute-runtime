@@ -191,12 +191,4 @@ inline void DrmCommandStreamReceiver<GfxFamily>::programVFEState(LinearStream &c
     }
 }
 
-template <typename GfxFamily>
-inline int64_t DrmCommandStreamReceiver<GfxFamily>::computeTimeoutMultiplier(bool useQuickKmdSleep, uint32_t taskCountToWait) const {
-    auto currentHwTag = *getTagAddress();
-    if (currentHwTag >= taskCountToWait || useQuickKmdSleep) {
-        return 1u;
-    }
-    return static_cast<int64_t>(taskCountToWait - currentHwTag);
-}
 } // namespace OCLRT
