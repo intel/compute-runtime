@@ -64,3 +64,9 @@ With that in mind, we tend to compare NEO against previous closed source release
 (i.e. [SRB5](https://software.intel.com/en-us/articles/opencl-drivers#latest_linux_driver)).
 
 Most of the developers are located in Poland (UTC+1 timezone).
+
+### I would like to join your team. How can I apply for a job?
+
+1. Go to: https://jobs.intel.com/ListJobs/All/Search/city/Gdansk/
+1. Filter for OpenCL in the job title
+1. Browse the descriptions looking for positions mentioning this GitHub repository
