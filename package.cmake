@@ -1,4 +1,4 @@
-# Copyright (c) 2017 - 2018, Intel Corporation
+# Copyright (c) 2017, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -61,6 +61,10 @@ if(UNIX)
   install(
     CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"/opt/intel/opencl\n\" )"
     CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/intel.icd \"/opt/intel/opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
+    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postinst \"echo /opt/intel/opencl >> ${_dir_etc}/ld.so.conf\n\" )"
+    CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
+    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postrm \"sed -i '/\\\\/opt\\\\/intel\\\\/opencl.*$/d' ${_dir_etc}/ld.so.conf\n\" )"
+    CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
     COMPONENT igdrcl
   )
   install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT igdrcl)
@@ -88,6 +92,7 @@ if(UNIX)
   set(CPACK_PACKAGE_VERSION_MINOR ${NEO_VERSION_MINOR})
   set(CPACK_PACKAGE_VERSION_PATCH ${NEO_VERSION_BUILD})
   set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "amd64")
+  set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "postinst;postrm")
   set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://01.org/compute-runtime")
   set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
   set(CPACK_RPM_COMPRESSION_TYPE "xz")
@@ -96,6 +101,8 @@ if(UNIX)
   set(CPACK_RPM_PACKAGE_GROUP "System Environment/Libraries")
   set(CPACK_RPM_PACKAGE_LICENSE "MIT")
   set(CPACK_RPM_PACKAGE_URL "http://01.org/compute-runtime")
+  set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${IGDRCL_BINARY_DIR}/postinst")
+  set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${IGDRCL_BINARY_DIR}/postrm")
   set(CPACK_PACKAGE_INSTALL_DIRECTORY "/opt/intel/opencl")
   set(CPACK_PACKAGE_CONTACT "Intel Corporation")
   set(CPACK_PACKAGE_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}-${NEO_VERSION_BUILD}.${CPACK_RPM_PACKAGE_ARCHITECTURE}")
