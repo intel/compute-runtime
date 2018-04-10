@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
+#include "runtime/sampler/sampler.h"
 #include "CL/cl_ext.h"
 
 using namespace OCLRT;
@@ -212,4 +213,34 @@ INSTANTIATE_TEST_CASE_P(api,
                             ::testing::ValuesIn(NormalizdProperties),
                             ::testing::ValuesIn(AddressingProperties),
                             ::testing::ValuesIn(FilterProperties)));
+
+TEST_F(clCreateSamplerWithPropertiesTests, whenCreatedWithMipMapDataThenSamplerIsProperlyPopulated) {
+    SamplerLodProperty minLodProperty;
+    SamplerLodProperty maxLodProperty;
+    minLodProperty.lod = 2.0f;
+    maxLodProperty.lod = 3.0f;
+    cl_sampler_properties mipMapFilteringMode = CL_FILTER_LINEAR;
+    cl_sampler_properties properties[] =
+        {
+            CL_SAMPLER_NORMALIZED_COORDS, 0,
+            CL_SAMPLER_ADDRESSING_MODE, CL_ADDRESS_NONE,
+            CL_SAMPLER_FILTER_MODE, CL_FILTER_LINEAR,
+            CL_SAMPLER_MIP_FILTER_MODE, mipMapFilteringMode,
+            CL_SAMPLER_LOD_MIN, minLodProperty.data,
+            CL_SAMPLER_LOD_MAX, maxLodProperty.data,
+            0};
+
+    cl_sampler clSampler = clCreateSamplerWithProperties(
+        pContext,
+        properties,
+        &retVal);
+
+    auto sampler = castToObject<Sampler>(clSampler);
+    ASSERT_NE(nullptr, sampler);
+    EXPECT_EQ(mipMapFilteringMode, sampler->mipFilterMode);
+    EXPECT_EQ(minLodProperty.lod, sampler->lodMin);
+    EXPECT_EQ(maxLodProperty.lod, sampler->lodMax);
+    clReleaseSampler(sampler);
+}
+
 } // namespace ULT

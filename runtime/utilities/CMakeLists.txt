@@ -32,6 +32,7 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator.h
   ${CMAKE_CURRENT_SOURCE_DIR}/iflist.h
   ${CMAKE_CURRENT_SOURCE_DIR}/idlist.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/numeric.h
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/range.h

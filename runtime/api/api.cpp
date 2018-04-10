@@ -967,6 +967,9 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
             normalizedCoords,
             addressingMode,
             filterMode,
+            CL_FILTER_NEAREST,
+            0.0f,
+            std::numeric_limits<float>::max(),
             retVal);
     }
 

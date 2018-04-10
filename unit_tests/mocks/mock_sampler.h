@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,11 @@ struct MockSampler : public Sampler {
     MockSampler(Context *context,
                 cl_bool normalizedCoordinates,
                 cl_addressing_mode addressingMode,
-                cl_filter_mode filterMode) : Sampler(context, normalizedCoordinates, addressingMode, filterMode) {
+                cl_filter_mode filterMode,
+                cl_filter_mode mipFilterMode = CL_FILTER_NEAREST,
+                float lodMin = 0.0f,
+                float lodMax = 0.0f) : Sampler(context, normalizedCoordinates, addressingMode, filterMode,
+                                               mipFilterMode, lodMin, lodMax) {
     }
 
     cl_context getContext() const {

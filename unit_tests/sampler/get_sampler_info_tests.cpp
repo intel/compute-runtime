@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -57,7 +57,7 @@ TEST_P(GetSamplerInfo, valid_returnsSuccess) {
     auto addressingMode = CL_ADDRESS_MIRRORED_REPEAT;
     auto filterMode = CL_FILTER_NEAREST;
     auto sampler = Sampler::create(&context, normalizedCoords, addressingMode,
-                                   filterMode, retVal);
+                                   filterMode, CL_FILTER_NEAREST, 2.0f, 3.0f, retVal);
 
     size_t sizeReturned = 0;
     retVal = sampler->getInfo(param, 0, nullptr, &sizeReturned);
@@ -78,7 +78,10 @@ cl_sampler_info samplerInfoParams[] = {
     CL_SAMPLER_CONTEXT,
     CL_SAMPLER_NORMALIZED_COORDS,
     CL_SAMPLER_ADDRESSING_MODE,
-    CL_SAMPLER_FILTER_MODE};
+    CL_SAMPLER_FILTER_MODE,
+    CL_SAMPLER_MIP_FILTER_MODE,
+    CL_SAMPLER_LOD_MIN,
+    CL_SAMPLER_LOD_MAX};
 
 INSTANTIATE_TEST_CASE_P(
     Sampler_,

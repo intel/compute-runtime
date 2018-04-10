@@ -20,6 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/utilities/numeric.h"
+
+#include <algorithm>
+
 namespace OCLRT {
 
 template <typename GfxFamily>
@@ -65,6 +69,9 @@ void SamplerHw<GfxFamily>::setArg(void *memory) {
     if (CL_FILTER_LINEAR == filterMode) {
         minMode = SAMPLER_STATE::MIN_MODE_FILTER_LINEAR;
         magMode = SAMPLER_STATE::MAG_MODE_FILTER_LINEAR;
+    }
+
+    if (CL_FILTER_LINEAR == mipFilterMode) {
         mipMode = SAMPLER_STATE::MIP_MODE_FILTER_LINEAR;
     }
 
@@ -90,6 +97,12 @@ void SamplerHw<GfxFamily>::setArg(void *memory) {
         samplerState->setUAddressMinFilterRoundingEnable(false);
         samplerState->setUAddressMagFilterRoundingEnable(false);
     }
+
+    FixedU4D8 minLodValue = FixedU4D8(std::min(getGenSamplerMaxLod(), this->lodMin));
+    FixedU4D8 maxLodValue = FixedU4D8(std::min(getGenSamplerMaxLod(), this->lodMax));
+    samplerState->setMinLod(minLodValue.getRawAccess());
+    samplerState->setMaxLod(maxLodValue.getRawAccess());
+
     appendSamplerStateParams(samplerState);
 }
 

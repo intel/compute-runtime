@@ -33,6 +33,11 @@ struct OpenCLObjectMapper<_cl_sampler> {
     typedef class Sampler DerivedType;
 };
 
+union SamplerLodProperty {
+    cl_sampler_properties data;
+    float lod;
+};
+
 class Sampler : public BaseObject<_cl_sampler> {
   public:
     static const cl_ulong objectMagic = 0x4684913AC213EF00LL;
@@ -40,7 +45,16 @@ class Sampler : public BaseObject<_cl_sampler> {
 
     static Sampler *create(Context *context, cl_bool normalizedCoordinates,
                            cl_addressing_mode addressingMode, cl_filter_mode filterMode,
+                           cl_filter_mode mipFilterMode, float lodMin, float lodMax,
                            cl_int &errcodeRet);
+
+    static Sampler *create(Context *context, cl_bool normalizedCoordinates,
+                           cl_addressing_mode addressingMode, cl_filter_mode filterMode,
+                           cl_int &errcodeRet) {
+        return Sampler::create(context, normalizedCoordinates, addressingMode, filterMode,
+                               CL_FILTER_NEAREST, 0.0f, std::numeric_limits<float>::max(),
+                               errcodeRet);
+    }
 
     static Sampler *create(Context *context,
                            const cl_sampler_properties *samplerProperties,
@@ -57,6 +71,14 @@ class Sampler : public BaseObject<_cl_sampler> {
     Sampler(Context *context,
             cl_bool normalizedCoordinates,
             cl_addressing_mode addressingMode,
+            cl_filter_mode filterMode,
+            cl_filter_mode mipFilterMode,
+            float lodMin,
+            float lodMax);
+
+    Sampler(Context *context,
+            cl_bool normalizedCoordinates,
+            cl_addressing_mode addressingMode,
             cl_filter_mode filterMode);
 
     unsigned int getSnapWaValue() const;
@@ -65,30 +87,51 @@ class Sampler : public BaseObject<_cl_sampler> {
     cl_bool normalizedCoordinates;
     cl_addressing_mode addressingMode;
     cl_filter_mode filterMode;
+    cl_filter_mode mipFilterMode;
+    float lodMin;
+    float lodMax;
 };
 
 template <typename GfxFamily>
 struct SamplerHw : public Sampler {
     void setArg(void *memory) override;
     void appendSamplerStateParams(typename GfxFamily::SAMPLER_STATE *state);
+    static constexpr float getGenSamplerMaxLod() {
+        return 14.0f;
+    }
 
     SamplerHw(Context *context,
               cl_bool normalizedCoordinates,
               cl_addressing_mode addressingMode,
-              cl_filter_mode filterMode) : Sampler(context,
-                                                   normalizedCoordinates,
-                                                   addressingMode,
-                                                   filterMode) {
+              cl_filter_mode filterMode,
+              cl_filter_mode mipFilterMode,
+              float lodMin,
+              float lodMax)
+        : Sampler(context, normalizedCoordinates, addressingMode, filterMode,
+                  mipFilterMode, lodMin, lodMax) {
+    }
+
+    SamplerHw(Context *context,
+              cl_bool normalizedCoordinates,
+              cl_addressing_mode addressingMode,
+              cl_filter_mode filterMode)
+        : Sampler(context, normalizedCoordinates, addressingMode, filterMode) {
     }
 
     static Sampler *create(Context *context,
                            cl_bool normalizedCoordinates,
                            cl_addressing_mode addressingMode,
-                           cl_filter_mode filterMode) {
+                           cl_filter_mode filterMode,
+                           cl_filter_mode mipFilterMode,
+                           float lodMin,
+                           float lodMax) {
         return new SamplerHw<GfxFamily>(context,
                                         normalizedCoordinates,
                                         addressingMode,
-                                        filterMode);
+                                        filterMode,
+                                        mipFilterMode,
+                                        lodMin,
+                                        lodMax);
     }
 
     static size_t getSamplerStateSize();
@@ -97,7 +140,10 @@ struct SamplerHw : public Sampler {
 typedef Sampler *(*SamplerCreateFunc)(Context *context,
                                       cl_bool normalizedCoordinates,
                                       cl_addressing_mode addressingMode,
-                                      cl_filter_mode filterMode);
+                                      cl_filter_mode filterMode,
+                                      cl_filter_mode mipFilterMode,
+                                      float lodMin,
+                                      float lodMax);
 
 typedef size_t (*getSamplerStateSizeHwFunc)();
 }

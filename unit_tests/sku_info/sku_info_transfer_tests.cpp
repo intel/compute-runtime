@@ -42,6 +42,7 @@ TEST(SkuInfoTransferTest, givenWaTableWhenFillingStructureForGmmThenCopyOnlySele
     _WA_TABLE requestedWaTable = {};
     _WA_TABLE refWaTable = {};
     WorkaroundTable waTable;
+    refWaTable = {};
     memset(&waTable, 1, sizeof(WorkaroundTable));
     SkuInfoTransfer::transferWaTableForGmm(&requestedWaTable, &waTable);
 

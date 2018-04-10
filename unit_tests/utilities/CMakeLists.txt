@@ -27,6 +27,7 @@ set(IGDRCL_SRCS_tests_utilities
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_reader_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/directory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_allocator_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/numeric_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/perf_profiler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/reference_tracked_object_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock_tests.cpp

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
 #include "runtime/helpers/sampler_helpers.h"
+#include "runtime/utilities/numeric.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -377,6 +378,38 @@ INSTANTIATE_TEST_CASE_P(SamplerSetArg,
                         AddressingModeTest,
                         ::testing::ValuesIn(addressingModeCases));
 
+HWTEST_F(SamplerSetArgTest, setKernelArgSamplerWithMipMaps) {
+    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+
+    FixedU4D8 minLod = 2.0f;
+    FixedU4D8 maxLod = 3.0f;
+
+    sampler = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_NONE,
+        CL_FILTER_NEAREST,
+        CL_FILTER_LINEAR,
+        minLod.asFloat(), maxLod.asFloat(),
+        retVal);
+
+    cl_sampler samplerObj = sampler;
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj),
+        &samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto samplerState = reinterpret_cast<const SAMPLER_STATE *>(
+        ptrOffset(pKernel->getDynamicStateHeap(),
+                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_EQ(FamilyType::SAMPLER_STATE::MIP_MODE_FILTER_LINEAR, samplerState->getMipModeFilter());
+    EXPECT_EQ(minLod.getRawAccess(), samplerState->getMinLod());
+    EXPECT_EQ(maxLod.getRawAccess(), samplerState->getMaxLod());
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 struct FilterModeTest
     : public SamplerSetArgFixture,
@@ -418,7 +451,7 @@ HWTEST_P(FilterModeTest, setKernelArgSampler) {
     } else {
         EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_LINEAR, samplerState->getMinModeFilter());
         EXPECT_EQ(SAMPLER_STATE::MAG_MODE_FILTER_LINEAR, samplerState->getMagModeFilter());
-        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_LINEAR, samplerState->getMipModeFilter());
+        EXPECT_EQ(SAMPLER_STATE::MIP_MODE_FILTER_NEAREST, samplerState->getMipModeFilter());
         EXPECT_TRUE(samplerState->getUAddressMinFilterRoundingEnable());
         EXPECT_TRUE(samplerState->getUAddressMagFilterRoundingEnable());
         EXPECT_TRUE(samplerState->getVAddressMinFilterRoundingEnable());

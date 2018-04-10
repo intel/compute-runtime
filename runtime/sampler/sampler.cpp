@@ -27,20 +27,33 @@
 #include "runtime/helpers/hw_info.h"
 #include "patch_list.h"
 
+#include <limits>
+
 namespace OCLRT {
 
 SamplerCreateFunc samplerFactory[IGFX_MAX_CORE] = {};
 getSamplerStateSizeHwFunc getSamplerStateSizeHw[IGFX_MAX_CORE] = {};
 
 Sampler::Sampler(Context *context, cl_bool normalizedCoordinates,
-                 cl_addressing_mode addressingMode, cl_filter_mode filterMode)
+                 cl_addressing_mode addressingMode, cl_filter_mode filterMode,
+                 cl_filter_mode mipFilterMode, float lodMin, float lodMax)
     : context(context), normalizedCoordinates(normalizedCoordinates),
-      addressingMode(addressingMode), filterMode(filterMode) {
+      addressingMode(addressingMode), filterMode(filterMode),
+      mipFilterMode(mipFilterMode), lodMin(lodMin), lodMax(lodMax) {
+}
+
+Sampler::Sampler(Context *context,
+                 cl_bool normalizedCoordinates,
+                 cl_addressing_mode addressingMode,
+                 cl_filter_mode filterMode)
+    : Sampler(context, normalizedCoordinates, addressingMode, filterMode,
+              CL_FILTER_NEAREST, 0.0f, std::numeric_limits<float>::max()) {
 }
 
 Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,
-                         cl_addressing_mode addressingMode,
-                         cl_filter_mode filterMode, cl_int &errcodeRet) {
+                         cl_addressing_mode addressingMode, cl_filter_mode filterMode,
+                         cl_filter_mode mipFilterMode, float lodMin, float lodMax,
+                         cl_int &errcodeRet) {
     errcodeRet = CL_SUCCESS;
     Sampler *sampler = nullptr;
 
@@ -50,7 +63,7 @@ Sampler *Sampler::create(Context *context, cl_bool normalizedCoordinates,
 
     auto funcCreate = samplerFactory[hwInfo.pPlatform->eRenderCoreFamily];
     DEBUG_BREAK_IF(nullptr == funcCreate);
-    sampler = funcCreate(context, normalizedCoordinates, addressingMode, filterMode);
+    sampler = funcCreate(context, normalizedCoordinates, addressingMode, filterMode, mipFilterMode, lodMin, lodMax);
 
     if (sampler == nullptr) {
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
@@ -63,42 +76,42 @@ size_t Sampler::getSamplerStateSize(const HardwareInfo &hwInfo) {
     return getSamplerStateSizeHw[hwInfo.pPlatform->eRenderCoreFamily]();
 }
 
-template <typename ParameterType, ParameterType minValue, ParameterType maxValue>
+template <typename ParameterType>
 struct SetOnce {
-    SetOnce(ParameterType defaultValue) : value(defaultValue),
-                                          setValueInternal(&SetOnce::setValueValid) {
+    SetOnce(ParameterType defaultValue, ParameterType min, ParameterType max)
+        : value(defaultValue), min(min), max(max) {
     }
 
-    cl_int setValue(cl_ulong property) {
-        auto result = (this->*setValueInternal)(property);
-        setValueInternal = &SetOnce::setValueInvalid;
-        return result;
-    }
-
-    ParameterType value;
-
-  protected:
-    cl_int (SetOnce::*setValueInternal)(cl_ulong property);
-
-    cl_int setValueValid(cl_ulong property) {
-        if (property >= minValue && property <= maxValue) {
-            value = static_cast<ParameterType>(property);
-            return CL_SUCCESS;
+    cl_int setValue(ParameterType property) {
+        if (alreadySet) {
+            return CL_INVALID_VALUE;
         }
-        return CL_INVALID_VALUE;
+
+        if ((property < min) || (property > max)) {
+            return CL_INVALID_VALUE;
+        }
+
+        this->value = property;
+        alreadySet = true;
+
+        return CL_SUCCESS;
     }
 
-    cl_int setValueInvalid(cl_ulong property) {
-        return CL_INVALID_VALUE;
-    }
+    bool alreadySet = false;
+    ParameterType value;
+    ParameterType min;
+    ParameterType max;
 };
 
 Sampler *Sampler::create(Context *context,
                          const cl_sampler_properties *samplerProperties,
                          cl_int &errcodeRet) {
-    SetOnce<uint32_t, CL_FALSE, CL_TRUE> normalizedCoords(CL_TRUE);
-    SetOnce<uint32_t, CL_FILTER_NEAREST, CL_FILTER_LINEAR> filterMode(CL_FILTER_NEAREST);
-    SetOnce<uint32_t, CL_ADDRESS_NONE, CL_ADDRESS_MIRRORED_REPEAT> addressingMode(CL_ADDRESS_CLAMP);
+    SetOnce<uint32_t> normalizedCoords(CL_TRUE, CL_FALSE, CL_TRUE);
+    SetOnce<uint32_t> filterMode(CL_FILTER_NEAREST, CL_FILTER_NEAREST, CL_FILTER_LINEAR);
+    SetOnce<uint32_t> addressingMode(CL_ADDRESS_CLAMP, CL_ADDRESS_NONE, CL_ADDRESS_MIRRORED_REPEAT);
+    SetOnce<uint32_t> mipFilterMode(CL_FILTER_NEAREST, CL_FILTER_NEAREST, CL_FILTER_LINEAR);
+    SetOnce<float> lodMin(0.0f, 0.0f, std::numeric_limits<float>::max());
+    SetOnce<float> lodMax(std::numeric_limits<float>::max(), 0.0f, std::numeric_limits<float>::max());
 
     errcodeRet = CL_SUCCESS;
     if (samplerProperties) {
@@ -109,14 +122,29 @@ Sampler *Sampler::create(Context *context,
             auto samValue = *samplerProperties;
             switch (samType) {
             case CL_SAMPLER_NORMALIZED_COORDS:
-                errcodeRet = normalizedCoords.setValue(samValue);
+                errcodeRet = normalizedCoords.setValue(static_cast<uint32_t>(samValue));
                 break;
             case CL_SAMPLER_ADDRESSING_MODE:
-                errcodeRet = addressingMode.setValue(samValue);
+                errcodeRet = addressingMode.setValue(static_cast<uint32_t>(samValue));
                 break;
             case CL_SAMPLER_FILTER_MODE:
-                errcodeRet = filterMode.setValue(samValue);
+                errcodeRet = filterMode.setValue(static_cast<uint32_t>(samValue));
                 break;
+            case CL_SAMPLER_MIP_FILTER_MODE:
+                errcodeRet = mipFilterMode.setValue(static_cast<uint32_t>(samValue));
+                break;
+            case CL_SAMPLER_LOD_MIN: {
+                SamplerLodProperty lodData;
+                lodData.data = samValue;
+                errcodeRet = lodMin.setValue(lodData.lod);
+                break;
+            }
+            case CL_SAMPLER_LOD_MAX: {
+                SamplerLodProperty lodData;
+                lodData.data = samValue;
+                errcodeRet = lodMax.setValue(lodData.lod);
+                break;
+            }
             default:
                 errcodeRet = CL_INVALID_VALUE;
                 break;
@@ -127,7 +155,9 @@ Sampler *Sampler::create(Context *context,
 
     Sampler *sampler = nullptr;
     if (errcodeRet == CL_SUCCESS) {
-        sampler = create(context, normalizedCoords.value, addressingMode.value, filterMode.value, errcodeRet);
+        sampler = create(context, normalizedCoords.value, addressingMode.value, filterMode.value,
+                         mipFilterMode.value, lodMin.value, lodMax.value,
+                         errcodeRet);
     }
 
     return sampler;
@@ -167,6 +197,21 @@ cl_int Sampler::getInfo(cl_sampler_info paramName, size_t paramValueSize,
     case CL_SAMPLER_FILTER_MODE:
         valueSize = sizeof(cl_filter_mode);
         pValue = &this->filterMode;
+        break;
+
+    case CL_SAMPLER_MIP_FILTER_MODE:
+        valueSize = sizeof(cl_filter_mode);
+        pValue = &this->mipFilterMode;
+        break;
+
+    case CL_SAMPLER_LOD_MIN:
+        valueSize = sizeof(float);
+        pValue = &this->lodMin;
+        break;
+
+    case CL_SAMPLER_LOD_MAX:
+        valueSize = sizeof(float);
+        pValue = &this->lodMax;
         break;
 
     case CL_SAMPLER_REFERENCE_COUNT:
