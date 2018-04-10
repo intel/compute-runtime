@@ -418,7 +418,7 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
             return nullptr;
         }
 
-        newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().profilingTimerResolution));
+        newDeviceCtx->SetProfilingTimerResolution(static_cast<float>(device.getDeviceInfo().outProfilingTimerResolution));
         auto igcPlatform = newDeviceCtx->GetPlatformHandle();
         auto igcGtSystemInfo = newDeviceCtx->GetGTSystemInfoHandle();
         auto igcFeWa = newDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();

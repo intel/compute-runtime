@@ -35,7 +35,7 @@ SKLTEST_F(SklDeviceCaps, reportsOcl21) {
 
 SKLTEST_F(SklDeviceCaps, SklProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(83u, caps.profilingTimerResolution);
+    EXPECT_EQ(83u, caps.outProfilingTimerResolution);
 }
 
 SKLTEST_F(SklDeviceCaps, givenSklDeviceWhenAskedFor32BitSupportThenFalseIsReturned) {

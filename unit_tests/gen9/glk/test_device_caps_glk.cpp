@@ -29,7 +29,7 @@ typedef Test<DeviceFixture> Gen9DeviceCaps;
 
 GLKTEST_F(Gen9DeviceCaps, GlkProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(52u, caps.profilingTimerResolution);
+    EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
 
 GLKTEST_F(Gen9DeviceCaps, givenGlkDeviceWhenAskedForDoubleSupportThenTrueIsReturned) {

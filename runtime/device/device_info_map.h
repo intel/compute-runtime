@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -133,7 +133,7 @@ template<> struct Map<CL_DEVICE_PREFERRED_VECTOR_WIDTH_LONG               > : pu
 template<> struct Map<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT              > : public MapBase<CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT,              uint32_t,                           &DeviceInfo::preferredVectorWidthShort> {};
 template<> struct Map<CL_DEVICE_PRINTF_BUFFER_SIZE                        > : public MapBase<CL_DEVICE_PRINTF_BUFFER_SIZE,                        size_t,                             &DeviceInfo::printfBufferSize> {};
 template<> struct Map<CL_DEVICE_PROFILE                                   > : public MapBase<CL_DEVICE_PROFILE,                                   const char *,                       &DeviceInfo::profile> {};
-template<> struct Map<CL_DEVICE_PROFILING_TIMER_RESOLUTION                > : public MapBase<CL_DEVICE_PROFILING_TIMER_RESOLUTION,                size_t,                             &DeviceInfo::profilingTimerResolution> {};
+template<> struct Map<CL_DEVICE_PROFILING_TIMER_RESOLUTION                > : public MapBase<CL_DEVICE_PROFILING_TIMER_RESOLUTION,                size_t,                             &DeviceInfo::outProfilingTimerResolution> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE                  > : public MapBase<CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE,                  uint32_t,                           &DeviceInfo::queueOnDeviceMaxSize> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE            > : public MapBase<CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE,            uint32_t,                           &DeviceInfo::queueOnDevicePreferredSize> {};
 template<> struct Map<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES                > : public MapBase<CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES,                uint64_t,                           &DeviceInfo::queueOnDeviceProperties> {};

@@ -259,7 +259,7 @@ bool Event::calcProfilingData() {
 
     int64_t c0 = 0;
     if (!dataCalculated && timeStampNode && !profilingCpuPath) {
-        double frequency = cmdQueue->getDevice().getProfilingTimerResolution();
+        double frequency = cmdQueue->getDevice().getDeviceInfo().profilingTimerResolution;
         /* calculation based on equation
            CpuTime = GpuTime * scalar + const( == c0)
            scalar = DeltaCpu( == dCpu) / DeltaGpu( == dGpu)

@@ -35,7 +35,7 @@ BXTTEST_F(BxtDeviceCaps, reportsOcl12) {
 
 BXTTEST_F(BxtDeviceCaps, BxtProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(52u, caps.profilingTimerResolution);
+    EXPECT_EQ(52u, caps.outProfilingTimerResolution);
 }
 
 BXTTEST_F(BxtDeviceCaps, BxtClVersionSupport) {

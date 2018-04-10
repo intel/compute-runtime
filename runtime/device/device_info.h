@@ -92,7 +92,8 @@ struct DeviceInfo {
     cl_device_local_mem_type     localMemType;
     cl_ulong                     localMemSize;
     cl_bool                      errorCorrectionSupport;
-    size_t                       profilingTimerResolution;
+    double                       profilingTimerResolution;
+    size_t                       outProfilingTimerResolution;
     cl_bool                      endianLittle;
     cl_bool                      deviceAvailable;
     cl_bool                      compilerAvailable;

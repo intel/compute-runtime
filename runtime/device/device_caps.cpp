@@ -208,7 +208,8 @@ void Device::initializeCaps() {
     deviceInfo.globalMemSize = alignDown(deviceInfo.globalMemSize, MemoryConstants::pageSize);
 
     deviceInfo.globalMemCacheType = CL_READ_WRITE_CACHE;
-    deviceInfo.profilingTimerResolution = static_cast<size_t>(getProfilingTimerResolution());
+    deviceInfo.profilingTimerResolution = getProfilingTimerResolution();
+    deviceInfo.outProfilingTimerResolution = static_cast<size_t>(deviceInfo.profilingTimerResolution);
     deviceInfo.memBaseAddressAlign = 1024;
     deviceInfo.minDataTypeAlignSize = 128;
 

@@ -402,13 +402,44 @@ struct MockTagNode : public TagNode<TagType> {
     }
 };
 
-TEST(EventProfilingTest, calcProfilingDataSetsEndTimestampInCompleteTimestampWhenCompleteIsZero) {
-    MockDevice *device = DeviceHelper<>::create();
+class MyOSTime : public OSTime {
+  public:
+    static int instanceNum;
+    MyOSTime() {
+        instanceNum++;
+    }
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        EXPECT_FALSE(true);
+        return 1.0;
+    }
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override {
+        EXPECT_FALSE(true);
+        return false;
+    }
+    bool getCpuTime(uint64_t *timeStamp) override {
+        EXPECT_FALSE(true);
+        return false;
+    };
+    double getHostTimerResolution() const override {
+        EXPECT_FALSE(true);
+        return 0;
+    }
+    uint64_t getCpuRawTimestamp() override {
+        EXPECT_FALSE(true);
+        return 0;
+    }
+};
+int MyOSTime::instanceNum = 0;
+TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
+    std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    MyOSTime::instanceNum = 0;
+    device->setOSTime(new MyOSTime());
+    EXPECT_EQ(1, MyOSTime::instanceNum);
     MockContext context;
     cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
-    MockCommandQueue cmdQ(&context, device, props);
+    MockCommandQueue cmdQ(&context, device.get(), props);
     cmdQ.setProfilingEnabled();
-    cmdQ.device = device;
+    cmdQ.device = device.get();
 
     HwTimeStamps timestamp;
     timestamp.GlobalStartTS = 10;
@@ -429,7 +460,6 @@ TEST(EventProfilingTest, calcProfilingDataSetsEndTimestampInCompleteTimestampWhe
 
     EXPECT_EQ(timestamp.ContextEndTS, timestamp.ContextCompleteTS);
     cmdQ.device = nullptr;
-    delete device;
 }
 
 struct ProfilingWithPerfCountersTests : public ProfilingTests,
@@ -774,5 +804,4 @@ HWTEST_F(ProfilingWithPerfCountersTests, GIVENCommandQueueWithProfilingPerfCount
 
     pCmdQ->setPerfCountersEnabled(false, UINT32_MAX);
 }
-
 } // namespace OCLRT
