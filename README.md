@@ -31,6 +31,11 @@ Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2
 Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
 Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
 
+## Linking applications
+
+When building applications, they should link with ICD loader library (ocl-icd).
+Directly linking to the runtime library (igdrcl) is not supported.
+
 ## How to provide feedback
 
 By default, please submit an issue using native github.com interface: https://github.com/intel/compute-runtime/issues.  
