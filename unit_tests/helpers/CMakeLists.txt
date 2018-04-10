@@ -54,4 +54,13 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/validator_tests.cpp
 )
+
+set(IGDRCL_SRCS_tests_helpers_windows
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_windows_tests.cpp
+)
+
+if(WIN32)
+  target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers_windows})
+endif()
+
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_helpers})

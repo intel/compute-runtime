@@ -36,7 +36,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::dshState;
     using BaseClass::hwInfo;
     using BaseClass::iohState;
-    using BaseClass::lastWaitForCompletionTimestamp;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::disableL3Cache;

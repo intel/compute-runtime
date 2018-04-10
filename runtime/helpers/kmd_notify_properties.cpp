@@ -25,41 +25,51 @@
 
 using namespace OCLRT;
 
-bool KmdNotifyProperties::timeoutEnabled(FlushStamp flushStampToWait) const {
-    return enableKmdNotify && flushStampToWait != 0;
-}
-
-int64_t KmdNotifyProperties::pickTimeoutValue(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp,
-                                              bool quickKmdSleepRequest, uint32_t currentHwTag, uint32_t taskCountToWait) const {
-    quickKmdSleepRequest |= applyQuickKmdSleepForSporadicWait(lastWaitTimestamp);
-
-    if (quickKmdSleepRequest && enableQuickKmdSleep) {
-        return delayQuickKmdSleepMicroseconds;
+bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
+                                          bool quickKmdSleepRequest,
+                                          uint32_t currentHwTag,
+                                          uint32_t taskCountToWait,
+                                          FlushStamp flushStampToWait) {
+    int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
+    if (!properties->enableKmdNotify && multiplier > KmdNotifyConstants::minimumTaskCountDiffToCheckAcLine) {
+        updateAcLineStatus();
     }
 
-    int64_t multiplier = (currentHwTag < taskCountToWait) ? static_cast<int64_t>(taskCountToWait - currentHwTag) : 1;
+    quickKmdSleepRequest |= applyQuickKmdSleepForSporadicWait();
 
-    return delayKmdNotifyMicroseconds * multiplier;
+    if (!properties->enableKmdNotify && !acLineConnected) {
+        timeoutValueOutput = KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine;
+    } else if (quickKmdSleepRequest && properties->enableQuickKmdSleep) {
+        timeoutValueOutput = properties->delayQuickKmdSleepMicroseconds;
+    } else {
+        timeoutValueOutput = properties->delayKmdNotifyMicroseconds * multiplier;
+    }
+
+    return flushStampToWait != 0 && (properties->enableKmdNotify || !acLineConnected);
 }
 
-bool KmdNotifyProperties::applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const {
-    if (enableQuickKmdSleepForSporadicWaits) {
+bool KmdNotifyHelper::applyQuickKmdSleepForSporadicWait() const {
+    if (properties->enableQuickKmdSleepForSporadicWaits) {
         auto now = std::chrono::high_resolution_clock::now();
-        auto timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(now - lastWaitTimestamp).count();
-        if (timeDiff > delayQuickKmdSleepForSporadicWaitsMicroseconds) {
+        auto timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(now - lastWaitForCompletionTimestamp).count();
+        if (timeDiff > properties->delayQuickKmdSleepForSporadicWaitsMicroseconds) {
             return true;
         }
     }
     return false;
 }
 
-void KmdNotifyProperties::overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination) {
+void KmdNotifyHelper::updateLastWaitForCompletionTimestamp() {
+    lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
+}
+
+void KmdNotifyHelper::overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination) {
     if (debugVariableValue >= 0) {
         destination = static_cast<int64_t>(debugVariableValue);
     }
 }
 
-void KmdNotifyProperties::overrideFromDebugVariable(int32_t debugVariableValue, bool &destination) {
+void KmdNotifyHelper::overrideFromDebugVariable(int32_t debugVariableValue, bool &destination) {
     if (debugVariableValue >= 0) {
         destination = !!(debugVariableValue);
     }

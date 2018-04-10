@@ -29,6 +29,7 @@ namespace SysCalls {
 
 HANDLE createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState, LPCSTR lpName);
 BOOL closeHandle(HANDLE hObject);
+BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr);
 
 } // namespace SysCalls
 

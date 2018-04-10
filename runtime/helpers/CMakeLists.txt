@@ -88,11 +88,17 @@ set(RUNTIME_SRCS_HELPERS_BASE
 set(RUNTIME_SRCS_HELPERS_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/translationtable_callbacks.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_properties_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_helper.h
+)
+set(RUNTIME_SRCS_HELPERS_LINUX
+    ${CMAKE_CURRENT_SOURCE_DIR}/linux/kmd_notify_properties_linux.cpp
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_BASE})
 if(WIN32)
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_WINDOWS})
+else()
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_LINUX})
 endif()
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_HELPERS_BASE ${RUNTIME_SRCS_HELPERS_BASE})

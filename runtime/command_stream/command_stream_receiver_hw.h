@@ -76,6 +76,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         uint64_t generalStateBase,
         uint64_t internalHeapBaseAddress);
 
+    void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);
@@ -90,7 +92,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
 
     uint64_t getScratchPatchAddress();
-    MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();
 
     static void emitNoop(LinearStream &commandStream, size_t bytesToUpdate);
 
@@ -101,7 +102,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     const HardwareInfo &hwInfo;
     CsrSizeRequestFlags csrSizeRequestFlags = {};
 
-    std::chrono::high_resolution_clock::time_point lastWaitForCompletionTimestamp;
+    std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 };
 
 template <typename GfxFamily>

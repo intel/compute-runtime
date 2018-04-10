@@ -40,9 +40,7 @@ namespace OCLRT {
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
-    if (hwInfo.capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits) {
-        lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
-    }
+    resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
 }
 
 template <typename GfxFamily>
@@ -568,13 +566,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
-    const auto &kmdNotifyProperties = this->hwInfo.capabilityTable.kmdNotifyProperties;
+    int64_t waitTimeout = 0;
+    bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait);
 
-    int64_t waitTimeout = kmdNotifyProperties.pickTimeoutValue(lastWaitForCompletionTimestamp, useQuickKmdSleep, *getTagAddress(), taskCountToWait);
-
-    auto status = waitForCompletionWithTimeout(kmdNotifyProperties.timeoutEnabled(flushStampToWait),
-                                               waitTimeout,
-                                               taskCountToWait);
+    auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
     if (!status) {
         waitForFlushStamp(flushStampToWait);
         //now call blocking wait, this is to ensure that task count is reached
@@ -582,8 +577,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
     }
     UNRECOVERABLE_IF(*getTagAddress() < taskCountToWait);
 
-    if (kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits) {
-        updateLastWaitForCompletionTimestamp();
+    if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
+        kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
 }
 
@@ -637,11 +632,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForMediaSampler(bool mediaS
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::updateLastWaitForCompletionTimestamp() {
-    lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     uint64_t baseAddress,
     uint64_t commandOffset,
@@ -664,6 +654,15 @@ void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresPatchInfo(
     setPatchInfoData(surfaceStatePatchInfo);
     setPatchInfoData(indirectObjectPatchInfo);
     setPatchInfoData(instructionPatchInfo);
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *newHelper) {
+    kmdNotifyHelper.reset(newHelper);
+    kmdNotifyHelper->updateAcLineStatus();
+    if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
+        kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
+    }
 }
 
 } // namespace OCLRT

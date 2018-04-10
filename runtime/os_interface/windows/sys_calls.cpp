@@ -34,6 +34,10 @@ BOOL closeHandle(HANDLE hObject) {
     return CloseHandle(hObject);
 }
 
+BOOL getSystemPowerStatus(LPSYSTEM_POWER_STATUS systemPowerStatusPtr) {
+    return GetSystemPowerStatus(systemPowerStatusPtr);
+}
+
 } // namespace SysCalls
 
 } // namespace OCLRT

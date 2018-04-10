@@ -37,15 +37,36 @@ struct KmdNotifyProperties {
     // If waits are called sporadically  use QuickKmdSleep mode, otherwise use standard delay
     bool enableQuickKmdSleepForSporadicWaits;
     int64_t delayQuickKmdSleepForSporadicWaitsMicroseconds;
+};
 
-    bool timeoutEnabled(FlushStamp flushStampToWait) const;
+namespace KmdNotifyConstants {
+constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
+constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
+} // namespace KmdNotifyConstants
 
-    int64_t pickTimeoutValue(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp,
-                             bool quickKmdSleepRequest, uint32_t currentHwTag, uint32_t taskCountToWait) const;
+class KmdNotifyHelper {
+  public:
+    KmdNotifyHelper() = delete;
+    KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties){};
 
-    bool applyQuickKmdSleepForSporadicWait(std::chrono::high_resolution_clock::time_point &lastWaitTimestamp) const;
+    bool obtainTimeoutParams(int64_t &timeoutValueOutput,
+                             bool quickKmdSleepRequest,
+                             uint32_t currentHwTag,
+                             uint32_t taskCountToWait,
+                             FlushStamp flushStampToWait);
+
+    bool quickKmdSleepForSporadicWaitsEnabled() const { return properties->enableQuickKmdSleepForSporadicWaits; }
+    MOCKABLE_VIRTUAL void updateLastWaitForCompletionTimestamp();
+    MOCKABLE_VIRTUAL void updateAcLineStatus();
 
     static void overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination);
     static void overrideFromDebugVariable(int32_t debugVariableValue, bool &destination);
+
+  protected:
+    bool applyQuickKmdSleepForSporadicWait() const;
+
+    const KmdNotifyProperties *properties = nullptr;
+    std::chrono::high_resolution_clock::time_point lastWaitForCompletionTimestamp;
+    bool acLineConnected = true;
 };
 } // namespace OCLRT
