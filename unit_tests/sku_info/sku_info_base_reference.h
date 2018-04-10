@@ -27,7 +27,7 @@
 namespace OCLRT {
 struct SkuInfoBaseReference {
     static void fillReferenceFtrForTransfer(_SKU_FEATURE_TABLE &refFtrTable) {
-        refFtrTable = {};
+        memset(&refFtrTable, 0, sizeof(refFtrTable));
         refFtrTable.FtrStandardMipTailFormat = 1;
         refFtrTable.FtrULT = 1;
         refFtrTable.FtrEDram = 1;
@@ -46,7 +46,7 @@ struct SkuInfoBaseReference {
     }
 
     static void fillReferenceWaForTransfer(_WA_TABLE &refWaTable) {
-        refWaTable = {};
+        memset(&refWaTable, 0, sizeof(refWaTable));
         refWaTable.WaFbcLinearSurfaceStride = 1;
         refWaTable.WaDisableEdramForDisplayRT = 1;
         refWaTable.WaEncryptedEdramOnlyPartials = 1;
