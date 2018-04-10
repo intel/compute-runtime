@@ -455,15 +455,13 @@ cl_int Image::validate(Context *context,
             if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
                 retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
-        } else if (imageDesc->image_width == 0 ||
-                   imageDesc->image_height == 0) {
+        }
+        if (!imageDesc->mem_object && (imageDesc->image_width == 0 ||
+                                       imageDesc->image_height == 0)) {
             retVal = CL_INVALID_IMAGE_DESCRIPTOR;
         }
         break;
     default:
-        if (parentImage) {
-            retVal = CL_INVALID_IMAGE_DESCRIPTOR;
-        }
         break;
     }
     if (hostPtr == nullptr) {

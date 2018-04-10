@@ -892,3 +892,36 @@ TEST(ImageFormatValidatorTest, givenValidParentChannelOrderAndChannelOrderWhenFo
     imageFormat.image_channel_order = CL_sBGRA;
     EXPECT_FALSE(image.hasValidParentImageFormat(imageFormat));
 };
+TEST(ImageValidatorTest, givenInvalidImage2dSizesWithoutParentObjectWhenValidateImageThenReturnsError) {
+    MockContext context;
+    cl_image_desc descriptor;
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    SurfaceFormatInfo surfaceFormat;
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_row_pitch = 0;
+
+    descriptor.image_height = 1;
+    descriptor.image_width = 0;
+    descriptor.mem_object = nullptr;
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+
+    descriptor.image_height = 0;
+    descriptor.image_width = 1;
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+};
+TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSizedThenReturnsSuccess) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    SurfaceFormatInfo surfaceFormat;
+    image.imageFormat.image_channel_order = CL_NV12_INTEL;
+
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 0;
+    descriptor.image_width = 0;
+    descriptor.image_row_pitch = 0;
+    descriptor.mem_object = &image;
+
+    EXPECT_EQ(CL_SUCCESS, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+};
