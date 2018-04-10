@@ -57,6 +57,7 @@ class MockBuiltins : public OCLRT::BuiltIns {
             return *sipKernelsOverride[type];
         }
         getSipKernelCalled = true;
+        getSipKernelType = type;
         return BuiltIns::getSipKernel(type, device);
     }
 
@@ -67,4 +68,5 @@ class MockBuiltins : public OCLRT::BuiltIns {
     OCLRT::BuiltIns *originalGlobalBuiltins = nullptr;
     std::map<OCLRT::SipKernelType, std::unique_ptr<OCLRT::SipKernel>> sipKernelsOverride;
     bool getSipKernelCalled = false;
+    OCLRT::SipKernelType getSipKernelType = OCLRT::SipKernelType::COUNT;
 };

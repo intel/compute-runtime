@@ -165,7 +165,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
     outDevice.memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
     outDevice.memoryManager->device = pDevice;
 
-    if (pDevice->preemptionMode == PreemptionMode::MidThread) {
+    if (pDevice->preemptionMode == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
         size_t requiredSize = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;
         size_t alignment = 256 * MemoryConstants::kiloByte;
         bool uncacheable = pDevice->getWaTable()->waCSRUncachable;
@@ -174,7 +174,8 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
             return false;
         }
         commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
-        BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice);
+        auto sipType = SipKernel::getSipKernelType(pHwInfo->pPlatform->eRenderCoreFamily, pDevice->isSourceLevelDebuggerActive());
+        BuiltIns::getInstance().getSipKernel(sipType, *pDevice);
     }
 
     return true;
@@ -255,7 +256,7 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
     return this->getHardwareInfo().pPlatform->eRenderCoreFamily;
 }
 
-bool Device::isSourceLevelDebuggerActive() {
+bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
 }
 } // namespace OCLRT

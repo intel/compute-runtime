@@ -76,22 +76,22 @@ void PreemptionHelper::applyPreemptionWaCmdsEnd(LinearStream *pCommandStream, co
 template <typename GfxFamily>
 void PreemptionHelper::programPreamble(LinearStream &preambleCmdStream, Device &device,
                                        const GraphicsAllocation *preemptionCsr) {
-    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
-        return;
-    }
-
-    UNRECOVERABLE_IF(nullptr == preemptionCsr);
     using GPGPU_CSR_BASE_ADDRESS = typename GfxFamily::GPGPU_CSR_BASE_ADDRESS;
     using STATE_SIP = typename GfxFamily::STATE_SIP;
+    bool sourceLevelDebuggerActive = device.isSourceLevelDebuggerActive();
+    if (device.getPreemptionMode() == PreemptionMode::MidThread) {
+        UNRECOVERABLE_IF(nullptr == preemptionCsr);
 
-    auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
-    csr->init();
-    csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
-
-    auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
-    sip->init();
-    auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, device.isSourceLevelDebuggerActive());
-    sip->setSystemInstructionPointer(BuiltIns::getInstance().getSipKernel(sipType, device).getSipAllocation()->getGpuAddressToPatch());
+        auto csr = reinterpret_cast<GPGPU_CSR_BASE_ADDRESS *>(preambleCmdStream.getSpace(sizeof(GPGPU_CSR_BASE_ADDRESS)));
+        csr->init();
+        csr->setGpgpuCsrBaseAddress(preemptionCsr->getGpuAddressToPatch());
+    }
+    if (device.getPreemptionMode() == PreemptionMode::MidThread || sourceLevelDebuggerActive) {
+        auto sip = reinterpret_cast<STATE_SIP *>(preambleCmdStream.getSpace(sizeof(STATE_SIP)));
+        sip->init();
+        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, sourceLevelDebuggerActive);
+        sip->setSystemInstructionPointer(BuiltIns::getInstance().getSipKernel(sipType, device).getSipAllocation()->getGpuAddressToPatch());
+    }
 }
 
 template <typename GfxFamily>
@@ -124,11 +124,15 @@ size_t PreemptionHelper::getRequiredCmdStreamSize(PreemptionMode newPreemptionMo
 
 template <typename GfxFamily>
 size_t PreemptionHelper::getRequiredPreambleSize(const Device &device) {
-    if (device.getPreemptionMode() != PreemptionMode::MidThread) {
-        return 0;
+    size_t size = 0;
+    if (device.getPreemptionMode() == PreemptionMode::MidThread) {
+        size += sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS);
+    }
+    if (device.getPreemptionMode() == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
+        size += sizeof(typename GfxFamily::STATE_SIP);
     }
 
-    return sizeof(typename GfxFamily::GPGPU_CSR_BASE_ADDRESS) + sizeof(typename GfxFamily::STATE_SIP);
+    return size;
 }
 
 template <typename GfxFamily>

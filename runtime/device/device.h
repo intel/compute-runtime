@@ -133,7 +133,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::vector<unsigned int> simultaneousInterops;
     std::string deviceExtensions;
     bool getEnabled64kbPages();
-    bool isSourceLevelDebuggerActive();
+    bool isSourceLevelDebuggerActive() const;
 
   protected:
     Device() = delete;
@@ -143,7 +143,7 @@ class Device : public BaseObject<_cl_device_id> {
     static bool createDeviceImpl(const HardwareInfo *pHwInfo,
                                  bool isRootDevice, Device &outDevice);
     static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
-    void initializeCaps();
+    MOCKABLE_VIRTUAL void initializeCaps();
     void appendOSExtensions(std::string &deviceExtensions);
 
     unsigned int enabledClVersion;

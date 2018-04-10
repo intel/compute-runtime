@@ -52,7 +52,7 @@ class MockDevice : public Device {
         return &this->deviceInfo;
     }
 
-    void initializeCaps() {
+    void initializeCaps() override {
         Device::initializeCaps();
     }
 
@@ -91,6 +91,10 @@ class MockDevice : public Device {
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
 
     GraphicsAllocation *getTagAllocation() { return tagAllocation; }
+
+    void setSourceLevelDebuggerActive(bool active) {
+        this->deviceInfo.sourceLevelDebuggerActive = active;
+    }
 
   private:
     bool forceWhitelistedRegs = false;

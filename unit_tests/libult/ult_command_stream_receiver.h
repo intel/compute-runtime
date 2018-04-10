@@ -53,6 +53,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
+    using BaseClass::programPreamble;
 
     UltCommandStreamReceiver(const UltCommandStreamReceiver &) = delete;
     UltCommandStreamReceiver &operator=(const UltCommandStreamReceiver &) = delete;
