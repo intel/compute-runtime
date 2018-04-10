@@ -59,12 +59,10 @@ if(UNIX)
 
   set(OCL_ICD_RUNTIME_NAME libigdrcl.so)
   install(
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"/opt/intel/opencl\n\" )"
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/intel.icd \"/opt/intel/opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postinst \"echo /opt/intel/opencl >> ${_dir_etc}/ld.so.conf\n\" )"
-    CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
-    CODE "file( WRITE  ${IGDRCL_BINARY_DIR}/postrm \"sed -i '/\\\\/opt\\\\/intel\\\\/opencl.*$/d' ${_dir_etc}/ld.so.conf\n\" )"
-    CODE "file( APPEND ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"/opt/intel/opencl\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"/opt/intel/opencl/${OCL_ICD_RUNTIME_NAME}\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
     COMPONENT igdrcl
   )
   install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT igdrcl)
