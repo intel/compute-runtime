@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -203,8 +203,17 @@ TEST_F(DrmTests, failOnParamBoost) {
     EXPECT_NE(ptr, nullptr);
 }
 
-TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenDeviceIsCreatedThenGmmSwitchesToSimplifiedMocsSelection) {
+TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenDeviceLowerThenGen9IsCreatedThenSimplifiedMocsSelectionIsFalse) {
+    deviceId = IBDW_GT3_WRK_DEVICE_F0_ID;
+    failOnParamBoost = -1;
+    auto ptr = DrmWrap::createDrm(0);
+    EXPECT_NE(ptr, nullptr);
+    EXPECT_FALSE(Gmm::useSimplifiedMocsTable);
+}
+
+TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenDeviceIsNewerThenGen9IsCreatedThenSimplifiedMocsSelectionIsTrue) {
     Gmm::useSimplifiedMocsTable = false;
+    deviceId = IBXT_X_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);

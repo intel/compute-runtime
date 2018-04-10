@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -209,7 +209,10 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     ret = drmObject->enableTurboBoost();
     if (ret != 0) {
         //turbo patch not present, we are not on custom Kernel, switch to simplified Mocs selection
-        Gmm::useSimplifiedMocsTable = true;
+        //do this only for GEN9+
+        if (eGtType >= GTTYPE_GTA) {
+            Gmm::useSimplifiedMocsTable = true;
+        }
         printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Failed to request OCL Turbo Boost\n");
     }
 
