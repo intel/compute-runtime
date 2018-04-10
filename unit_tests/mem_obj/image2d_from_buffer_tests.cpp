@@ -105,13 +105,13 @@ TEST_F(Image2dFromBufferTest, CalculateRowPitch) {
     EXPECT_EQ(1024u, imageFromBuffer->getImageDesc().image_row_pitch);
     delete imageFromBuffer;
 }
-TEST_F(Image2dFromBufferTest, InvalidRowPitch) {
+TEST_F(Image2dFromBufferTest, givenInvalidRowPitchWhenCreateImage2dFromBufferThenReturnsError) {
     char ptr[10];
     imageDesc.image_row_pitch = 257;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
     retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, ptr);
-    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, retVal);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
 
 TEST_F(Image2dFromBufferTest, givenRowPitchThatIsGreaterThenComputedWhenImageIsCreatedThenPassedRowPitchIsUsedInsteadOfComputed) {

@@ -417,7 +417,6 @@ cl_int Image::validate(Context *context,
                        const cl_image_desc *imageDesc,
                        const void *hostPtr) {
     auto pDevice = context->getDevice(0);
-    cl_int retVal = CL_SUCCESS;
     size_t srcSize = 0;
     size_t retSize = 0;
     const size_t *maxWidth = nullptr;
@@ -430,14 +429,12 @@ cl_int Image::validate(Context *context,
 
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
-    switch (imageDesc->image_type) {
-
-    case CL_MEM_OBJECT_IMAGE2D:
+    if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D) {
         pDevice->getCap<CL_DEVICE_IMAGE2D_MAX_WIDTH>(reinterpret_cast<const void *&>(maxWidth), srcSize, retSize);
         pDevice->getCap<CL_DEVICE_IMAGE2D_MAX_HEIGHT>(reinterpret_cast<const void *&>(maxHeight), srcSize, retSize);
         if (imageDesc->image_width > *maxWidth ||
             imageDesc->image_height > *maxHeight) {
-            retVal = CL_INVALID_IMAGE_SIZE;
+            return CL_INVALID_IMAGE_SIZE;
         }
         if (parentBuffer) { // Image 2d from buffer
             pDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
@@ -446,52 +443,43 @@ cl_int Image::validate(Context *context,
             if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
                 ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
                 (imageDesc->image_height * (imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : imageDesc->image_width) > parentBuffer->getSize())) {
-                retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+                return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             } else if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
-                retVal = CL_INVALID_VALUE;
+                return CL_INVALID_VALUE;
             }
         }
         if (parentImage && !IsNV12Image(&parentImage->getImageFormat())) { // Image 2d from image 2d
             if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
-                retVal = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+                return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
         }
-        if (!imageDesc->mem_object && (imageDesc->image_width == 0 ||
-                                       imageDesc->image_height == 0)) {
-            retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+        if (!(parentImage && IsNV12Image(&parentImage->getImageFormat())) &&
+            (imageDesc->image_width == 0 || imageDesc->image_height == 0)) {
+            return CL_INVALID_IMAGE_DESCRIPTOR;
         }
-        break;
-    default:
-        break;
     }
     if (hostPtr == nullptr) {
         if (imageDesc->image_row_pitch != 0 && imageDesc->mem_object == nullptr) {
-            retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+            return CL_INVALID_IMAGE_DESCRIPTOR;
         }
     } else {
         if (imageDesc->image_row_pitch != 0) {
             if (imageDesc->image_row_pitch % surfaceFormat->ImageElementSizeInBytes != 0 ||
                 imageDesc->image_row_pitch < imageDesc->image_width * surfaceFormat->ImageElementSizeInBytes) {
-                retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+                return CL_INVALID_IMAGE_DESCRIPTOR;
             }
         }
     }
 
     if (parentBuffer && imageDesc->image_type != CL_MEM_OBJECT_IMAGE1D_BUFFER && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-        retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+        return CL_INVALID_IMAGE_DESCRIPTOR;
     }
 
     if (parentImage && imageDesc->image_type != CL_MEM_OBJECT_IMAGE2D) {
-        retVal = CL_INVALID_IMAGE_DESCRIPTOR;
+        return CL_INVALID_IMAGE_DESCRIPTOR;
     }
 
-    if (retVal != CL_SUCCESS) {
-        return retVal;
-    }
-
-    retVal = validateImageTraits(context, flags, &surfaceFormat->OCLImageFormat, imageDesc, hostPtr);
-
-    return retVal;
+    return validateImageTraits(context, flags, &surfaceFormat->OCLImageFormat, imageDesc, hostPtr);
 }
 
 cl_int Image::validateImageFormat(const cl_image_format *imageFormat) {

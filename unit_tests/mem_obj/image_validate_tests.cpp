@@ -925,3 +925,24 @@ TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSized
 
     EXPECT_EQ(CL_SUCCESS, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
 };
+TEST(ImageValidatorTest, givenNonNV12Image2dAsParentImageWhenValidateImageZeroSizedThenReturnsError) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    SurfaceFormatInfo surfaceFormat;
+    image.imageFormat.image_channel_order = CL_BGRA;
+    image.imageFormat.image_channel_data_type = CL_UNORM_INT8;
+
+    surfaceFormat.OCLImageFormat.image_channel_order = CL_sBGRA;
+    surfaceFormat.OCLImageFormat.image_channel_data_type = CL_UNORM_INT8;
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 0;
+    descriptor.image_width = 0;
+    descriptor.image_row_pitch = image.getHostPtrRowPitch();
+    descriptor.image_slice_pitch = image.getHostPtrSlicePitch();
+    image.imageDesc = descriptor;
+    descriptor.mem_object = &image;
+
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, 0, &surfaceFormat, &descriptor, dummyPtr));
+};
