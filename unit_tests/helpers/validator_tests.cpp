@@ -25,6 +25,7 @@
 #include "runtime/helpers/error_mappers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "gtest/gtest.h"
 
@@ -149,8 +150,8 @@ TEST(Platform, givenNullPlatformThenReturnInvalidPlatform) {
 }
 
 TEST(Platform, givenPlatformThenReturnSUCCESS) {
-    _cl_platform_id clPlatform;
-    EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatform));
+    cl_platform_id clPlatformId = platform();
+    EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
 }
 
 typedef ::testing::TestWithParam<size_t> PatternSizeValid;
