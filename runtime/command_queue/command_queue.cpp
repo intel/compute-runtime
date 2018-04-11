@@ -547,7 +547,15 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
 
     if (image->isMemObjZeroCopy() && image->mappingOnCpuAllowed()) {
         GetInfoHelper::set(imageSlicePitch, image->getImageDesc().image_slice_pitch);
-        GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_row_pitch);
+        if (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+            // There are differences in qPitch programming between Gen8 vs Gen9+ devices.
+            // For Gen8 qPitch is distance in rows while Gen9+ it is in pixels.
+            // Minimum value of qPitch is 4 and this causes slicePitch = 4*rowPitch on Gen8.
+            // To allow zero-copy we have to tell what is correct value rowPitch which should equal to slicePitch.
+            GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_slice_pitch);
+        } else {
+            GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_row_pitch);
+        }
     } else {
         GetInfoHelper::set(imageSlicePitch, image->getHostPtrSlicePitch());
         GetInfoHelper::set(imageRowPitch, image->getHostPtrRowPitch());

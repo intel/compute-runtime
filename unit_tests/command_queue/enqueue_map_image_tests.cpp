@@ -890,6 +890,65 @@ TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSliceP
     EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
 }
 
+TEST_F(EnqueueMapImageTest, givenMipMapImageWhen1DArrayThenReturnRowAndSlicePitchAreEqual) {
+    class MockImage : public Image {
+      public:
+        MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const SurfaceFormatInfo &surfaceFormat,
+                  const cl_image_format &imageFormat, const cl_image_desc &imageDesc) : Image(context, flags,
+                                                                                              0, nullptr,
+                                                                                              imageFormat, imageDesc,
+                                                                                              true,
+                                                                                              allocation,
+                                                                                              false, false, 0, 0,
+                                                                                              surfaceFormat, nullptr) {
+        }
+
+        void setImageArg(void *memory, bool isMediaBlockImage, uint32_t mipLevel) override {}
+        void setMediaImageArg(void *memory) override {}
+        void setMediaSurfaceRotation(void *memory) override {}
+        void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
+        void transformImage2dArrayTo3d(void *memory) override {}
+        void transformImage3dTo2dArray(void *memory) override {}
+    };
+
+    const size_t origin[3] = {0, 0, 0};
+    const size_t region[3] = {1, 1, 1};
+    size_t retImageRowPitch = 0;
+    size_t retImageSlicePitch = 0;
+
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+
+    cl_image_desc imageDesc = {};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
+    imageDesc.image_width = 329;
+    imageDesc.image_array_size = 48;
+    imageDesc.image_row_pitch = 2688;
+    imageDesc.image_slice_pitch = 10752;
+    imageDesc.num_mip_levels = 0;
+
+    size_t imgSize = imageDesc.image_slice_pitch * imageDesc.image_array_size;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_order = CL_RGBA;
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT16;
+
+    const SurfaceFormatInfo *surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    auto allocation = context->getMemoryManager()->allocateGraphicsMemory(imgSize, MemoryConstants::preferredAlignment);
+    ASSERT_NE(allocation, nullptr);
+
+    MockImage image(context, flags, allocation, *surfaceFormat, imageFormat, imageDesc);
+
+    EXPECT_TRUE(image.mappingOnCpuAllowed());
+    EXPECT_TRUE(image.isMemObjZeroCopy());
+
+    pCmdQ->enqueueMapImage(&image, true, CL_MAP_READ, origin, region,
+                           &retImageRowPitch, &retImageSlicePitch,
+                           0, nullptr, nullptr, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(retImageRowPitch, retImageSlicePitch);
+}
+
 struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
                                  public ::testing::Test {
 
