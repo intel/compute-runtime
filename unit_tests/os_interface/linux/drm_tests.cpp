@@ -131,7 +131,7 @@ TEST(DrmTest, GetRevisionID) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
+TEST(DrmTest, GivenDrmWhenAskedFor48BitAddressCorrectValueReturned) {
     DrmMock *pDrm = new DrmMock;
     pDrm->StoredPPGTT = 3;
     EXPECT_TRUE(pDrm->is48BitAddressRangeSupported());
@@ -141,7 +141,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedFor48BitAddressCorrectValueReturned) {
 }
 
 #if defined(I915_PARAM_HAS_PREEMPTION)
-TEST(DrmTest, GivenMockDrmWhenAskedForPreemptionCorrectValueReturned) {
+TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
     DrmMock *pDrm = new DrmMock;
     pDrm->StoredPreemptionSupport = 1;
     EXPECT_TRUE(pDrm->hasPreemption());
@@ -150,7 +150,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForPreemptionCorrectValueReturned) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenMockDrmWhenAskedForContextThatPassedThenValidContextIdsReturned) {
+TEST(DrmTest, GivenDrmWhenAskedForContextThatPassedThenValidContextIdsReturned) {
     DrmMock *pDrm = new DrmMock;
     EXPECT_EQ(0u, pDrm->lowPriorityContextId);
     pDrm->StoredRetVal = 0;
@@ -162,7 +162,7 @@ TEST(DrmTest, GivenMockDrmWhenAskedForContextThatPassedThenValidContextIdsReturn
     delete pDrm;
 }
 
-TEST(DrmTest, GivenMockDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
+TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     DrmMock *pDrm = new DrmMock;
     pDrm->StoredRetVal = -1;
     EXPECT_FALSE(pDrm->contextCreate());
@@ -170,13 +170,28 @@ TEST(DrmTest, GivenMockDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     delete pDrm;
 }
 
-TEST(DrmTest, GivenMockDrmWhenAskedForContextWithLowPriorityThatFailsThenFalseIsReturned) {
+TEST(DrmTest, GivenDrmWhenAskedForContextWithLowPriorityThatFailsThenFalseIsReturned) {
     DrmMock *pDrm = new DrmMock;
     EXPECT_TRUE(pDrm->contextCreate());
     pDrm->StoredRetVal = -1;
     EXPECT_FALSE(pDrm->setLowPriority());
     pDrm->StoredRetVal = 0;
     delete pDrm;
+}
+#else
+TEST(DrmTest, GivenDrmWhenAskedForContextWithLowPriorityThenFalseIsReturned) {
+    DrmMock drmMock;
+    EXPECT_FALSE(drmMock.contextCreate());
+}
+
+TEST(DrmTest, GivenDrmWhenContextDestroyIsCalledThenThereAreNoLeaksOrCrashes) {
+    DrmMock drmMock;
+    drmMock.contextDestroy();
+}
+
+TEST(DrmTest, GivenDrmWhenSetContextPriorityIsCalledThenFalseIsReturned) {
+    DrmMock drmMock;
+    EXPECT_FALSE(drmMock.setLowPriority());
 }
 #endif
 

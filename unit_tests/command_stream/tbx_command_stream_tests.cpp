@@ -277,3 +277,8 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
+
+TEST(TbxMemoryManagerTest, givenTbxMemoryManagerWhenItIsQueriedForSystemSharedMemoryThen1GBIsReturned) {
+    TbxMemoryManager memoryManager;
+    EXPECT_EQ(1 * GB, memoryManager.getSystemSharedMemory());
+}

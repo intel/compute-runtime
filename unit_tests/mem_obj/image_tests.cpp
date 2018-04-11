@@ -1011,6 +1011,16 @@ TEST(ImageTest, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectVal
     EXPECT_EQ(expectedOffset, retOffset);
 }
 
+TEST(ImageTest, givenImageWhenAskedForMcsInfoThenDefaultValuesAreReturned) {
+    MockContext ctx;
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx));
+
+    auto mcsInfo = image->getMcsSurfaceInfo();
+    EXPECT_EQ(0u, mcsInfo.multisampleCount);
+    EXPECT_EQ(0u, mcsInfo.qPitch);
+    EXPECT_EQ(0u, mcsInfo.pitch);
+}
+
 TEST(ImageTest, givenImageWhenAskedForPtrOffsetForCpuMappingThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLinearImages.set(true);
