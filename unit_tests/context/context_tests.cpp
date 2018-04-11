@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/context/context.h"
-#include "runtime/device/device.h"
-#include "runtime/helpers/options.h"
-#include "runtime/command_queue/command_queue.h"
-#include "runtime/device_queue/device_queue.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 #include "gtest/gtest.h"
+#include "runtime/context/context.inl"
+#include "runtime/command_queue/command_queue.h"
+#include "runtime/device/device.h"
+#include "runtime/device_queue/device_queue.h"
+#include "runtime/helpers/options.h"
+#include "runtime/sharings/sharing.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
@@ -260,6 +261,29 @@ TEST_F(ContextTest, GivenInteropSyncParamWhenCreateContextThenSetContextParam) {
     EXPECT_NE(nullptr, context);
     EXPECT_FALSE(context->getInteropUserSyncEnabled());
     delete context;
+}
+
+class MockSharingFunctions : public SharingFunctions {
+  public:
+    uint32_t getId() const override {
+        return sharingId;
+    }
+    static const uint32_t sharingId = 0;
+};
+
+TEST_F(ContextTest, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
+    MockContext context;
+    context.clearSharingFunctions();
+    auto *sharingF = context.getSharing<MockSharingFunctions>();
+    EXPECT_EQ(sharingF, nullptr);
+}
+
+TEST_F(ContextTest, givenContextWhenSharingTableIsNotEmptyThenReturnsSharingFunctionPointer) {
+    MockContext context;
+    MockSharingFunctions *sharingFunctions = new MockSharingFunctions;
+    context.registerSharing<MockSharingFunctions>(sharingFunctions);
+    auto *sharingF = context.getSharing<MockSharingFunctions>();
+    EXPECT_EQ(sharingF, sharingFunctions);
 }
 
 class ContextWithAsyncDeleterTest : public ::testing::WithParamInterface<bool>,

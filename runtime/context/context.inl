@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,9 @@ void Context::registerSharing(Sharing *sharing) {
 
 template <typename Sharing>
 Sharing *Context::getSharing() {
-    UNRECOVERABLE_IF(Sharing::sharingId >= sharingFunctions.size());
+    if (Sharing::sharingId >= sharingFunctions.size()) {
+        return nullptr;
+    }
 
     return reinterpret_cast<Sharing *>(sharingFunctions[Sharing::sharingId].get());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/context/context.h"
 #include "runtime/context/context.inl"
 #include "runtime/os_interface/windows/d3d_sharing_functions.h"
 #include "runtime/sharings/sharing_factory.h"

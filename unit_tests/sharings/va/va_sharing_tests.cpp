@@ -397,7 +397,7 @@ TEST_F(VaSharingTests, givenVaSurfaceWhenCreateImageFromParentThenSetMediaPlaneT
     EXPECT_EQ(CL_SUCCESS, errCode);
 }
 
-TEST_F(VaSharingTests, givenContextWhenEmptySharingTableEmptyThenReturnsNullptr) {
+TEST_F(VaSharingTests, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
     MockContext context;
     context.clearSharingFunctions();
     VASharingFunctions *sharingF = context.getSharing<VASharingFunctions>();
