@@ -914,7 +914,7 @@ TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSized
     cl_image_desc descriptor;
     MockContext context;
     void *dummyPtr = reinterpret_cast<void *>(0x17);
-    SurfaceFormatInfo surfaceFormat;
+    SurfaceFormatInfo surfaceFormat = {};
     image.imageFormat.image_channel_order = CL_NV12_INTEL;
 
     descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
