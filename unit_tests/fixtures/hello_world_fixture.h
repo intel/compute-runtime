@@ -94,10 +94,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         pSrcMemory = alignedMalloc(sizeUserMemory, 4096);
         ASSERT_NE(nullptr, pSrcMemory);
 
-        // Initialize user memory to known values
-        memset(pDestMemory, 0x11, sizeUserMemory);
-        memset(pSrcMemory, 0x22, sizeUserMemory);
-
         pKernel->setArgSvm(0, sizeUserMemory, pSrcMemory);
         pKernel->setArgSvm(1, sizeUserMemory, pDestMemory);
 
