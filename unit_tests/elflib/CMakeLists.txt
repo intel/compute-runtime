@@ -42,7 +42,7 @@ if(UNIX)
   target_link_libraries(elflib_tests ${IGDRCL_EXTRA_LIBS})
 endif()
 
-add_custom_target(run_elflib_tests ALL DEPENDS elflib_tests)
+add_custom_target(run_elflib_tests ALL DEPENDS unit_tests elflib_tests)
 add_custom_command(
   TARGET run_elflib_tests
   POST_BUILD
