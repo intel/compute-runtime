@@ -752,6 +752,17 @@ TEST(Buffers64on32Tests, given32BitBufferThatIsCreatedWithUseHostPtrButIsNotZero
     }
 }
 
+TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuffer) {
+    MockContext context;
+    auto memoryManager = context.getDevice(0)->getMemoryManager();
+    auto handler = new SharingHandler();
+    auto graphicsAlloaction = memoryManager->allocateGraphicsMemory(4096);
+    auto buffer = Buffer::createSharedBuffer(&context, CL_MEM_READ_ONLY, handler, graphicsAlloaction);
+    ASSERT_NE(nullptr, buffer);
+    EXPECT_EQ(handler, buffer->peekSharingHandler());
+    buffer->release();
+}
+
 class BufferTests : public ::testing::Test {
   protected:
     void SetUp() override {
