@@ -483,6 +483,31 @@ HWTEST_F(ImageSetArgTest, givenDepthFormatWhenSetArgIsCalledThenProgramAuxFields
     delete image;
 }
 
+HWTEST_F(ImageSetArgTest, givenMultisampledR32Floatx8x24DepthStencilFormatWhenSetArgIsCalledThenSetMssSurfaceStateStorageParam) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+
+    McsSurfaceInfo msi = {0, 0, 3};
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    imgDesc.num_samples = 8;
+    cl_image_format imgFormat = {CL_DEPTH_STENCIL, CL_FLOAT};
+
+    std::unique_ptr<Image> image(ImageHelper<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
+    image->setMcsSurfaceInfo(msi);
+    cl_mem memObj = image.get();
+
+    retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(),
+                                                                           pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    EXPECT_TRUE(Image::isDepthFormat(image->getImageFormat()));
+    EXPECT_TRUE(surfaceState->getSurfaceFormat() == SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS);
+    EXPECT_TRUE(surfaceState->getMultisampledSurfaceStorageFormat() ==
+                RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_MSS);
+}
+
 HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMultisampledImgIsCalledThenProgramAuxFieldsWithMcsParams) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};

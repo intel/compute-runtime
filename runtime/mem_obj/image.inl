@@ -178,6 +178,8 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState) {
+    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+
     if (getMcsAllocation()) {
         auto mcsGmm = getMcsAllocation()->gmm;
 
@@ -189,7 +191,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
             surfaceState->setAuxiliarySurfaceQpitch(mcsSurfaceInfo.qPitch);
             surfaceState->setAuxiliarySurfaceBaseAddress(mcsAllocation->getGpuAddress());
         }
-    } else if (isDepthFormat(imageFormat)) {
+    } else if (isDepthFormat(imageFormat) && surfaceState->getSurfaceFormat() != SURFACE_FORMAT::SURFACE_FORMAT_R32_FLOAT_X8X24_TYPELESS) {
         surfaceState->setMultisampledSurfaceStorageFormat(RENDER_SURFACE_STATE::MULTISAMPLED_SURFACE_STORAGE_FORMAT::MULTISAMPLED_SURFACE_STORAGE_FORMAT_DEPTH_STENCIL);
     }
 }
