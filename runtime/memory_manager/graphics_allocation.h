@@ -50,6 +50,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     osHandle sharedHandle;
     bool locked = false;
     uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
+    bool evictable = true;
 
   public:
     enum AllocationType {
@@ -125,6 +126,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t allocationOffset = 0u;
 
     int residencyTaskCount = ObjectNotResident;
+
+    void setEvictable(bool evictable) { this->evictable = evictable; }
+    bool peekEvictable() const { return evictable; }
 
     bool isResident() const { return residencyTaskCount != ObjectNotResident; }
     void setLocked(bool locked) { this->locked = locked; }

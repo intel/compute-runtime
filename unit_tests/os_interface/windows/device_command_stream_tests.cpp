@@ -668,15 +668,21 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
     auto commandBuffer = memManager->allocateGraphicsMemory(1024, 4096);
+    auto dshAlloc = memManager->allocateGraphicsMemory(1024, 4096);
+    auto iohAlloc = memManager->allocateGraphicsMemory(1024, 4096);
+    auto sshAlloc = memManager->allocateGraphicsMemory(1024, 4096);
 
     mockCsr->setTagAllocation(tagAllocation);
 
     LinearStream cs(commandBuffer);
+    LinearStream dsh(dshAlloc);
+    LinearStream ioh(iohAlloc);
+    LinearStream ssh(sshAlloc);
 
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.requiresCoherency = true;
-    mockCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    mockCsr->flushTask(cs, 0u, dsh, ioh, ssh, 0u, dispatchFlags);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();
@@ -692,11 +698,14 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
     EXPECT_EQ(reinterpret_cast<uint64_t>(csrCommandStream->getUnderlyingBuffer()), mockWddm->submitResult.commandBufferSubmitted);
     EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)mockWddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
-    EXPECT_EQ(3u, mockWddm->makeResidentResult.handleCount);
+    EXPECT_EQ(6u, mockWddm->makeResidentResult.handleCount);
 
     std::vector<D3DKMT_HANDLE> expectedHandles;
     expectedHandles.push_back(((WddmAllocation *)tagAllocation)->handle);
     expectedHandles.push_back(((WddmAllocation *)commandBuffer)->handle);
+    expectedHandles.push_back(((WddmAllocation *)dshAlloc)->handle);
+    expectedHandles.push_back(((WddmAllocation *)iohAlloc)->handle);
+    expectedHandles.push_back(((WddmAllocation *)sshAlloc)->handle);
     expectedHandles.push_back(((WddmAllocation *)csrCommandStream)->handle);
 
     for (auto i = 0u; i < mockWddm->makeResidentResult.handleCount; i++) {
@@ -712,8 +721,14 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 
     EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition());
     EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition());
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition());
     EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition());
 
+    memManager->freeGraphicsMemory(dshAlloc);
+    memManager->freeGraphicsMemory(iohAlloc);
+    memManager->freeGraphicsMemory(sshAlloc);
     memManager->freeGraphicsMemory(commandBuffer);
 }
 

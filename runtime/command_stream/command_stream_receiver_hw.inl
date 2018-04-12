@@ -299,8 +299,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto sshAllocation = ssh.getGraphicsAllocation();
 
     this->makeResident(*dshAllocation);
+    dshAllocation->setEvictable(false);
     this->makeResident(*iohAllocation);
     this->makeResident(*sshAllocation);
+    iohAllocation->setEvictable(false);
 
     this->makeResident(*tagAllocation);
 

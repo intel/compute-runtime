@@ -315,6 +315,29 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
     EXPECT_EQ(expectedUsedSize, commandStream.getUsed());
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIohNotEvictable) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    DispatchFlags dispatchFlags;
+
+    mockCsr->flushTask(commandStream,
+                       0,
+                       dsh,
+                       ioh,
+                       ssh,
+                       taskLevel,
+                       dispatchFlags);
+
+    EXPECT_EQ(dsh.getGraphicsAllocation()->peekEvictable(), true);
+    EXPECT_EQ(ssh.getGraphicsAllocation()->peekEvictable(), true);
+    EXPECT_EQ(ioh.getGraphicsAllocation()->peekEvictable(), true);
+
+    dsh.getGraphicsAllocation()->setEvictable(false);
+    EXPECT_EQ(dsh.getGraphicsAllocation()->peekEvictable(), false);
+    dsh.getGraphicsAllocation()->setEvictable(true);
+    EXPECT_EQ(dsh.getGraphicsAllocation()->peekEvictable(), true);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
     pDevice->resetCommandStreamReceiver(mockCsr);
