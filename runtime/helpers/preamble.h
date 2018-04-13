@@ -50,8 +50,10 @@ struct PreambleHelper {
     static void programVFEState(LinearStream *pCommandStream, const HardwareInfo &hwInfo, int scratchSize, uint64_t scratchAddress);
     static void programPreamble(LinearStream *pCommandStream, Device &device, uint32_t l3Config,
                                 uint32_t requiredThreadArbitrationPolicy, GraphicsAllocation *preemptionCsr);
+    static void programKernelDebugging(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
     static size_t getAdditionalCommandsSize(const Device &device);
+    static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
 };
@@ -77,5 +79,15 @@ template <typename GfxFamily>
 struct L3CNTLRegisterOffset {
     static const uint32_t registerOffset;
 };
+
+namespace DebugModeRegisterOffset {
+static constexpr uint32_t registerOffset = 0x20ec;
+static constexpr uint32_t debugEnabledValue = (1 << 6) | (1 << 22);
+}; // namespace DebugModeRegisterOffset
+
+namespace TdDebugControlRegisterOffset {
+static constexpr uint32_t registerOffset = 0xe400;
+static constexpr uint32_t debugEnabledValue = (1 << 4) | (1 << 7);
+}; // namespace TdDebugControlRegisterOffset
 
 } // namespace OCLRT

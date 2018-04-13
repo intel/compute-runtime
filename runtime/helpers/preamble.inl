@@ -47,7 +47,8 @@ void PreambleHelper<GfxFamily>::programGenSpecificPreambleWorkArounds(LinearStre
 
 template <typename GfxFamily>
 size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device) {
-    return 0;
+    size_t totalSize = getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
+    return totalSize;
 }
 
 template <typename GfxFamily>
@@ -84,6 +85,9 @@ void PreambleHelper<GfxFamily>::programPreamble(LinearStream *pCommandStream, De
     programL3(pCommandStream, l3Config);
     programThreadArbitration(pCommandStream, requiredThreadArbitrationPolicy);
     programPreemption(pCommandStream, device, preemptionCsr);
+    if (device.isSourceLevelDebuggerActive()) {
+        programKernelDebugging(pCommandStream);
+    }
     programGenSpecificPreambleWorkArounds(pCommandStream, device.getHardwareInfo());
 }
 
@@ -96,4 +100,26 @@ template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getUrbEntryAllocationSize() {
     return 0x782;
 }
+
+template <typename GfxFamily>
+void PreambleHelper<GfxFamily>::programKernelDebugging(LinearStream *pCommandStream) {
+    auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
+    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
+    pCmd->setRegisterOffset(DebugModeRegisterOffset::registerOffset);
+    pCmd->setDataDword(DebugModeRegisterOffset::debugEnabledValue);
+
+    auto pCmd2 = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
+    *pCmd2 = MI_LOAD_REGISTER_IMM::sInit();
+    pCmd2->setRegisterOffset(TdDebugControlRegisterOffset::registerOffset);
+    pCmd2->setDataDword(TdDebugControlRegisterOffset::debugEnabledValue);
+}
+
+template <typename GfxFamily>
+size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingActive) {
+    if (debuggingActive) {
+        return 2 * sizeof(MI_LOAD_REGISTER_IMM);
+    }
+    return 0;
+}
+
 } // namespace OCLRT
