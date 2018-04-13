@@ -25,8 +25,8 @@ REM OTHER DEALINGS IN THE SOFTWARE.
   goto end
 )
 
-if exist ../../../../../../terminate ( exit )
-if exist ../../../../../../no_verifier ( exit /b )
+if exist ../../../../../terminate ( exit )
+if exist ../../../../../no_verifier ( exit /b )
 
 appverif.exe -enable Exceptions Handles Heaps Leak Locks Memory Threadpool TLS DirtyStacks -for igdrcl_tests.exe
 %~dp0/igdrcl_tests.exe %*
