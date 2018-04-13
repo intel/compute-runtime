@@ -29,7 +29,7 @@
 using namespace OCLRT;
 
 TEST(KblDeviceIdTest, supportedDeviceId) {
-    std::array<DeviceDescriptor, 25> expectedDescriptors = {{
+    std::array<DeviceDescriptor, 26> expectedDescriptors = {{
         {IKBL_GT1_DT_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
         {IKBL_GT1_HALO_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
         {IKBL_GT1_SERV_DEVICE_F0_ID, &KBL_1x2x6::hwInfo, &KBL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
@@ -47,6 +47,7 @@ TEST(KblDeviceIdTest, supportedDeviceId) {
         {IKBL_GT2_ULT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupGtSystemInfo, GTTYPE_GT2},
         {IKBL_GT2_ULX_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupGtSystemInfo, GTTYPE_GT2},
         {IKBL_GT2_WRK_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupGtSystemInfo, GTTYPE_GT2},
+        {IKBL_GT2_R_ULX_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupGtSystemInfo, GTTYPE_GT2},
         {IKBL_GT2F_ULT_DEVICE_F0_ID, &KBL_1x3x8::hwInfo, &KBL_1x3x8::setupGtSystemInfo, GTTYPE_GT2},
 
         {IKBL_GT3_15W_ULT_DEVICE_F0_ID, &KBL_2x3x8::hwInfo, &KBL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
