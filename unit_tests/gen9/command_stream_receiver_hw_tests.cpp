@@ -23,11 +23,26 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/linear_stream.h"
+#include "runtime/gen_common/reg_configs.h"
+
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/ult_command_stream_receiver_fixture.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_event.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_csr.h"
 
 #include "test.h"
+#include "gtest/gtest.h"
 using namespace OCLRT;
+
+#include "unit_tests/command_stream/command_stream_receiver_hw_tests.inl"
+
+using CommandStreamReceiverHwTestGen9 = CommandStreamReceiverHwTest<SKLFamily>;
 
 GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreemptionWhenPreambleIsProgrammedThenCorrectSipKernelGpuAddressIsProgrammed) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
@@ -91,4 +106,12 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     STATE_SIP *stateSipCmd = (STATE_SIP *)*itorStateSip;
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
     EXPECT_EQ(dbgLocalSipAllocation->getGpuAddressToPatch(), sipAddress);
+}
+
+GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {
+    givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl();
+}
+
+GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblocking) {
+    givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 }

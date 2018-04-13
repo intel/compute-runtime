@@ -22,6 +22,7 @@ if(TESTS_GEN8)
   set(IGDRCL_SRCS_tests_gen8
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_bwd.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests.cpp

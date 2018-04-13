@@ -80,8 +80,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 
 template <typename GfxFamily>
 size_t getSizeRequiredPreambleCS(const Device &device) {
-    return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
-           sizeof(typename GfxFamily::PIPE_CONTROL) +
+    return sizeof(typename GfxFamily::PIPE_CONTROL) +
            sizeof(typename GfxFamily::MEDIA_VFE_STATE) + PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
 }
 
@@ -100,6 +99,14 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
         PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, dispatchFlags.mediaSamplerRequired);
         this->lastMediaSamplerConfig = dispatchFlags.mediaSamplerRequired;
     }
+}
+
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() const {
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
+        return sizeof(typename GfxFamily::PIPELINE_SELECT);
+    }
+    return 0;
 }
 
 template <typename GfxFamily>
@@ -540,16 +547,13 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
                   sizeof(PIPE_CONTROL) +
                   getRequiredPipeControlSize() +
                   sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
-        size += sizeof(typename GfxFamily::PIPELINE_SELECT);
-    }
-    if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
-    }
+
+    size += getCmdSizeForL3Config();
     size += getCmdSizeForCoherency();
     size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
+    size += getCmdSizeForPipelineSelect();
+    size += getCmdSizeForPreemption(dispatchFlags);
 
-    size += PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
     if (getMemoryManager()->device->getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
@@ -592,6 +596,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &
 }
 
 template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const {
+    return PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(dispatchFlags.preemptionMode, this->lastPreemptionMode);
+}
+
+template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     if (csrSizeRequestFlags.l3ConfigChanged && this->isPreambleSent) {
@@ -604,6 +613,16 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
     }
+}
+
+template <typename GfxFamily>
+inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const {
+    if (!this->isPreambleSent) {
+        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
+    } else if (csrSizeRequestFlags.l3ConfigChanged) {
+        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + sizeof(typename GfxFamily::PIPE_CONTROL);
+    }
+    return 0;
 }
 
 template <typename GfxFamily>

@@ -52,7 +52,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void flushBatchedSubmissions() override;
 
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override;
-    int getRequiredPipeControlSize();
+    int getRequiredPipeControlSize() const;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
     static void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress);
@@ -60,6 +60,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
     size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags);
+    size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
+    size_t getCmdSizeForL3Config() const;
+    size_t getCmdSizeForPipelineSelect() const;
     size_t getCmdSizeForCoherency();
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);

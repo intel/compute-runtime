@@ -43,7 +43,7 @@ void CommandStreamReceiverHw<Family>::addPipeControlWA(LinearStream &commandStre
 }
 
 template <>
-int CommandStreamReceiverHw<Family>::getRequiredPipeControlSize() {
+int CommandStreamReceiverHw<Family>::getRequiredPipeControlSize() const {
     return 1 * sizeof(Family::PIPE_CONTROL);
 }
 

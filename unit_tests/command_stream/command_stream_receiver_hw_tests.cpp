@@ -62,7 +62,6 @@ using ::testing::_;
 
 HWTEST_F(UltCommandStreamReceiverTest, requiredCmdSizeForPreamble) {
     auto expectedCmdSize =
-        sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) +
         sizeof(typename FamilyType::PIPE_CONTROL) +
         sizeof(typename FamilyType::MEDIA_VFE_STATE) +
         PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
@@ -700,14 +699,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
-    size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
-    size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
-    size_t sizeNeededForPreemption = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.lastPreemptionMode);
-    size_t sizeNeeded = sizeNeededForPreamble +
-                        sizeNeededForStateBaseAddress +
-                        sizeNeededForPipeControl +
-                        sizeNeededForPreemption +
-                        sizeof(MI_BATCH_BUFFER_END);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
@@ -736,13 +728,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
-    size_t sizeNeededForPipeControl = commandStreamReceiver.getRequiredPipeControlSize();
-    size_t sizeNeededForPreemption = PreemptionHelper::getRequiredCmdStreamSize<FamilyType>(pDevice->getPreemptionMode(), commandStreamReceiver.lastPreemptionMode);
-    size_t sizeNeeded = sizeNeededForPreamble +
-                        sizeNeededForStateBaseAddress +
-                        sizeNeededForPipeControl +
-                        sizeNeededForPreemption +
-                        sizeof(MI_BATCH_BUFFER_END);
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
@@ -1351,46 +1337,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenFlushedCallRequiringDCFlushWh
     retVal = clReleaseMemObject(buffer);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3Config) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    size_t GWS = 1;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*platformDevices[0]);
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
-
-    auto &commandStreamCSR = commandStreamReceiver->getCS();
-
-    // Mark Pramble as sent, override L3Config to invalid to programL3
-    commandStreamReceiver->isPreambleSent = true;
-    commandStreamReceiver->lastSentL3Config = 0;
-
-    ((MockKernel *)kernel)->setTotalSLMSize(1024);
-
-    cmdList.clear();
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
-
-    // Parse command list to verify that PC was added to taskCS
-    parseCommands<FamilyType>(commandStreamCSR, 0);
-
-    auto itorCmd = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), L3CNTLRegisterOffset<FamilyType>::registerOffset);
-    ASSERT_NE(cmdList.end(), itorCmd);
-
-    auto cmdMILoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorCmd);
-    ASSERT_NE(nullptr, cmdMILoad);
-
-    // MI_LOAD_REGISTER should be preceded by PC
-    EXPECT_NE(cmdList.begin(), itorCmd);
-    --itorCmd;
-    auto cmdPC = genCmdCast<PIPE_CONTROL *>(*itorCmd);
-    ASSERT_NE(nullptr, cmdPC);
-
-    uint32_t L3Config = PreambleHelper<FamilyType>::getL3Config(*platformDevices[0], true);
-    EXPECT_EQ(L3Config, (uint32_t)cmdMILoad->getDataDword());
-}
-
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDefaultCommandStreamReceiverThenRoundRobinPolicyIsSelected) {
     MockCsrHw<FamilyType> commandStreamReceiver(*platformDevices[0]);
     EXPECT_EQ(PreambleHelper<FamilyType>::getDefaultThreadArbitrationPolicy(), commandStreamReceiver.peekThreadArbitrationPolicy());
@@ -1424,51 +1370,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenKernelWithSlmWhenPreviousSLML
 
     auto itorCmd = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), L3CNTLRegisterOffset<FamilyType>::registerOffset);
     EXPECT_EQ(cmdList.end(), itorCmd);
-}
-
-HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblocking) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    size_t GWS = 1;
-    MockContext ctx(pDevice);
-    MockKernelWithInternals kernel(*pDevice);
-    CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*platformDevices[0]);
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
-    cl_event blockingEvent;
-    MockEvent<UserEvent> mockEvent(&ctx);
-    blockingEvent = &mockEvent;
-
-    auto &commandStreamCSR = commandStreamReceiver->getCS();
-
-    uint32_t L3Config = PreambleHelper<FamilyType>::getL3Config(*platformDevices[0], false);
-
-    // Mark Pramble as sent, override L3Config to SLM config
-    commandStreamReceiver->isPreambleSent = true;
-    commandStreamReceiver->lastSentL3Config = 0;
-
-    ((MockKernel *)kernel)->setTotalSLMSize(1024);
-
-    commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 1, &blockingEvent, nullptr);
-
-    // Expect nothing was sent
-    EXPECT_EQ(0u, commandStreamCSR.getUsed());
-
-    // Unblock Event
-    mockEvent.setStatus(CL_COMPLETE);
-
-    cmdList.clear();
-    // Parse command list
-    parseCommands<FamilyType>(commandStreamCSR, 0);
-
-    // Expect L3 was programmed
-    auto itorCmd = findMmio<FamilyType>(cmdList.begin(), cmdList.end(), L3CNTLRegisterOffset<FamilyType>::registerOffset);
-    ASSERT_NE(cmdList.end(), itorCmd);
-
-    auto cmdMILoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorCmd);
-    ASSERT_NE(nullptr, cmdMILoad);
-
-    L3Config = PreambleHelper<FamilyType>::getL3Config(*platformDevices[0], true);
-    EXPECT_EQ(L3Config, (uint32_t)cmdMILoad->getDataDword());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
@@ -1914,6 +1815,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnL3ConfigChanged) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
     DispatchFlags flags;
@@ -1929,7 +1831,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequir
 
     EXPECT_NE(l3ConfigNotChangedSize, l3ConfigChangedSize);
     auto difference = l3ConfigChangedSize - l3ConfigNotChangedSize;
-    EXPECT_EQ(sizeof(PIPE_CONTROL), difference);
+    EXPECT_EQ(sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM), difference);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnL3ConfigChanged) {
