@@ -123,6 +123,10 @@ void Device::initializeCaps() {
         deviceInfo.independentForwardProgress = false;
     }
 
+    if (enabledClVersion >= 20) {
+        deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
+    }
+
     if (hwInfo.capabilityTable.ftrSupportsFP64) {
         deviceExtensions += "cl_khr_fp64 ";
     }
