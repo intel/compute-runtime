@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -150,3 +150,25 @@ INSTANTIATE_TEST_CASE_P(
     Device_,
     GetDeviceInfoSize,
     testing::ValuesIn(deviceInfoParams2));
+
+TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForDeviceVersionThenProperSizeIsReturned) {
+    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    size_t sizeReturned = 0;
+    auto retVal = device->getDeviceInfo(
+        CL_DEVICE_VERSION,
+        0,
+        nullptr,
+        &sizeReturned);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(16u, sizeReturned);
+    std::unique_ptr<char[]> deviceVersion(new char[sizeReturned]);
+
+    retVal = device->getDeviceInfo(
+        CL_DEVICE_VERSION,
+        sizeReturned,
+        deviceVersion.get(),
+        nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
