@@ -22,22 +22,18 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/event/event.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
+#include "test.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 
 struct EnqueueMapImageTest : public DeviceFixture,
-                             public BuiltInFixture,
                              public CommandQueueHwFixture,
                              public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
@@ -47,7 +43,6 @@ struct EnqueueMapImageTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        BuiltInFixture::SetUp(pDevice);
         CommandQueueFixture::SetUp(pDevice, 0);
         context = new MockContext(pDevice);
         image = ImageHelper<ImageUseHostPtr<Image2dDefaults>>::create(context);
@@ -55,7 +50,6 @@ struct EnqueueMapImageTest : public DeviceFixture,
 
     void TearDown() override {
         delete image;
-        BuiltInFixture::TearDown();
         context->release();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
