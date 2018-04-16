@@ -637,7 +637,7 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWhenGetHeapMemoryIsCalledW
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
 
-    IndirectHeap heap(nullptr, 100);
+    IndirectHeap heap(nullptr, size_t{100});
 
     IndirectHeap *indirectHeap = &heap;
     cmdQ.allocateHeapMemory(this->GetParam(), 100, indirectHeap);

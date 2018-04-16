@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,6 +25,9 @@
 namespace OCLRT {
 
 IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
+}
+
+IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
 }
 
 IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {

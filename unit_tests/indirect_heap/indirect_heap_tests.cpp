@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,8 +27,6 @@
 using namespace OCLRT;
 
 struct IndirectHeapTest : public ::testing::Test {
-    IndirectHeapTest() {
-    }
     uint8_t buffer[256];
     MockGraphicsAllocation gfxAllocation = {(void *)buffer, sizeof(buffer)};
     IndirectHeap indirectHeap = {&gfxAllocation};
@@ -101,4 +99,22 @@ TEST_F(IndirectHeapTest, alignShouldAlignUpward) {
 TEST_F(IndirectHeapTest, givenIndirectHeapWhenGetCpuBaseIsCalledThenCpuAddressIsReturned) {
     auto base = indirectHeap.getCpuBase();
     EXPECT_EQ(base, buffer);
+}
+
+TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
+    auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
+    GraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    graphicsAllocation.gpuBaseAddress = 4096u;
+    IndirectHeap indirectHeap(&graphicsAllocation, false);
+
+    EXPECT_EQ(0u, indirectHeap.getHeapGpuStartOffset());
+}
+
+TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapGpuStartOffsetThenZeroIsReturned) {
+    auto cpuBaseAddress = reinterpret_cast<void *>(0x3000);
+    GraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    graphicsAllocation.gpuBaseAddress = 4096u;
+    IndirectHeap indirectHeap(&graphicsAllocation, true);
+
+    EXPECT_EQ(8192u, indirectHeap.getHeapGpuStartOffset());
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -46,16 +46,28 @@ class IndirectHeap : public LinearStream {
 
     IndirectHeap(void *buffer, size_t bufferSize);
     IndirectHeap(GraphicsAllocation *buffer);
+    IndirectHeap(GraphicsAllocation *buffer, bool canBeUtilizedAs4GbHeap);
 
     // Disallow copy'ing
     IndirectHeap(const IndirectHeap &) = delete;
     IndirectHeap &operator=(const IndirectHeap &) = delete;
 
     void align(size_t alignment);
+    uint64_t getHeapGpuStartOffset();
+
+  protected:
+    bool canBeUtilizedAs4GbHeap = false;
 };
 
 inline void IndirectHeap::align(size_t alignment) {
     auto address = alignUp(ptrOffset(buffer, sizeUsed), alignment);
     sizeUsed = ptrDiff(address, buffer);
+}
+inline uint64_t IndirectHeap::getHeapGpuStartOffset() {
+    if (this->canBeUtilizedAs4GbHeap) {
+        return this->graphicsAllocation->getGpuAddressToPatch();
+    } else {
+        return 0llu;
+    }
 }
 }
