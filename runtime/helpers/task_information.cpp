@@ -83,9 +83,9 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
 
     completionStamp = csr.flushTask(queueCommandStream,
                                     offset,
-                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
-                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT),
-                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE),
+                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
                                     taskLevel,
                                     dispatchFlags);
 
@@ -269,9 +269,9 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
 
     completionStamp = csr.flushTask(queueCommandStream,
                                     offset,
-                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
-                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT),
-                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE),
+                                    cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u),
+                                    cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
+                                    cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
                                     taskLevel,
                                     dispatchFlags);
 

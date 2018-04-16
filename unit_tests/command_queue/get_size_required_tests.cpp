@@ -36,9 +36,9 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
 
     void SetUp() override {
         CommandEnqueueFixture::SetUp();
-        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
-        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
+        dsh = &pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
+        ioh = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
+        ssh = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
 
         usedBeforeDSH = dsh->getUsed();
         usedBeforeIOH = ioh->getUsed();

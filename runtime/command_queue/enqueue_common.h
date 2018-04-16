@@ -125,7 +125,7 @@ void CommandQueueHw<GfxFamily>::forceDispatchScheduler(OCLRT::MultiDispatchInfo 
                       devQueueHw->getDshBuffer(),
                       reflectionSurface,
                       devQueueHw->getQueueStorageBuffer(),
-                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation());
+                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation());
 
     multiDispatchInfo.push(dispatchInfo);
 }
@@ -291,7 +291,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                               devQueueHw->getDshBuffer(),
                               multiDispatchInfo.begin()->getKernel()->getKernelReflectionSurface(),
                               devQueueHw->getQueueStorageBuffer(),
-                              this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation(),
+                              this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
                               devQueueHw->getDebugQueue());
 
             GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
@@ -299,7 +299,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 *devQueueHw,
                 preemption,
                 scheduler,
-                &getIndirectHeap(IndirectHeap::SURFACE_STATE),
+                &getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
                 devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE));
 
             scheduler.makeResident(commandStreamReceiver);
@@ -343,7 +343,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                       devQueueHw->getDshBuffer(),
                                                       multiDispatchInfo.begin()->getKernel()->getKernelReflectionSurface(),
                                                       devQueueHw->getQueueStorageBuffer(),
-                                                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE).getGraphicsAllocation(),
+                                                      this->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getGraphicsAllocation(),
                                                       devQueueHw->getDebugQueue());
                 }
             }
@@ -537,8 +537,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         ioh = dsh;
         implicitFlush = true;
     } else {
-        dsh = &getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
-        ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
+        dsh = &getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
+        ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
     }
 
     commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.begin()->getKernel()->getThreadArbitrationPolicy<GfxFamily>());
@@ -568,7 +568,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         commandStreamStart,
         *dsh,
         *ioh,
-        getIndirectHeap(IndirectHeap::SURFACE_STATE),
+        getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
         taskLevel,
         dispatchFlags);
 

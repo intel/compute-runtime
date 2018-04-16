@@ -400,7 +400,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
 
         pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, sshSize);
 
-        void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE).getCpuBase();
+        void *sshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
         KernelOperation *blockedCommandData = new KernelOperation(std::unique_ptr<LinearStream>(new LinearStream()),
                                                                   std::unique_ptr<IndirectHeap>(dsh),
@@ -416,7 +416,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
 
         cmdComputeKernel->submit(0, false);
 
-        void *newSshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE).getCpuBase();
+        void *newSshBuffer = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u).getCpuBase();
 
         EXPECT_EQ(sshBuffer, newSshBuffer);
 

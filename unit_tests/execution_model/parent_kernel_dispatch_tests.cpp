@@ -48,7 +48,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
 
         pKernel->createReflectionSurface();
 
-        size_t dshUsedBefore = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE).getUsed();
+        size_t dshUsedBefore = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
         EXPECT_EQ(0u, dshUsedBefore);
 
         size_t executionModelDSHUsedBefore = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
@@ -67,7 +67,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
                                                       pDevice->getPreemptionMode(),
                                                       false);
 
-        size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE).getUsed();
+        size_t dshUsedAfter = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u).getUsed();
         EXPECT_EQ(0u, dshUsedAfter);
 
         size_t executionModelDSHUsedAfter = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE)->getUsed();
@@ -107,7 +107,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
 
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
-        auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT);
+        auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
 
         GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
                                                       *pKernel,
@@ -150,7 +150,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
                                                       pDevice->getPreemptionMode(),
                                                       false);
 
-        auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE);
+        auto &ssh = pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u);
 
         EXPECT_LE(pKernel->getKernelInfo().heapInfo.pKernelHeader->SurfaceStateHeapSize, ssh.getMaxAvailableSpace());
 

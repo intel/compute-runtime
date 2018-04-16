@@ -334,7 +334,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
-                                  size_t minRequiredSize = 0u);
+                                  size_t minRequiredSize);
 
     void allocateHeapMemory(IndirectHeap::Type heapType,
                             size_t minRequiredSize, IndirectHeap *&indirectHeap);

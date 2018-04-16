@@ -594,7 +594,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     MockCommandQueue cmdQ(context.get(), pDevice, props);
 
-    auto &ih = cmdQ.getIndirectHeap(this->GetParam());
+    auto &ih = cmdQ.getIndirectHeap(this->GetParam(), 0u);
     auto allocation = ih.getGraphicsAllocation();
     EXPECT_NE(nullptr, allocation);
 
