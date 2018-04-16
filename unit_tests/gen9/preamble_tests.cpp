@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/source_level_debugger/source_level_debugger_preamble_test.h"
 #include "gtest/gtest.h"
 
@@ -59,6 +60,8 @@ GEN9TEST_F(PreambleTestGen9, givenDisabledPreemptionAndDisabledDebuggingWhenPrea
 }
 
 GEN9TEST_F(PreambleTestGen9, givenKernelDebuggingActiveAndDisabledPreemptionWhenGetAdditionalCommandsSizeIsCalledThen2MiLoadRegisterImmCmdsAndStateSipAreInlcuded) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::Disabled));
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
 
     mockDevice->setSourceLevelDebuggerActive(false);
