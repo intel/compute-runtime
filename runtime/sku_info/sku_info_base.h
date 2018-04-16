@@ -93,6 +93,7 @@ struct FeatureTableBase {
     bool ftrDisplayEngineS3d = false;      // Gmmlib
     bool ftrVERing = false;                // Gmmlib
     bool ftrWddm2GpuMmu = false;           // Gmmlib
+    bool ftrWddm2_1_64kbPages = false;     // Gmmlib
 
     bool ftrKmdDaf = false;
 };

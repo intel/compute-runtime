@@ -41,6 +41,8 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrLCIA = 1;
         refFtrTable.FtrIA32eGfxPTEs = 1;
         refFtrTable.FtrWddm2GpuMmu = 1;
+        refFtrTable.FtrWddm2_1_64kbPages = 1;
+
         refFtrTable.FtrTranslationTable = 1;
         refFtrTable.FtrUserModeTranslationTable = 1;
     }
@@ -124,6 +126,7 @@ struct SkuInfoBaseReference {
         refFtrTable.ftrDisplayEngineS3d = true;
         refFtrTable.ftrVERing = true;
         refFtrTable.ftrWddm2GpuMmu = true;
+        refFtrTable.ftrWddm2_1_64kbPages = true;
 
         refFtrTable.ftrKmdDaf = true;
     }
