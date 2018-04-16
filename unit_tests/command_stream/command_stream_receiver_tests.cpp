@@ -211,7 +211,7 @@ HWTEST_F(CommandStreamReceiverTest, dontReuseSurfaceIfStillInUse) {
 
     *hwTag = 1;
 
-    auto newAllocation = memoryManager->obtainReusableAllocation(1);
+    auto newAllocation = memoryManager->obtainReusableAllocation(1, false);
 
     EXPECT_EQ(nullptr, newAllocation);
 }

@@ -41,12 +41,14 @@ namespace OCLRT {
 struct ReusableAllocationRequirements {
     size_t requiredMinimalSize;
     volatile uint32_t *csrTagAddress;
+    bool internalAllocationRequired;
 };
 
-std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress) {
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress, bool internalAllocationRequired) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = csrTagAddress;
+    req.internalAllocationRequired = internalAllocationRequired;
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -57,7 +59,9 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     auto *curr = head;
     while (curr != nullptr) {
         auto currentTagValue = req->csrTagAddress ? *req->csrTagAddress : -1;
-        if ((curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) && ((currentTagValue > curr->taskCount) || (curr->taskCount == 0))) {
+        if ((req->internalAllocationRequired == curr->is32BitAllocation) &&
+            (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
+            ((currentTagValue > curr->taskCount) || (curr->taskCount == 0))) {
             return removeOneImpl(curr, nullptr);
         }
         curr = curr->next;
@@ -207,9 +211,9 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
-std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize) {
+std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, csr ? csr->getTagAddress() : nullptr);
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, csr ? csr->getTagAddress() : nullptr, internalAllocation);
     return allocation;
 }
 

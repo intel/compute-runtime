@@ -69,7 +69,7 @@ constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
 
 class AllocationsList : public IDList<GraphicsAllocation, true, true> {
   public:
-    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress = nullptr);
+    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress, bool internalAllocationRequired);
 
   private:
     GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
@@ -164,7 +164,7 @@ class MemoryManager {
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
 
-    std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize);
+    std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
 
     //intrusive list of allocation
     AllocationsList graphicsAllocations;

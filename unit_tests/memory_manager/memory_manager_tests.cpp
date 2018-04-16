@@ -333,7 +333,7 @@ TEST_F(MemoryAllocatorTest, obtainAllocationFromEmptyReuseListReturnNullPtr) {
 
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
-    auto allocation2 = memoryManager->obtainReusableAllocation(1);
+    auto allocation2 = memoryManager->obtainReusableAllocation(1, false);
     EXPECT_EQ(nullptr, allocation2);
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -345,7 +345,7 @@ TEST_F(MemoryAllocatorTest, obtainAllocationFromReusableList) {
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    auto allocation2 = memoryManager->obtainReusableAllocation(1);
+    auto allocation2 = memoryManager->obtainReusableAllocation(1, false);
     EXPECT_EQ(allocation, allocation2.get());
 
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
@@ -380,7 +380,7 @@ TEST_F(MemoryAllocatorTest, obtainAllocationFromMidlleOfReusableList) {
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation2));
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation3));
 
-    auto reusableAllocation = memoryManager->obtainReusableAllocation(10000);
+    auto reusableAllocation = memoryManager->obtainReusableAllocation(10000, false);
 
     EXPECT_EQ(nullptr, reusableAllocation->next);
     EXPECT_EQ(nullptr, reusableAllocation->prev);
@@ -391,6 +391,48 @@ TEST_F(MemoryAllocatorTest, obtainAllocationFromMidlleOfReusableList) {
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation3) || (allocation3 == reusableAllocation.get()));
 
     memoryManager->freeGraphicsMemory(reusableAllocation.release());
+}
+
+TEST_F(MemoryAllocatorTest, givenNonInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenNullIsReturned) {
+    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto allocation = memoryManager->allocateGraphicsMemory(4096, 4096);
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+
+    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto internalAllocation = memoryManager->obtainReusableAllocation(1, true);
+    EXPECT_EQ(nullptr, internalAllocation);
+}
+
+TEST_F(MemoryAllocatorTest, givenInternalAllocationWhenItIsPutOnReusableListWhenNonInternalAllocationIsRequestedThenNullIsReturned) {
+    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto allocation = memoryManager->allocateGraphicsMemory(4096, 4096);
+    allocation->is32BitAllocation = true;
+
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+
+    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto internalAllocation = memoryManager->obtainReusableAllocation(1, false);
+    EXPECT_EQ(nullptr, internalAllocation);
+}
+
+TEST_F(MemoryAllocatorTest, givenInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenItIsReturned) {
+    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto allocation = memoryManager->allocateGraphicsMemory(4096, 4096);
+    allocation->is32BitAllocation = true;
+
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+
+    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+
+    auto internalAllocation = memoryManager->obtainReusableAllocation(1, true);
+    EXPECT_EQ(allocation, internalAllocation.get());
+    internalAllocation.release();
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(MemoryAllocatorTest, AlignedHostPtrWithAlignedSizeWhenAskedForGraphicsAllocationReturnsNullStorageFromHostPtrManager) {

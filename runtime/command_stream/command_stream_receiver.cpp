@@ -143,7 +143,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        auto allocation = memoryManager->obtainReusableAllocation(requiredSize).release();
+        auto allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
         }

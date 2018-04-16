@@ -281,7 +281,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        GraphicsAllocation *allocation = memoryManager->obtainReusableAllocation(requiredSize).release();
+        GraphicsAllocation *allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
 
         if (!allocation) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
@@ -640,7 +640,7 @@ void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType,
 
     finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
 
-    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize).release();
+    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, false).release();
 
     if (!heapMemory) {
         heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
