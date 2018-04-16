@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,12 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/built_ins/built_ins.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_map_buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -40,11 +38,8 @@ using namespace OCLRT;
 
 struct EnqueueSvmTest : public DeviceFixture,
                         public CommandQueueHwFixture,
-                        public BuiltInFixture,
                         public ::testing::Test {
     typedef CommandQueueHwFixture CommandQueueFixture;
-
-    using BuiltInFixture::SetUp;
 
     EnqueueSvmTest() {
     }
@@ -52,13 +47,11 @@ struct EnqueueSvmTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
-        BuiltInFixture::SetUp(pDevice);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256);
     }
 
     void TearDown() override {
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
-        BuiltInFixture::TearDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
     }

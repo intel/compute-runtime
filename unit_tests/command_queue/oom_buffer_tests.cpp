@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -48,7 +47,6 @@ static OOMSetting oomSettings[] = {
 struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public DeviceFixture,
                                    public CommandQueueFixture,
-                                   public BuiltInFixture,
                                    public SimpleArgKernelFixture,
                                    public HelloWorldKernelFixture,
                                    public ::testing::TestWithParam<OOMSetting> {
@@ -56,7 +54,6 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
     using CommandQueueFixture::SetUp;
     using SimpleArgKernelFixture::SetUp;
     using HelloWorldKernelFixture::SetUp;
-    using BuiltInFixture::SetUp;
 
     OOMCommandQueueBufferTest() {
     }
@@ -68,7 +65,6 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         context = new MockContext(pDevice);
         BufferDefaults::context = context;
         CommandQueueFixture::SetUp(context, pDevice, 0);
-        BuiltInFixture::SetUp(pDevice);
         SimpleArgKernelFixture::SetUp(pDevice);
         HelloWorldKernelFixture::SetUp(pDevice, "CopyBuffer_simd", "CopyBuffer");
 
@@ -97,7 +93,6 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
     void TearDown() override {
         delete dstBuffer;
         delete srcBuffer;
-        BuiltInFixture::TearDown();
         context->release();
         HelloWorldKernelFixture::TearDown();
         SimpleArgKernelFixture::TearDown();

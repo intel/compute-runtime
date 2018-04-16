@@ -51,7 +51,6 @@ void api_fixture::SetUp() {
 
     pKernel = new MockKernel(pProgram, *pProgram->MockProgram::getKernelInfo(), *pDevice);
     ASSERT_NE(nullptr, pKernel);
-    BuiltInFixture::SetUp(pDevice);
 }
 
 void api_fixture::TearDown() {
@@ -60,7 +59,6 @@ void api_fixture::TearDown() {
     pContext->release();
     pProgram->release();
 
-    BuiltInFixture::TearDown();
     PlatformFixture::TearDown();
 }
 
@@ -83,7 +81,6 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
 
     kernel = new MockKernel(prgPtr, *program->MockProgram::getKernelInfo(), *devPtr);
     ASSERT_NE(nullptr, kernel);
-    BuiltInFixture::SetUp(devPtr);
 }
 
 void api_fixture_using_aligned_memory_manager::TearDown() {
@@ -92,7 +89,5 @@ void api_fixture_using_aligned_memory_manager::TearDown() {
     context->release();
     program->release();
     delete device;
-
-    BuiltInFixture::TearDown();
 }
 } // namespace OCLRT

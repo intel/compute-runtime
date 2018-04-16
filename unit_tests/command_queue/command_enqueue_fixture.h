@@ -23,7 +23,6 @@
 #pragma once
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
@@ -33,19 +32,14 @@
 namespace OCLRT {
 
 struct CommandDeviceFixture : public DeviceFixture,
-                              public BuiltInFixture,
                               public CommandQueueHwFixture {
-    using BuiltInFixture::SetUp;
     using CommandQueueHwFixture::SetUp;
     void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
         DeviceFixture::SetUp();
-        BuiltInFixture::SetUp(pDevice);
-        ASSERT_NE(nullptr, pBuiltIns);
         CommandQueueHwFixture::SetUp(pDevice, cmdQueueProperties);
     }
 
     void TearDown() {
-        BuiltInFixture::TearDown();
         CommandQueueHwFixture::TearDown();
         DeviceFixture::TearDown();
     }

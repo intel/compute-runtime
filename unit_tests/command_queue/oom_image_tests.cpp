@@ -25,7 +25,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
 
@@ -43,10 +42,8 @@ static OOMSetting oomSettings[] = {
 
 struct OOMCommandQueueImageTest : public DeviceFixture,
                                   public CommandQueueFixture,
-                                  public BuiltInFixture,
                                   public ::testing::TestWithParam<OOMSetting> {
 
-    using BuiltInFixture::SetUp;
     using CommandQueueFixture::SetUp;
 
     OOMCommandQueueImageTest() {
@@ -56,7 +53,6 @@ struct OOMCommandQueueImageTest : public DeviceFixture,
         DeviceFixture::SetUp();
         context = new MockContext(pDevice);
         CommandQueueFixture::SetUp(context, pDevice, 0);
-        BuiltInFixture::SetUp(pDevice);
 
         srcImage = Image2dHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
@@ -85,7 +81,6 @@ struct OOMCommandQueueImageTest : public DeviceFixture,
         delete srcImage;
         context->release();
 
-        BuiltInFixture::TearDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
     }

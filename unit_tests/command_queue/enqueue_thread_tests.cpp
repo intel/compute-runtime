@@ -28,7 +28,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "test.h"
@@ -75,21 +74,15 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     }
 };
 
-struct EnqueueThreadingFixture : public DeviceFixture,
-                                 public BuiltInFixture {
-    using BuiltInFixture::SetUp;
-
+struct EnqueueThreadingFixture : public DeviceFixture {
     void SetUp() {
         DeviceFixture::SetUp();
-        BuiltInFixture::SetUp(pDevice);
         context = new MockContext(pDevice);
-        ASSERT_NE(nullptr, pBuiltIns);
         pCmdQ = nullptr;
     }
 
     void TearDown() {
         delete pCmdQ;
-        BuiltInFixture::TearDown();
         context->release();
         DeviceFixture::TearDown();
     }

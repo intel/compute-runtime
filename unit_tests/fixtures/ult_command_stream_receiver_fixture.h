@@ -26,7 +26,6 @@
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 
@@ -34,13 +33,11 @@ namespace OCLRT {
 
 struct UltCommandStreamReceiverTest
     : public DeviceFixture,
-      public BuiltInFixture,
       public HardwareParse,
       ::testing::Test {
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        BuiltInFixture::SetUp(pDevice);
         HardwareParse::SetUp();
 
         size_t sizeStream = 256;
@@ -85,7 +82,6 @@ struct UltCommandStreamReceiverTest
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
         HardwareParse::TearDown();
-        BuiltInFixture::TearDown();
         DeviceFixture::TearDown();
     }
 

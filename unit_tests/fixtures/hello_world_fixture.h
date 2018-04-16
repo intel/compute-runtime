@@ -29,7 +29,6 @@
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/indirect_heap/indirect_heap_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/hello_world_kernel_fixture.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
@@ -51,8 +50,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
                            public FixtureFactory::CommandStreamFixture,
                            public FixtureFactory::CommandQueueFixture,
                            public FixtureFactory::KernelFixture,
-                           public DeviceFixture,
-                           public BuiltInFixture {
+                           public DeviceFixture {
 
     typedef typename FixtureFactory::IndirectHeapFixture IndirectHeapFixture;
     typedef typename FixtureFactory::CommandStreamFixture CommandStreamFixture;
@@ -63,7 +61,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     using CommandStreamFixture::pCS;
     using KernelFixture::pKernel;
     using IndirectHeapFixture::SetUp;
-    using BuiltInFixture::SetUp;
     using HelloWorldKernelFixture::SetUp;
     using CommandStreamFixture::SetUp;
     using CommandQueueFixture::SetUp;
@@ -79,8 +76,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     virtual void SetUp() {
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pDevice);
-        BuiltInFixture::SetUp(pDevice);
-        ASSERT_NE(nullptr, pBuiltIns);
         CommandQueueFixture::SetUp(pDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
         CommandStreamFixture::SetUp(pCmdQ);
@@ -111,7 +106,6 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandStreamFixture::TearDown();
         CommandQueueFixture::TearDown();
         delete BufferDefaults::context;
-        BuiltInFixture::TearDown();
         DeviceFixture::TearDown();
     }
 

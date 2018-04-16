@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,6 @@
 #pragma once
 
 #include "unit_tests/fixtures/platform_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/helpers/options.h"
@@ -33,9 +32,7 @@
 using namespace OCLRT;
 
 class ScenarioTest : public ::testing::Test,
-                     public PlatformFixture,
-                     public BuiltInFixture {
-    using BuiltInFixture::SetUp;
+                     public PlatformFixture {
     using PlatformFixture::SetUp;
 
   public:
@@ -58,7 +55,6 @@ class ScenarioTest : public ::testing::Test,
         kernel = kernelInternals->mockKernel;
 
         ASSERT_NE(nullptr, kernel);
-        BuiltInFixture::SetUp(pDevice);
     }
     void TearDown() override {
         delete kernelInternals;
@@ -66,7 +62,6 @@ class ScenarioTest : public ::testing::Test,
         context->release();
         program->release();
 
-        BuiltInFixture::TearDown();
         PlatformFixture::TearDown();
     }
 

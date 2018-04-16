@@ -28,7 +28,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/kernel/kernel.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/fixtures/program_fixture.h"
@@ -86,12 +85,10 @@ struct VerboseLevelTest : public DriverDiagnosticsTest,
 };
 
 struct PerformanceHintTest : public DriverDiagnosticsTest,
-                             public BuiltInFixture,
                              public CommandQueueHwFixture {
 
     void SetUp() override {
         DriverDiagnosticsTest::SetUp();
-        BuiltInFixture::SetUp(pPlatform->getDevice(0));
         cl_device_id deviceID = devices[0];
         cl_context_properties validProperties[3] = {CL_CONTEXT_SHOW_DIAGNOSTICS_INTEL, CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, 0};
         context = Context::create<OCLRT::MockContext>(validProperties, DeviceVector(&deviceID, 1), callbackFunction, (void *)userData, retVal);
@@ -100,7 +97,6 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
 
     void TearDown() override {
         CommandQueueHwFixture::TearDown();
-        BuiltInFixture::TearDown();
         DriverDiagnosticsTest::TearDown();
     }
 };
