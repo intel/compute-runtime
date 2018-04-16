@@ -481,7 +481,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     uint32_t crossThreadDataSize;
 
     GraphicsAllocation *privateSurface;
-    uint32_t privateSurfaceSize;
+    uint64_t privateSurfaceSize;
 
     GraphicsAllocation *kernelReflectionSurface;
 

@@ -741,6 +741,60 @@ TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamGetConstantBuffe
     delete pKernelInfo;
 }
 
+TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4ThenReturnOutOfResources) {
+    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
+    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
+    executionEnvironment->CompiledSIMD32 = 32;
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
+    pKernelInfo->gpuPointerSize = 4;
+    pDevice->getMemoryManager()->setForce32BitAllocations(false);
+    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
+        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
+}
+
+TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4And32BitAllocationsThenReturnOutOfResources) {
+    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
+    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
+    executionEnvironment->CompiledSIMD32 = 32;
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
+    pKernelInfo->gpuPointerSize = 4;
+    pDevice->getMemoryManager()->setForce32BitAllocations(true);
+    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
+        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
+}
+
+TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize8And32BitAllocationsThenReturnOutOfResources) {
+    auto pAllocateStatelessPrivateSurface = std::unique_ptr<SPatchAllocateStatelessPrivateSurface>(new SPatchAllocateStatelessPrivateSurface());
+    pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
+    auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
+    executionEnvironment->CompiledSIMD32 = 32;
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
+    pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
+    MockContext context;
+    MockProgram program(&context, false);
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
+    pKernelInfo->gpuPointerSize = 8;
+    pDevice->getMemoryManager()->setForce32BitAllocations(true);
+    if (pDevice->getDeviceInfo().computeUnitsUsedForScratch == 0)
+        pDevice->getDeviceInfoToModify()->computeUnitsUsedForScratch = 120;
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, pKernel->initialize());
+}
+
 TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalSurfaceIsPatchedWithCpuAddress) {
 
     // define kernel info

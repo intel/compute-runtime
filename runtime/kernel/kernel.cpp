@@ -260,8 +260,12 @@ cl_int Kernel::initialize() {
         if (privateSurfaceSize) {
             privateSurfaceSize *= device.getDeviceInfo().computeUnitsUsedForScratch * getKernelInfo().getMaxSimdSize();
             DEBUG_BREAK_IF(privateSurfaceSize == 0);
+            if ((is32Bit() || device.getMemoryManager()->peekForce32BitAllocations()) && (privateSurfaceSize > std::numeric_limits<uint32_t>::max())) {
+                retVal = CL_OUT_OF_RESOURCES;
+                break;
+            }
 
-            privateSurface = device.getMemoryManager()->createGraphicsAllocationWithRequiredBitness(privateSurfaceSize, nullptr);
+            privateSurface = device.getMemoryManager()->createGraphicsAllocationWithRequiredBitness(static_cast<size_t>(privateSurfaceSize), nullptr);
             if (privateSurface == nullptr) {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
