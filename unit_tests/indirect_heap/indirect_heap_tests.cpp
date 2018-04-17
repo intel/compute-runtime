@@ -118,3 +118,21 @@ TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAsk
 
     EXPECT_EQ(8192u, indirectHeap.getHeapGpuStartOffset());
 }
+
+TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapSupporting4GbModeWhenAskedForHeapBaseThenGpuBaseIsReturned) {
+    auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
+    GraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    graphicsAllocation.gpuBaseAddress = 4096u;
+    IndirectHeap indirectHeap(&graphicsAllocation, true);
+
+    EXPECT_EQ(4096u, indirectHeap.getHeapGpuBase());
+}
+
+TEST(IndirectHeapWith4GbAllocatorTest, givenIndirectHeapNotSupporting4GbModeWhenAskedForHeapBaseThenGpuAddressIsReturned) {
+    auto cpuBaseAddress = reinterpret_cast<void *>(0x2000);
+    GraphicsAllocation graphicsAllocation(cpuBaseAddress, 4096u);
+    graphicsAllocation.gpuBaseAddress = 4096u;
+    IndirectHeap indirectHeap(&graphicsAllocation, false);
+
+    EXPECT_EQ(8192u, indirectHeap.getHeapGpuBase());
+}

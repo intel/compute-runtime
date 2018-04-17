@@ -54,6 +54,7 @@ class IndirectHeap : public LinearStream {
 
     void align(size_t alignment);
     uint64_t getHeapGpuStartOffset();
+    uint64_t getHeapGpuBase();
 
   protected:
     bool canBeUtilizedAs4GbHeap = false;
@@ -68,6 +69,13 @@ inline uint64_t IndirectHeap::getHeapGpuStartOffset() {
         return this->graphicsAllocation->getGpuAddressToPatch();
     } else {
         return 0llu;
+    }
+}
+inline uint64_t IndirectHeap::getHeapGpuBase() {
+    if (this->canBeUtilizedAs4GbHeap) {
+        return this->graphicsAllocation->gpuBaseAddress;
+    } else {
+        return this->graphicsAllocation->getGpuAddress();
     }
 }
 }
