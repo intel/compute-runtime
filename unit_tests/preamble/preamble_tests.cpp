@@ -27,6 +27,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/libult/mock_gfx_family.h"
 
 #include <gtest/gtest.h>
 
@@ -165,4 +166,18 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
     size_t diff = withDebugging - withoutDebugging;
     size_t sizeExpected = 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM);
     EXPECT_EQ(sizeExpected, diff);
+}
+
+TEST(DefaultPreambleHelperTest, givenDefaultPreambleHelperWhenGetAdditionalCommandsSizeThenZeroIsReturned) {
+    auto size = PreambleHelper<GENX>::getAdditionalCommandsSize(MockDevice(**platformDevices));
+    EXPECT_EQ(0u, size);
+}
+
+TEST(DefaultPreambleHelperTest, givenDefaultPreambleHelperWhenProgramGenSpecificPreambleWorkAroundsThenDoNothing) {
+    char preambleBuffer[4096];
+    LinearStream preambleStream(preambleBuffer, 4096);
+    size_t size = preambleStream.getUsed();
+
+    PreambleHelper<GENX>::programGenSpecificPreambleWorkArounds(&preambleStream, **platformDevices);
+    EXPECT_EQ(size, preambleStream.getUsed());
 }
