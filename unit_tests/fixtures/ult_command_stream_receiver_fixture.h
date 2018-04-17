@@ -35,7 +35,6 @@ struct UltCommandStreamReceiverTest
     : public DeviceFixture,
       public HardwareParse,
       ::testing::Test {
-
     void SetUp() override {
         DeviceFixture::SetUp();
         HardwareParse::SetUp();
@@ -147,9 +146,9 @@ struct UltCommandStreamReceiverTest
     DispatchFlags flushTaskFlags = {};
     uint32_t taskLevel = 42;
     LinearStream commandStream;
-    LinearStream dsh;
-    LinearStream ioh;
-    LinearStream ssh;
+    IndirectHeap dsh = {nullptr};
+    IndirectHeap ioh = {nullptr};
+    IndirectHeap ssh = {nullptr};
 
     void *cmdBuffer = nullptr;
     void *dshBuffer = nullptr;

@@ -559,7 +559,7 @@ struct DrmCsrVfeTests : ::testing::Test {
         }
     };
 
-    void flushTask(CommandStreamReceiver &csr, LinearStream &stream, bool lowPriority) {
+    void flushTask(CommandStreamReceiver &csr, IndirectHeap &stream, bool lowPriority) {
         dispatchFlags.lowPriority = lowPriority;
         csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags);
     }
@@ -576,7 +576,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlush
     device->resetCommandStreamReceiver(mockCsr);
 
     auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
-    LinearStream stream(graphicAlloc);
+    IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
@@ -604,7 +604,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorit
     device->resetCommandStreamReceiver(mockCsr);
 
     auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
-    LinearStream stream(graphicAlloc);
+    IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
@@ -632,7 +632,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsF
     device->resetCommandStreamReceiver(mockCsr);
 
     auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
-    LinearStream stream(graphicAlloc);
+    IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
@@ -660,7 +660,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
     device->resetCommandStreamReceiver(mockCsr);
 
     auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
-    LinearStream stream(graphicAlloc);
+    IndirectHeap stream(graphicAlloc);
 
     mockCsr->overrideMediaVFEStateDirty(false);
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
@@ -681,7 +681,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaul
     device->resetCommandStreamReceiver(mockCsr);
 
     auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
-    LinearStream stream(graphicAlloc);
+    IndirectHeap stream(graphicAlloc);
 
     mockCsr->overrideMediaVFEStateDirty(false);
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
@@ -996,7 +996,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    IndirectHeap cs(commandBuffer);
 
     tCsr->makeResident(*dummyAllocation);
 
@@ -1054,7 +1054,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
-    LinearStream cs(commandBuffer);
+    IndirectHeap cs(commandBuffer);
     std::unique_ptr<Device> device(DeviceHelper<>::create(nullptr));
 
     tCsr->getMemoryManager()->device = device.get();

@@ -447,9 +447,9 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
-        const LinearStream &dsh,
-        const LinearStream &ioh,
-        const LinearStream &ssh,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
         uint32_t taskLevel,
         DispatchFlags &dispatchFlags) override {
         CompletionStamp cs = {};

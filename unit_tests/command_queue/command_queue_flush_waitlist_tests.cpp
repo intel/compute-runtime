@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -61,7 +61,7 @@ HWTEST_F(CommandQueueSimpleTest, flushWaitlistDoesNotFlushSingleEventWhenTaskCou
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto *gfxAllocation = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
-    LinearStream stream(gfxAllocation);
+    IndirectHeap stream(gfxAllocation);
 
     // Update latestSentTaskCount to == 1
     DispatchFlags dispatchFlags;

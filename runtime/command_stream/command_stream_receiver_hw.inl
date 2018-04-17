@@ -106,9 +106,9 @@ template <typename GfxFamily>
 CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     LinearStream &commandStreamTask,
     size_t commandStreamStartTask,
-    const LinearStream &dsh,
-    const LinearStream &ioh,
-    const LinearStream &ssh,
+    const IndirectHeap &dsh,
+    const IndirectHeap &ioh,
+    const IndirectHeap &ssh,
     uint32_t taskLevel,
     DispatchFlags &dispatchFlags) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;

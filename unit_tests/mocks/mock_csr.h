@@ -119,9 +119,9 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
-        const LinearStream &dsh,
-        const LinearStream &ioh,
-        const LinearStream &ssh,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
         uint32_t taskLevel,
         DispatchFlags &dispatchFlags) override {
         this->flushTaskStamp = *this->executionStamp;
@@ -189,8 +189,8 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const LinearStream &dsh, const LinearStream &ioh,
-                              const LinearStream &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags) override {
+                              const IndirectHeap &dsh, const IndirectHeap &ioh,
+                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags) override {
         passedDispatchFlags = dispatchFlags;
         return CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
                                                              dsh, ioh, ssh, taskLevel, dispatchFlags);
@@ -217,9 +217,9 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     CompletionStamp flushTask(
         LinearStream &commandStream,
         size_t commandStreamStart,
-        const LinearStream &dsh,
-        const LinearStream &ioh,
-        const LinearStream &ssh,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
         uint32_t taskLevel,
         DispatchFlags &dispatchFlags) override;
 

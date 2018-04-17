@@ -35,6 +35,7 @@ namespace OCLRT {
 class Device;
 class EventBuilder;
 class LinearStream;
+class IndirectHeap;
 class MemoryManager;
 class OSInterface;
 class GraphicsAllocation;
@@ -60,7 +61,7 @@ class CommandStreamReceiver {
     virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                                      const LinearStream &dsh, const LinearStream &ioh, const LinearStream &ssh,
+                                      const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
                                       uint32_t taskLevel, DispatchFlags &dispatchFlags) = 0;
 
     virtual void flushBatchedSubmissions() = 0;

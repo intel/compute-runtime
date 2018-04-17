@@ -684,9 +684,9 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     mockCsr->setPreemptionCsrAllocation(preemptionAllocation);
 
     LinearStream cs(commandBuffer);
-    LinearStream dsh(dshAlloc);
-    LinearStream ioh(iohAlloc);
-    LinearStream ssh(sshAlloc);
+    IndirectHeap dsh(dshAlloc);
+    IndirectHeap ioh(iohAlloc);
+    IndirectHeap ssh(sshAlloc);
 
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
@@ -828,7 +828,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
     auto &csrCS = mockWddmCsr.getCS();
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
-    LinearStream cs(graphicsAllocation);
+    IndirectHeap cs(graphicsAllocation);
 
     EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 
@@ -863,7 +863,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     mockWddmCsr.setPreemptionCsrAllocation(preemptionAllocation);
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024, 4096);
-    LinearStream cs(graphicsAllocation);
+    IndirectHeap cs(graphicsAllocation);
 
     EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
 

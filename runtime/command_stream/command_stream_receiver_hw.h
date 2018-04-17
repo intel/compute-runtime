@@ -46,7 +46,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
-                              const LinearStream &dsh, const LinearStream &ioh, const LinearStream &ssh,
+                              const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
                               uint32_t taskLevel, DispatchFlags &dispatchFlags) override;
 
     void flushBatchedSubmissions() override;
