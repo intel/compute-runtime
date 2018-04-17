@@ -240,7 +240,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendCrossThreadData(
         }
     }
 
-    return offsetCrossThreadData;
+    return offsetCrossThreadData + static_cast<size_t>(indirectHeap.getHeapGpuStartOffset());
 }
 
 // Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)

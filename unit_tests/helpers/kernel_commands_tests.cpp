@@ -204,6 +204,31 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
+HWTEST_F(KernelCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    auto offset = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *mockKernelWithInternal.mockKernel);
+    EXPECT_EQ(0u, offset);
+}
+
+HWTEST_F(KernelCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {
+    auto internalAllocation = pDevice->getMemoryManager()->createInternalGraphicsAllocation(nullptr, 4096);
+    IndirectHeap indirectHeap(internalAllocation, true);
+    auto expectedOffset = internalAllocation->getGpuAddressToPatch();
+
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    auto offset = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
+        indirectHeap,
+        *mockKernelWithInternal.mockKernel);
+    EXPECT_EQ(expectedOffset, offset);
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(internalAllocation);
+}
+
 HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataOffsetsAreMoved) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
