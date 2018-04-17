@@ -2062,7 +2062,7 @@ cl_int Kernel::checkCorrectImageAccessQualifier(cl_uint argIndex,
                 return CL_INVALID_ARG_VALUE;
             }
         } else {
-            return CL_INVALID_VALUE;
+            return CL_INVALID_ARG_VALUE;
         }
     }
     return CL_SUCCESS;

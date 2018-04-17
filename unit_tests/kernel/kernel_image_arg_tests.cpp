@@ -137,7 +137,7 @@ TEST_F(KernelImageArgTest, givenImageWithWriteOnlyAccessAndReadOnlyArgWhenCheckC
     EXPECT_EQ(retVal, CL_INVALID_ARG_INDEX);
 }
 
-TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckCorrectImageAccessQualifierIsCalledThenRetValNotValid) {
+TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckCorrectImageAccessQualifierIsCalledThenReturnsInvalidArgValue) {
     cl_image_format imgFormat = {CL_RGBA, CL_UNORM_INT8};
     cl_image_desc imgDesc = {};
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -154,7 +154,7 @@ TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndWriteOnlyArgWhenCheckC
     Image *image = NULL;
     memObj = image;
     retVal = pKernel->checkCorrectImageAccessQualifier(0, sizeof(memObj), &memObj);
-    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+    EXPECT_EQ(retVal, CL_INVALID_ARG_VALUE);
 }
 
 TEST_F(KernelImageArgTest, givenImageWithReadOnlyAccessAndReadOnlyArgWhenCheckCorrectImageAccessQualifierIsCalledThenRetValNotValid) {
