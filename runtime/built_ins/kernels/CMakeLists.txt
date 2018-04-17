@@ -39,16 +39,17 @@ set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
 set(BUILTIN_CPP "")
 
 # Define function for compiling built-ins (with cloc)
-function(compile_builtin gen_name builtin)
-  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${gen_name}")
-
+function(compile_builtin gen_type platform_type builtin)
+  string(TOLOWER ${gen_type} gen_type_lower)
+  get_family_name_with_type(${gen_type} ${platform_type})
+  set(OUTPUTDIR "${BUILTINS_OUTDIR_WITH_ARCH}/${gen_type_lower}")
   # get filename
   get_filename_component(FILENAME ${builtin} NAME)
 
   # get name of the file w/o extension
   get_filename_component(BASENAME ${builtin} NAME_WE)
 
-  set(OUTPUTPATH_BASE "${OUTPUTDIR}/${BASENAME}_${gen_name}")
+  set(OUTPUTPATH_BASE "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}")
   set(OUTPUT_FILES
     ${OUTPUTPATH_BASE}.bc
     ${OUTPUTPATH_BASE}.bin
@@ -59,48 +60,38 @@ function(compile_builtin gen_name builtin)
   # function returns builtin cpp filename
   unset(BUILTIN_CPP)
   # set variable outside function
-  set(BUILTIN_CPP built_ins/${NEO_ARCH}/${gen_name}/${BASENAME}_${gen_name}.cpp PARENT_SCOPE)
-
-  if(MSVC)
-    add_custom_command(
-      OUTPUT ${OUTPUT_FILES}
-      COMMAND cloc -q -file ${FILENAME} -device ${gen_name} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${BUILTIN_DEBUG_OPTION}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${builtin} cloc copy_compiler_files
-    )
+  set(BUILTIN_CPP built_ins/${NEO_ARCH}/${gen_type_lower}/${BASENAME}_${family_name_with_type}.cpp PARENT_SCOPE)
+  if(WIN32)
+    set(cloc_cmd_prefix cloc)
   else()
-    add_custom_command(
-      OUTPUT ${OUTPUT_FILES}
-      COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${FILENAME} -device ${gen_name} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${BUILTIN_DEBUG_OPTION}"
-      WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${builtin} cloc copy_compiler_files
-    )
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
   endif()
+  add_custom_command(
+    OUTPUT ${OUTPUT_FILES}
+    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR}  -cpp_file -options "-cl-kernel-arg-info ${BUILTIN_DEBUG_OPTION}"
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS ${builtin} cloc copy_compiler_files
+  )
 endfunction()
 
-macro(compile_builtins GEN_TYPE PLATFORM_IT)
-  string(TOLOWER ${PLATFORM_IT} PLATFORM_LOWER)
-  string(CONCAT GEN "_" ${GEN_TYPE} "_" ${PLATFORM_IT})
-
-  set (BUILTINS_COMMANDS)
-  foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
-    compile_builtin(${PLATFORM_LOWER} ${GENERATED_BUILTIN}.igdrcl_built_in)
-    list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
-    set (RUNTIME_GENERATED_${GENERATED_BUILTIN}${GEN} ${BUILTIN_CPP} PARENT_SCOPE)
-  endforeach()
-
-  set(target_name builtins_${PLATFORM_LOWER})
-  add_custom_target(${target_name} DEPENDS ${BUILTINS_COMMANDS})
-  add_dependencies(builtins ${target_name})
-  set_target_properties(${target_name} PROPERTIES FOLDER "built_ins/${PLATFORM_LOWER}")
-endmacro()
-
-macro(macro_for_each_platform)
-  compile_builtins(${GEN_TYPE_LOWER} ${PLATFORM_IT})
-endmacro()
-
 macro(macro_for_each_gen)
-  apply_macro_for_each_platform()
+  foreach(PLATFORM_TYPE "CORE" "LP")
+    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
+      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+      string(TOLOWER ${PLATFORM_TYPE} PLATFORM_TYPE_LOWER)
+      unset(BUILTINS_COMMANDS)
+      foreach(GENERATED_BUILTIN ${GENERATED_BUILTINS})
+        compile_builtin(${GEN_TYPE} ${PLATFORM_TYPE} ${GENERATED_BUILTIN}.igdrcl_built_in)
+        list(APPEND BUILTINS_COMMANDS ${TargetDir}/${BUILTIN_CPP})
+        set(RUNTIME_GENERATED_${GENERATED_BUILTIN}_${family_name_with_type} ${BUILTIN_CPP} PARENT_SCOPE)
+      endforeach()
+
+      set(target_name builtins_${family_name_with_type})
+      add_custom_target(${target_name} DEPENDS ${BUILTINS_COMMANDS})
+      add_dependencies(builtins ${target_name})
+      set_target_properties(${target_name} PROPERTIES FOLDER "built_ins/${family_name_with_type}")
+    endif()
+  endforeach()
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")

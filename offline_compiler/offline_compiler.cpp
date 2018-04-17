@@ -248,6 +248,9 @@ int OfflineCompiler::getHardwareInfo(const char *pDeviceName) {
         if (stringsAreEqual(pDeviceName, hardwarePrefix[productId])) {
             if (hardwareInfoTable[productId]) {
                 hwInfo = hardwareInfoTable[productId];
+                familyNameWithType.clear();
+                familyNameWithType.append(familyName[hwInfo->pPlatform->eRenderCoreFamily]);
+                familyNameWithType.append(getPlatformType(*hwInfo));
                 retVal = CL_SUCCESS;
                 break;
             }
@@ -530,15 +533,15 @@ void OfflineCompiler::parseDebugSettings() {
 ////////////////////////////////////////////////////////////////////////////////
 // ParseBinAsCharArray
 ////////////////////////////////////////////////////////////////////////////////
-std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &deviceName, std::string &fileName) {
+std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName) {
     std::string builtinName = convertToPascalCase(fileName);
     std::ostringstream out;
 
     // Convert binary to cpp
     out << "#include <cstddef>\n";
     out << "#include <cstdint>\n\n";
-    out << "size_t " << builtinName << "BinarySize_" << deviceName << " = " << size << ";\n";
-    out << "uint32_t " << builtinName << "Binary_" << deviceName << "[" << (size + 3) / 4 << "] = {"
+    out << "size_t " << builtinName << "BinarySize_" << familyNameWithType << " = " << size << ";\n";
+    out << "uint32_t " << builtinName << "Binary_" << familyNameWithType << "[" << (size + 3) / 4 << "] = {"
         << std::endl
         << "    ";
 
@@ -572,11 +575,11 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;
     out << "    createBuiltinResourceName(" << std::endl;
     out << "        EBuiltInOps::" << builtinName << "," << std::endl;
-    out << "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" << deviceName << "\", 0)" << std::endl;
+    out << "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" << familyNameWithType << "\", 0)" << std::endl;
     out << "        .c_str()," << std::endl;
     out << "    (const char *)" << builtinName << "Binary"
-        << "_" << deviceName << "," << std::endl;
-    out << "    " << builtinName << "BinarySize_" << deviceName << ");" << std::endl;
+        << "_" << familyNameWithType << "," << std::endl;
+    out << "    " << builtinName << "BinarySize_" << familyNameWithType << ");" << std::endl;
     out << "}" << std::endl;
 
     return out.str();
@@ -733,9 +736,9 @@ void OfflineCompiler::writeOutAllFiles() {
     std::string fileBase;
     std::string fileTrunk = getFileNameTrunk(inputFile);
     if (outputFile.empty()) {
-        fileBase = fileTrunk + "_" + deviceName;
+        fileBase = fileTrunk + "_" + familyNameWithType;
     } else {
-        fileBase = outputFile + "_" + deviceName;
+        fileBase = outputFile + "_" + familyNameWithType;
     }
 
     if (outputDirectory != "") {
@@ -789,7 +792,7 @@ void OfflineCompiler::writeOutAllFiles() {
         if (useCppFile) {
             std::string cppOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
             cppOutputFile.append(fileBase + ".cpp");
-            std::string cpp = parseBinAsCharArray((uint8_t *)genBinary, genBinarySize, deviceName, fileTrunk);
+            std::string cpp = parseBinAsCharArray((uint8_t *)genBinary, genBinarySize, fileTrunk);
             writeDataToFile(cppOutputFile.c_str(), cpp.c_str(), cpp.size());
         }
     }

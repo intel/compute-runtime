@@ -64,7 +64,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     {true, 30000, false, 0, false, 0}, // KmdNotifyProperties
     false,                             // ftr64KBpages
     EngineType::ENGINE_RCS,            // defaultEngineType
-    MemoryConstants::pageSize          //requiredPreemptionSurfaceSize
+    MemoryConstants::pageSize,         //requiredPreemptionSurfaceSize
+    false                              // isBigCore
 };
 
 const HardwareInfo GLK_1x3x6::hwInfo = {

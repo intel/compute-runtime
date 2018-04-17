@@ -69,7 +69,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     {false, 0, false, 0, false, 0}, // KmdNotifyProperties
     false,                          // ftr64KBpages
     EngineType::ENGINE_RCS,         // defaultEngineType
-    MemoryConstants::pageSize       //requiredPreemptionSurfaceSize
+    MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
+    false                           // isBigCore
 };
 
 const HardwareInfo BXT_1x2x6::hwInfo = {

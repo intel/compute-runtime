@@ -56,7 +56,7 @@ class OfflineCompiler {
         return quiet;
     }
 
-    std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &deviceName, std::string &fileName);
+    std::string parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName);
     static bool readOptionsFromFile(std::string &optionsOut, const std::string &file);
 
   protected:
@@ -76,6 +76,7 @@ class OfflineCompiler {
     const HardwareInfo *hwInfo = nullptr;
 
     std::string deviceName;
+    std::string familyNameWithType;
     std::string inputFile;
     std::string outputFile;
     std::string outputDirectory;

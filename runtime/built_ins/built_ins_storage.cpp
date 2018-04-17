@@ -200,11 +200,11 @@ std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &b
 BuiltinResourceT BuiltinsLib::getBuiltinResource(EBuiltInOps builtin, BuiltinCode::ECodeType requestedCodeType, Device &device) {
     BuiltinResourceT bc;
     std::string resourceNameGeneric = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType));
-    std::string resourceNameForPlatform = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getProductAbbrev());
-    std::string resourceNameForPlatformAndStepping = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getProductAbbrev(),
-                                                                               device.getHardwareInfo().pPlatform->usRevId);
+    std::string resourceNameForPlatformType = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getFamilyNameWithType());
+    std::string resourceNameForPlatformTypeAndStepping = createBuiltinResourceName(builtin, BuiltinCode::getExtension(requestedCodeType), device.getFamilyNameWithType(),
+                                                                                   device.getHardwareInfo().pPlatform->usRevId);
 
-    for (auto &rn : {resourceNameForPlatformAndStepping, resourceNameForPlatform, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
+    for (auto &rn : {resourceNameForPlatformTypeAndStepping, resourceNameForPlatformType, resourceNameGeneric}) { // first look for dedicated version, only fallback to generic one
         for (auto &s : allStorages) {
             bc = s.get()->load(rn);
             if (bc.size() != 0) {

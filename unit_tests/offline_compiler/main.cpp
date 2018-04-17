@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
     std::string devicePrefix("skl");
+    std::string familyNameWithType("Gen9core");
 
 #if defined(__linux__)
     if (getenv("CLOC_SELFTEST") == nullptr) {
@@ -81,6 +82,9 @@ int main(int argc, char **argv) {
             } else if (strcmp("--device", argv[i]) == 0) {
                 ++i;
                 devicePrefix = argv[i];
+            } else if (strcmp("--family_type", argv[i]) == 0) {
+                ++i;
+                familyNameWithType = argv[i];
             }
         }
     }
@@ -90,21 +94,21 @@ int main(int argc, char **argv) {
     // working directories
     std::string nTestFiles = getRunPath();
     nTestFiles.append("/");
-    nTestFiles.append(devicePrefix);
+    nTestFiles.append(familyNameWithType);
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;
-    binaryNameSuffix.append(devicePrefix);
+    binaryNameSuffix.append(familyNameWithType);
 
 #ifdef WIN32
 #include <direct.h>
-    if (_chdir(devicePrefix.c_str())) {
-        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
+    if (_chdir(familyNameWithType.c_str())) {
+        std::cout << "chdir into " << familyNameWithType << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #elif defined(__linux__)
 #include <unistd.h>
-    if (chdir(devicePrefix.c_str()) != 0) {
-        std::cout << "chdir into " << devicePrefix << " directory failed.\nThis might cause test failures." << std::endl;
+    if (chdir(familyNameWithType.c_str()) != 0) {
+        std::cout << "chdir into " << familyNameWithType << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
 
@@ -118,7 +122,7 @@ int main(int argc, char **argv) {
         listeners.Append(customEventListener);
     }
 
-    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix)));
+    gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, familyNameWithType)));
 
     retVal = RUN_ALL_TESTS();
 

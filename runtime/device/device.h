@@ -97,6 +97,7 @@ class Device : public BaseObject<_cl_device_id> {
     volatile uint32_t *getTagAddress() const;
 
     const char *getProductAbbrev() const;
+    const std::string getFamilyNameWithType() const;
 
     // This helper template is meant to simplify getDeviceInfo
     template <cl_device_info Param>

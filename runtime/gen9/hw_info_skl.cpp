@@ -72,7 +72,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     {false, 0, false, 0, false, 0}, // KmdNotifyProperties
     true,                           // ftr64KBpages
     EngineType::ENGINE_RCS,         // defaultEngineType
-    MemoryConstants::pageSize       //requiredPreemptionSurfaceSize
+    MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
+    true                            // isBigCore
 };
 
 const HardwareInfo SKL_1x2x6::hwInfo = {

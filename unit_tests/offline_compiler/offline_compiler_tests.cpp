@@ -40,7 +40,7 @@ namespace OCLRT {
 std::string getCompilerOutputFileName(const std::string &fileName, const std::string &type) {
     std::string fName(fileName);
     fName.append("_");
-    fName.append(gEnvironment->devicePrefix);
+    fName.append(gEnvironment->familyNameWithType);
     fName.append(".");
     fName.append(type);
     return fName;
@@ -151,30 +151,30 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
         0x34, 0x5, 0x60, 0x78, 0x9, 0x66, 0xff,
     };
 
-    std::string deviceName = gEnvironment->devicePrefix;
+    std::string familyNameWithType = gEnvironment->familyNameWithType;
     std::string fileName = "scheduler";
-    std::string retArray = pOfflineCompiler->parseBinAsCharArray(binary, sizeof(binary), deviceName, fileName);
+    std::string retArray = pOfflineCompiler->parseBinAsCharArray(binary, sizeof(binary), fileName);
     std::string target = "#include <cstddef>\n"
                          "#include <cstdint>\n\n"
                          "size_t SchedulerBinarySize_" +
-                         deviceName + " = 37;\n"
-                                      "uint32_t SchedulerBinary_" +
-                         deviceName + "[10] = {\n"
-                                      "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
-                                      "    0x66097860, 0xff000000};\n\n"
-                                      "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n\n"
-                                      "namespace OCLRT {\n"
-                                      "static RegisterEmbeddedResource registerSchedulerBin(\n"
-                                      "    createBuiltinResourceName(\n"
-                                      "        EBuiltInOps::Scheduler,\n"
-                                      "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" +
-                         deviceName + "\", 0)\n"
-                                      "        .c_str(),\n"
-                                      "    (const char *)SchedulerBinary_" +
-                         deviceName + ",\n"
-                                      "    SchedulerBinarySize_" +
-                         deviceName + ");\n"
-                                      "}\n";
+                         familyNameWithType + " = 37;\n"
+                                              "uint32_t SchedulerBinary_" +
+                         familyNameWithType + "[10] = {\n"
+                                              "    0x40032302, 0x90800756, 0x05340301, 0x66097860, 0x101010ff, 0x40032302, 0x90800756, 0x05340301, \n"
+                                              "    0x66097860, 0xff000000};\n\n"
+                                              "#include \"runtime/built_ins/registry/built_ins_registry.h\"\n\n"
+                                              "namespace OCLRT {\n"
+                                              "static RegisterEmbeddedResource registerSchedulerBin(\n"
+                                              "    createBuiltinResourceName(\n"
+                                              "        EBuiltInOps::Scheduler,\n"
+                                              "        BuiltinCode::getExtension(BuiltinCode::ECodeType::Binary), \"" +
+                         familyNameWithType + "\", 0)\n"
+                                              "        .c_str(),\n"
+                                              "    (const char *)SchedulerBinary_" +
+                         familyNameWithType + ",\n"
+                                              "    SchedulerBinarySize_" +
+                         familyNameWithType + ");\n"
+                                              "}\n";
     EXPECT_EQ(retArray, target);
 
     delete pOfflineCompiler;

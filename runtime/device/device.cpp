@@ -213,6 +213,12 @@ const char *Device::getProductAbbrev() const {
     return hardwarePrefix[hwInfo.pPlatform->eProductFamily];
 }
 
+const std::string Device::getFamilyNameWithType() const {
+    std::string platformName = familyName[hwInfo.pPlatform->eRenderCoreFamily];
+    platformName.append(getPlatformType(hwInfo));
+    return platformName;
+}
+
 double Device::getProfilingTimerResolution() {
     return osTime->getDynamicDeviceTimerResolution(hwInfo);
 }

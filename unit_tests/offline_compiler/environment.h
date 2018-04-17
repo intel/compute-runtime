@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "offline_compiler/offline_compiler.h"
 #include "runtime/os_interface/os_inc_base.h"
 #include "gtest/gtest.h"
 #include "unit_tests/mocks/mock_compilers.h"
@@ -29,8 +30,8 @@
 
 class Environment : public ::testing::Environment {
   public:
-    Environment(const std::string &devicePrefix)
-        : libraryFrontEnd(nullptr), libraryIGC(nullptr), devicePrefix(devicePrefix) {
+    Environment(const std::string &devicePrefix, const std::string &familyNameWithType)
+        : libraryFrontEnd(nullptr), libraryIGC(nullptr), devicePrefix(devicePrefix), familyNameWithType(familyNameWithType) {
     }
 
     void SetInputFileName(
@@ -66,4 +67,5 @@ class Environment : public ::testing::Environment {
     OCLRT::MockCompilerEnableGuard mockCompilerGuard;
 
     const std::string devicePrefix;
+    const std::string familyNameWithType;
 };

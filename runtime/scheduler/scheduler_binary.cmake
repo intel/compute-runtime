@@ -19,63 +19,61 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 add_custom_target(scheduler)
-set (SCHEDULER_OUTDIR_WITH_ARCH "${TargetDir}/scheduler/${NEO_ARCH}")
+set(SCHEDULER_OUTDIR_WITH_ARCH "${TargetDir}/scheduler/${NEO_ARCH}")
 set_target_properties(scheduler PROPERTIES FOLDER "scheduler")
 
 set (SCHEDULER_KERNEL scheduler.cl)
 set (SCHEDULER_INCLUDE_OPTIONS "-I$<JOIN:${IGDRCL__IGC_INCLUDE_DIR}, -I>")
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-    set(SCHEDULER_DEBUG_OPTION "-D DEBUG")
+  set(SCHEDULER_DEBUG_OPTION "-D DEBUG")
 else()
-    set(SCHEDULER_DEBUG_OPTION "")
+  set(SCHEDULER_DEBUG_OPTION "")
 endif()
 
 set(SCHEDULER_INCLUDE_DIR ${TargetDir})
 
-function(compile_kernel target gen_name gen_type kernel)
-  set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_name}")
-  set(SCHEDULER_INCLUDE_OPTIONS "${SCHEDULER_INCLUDE_OPTIONS} -I ../${gen_type}")
+function(compile_kernel target gen_type platform_type kernel)
+  get_family_name_with_type(${gen_type} ${platform_type})
+  string(TOLOWER ${gen_type} gen_type_lower)
+  # get filename
+  set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_type_lower}")
+  set(SCHEDULER_INCLUDE_OPTIONS "${SCHEDULER_INCLUDE_OPTIONS} -I ../${gen_type_lower}")
 
   get_filename_component(BASENAME ${kernel} NAME_WE)
 
-  set(OUTPUTPATH "${OUTPUTDIR}/${BASENAME}_${gen_name}.bin")
+  set(OUTPUTPATH "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}.bin")
 
-  set(SCHEDULER_CPP "${OUTPUTDIR}/${BASENAME}_${gen_name}.cpp")
-
-  if(MSVC)
-    add_custom_command(
-      OUTPUT ${OUTPUTPATH}
-      COMMAND cloc -q -file ${kernel} -device ${gen_name} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${kernel} cloc copy_compiler_files
-    )
+  set(SCHEDULER_CPP "${OUTPUTDIR}/${BASENAME}_${family_name_with_type}.cpp")
+  if(WIN32)
+    set(cloc_cmd_prefix cloc)
   else()
-    add_custom_command(
-      OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
-      COMMAND LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc> -q -file ${kernel} -device ${gen_name} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
-      WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
-      DEPENDS ${kernel} cloc copy_compiler_files
-    )
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
   endif()
+  add_custom_command(
+    OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
+    COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
+    WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
+    DEPENDS ${kernel} cloc copy_compiler_files
+  )
   set(SCHEDULER_CPP ${SCHEDULER_CPP} PARENT_SCOPE)
 
   add_custom_target(${target} DEPENDS ${OUTPUTPATH})
-  set_target_properties(${target} PROPERTIES FOLDER "scheduler/${gen_name}")
+  set_target_properties(${target} PROPERTIES FOLDER "scheduler/${gen_type_lower}")
 endfunction()
 
-macro(macro_for_each_platform)
-  PLATFORM_HAS_2_0(${GEN_TYPE} ${PLATFORM_IT} PLATFORM_SUPPORTS_2_0)
-  if(COMPILE_BUILT_INS AND ${PLATFORM_SUPPORTS_2_0})
-    string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-    compile_kernel(scheduler_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${GEN_TYPE_LOWER} ${SCHEDULER_KERNEL})
-    add_dependencies(scheduler scheduler_${PLATFORM_IT_LOWER})
-    list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
-  endif()
-endmacro()
-
 macro(macro_for_each_gen)
-  apply_macro_for_each_platform()
+  foreach(PLATFORM_TYPE "CORE" "LP")
+    if(${GEN_TYPE}_HAS_${PLATFORM_TYPE})
+      get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+      set(PLATFORM_2_0_LOWER ${DEFAULT_SUPPORTED_2_0_${GEN_TYPE}_${PLATFORM_TYPE}_PLATFORM})
+      if(COMPILE_BUILT_INS AND PLATFORM_2_0_LOWER)
+        compile_kernel(scheduler_${family_name_with_type} ${GEN_TYPE} ${PLATFORM_TYPE} ${SCHEDULER_KERNEL})
+        add_dependencies(scheduler scheduler_${family_name_with_type})
+        list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
+      endif()
+    endif()
+  endforeach()
   source_group("generated files\\${GEN_TYPE_LOWER}" FILES ${GENERATED_SCHEDULER_CPPS})
 endmacro()
 

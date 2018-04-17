@@ -305,7 +305,8 @@ int main(int argc, char **argv) {
     device.pSysInfo = &gtSystemInfo;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
-    binaryNameSuffix.append(hardwarePrefix[productFamily]);
+    binaryNameSuffix.append(familyName[device.pPlatform->eRenderCoreFamily]);
+    binaryNameSuffix.append(getPlatformType(device));
 
     std::string nBinaryKernelFiles = getRunPath(argv[0]);
     nBinaryKernelFiles.append("/");

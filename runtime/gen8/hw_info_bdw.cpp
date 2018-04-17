@@ -73,7 +73,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     {true, 50000, true, 5000, true, 200000}, // KmdNotifyProperties
     false,                                   // ftr64KBpages
     EngineType::ENGINE_RCS,                  // defaultEngineType
-    MemoryConstants::pageSize                //requiredPreemptionSurfaceSize
+    MemoryConstants::pageSize,               //requiredPreemptionSurfaceSize
+    true                                     // isBigCore
 };
 
 const HardwareInfo BDW_1x2x6::hwInfo = {

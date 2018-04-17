@@ -72,6 +72,7 @@ struct RuntimeCapabilityTable {
     EngineType defaultEngineType;
 
     size_t requiredPreemptionSurfaceSize;
+    bool isBigCore;
 };
 
 struct HardwareCapabilities {
@@ -112,5 +113,7 @@ struct EnableGfxFamilyHw {
         familyName[gfxFamily] = GfxFamilyMapper<gfxFamily>::name;
     }
 };
+
+const char *getPlatformType(const HardwareInfo &hwInfo);
 
 } // namespace OCLRT

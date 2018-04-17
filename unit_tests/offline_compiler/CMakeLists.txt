@@ -70,9 +70,25 @@ string(TOLOWER ${DEFAULT_TESTED_PLATFORM} CLOC_DEFAULT_DEVICE)
 
 add_custom_target(run_cloc_tests ALL
   DEPENDS cloc_tests
-  DEPENDS copy_test_files_${CLOC_DEFAULT_DEVICE}
-  DEPENDS test_kernels_${CLOC_DEFAULT_DEVICE}
 )
+macro(macro_for_each_platform)
+  if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_DEFAULT_DEVICE}")
+    foreach(PLATFORM_TYPE "CORE" "LP")
+      if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
+        get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
+        add_dependencies(run_cloc_tests test_kernels_${family_name_with_type})
+        neo_copy_test_files(copy_test_files_${family_name_with_type} ${family_name_with_type})
+        add_dependencies(run_cloc_tests copy_test_files_${family_name_with_type})
+        set(run_tests_cmd cloc_tests --device ${CLOC_DEFAULT_DEVICE} --family_type ${family_name_with_type})
+      endif()
+    endforeach()
+  endif()
+endmacro()
+macro(macro_for_each_gen)
+  apply_macro_for_each_platform()
+endmacro()
+
+apply_macro_for_each_gen("TESTED")
 
 set_property(TARGET run_cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
 
@@ -85,7 +101,7 @@ if(WIN32)
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.gen
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/copybuffer_${CLOC_DEFAULT_DEVICE}.bin
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${CLOC_DEFAULT_DEVICE}/offline_compiler_test
-    COMMAND cloc_tests --device ${CLOC_DEFAULT_DEVICE}
+    COMMAND ${run_tests_cmd}
     WORKING_DIRECTORY ${TargetDir}
   )
 else()
@@ -98,7 +114,7 @@ else()
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/*.ll
     COMMAND ${CMAKE_COMMAND} -E remove ${TargetDir}/${CLOC_DEFAULT_DEVICE}/*.bin
     COMMAND ${CMAKE_COMMAND} -E remove_directory "${TargetDir}/offline_compiler_test"
-    COMMAND cloc_tests --device ${CLOC_DEFAULT_DEVICE}
+    COMMAND ${run_tests_cmd}
     WORKING_DIRECTORY ${TargetDir}
   )
 endif()
