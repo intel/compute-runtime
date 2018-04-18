@@ -108,6 +108,11 @@ class MockProgram : public Program {
         allowNonUniform = allow;
     }
 
+    char *getDebugDataBinary(size_t &debugDataBinarySize) const {
+        debugDataBinarySize = this->debugDataSize;
+        return this->debugData;
+    }
+
     Device *getDevicePtr() { return this->pDevice; }
 
     bool contextSet = false;

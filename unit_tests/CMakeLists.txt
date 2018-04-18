@@ -223,7 +223,11 @@ function(neo_gen_kernel_with_options target product filepath)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
 
-function(neo_gen_kernel_with_internal_options target product filepath)
+set(TEST_KERNEL_kernel_debug_enable
+  "-cl-kernel-debug-enable"
+)
+
+function(neo_gen_kernel_with_kernel_debug_options target product filepath)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
 
@@ -231,25 +235,24 @@ function(neo_gen_kernel_with_internal_options target product filepath)
   set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
   set(results)
-  foreach(arg ${ARGN})
-    string(REPLACE " " "_" argwospaces ${arg})
+  string(REPLACE " " "_" argwospaces ${TEST_KERNEL_kernel_debug_enable})
 
-    set(outputpath_base "${outputdir}/${argwospaces}_${product}")
-    set(output_files
-      ${outputpath_base}.bc
-      ${outputpath_base}.bin
-      ${outputpath_base}.gen
-    )
+  set(outputpath_base "${outputdir}/${argwospaces}_${product}")
+  set(output_files
+    ${outputpath_base}.bc
+    ${outputpath_base}.bin
+    ${outputpath_base}.gen
+    ${outputpath_base}.dbg
+  )
 
-    add_custom_command(
-      OUTPUT ${output_files}
-      COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${product} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${arg} -options_name
-      WORKING_DIRECTORY ${workdir}
-      DEPENDS ${filepath} cloc
-    )
+  add_custom_command(
+    OUTPUT ${output_files}
+    COMMAND ${cloc_cmd_prefix} -q -file ${filename} -device ${product} -${NEO_BITS} -out_dir ${outputdir} -output ${argwospaces} -internal_options ${TEST_KERNEL_kernel_debug_enable} -options "-g"
+    WORKING_DIRECTORY ${workdir}
+    DEPENDS ${filepath} cloc
+  )
 
-    list(APPEND results ${output_files})
-  endforeach()
+  list(APPEND results ${output_files})
   add_custom_target(${target} DEPENDS ${results} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "kernels/${product}")
 endfunction()
@@ -289,10 +292,6 @@ set(TEST_KERNEL_options
   "-cl-finite-math-only"
   "-cl-kernel-arg-info"
   "-x spir -spir-std=1.2"
-)
-
-set(TEST_KERNEL_internal_options
-  "-cl-kernel-debug-enable"
 )
 
 set(TEST_KERNEL_2_0_options
@@ -379,7 +378,7 @@ macro(macro_for_each_platform)
 
     # Temporarily disabled debug kernel generation on gen8
     if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-      neo_gen_kernel_with_internal_options(test_kernel_internal_options_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL} ${TEST_KERNEL_internal_options})
+      neo_gen_kernel_with_kernel_debug_options(test_kernel_debug_enable_${PLATFORM_IT_LOWER} ${PLATFORM_IT_LOWER} ${TEST_KERNEL})
     endif()
 
     add_dependencies(unit_tests test_kernels_${PLATFORM_IT_LOWER})
@@ -387,7 +386,7 @@ macro(macro_for_each_platform)
 
     # Temporarily disabled debug kernel generation on gen8
     if(NOT ("${GEN_TYPE_LOWER}" STREQUAL "gen8"))
-      add_dependencies(unit_tests test_kernel_internal_options_${PLATFORM_IT_LOWER})
+      add_dependencies(unit_tests test_kernel_debug_enable_${PLATFORM_IT_LOWER})
     endif()
 
     set(sip_kernel_file_name)

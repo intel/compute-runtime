@@ -191,6 +191,10 @@ int OfflineCompiler::buildSourceCode() {
         UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
         storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
         updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+
+        if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
+            storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
+        }
         retVal = igcOutput->Successful() ? CL_SUCCESS : CL_BUILD_PROGRAM_FAILURE;
     } while (0);
 
@@ -805,6 +809,22 @@ void OfflineCompiler::writeOutAllFiles() {
             elfOutputFile.c_str(),
             elfBinary,
             elfBinarySize);
+    }
+
+    if (debugDataBinary) {
+        std::string debugOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
+        debugOutputFile.append(fileBase + ".dbg");
+
+        if (useOptionsSuffix) {
+            std::string opts(options.c_str());
+            std::replace(opts.begin(), opts.end(), ' ', '_');
+            debugOutputFile.append(opts);
+        }
+
+        writeDataToFile(
+            debugOutputFile.c_str(),
+            debugDataBinary,
+            debugDataBinarySize);
     }
 }
 

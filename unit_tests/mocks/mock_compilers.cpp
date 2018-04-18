@@ -357,10 +357,6 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
     if ((debugVars.forceBuildFailure == false) &&
         (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
-        if (debugVars.debugDataToReturn != nullptr) {
-            out->setDebugData(debugVars.debugDataToReturn, debugVars.debugDataToReturnSize);
-        }
-
         if (debugVars.internalOptionsExpected) {
             if (internalOptions->GetSizeRaw() < 1 || internalOptions->GetMemoryRaw() == nullptr) {
                 if (out) {
@@ -371,6 +367,12 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
 
         std::string inputFile = "";
         inputFile.append(debugVars.fileName);
+
+        std::string debugFile;
+        auto pos = inputFile.rfind(".");
+        debugFile = inputFile.substr(0, pos);
+        debugFile.append(".dbg");
+
         if (debugVars.appendOptionsToFileName &&
             options->GetSizeRaw()) {
             std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
@@ -381,6 +383,10 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             }
             std::replace(opts.begin(), opts.end(), ' ', '_');
             inputFile.append(opts);
+
+            if (debugVars.debugDataToReturn == nullptr) {
+                debugFile.append(opts);
+            }
         }
 
         size_t fileSize = 0;
@@ -389,6 +395,14 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         out->setOutput(fileData.get(), fileSize);
         if (fileSize == 0) {
             out->setError("error: Mock compiler could not find cached input file: " + inputFile);
+        }
+
+        if (debugVars.debugDataToReturn != nullptr) {
+            out->setDebugData(debugVars.debugDataToReturn, debugVars.debugDataToReturnSize);
+        } else {
+            size_t fileSize = 0;
+            auto fileData = loadBinaryFile(debugFile, fileSize);
+            out->setDebugData(fileData.get(), fileSize);
         }
     } else {
         out->setError();

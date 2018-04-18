@@ -92,11 +92,13 @@ cl_int Program::build(
                 break;
             }
 
+            internalOptions.append(platform()->peekCompilerExtensions());
+
             if (isKernelDebugEnabled()) {
                 internalOptions.append(CompilerOptions::debugKernelEnable);
+                options.append(" -g ");
             }
 
-            internalOptions.append(platform()->peekCompilerExtensions());
             inputArgs.pInput = (char *)(sourceCode.c_str());
             inputArgs.InputSize = (uint32_t)sourceCode.size();
             inputArgs.pOptions = options.c_str();

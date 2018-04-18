@@ -59,10 +59,11 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
 
         kbHelper = new KernelBinaryHelper(filename, false);
-        CreateProgramWithSource(
+        CreateProgramWithSource<MockProgram>(
             pContext,
             &device,
             "copybuffer.cl");
+        mockProgram = reinterpret_cast<MockProgram *>(pProgram);
         pProgram->enableKernelDebug();
     }
 
@@ -72,6 +73,7 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
     }
     cl_device_id device;
     KernelBinaryHelper *kbHelper = nullptr;
+    MockProgram *mockProgram = nullptr;
 };
 
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
@@ -93,6 +95,18 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     }
 }
 
+TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDashGFlag) {
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        cl_int retVal = pProgram->compile(1, &device, nullptr,
+                                          0, nullptr, nullptr,
+                                          nullptr,
+                                          nullptr);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-g"));
+    }
+}
+
 TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
         std::string receivedInternalOptions;
@@ -109,6 +123,14 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     }
 }
 
+TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag) {
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_THAT(pProgram->getOptions(), ::testing::HasSubstr("-g"));
+    }
+}
+
 TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBuiltThenPatchTokenAllocateSipSurfaceHasSizeGreaterThanZero) {
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
         retVal = pProgram->build(1, &device, CompilerOptions::debugKernelEnable, nullptr, nullptr, false);
@@ -116,5 +138,16 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenBui
 
         auto kernelInfo = pProgram->getKernelInfo("CopyBuffer");
         EXPECT_NE(0u, kernelInfo->patchInfo.pAllocateSystemThreadSurface->PerThreadSystemThreadSurfaceSize);
+    }
+}
+
+TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored) {
+    if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
+        retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
+
+        size_t debugDataSize = 0;
+        auto debugData = mockProgram->getDebugDataBinary(debugDataSize);
+        EXPECT_NE(nullptr, debugData);
+        EXPECT_NE(0u, debugDataSize);
     }
 }

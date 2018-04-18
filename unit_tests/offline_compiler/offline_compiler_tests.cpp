@@ -633,6 +633,50 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     compilerOutputRemove("myOutputFileName", "gen");
 }
 
+TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataFileIsCreated) {
+    const char *argv[] = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-output",
+        "myOutputFileName",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    char debugData[10];
+    MockCompilerDebugVars igcDebugVars(gEnvironment->igcDebugVars);
+    igcDebugVars.debugDataToReturn = debugData;
+    igcDebugVars.debugDataToReturnSize = sizeof(debugData);
+
+    OCLRT::setIgcDebugVars(igcDebugVars);
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "dbg"));
+
+    retVal = mockOfflineCompiler->build();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "dbg"));
+
+    compilerOutputRemove("myOutputFileName", "bc");
+    compilerOutputRemove("myOutputFileName", "bin");
+    compilerOutputRemove("myOutputFileName", "gen");
+    compilerOutputRemove("myOutputFileName", "dbg");
+
+    OCLRT::setIgcDebugVars(gEnvironment->igcDebugVars);
+}
+
 TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreAppendedToInternalOptionsString) {
     const char *argv[] = {
         "cloc",

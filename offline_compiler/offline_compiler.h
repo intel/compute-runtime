@@ -96,6 +96,8 @@ class OfflineCompiler {
     size_t genBinarySize = 0;
     char *llvmBinary = nullptr;
     size_t llvmBinarySize = 0;
+    char *debugDataBinary = nullptr;
+    size_t debugDataBinarySize = 0;
 
     std::unique_ptr<OsLibrary> igcLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> igcMain = nullptr;
