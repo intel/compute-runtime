@@ -2,17 +2,18 @@
 
 ## Building
 
-*Instructions assume clean Ubuntu* 16.04.3 LTS installation.*
+*Instructions assume clean Centos 7.4.1708 installation.**
 
 1. Download & install required dependencies
 
 Example:
 
 ```shell
-sudo apt-get install ccache flex bison clang-4.0 cmake g++ git patch zlib1g-dev 
+sudo yum groups install  "Development Tools"
+sudo yum install centos-release-scl epel-release
+sudo yum install devtoolset-4-gcc-c++ llvm-toolset-7-clang cmake3 ninja-build p7zip rpm-build dpkg xorg-x11-util-macros libpciaccess-devel which zlib-devel
+sudo /usr/sbin/alternatives --install /usr/bin/cmake cmake /usr/bin/cmake3 50
 ```
-
-See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md) for other requirements and dependencies, when building and installing NEO.
 
 2. Create workspace folder and download sources:
 ```
@@ -26,7 +27,6 @@ See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/docume
 	  |- gtest              https://github.com/google/googletest
 	  |- igc                https://github.com/intel/intel-graphics-compiler
 	  |- khronos            https://github.com/KhronosGroup/OpenCL-Headers
-	  |- libdrm             https://anongit.freedesktop.org/git/mesa/drm.git
 	  |- neo                https://github.com/intel/compute-runtime
 ```
 
@@ -42,7 +42,6 @@ git clone -b release-1.7.0 https://github.com/google/googlemock gmock
 git clone -b release-1.7.0 https://github.com/google/googletest gtest
 git clone https://github.com/intel/intel-graphics-compiler igc
 git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
-git clone https://anongit.freedesktop.org/git/mesa/drm.git libdrm
 git clone https://github.com/intel/compute-runtime neo
 ```
 
@@ -56,22 +55,26 @@ Example:
 mkdir build
 ```
 
-4. Build complete driver:
+4. Enabling additional extension
+
+* [cl_intel_va_api_media_sharing](https://github.com/intel/compute-runtime/blob/master/documentation/cl_intel_va_api_media_sharing.md)
+
+5. Build complete driver:
 
 ```shell
 cd build
-cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
-make -j`nproc` package
+scl enable devtoolset-4 llvm-toolset-7 "cmake -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo"
+scl enable devtoolset-4 llvm-toolset-7 "make -j `nproc` package"
 ```
 
-## Install
+## Installing
 
-To install OpenCL driver please use deb package generated during build
+To install OpenCL driver please use rpm package generated during build
 
 Example:
 
 ```shell
-sudo dpkg -i intel-opencl-1.0-0.x86_64-igdrcl.deb
+sudo rpm -i intel-opencl-1.0-0.x86_64-igdrcl.rpm
 ```
 
 ___(*) Other names and brands my be claimed as property of others.___

@@ -13,23 +13,28 @@ motivation and intentions wrt OpenCL support in the open source.
 
 The Intel(R) Graphics Compute Runtime for OpenCL(TM) is distributed under the MIT License.
 
-You may obtain a copy of the License at:
-
-https://opensource.org/licenses/MIT
+You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Dependencies
 
-GmmLib - https://github.com/intel/gmmlib  
-Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler  
-Google Test v1.7.0 - https://github.com/google/googletest  
-Google Mock v1.7.0 - https://github.com/google/googlemock  
-Khronos OpenCL Headers - https://github.com/KhronosGroup/OpenCL-Headers  
+* GmmLib - https://github.com/intel/gmmlib  
+* Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler  
+* Google Test v1.7.0 - https://github.com/google/googletest  
+* Google Mock v1.7.0 - https://github.com/google/googlemock  
+* Khronos OpenCL Headers - https://github.com/KhronosGroup/OpenCL-Headers  
+
+## Optional dependencies
+
+Below packages are needed to enable [cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt) extension
+
+* libdrm - https://anongit.freedesktop.org/git/mesa/drm.git  
+* libva - https://github.com/intel/libva.git  
 
 ## Supported Platforms
 
-Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1  
-Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
-Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
+* Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1  
+* Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
+* Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
 
 ## Linking applications
 
@@ -46,7 +51,9 @@ Create a pull request on github.com with your patch. Make sure your change is cl
 A maintainer will contact you if there are questions or concerns.
 
 ## See also
-* Building and installation: [BUILD.md](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD.md)
+* Building and installation:
+  * [Ubuntu 16.04](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
+  * [Centos 7](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
 * Contribution guidelines: [CONTRIB.md](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIB.md)
 * Known issues and limitations: [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md)
 * Frequently asked questions: [FAQ.md](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md)
