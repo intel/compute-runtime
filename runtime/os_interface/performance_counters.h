@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,11 +21,13 @@
 */
 
 #pragma once
-#include <memory>
-#include <mutex>
+#include "config.h"
 #include "CL/cl.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hw_info.h"
+
+#include <memory>
+#include <mutex>
 
 namespace OCLRT {
 struct HardwareInfo;

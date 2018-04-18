@@ -21,10 +21,11 @@
  */
 
 #pragma once
-#include "runtime/device/device_info.h"
+#include "config.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 #include "CL/cl_ext_intel.h"
+#include "runtime/device/device_info.h"
 #include "public/cl_ext_private.h"
 
 namespace DeviceInfoTable {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/context/context.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/program/program.h"
 

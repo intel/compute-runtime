@@ -24,6 +24,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/sip.h"
+#include "runtime/program/program.h"
 
 #include <memory>
 

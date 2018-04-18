@@ -22,6 +22,7 @@
 
 #include "unit_tests/command_queue/buffer_operations_fixture.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/gen_common/reg_configs.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"

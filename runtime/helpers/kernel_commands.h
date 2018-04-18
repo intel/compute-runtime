@@ -27,9 +27,10 @@
 #include "runtime/helpers/per_thread_data.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/scheduler/scheduler_kernel.h"
+#include <algorithm>
 #include <cstdint>
 #include <cstddef>
-#include <algorithm>
 
 namespace OCLRT {
 

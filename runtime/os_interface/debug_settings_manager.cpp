@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "config.h"
 #include "debug_settings_manager.h"
 #include "runtime/event/event.h"
 #include "runtime/kernel/kernel.h"

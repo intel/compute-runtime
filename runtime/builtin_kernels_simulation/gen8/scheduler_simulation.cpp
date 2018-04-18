@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,14 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "config.h"
 #include "CL/cl.h"
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.inl"
-#include "runtime/memory_manager/graphics_allocation.h"
-#include "runtime/gen8/hw_cmds.h"
 #include "runtime/execution_model/device_enqueue.h"
+#include "runtime/gen8/hw_cmds.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 using namespace OCLRT;
 using namespace BuiltinKernelsSimulation;

@@ -21,6 +21,7 @@
  */
 
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/gen_common/reg_configs.h"
 #include "runtime/helpers/preamble.h"

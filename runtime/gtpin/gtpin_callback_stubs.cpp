@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "config.h"
 #include "CL/cl.h"
 #include <cstdint>
 

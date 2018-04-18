@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/enqueue_fill_buffer.h"
 #include "runtime/command_queue/enqueue_kernel.h"

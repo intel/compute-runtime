@@ -20,20 +20,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "config.h"
+#include "hw_cmds.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "hw_cmds.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/device/device_vector.h"
+#include "runtime/device/driver_info.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_time.h"
-#include "runtime/device/driver_info.h"
 #include <cstring>
 #include <map>
 

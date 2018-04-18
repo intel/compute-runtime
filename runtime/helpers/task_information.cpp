@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_queue/command_queue.h"
@@ -27,12 +28,12 @@
 #include "runtime/device/device.h"
 #include "runtime/device_queue/device_queue.h"
 #include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/mem_obj/mem_obj.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/surface.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/mem_obj/mem_obj.h"
+#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/surface.h"
 
 namespace OCLRT {
 KernelOperation::~KernelOperation() {

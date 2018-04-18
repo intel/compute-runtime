@@ -21,6 +21,7 @@
  */
 
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "hw_cmds.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/helpers/basic_math.h"

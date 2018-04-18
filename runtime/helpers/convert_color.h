@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,9 +21,10 @@
  */
 
 #pragma once
-#include <utility>
+#include "config.h"
 #include "runtime/helpers/basic_math.h"
 #include "CL/cl.h"
+#include <utility>
 
 namespace OCLRT {
 
