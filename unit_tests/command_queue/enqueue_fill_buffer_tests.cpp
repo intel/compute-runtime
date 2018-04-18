@@ -334,7 +334,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, argumentZeroShouldMatchDestAddress) {
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
     EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
 
@@ -369,7 +369,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_argumentOneShouldMatchOffset) {
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (uint32_t *)getStatelessArgumentPointer<FamilyType>(*kernel, 1);
+    auto pArgument = (uint32_t *)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
     ASSERT_NE(nullptr, pArgument);
     EXPECT_EQ(0u, *pArgument);
 
@@ -401,7 +401,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 2);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 2u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
     EXPECT_NE(nullptr, *pArgument);
 
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);

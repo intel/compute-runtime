@@ -419,6 +419,18 @@ TEST_P(CommandQueueIndirectHeapTest, IndirectHeapIsProvidedByDevice) {
     EXPECT_NE(nullptr, &indirectHeap);
 }
 
+TEST_P(CommandQueueIndirectHeapTest, givenIndirectObjectHeapWhenItIsQueriedForInternalAllocationThenTrueIsReturned) {
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
+    CommandQueue cmdQ(context.get(), pDevice, props);
+
+    auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 8192);
+    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
+        EXPECT_TRUE(indirectHeap.getGraphicsAllocation()->is32BitAllocation);
+    } else {
+        EXPECT_FALSE(indirectHeap.getGraphicsAllocation()->is32BitAllocation);
+    }
+}
+
 TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue cmdQ(context.get(), pDevice, props);
@@ -482,7 +494,14 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     auto memoryManager = pDevice->getMemoryManager();
     auto allocationSize = defaultHeapSize * 2;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(allocationSize);
+    GraphicsAllocation *allocation = nullptr;
+
+    if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
+        allocation = memoryManager->createInternalGraphicsAllocation(nullptr, allocationSize);
+    } else {
+        allocation = memoryManager->allocateGraphicsMemory(allocationSize);
+    }
+
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());

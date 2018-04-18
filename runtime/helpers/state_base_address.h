@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,15 +25,16 @@
 
 namespace OCLRT {
 
+class IndirectHeap;
 class LinearStream;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelper {
     static void programStateBaseAddress(
         LinearStream &commandStream,
-        const LinearStream &dsh,
-        const LinearStream &ioh,
-        const LinearStream &ssh,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
         uint64_t generalStateBase,
         uint32_t statelessMocsIndex,
         uint64_t internalHeapBase);

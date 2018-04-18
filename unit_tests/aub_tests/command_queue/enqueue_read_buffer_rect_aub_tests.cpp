@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -49,7 +49,7 @@ typedef ReadBufferRectHw AUBReadBufferRect;
 static const size_t width = 10;
 
 HWTEST_P(AUBReadBufferRect, simple3D) {
-    MockContext context;
+    MockContext context(this->pDevice);
     size_t rowPitch = width;
     size_t slicePitch = rowPitch * rowPitch;
 

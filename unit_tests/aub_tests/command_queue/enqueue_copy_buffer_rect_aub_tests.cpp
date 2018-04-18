@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,7 +60,7 @@ HWTEST_P(AUBCopyBufferRect, simple) {
     static const size_t rowPitch = 20;
     static const size_t slicePitch = rowPitch * rowPitch;
     static const size_t elementCount = slicePitch * rowPitch;
-    MockContext context;
+    MockContext context(this->pDevice);
 
     cl_uchar *srcMemory = new uint8_t[elementCount + 8];
     cl_uchar *dstMemory = new uint8_t[elementCount + 8];

@@ -48,7 +48,7 @@ struct ReadBufferHw
 typedef ReadBufferHw AUBReadBuffer;
 
 HWTEST_P(AUBReadBuffer, simple) {
-    MockContext context;
+    MockContext context(this->pDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -118,7 +118,7 @@ HWTEST_F(AUBReadBuffer, reserveCanonicalGpuAddress) {
         return;
     }
 
-    MockContext context;
+    MockContext context(this->pDevice);
 
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float dstMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};

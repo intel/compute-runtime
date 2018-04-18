@@ -205,14 +205,15 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
 }
 
 HWTEST_F(KernelCommandsTest, givenIndirectHeapNotAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenOffsetZeroIsReturned) {
-    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
-    auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto nonInternalAllocation = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
+    IndirectHeap indirectHeap(nonInternalAllocation, false);
 
     MockKernelWithInternals mockKernelWithInternal(*pDevice);
     auto offset = KernelCommandsHelper<FamilyType>::sendCrossThreadData(
         indirectHeap,
         *mockKernelWithInternal.mockKernel);
     EXPECT_EQ(0u, offset);
+    pDevice->getMemoryManager()->freeGraphicsMemory(nonInternalAllocation);
 }
 
 HWTEST_F(KernelCommandsTest, givenIndirectHeapAllocatedFromInternalPoolWhenSendCrossThreadDataIsCalledThenHeapBaseOffsetIsReturned) {

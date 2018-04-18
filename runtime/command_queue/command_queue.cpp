@@ -635,15 +635,24 @@ void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType,
     auto memoryManager = device->getMemoryManager();
     size_t reservedSize = 0;
     auto finalHeapSize = defaultHeapSize;
+    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType ? true : false;
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        requireInternalHeap = false;
+    }
 
     minRequiredSize += reservedSize;
 
     finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
 
-    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, false).release();
+    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
 
     if (!heapMemory) {
-        heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
+        if (requireInternalHeap) {
+            heapMemory = memoryManager->createInternalGraphicsAllocation(nullptr, finalHeapSize);
+        } else {
+            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
+        }
     } else {
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }
@@ -659,7 +668,7 @@ void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType,
         indirectHeap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
         indirectHeap->replaceGraphicsAllocation(heapMemory);
     } else {
-        indirectHeap = new IndirectHeap(heapMemory);
+        indirectHeap = new IndirectHeap(heapMemory, requireInternalHeap);
         indirectHeap->overrideMaxSize(finalHeapSize);
     }
 }

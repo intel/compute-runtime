@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/command_stream/linear_stream.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_constants.h"
@@ -30,9 +30,9 @@ namespace OCLRT {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     LinearStream &commandStream,
-    const LinearStream &dsh,
-    const LinearStream &ioh,
-    const LinearStream &ssh,
+    const IndirectHeap &dsh,
+    const IndirectHeap &ioh,
+    const IndirectHeap &ssh,
     uint64_t generalStateBase,
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase) {
@@ -51,7 +51,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     // GSH must be set to 0 for stateless
     pCmd->setGeneralStateBaseAddress(generalStateBase);
     pCmd->setSurfaceStateBaseAddress(reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
-    pCmd->setIndirectObjectBaseAddress(reinterpret_cast<uintptr_t>(ioh.getCpuBase()));
     pCmd->setInstructionBaseAddress(internalHeapBase);
 
     pCmd->setDynamicStateBufferSizeModifyEnable(true);
@@ -61,7 +60,9 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     pCmd->setDynamicStateBufferSize(static_cast<uint32_t>((dsh.getMaxAvailableSpace() + MemoryConstants::pageMask) / MemoryConstants::pageSize));
     pCmd->setGeneralStateBufferSize(static_cast<uint32_t>(-1));
-    pCmd->setIndirectObjectBufferSize(static_cast<uint32_t>((ioh.getMaxAvailableSpace() + MemoryConstants::pageMask) / MemoryConstants::pageSize));
+
+    pCmd->setIndirectObjectBaseAddress(ioh.getHeapGpuBase());
+    pCmd->setIndirectObjectBufferSize(ioh.getHeapSizeInPages());
 
     pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 

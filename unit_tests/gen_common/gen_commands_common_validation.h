@@ -56,7 +56,7 @@ void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
     // Stateless accesses require GSH.base to be 0.
     EXPECT_EQ(expectedGeneralStateHeapBaseAddress, cmd->getGeneralStateBaseAddress());
     EXPECT_EQ(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pSSH->getCpuBase())), cmd->getSurfaceStateBaseAddress());
-    EXPECT_EQ(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pIOH->getCpuBase())), cmd->getIndirectObjectBaseAddress());
+    EXPECT_EQ(pIOH->getGpuBase(), cmd->getIndirectObjectBaseAddress());
     EXPECT_EQ(internalHeapBase, cmd->getInstructionBaseAddress());
 
     // Verify all sizes are getting programmed
@@ -67,7 +67,7 @@ void validateStateBaseAddress(uint64_t internalHeapBase, IndirectHeap *pDSH,
 
     EXPECT_EQ(pDSH->getMaxAvailableSpace(), cmd->getDynamicStateBufferSize() * MemoryConstants::pageSize);
     EXPECT_NE(0u, cmd->getGeneralStateBufferSize());
-    EXPECT_EQ(pIOH->getMaxAvailableSpace(), cmd->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
+    EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getIndirectObjectBufferSize());
     EXPECT_EQ(MemoryConstants::sizeOf4GBinPageEntities, cmd->getInstructionBufferSize());
 
     // Generically validate this command

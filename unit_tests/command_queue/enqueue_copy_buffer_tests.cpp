@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -281,7 +281,7 @@ HWTEST_F(EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 0u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
     EXPECT_EQ((void *)((uintptr_t)srcBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
 }
@@ -308,7 +308,7 @@ HWTEST_F(EnqueueCopyBufferTest, argumentOneShouldMatchDestAddress) {
     ASSERT_NE(nullptr, kernel);
 
     // Determine where the argument is
-    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 1);
+    auto pArgument = (void **)getStatelessArgumentPointer<FamilyType>(*kernel, 1u, pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0));
 
     EXPECT_EQ((void *)((uintptr_t)dstBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
 }

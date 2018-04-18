@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -211,24 +211,24 @@ struct HardwareParse {
     }
 
     template <typename FamilyType>
-    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg) {
-        typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-        typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    const void *getStatelessArgumentPointer(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh) {
         typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-        auto cmdIDD = (INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
-        EXPECT_NE(nullptr, cmdIDD);
-        auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
-        EXPECT_NE(nullptr, cmdSBA);
+        typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
         auto cmdWalker = (GPGPU_WALKER *)this->cmdWalker;
         EXPECT_NE(nullptr, cmdWalker);
 
+        auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
+        EXPECT_NE(nullptr, cmdSBA);
+
         auto offsetCrossThreadData = cmdWalker->getIndirectDataStartAddress();
         EXPECT_LT(offsetCrossThreadData, cmdSBA->getIndirectObjectBufferSize() * MemoryConstants::pageSize);
 
+        offsetCrossThreadData -= static_cast<uint32_t>(ioh.getGraphicsAllocation()->getGpuAddressToPatch());
+
         // Get the base of cross thread
         auto pCrossThreadData = ptrOffset(
-            reinterpret_cast<const void *>(cmdSBA->getIndirectObjectBaseAddress()),
+            reinterpret_cast<const void *>(ioh.getCpuBase()),
             offsetCrossThreadData);
 
         // Determine where the argument is
