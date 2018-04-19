@@ -26,6 +26,7 @@
 #include <vector>
 
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/utilities/idlist.h"
 
@@ -69,7 +70,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation(const GraphicsAllocation &) = delete;
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn) : size(sizeIn),
                                                         cpuPtr(cpuPtrIn),
-                                                        gpuAddress((uint64_t)cpuPtrIn),
+                                                        gpuAddress(castToUint64(cpuPtrIn)),
                                                         sharedHandle(Sharing::nonSharedResource),
 
                                                         allocationType(ALLOCATION_TYPE_UNKNOWN) {}
@@ -83,7 +84,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
                                                                                  cpuPtr(cpuPtrIn),
-                                                                                 gpuAddress((uint64_t)cpuPtrIn),
+                                                                                 gpuAddress(castToUint64(cpuPtrIn)),
                                                                                  sharedHandle(sharedHandleIn),
 
                                                                                  allocationType(ALLOCATION_TYPE_UNKNOWN) {}

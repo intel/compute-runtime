@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -50,4 +50,12 @@ TEST(PtrMath, addrToPtr) {
 
     EXPECT_EQ(ptr32BitAddr, addrToPtr(addr32Bit));
     EXPECT_EQ(ptr64BitAddr, addrToPtr(addr64Bit));
+}
+
+TEST(PtrMath, givenCastToUint64FunctionWhenItIsCalledThenProperValueIsReturned) {
+    uintptr_t address = 0xf0000000;
+    void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
+    uint64_t expectedUint64Address = 0xf0000000;
+    auto uintAddress = castToUint64(addressWithTrailingBitSet);
+    EXPECT_EQ(uintAddress, expectedUint64Address);
 }

@@ -1656,3 +1656,20 @@ TEST_F(MockAlignMallocMemoryManagerTest, givenMemoryManagerWitNonZeroAlignRestri
     uintptr_t memVal = reinterpret_cast<uintptr_t>(alignedMemoryManager->allocateSystemMemory(0x1000, 0x1000));
     EXPECT_EQ(expectedVal, memVal);
 }
+
+TEST(GraphicsAllocation, givenCpuPointerBasedConstructorWhenGraphicsAllocationIsCreatedThenGpuAddressHasCorrectValue) {
+    uintptr_t address = 0xf0000000;
+    void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
+    uint64_t expectedGpuAddress = 0xf0000000;
+    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u);
+    EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
+}
+
+TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocationIsCreatedThenGpuAddressHasCorrectValue) {
+    uintptr_t address = 0xf0000000;
+    void *addressWithTrailingBitSet = reinterpret_cast<void *>(address);
+    uint64_t expectedGpuAddress = 0xf0000000;
+    osHandle sharedHandle{};
+    GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u, sharedHandle);
+    EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
+}

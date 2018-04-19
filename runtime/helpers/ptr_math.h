@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,4 +60,8 @@ inline void patchWithRequiredSize(void *memoryToBePatched, uint32_t patchSize, u
         uint32_t *curbeAddress = (uint32_t *)memoryToBePatched;
         *curbeAddress = (uint32_t)patchValue;
     }
+}
+
+inline uint64_t castToUint64(void *address) {
+    return static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
 }
