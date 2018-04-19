@@ -36,7 +36,9 @@ D3DSurface::D3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D
     : D3DSharing(context, surfaceInfo->resource, surfaceStaging, plane, sharedResource), adapterType(adapterType),
       surfaceInfo(*surfaceInfo), lockable(lockable), plane(plane), oclPlane(oclPlane), d3d9Surface(surfaceInfo->resource),
       d3d9SurfaceStaging(surfaceStaging) {
-    resourceDevice = sharingFunctions->getDevice();
+    if (sharingFunctions) {
+        resourceDevice = sharingFunctions->getDevice();
+    }
 };
 
 Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo, cl_mem_flags flags,
@@ -125,7 +127,7 @@ void D3DSurface::synchronizeObject(UpdateData *updateData) {
             sharingFunctions->lockRect(d3d9SurfaceStaging, &lockedRect, D3DLOCK_READONLY);
         }
 
-        auto image = castToObject<Image>(updateData->memObject);
+        auto image = castToObjectOrAbort<Image>(updateData->memObject);
         auto sys = lockedRect.pBits;
         auto gpu = context->getMemoryManager()->lockResource(image->getGraphicsAllocation());
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
@@ -148,6 +150,11 @@ void D3DSurface::synchronizeObject(UpdateData *updateData) {
 
 void D3DSurface::releaseResource(MemObj *memObject) {
     D3DLOCKED_RECT lockedRect = {};
+    auto image = castToObject<Image>(memObject);
+    if (!image) {
+        return;
+    }
+
     sharingFunctions->setDevice(resourceDevice);
     if (!sharedResource) {
         if (lockable) {
@@ -156,7 +163,6 @@ void D3DSurface::releaseResource(MemObj *memObject) {
             sharingFunctions->lockRect(d3d9SurfaceStaging, &lockedRect, 0);
         }
 
-        auto image = castToObject<Image>(memObject);
         auto sys = lockedRect.pBits;
         auto gpu = context->getMemoryManager()->lockResource(image->getGraphicsAllocation());
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
@@ -303,6 +309,15 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     }
     if (noPlaneRequired && plane > 0) {
         return CL_INVALID_VALUE;
+    }
+    return CL_SUCCESS;
+}
+
+int D3DSurface::validateUpdateData(UpdateData *updateData) {
+    UNRECOVERABLE_IF(updateData == nullptr);
+    auto image = castToObject<Image>(updateData->memObject);
+    if (!image) {
+        return CL_INVALID_MEM_OBJECT;
     }
     return CL_SUCCESS;
 }

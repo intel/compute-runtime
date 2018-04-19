@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,6 +41,7 @@ class D3DSurface : public D3DSharing<D3DTypesHelper::D3D9> {
     static cl_int findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, OCLPlane &oclPlane);
     void synchronizeObject(UpdateData *updateData) override;
     void releaseResource(MemObj *memObject) override;
+    int validateUpdateData(UpdateData *updateData) override;
 
     cl_dx9_surface_info_khr &getSurfaceInfo() { return surfaceInfo; }
     cl_dx9_media_adapter_type_khr &getAdapterType() { return adapterType; }

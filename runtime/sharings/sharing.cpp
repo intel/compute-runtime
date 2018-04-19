@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,21 +27,34 @@
 #include <memory>
 
 namespace OCLRT {
-void SharingHandler::acquire(MemObj *memObj) {
+int SharingHandler::acquire(MemObj *memObj) {
     if (acquireCount == 0) {
         UpdateData updateData;
         auto currentSharedHandle = memObj->getGraphicsAllocation()->peekSharedHandle();
         updateData.sharedHandle = currentSharedHandle;
         updateData.memObject = memObj;
-        synchronizeHandler(&updateData);
+        int result = synchronizeHandler(&updateData);
+        if (result != CL_SUCCESS) {
+            return result;
+        }
         DEBUG_BREAK_IF(updateData.synchronizationStatus != SynchronizeStatus::ACQUIRE_SUCCESFUL);
         DEBUG_BREAK_IF(currentSharedHandle != updateData.sharedHandle);
     }
     acquireCount++;
+    return CL_SUCCESS;
 }
 
-void SharingHandler::synchronizeHandler(UpdateData *updateData) {
-    synchronizeObject(updateData);
+int SharingHandler::synchronizeHandler(UpdateData *updateData) {
+    auto result = validateUpdateData(updateData);
+    if (result == CL_SUCCESS) {
+        synchronizeObject(updateData);
+    }
+    return result;
+}
+
+int SharingHandler::validateUpdateData(UpdateData *updateData) {
+    UNRECOVERABLE_IF(updateData == nullptr);
+    return CL_SUCCESS;
 }
 
 void SharingHandler::release(MemObj *memObject) {

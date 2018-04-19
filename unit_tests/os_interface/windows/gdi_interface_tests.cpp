@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,4 +42,8 @@ TEST(GdiInterface, failLoad) {
     Os::gdiDllName = oldName;
 }
 
+TEST(ThkWrapperTest, givenThkWrapperWhenConstructedThenmFuncIsInitialized) {
+    OCLRT::ThkWrapper<false, void *> wrapper;
+    EXPECT_EQ(nullptr, wrapper.mFunc);
+}
 #endif

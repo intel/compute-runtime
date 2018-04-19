@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,10 +28,12 @@
 #include "runtime/sharings/d3d/cl_d3d_api.h"
 #include "runtime/sharings/d3d/d3d_sharing.h"
 #include "runtime/sharings/d3d/d3d_buffer.h"
+#include "runtime/sharings/d3d/d3d_surface.h"
 #include "runtime/sharings/d3d/d3d_texture.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #include "test.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/fixtures/platform_fixture.h"
@@ -1385,4 +1387,22 @@ REGISTER_TYPED_TEST_CASE_P(D3DAuxTests,
 
 INSTANTIATE_TYPED_TEST_CASE_P(D3DSharingTests, D3DAuxTests, D3DTypes);
 
+TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdateDataThenInvalidMemObjectErrorIsReturned) {
+    class MockD3DSurface : public D3DSurface {
+      public:
+        MockD3DSurface(Context *context, cl_dx9_surface_info_khr *surfaceInfo, D3DTypesHelper::D3D9::D3DTexture2d *surfaceStaging, cl_uint plane,
+                       OCLPlane oclPlane, cl_dx9_media_adapter_type_khr adapterType, bool sharedResource, bool lockable) : D3DSurface(context, surfaceInfo, surfaceStaging, plane,
+                                                                                                                                      oclPlane, adapterType, sharedResource, lockable) {}
+    };
+    MockContext context;
+    cl_dx9_surface_info_khr surfaceInfo = {};
+    OCLPlane oclPlane = OCLPlane::NO_PLANE;
+    std::unique_ptr<D3DSurface> surface(new MockD3DSurface(&context, &surfaceInfo, nullptr, 0, oclPlane, 0, false, false));
+
+    MockBuffer buffer;
+    UpdateData updateData;
+    updateData.memObject = &buffer;
+    auto result = surface->validateUpdateData(&updateData);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, result);
+}
 } // namespace OCLRT

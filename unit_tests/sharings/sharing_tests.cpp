@@ -30,7 +30,7 @@ using namespace OCLRT;
 
 TEST(sharingHandler, givenBasicSharingHandlerWhenSynchronizeObjectThenErrorIsReturned) {
     struct SH : SharingHandler {
-        void synchronizeHandlerMock(UpdateData *updateData) { return synchronizeHandler(updateData); }
+        int synchronizeHandlerMock(UpdateData *updateData) { return synchronizeHandler(updateData); }
 
     } sharingHandler;
 
@@ -104,4 +104,14 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
     EXPECT_EQ(sharingHandler.release(memObj.get()), 1u);
     EXPECT_EQ(sharingHandler.release(memObj.get()), 0u);
     EXPECT_EQ(sharingHandler.releaseCount, 1);
+}
+
+TEST(sharingHandler, givenSharingHandlerWhenValidateUpdateDataIsCalledWithNonNullInputThenAbortIsNotCalled) {
+    class MockSharingHandler : SharingHandler {
+      public:
+        using SharingHandler::validateUpdateData;
+    };
+    MockSharingHandler sharingHandler;
+    UpdateData updateData;
+    sharingHandler.validateUpdateData(&updateData);
 }

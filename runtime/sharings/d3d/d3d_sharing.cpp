@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,19 +35,23 @@ template <typename D3D>
 D3DSharing<D3D>::D3DSharing(Context *context, D3DResource *resource, D3DResource *resourceStaging, unsigned int subresource, bool sharedResource)
     : sharedResource(sharedResource), subresource(subresource), resource(resource), resourceStaging(resourceStaging), context(context) {
     sharingFunctions = context->getSharing<D3DSharingFunctions<D3D>>();
-    sharingFunctions->addRef(resource);
-    sharingFunctions->createQuery(&this->d3dQuery);
-    sharingFunctions->track(resource, subresource);
+    if (sharingFunctions) {
+        sharingFunctions->addRef(resource);
+        sharingFunctions->createQuery(&this->d3dQuery);
+        sharingFunctions->track(resource, subresource);
+    }
 };
 
 template <typename D3D>
 D3DSharing<D3D>::~D3DSharing() {
-    sharingFunctions->untrack(resource, subresource);
-    if (!sharedResource) {
-        sharingFunctions->release(resourceStaging);
+    if (sharingFunctions) {
+        sharingFunctions->untrack(resource, subresource);
+        if (!sharedResource) {
+            sharingFunctions->release(resourceStaging);
+        }
+        sharingFunctions->release(resource);
+        sharingFunctions->release(d3dQuery);
     }
-    sharingFunctions->release(resource);
-    sharingFunctions->release(d3dQuery);
 };
 
 template <typename D3D>

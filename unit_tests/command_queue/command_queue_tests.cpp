@@ -933,6 +933,24 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenRet
     EXPECT_EQ(result, CL_INVALID_MEM_OBJECT);
 }
 
+TEST(CommandQueue, givenEnqueueAcquireSharedObjectsCallWhenAcquireFailsThenCorrectErrorIsReturned) {
+    class MockSharingHandler : public SharingHandler {
+        int validateUpdateData(UpdateData *data) override {
+            return CL_INVALID_MEM_OBJECT;
+        }
+    };
+    MockContext context;
+    CommandQueue cmdQ(&context, nullptr, 0);
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(&context));
+
+    MockSharingHandler *handler = new MockSharingHandler;
+    buffer->setSharingHandler(handler);
+    cl_mem memObject = buffer.get();
+    auto retVal = cmdQ.enqueueAcquireSharedObjects(1, &memObject, 0, nullptr, nullptr, 0);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+    buffer->setSharingHandler(nullptr);
+}
+
 HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsCalledThenSurfaceStateIsCorrectlySet) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     MockProgram program;
