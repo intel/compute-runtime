@@ -53,6 +53,10 @@ size_t simple_sprintf(char *output, size_t outputSize, const char *format, T val
     _set_output_format(_TWO_DIGIT_EXPONENT);
 #endif
     size_t len = strlen(format);
+    if (len == 0) {
+        output[0] = '\0';
+        return 0;
+    }
 
     if (len > 3 && *(format + len - 2) == 'h' && *(format + len - 3) == 'h') {
         if (*(format + len - 1) == 'i' || *(format + len - 1) == 'd') {
@@ -63,11 +67,10 @@ size_t simple_sprintf(char *output, size_t outputSize, const char *format, T val
             return sprintf_s(output, outputSize, format, fixedValue);
         }
     } else if (format[len - 1] == 'F') {
-        char formatCopy[1024];
-        strcpy_s(formatCopy, 1024, format);
-        formatCopy[len - 1] = 'f';
+        std::string formatCopy = format;
+        *formatCopy.rbegin() = 'f';
 
-        size_t returnValue = sprintf_s(output, outputSize, formatCopy, value);
+        size_t returnValue = sprintf_s(output, outputSize, formatCopy.c_str(), value);
         for (size_t i = 0; i < returnValue; i++)
             output[i] = std::toupper(output[i]);
         return returnValue;
