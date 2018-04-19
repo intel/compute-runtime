@@ -95,7 +95,13 @@ void *OCLRT::Context::getOsContextInfo(cl_context_info &paramName, size_t *srcPa
 
 cl_int CL_API_CALL clGetDeviceIDsFromDX9INTEL(cl_platform_id platform, cl_dx9_device_source_intel dx9DeviceSource, void *dx9Object,
                                               cl_dx9_device_set_intel dx9DeviceSet, cl_uint numEntries, cl_device_id *devices, cl_uint *numDevices) {
-    cl_device_id device = castToObject<Platform>(platform)->getDevice(0);
+    Platform *platformInternal = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    cl_device_id device = platformInternal->getDevice(0);
+
     GetInfoHelper::set(devices, device);
     GetInfoHelper::set(numDevices, 1u);
     return CL_SUCCESS;
@@ -122,14 +128,25 @@ cl_mem CL_API_CALL clCreateFromDX9MediaSurfaceINTEL(cl_context context, cl_mem_f
 
 cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     return cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                              eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_OBJECTS_INTEL);
 }
 
 cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue, cl_uint numObjects, cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
@@ -138,8 +155,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
         }
     }
 
-    auto retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
-                                                    eventWaitList, event, CL_COMMAND_RELEASE_DX9_OBJECTS_INTEL);
+    retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
+                                               eventWaitList, event, CL_COMMAND_RELEASE_DX9_OBJECTS_INTEL);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish(true);
     }
@@ -150,7 +167,13 @@ cl_int CL_API_CALL clGetDeviceIDsFromDX9MediaAdapterKHR(cl_platform_id platform,
                                                         cl_dx9_media_adapter_type_khr *mediaAdapterType, void *mediaAdapters,
                                                         cl_dx9_media_adapter_set_khr mediaAdapterSet, cl_uint numEntries,
                                                         cl_device_id *devices, cl_uint *numDevices) {
-    cl_device_id device = castToObject<Platform>(platform)->getDevice(0);
+    Platform *platformInternal = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+    cl_device_id device = platformInternal->getDevice(0);
+
     GetInfoHelper::set(devices, device);
     GetInfoHelper::set(numDevices, 1u);
     return CL_SUCCESS;
@@ -167,14 +190,24 @@ cl_mem CL_API_CALL clCreateFromDX9MediaSurfaceKHR(cl_context context, cl_mem_fla
 
 cl_int CL_API_CALL clEnqueueAcquireDX9MediaSurfacesKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                        cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
     return cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                              eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_MEDIA_SURFACES_KHR);
 }
 
 cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                        cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
@@ -183,8 +216,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
         }
     }
 
-    auto retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
-                                                    eventWaitList, event, CL_COMMAND_RELEASE_DX9_MEDIA_SURFACES_KHR);
+    retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
+                                               eventWaitList, event, CL_COMMAND_RELEASE_DX9_MEDIA_SURFACES_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish(true);
     }
@@ -201,11 +234,17 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
     cl_uint localNumDevices = 0;
     cl_int retCode = CL_SUCCESS;
 
+    Platform *platformInternal = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     if (DebugManager.injectFcn) {
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D10>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    cl_device_id device = castToObject<Platform>(platform)->getDevice(0);
+    cl_device_id device = platformInternal->getDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D10_DEVICE_KHR:
@@ -244,7 +283,13 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D10KHR(cl_platform_id platform, cl_d3d10_
 
 cl_mem CL_API_CALL clCreateFromD3D10BufferKHR(cl_context context, cl_mem_flags flags, ID3D10Buffer *resource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D10>>()->isTracked(resource, 0)) {
         err.set(CL_INVALID_D3D10_RESOURCE_KHR);
@@ -256,7 +301,13 @@ cl_mem CL_API_CALL clCreateFromD3D10BufferKHR(cl_context context, cl_mem_flags f
 cl_mem CL_API_CALL clCreateFromD3D10Texture2DKHR(cl_context context, cl_mem_flags flags, ID3D10Texture2D *resource,
                                                  UINT subresource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D10>>()->isTracked(resource, subresource)) {
         err.set(CL_INVALID_D3D10_RESOURCE_KHR);
@@ -268,7 +319,13 @@ cl_mem CL_API_CALL clCreateFromD3D10Texture2DKHR(cl_context context, cl_mem_flag
 cl_mem CL_API_CALL clCreateFromD3D10Texture3DKHR(cl_context context, cl_mem_flags flags, ID3D10Texture3D *resource,
                                                  UINT subresource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D10>>()->isTracked(resource, subresource)) {
         err.set(CL_INVALID_D3D10_RESOURCE_KHR);
@@ -279,9 +336,19 @@ cl_mem CL_API_CALL clCreateFromD3D10Texture3DKHR(cl_context context, cl_mem_flag
 
 cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
-        if (castToObject<MemObj>(memObjects[object])->acquireCount >= 1) {
+        auto memObj = castToObject<MemObj>(memObjects[object]);
+        if (memObj == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+        if (memObj->acquireCount >= 1) {
             return CL_D3D10_RESOURCE_ALREADY_ACQUIRED_KHR;
         }
     }
@@ -291,9 +358,18 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
 
 cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
         if (memObject->acquireCount == 0) {
             return CL_D3D10_RESOURCE_NOT_ACQUIRED_KHR;
         }
@@ -303,8 +379,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
         }
     }
 
-    auto retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
-                                                    eventWaitList, event, CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR);
+    retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
+                                               eventWaitList, event, CL_COMMAND_RELEASE_D3D10_OBJECTS_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish(true);
     }
@@ -321,11 +397,17 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
     cl_uint localNumDevices = 0;
     cl_int retCode = CL_SUCCESS;
 
+    Platform *platformInternal = nullptr;
+    auto retVal = validateObjects(WithCastToInternal(platform, &platformInternal));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     if (DebugManager.injectFcn) {
         sharingFcns.getDxgiDescFcn = (D3DSharingFunctions<D3DTypesHelper::D3D11>::GetDxgiDescFcn)DebugManager.injectFcn;
     }
 
-    cl_device_id device = castToObject<Platform>(platform)->getDevice(0);
+    cl_device_id device = platformInternal->getDevice(0);
 
     switch (d3dDeviceSource) {
     case CL_D3D11_DEVICE_KHR:
@@ -364,7 +446,12 @@ cl_int CL_API_CALL clGetDeviceIDsFromD3D11KHR(cl_platform_id platform, cl_d3d11_
 
 cl_mem CL_API_CALL clCreateFromD3D11BufferKHR(cl_context context, cl_mem_flags flags, ID3D11Buffer *resource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D11>>()->isTracked(resource, 0)) {
         err.set(CL_INVALID_D3D11_RESOURCE_KHR);
@@ -376,7 +463,12 @@ cl_mem CL_API_CALL clCreateFromD3D11BufferKHR(cl_context context, cl_mem_flags f
 cl_mem CL_API_CALL clCreateFromD3D11Texture2DKHR(cl_context context, cl_mem_flags flags, ID3D11Texture2D *resource,
                                                  UINT subresource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D11>>()->isTracked(resource, subresource)) {
         err.set(CL_INVALID_D3D11_RESOURCE_KHR);
@@ -388,7 +480,13 @@ cl_mem CL_API_CALL clCreateFromD3D11Texture2DKHR(cl_context context, cl_mem_flag
 cl_mem CL_API_CALL clCreateFromD3D11Texture3DKHR(cl_context context, cl_mem_flags flags, ID3D11Texture3D *resource,
                                                  UINT subresource, cl_int *errcodeRet) {
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
-    auto ctx = castToObject<Context>(context);
+    Context *ctx = nullptr;
+
+    err.set(validateObjects(WithCastToInternal(context, &ctx)));
+
+    if (err.localErrcode != CL_SUCCESS) {
+        return nullptr;
+    }
 
     if (ctx->getSharing<D3DSharingFunctions<D3DTypesHelper::D3D11>>()->isTracked(resource, subresource)) {
         err.set(CL_INVALID_D3D11_RESOURCE_KHR);
@@ -399,9 +497,19 @@ cl_mem CL_API_CALL clCreateFromD3D11Texture3DKHR(cl_context context, cl_mem_flag
 
 cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
-        if (castToObject<MemObj>(memObjects[object])->acquireCount >= 1) {
+        auto memObj = castToObject<MemObj>(memObjects[object]);
+        if (memObj == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
+        if (memObj->acquireCount >= 1) {
             return CL_D3D11_RESOURCE_ALREADY_ACQUIRED_KHR;
         }
     }
@@ -411,9 +519,18 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
 
 cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,
                                                    cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {
-    auto cmdQ = castToObject<CommandQueue>(commandQueue);
+    CommandQueue *cmdQ = nullptr;
+
+    auto retVal = validateObjects(WithCastToInternal(commandQueue, &cmdQ));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
+        if (memObject == nullptr) {
+            return CL_INVALID_MEM_OBJECT;
+        }
         if (memObject->acquireCount == 0) {
             return CL_D3D11_RESOURCE_NOT_ACQUIRED_KHR;
         }
@@ -423,8 +540,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
         }
     }
 
-    auto retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
-                                                    eventWaitList, event, CL_COMMAND_RELEASE_D3D11_OBJECTS_KHR);
+    retVal = cmdQ->enqueueReleaseSharedObjects(numObjects, memObjects, numEventsInWaitList,
+                                               eventWaitList, event, CL_COMMAND_RELEASE_D3D11_OBJECTS_KHR);
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish(true);
     }
