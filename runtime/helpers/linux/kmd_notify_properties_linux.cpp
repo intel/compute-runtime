@@ -22,4 +22,10 @@
 
 #include "runtime/helpers/kmd_notify_properties.h"
 
-void OCLRT::KmdNotifyHelper::updateAcLineStatus() {}
+using namespace OCLRT;
+
+void KmdNotifyHelper::updateAcLineStatus() {}
+
+int64_t KmdNotifyHelper::getBaseTimeout(const int64_t &multiplier) const {
+    return properties->delayKmdNotifyMicroseconds * multiplier;
+}

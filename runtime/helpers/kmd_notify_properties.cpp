@@ -42,7 +42,7 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
     } else if (quickKmdSleepRequest && properties->enableQuickKmdSleep) {
         timeoutValueOutput = properties->delayQuickKmdSleepMicroseconds;
     } else {
-        timeoutValueOutput = properties->delayKmdNotifyMicroseconds * multiplier;
+        timeoutValueOutput = getBaseTimeout(multiplier);
     }
 
     return flushStampToWait != 0 && (properties->enableKmdNotify || !acLineConnected);

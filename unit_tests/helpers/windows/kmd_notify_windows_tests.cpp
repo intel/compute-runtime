@@ -37,6 +37,7 @@ extern BYTE systemPowerStatusACLineStatusOverride;
 class MockKmdNotifyHelper : public KmdNotifyHelper {
   public:
     using KmdNotifyHelper::acLineConnected;
+    using KmdNotifyHelper::getBaseTimeout;
     using KmdNotifyHelper::updateAcLineStatus;
 
     MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
@@ -74,4 +75,14 @@ TEST(KmdNotifyWindowsTests, whenGetSystemPowerStatusReturnErrorThenDontUpdateAcL
     helper.updateAcLineStatus();
     EXPECT_TRUE(helper.acLineConnected);
 }
+
+TEST(KmdNotifyWindowsTests, givenTaskCountDiffGreaterThanOneWhenBaseTimeoutRequestedThenDontMultiply) {
+    auto localProperties = (platformDevices[0]->capabilityTable.kmdNotifyProperties);
+    localProperties.delayKmdNotifyMicroseconds = 10;
+    const int64_t multiplier = 10;
+
+    MockKmdNotifyHelper helper(&localProperties);
+    EXPECT_EQ(localProperties.delayKmdNotifyMicroseconds, helper.getBaseTimeout(multiplier));
+}
+
 } // namespace OCLRT

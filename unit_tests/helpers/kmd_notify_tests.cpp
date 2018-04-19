@@ -221,25 +221,6 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, true);
 }
 
-HWTEST_F(KmdNotifyTests, givenComputeTimeoutMultiplierWhenWaitCalledThenUseNewTimeout) {
-    auto csr = createMockCsr<FamilyType>();
-
-    *device->getTagAddress() = taskCountToWait;
-    taskCountToWait += 5;
-
-    auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds *
-                           (taskCountToWait - *device->getTagAddress());
-
-    auto updateHwTag = [&](bool, int64_t, uint32_t) {
-        *device->getTagAddress() = taskCountToWait;
-        return true;
-    };
-
-    EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, expectedTimeout, ::testing::_)).Times(1).WillOnce(::testing::Invoke(updateHwTag));
-
-    csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false);
-}
-
 HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultiplyTimeout) {
     auto csr = createMockCsr<FamilyType>();
     *device->getTagAddress() = taskCountToWait;

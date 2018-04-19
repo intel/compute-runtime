@@ -64,6 +64,7 @@ class KmdNotifyHelper {
 
   protected:
     bool applyQuickKmdSleepForSporadicWait() const;
+    int64_t getBaseTimeout(const int64_t &multiplier) const;
 
     const KmdNotifyProperties *properties = nullptr;
     std::chrono::high_resolution_clock::time_point lastWaitForCompletionTimestamp;
