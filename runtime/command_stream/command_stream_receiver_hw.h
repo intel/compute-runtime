@@ -60,6 +60,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);
     size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags);
+    size_t getRequiredCmdSizeForPreamble() const;
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
@@ -107,6 +108,4 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 };
 
-template <typename GfxFamily>
-size_t getSizeRequiredPreambleCS(const Device &device);
 } // namespace OCLRT

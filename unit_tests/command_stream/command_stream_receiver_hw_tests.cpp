@@ -60,14 +60,48 @@ using namespace OCLRT;
 using ::testing::_;
 using ::testing::Invoke;
 
-HWTEST_F(UltCommandStreamReceiverTest, requiredCmdSizeForPreamble) {
+HWTEST_F(UltCommandStreamReceiverTest, givenThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
     auto expectedCmdSize =
         sizeof(typename FamilyType::PIPE_CONTROL) +
         sizeof(typename FamilyType::MEDIA_VFE_STATE) +
         PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
 
-    EXPECT_EQ(expectedCmdSize, getSizeRequiredPreambleCS<FamilyType>(*pDevice));
+    EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble());
 }
+
+HWTEST_F(UltCommandStreamReceiverTest, givenThreadArbitrationPolicyChangedWhenEstimatingPreambleCmdSizeThenResultDependsOnPolicyProgrammingCmdSize) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
+    auto policyNotChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy + 1;
+    auto policyChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    auto actualDifference = policyChanged - policyNotChanged;
+    auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize();
+    EXPECT_EQ(actualDifference, expectedDifference);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenPreambleNotSentPolicyChangedWhenEstimatingPreambleCmdSizeThenResultDependsOnPolicyProgrammingCmdSize) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
+
+    commandStreamReceiver.isPreambleSent = false;
+    auto preambleNotSent = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    commandStreamReceiver.isPreambleSent = true;
+    auto preambleSent = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    auto actualDifference = preambleNotSent - preambleSent;
+    auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize();
+    EXPECT_EQ(actualDifference, expectedDifference);
+}
+
 HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateWhenHeapsAreAskedForDirtyStatusThenTrueIsReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
@@ -697,7 +731,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble();
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
     sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
@@ -728,7 +762,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble();
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
@@ -1783,12 +1817,11 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledPreemptionWhenFlushTas
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAndL3ConfigChanged) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
-    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    CsrSizeRequestFlags csrSizeRequest = {};
 
     commandStream.getSpace(sizeof(PIPE_CONTROL));
+    flushTaskFlags.useSLM = true;
+    flushTaskFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     // Force a PIPE_CONTROL through a taskLevel transition
@@ -1797,60 +1830,49 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.lastMediaSamplerConfig = 0;
     commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
+    csrSizeRequest.l3ConfigChanged = true;
+    commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = 2 * sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MEDIA_VFE_STATE) +
-                        sizeof(MI_BATCH_BUFFER_START) + sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) +
-                        commandStreamReceiver.getRequiredPipeControlSize();
-
-    sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
-
+    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags);
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
 
-    DispatchFlags dispatchFlags;
-    dispatchFlags.useSLM = true;
-    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
-
-    commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, dispatchFlags);
+    commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, flushTaskFlags);
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequiredCsrSizeDependsOnL3ConfigChanged) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
     commandStreamReceiver.isPreambleSent = true;
 
     csrSizeRequest.l3ConfigChanged = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
+    auto expectedDifference = commandStreamReceiver.getCmdSizeForL3Config();
 
     csrSizeRequest.l3ConfigChanged = false;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
 
-    EXPECT_NE(l3ConfigNotChangedSize, l3ConfigChangedSize);
     auto difference = l3ConfigChangedSize - l3ConfigNotChangedSize;
-    EXPECT_EQ(sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM), difference);
+    EXPECT_EQ(expectedDifference, difference);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleNotSentThenRequiredCsrSizeDoesntDependOnL3ConfigChanged) {
     UltCommandStreamReceiver<FamilyType> &commandStreamReceiver = (UltCommandStreamReceiver<FamilyType> &)pDevice->getCommandStreamReceiver();
     CsrSizeRequestFlags csrSizeRequest = {};
-    DispatchFlags flags;
     commandStreamReceiver.isPreambleSent = false;
 
     csrSizeRequest.l3ConfigChanged = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    auto l3ConfigChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
 
     csrSizeRequest.l3ConfigChanged = false;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
-    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flags);
+    auto l3ConfigNotChangedSize = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
 
     EXPECT_EQ(l3ConfigNotChangedSize, l3ConfigChangedSize);
 }

@@ -87,8 +87,13 @@ void PreambleHelper<SKLFamily>::programThreadArbitration(LinearStream *pCommandS
 }
 
 template <>
+size_t PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize() {
+    return sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+}
+
+template <>
 size_t PreambleHelper<SKLFamily>::getAdditionalCommandsSize(const Device &device) {
-    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<SKLFamily>(device) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL);
+    size_t totalSize = PreemptionHelper::getRequiredPreambleSize<SKLFamily>(device);
     totalSize += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
     return totalSize;
 }

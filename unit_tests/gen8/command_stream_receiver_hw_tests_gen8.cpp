@@ -47,5 +47,5 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenKernelWithSlmWhenPreviousNOSLML
 }
 
 GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblocking) {
-    givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
+    givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 }

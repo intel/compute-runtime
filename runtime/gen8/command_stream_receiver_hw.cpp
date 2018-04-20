@@ -52,8 +52,6 @@ void CommandStreamReceiverHw<Family>::addDcFlushToPipeControl(Family::PIPE_CONTR
     pCmd->setDcFlushEnable(flushDC);
 }
 
-template size_t getSizeRequiredPreambleCS<Family>(const Device &hwInfo);
-
 template <>
 void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];

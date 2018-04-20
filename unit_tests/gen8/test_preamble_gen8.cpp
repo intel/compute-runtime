@@ -76,6 +76,7 @@ BDWTEST_F(ThreadArbitrationGen8, givenPolicyWhenThreadArbitrationProgrammedThenD
     EXPECT_EQ(0u, cs.getUsed());
 
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getAdditionalCommandsSize(MockDevice(**platformDevices)));
+    EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getThreadArbitrationCommandsSize());
     EXPECT_EQ(0u, PreambleHelper<BDWFamily>::getDefaultThreadArbitrationPolicy());
 }
 

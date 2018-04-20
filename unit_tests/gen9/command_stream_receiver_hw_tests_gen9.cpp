@@ -58,7 +58,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
     uint32_t newL3Config;
     DispatchFlags dispatchFlags;
 
-    auto cmdSizePreambleMidThread = getSizeRequiredPreambleCS<FamilyType>(*pDevice);
+    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble();
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
@@ -88,7 +88,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     uint32_t newL3Config;
     DispatchFlags dispatchFlags;
 
-    auto cmdSizePreambleMidThread = getSizeRequiredPreambleCS<FamilyType>(*pDevice);
+    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble();
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
@@ -113,5 +113,5 @@ GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenKernelWithSlmWhenPreviousNOSLML
 }
 
 GEN9TEST_F(CommandStreamReceiverHwTestGen9, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblocking) {
-    givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
+    givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 }

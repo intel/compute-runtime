@@ -99,8 +99,8 @@ SKLTEST_F(ThreadArbitration, givenPreambleWhenItIsProgrammedThenThreadArbitratio
     EXPECT_EQ(0xE404u, lri.getRegisterOffset());
     EXPECT_EQ(0x100u, lri.getDataDword());
 
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL),
-              PreambleHelper<SKLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    EXPECT_EQ(0u, PreambleHelper<SKLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<SKLFamily>::getThreadArbitrationCommandsSize());
 }
 
 SKLTEST_F(ThreadArbitration, defaultArbitrationPolicy) {

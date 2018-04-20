@@ -38,7 +38,7 @@ struct CommandStreamReceiverHwTest : public DeviceFixture,
     }
 
     void givenKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigImpl();
-    void givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
+    void givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 };
 
 template <typename GfxFamily>
@@ -83,7 +83,8 @@ void CommandStreamReceiverHwTest<GfxFamily>::givenKernelWithSlmWhenPreviousNOSLM
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblockingImpl() {
+void CommandStreamReceiverHwTest<GfxFamily>::givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl() {
+
     typedef typename GfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     size_t GWS = 1;
     MockContext ctx(pDevice);

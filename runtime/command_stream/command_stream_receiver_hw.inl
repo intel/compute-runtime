@@ -84,9 +84,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 }
 
 template <typename GfxFamily>
-size_t getSizeRequiredPreambleCS(const Device &device) {
-    return sizeof(typename GfxFamily::PIPE_CONTROL) +
-           sizeof(typename GfxFamily::MEDIA_VFE_STATE) + PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
+inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble() const {
+    size_t size = sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
+    size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*memoryManager->device);
+    if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
+        size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
+    }
+    return size;
 }
 
 template <typename GfxFamily>
@@ -577,11 +581,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags) {
-    size_t size = getSizeRequiredPreambleCS<GfxFamily>(*memoryManager->device) +
-                  sizeof(typename GfxFamily::STATE_BASE_ADDRESS) +
-                  sizeof(PIPE_CONTROL) +
-                  getRequiredPipeControlSize() +
-                  sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
+    size_t size = getRequiredCmdSizeForPreamble();
+    size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    size += getRequiredPipeControlSize();
+    size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
     size += getCmdSizeForCoherency();
