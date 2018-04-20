@@ -21,6 +21,7 @@
 
 set(IGDRCL_SRCS_linux_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/main_linux.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
 )
 
 set(IGDRCL_SRCS_linux_dll_tests
@@ -30,6 +31,7 @@ set(IGDRCL_SRCS_linux_dll_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_layer.h
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/debug_settings_manager.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/drm_neo_create.cpp
+  ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
 )
 
 if(LIBVA_FOUND)

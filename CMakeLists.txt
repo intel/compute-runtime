@@ -127,6 +127,13 @@ if(NOT KMDAF_HEADERS_DIR)
     endif()
 endif(NOT KMDAF_HEADERS_DIR)
 
+if(NOT SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
+    if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/source_level_debugger/igfx_debug_interchange_types.h")
+	    get_filename_component(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR "../internal/source_level_debugger/" ABSOLUTE)
+        message(STATUS "Source Level Debugger headers dir: ${SOURCE_LEVEL_DEBUGGER_HEADERS_DIR}")
+    endif()
+endif(NOT SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
+
 if(LIBDRM_DIR)
   get_filename_component(I915_INCLUDES_DIR "${LIBDRM_DIR}/include" ABSOLUTE)
 else()

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,14 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace Os {
-#if defined(_WIN64)
-const char *frontEndDllName = "igdfcl64.dll";
-const char *igcDllName = "igc64.dll";
-#else
-const char *frontEndDllName = "igdfcl32.dll";
-const char *igcDllName = "igc32.dll";
-#endif
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
-const char *gdiDllName = "gdi32.dll";
+using namespace std;
+
+namespace OCLRT {
+
+OsLibrary *SourceLevelDebugger::loadDebugger() {
+    return OsLibrary::load(SourceLevelDebugger::dllName);
 }
+} // namespace OCLRT

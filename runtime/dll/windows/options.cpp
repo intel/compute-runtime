@@ -20,28 +20,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+namespace Os {
+#if defined(_WIN64)
+const char *frontEndDllName = "igdfcl64.dll";
+const char *igcDllName = "igc64.dll";
+#else
+const char *frontEndDllName = "igdfcl32.dll";
+const char *igcDllName = "igc32.dll";
+#endif
 
-namespace OCLRT {
-
-class OSInterface {
-
-  public:
-    class OSInterfaceImpl;
-    OSInterface();
-    virtual ~OSInterface();
-    OSInterface(const OSInterface &) = delete;
-    OSInterface &operator=(const OSInterface &) = delete;
-
-    OSInterfaceImpl *get() const {
-        return osInterfaceImpl;
-    };
-    unsigned int getHwContextId() const;
-    static bool osEnabled64kbPages;
-    static bool are64kbPagesEnabled();
-    unsigned int getDeviceHandle() const;
-
-  protected:
-    OSInterfaceImpl *osInterfaceImpl = nullptr;
-};
-} // namespace OCLRT
+const char *gdiDllName = "gdi32.dll";
+} // namespace Os

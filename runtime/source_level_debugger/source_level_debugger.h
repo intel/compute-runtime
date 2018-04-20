@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,27 +21,39 @@
  */
 
 #pragma once
+#include "runtime/os_interface/os_library.h"
+#include <memory>
 
 namespace OCLRT {
-
-class OSInterface {
-
+class SourceLevelDebugger {
   public:
-    class OSInterfaceImpl;
-    OSInterface();
-    virtual ~OSInterface();
-    OSInterface(const OSInterface &) = delete;
-    OSInterface &operator=(const OSInterface &) = delete;
+    SourceLevelDebugger();
+    ~SourceLevelDebugger();
+    SourceLevelDebugger(const SourceLevelDebugger &ref) = delete;
+    SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
 
-    OSInterfaceImpl *get() const {
-        return osInterfaceImpl;
-    };
-    unsigned int getHwContextId() const;
-    static bool osEnabled64kbPages;
-    static bool are64kbPagesEnabled();
-    unsigned int getDeviceHandle() const;
+    bool isDebuggerActive();
+    void notifyNewDevice(uint32_t deviceHandle) const;
+    void notifySourceCode(uint32_t deviceHandle, const char *sourceCode, size_t size) const;
+    bool isOptimizationDisabled() const;
+    void notifyKernelDebugData() const;
 
   protected:
-    OSInterfaceImpl *osInterfaceImpl = nullptr;
+    class SourceLevelDebuggerInterface;
+    SourceLevelDebuggerInterface *interface = nullptr;
+
+    static OsLibrary *loadDebugger();
+    void getFunctions();
+
+    std::unique_ptr<OsLibrary> debuggerLibrary;
+    bool isActive = false;
+
+    static const char *notifyNewDeviceSymbol;
+    static const char *notifySourceCodeSymbol;
+    static const char *getDebuggerOptionSymbol;
+    static const char *notifyKernelDebugDataSymbol;
+    static const char *initSymbol;
+    // OS specific library name
+    static const char *dllName;
 };
 } // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,28 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
-namespace OCLRT {
-
-class OSInterface {
-
-  public:
-    class OSInterfaceImpl;
-    OSInterface();
-    virtual ~OSInterface();
-    OSInterface(const OSInterface &) = delete;
-    OSInterface &operator=(const OSInterface &) = delete;
-
-    OSInterfaceImpl *get() const {
-        return osInterfaceImpl;
-    };
-    unsigned int getHwContextId() const;
-    static bool osEnabled64kbPages;
-    static bool are64kbPagesEnabled();
-    unsigned int getDeviceHandle() const;
-
-  protected:
-    OSInterfaceImpl *osInterfaceImpl = nullptr;
-};
-} // namespace OCLRT
+const char *OCLRT::SourceLevelDebugger::dllName = "libigfxdbgxchg64.so";

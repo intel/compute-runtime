@@ -18,14 +18,17 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(IGDRCL_SRCS_tests_source_level_debugger
-  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/device_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_preamble_test.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_preamble_test.inl
-)
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_source_level_debugger})
-
 if(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
-  target_sources(igdrcl_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_tests.cpp)
+  set(RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.h
+  )
+else()
+  set(RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER
+    ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.h
+  )
 endif()
+
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_SOURCE_LEVEL_DEBUGGER})

@@ -37,12 +37,12 @@ set(CLOC_SRCS_LIB
 if(WIN32)
   list(APPEND CLOC_SRCS_LIB
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/os_library.cpp
-    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/options.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/dll/windows/options.cpp
   )
 else()
   list(APPEND CLOC_SRCS_LIB
     ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/os_library.cpp
-    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/options.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
   )
 endif()
 

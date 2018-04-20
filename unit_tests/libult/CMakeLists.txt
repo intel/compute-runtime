@@ -39,6 +39,8 @@ apply_macro_for_each_gen("TESTED")
 set(IGDRCL_SRCS_LIB_ULT
   ${IGDRCL_SOURCE_DIR}/unit_tests/abort.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/built_ins_helper.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/create_tbx_sockets.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/libult/ult_command_stream_receiver.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/debug_helpers.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/memory_management.h
@@ -50,6 +52,14 @@ set(IGDRCL_SRCS_LIB_ULT
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_family.cpp
 )
+
+if(SOURCE_LEVEL_DEBUGGER_HEADERS_DIR)
+  list(APPEND IGDRCL_SRCS_LIB_ULT
+    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/libult/source_level_debugger_library.h
+  )
+endif()
 
 add_library (igdrcl_libult OBJECT
   ${IGDRCL_SRCS_LIB_ULT}

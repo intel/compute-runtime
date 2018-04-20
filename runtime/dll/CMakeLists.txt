@@ -30,6 +30,7 @@ set(RUNTIME_SRCS_DLL_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/create_deferred_deleter.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_tbx_sockets.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger.cpp
 
   ${IGDRCL_SOURCE_DIR}/runtime/api/api.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/resource_info.cpp
@@ -44,10 +45,12 @@ set(RUNTIME_SRCS_DLL_BASE
 )
 
 set(RUNTIME_SRCS_DLL_LINUX
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/options.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/page_table_mngr.cpp
   ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/sys_calls.cpp
