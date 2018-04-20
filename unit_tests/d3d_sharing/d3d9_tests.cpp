@@ -863,109 +863,109 @@ TEST_F(D3D9Tests, fillTexture3dDesc) {
     EXPECT_TRUE(memcmp(&requestedDesc, &expectedDesc, sizeof(D3D9::D3DTexture3dDesc)) == 0);
 }
 
-TEST_F(D3D9Tests, givingImproperPlatformWhileGettindDeviceIDsFromDX9ReturnsError) {
+TEST_F(D3D9Tests, givenImproperPlatformWhenGettingDeviceIDsFromDX9ThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clGetDeviceIDsFromDX9INTEL(nullptr, 1, nullptr, 1, 1, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileAcquiringDX9ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenDX9ObjectsAreAcquiredThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueAcquireDX9ObjectsINTEL(nullptr, 1, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileReleasingDX9ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenDX9ObjectsAreReleasedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueReleaseDX9ObjectsINTEL(nullptr, 1, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperPlatformWhileGettingDeviceIDsFromDX9MediaAdapterReturnsError) {
+TEST_F(D3D9Tests, givenImproperPlatformWhenGettingDeviceIDsFromDX9MediaAdapterThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clGetDeviceIDsFromDX9MediaAdapterKHR(nullptr, 1, nullptr, nullptr, 1, 1, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileAcquiringDX9MediaSurfacesReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenDX9MediaSurfacesAreAcquiredThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueAcquireDX9MediaSurfacesKHR(nullptr, 1, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileReleasingDX9MediaSurfacesReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenDX9MediaSurfacesAreReleasedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueReleaseDX9MediaSurfacesKHR(nullptr, 1, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperPlatformWhileGettingDeviceIDsFromD3D10ReturnsError) {
+TEST_F(D3D9Tests, givenImproperPlatformWhenGettingDeviceIDsFromD3D10ThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clGetDeviceIDsFromD3D10KHR(nullptr, 0, nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D10BufferReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D10BufferThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D10BufferKHR(nullptr, 0, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D10Texture2DReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D10Texture2DThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D10Texture2DKHR(nullptr, 0, nullptr, 0u, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D10Texture3DReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D10Texture3DThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D10Texture3DKHR(nullptr, 0, nullptr, 0u, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileAcquiringD3D10ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenD3D10ObjectsAreAcquiredThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueAcquireD3D10ObjectsKHR(nullptr, 0, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileReleasingD3D10ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenD3D10ObjectsAreReleasedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueReleaseD3D10ObjectsKHR(nullptr, 0, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperPlatformWhileGettingDeviceIDsFromD3D11ReturnsError) {
+TEST_F(D3D9Tests, givenImproperPlatformWhenGettingDeviceIDsFromD3D11ThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clGetDeviceIDsFromD3D11KHR(nullptr, 0, nullptr, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PLATFORM, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D11BufferReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D11BufferThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D11BufferKHR(nullptr, 0, nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D11Texture2DReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D11Texture2DThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D11Texture2DKHR(nullptr, 0, nullptr, 0u, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperContextWhileCreatingFromD3D11Texture3DReturnsError) {
+TEST_F(D3D9Tests, givenImproperContextWhenCreatingFromD3D11Texture3DThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     clCreateFromD3D11Texture3DKHR(nullptr, 0, nullptr, 0u, &retVal);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileAcquiringD3D11ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenD3D11ObjectsAreAcquiredThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueAcquireD3D11ObjectsKHR(nullptr, 0, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST_F(D3D9Tests, givingImproperCommandQueueWhileReleasingD3D11ObjectsReturnsError) {
+TEST_F(D3D9Tests, givenImproperCommandQueueWhenD3D11ObjectsAreReleasedThenReturnError) {
     cl_int retVal = CL_SUCCESS;
     retVal = clEnqueueReleaseD3D11ObjectsKHR(nullptr, 0, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
