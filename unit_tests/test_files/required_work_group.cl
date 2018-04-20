@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-__kernel __attribute__((reqd_work_group_size(16, 8, 4)))
+__kernel __attribute__((reqd_work_group_size(8, 4, 4)))
 void CopyBuffer(
     __global unsigned int *src,
     __global unsigned int *dst)

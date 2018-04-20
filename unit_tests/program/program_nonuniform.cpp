@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -240,7 +240,7 @@ TEST_F(ProgramNonUniformTest, ExecuteKernelNonUniform21) {
         ASSERT_NE(nullptr, pKernel);
 
         size_t globalWorkSize[3] = {12, 12, 12};
-        size_t localWorkSize[3] = {11, 12, 12};
+        size_t localWorkSize[3] = {11, 12, 1};
 
         retVal = pCmdQ->enqueueKernel(
             pKernel,

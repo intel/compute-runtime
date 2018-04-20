@@ -71,6 +71,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
     }
 
     size_t remainder = 0;
+    size_t totalWorkItems = 1u;
     const size_t *localWkgSizeToPass = localWorkSizeIn ? workGroupSize : nullptr;
 
     for (auto i = 0u; i < workDim; i++) {
@@ -86,6 +87,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
                 }
             }
             workGroupSize[i] = localWorkSizeIn[i];
+            totalWorkItems *= localWorkSizeIn[i];
         }
 
         remainder += region[i] % workGroupSize[i];
@@ -125,6 +127,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
             ",", globalWorkSizeIn[1],
             ",", globalWorkSizeIn[2],
             ",SIMD:, ", kernel.getKernelInfo().getMaxSimdSize());
+
+    if (totalWorkItems > this->getDevice().getDeviceInfo().maxWorkGroupSize) {
+        return CL_INVALID_WORK_GROUP_SIZE;
+    }
 
     enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(
         surfaces,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -78,12 +78,12 @@ TEST_F(EnqueueKernelRequiredWorkSize, unspecifiedWorkGroupSize) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->localWorkSizeX, 16u);
-    EXPECT_EQ(*pKernel->localWorkSizeY, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeY, 4u);
     EXPECT_EQ(*pKernel->localWorkSizeZ, 4u);
 
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 16u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 4u);
     EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 4u);
 }
 
@@ -91,7 +91,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, unspecifiedWorkGroupSize) {
 TEST_F(EnqueueKernelRequiredWorkSize, matchingRequiredWorkGroupSize) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {32, 32, 32};
-    size_t localWorkSize[3] = {16, 8, 4};
+    size_t localWorkSize[3] = {8, 4, 4};
 
     auto retVal = pCmdQ->enqueueKernel(
         pKernel,
@@ -105,12 +105,12 @@ TEST_F(EnqueueKernelRequiredWorkSize, matchingRequiredWorkGroupSize) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 16u);
-    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeY, 4u);
     EXPECT_EQ(*pKernel->enqueuedLocalWorkSizeZ, 4u);
 
-    EXPECT_EQ(*pKernel->localWorkSizeX, 16u);
-    EXPECT_EQ(*pKernel->localWorkSizeY, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeX, 8u);
+    EXPECT_EQ(*pKernel->localWorkSizeY, 4u);
     EXPECT_EQ(*pKernel->localWorkSizeZ, 4u);
 }
 
@@ -118,7 +118,7 @@ TEST_F(EnqueueKernelRequiredWorkSize, matchingRequiredWorkGroupSize) {
 TEST_F(EnqueueKernelRequiredWorkSize, givenKernelRequiringLocalWorkgroupSizeWhen1DimensionIsPassedThatIsCorrectThenNdRangeIsSuccesful) {
     size_t globalWorkOffset[1] = {0};
     size_t globalWorkSize[1] = {32};
-    size_t localWorkSize[1] = {16};
+    size_t localWorkSize[1] = {8};
 
     auto retVal = pCmdQ->enqueueKernel(
         pKernel,
