@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -82,7 +82,9 @@ block_advanced_motion_estimate_check_intel(
                  get_global_offset(1); // 16 pixels tall MBs (globally scalar)
 
     uint curMB = gid_0 + gid_1 * width; // current MB id
-    short2 count = count_motion_vector_buffer[curMB];
+    short2 count = 0;
+    if(count_motion_vector_buffer != NULL)
+    count = count_motion_vector_buffer[curMB];
 
     int countPredMVs = count.x;
     if (countPredMVs != 0) {
@@ -94,11 +96,12 @@ block_advanced_motion_estimate_check_intel(
 
       int2 predMV = 0;
       if (get_local_id(0) < countPredMVs) {
+        if(predictors_buffer != NULL){
         predMV =
             convert_int2(predictors_buffer[offset]); // one MV per work-item
         predMV.x /= 4;
         predMV.y /= 4;
-        predMV.y &= 0xFFFE;
+        predMV.y &= 0xFFFE;}
       }
 
       // Do up to 8 IMEs, get the best MVs and their distortions, and optionally
@@ -152,9 +155,10 @@ block_advanced_motion_estimate_check_intel(
       if ((skip_block_type == 0x0) | ((doIntra) & (countSkipMVs == 0))) {
         int skipMVs = 0;
         if (get_local_id(0) < countSkipMVs) {
+          if(skip_motion_vector_buffer != NULL ) {
           __global int *skip1_motion_vector_buffer =
               (__global int *)skip_motion_vector_buffer;
-          skipMVs = skip1_motion_vector_buffer[offset]; // one packed MV for one
+          skipMVs = skip1_motion_vector_buffer[offset]; } // one packed MV for one
                                                         // work-item
         }
         intel_work_group_vme_mb_multi_check_16x16(
@@ -174,9 +178,10 @@ block_advanced_motion_estimate_check_intel(
       if ((skip_block_type == 0x1) & (countSkipMVs > 0)) {
         int4 skipMVs = 0;
         if (get_local_id(0) < countSkipMVs) {
+          if(skip_motion_vector_buffer != NULL){
           __global int4 *skip4_motion_vector_buffer =
               (__global int4 *)(skip_motion_vector_buffer);
-          skipMVs = skip4_motion_vector_buffer[offset]; // four component MVs
+          skipMVs = skip4_motion_vector_buffer[offset]; } // four component MVs
                                                         // per work-item
         }
         intel_work_group_vme_mb_multi_check_8x8(
@@ -221,11 +226,10 @@ block_advanced_motion_estimate_check_intel(
         //    offset index.
 
         short2 val = as_short2(dstSearch[8 + get_local_id(0) * 2]);
+        if(motion_vector_buffer != NULL)
         motion_vector_buffer[index] = val;
 
-#ifndef HW_NULL_CHECK
         if (residuals != NULL)
-#endif
         {
           residuals[index] = distSearch[get_local_id(0)];
         }
@@ -250,11 +254,10 @@ block_advanced_motion_estimate_check_intel(
           //    with offset index.
 
           short2 val = as_short2(dstSearch[8 + get_local_id(0) * 4 * 2]);
+          if(motion_vector_buffer != NULL)
           motion_vector_buffer[index] = val;
 
-#ifndef HW_NULL_CHECK
           if (residuals != NULL)
-#endif
           {
             residuals[index] = distSearch[get_local_id(0) * 4];
           }
@@ -276,11 +279,10 @@ block_advanced_motion_estimate_check_intel(
           //    location 0 of search_residuals with offset index.
 
           short2 val = as_short2(dstSearch[8]);
+          if(motion_vector_buffer != NULL)
           motion_vector_buffer[index] = val;
 
-#ifndef HW_NULL_CHECK
           if (residuals != NULL)
-#endif
           {
             residuals[index] = distSearch[0];
           }
@@ -307,6 +309,7 @@ block_advanced_motion_estimate_check_intel(
           // 2. The work-item gathers distSkip locations 0, 16*1, .., 16*7 and
           //    copies them to contiguous skip_residual locations 0, 1, 2, ..,
           //    7.
+          if(skip_residuals != NULL)
           skip_residuals[index] = distSkip[get_local_id(0) * 16];
         }
       } else {
@@ -322,9 +325,9 @@ block_advanced_motion_estimate_check_intel(
           // 2. The work-item gathers distSkip locations 0, 4*1, .., 4*31 and
           //    copies them to contiguous skip_residual locations 0, 1, 2, ..,
           //    31.
-
+          if(skip_resiudals != NULL){
           skip_residuals[index] = distSkip[get_local_id(0) * 4];
-          skip_residuals[index + 16] = distSkip[(get_local_id(0) + 16) * 4];
+          skip_residuals[index + 16] = distSkip[(get_local_id(0) + 16) * 4];}
         }
       }
     }
@@ -345,8 +348,9 @@ block_advanced_motion_estimate_check_intel(
         char value = dstIntra_4x4[get_local_id(0)];
         char value_low = (value)&0xf;
         char value_high = (value >> 4) & 0xf;
+        if(intra_search_predictor_modes != NULL){
         intra_search_predictor_modes[index_low + 5] = value_low;
-        intra_search_predictor_modes[index_high + 5] = value_high;
+        intra_search_predictor_modes[index_high + 5] = value_high;}
       }
 
       // Write out the 8x8 intra modes
@@ -356,6 +360,7 @@ block_advanced_motion_estimate_check_intel(
         char value = dstIntra_8x8[get_local_id(0) * 2];
         char value_low = (value)&0xf;
         int index = (gid_0 * 22) + (get_local_id(0)) + (gid_1 * 22 * width);
+        if(intra_search_predictor_modes != NULL)
         intra_search_predictor_modes[index + 1] = value_low;
       }
 
@@ -365,13 +370,12 @@ block_advanced_motion_estimate_check_intel(
             (__local char *)(&dstSkipIntra[64 + 0 + 4]);
         char value = dstIntra_16x16[get_local_id(0)];
         char value_low = (value)&0xf;
+        if(intra_search_predictor_modes != NULL)
         intra_search_predictor_modes[index_low] = value_low;
       }
 
 // Get the intra residuals.
-#ifndef HW_NULL_CHECK
       if (intra_residuals != NULL)
-#endif
       {
         int index = (gid_0 * 4) + (gid_1 * 4 * width);
 
