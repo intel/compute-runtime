@@ -27,6 +27,7 @@
 #include "runtime/helpers/validators.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -132,6 +133,30 @@ TEST(DeviceList, nonZeroCount_nullPointer) {
 TEST(DeviceList, nonZeroCount_noNullPointer) {
     cl_device_id devList = (cl_device_id)ptrGarbage;
     EXPECT_EQ(CL_INVALID_DEVICE, validateObjects(DeviceList(1, &devList)));
+}
+
+TEST(MemObjList, zeroCount_nonNullPointer) {
+    cl_mem memList = static_cast<cl_mem>(ptrGarbage);
+    EXPECT_EQ(CL_INVALID_VALUE, validateObjects(MemObjList(0, &memList)));
+}
+
+TEST(MemObjList, zeroCount_nullPointer) {
+    EXPECT_EQ(CL_SUCCESS, validateObjects(MemObjList(0, nullptr)));
+}
+
+TEST(MemObjList, nonZeroCount_nullPointer) {
+    EXPECT_EQ(CL_INVALID_VALUE, validateObjects(MemObjList(1, nullptr)));
+}
+
+TEST(MemObjList, nonZeroCount_noNullPointer) {
+    cl_mem memList = static_cast<cl_mem>(ptrGarbage);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, validateObjects(MemObjList(1, &memList)));
+}
+
+TEST(MemObjList, nonZeroCount_validPointer) {
+    std::unique_ptr<MockBuffer> buffer(new MockBuffer());
+    cl_mem memList = static_cast<cl_mem>(buffer.get());
+    EXPECT_EQ(CL_SUCCESS, validateObjects(MemObjList(1, &memList)));
 }
 
 TEST(NonZeroBufferSizeValidator, zero) {

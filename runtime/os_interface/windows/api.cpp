@@ -343,11 +343,13 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObj = castToObject<MemObj>(memObjects[object]);
-        if (memObj == nullptr) {
-            return CL_INVALID_MEM_OBJECT;
-        }
         if (memObj->acquireCount >= 1) {
             return CL_D3D10_RESOURCE_ALREADY_ACQUIRED_KHR;
         }
@@ -365,11 +367,13 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
-        if (memObject == nullptr) {
-            return CL_INVALID_MEM_OBJECT;
-        }
         if (memObject->acquireCount == 0) {
             return CL_D3D10_RESOURCE_NOT_ACQUIRED_KHR;
         }
@@ -504,11 +508,13 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObj = castToObject<MemObj>(memObjects[object]);
-        if (memObj == nullptr) {
-            return CL_INVALID_MEM_OBJECT;
-        }
         if (memObj->acquireCount >= 1) {
             return CL_D3D11_RESOURCE_ALREADY_ACQUIRED_KHR;
         }
@@ -526,11 +532,13 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
-        if (memObject == nullptr) {
-            return CL_INVALID_MEM_OBJECT;
-        }
         if (memObject->acquireCount == 0) {
             return CL_D3D11_RESOURCE_NOT_ACQUIRED_KHR;
         }
