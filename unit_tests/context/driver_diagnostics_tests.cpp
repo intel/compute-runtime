@@ -413,6 +413,34 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
     context->release();
 }
 
+TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndPrintDriverDiagnosticsToFileDebugModesEnabledWhenHintIsCalledThenDriverProvidedOutputOnLogFile) {
+    DebugManagerStateRestore dbgRestore;
+    auto hintLevel = 255;
+    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    DebugManager.flags.PrintDriverDiagnosticsToFile.set(true);
+
+    std::remove(DebugManager.getLogFileName());
+    ASSERT_FALSE(fileExists(DebugManager.getLogFileName()));
+
+    auto pDevice = castToObject<Device>(devices[0]);
+    cl_device_id clDevice = pDevice;
+
+    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
+    context->release();
+
+    void *pLogBuffer;
+    size_t logSize;
+    EXPECT_TRUE(fileExists(DebugManager.getLogFileName()));
+    EXPECT_TRUE(fileExistsHasSize(DebugManager.getLogFileName()));
+    logSize = loadDataFromFile(DebugManager.getLogFileName(), pLogBuffer);
+    EXPECT_NE(0u, logSize);
+    EXPECT_NE(nullptr, pLogBuffer);
+    EXPECT_EQ('\n', ((char *)pLogBuffer)[0]);
+    deleteDataReadFromFile(pLogBuffer);
+    std::remove(DebugManager.getLogFileName());
+}
+
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenContextIsBeingCreatedThenPropertiesPassedToContextAreOverwritten) {
     DebugManagerStateRestore dbgRestore;
     auto hintLevel = 1;

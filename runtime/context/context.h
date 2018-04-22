@@ -111,7 +111,13 @@ class Context : public BaseObject<_cl_context> {
                 contextCallback(hint, &flags, sizeof(flags), userData);
             }
             if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
-                printf("\n%s\n", hint);
+                if (DebugManager.flags.PrintDriverDiagnosticsToFile.get()) {
+                    char prettyHint[DriverDiagnostics::maxHintStringSize + 2];
+                    int length = snprintf(prettyHint, DriverDiagnostics::maxHintStringSize + 2, "\n%s\n", hint);
+                    DebugManager.writeToFile(DebugManager.getLogFileName(), prettyHint, length, std::ios::app);
+                } else {
+                    printf("\n%s\n", hint);
+                }
             }
         }
     }
