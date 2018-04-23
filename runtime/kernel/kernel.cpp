@@ -1133,6 +1133,11 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         storeKernelArg(argIndex, BUFFER_OBJ, nullptr, argVal, argSize);
 
+        if (requiresSshForBuffers()) {
+            auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
+            Buffer::setSurfaceState(&getContext(), surfaceState, 0, nullptr);
+        }
+
         return CL_SUCCESS;
     }
 }

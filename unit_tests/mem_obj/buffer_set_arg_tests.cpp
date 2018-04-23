@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gtest/gtest.h"
+#include "test.h"
 
 using namespace OCLRT;
 
@@ -73,6 +74,11 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].size = sizeOfPointer;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeOfPointer;
 
+        kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+        pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
+        pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+        pKernelInfo->usesSsh = true;
+
         pProgram = new MockProgram(pContext, false);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
@@ -102,6 +108,8 @@ class BufferSetArgTest : public ContextFixture,
     MockProgram *pProgram;
     MockKernel *pKernel = nullptr;
     KernelInfo *pKernelInfo = nullptr;
+    SKernelBinaryHeaderCommon kernelHeader;
+    char surfaceStateHeap[0x80];
     char pCrossThreadData[64];
     Buffer *buffer = nullptr;
 };
@@ -121,6 +129,43 @@ TEST_F(BufferSetArgTest, setKernelArgBufferWithWrongSizeReturnsInvalidArgValueEr
     cl_mem arg = buffer;
     cl_int err = pKernel->setArgBuffer(0, sizeof(cl_mem) + 1, arg);
     EXPECT_EQ(CL_INVALID_ARG_VALUE, err);
+}
+
+HWTEST_F(BufferSetArgTest, givenSetArgBufferWhenNullArgStatefulThenProgramNullSurfaceState) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+
+    auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
+        ptrOffset(pKernel->getSurfaceStateHeap(),
+                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+
+    pKernelInfo->requiresSshForBuffers = true;
+
+    cl_int ret = pKernel->setArgBuffer(0, sizeof(cl_mem), nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    auto surfaceFormat = surfaceState->getSurfaceType();
+    auto surfacetype = surfaceState->getSurfaceFormat();
+
+    EXPECT_EQ(surfaceFormat, RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL);
+    EXPECT_EQ(surfacetype, SURFACE_FORMAT::SURFACE_FORMAT_RAW);
+}
+
+HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramNullSurfaceState) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+
+    char sshOriginal[sizeof(surfaceStateHeap)];
+    memcpy(sshOriginal, surfaceStateHeap, sizeof(surfaceStateHeap));
+
+    pKernelInfo->requiresSshForBuffers = false;
+
+    cl_int ret = pKernel->setArgBuffer(0, sizeof(cl_mem), nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, ret);
+
+    EXPECT_EQ(memcmp(sshOriginal, surfaceStateHeap, sizeof(surfaceStateHeap)), 0);
 }
 
 TEST_F(BufferSetArgTest, setKernelArgBufferFor32BitAddressing) {
