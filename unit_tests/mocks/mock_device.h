@@ -36,7 +36,9 @@ class MockMemoryManager;
 class MockDevice : public Device {
   public:
     using Device::commandStreamReceiver;
+    using Device::createDeviceImpl;
     using Device::initializeCaps;
+    using Device::sourceLevelDebugger;
 
     void setOSTime(OSTime *osTime);
     void setDriverInfo(DriverInfo *driverInfo);

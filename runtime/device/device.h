@@ -37,6 +37,7 @@ class MemoryManager;
 class OSTime;
 class DriverInfo;
 struct HardwareInfo;
+class SourceLevelDebugger;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -169,6 +170,7 @@ class Device : public BaseObject<_cl_device_id> {
 
     PreemptionMode preemptionMode;
     EngineType engineType;
+    std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
 };
 
 template <cl_device_info Param>

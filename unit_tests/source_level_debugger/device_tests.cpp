@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_builtins.h"
@@ -32,7 +33,18 @@ using namespace OCLRT;
 
 class MockDeviceWithActiveDebugger : public MockDevice {
   public:
-    MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {}
+    class MockOsLibrary : public OsLibrary {
+      public:
+        void *getProcAddress(const std::string &procName) override {
+            return nullptr;
+        }
+        bool isLoaded() override {
+            return false;
+        }
+    };
+    MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {
+        sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
+    }
 
     void initializeCaps() override {
         MockDevice::initializeCaps();

@@ -20,12 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/device/device.h"
+#include "runtime/os_interface/os_interface.h"
+#include "runtime/program/kernel_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/libult/source_level_debugger_library.h"
+#include "unit_tests/libult/create_command_stream.h"
 
 #include <gtest/gtest.h>
+#include <memory>
 
 using namespace OCLRT;
+using std::unique_ptr;
 
 class DebuggerLibraryRestorer {
   public:
@@ -45,7 +52,7 @@ class DebuggerLibraryRestorer {
 class MockSourceLevelDebugger : public SourceLevelDebugger {
   public:
     using SourceLevelDebugger::debuggerLibrary;
-    MockSourceLevelDebugger() = default;
+    MockSourceLevelDebugger() : SourceLevelDebugger(SourceLevelDebugger::loadDebugger()) {}
     void setActive(bool active) {
         isActive = active;
     }
@@ -59,7 +66,7 @@ TEST(SourceLevelDebugger, givenNoKernelDebuggerLibraryWhenSourceLevelDebuggerIsC
     EXPECT_EQ(nullptr, debugger.debuggerLibrary.get());
 }
 
-TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiveIsCalledThenLibraryIsLoadedAndFalseIsReturned) {
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenSourceLevelDebuggerIsConstructedThenLibraryIsLoaded) {
     DebuggerLibraryRestorer restorer;
     DebuggerLibrary::setLibraryAvailable(true);
 
@@ -67,9 +74,19 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiv
     EXPECT_NE(nullptr, debugger.debuggerLibrary.get());
 }
 
-TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiveIsCalledThenTrueIsReturned) {
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryAvailableWhenIsDebuggerActiveIsCalledThenFalseIsReturned) {
     DebuggerLibraryRestorer restorer;
     DebuggerLibrary::setLibraryAvailable(true);
+
+    MockSourceLevelDebugger debugger;
+    bool active = debugger.isDebuggerActive();
+    EXPECT_FALSE(active);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsDebuggerActiveIsCalledThenTrueIsReturned) {
+    DebuggerLibraryRestorer restorer;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
 
     MockSourceLevelDebugger debugger;
     bool active = debugger.isDebuggerActive();
@@ -90,6 +107,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifySourceCodeIs
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
@@ -110,6 +128,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifySourceCod
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
@@ -126,6 +145,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyNewDeviceIsC
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
@@ -140,6 +160,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyNewDevice
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
@@ -154,6 +175,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenIsOptimizationDisa
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
@@ -186,6 +208,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerWhenGetDebuggerOptionReturnsZeroThe
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     char value = '1';
@@ -205,6 +228,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOption
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     char value = '1';
@@ -224,6 +248,7 @@ TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOption
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     char value = '0';
@@ -243,10 +268,178 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenNotifyKernelDebugD
 
     DebuggerLibraryInterceptor interceptor;
     DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
     MockSourceLevelDebugger debugger;
-    debugger.notifyKernelDebugData();
+    char isa[8];
+    char dbgIsa[10];
+    char visa[12];
+
+    KernelInfo info;
+    info.debugData.genIsa = dbgIsa;
+    info.debugData.vIsa = visa;
+    info.debugData.genIsaSize = sizeof(dbgIsa);
+    info.debugData.vIsaSize = sizeof(visa);
+
+    info.name = "debugKernel";
+
+    SKernelBinaryHeaderCommon kernelHeader;
+    kernelHeader.KernelHeapSize = sizeof(isa);
+    info.heapInfo.pKernelHeader = &kernelHeader;
+    info.heapInfo.pKernelHeap = isa;
+
+    debugger.notifyKernelDebugData(6, &info);
 
     EXPECT_TRUE(interceptor.kernelDebugDataCalled);
+
+    EXPECT_EQ(static_cast<uint32_t>(IGFXDBG_CURRENT_VERSION), interceptor.kernelDebugDataArgIn.version);
+    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(6), interceptor.kernelDebugDataArgIn.hDevice);
+    EXPECT_EQ(reinterpret_cast<GenRtProgramHandle>(0), interceptor.kernelDebugDataArgIn.hProgram);
+
+    EXPECT_EQ(dbgIsa, interceptor.kernelDebugDataArgIn.dbgGenIsaBuffer);
+    EXPECT_EQ(sizeof(dbgIsa), interceptor.kernelDebugDataArgIn.dbgGenIsaSize);
+    EXPECT_EQ(visa, interceptor.kernelDebugDataArgIn.dbgVisaBuffer);
+    EXPECT_EQ(sizeof(visa), interceptor.kernelDebugDataArgIn.dbgVisaSize);
+
+    EXPECT_EQ(kernelHeader.KernelHeapSize, interceptor.kernelDebugDataArgIn.KernelBinSize);
+    EXPECT_EQ(isa, interceptor.kernelDebugDataArgIn.kernelBinBuffer);
+    EXPECT_STREQ(info.name.c_str(), interceptor.kernelDebugDataArgIn.kernelName);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenNotifyKernelDebugDataIsCalledThenDebuggerLibraryFunctionIsNotCalled) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+
+    debugger.setActive(false);
+    KernelInfo info;
+    debugger.notifyKernelDebugData(6, &info);
+    EXPECT_FALSE(interceptor.kernelDebugDataCalled);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalledWithLocalMemoryUsageFalseThenDebuggerFunctionIsCalledWithCorrectArg) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+
+    debugger.initialize(false);
+    EXPECT_TRUE(interceptor.initCalled);
+    EXPECT_FALSE(interceptor.targetCapsArgIn.supportsLocalMemory);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeReturnsErrorThenIsActiveIsSetToFalse) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+
+    interceptor.initRetVal = IgfxdbgRetVal::IGFXDBG_FAILURE;
+    debugger.initialize(false);
+    EXPECT_TRUE(interceptor.initCalled);
+    EXPECT_FALSE(debugger.isDebuggerActive());
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenInitializeIsCalledWithLocalMemoryUsageTrueThenDebuggerFunctionIsCalledWithCorrectArg) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+
+    debugger.initialize(true);
+    EXPECT_TRUE(interceptor.initCalled);
+    EXPECT_TRUE(interceptor.targetCapsArgIn.supportsLocalMemory);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenInitializeIsCalledThenDebuggerFunctionIsNotCalled) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    MockSourceLevelDebugger debugger;
+
+    debugger.initialize(false);
+    EXPECT_FALSE(interceptor.initCalled);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructedThenDebuggerIsInitialized) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    EXPECT_TRUE(interceptor.initCalled);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedThenDebuggerIsNotified) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    MockDevice::createDeviceImpl(platformDevices[0], true, *device.get());
+    EXPECT_TRUE(interceptor.newDeviceCalled);
+    uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface() != nullptr ? device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
+    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedWithOsCsrThenDebuggerIsNotifiedWithCorrectDeviceHandle) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(true);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    overrideCommandStreamReceiverCreation = true;
+
+    // Device::create must be used to create correct OS memory manager
+    unique_ptr<Device> device(Device::create<Device>(platformDevices[0]));
+    ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
+
+    EXPECT_TRUE(interceptor.newDeviceCalled);
+    uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle();
+    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+}
+
+TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreatedThenDebuggerIsNotCreatedInitializedAndNotNotified) {
+    DebuggerLibraryRestorer restorer;
+
+    DebuggerLibraryInterceptor interceptor;
+    DebuggerLibrary::setLibraryAvailable(true);
+    DebuggerLibrary::setDebuggerActive(false);
+    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+    unique_ptr<MockDevice> device(DeviceHelper<>::create());
+
+    EXPECT_EQ(nullptr, device->sourceLevelDebugger.get());
+    EXPECT_FALSE(interceptor.initCalled);
+    EXPECT_FALSE(interceptor.newDeviceCalled);
 }

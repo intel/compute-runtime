@@ -30,6 +30,7 @@
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "CL/cl_ext_intel.h"
 #include "driver_version.h"
@@ -361,6 +362,6 @@ void Device::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.sourceLevelDebuggerActive = false;
+    deviceInfo.sourceLevelDebuggerActive = sourceLevelDebugger ? sourceLevelDebugger->isDebuggerActive() : false;
 }
 } // namespace OCLRT

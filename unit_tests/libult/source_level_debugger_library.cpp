@@ -25,7 +25,7 @@
 
 using namespace OCLRT;
 
-bool DebuggerLibrary::isDebuggerActive = false;
+bool DebuggerLibrary::debuggerActive = false;
 bool DebuggerLibrary::isLibraryAvailable = false;
 DebuggerLibraryInterceptor *DebuggerLibrary::interceptor = nullptr;
 
@@ -40,6 +40,8 @@ void *DebuggerLibrary::getProcAddress(const std::string &procName) {
         return reinterpret_cast<void *>(notifyKernelDebugData);
     } else if (procName == "init") {
         return reinterpret_cast<void *>(init);
+    } else if (procName == "isDebuggerActive") {
+        return reinterpret_cast<void *>(isDebuggerActive);
     }
     return nullptr;
 }
@@ -55,16 +57,18 @@ int DebuggerLibrary::notifyNewDevice(GfxDbgNewDeviceData *newDevice) {
     if (interceptor) {
         interceptor->newDeviceArgIn = *newDevice;
         interceptor->newDeviceCalled = true;
+        return interceptor->newDeviceRetVal;
     }
-    return 0;
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
 }
 
 int DebuggerLibrary::notifySourceCode(GfxDbgSourceCode *sourceCode) {
     if (interceptor) {
         interceptor->sourceCodeArgIn = *sourceCode;
         interceptor->sourceCodeCalled = true;
+        return interceptor->sourceCodeRetVal;
     }
-    return 0;
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
 }
 
 int DebuggerLibrary::getDebuggerOption(GfxDbgOption *option) {
@@ -77,21 +81,27 @@ int DebuggerLibrary::getDebuggerOption(GfxDbgOption *option) {
         }
         return interceptor->optionRetVal;
     }
-    return true;
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
 }
 
 int DebuggerLibrary::notifyKernelDebugData(GfxDbgKernelDebugData *kernelDebugData) {
     if (interceptor) {
         interceptor->kernelDebugDataArgIn = *kernelDebugData;
         interceptor->kernelDebugDataCalled = true;
+        return interceptor->kernelDebugDataRetVal;
     }
-    return 0;
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
 }
 
 int DebuggerLibrary::init(GfxDbgTargetCaps *targetCaps) {
     if (interceptor) {
         interceptor->targetCapsArgIn = *targetCaps;
-        interceptor->targetCapsCalled = true;
+        interceptor->initCalled = true;
+        return interceptor->initRetVal;
     }
-    return 0;
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
+}
+
+int DebuggerLibrary::isDebuggerActive(void) {
+    return debuggerActive ? 1 : 0;
 }

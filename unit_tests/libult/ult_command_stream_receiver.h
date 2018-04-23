@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include <map>

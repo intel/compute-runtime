@@ -117,6 +117,13 @@ struct WorkSizeInfo {
     void checkRatio(const size_t workItems[3]);
 };
 
+struct DebugData {
+    uint32_t vIsaSize = 0;
+    uint32_t genIsaSize = 0;
+    const char *vIsa = nullptr;
+    const char *genIsa = nullptr;
+};
+
 struct KernelInfo {
   public:
     static KernelInfo *create();
@@ -243,5 +250,6 @@ struct KernelInfo {
     uint64_t kernelId = 0;
     bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
+    DebugData debugData;
 };
 } // namespace OCLRT

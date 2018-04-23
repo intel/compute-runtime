@@ -43,13 +43,13 @@ struct DebuggerLibraryInterceptor {
     bool sourceCodeCalled = false;
     bool optionCalled = false;
     bool kernelDebugDataCalled = false;
-    bool targetCapsCalled = false;
+    bool initCalled = false;
 
     int newDeviceRetVal = 0;
     int sourceCodeRetVal = 0;
     int optionRetVal = 0;
     int kernelDebugDataRetVal = 0;
-    int targetCapsRetVal = 0;
+    int initRetVal = 0;
 };
 
 class DebuggerLibrary : public OCLRT::OsLibrary {
@@ -64,11 +64,11 @@ class DebuggerLibrary : public OCLRT::OsLibrary {
     }
 
     static void setDebuggerActive(bool active) {
-        isDebuggerActive = active;
+        debuggerActive = active;
     }
 
     static bool getDebuggerActive() {
-        return isDebuggerActive;
+        return debuggerActive;
     }
 
     static void setLibraryAvailable(bool available) {
@@ -95,7 +95,8 @@ class DebuggerLibrary : public OCLRT::OsLibrary {
     static int getDebuggerOption(GfxDbgOption *);
     static int notifyKernelDebugData(GfxDbgKernelDebugData *);
     static int init(GfxDbgTargetCaps *);
+    static int isDebuggerActive(void);
 
     static bool isLibraryAvailable;
-    static bool isDebuggerActive;
+    static bool debuggerActive;
 };

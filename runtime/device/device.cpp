@@ -22,6 +22,7 @@
 
 #include "hw_cmds.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/sip.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/preemption.h"
@@ -33,7 +34,9 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include <cstring>
 #include <map>
 
@@ -84,6 +87,12 @@ Device::Device(const HardwareInfo &hwInfo,
     engineType = DebugManager.flags.NodeOrdinal.get() == -1
                      ? hwInfo.capabilityTable.defaultEngineType
                      : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+
+    sourceLevelDebugger.reset(SourceLevelDebugger::create());
+    if (sourceLevelDebugger) {
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
+        sourceLevelDebugger->initialize(localMemorySipAvailable);
+    }
 }
 
 Device::~Device() {
@@ -161,6 +170,15 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
             pDevice->performanceCounters = createPerformanceCountersFunc(pDevice->osTime.get());
             pDevice->performanceCounters->initialize(pHwInfo);
         }
+    }
+
+    uint32_t deviceHandle = 0;
+    if (commandStreamReceiver->getOSInterface()) {
+        deviceHandle = commandStreamReceiver->getOSInterface()->getDeviceHandle();
+    }
+
+    if (pDevice->deviceInfo.sourceLevelDebuggerActive) {
+        pDevice->sourceLevelDebugger->notifyNewDevice(deviceHandle);
     }
 
     outDevice.memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);

@@ -25,22 +25,26 @@
 #include <memory>
 
 namespace OCLRT {
+struct KernelInfo;
+
 class SourceLevelDebugger {
   public:
-    SourceLevelDebugger();
+    SourceLevelDebugger(OsLibrary *library);
     ~SourceLevelDebugger();
     SourceLevelDebugger(const SourceLevelDebugger &ref) = delete;
     SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
+    static SourceLevelDebugger *create();
 
     bool isDebuggerActive();
     void notifyNewDevice(uint32_t deviceHandle) const;
     void notifySourceCode(uint32_t deviceHandle, const char *sourceCode, size_t size) const;
     bool isOptimizationDisabled() const;
-    void notifyKernelDebugData() const;
+    void notifyKernelDebugData(uint32_t deviceHandle, const KernelInfo *kernelInfo) const;
+    void initialize(bool useLocalMemory);
 
   protected:
     class SourceLevelDebuggerInterface;
-    SourceLevelDebuggerInterface *interface = nullptr;
+    SourceLevelDebuggerInterface *sourceLevelDebuggerInterface = nullptr;
 
     static OsLibrary *loadDebugger();
     void getFunctions();
@@ -53,6 +57,7 @@ class SourceLevelDebugger {
     static const char *getDebuggerOptionSymbol;
     static const char *notifyKernelDebugDataSymbol;
     static const char *initSymbol;
+    static const char *isDebuggerActiveSymbol;
     // OS specific library name
     static const char *dllName;
 };
