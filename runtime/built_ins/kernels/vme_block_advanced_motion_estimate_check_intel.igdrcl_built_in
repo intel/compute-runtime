@@ -325,7 +325,7 @@ block_advanced_motion_estimate_check_intel(
           // 2. The work-item gathers distSkip locations 0, 4*1, .., 4*31 and
           //    copies them to contiguous skip_residual locations 0, 1, 2, ..,
           //    31.
-          if(skip_resiudals != NULL){
+          if(skip_residuals != NULL){
           skip_residuals[index] = distSkip[get_local_id(0) * 4];
           skip_residuals[index + 16] = distSkip[(get_local_id(0) + 16) * 4];}
         }
