@@ -45,8 +45,9 @@ set(RUNTIME_SRCS_DLL_BASE
 )
 
 set(RUNTIME_SRCS_DLL_LINUX
-  ${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/allocator_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linux/drm_neo_create.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/linux/options.cpp
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS

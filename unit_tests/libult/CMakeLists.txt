@@ -120,6 +120,7 @@ set(IGDRCL_SRCS_LIB_ULT_ENV_WINDOWS
 
 set(IGDRCL_SRCS_LIB_ULT_ENV_LINUX
   ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/options.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/linux/allocator_helper.cpp
 )
 
 if(WIN32)

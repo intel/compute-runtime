@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,7 @@
 
 #include <memory>
 #include "runtime/os_interface/32bit_memory.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/basic_math.h"
@@ -105,7 +106,7 @@ OCLRT::Allocator32bit::Allocator32bit() : Allocator32bit(new OsInternals) {
 OCLRT::Allocator32bit::Allocator32bit(Allocator32bit::OsInternals *osInternalsIn) : osInternals(osInternalsIn) {
 
     if (DebugManager.flags.UseNewHeapAllocator.get()) {
-        size_t sizeToMap = alignUp(4 * GB - 8096, 4096);
+        size_t sizeToMap = getSizeToMap();
         void *ptr = MAP_FAILED;
 
         ptr = this->osInternals->mmapFunction(nullptr, sizeToMap, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);

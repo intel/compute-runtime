@@ -705,6 +705,7 @@ class DrmCommandStreamEnhancedFixture
     DrmMockCustom *mock;
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
     DrmMemoryManager *mm = nullptr;
+    MockDevice *device = nullptr;
     DebugManagerStateRestore *dbgState;
 
     void SetUp() {
@@ -719,12 +720,15 @@ class DrmCommandStreamEnhancedFixture
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
         ASSERT_NE(nullptr, mm);
+        device = MockDevice::createWithMemoryManager<MockDevice>(platformDevices[0], mm);
+        ASSERT_NE(nullptr, device);
+        mm->device = device;
     }
 
     void TearDown() {
         //And close at destruction
         delete csr;
-        delete mm;
+        delete device;
         delete mock;
         delete dbgState;
     }
@@ -942,19 +946,13 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenDrmCsrCreatedWithInactiveGemCloseWor
 class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixture> {
   public:
     DrmAllocation *tagAllocation;
-    DrmAllocation *preemptionAllocation = nullptr;
+    DrmAllocation *preemptionAllocation;
     void SetUp() override {
         DrmCommandStreamEnhancedFixture::SetUp();
-        tagAllocation = mm->allocateGraphicsMemory(1024, 4096);
-        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
-            preemptionAllocation = mm->allocateGraphicsMemory(1024, 4096);
-        }
+        tagAllocation = static_cast<DrmAllocation *>(device->getTagAllocation());
+        preemptionAllocation = static_cast<DrmAllocation *>(device->getPreemptionAllocation());
     }
     void TearDown() override {
-        if (preemptionAllocation) {
-            mm->freeGraphicsMemory(preemptionAllocation);
-        }
-        mm->freeGraphicsMemory(tagAllocation);
         DrmCommandStreamEnhancedFixture::TearDown();
     }
 };
@@ -974,10 +972,10 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
-    //preemption allocation in Mid Thread preemption mode
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+    //preemption allocation + Sip Kernel
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
 
-    EXPECT_EQ(5 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
     uint64_t flags = I915_EXEC_RENDER | I915_EXEC_NO_RELOC;
     EXPECT_EQ(flags, this->mock->execBuffer.flags);
 
@@ -1007,6 +1005,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     tCsr->setTagAllocation(tagAllocation);
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     DispatchFlags dispatchFlags;
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
     tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     //make sure command buffer is recorded
@@ -1015,10 +1014,10 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     EXPECT_NE(nullptr, cmdBuffers.peekHead());
 
     //preemption allocation
-    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
-    //preemption allocation in Mid Thread preemption mode
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+    //preemption allocation + sipKernel
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
 
     auto recordedCmdBuffer = cmdBuffers.peekHead();
     EXPECT_EQ(3u + csrSurfaceCount, recordedCmdBuffer->surfaces.size());
@@ -1035,7 +1034,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     EXPECT_EQ(tCsr->commandStream.getGraphicsAllocation(), recordedCmdBuffer->batchBuffer.commandBufferAllocation);
 
-    EXPECT_EQ(5 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
 
     EXPECT_EQ(0u, this->mock->execBuffer.flags);
 
@@ -1066,6 +1065,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
 
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
     tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
@@ -1082,10 +1082,10 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     EXPECT_FALSE(commandBufferGraphicsAllocation->isResident());
 
     //preemption allocation
-    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 1 : 0;
+    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
-    //preemption allocation in Mid Thread preemption mode
-    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 1 : 0;
+    //preemption allocation +sip Kernel
+    int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
 
     //validate that submited command buffer has what we want
     EXPECT_EQ(3u + csrSurfaceCount, this->mock->execBuffer.buffer_count);
@@ -1107,7 +1107,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
         EXPECT_TRUE(handleFound);
     }
 
-    EXPECT_EQ(6 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
+    EXPECT_EQ(7 + ioctlExtraCnt, this->mock->ioctl_cnt.total);
 
     mm->freeGraphicsMemory(dummyAllocation);
     mm->freeGraphicsMemory(commandBuffer);

@@ -97,6 +97,20 @@ class MockDevice : public Device {
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;
     }
+    template <typename T>
+    static T *createWithMemoryManager(const HardwareInfo *pHwInfo,
+                                      MemoryManager *memManager) {
+        pHwInfo = getDeviceInitHwInfo(pHwInfo);
+        T *device = new T(*pHwInfo);
+        if (memManager) {
+            device->setMemoryManager(memManager);
+        }
+        if (false == createDeviceImpl(pHwInfo, true, *device)) {
+            delete device;
+            return nullptr;
+        }
+        return device;
+    }
 
   private:
     bool forceWhitelistedRegs = false;

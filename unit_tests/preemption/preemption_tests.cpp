@@ -35,8 +35,6 @@
 
 using namespace OCLRT;
 
-extern int preemptionModeFromDebugManager;
-
 class ThreadGroupPreemptionTests : public DevicePreemptionTests {
     void SetUp() override {
         dbgRestore.reset(new DebugManagerStateRestore());
@@ -307,10 +305,6 @@ TEST_F(DevicePreemptionTests, setDefaultDisabledPreemptionNoMidBatchSupport) {
 
     PreemptionHelper::adjustDefaultPreemptionMode(devCapabilities, false, false, false);
     EXPECT_EQ(PreemptionMode::Disabled, devCapabilities.defaultPreemptionMode);
-}
-
-TEST(PreemptionTest, defaultMode) {
-    EXPECT_EQ(-1, preemptionModeFromDebugManager);
 }
 
 struct PreemptionHwTest : ::testing::Test, ::testing::WithParamInterface<PreemptionMode> {

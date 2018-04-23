@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -191,9 +191,7 @@ struct MockFclOclDeviceCtx : MockCIF<IGC::FclOclDeviceCtxTagOCL> {
 class MockCompilerInterface : public CompilerInterface {
   public:
     ~MockCompilerInterface() {
-        if (originalGlobalCompilerInterface != nullptr) {
-            CompilerInterface::pInstance = originalGlobalCompilerInterface;
-        }
+        CompilerInterface::pInstance = originalGlobalCompilerInterface;
     }
 
     bool isCompilerAvailable() const {
@@ -318,4 +316,4 @@ template <>
 inline std::map<const Device *, MockCompilerInterface::fclDevCtxUptr> &MockCompilerInterface::getDeviceContexts<IGC::FclOclDeviceCtxTagOCL>() {
     return getFclDeviceContexts();
 }
-}
+} // namespace OCLRT

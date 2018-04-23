@@ -57,8 +57,8 @@
 
 using namespace OCLRT;
 
-using ::testing::_;
 using ::testing::Invoke;
+using ::testing::_;
 
 HWTEST_F(UltCommandStreamReceiverTest, givenThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -1817,6 +1817,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnabledPreemptionWhenFlushTas
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAndL3ConfigChanged) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
+    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     CsrSizeRequestFlags csrSizeRequest = {};
 
     commandStream.getSpace(sizeof(PIPE_CONTROL));
@@ -1829,13 +1833,18 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithPCWhenPreambleSentAnd
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
     commandStreamReceiver.lastMediaSamplerConfig = 0;
+    commandStreamReceiver.lastSentCoherencyRequest = false;
     commandStreamReceiver.lastSentThreadArbitrationPolicy = commandStreamReceiver.requiredThreadArbitrationPolicy;
     csrSizeRequest.l3ConfigChanged = true;
     commandStreamReceiver.overrideCsrSizeReqFlags(csrSizeRequest);
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSizeAligned(flushTaskFlags);
+    size_t sizeNeeded = 2 * sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM) + sizeof(MEDIA_VFE_STATE) +
+                        sizeof(MI_BATCH_BUFFER_START) + sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) +
+                        commandStreamReceiver.getRequiredPipeControlSize();
+
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
+    expectedUsed = alignUp(expectedUsed, MemoryConstants::cacheLineSize);
 
     commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, flushTaskFlags);
 

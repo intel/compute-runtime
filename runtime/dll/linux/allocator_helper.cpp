@@ -20,14 +20,12 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "runtime/helpers/built_ins_helper.h"
-#include "unit_tests/mocks/mock_compilers.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/basic_math.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 
 namespace OCLRT {
-const SipKernel &initSipKernel(SipKernelType type, Device &device) {
-    std::unique_ptr<MockCompilerInterface> mockCompilerInterface(new MockCompilerInterface());
-    mockCompilerInterface->overrideGlobalCompilerInterface();
-    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
-    return BuiltIns::getInstance().getSipKernel(type, device);
+size_t getSizeToMap() {
+    return static_cast<size_t>(alignUp(4 * GB - 8096, 4096));
 }
 } // namespace OCLRT

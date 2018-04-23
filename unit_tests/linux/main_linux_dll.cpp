@@ -22,6 +22,9 @@
 
 #include "mock_os_layer.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/basic_math.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 #include "unit_tests/custom_event_listener.h"
 #include "test.h"
 
@@ -287,6 +290,10 @@ TEST_F(DrmTests, failOnInvalidDeviceName) {
 
     ptr = DrmWrap::get(0);
     EXPECT_EQ(ptr, nullptr);
+}
+
+TEST(AllocatorHelper, givenExpectedSizeToMapWhenGetSizetoMapCalledThenExpectedValueReturned) {
+    EXPECT_EQ((alignUp(4 * GB - 8096, 4096)), OCLRT::getSizeToMap());
 }
 
 int main(int argc, char **argv) {

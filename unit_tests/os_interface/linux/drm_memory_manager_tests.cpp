@@ -28,6 +28,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/os_interface/linux/allocator_helper.h"
 #include "runtime/os_interface/linux/drm_allocation.h"
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
@@ -1129,7 +1130,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     memoryManager->device = pDevice.get();
 
     auto allocator = memoryManager->getDrmInternal32BitAllocator();
-    size_t size = 4 * GB - 4096;
+    size_t size = getSizeToMap();
     auto alloc = allocator->allocate(size);
     EXPECT_NE(0llu, alloc);
 

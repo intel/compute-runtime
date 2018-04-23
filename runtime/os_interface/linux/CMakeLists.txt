@@ -20,6 +20,7 @@
 
 set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
