@@ -57,8 +57,8 @@
 
 using namespace OCLRT;
 
-using ::testing::Invoke;
 using ::testing::_;
+using ::testing::Invoke;
 
 HWTEST_F(UltCommandStreamReceiverTest, requiredCmdSizeForPreamble) {
     auto expectedCmdSize =
@@ -682,8 +682,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, nonblockingFlushWithNoPreviousDepe
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPreamble) {
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 
     WhitelistedRegisters forceRegs = {0};
@@ -700,6 +699,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     auto &csrCS = commandStreamReceiver.getCS();
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
+    sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
+    sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble);
@@ -712,6 +713,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPreambleAndSba) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
+    typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
 
     WhitelistedRegisters forceRegs = {0};
@@ -729,6 +731,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     size_t sizeNeededForPreamble = getSizeRequiredPreambleCS<FamilyType>(MockDevice(commandStreamReceiver.hwInfo));
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags);
+    sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
+    sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
     sizeNeeded = alignUp(sizeNeeded, MemoryConstants::cacheLineSize);
 
     csrCS.getSpace(csrCS.getAvailableSpace() - sizeNeededForPreamble - sizeNeededForStateBaseAddress);
