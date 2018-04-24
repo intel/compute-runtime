@@ -40,7 +40,6 @@ set(RUNTIME_SRCS_UTILITIES_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/spinlock.h
   ${CMAKE_CURRENT_SOURCE_DIR}/stackvec.h
   ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocator_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/timer_util.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vec.h
 )

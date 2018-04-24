@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,10 +36,9 @@ struct timeStamps {
     uint64_t end;
 };
 
-template <size_t TemplateMaxTagPoolCount = 1>
 class MockTagAllocator : public TagAllocator<timeStamps> {
   public:
-    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(memMngr, tagCount, tagAlignment, TemplateMaxTagPoolCount) {
+    MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(memMngr, tagCount, tagAlignment) {
     }
 
     GraphicsAllocation *getGraphicsAllocation(size_t id = 0) {
@@ -73,7 +72,7 @@ class MockTagAllocator : public TagAllocator<timeStamps> {
 
 TEST_F(TagAllocatorTest, Initialize) {
 
-    MockTagAllocator<> tagAllocator(memoryManager, 100, 64);
+    MockTagAllocator tagAllocator(memoryManager, 100, 64);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
 
@@ -87,7 +86,7 @@ TEST_F(TagAllocatorTest, Initialize) {
 
 TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
 
-    MockTagAllocator<> tagAllocator(memoryManager, 10, 16);
+    MockTagAllocator tagAllocator(memoryManager, 10, 16);
 
     ASSERT_NE(nullptr, tagAllocator.getGraphicsAllocation());
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
@@ -118,7 +117,7 @@ TEST_F(TagAllocatorTest, GetReturnTagCheckFreeAndUsedLists) {
 TEST_F(TagAllocatorTest, TagAlignment) {
 
     size_t alignment = 64;
-    MockTagAllocator<> tagAllocator(memoryManager, 10, alignment);
+    MockTagAllocator tagAllocator(memoryManager, 10, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -130,31 +129,35 @@ TEST_F(TagAllocatorTest, TagAlignment) {
     tagAllocator.returnTag(tagNode);
 }
 
-TEST_F(TagAllocatorTest, GetAllTags) {
+TEST_F(TagAllocatorTest, givenTagAllocatorWhenAllNodesWereUsedThenCreateNewGraphicsAllocation) {
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator<> tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator tagAllocator(memoryManager, 4, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
     TagNode<timeStamps> *tagNodes[4];
 
-    for (int i = 0; i < 4; i++) {
+    for (size_t i = 0; i < 4; i++) {
         tagNodes[i] = tagAllocator.getTag();
         EXPECT_NE(nullptr, tagNodes[i]);
     }
+    EXPECT_EQ(1u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(1u, tagAllocator.getTagPoolCount());
 
-    TagNode<timeStamps> *nullTag = tagAllocator.getTag();
+    TagNode<timeStamps> *tagNode = tagAllocator.getTag();
+    EXPECT_NE(nullptr, tagNode);
 
-    EXPECT_EQ(nullptr, nullTag);
+    EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
 }
 
 TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
 
     // Big alignment to force only 4 tags
     size_t alignment = 1024;
-    MockTagAllocator<> tagAllocator(memoryManager, 4, alignment);
+    MockTagAllocator tagAllocator(memoryManager, 4, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
@@ -164,9 +167,13 @@ TEST_F(TagAllocatorTest, GetTagsAndReturnInDifferentOrder) {
         tagNodes[i] = tagAllocator.getTag();
         EXPECT_NE(nullptr, tagNodes[i]);
     }
+    EXPECT_EQ(1u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(1u, tagAllocator.getTagPoolCount());
 
-    TagNode<timeStamps> *nullTag = tagAllocator.getTag();
-    EXPECT_EQ(nullptr, nullTag);
+    TagNode<timeStamps> *tagNode2 = tagAllocator.getTag();
+    EXPECT_NE(nullptr, tagNode2);
+    EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
 
     IDList<TagNode<timeStamps>> &freeList = tagAllocator.getFreeTags();
     bool isFoundOnFreeList = freeList.peekContains(*tagNodes[0]);
@@ -195,22 +202,21 @@ TEST_F(TagAllocatorTest, GetTagsFromTwoPools) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator<2> tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator tagAllocator(memoryManager, 1, alignment);
 
     ASSERT_NE(nullptr, tagAllocator.getFreeTagsHead());
 
     TagNode<timeStamps> *tagNode1, *tagNode2;
 
     tagNode1 = tagAllocator.getTag();
-    EXPECT_NE(nullptr, tagNode1);
+    ASSERT_NE(nullptr, tagNode1);
 
     tagNode2 = tagAllocator.getTag();
     ASSERT_NE(nullptr, tagNode2);
 
+    EXPECT_EQ(2u, tagAllocator.getGraphicsAllocationsCount());
+    EXPECT_EQ(2u, tagAllocator.getTagPoolCount());
     EXPECT_NE(tagNode1->getGraphicsAllocation(), tagNode2->getGraphicsAllocation());
-
-    TagNode<timeStamps> *nullTag = tagAllocator.getTag();
-    EXPECT_EQ(nullptr, nullTag);
 
     tagAllocator.returnTag(tagNode1);
     tagAllocator.returnTag(tagNode2);
@@ -220,7 +226,7 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 
     // Big alignment to force only 1 tag
     size_t alignment = 4096;
-    MockTagAllocator<2> tagAllocator(memoryManager, 1, alignment);
+    MockTagAllocator tagAllocator(memoryManager, 1, alignment);
 
     TagNode<timeStamps> *tagNode1, *tagNode2;
 

@@ -37,6 +37,8 @@
 #include <algorithm>
 
 namespace OCLRT {
+constexpr size_t ProfilingTagCount = 512;
+constexpr size_t PerfCounterTagCount = 512;
 
 struct ReusableAllocationRequirements {
     size_t requiredMinimalSize;
@@ -265,16 +267,16 @@ void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList 
 
 TagAllocator<HwTimeStamps> *MemoryManager::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator = std::unique_ptr<TagAllocatorBase>(new TagAllocator<HwTimeStamps>(this, ProfilingTagCount, 64, UnlimitedProfilingCount));
+        profilingTimeStampAllocator.reset(new TagAllocator<HwTimeStamps>(this, ProfilingTagCount, MemoryConstants::cacheLineSize));
     }
-    return reinterpret_cast<TagAllocator<HwTimeStamps> *>(profilingTimeStampAllocator.get());
+    return profilingTimeStampAllocator.get();
 }
 
 TagAllocator<HwPerfCounter> *MemoryManager::getEventPerfCountAllocator() {
     if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator = std::unique_ptr<TagAllocatorBase>(new TagAllocator<HwPerfCounter>(this, PerfCounterTagCount, 64, UnlimitedPerfCounterCount));
+        perfCounterAllocator.reset(new TagAllocator<HwPerfCounter>(this, PerfCounterTagCount, MemoryConstants::cacheLineSize));
     }
-    return reinterpret_cast<TagAllocator<HwPerfCounter> *>(perfCounterAllocator.get());
+    return perfCounterAllocator.get();
 }
 
 void MemoryManager::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {

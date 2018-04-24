@@ -26,7 +26,6 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/utilities/tag_allocator_base.h"
 
 #include <cstdint>
 #include <vector>
@@ -240,8 +239,8 @@ class MemoryManager {
 
   protected:
     std::recursive_mutex mtx;
-    std::unique_ptr<TagAllocatorBase> profilingTimeStampAllocator;
-    std::unique_ptr<TagAllocatorBase> perfCounterAllocator;
+    std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
+    std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
     GraphicsAllocation *paddingAllocation = nullptr;

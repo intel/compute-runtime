@@ -567,23 +567,11 @@ TEST_F(MemoryAllocatorTest, getEventTsAllocator) {
     EXPECT_EQ(allocator2, allocator);
 }
 
-TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenTagEventTsAllocatorIsCreatedItHasUnlimitedTagCount) {
-    TagAllocator<HwTimeStamps> *allocator = memoryManager->getEventTsAllocator();
-    EXPECT_NE(nullptr, allocator);
-    EXPECT_EQ(UnlimitedProfilingCount, allocator->peekMaxTagPoolCount());
-}
-
 TEST_F(MemoryAllocatorTest, getEventPerfCountAllocator) {
     TagAllocator<HwPerfCounter> *allocator = memoryManager->getEventPerfCountAllocator();
     EXPECT_NE(nullptr, allocator);
     TagAllocator<HwPerfCounter> *allocator2 = memoryManager->getEventPerfCountAllocator();
     EXPECT_EQ(allocator2, allocator);
-}
-
-TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenTagPerfCountAllocatorIsCreatedItHasUnlimitedTagCount) {
-    TagAllocator<HwPerfCounter> *allocator = memoryManager->getEventPerfCountAllocator();
-    EXPECT_NE(nullptr, allocator);
-    EXPECT_EQ(UnlimitedPerfCounterCount, allocator->peekMaxTagPoolCount());
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {

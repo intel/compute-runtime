@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/idlist.h"
-#include "runtime/utilities/tag_allocator_base.h"
 
 #include <cstdint>
 #include <mutex>
@@ -51,29 +50,21 @@ struct TagNode : public IDNode<TagNode<TagType>> {
 };
 
 template <typename TagType>
-class TagAllocator : public TagAllocatorBase {
+class TagAllocator {
   public:
     using NodeType = TagNode<TagType>;
 
-    TagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment, size_t maxTagPoolCount) : memoryManager(memMngr),
-                                                                                                         maxTagPoolCount(maxTagPoolCount),
-                                                                                                         tagCount(tagCount),
-                                                                                                         tagAlignment(tagAlignment) {
-        if (maxTagPoolCount) {
-            gfxAllocations.reserve(maxTagPoolCount);
-            tagPoolMemory.reserve(maxTagPoolCount);
-        } else {
-            gfxAllocations.reserve(PrefferedProfilingTagPoolCount);
-            tagPoolMemory.reserve(PrefferedProfilingTagPoolCount);
-        }
+    TagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : memoryManager(memMngr),
+                                                                                 tagCount(tagCount),
+                                                                                 tagAlignment(tagAlignment) {
         populateFreeTags();
     }
 
-    ~TagAllocator() override {
+    MOCKABLE_VIRTUAL ~TagAllocator() {
         cleanUpResources();
     }
 
-    void cleanUpResources() override {
+    void cleanUpResources() {
         size_t size = gfxAllocations.size();
 
         for (uint32_t i = 0; i < size; ++i) {
@@ -94,8 +85,7 @@ class TagAllocator : public TagAllocatorBase {
             populateFreeTags();
             node = freeTags.removeFrontOne().release();
         }
-        if (node)
-            usedTags.pushFrontOne(*node);
+        usedTags.pushFrontOne(*node);
         return node;
     }
 
@@ -105,8 +95,6 @@ class TagAllocator : public TagAllocatorBase {
         ((void)(usedNode));
         freeTags.pushFrontOne(*node);
     }
-    size_t peekMaxTagPoolCount() { return maxTagPoolCount; }
-
   protected:
     IDList<NodeType> freeTags;
     IDList<NodeType> usedTags;
@@ -114,7 +102,6 @@ class TagAllocator : public TagAllocatorBase {
     std::vector<NodeType *> tagPoolMemory;
 
     MemoryManager *memoryManager;
-    const size_t maxTagPoolCount;
     size_t tagCount;
     size_t tagAlignment;
 
@@ -128,28 +115,25 @@ class TagAllocator : public TagAllocatorBase {
 
         std::unique_lock<std::mutex> lock(allocationsMutex);
 
-        size_t tagPoolCount = gfxAllocations.size();
-        if (tagPoolCount < maxTagPoolCount || maxTagPoolCount == 0) {
-            GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(allocationSizeRequired);
-            gfxAllocations.push_back(graphicsAllocation);
+        GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(allocationSizeRequired);
+        gfxAllocations.push_back(graphicsAllocation);
 
-            uintptr_t Size = graphicsAllocation->getUnderlyingBufferSize();
-            uintptr_t Start = reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer());
-            uintptr_t End = Start + Size;
-            size_t nodeCount = Size / tagSize;
+        uintptr_t Size = graphicsAllocation->getUnderlyingBufferSize();
+        uintptr_t Start = reinterpret_cast<uintptr_t>(graphicsAllocation->getUnderlyingBuffer());
+        uintptr_t End = Start + Size;
+        size_t nodeCount = Size / tagSize;
 
-            NodeType *nodesMemory = new NodeType[nodeCount];
+        NodeType *nodesMemory = new NodeType[nodeCount];
 
-            for (size_t i = 0; i < nodeCount; ++i) {
-                nodesMemory[i].gfxAllocation = graphicsAllocation;
-                nodesMemory[i].tag = reinterpret_cast<TagType *>(Start);
-                freeTags.pushTailOne(nodesMemory[i]);
-                Start += tagSize;
-            }
-            DEBUG_BREAK_IF(Start > End);
-            ((void)(End));
-            tagPoolMemory.push_back(nodesMemory);
+        for (size_t i = 0; i < nodeCount; ++i) {
+            nodesMemory[i].gfxAllocation = graphicsAllocation;
+            nodesMemory[i].tag = reinterpret_cast<TagType *>(Start);
+            freeTags.pushTailOne(nodesMemory[i]);
+            Start += tagSize;
         }
+        DEBUG_BREAK_IF(Start > End);
+        ((void)(End));
+        tagPoolMemory.push_back(nodesMemory);
     }
 };
 } // namespace OCLRT
