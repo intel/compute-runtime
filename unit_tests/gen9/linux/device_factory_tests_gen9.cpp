@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,24 +20,34 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/options.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "test.h"
+#include "unit_tests/os_interface/linux/device_factory_tests.h"
 
-using namespace OCLRT;
+typedef DeviceFactoryLinuxTest DeviceFactoryLinuxTestSkl;
 
-struct Gen8PlatformCaps : public PlatformFixture, public ::testing::Test {
-    void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
-    }
+GEN9TEST_F(DeviceFactoryLinuxTestSkl, queryWhitelistedPreemptionRegister) {
+    pDrm->StoredPreemptionSupport = 1;
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
 
-    void TearDown() override {
-        PlatformFixture::TearDown();
-    }
-};
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    EXPECT_TRUE(success);
+#if defined(I915_PARAM_HAS_PREEMPTION)
+    EXPECT_TRUE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+#else
+    EXPECT_FALSE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+#endif
 
-GEN8TEST_F(Gen8PlatformCaps, allSkusSupportFP64) {
-    const auto &caps = pPlatform->getPlatformInfo();
+    DeviceFactory::releaseDevices();
+}
 
-    EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
+GEN9TEST_F(DeviceFactoryLinuxTestSkl, queryNotWhitelistedPreemptionRegister) {
+    pDrm->StoredPreemptionSupport = 0;
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
+
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    EXPECT_TRUE(success);
+    EXPECT_FALSE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
+
+    DeviceFactory::releaseDevices();
 }

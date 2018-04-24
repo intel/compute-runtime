@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,26 +20,24 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/helpers/options.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
 
-typedef ::testing::Test Gen8CoherencyRequirements;
+struct Gen8PlatformCaps : public PlatformFixture, public ::testing::Test {
+    void SetUp() override {
+        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+    }
 
-GEN8TEST_F(Gen8CoherencyRequirements, noCoherencyProgramming) {
-    CommandStreamReceiverHw<BDWFamily> csr(*platformDevices[0]);
-    LinearStream stream;
-    DispatchFlags flags = {};
+    void TearDown() override {
+        PlatformFixture::TearDown();
+    }
+};
 
-    auto retSize = csr.getCmdSizeForCoherency();
-    EXPECT_EQ(0u, retSize);
-    csr.programCoherency(stream, flags);
-    EXPECT_EQ(0u, stream.getUsed());
+GEN8TEST_F(Gen8PlatformCaps, allSkusSupportFP64) {
+    const auto &caps = pPlatform->getPlatformInfo();
 
-    flags.requiresCoherency = true;
-    retSize = csr.getCmdSizeForCoherency();
-    EXPECT_EQ(0u, retSize);
-    csr.programCoherency(stream, flags);
-    EXPECT_EQ(0u, stream.getUsed());
+    EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
 }

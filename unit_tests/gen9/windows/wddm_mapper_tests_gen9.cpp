@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,34 +20,28 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/os_interface/linux/device_factory_tests.h"
+#include "unit_tests/helpers/gtest_helpers.h"
+#include "test.h"
+#include "hw_cmds.h"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
 
-typedef DeviceFactoryLinuxTest DeviceFactoryLinuxTestSkl;
+using namespace OCLRT;
+using namespace std;
 
-GEN9TEST_F(DeviceFactoryLinuxTestSkl, queryWhitelistedPreemptionRegister) {
-    pDrm->StoredPreemptionSupport = 1;
-    HardwareInfo *hwInfo = nullptr;
-    size_t numDevices = 0;
+struct WddmMapperTestsGen9 : public ::testing::Test {
+    void SetUp() override {}
+    void TearDown() override {}
+};
 
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
-    EXPECT_TRUE(success);
-#if defined(I915_PARAM_HAS_PREEMPTION)
-    EXPECT_TRUE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
-#else
-    EXPECT_FALSE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
-#endif
-
-    DeviceFactory::releaseDevices();
+GEN9TEST_F(WddmMapperTestsGen9, engineNodeMapPass) {
+    GPUNODE_ORDINAL gpuNode = GPUNODE_MAX;
+    bool ret = WddmEngineMapper<SKLFamily>::engineNodeMap(EngineType::ENGINE_RCS, gpuNode);
+    EXPECT_TRUE(ret);
+    EXPECT_EQ(GPUNODE_3D, gpuNode);
 }
 
-GEN9TEST_F(DeviceFactoryLinuxTestSkl, queryNotWhitelistedPreemptionRegister) {
-    pDrm->StoredPreemptionSupport = 0;
-    HardwareInfo *hwInfo = nullptr;
-    size_t numDevices = 0;
-
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
-    EXPECT_TRUE(success);
-    EXPECT_FALSE(hwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580);
-
-    DeviceFactory::releaseDevices();
+GEN9TEST_F(WddmMapperTestsGen9, engineNodeMapNegative) {
+    GPUNODE_ORDINAL gpuNode = GPUNODE_MAX;
+    bool ret = WddmEngineMapper<SKLFamily>::engineNodeMap(EngineType::ENGINE_BCS, gpuNode);
+    EXPECT_FALSE(ret);
 }
