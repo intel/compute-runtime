@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,3 +28,16 @@ std::string testFiles("test_files/x64/");
 std::string testFiles("test_files/x86/");
 #endif
 std::string clFiles("test_files/");
+std::string binaryNameSuffix("");
+
+void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options) {
+    if (outputFilename.length() > 0) {
+        outputFilename.clear();
+    }
+    outputFilename.reserve(2 * testFiles.length());
+    outputFilename.append(testFiles);
+    outputFilename.append(kernelName);
+    outputFilename.append(binaryNameSuffix);
+    outputFilename.append(extension);
+    outputFilename.append(options);
+}

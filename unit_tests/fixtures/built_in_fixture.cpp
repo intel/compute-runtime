@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,8 +21,6 @@
  */
 
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/device/device.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
@@ -43,18 +41,8 @@ void BuiltInFixture::SetUp(Device *pDevice) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    std::string builtInFileRoot = testFiles + KernelBinaryHelper::BUILT_INS;
-    std::string builtInBcFile = builtInFileRoot + "_";
-    std::string builtInGenFile = builtInFileRoot + "_";
-
-    auto product = pDevice->getProductAbbrev();
-    builtInBcFile.append(product);
-    builtInGenFile.append(product);
-    builtInBcFile.append(".bc");
-    builtInGenFile.append(".gen");
-
-    fclDebugVars.fileName = builtInBcFile;
-    igcDebugVars.fileName = builtInGenFile;
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
 
     gEnvironment->fclPushDebugVars(fclDebugVars);
     gEnvironment->igcPushDebugVars(igcDebugVars);

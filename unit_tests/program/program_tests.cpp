@@ -2181,10 +2181,8 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
 
     // Load a binary program file
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     EXPECT_NE(0u, binarySize);
 
@@ -2255,10 +2253,8 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
 
     // Load a binary program file
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     EXPECT_NE(0u, binarySize);
 
@@ -2312,10 +2308,8 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
 
     // Load a binary program file
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     EXPECT_NE(0u, binarySize);
 
@@ -2452,10 +2446,8 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
 
     // Load a binary program file
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     EXPECT_NE(0u, binarySize);
 

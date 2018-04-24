@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,8 +23,6 @@
 #include "cl_api_tests.h"
 #include "runtime/context/context.h"
 #include "runtime/helpers/file_io.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/options.h"
 #include "unit_tests/helpers/test_files.h"
 
 using namespace OCLRT;
@@ -40,11 +38,9 @@ TEST_F(clCreateProgramWithBinaryTests, returnsSuccess) {
     cl_int binaryStatus = CL_INVALID_VALUE;
     void *pBinary = nullptr;
     size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".bin");
     ASSERT_EQ(true, fileExists(testFile));
 
     binarySize = loadDataFromFile(

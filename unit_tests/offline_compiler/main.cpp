@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -95,6 +95,7 @@ int main(int argc, char **argv) {
     nTestFiles.append("/");
     nTestFiles.append(testFiles);
     testFiles = nTestFiles;
+    binaryNameSuffix.append(devicePrefix);
 
 #ifdef WIN32
 #include <direct.h>

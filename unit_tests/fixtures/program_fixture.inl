@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,16 +31,10 @@ void ProgramFixture::CreateProgramFromBinary(cl_context context,
                                              cl_int &retVal,
                                              const std::string &options) {
     Cleanup();
-    std::string testFile;
     retVal = CL_SUCCESS;
-    Context *pContext = castToObject<Context>(context);
 
-    testFile.append(testFiles);
-    testFile.append(binaryFileName);
-    testFile.append("_");
-    testFile.append(pContext->getDevice(0)->getProductAbbrev());
-    testFile.append(".bin");
-    testFile.append(options);
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, binaryFileName + "_", ".bin", options);
 
     knownSourceSize = loadDataFromFile(
         testFile.c_str(),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,8 +36,8 @@ class Environment : public ::testing::Environment {
     void SetInputFileName(
         const std::string filename) {
 
-        igcDebugVars.fileName = testFiles + filename + "_" + devicePrefix + ".gen";
-        fclDebugVars.fileName = testFiles + filename + "_" + devicePrefix + ".bc";
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
+        retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
 
         OCLRT::setIgcDebugVars(igcDebugVars);
         OCLRT::setFclDebugVars(fclDebugVars);

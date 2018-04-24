@@ -64,17 +64,14 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
 
   protected:
     Program *CreateProgramFromBinary(
-        const std::string &BinaryFileName) {
-        std::string testFile;
+        const std::string &binaryFileName) {
         cl_int retVal = CL_SUCCESS;
 
-        testFile.append(testFiles);
-        testFile.append(BinaryFileName);
-        EXPECT_EQ(true, fileExists(testFile));
+        EXPECT_EQ(true, fileExists(binaryFileName));
 
         void *pSource = nullptr;
         size_t sourceSize = loadDataFromFile(
-            testFile.c_str(),
+            binaryFileName.c_str(),
             pSource);
 
         EXPECT_NE(0u, sourceSize);
@@ -94,40 +91,6 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
 
         EXPECT_EQ(retVal, CL_SUCCESS);
         EXPECT_NE(pProgram, nullptr);
-
-        deleteDataReadFromFile(pSource);
-
-        return pProgram;
-    }
-
-    Program *CreateProgramFromSource(
-        const std::string &SourceFileName) {
-        cl_int retVal = CL_SUCCESS;
-        std::string testFile;
-
-        testFile.append(testFiles);
-        testFile.append(SourceFileName);
-        EXPECT_EQ(true, fileExists(testFile));
-
-        void *pSource = nullptr;
-        size_t sourceSize = loadDataFromFile(
-            testFile.c_str(),
-            pSource);
-
-        EXPECT_NE(0u, sourceSize);
-        EXPECT_NE(nullptr, pSource);
-
-        Program *pProgram = nullptr;
-
-        pProgram = Program::create(
-            context,
-            1,
-            (const char **)(&pSource),
-            &sourceSize,
-            retVal);
-
-        EXPECT_NE(nullptr, pProgram);
-        EXPECT_EQ(CL_SUCCESS, retVal);
 
         deleteDataReadFromFile(pSource);
 

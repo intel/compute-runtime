@@ -40,6 +40,12 @@ TEST_F(DeviceTest, Create) {
     EXPECT_NE(nullptr, pDevice);
 }
 
+TEST_F(DeviceTest, givenDeviceWhenGetProductAbbrevThenReturnsHardwarePrefix) {
+    const auto productAbbrev = pDevice->getProductAbbrev();
+    const auto hwPrefix = hardwarePrefix[pDevice->getHardwareInfo().pPlatform->eProductFamily];
+    EXPECT_EQ(hwPrefix, productAbbrev);
+}
+
 TEST_F(DeviceTest, getCommandStreamReceiver) {
     EXPECT_NE(nullptr, &pDevice->getCommandStreamReceiver());
 }

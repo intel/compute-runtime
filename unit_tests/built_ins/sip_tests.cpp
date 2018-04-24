@@ -142,9 +142,8 @@ TEST(DebugSip, DISABLED_givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKerne
     EXPECT_NE(nullptr, mockDevice);
     MockCompilerDebugVars igcDebugVars;
 
-    auto product = mockDevice->getProductAbbrev();
     std::string name = "sip_dummy_kernel_debug";
-    std::string builtInFileRoot = testFiles + getDebugSipKernelNameWithBitnessAndProductSuffix(name, product);
+    std::string builtInFileRoot = testFiles + getDebugSipKernelNameWithBitnessAndProductSuffix(name, binaryNameSuffix.c_str());
     std::string builtInGenFile = builtInFileRoot;
     builtInGenFile.append(".gen");
 

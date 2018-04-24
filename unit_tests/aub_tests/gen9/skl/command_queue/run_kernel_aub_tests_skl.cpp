@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/memory_manager/surface.h"
-#include "unit_tests/fixtures/run_kernel_fixture.h"
 #include "unit_tests/fixtures/two_walker_fixture.h"
 #include "unit_tests/aub_tests/fixtures/run_kernel_fixture.h"
-#include "CL/cl_ext.h"
-#include "CL/cl.h"
 
 using namespace OCLRT;
 
@@ -56,10 +51,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, ooqExecution) {
     cl_event *event2 = nullptr;
     cl_int retVal = CL_FALSE;
 
-    // we would need real compiler for this
-    //Program* pProgram = CreateProgramFromSource( "simple_kernels.cl" );
-
-    Program *pProgram = CreateProgramFromBinary(std::string("simple_kernels_") + pDevice->getProductAbbrev() + ".bin");
+    std::string kernelFilename;
+    retrieveBinaryKernelFilename(kernelFilename, "simple_kernels_", ".bin");
+    Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     cl_device_id device = pDevice;
@@ -284,8 +278,9 @@ SKLTEST_F(AUBRunKernelIntegrateTest, deviceSideVme) {
     const int MV_BUFFER_SIZE = testWidth * mbHeight / 4;
     const int RESIDUALS_BUFFER_SIZE = MV_BUFFER_SIZE;
 
-    Program *pProgram = CreateProgramFromBinary(
-        std::string("vme_kernels_") + pDevice->getProductAbbrev() + ".bin");
+    std::string kernelFilename;
+    retrieveBinaryKernelFilename(kernelFilename, "vme_kernels_", ".bin");
+    Program *pProgram = CreateProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     cl_device_id device = pDevice;

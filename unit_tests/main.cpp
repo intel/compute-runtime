@@ -271,23 +271,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    // we look for test files always relative to binary location
-    // this simplifies multi-process execution and using different
-    // working directories
-    std::string nTestFiles = getRunPath(argv[0]);
-    nTestFiles.append("/");
-    nTestFiles.append(hardwarePrefix[productFamily]);
-    nTestFiles.append("/");
-    nTestFiles.append(testFiles);
-    testFiles = nTestFiles;
-
-    std::string nClFiles = getRunPath(argv[0]);
-    nClFiles.append("/");
-    nClFiles.append(hardwarePrefix[productFamily]);
-    nClFiles.append("/");
-    nClFiles.append(clFiles);
-    clFiles = nClFiles;
-
 #ifdef WIN32
 #include <direct.h>
     if (_chdir(hardwarePrefix[productFamily])) {
@@ -302,12 +285,6 @@ int main(int argc, char **argv) {
 
     uint32_t threadsPerEu = 7;
     PLATFORM platform;
-    std::string baseFile = nTestFiles + "15895692906525787409_";
-    baseFile = baseFile + hardwarePrefix[productFamily];
-
-    auto fclMockFile = baseFile + ".bc";
-    auto igcMockFile = baseFile + ".gen";
-
     auto hardwareInfo = hardwareInfoTable[productFamily];
     if (!hardwareInfo) {
         return -1;
@@ -340,6 +317,22 @@ int main(int argc, char **argv) {
     device.pSysInfo = &gtSystemInfo;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
+    binaryNameSuffix.append(hardwarePrefix[productFamily]);
+
+    std::string nBinaryKernelFiles = getRunPath(argv[0]);
+    nBinaryKernelFiles.append("/");
+    nBinaryKernelFiles.append(binaryNameSuffix);
+    nBinaryKernelFiles.append("/");
+    nBinaryKernelFiles.append(testFiles);
+    testFiles = nBinaryKernelFiles;
+
+    std::string nClFiles = getRunPath(argv[0]);
+    nClFiles.append("/");
+    nClFiles.append(hardwarePrefix[productFamily]);
+    nClFiles.append("/");
+    nClFiles.append(clFiles);
+    clFiles = nClFiles;
+
     auto pDevices = new const HardwareInfo *[numDevices];
     for (decltype(numDevices) i = 0; i < numDevices; ++i) {
         pDevices[i] = &device;
@@ -365,10 +358,10 @@ int main(int argc, char **argv) {
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    fclDebugVars.fileName = fclMockFile;
-    igcDebugVars.fileName = igcMockFile;
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, "15895692906525787409_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, "15895692906525787409_", ".gen");
 
-    gEnvironment->setMockFileNames(fclMockFile, igcMockFile);
+    gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);
 
     // globally override-disable preemption to speed-up test execution

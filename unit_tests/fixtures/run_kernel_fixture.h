@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,6 @@
 
 #pragma once
 
-#include "runtime/device/device.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
 
@@ -33,27 +32,16 @@ struct CommandStreamFixture;
 // helper functions to enforce MockCompiler input files
 inline void overwriteBuiltInBinaryName(
     Device *pDevice,
-    const char *filename,
+    const std::string &filename,
     bool appendOptionsToFileName = false) {
     // set mock compiler to return expected kernel...
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    std::string builtInFileRoot = testFiles;
-    builtInFileRoot.append(filename);
-    std::string builtInBcFile = builtInFileRoot + "_";
-    std::string builtInGenFile = builtInFileRoot + "_";
-
-    auto product = pDevice->getProductAbbrev();
-    builtInBcFile.append(product);
-    builtInGenFile.append(product);
-    builtInBcFile.append(".bc");
-    builtInGenFile.append(".gen");
-
-    fclDebugVars.fileName = builtInBcFile;
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
-    igcDebugVars.fileName = builtInGenFile;
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
     gEnvironment->fclPushDebugVars(fclDebugVars);

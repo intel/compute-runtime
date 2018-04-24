@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,18 +35,8 @@ KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptio
     MockCompilerDebugVars fclDebugVars;
     MockCompilerDebugVars igcDebugVars;
 
-    std::string builtInFileRoot = testFiles + name + "_";
-    std::string builtInBcFile = builtInFileRoot;
-    std::string builtInGenFile = builtInFileRoot;
-
-    auto product = hardwarePrefix[productFamily];
-    builtInBcFile.append(product);
-    builtInGenFile.append(product);
-    builtInBcFile.append(".bc");
-    builtInGenFile.append(".gen");
-
-    fclDebugVars.fileName = builtInBcFile;
-    igcDebugVars.fileName = builtInGenFile;
+    retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".gen");
 
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;

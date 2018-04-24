@@ -44,10 +44,8 @@ std::vector<char> MockSipKernel::getDummyGenBinary() {
     return dummyBinaryForSip;
 }
 std::vector<char> MockSipKernel::getBinary() {
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".gen");
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".gen");
 
     void *binary = nullptr;
     auto binarySize = loadDataFromFile(testFile.c_str(), binary);

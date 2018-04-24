@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,17 +22,12 @@
 
 #include "config.h"
 #include "cl_api_tests.h"
-#include "runtime/helpers/base_object.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"
-#include "runtime/device/device.h"
 #include "runtime/helpers/file_io.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/options.h"
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
-#include "unit_tests/helpers/memory_management.h"
 
 using namespace OCLRT;
 
@@ -97,11 +92,8 @@ TEST_F(clBuildProgramTests, FromBinaryBasic) {
     cl_int binaryStatus = CL_SUCCESS;
     void *pBinary = nullptr;
     size_t binarySize = 0;
-
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".bin");
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
     binarySize = loadDataFromFile(
         testFile.c_str(),
@@ -145,11 +137,8 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     cl_int binaryStatus = CL_SUCCESS;
     void *pBinary = nullptr;
     size_t binarySize = 0;
-
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".bin");
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
     binarySize = loadDataFromFile(
         testFile.c_str(),
@@ -204,11 +193,8 @@ TEST_F(clBuildProgramTests, FromBinarySpir) {
     size_t binarySize = 0;
 
     KernelBinaryHelper kbHeler("CopyBuffer_simd8", false);
-
-    std::string testFile(testFiles);
-    testFile.append("CopyBuffer_simd8_");
-    testFile.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    testFile.append(".bc");
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bc");
 
     binarySize = loadDataFromFile(
         testFile.c_str(),

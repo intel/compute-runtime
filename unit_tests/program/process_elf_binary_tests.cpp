@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,8 +21,6 @@
  */
 
 #include "runtime/helpers/file_io.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/options.h"
 #include "runtime/program/program.h"
 #include "runtime/helpers/string.h"
 #include "unit_tests/helpers/test_files.h"
@@ -60,10 +58,8 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
 TEST_F(ProcessElfBinaryTests, ValidBinary) {
     uint32_t binaryVersion;
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
@@ -138,10 +134,8 @@ class ProcessElfBinaryTestsWithBinaryType : public Program,
 TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThenProgramIsProperlyResolved) {
     uint32_t binaryVersion;
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
@@ -182,10 +176,8 @@ INSTANTIATE_TEST_CASE_P(ResolveBinaryTests,
 TEST_F(ProcessElfBinaryTests, BackToBack) {
     uint32_t binaryVersion;
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("CopyBuffer_simd8_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
 
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
@@ -195,12 +187,10 @@ TEST_F(ProcessElfBinaryTests, BackToBack) {
     EXPECT_NE(0u, binaryVersion);
     deleteDataReadFromFile(pBinary);
 
-    filePath = testFiles;
-    filePath.append("simple_arg_int_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath2;
+    retrieveBinaryKernelFilename(filePath2, "simple_arg_int_", ".bin");
 
-    binarySize = loadDataFromFile(filePath.c_str(), pBinary);
+    binarySize = loadDataFromFile(filePath2.c_str(), pBinary);
     retVal = processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -212,10 +202,8 @@ TEST_F(ProcessElfBinaryTests, BackToBack) {
 TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
     uint32_t binaryVersion;
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("simple_kernels_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "simple_kernels_", ".bin");
 
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
@@ -230,10 +218,8 @@ TEST_F(ProcessElfBinaryTests, BuildOptionsEmpty) {
 TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
     uint32_t binaryVersion;
     void *pBinary = nullptr;
-    std::string filePath = testFiles;
-    filePath.append("simple_kernels_opts_");
-    filePath.append(hardwarePrefix[platformDevices[0]->pPlatform->eProductFamily]);
-    filePath.append(".bin");
+    std::string filePath;
+    retrieveBinaryKernelFilename(filePath, "simple_kernels_opts_", ".bin");
 
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
