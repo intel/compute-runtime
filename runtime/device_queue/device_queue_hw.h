@@ -34,10 +34,7 @@ namespace OCLRT {
 template <typename GfxFamily>
 class DeviceQueueHw : public DeviceQueue {
     using BaseClass = DeviceQueue;
-    using MEDIA_STATE_FLUSH = typename GfxFamily::MEDIA_STATE_FLUSH;
-    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
@@ -48,7 +45,6 @@ class DeviceQueueHw : public DeviceQueue {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using MI_MATH = typename GfxFamily::MI_MATH;
     using MI_MATH_ALU_INST_INLINE = typename GfxFamily::MI_MATH_ALU_INST_INLINE;
-    using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
 
   public:
     DeviceQueueHw(Context *context,

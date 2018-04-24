@@ -40,6 +40,8 @@
 
 namespace OCLRT {
 
+using WALKER_HANDLE = void *;
+
 constexpr int32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 constexpr int32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
@@ -135,7 +137,7 @@ class GpgpuWalkerHelper {
     static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
 
     static size_t setGpgpuWalkerThreadData(
-        typename GfxFamily::GPGPU_WALKER *pCmd,
+        WALKER_HANDLE pCmdData,
         const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
         const size_t numWorkGroups[3],

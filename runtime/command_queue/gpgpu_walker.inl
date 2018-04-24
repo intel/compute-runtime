@@ -116,13 +116,14 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 
 template <typename GfxFamily>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    typename GfxFamily::GPGPU_WALKER *pCmd,
+    WALKER_HANDLE pCmdData,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
     const size_t numWorkGroups[3],
     const size_t localWorkSizesIn[3],
     uint32_t simd) {
-    typedef typename GfxFamily::GPGPU_WALKER GPGPU_WALKER;
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+    GPGPU_WALKER *pCmd = static_cast<GPGPU_WALKER *>(pCmdData);
 
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 

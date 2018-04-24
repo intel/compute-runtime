@@ -103,6 +103,10 @@ void DeviceQueueHw<GfxFamily>::resetDeviceQueue() {
 
 template <typename GfxFamily>
 size_t DeviceQueueHw<GfxFamily>::getMinimumSlbSize() {
+    using MEDIA_STATE_FLUSH = typename GfxFamily::MEDIA_STATE_FLUSH;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+
     return sizeof(MEDIA_STATE_FLUSH) +
            sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) +
            sizeof(PIPE_CONTROL) +
@@ -124,6 +128,10 @@ void DeviceQueueHw<GfxFamily>::initPipeControl(PIPE_CONTROL *pc) {
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::buildSlbDummyCommands() {
+    using MEDIA_STATE_FLUSH = typename GfxFamily::MEDIA_STATE_FLUSH;
+    using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename GfxFamily::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
+
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(queueBuffer->getUnderlyingBuffer());
     auto slbEndOffset = igilCmdQueue->m_controls.m_SLBENDoffsetInBytes;
     size_t commandsSize = getMinimumSlbSize() + getWaCommandsSize();
@@ -291,6 +299,7 @@ IndirectHeap *DeviceQueueHw<GfxFamily>::getIndirectHeap(IndirectHeap::Type type)
 
 template <typename GfxFamily>
 void DeviceQueueHw<GfxFamily>::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentIDCount) {
+    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
     void *pDSH = dynamicStateHeap.getCpuBase();
 
     // Set scheduler ID to last entry in first table, it will have ID == 0, blocks will have following entries.
@@ -426,6 +435,7 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
 
 template <typename GfxFamily>
 size_t DeviceQueueHw<GfxFamily>::getMediaStateClearCmdsSize() {
+    using MEDIA_VFE_STATE = typename GfxFamily::MEDIA_VFE_STATE;
     // PC with GenreicMediaStateClear + WA PC
     size_t size = 2 * sizeof(PIPE_CONTROL);
 
