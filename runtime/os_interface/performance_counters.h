@@ -21,7 +21,6 @@
 */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hw_info.h"

@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include <CL/cl.h>
 #include <CL/cl_ext.h>
 #include "CL/cl_ext_intel.h"

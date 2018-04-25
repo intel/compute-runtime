@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "runtime/api/dispatch.h"
 #include <cstdint>
 

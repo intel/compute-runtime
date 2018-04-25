@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/api/dispatch.h"
 #include "runtime/utilities/reference_tracked_object.h"

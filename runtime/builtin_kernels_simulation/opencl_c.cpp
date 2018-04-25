@@ -21,7 +21,6 @@
  */
 
 #include <cstdint>
-#include "config.h"
 #include "CL/cl.h"
 #include "opencl_c.h"
 #include "runtime/helpers/string.h"

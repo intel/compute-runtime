@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "gtpin_ocl_interface.h"
 #include "CL/cl.h"
 #include "runtime/command_queue/command_queue.h"

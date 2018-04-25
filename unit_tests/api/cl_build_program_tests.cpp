@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "cl_api_tests.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/context/context.h"

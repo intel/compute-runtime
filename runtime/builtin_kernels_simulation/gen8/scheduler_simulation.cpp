@@ -20,7 +20,6 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"

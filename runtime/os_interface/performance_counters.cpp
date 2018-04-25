@@ -20,7 +20,6 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/os_interface/performance_counters.h"

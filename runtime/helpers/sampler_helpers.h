@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 
 // It's max SSH size per kernel (MAX_BINDING_TABLE_INDEX * 64)

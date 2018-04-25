@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "environment.h"
 #include "mock/mock_offline_compiler.h"
 #include "offline_compiler_tests.h"

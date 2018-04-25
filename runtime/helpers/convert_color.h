@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "runtime/helpers/basic_math.h"
 #include "CL/cl.h"
 #include <utility>

@@ -24,7 +24,6 @@
 #include "runtime/helpers/debug_helpers.h"
 #include <cstdint>
 #include <cstddef>
-#include "config.h"
 
 #ifndef OCL_RUNTIME_PROFILING
 #define OCL_RUNTIME_PROFILING 0

@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "hw_cmds.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"

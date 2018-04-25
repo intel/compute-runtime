@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/kernel/kernel.h"

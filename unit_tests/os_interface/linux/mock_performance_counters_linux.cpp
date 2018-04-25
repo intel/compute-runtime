@@ -19,7 +19,6 @@
 * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 * OTHER DEALINGS IN THE SOFTWARE.
 */
-#include "config.h"
 #include "mock_performance_counters_linux.h"
 #include "unit_tests/os_interface/linux/drm_mock.h"
 #include "unit_tests/os_interface/linux/mock_os_time_linux.h"

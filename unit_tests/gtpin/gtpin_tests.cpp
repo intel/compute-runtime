@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_defs.h"

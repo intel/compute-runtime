@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,7 +22,6 @@
 
 #pragma once
 #include "cif/common/cif_main.h"
-#include "config.h"
 #include "ocl_igc_interface/code_type.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

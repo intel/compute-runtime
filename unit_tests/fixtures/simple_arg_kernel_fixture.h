@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "gtest/gtest.h"
 #include "CL/cl.h"
 #include "runtime/device/device.h"

@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "elf/writer.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_options.h"

@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "environment.h"
 #include "runtime/os_interface/os_library.h"
 #include "unit_tests/custom_event_listener.h"

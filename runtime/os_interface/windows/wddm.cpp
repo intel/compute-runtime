@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/gdi_interface.h"

@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "test.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/helpers/aligned_memory.h"

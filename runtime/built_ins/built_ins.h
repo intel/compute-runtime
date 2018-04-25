@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/utilities/vec.h"

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,6 @@
 */
 
 #include "runtime/os_interface/windows/windows_wrapper.h"
-#include "config.h"
 #include "unit_tests/os_interface/windows/mock_performance_counters_win.h"
 #include "gtest/gtest.h"
 

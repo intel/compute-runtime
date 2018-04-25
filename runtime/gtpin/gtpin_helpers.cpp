@@ -21,7 +21,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "gtpin_ocl_interface.h"
 #include "gtpin_helpers.h"
 #include "CL/cl.h"

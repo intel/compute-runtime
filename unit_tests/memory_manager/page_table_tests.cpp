@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "runtime/helpers/selectors.h"
 #include "runtime/memory_manager/page_table.h"
 #include "test.h"

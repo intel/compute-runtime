@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "config.h"
 #include "CL/cl.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "sharing.h"

@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#include "config.h"
 #include "CL/cl.h"
 #include "heap_info.h"
 #include "kernel_arg_info.h"
