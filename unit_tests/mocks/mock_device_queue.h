@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,19 +42,19 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
     using BaseClass::addArbCheckCmdWa;
     using BaseClass::addLriCmd;
     using BaseClass::addLriCmdWa;
+    using BaseClass::addMediaStateClearCmds;
     using BaseClass::addMiAtomicCmdWa;
     using BaseClass::addPipeControlCmdWa;
     using BaseClass::addProfilingEndCmds;
     using BaseClass::buildSlbDummyCommands;
     using BaseClass::getCSPrefetchSize;
+    using BaseClass::getExecutionModelCleanupSectionSize;
+    using BaseClass::getMediaStateClearCmdsSize;
     using BaseClass::getMinimumSlbSize;
+    using BaseClass::getProfilingEndCmdsSize;
     using BaseClass::getSlbCS;
     using BaseClass::getWaCommandsSize;
     using BaseClass::offsetDsh;
-    using BaseClass::addMediaStateClearCmds;
-    using BaseClass::getMediaStateClearCmdsSize;
-    using BaseClass::getProfilingEndCmdsSize;
-    using BaseClass::getExecutionModelCleanupSectionSize;
 
     bool arbCheckWa;
     bool miAtomicWa;
@@ -107,7 +107,7 @@ class MockDeviceQueueHw : public DeviceQueueHw<GfxFamily> {
             size = slbCS->getUsed();
             miAtomicWa = true;
         }
-        slbCS->putSpace(slbCS->getUsed()); // reset
+        slbCS->replaceBuffer(slb->getUnderlyingBuffer(), slb->getUnderlyingBufferSize()); // reset
 
         setupExpectedCmds();
     };

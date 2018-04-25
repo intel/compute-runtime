@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,16 +80,6 @@ TEST_F(LinearStreamTest, getSpaceReducesAvailableSpace) {
     EXPECT_LT(linearStream.getAvailableSpace(), originalAvailable);
 }
 
-TEST_F(LinearStreamTest, putSpaceReducesAvailableSpace) {
-    auto originalAvailable = linearStream.getAvailableSpace();
-    size_t sizeToAllocate = 2 * sizeof(uint32_t);
-
-    ASSERT_NE(nullptr, linearStream.getSpace(sizeToAllocate));
-    linearStream.putSpace(sizeToAllocate);
-
-    EXPECT_EQ(linearStream.getAvailableSpace(), originalAvailable);
-}
-
 TEST_F(LinearStreamTest, testGetUsed) {
     size_t sizeToAllocate = 2 * sizeof(uint32_t);
     ASSERT_NE(nullptr, linearStream.getSpace(sizeToAllocate));
@@ -99,6 +89,11 @@ TEST_F(LinearStreamTest, testGetUsed) {
 
 TEST_F(LinearStreamTest, givenLinearStreamWhenGetCpuBaseIsCalledThenCpuBaseAddressIsReturned) {
     ASSERT_EQ(pCmdBuffer, linearStream.getCpuBase());
+}
+
+TEST_F(LinearStreamTest, givenNotEnoughSpaceWhenGetSpaceIsCalledThenThrowException) {
+    linearStream.getSpace(linearStream.getMaxAvailableSpace());
+    EXPECT_THROW(linearStream.getSpace(1), std::exception);
 }
 
 TEST_F(LinearStreamTest, testReplaceBuffer) {

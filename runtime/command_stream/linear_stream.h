@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,8 +40,6 @@ class LinearStream {
     uint64_t getGpuBase() const;
     uint64_t getCurrentGpuOffsetFromHeapBase() const;
     void *getSpace(size_t size);
-    void *getSpaceUnsecure(size_t size);
-    void putSpace(size_t size);
     size_t getMaxAvailableSpace() const;
     size_t getAvailableSpace() const;
     size_t getUsed() const;
@@ -75,20 +73,11 @@ inline uint64_t LinearStream::getCurrentGpuOffsetFromHeapBase() const {
     return ptrOffset(this->graphicsAllocation->getGpuAddressToPatch(), sizeUsed);
 }
 
-inline void *LinearStream::getSpaceUnsecure(size_t size) {
-    auto memory = (uint8_t *)buffer + sizeUsed;
-    sizeUsed += size;
-    return memory;
-}
-
 inline void *LinearStream::getSpace(size_t size) {
     UNRECOVERABLE_IF(sizeUsed + size > maxAvailableSpace);
-    return getSpaceUnsecure(size);
-}
-
-inline void LinearStream::putSpace(size_t size) {
-    DEBUG_BREAK_IF(sizeUsed < size);
-    sizeUsed -= size;
+    auto memory = ptrOffset(buffer, sizeUsed);
+    sizeUsed += size;
+    return memory;
 }
 
 inline size_t LinearStream::getMaxAvailableSpace() const {

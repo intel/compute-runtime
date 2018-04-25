@@ -675,41 +675,6 @@ INSTANTIATE_TEST_CASE_P(
         IndirectHeap::INDIRECT_OBJECT,
         IndirectHeap::SURFACE_STATE));
 
-typedef Test<DeviceFixture> CommandQueueCSTest;
-HWTEST_F(CommandQueueCSTest, getCSShouldReturnACSWithEnoughSizeCSRTraffic) {
-    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
-
-    auto WaNeeded = KernelCommandsHelper<FamilyType>::isPipeControlWArequired();
-
-    size_t sizeCSRNeeds =
-        sizeof(typename FamilyType::PIPE_CONTROL) * (WaNeeded ? 2 : 1) + sizeof(typename FamilyType::MI_BATCH_BUFFER_END) + MemoryConstants::cacheLineSize - 1;
-
-    sizeCSRNeeds = alignUp(sizeCSRNeeds, MemoryConstants::cacheLineSize);
-
-    // NOTE: This test attempts to reserve the maximum amount
-    // of memory such that if a client gets everything he wants
-    // we don't overflow/corrupt memory when CSR appends its
-    // work.
-    size_t sizeCQReserves = CSRequirements::minCommandQueueCommandStreamSize;
-
-    EXPECT_EQ(sizeCSRNeeds, sizeCQReserves);
-
-    size_t sizeRequested = 0x1000 - sizeCQReserves;
-    auto &cs = commandQueue.getCS(sizeRequested);
-    ASSERT_GE(0x1000u, cs.getMaxAvailableSpace());
-
-    EXPECT_GE(cs.getAvailableSpace(), sizeRequested);
-    cs.getSpace(sizeRequested);
-
-    // This should trigger an assert.
-    //cs.getSpace(sizeCSRNeeds);
-
-    // This won't trigger an assert. CSR should use
-    // this interface for CS's it doesn't own.
-    cs.getSpaceUnsecure(sizeCSRNeeds);
-    EXPECT_EQ(0x1000u, cs.getUsed());
-}
-
 using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(*platformDevices));
