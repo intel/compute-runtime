@@ -151,8 +151,8 @@ bool Context::createImpl(const cl_context_properties *properties,
         numProperties++;
     }
 
-    if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
-        driverDiagnosticsUsed = DebugManager.flags.PrintDriverDiagnostics.get();
+    if (getDebugManager().flags.PrintDriverDiagnostics.get() != -1) {
+        driverDiagnosticsUsed = getDebugManager().flags.PrintDriverDiagnostics.get();
     }
     if (driverDiagnosticsUsed >= 0) {
         driverDiagnostics.reset(new DriverDiagnostics((cl_diagnostics_verbose_level)driverDiagnosticsUsed));

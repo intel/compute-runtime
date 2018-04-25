@@ -38,6 +38,8 @@ using namespace OCLRT;
 
 class WhiteBoxContext : public Context {
   public:
+    using Context::getDebugManager;
+
     MemoryManager *getMM() {
         return this->memoryManager;
     }
@@ -94,6 +96,10 @@ TEST_F(ContextTest, TestCtor) {
 
 TEST_F(ContextTest, MemoryManager) {
     EXPECT_NE(nullptr, context->getMM());
+}
+
+TEST_F(ContextTest, DebugManager) {
+    EXPECT_EQ(&(context->getDebugManager()), &DebugManager);
 }
 
 TEST_F(ContextTest, propertiesShouldBeCopied) {

@@ -110,11 +110,11 @@ class Context : public BaseObject<_cl_context> {
             if (contextCallback) {
                 contextCallback(hint, &flags, sizeof(flags), userData);
             }
-            if (DebugManager.flags.PrintDriverDiagnostics.get() != -1) {
-                if (DebugManager.flags.PrintDriverDiagnosticsToFile.get()) {
+            if (getDebugManager().flags.PrintDriverDiagnostics.get() != -1) {
+                if (getDebugManager().flags.PrintDriverDiagnosticsToFile.get()) {
                     char prettyHint[DriverDiagnostics::maxHintStringSize + 2];
                     int length = snprintf(prettyHint, DriverDiagnostics::maxHintStringSize + 2, "\n%s\n", hint);
-                    DebugManager.writeToFile(DebugManager.getLogFileName(), prettyHint, length, std::ios::app);
+                    getDebugManager().writeToFile(getDebugManager().getLogFileName(), prettyHint, length, std::ios::app);
                 } else {
                     printf("\n%s\n", hint);
                 }
@@ -135,6 +135,10 @@ class Context : public BaseObject<_cl_context> {
 
     // OS specific implementation
     void *getOsContextInfo(cl_context_info &paramName, size_t *srcParamSize);
+
+    MOCKABLE_VIRTUAL decltype(DebugManager) &getDebugManager() const {
+        return DebugManager;
+    }
 
     const cl_context_properties *properties;
     size_t numProperties;
