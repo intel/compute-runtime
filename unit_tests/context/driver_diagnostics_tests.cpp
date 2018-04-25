@@ -25,6 +25,50 @@
 
 using namespace OCLRT;
 
+template <DebugFunctionalityLevel DebugLevel>
+class TestDebugSettingsManager : public DebugSettingsManager<DebugLevel> {
+  public:
+    void writeToFile(std::string filename,
+                     const char *str,
+                     size_t length,
+                     std::ios_base::openmode mode) override {
+
+        savedFiles[filename] << std::string(str, str + length);
+    }
+
+    bool wasFileCreated(std::string filename) {
+        return savedFiles.find(filename) != savedFiles.end();
+    }
+
+    std::string getFileString(std::string filename) {
+        return savedFiles[filename].str();
+    }
+
+    void restore() {
+        this->flags = DebugManager.flags;
+        this->injectFcn = DebugManager.injectFcn;
+        savedFiles.clear();
+    }
+
+  protected:
+    std::map<std::string, std::stringstream> savedFiles;
+};
+
+TestDebugSettingsManager<globalDebugFunctionalityLevel> TestDebugManager;
+
+class TestDebugManagerContext : public MockContext {
+  public:
+    TestDebugManagerContext(
+        void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
+        void *data) : MockContext(funcNotify, data) {
+    }
+
+  protected:
+    decltype(TestDebugManager) &getDebugManager() const override {
+        return TestDebugManager;
+    }
+};
+
 bool containsHint(const char *providedHint, char *userData) {
     for (auto i = 0; i < maxHintCounter; i++) {
         if (strcmp(providedHint, userData + i * DriverDiagnostics::maxHintStringSize) == 0) {
@@ -414,31 +458,23 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndBadHintLevelWhenAction
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsAndPrintDriverDiagnosticsToFileDebugModesEnabledWhenHintIsCalledThenDriverProvidedOutputOnLogFile) {
-    DebugManagerStateRestore dbgRestore;
     auto hintLevel = 255;
-    DebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
-    DebugManager.flags.PrintDriverDiagnosticsToFile.set(true);
-
-    std::remove(DebugManager.getLogFileName());
-    ASSERT_FALSE(fileExists(DebugManager.getLogFileName()));
+    TestDebugManager.flags.PrintDriverDiagnostics.set(hintLevel);
+    TestDebugManager.flags.PrintDriverDiagnosticsToFile.set(true);
 
     auto pDevice = castToObject<Device>(devices[0]);
     cl_device_id clDevice = pDevice;
 
-    auto context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
+    auto context = Context::create<TestDebugManagerContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
     context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_ALL_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
-    context->release();
 
-    void *pLogBuffer;
-    size_t logSize;
-    EXPECT_TRUE(fileExists(DebugManager.getLogFileName()));
-    EXPECT_TRUE(fileExistsHasSize(DebugManager.getLogFileName()));
-    logSize = loadDataFromFile(DebugManager.getLogFileName(), pLogBuffer);
-    EXPECT_NE(0u, logSize);
-    EXPECT_NE(nullptr, pLogBuffer);
-    EXPECT_EQ('\n', ((char *)pLogBuffer)[0]);
-    deleteDataReadFromFile(pLogBuffer);
-    std::remove(DebugManager.getLogFileName());
+    EXPECT_TRUE(TestDebugManager.wasFileCreated(TestDebugManager.getLogFileName()));
+    std::string log = TestDebugManager.getFileString(TestDebugManager.getLogFileName());
+    EXPECT_NE(0u, log.size());
+    EXPECT_EQ('\n', log[0]);
+
+    context->release();
+    TestDebugManager.restore();
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenContextIsBeingCreatedThenPropertiesPassedToContextAreOverwritten) {
