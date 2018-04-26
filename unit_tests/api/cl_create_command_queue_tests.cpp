@@ -84,4 +84,16 @@ HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenComma
     EXPECT_EQ(DispatchMode::BatchedDispatch, csr.dispatchMode);
     retVal = clReleaseCommandQueue(cmdq);
 }
+
+HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
+    EXPECT_FALSE(csr.isNTo1SubmissionModelEnabled());
+
+    auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
+    EXPECT_TRUE(csr.isNTo1SubmissionModelEnabled());
+    retVal = clReleaseCommandQueue(cmdq);
+}
+
 } // namespace ULT

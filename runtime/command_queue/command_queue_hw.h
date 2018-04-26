@@ -66,6 +66,7 @@ class CommandQueueHw : public CommandQueue {
 
         if (getCmdQueueProperties<cl_queue_properties>(properties, CL_QUEUE_PROPERTIES) & static_cast<cl_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)) {
             device->getCommandStreamReceiver().overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+            device->getCommandStreamReceiver().enableNTo1SubmissionModel();
         }
     }
 

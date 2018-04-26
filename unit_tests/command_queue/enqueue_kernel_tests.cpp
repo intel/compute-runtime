@@ -1469,16 +1469,43 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEv
     clReleaseEvent(event);
 }
 
-HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeThenPipeControlPositionIsRecorded) {
-    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeAndCommandStreamReceiverIsInNTo1ModeThenPipeControlPositionIsRecorded) {
+    const cl_queue_properties props[] = {0};
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
 
+    auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+    mockCsr->enableNTo1SubmissionModel();
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+    cl_event event;
+
+    clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event);
+
+    EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
+    auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
+    EXPECT_NE(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
+    EXPECT_NE(nullptr, cmdBuffer->epiloguePipeControlLocation);
+
+    clReleaseCommandQueue(inOrderQueue);
+    clReleaseEvent(event);
+}
+
+HWTEST_F(EnqueueKernelTest, givenOutOfOrderCommandQueueWhenEnqueueKernelReturningEventIsMadeThenPipeControlPositionIsRecorded) {
     auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     pDevice->resetCommandStreamReceiver(mockCsr);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
 
     MockKernelWithInternals mockKernel(*pDevice);
     size_t gws[3] = {1, 0, 0};

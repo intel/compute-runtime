@@ -104,6 +104,8 @@ class CommandStreamReceiver {
 
     uint32_t peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
 
+    void enableNTo1SubmissionModel() { this->nTo1SubmissionModelEnabled = true; }
+    bool isNTo1SubmissionModelEnabled() const { return this->nTo1SubmissionModelEnabled; }
     void overrideDispatchPolicy(DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
 
     virtual void overrideMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
@@ -173,6 +175,7 @@ class CommandStreamReceiver {
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
+    bool nTo1SubmissionModelEnabled = false;
     DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
     bool disableL3Cache = false;
     uint32_t requiredScratchSize = 0;
