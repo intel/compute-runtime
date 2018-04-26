@@ -271,18 +271,6 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-#ifdef WIN32
-#include <direct.h>
-    if (_chdir(hardwarePrefix[productFamily])) {
-        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
-    }
-#elif defined(__linux__)
-#include <unistd.h>
-    if (chdir(hardwarePrefix[productFamily]) != 0) {
-        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
-    }
-#endif
-
     uint32_t threadsPerEu = 7;
     PLATFORM platform;
     auto hardwareInfo = hardwareInfoTable[productFamily];
@@ -332,6 +320,18 @@ int main(int argc, char **argv) {
     nClFiles.append("/");
     nClFiles.append(clFiles);
     clFiles = nClFiles;
+
+#ifdef WIN32
+#include <direct.h>
+    if (_chdir(hardwarePrefix[productFamily])) {
+        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#elif defined(__linux__)
+#include <unistd.h>
+    if (chdir(hardwarePrefix[productFamily]) != 0) {
+        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
+    }
+#endif
 
     auto pDevices = new const HardwareInfo *[numDevices];
     for (decltype(numDevices) i = 0; i < numDevices; ++i) {
