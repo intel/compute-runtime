@@ -56,7 +56,6 @@ struct OpenCLObjectMapper<_cl_command_queue> {
 class CommandQueue : public BaseObject<_cl_command_queue> {
   public:
     static const cl_ulong objectMagic = 0x1234567890987654LL;
-    enum { NUM_HEAPS = IndirectHeap::NUM_TYPES };
 
     static CommandQueue *create(Context *context, Device *device,
                                 const cl_queue_properties *properties,
@@ -432,7 +431,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool perfCountersRegsCfgPending;
 
     LinearStream *commandStream;
-    IndirectHeap *indirectHeap[NUM_HEAPS];
 
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;

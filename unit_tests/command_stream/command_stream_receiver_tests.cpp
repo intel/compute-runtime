@@ -258,6 +258,32 @@ HWTEST_F(CommandStreamReceiverTest, givenDefaultCommandStreamReceiverThenDefault
     EXPECT_EQ(DispatchMode::ImmediateDispatch, csr.dispatchMode);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenGetIndirectHeapIsCalledThenHeapIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &heap = csr.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10u);
+    EXPECT_NE(nullptr, heap.getGraphicsAllocation());
+    EXPECT_NE(nullptr, csr.indirectHeap[IndirectHeap::DYNAMIC_STATE]);
+    EXPECT_EQ(&heap, csr.indirectHeap[IndirectHeap::DYNAMIC_STATE]);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenReleaseIndirectHeapIsCalledThenHeapAllocationIsNull) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &heap = csr.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10u);
+    csr.releaseIndirectHeap(IndirectHeap::DYNAMIC_STATE);
+    EXPECT_EQ(nullptr, heap.getGraphicsAllocation());
+    EXPECT_EQ(0u, heap.getMaxAvailableSpace());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenCsrWhenAllocateHeapMemoryIsCalledThenHeapMemoryIsAllocated) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    IndirectHeap *dsh = nullptr;
+    csr.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
+    EXPECT_NE(nullptr, dsh);
+    ASSERT_NE(nullptr, dsh->getGraphicsAllocation());
+    csr.getMemoryManager()->freeGraphicsMemory(dsh->getGraphicsAllocation());
+    delete dsh;
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllocationIsCalledThenNullptrIsReturned) {
     MockCommandStreamReceiver csr;
     EXPECT_EQ(nullptr, csr.getTagAllocation());

@@ -86,9 +86,7 @@ CommandQueue::CommandQueue(Context *context,
     if (context) {
         context->incRefInternal();
     }
-    for (int i = 0; i < NUM_HEAPS; ++i) {
-        indirectHeap[i] = nullptr;
-    }
+
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
 }
@@ -110,15 +108,6 @@ CommandQueue::~CommandQueue() {
         }
         delete commandStream;
 
-        for (int i = 0; i < NUM_HEAPS; ++i) {
-            if (indirectHeap[i] != nullptr) {
-                auto allocation = indirectHeap[i]->getGraphicsAllocation();
-                if (allocation != nullptr) {
-                    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-                }
-                delete indirectHeap[i];
-            }
-        }
         if (perfConfigurationData) {
             delete perfConfigurationData;
         }
@@ -218,48 +207,6 @@ uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
         taskLevel = std::max(taskLevel, eventTaskLevel);
     }
     return taskLevel;
-}
-
-IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType,
-                                            size_t minRequiredSize) {
-    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
-    auto &heap = indirectHeap[heapType];
-    GraphicsAllocation *heapMemory = nullptr;
-
-    DEBUG_BREAK_IF(nullptr == device);
-    auto memoryManager = device->getMemoryManager();
-    DEBUG_BREAK_IF(nullptr == memoryManager);
-
-    if (heap)
-        heapMemory = heap->getGraphicsAllocation();
-
-    if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
-        memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
-        heapMemory = nullptr;
-    }
-
-    if (!heapMemory) {
-        allocateHeapMemory(heapType, minRequiredSize, heap);
-    }
-
-    return *heap;
-}
-
-void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
-    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
-    auto &heap = indirectHeap[heapType];
-
-    DEBUG_BREAK_IF(nullptr == device);
-    auto memoryManager = device->getMemoryManager();
-    DEBUG_BREAK_IF(nullptr == memoryManager);
-
-    if (heap) {
-        auto heapMemory = heap->getGraphicsAllocation();
-        if (heapMemory != nullptr)
-            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
-        heap->replaceBuffer(nullptr, 0);
-        heap->replaceGraphicsAllocation(nullptr);
-    }
 }
 
 LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
@@ -633,46 +580,16 @@ bool CommandQueue::setupDebugSurface(Kernel *kernel) {
     return true;
 }
 
-void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType,
-                                      size_t minRequiredSize, IndirectHeap *&indirectHeap) {
-    auto memoryManager = device->getMemoryManager();
-    size_t reservedSize = 0;
-    auto finalHeapSize = defaultHeapSize;
-    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType ? true : false;
-
-    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-        requireInternalHeap = false;
-    }
-
-    minRequiredSize += reservedSize;
-
-    finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
-
-    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
-
-    if (!heapMemory) {
-        if (requireInternalHeap) {
-            heapMemory = memoryManager->createInternalGraphicsAllocation(nullptr, finalHeapSize);
-        } else {
-            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
-        }
-    } else {
-        finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
-    }
-
-    heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
-
-    if (IndirectHeap::SURFACE_STATE == heapType) {
-        DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
-        finalHeapSize = maxSshSize;
-    }
-
-    if (indirectHeap) {
-        indirectHeap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
-        indirectHeap->replaceGraphicsAllocation(heapMemory);
-    } else {
-        indirectHeap = new IndirectHeap(heapMemory, requireInternalHeap);
-        indirectHeap->overrideMaxSize(finalHeapSize);
-    }
+IndirectHeap &CommandQueue::getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize) {
+    return this->getDevice().getCommandStreamReceiver().getIndirectHeap(heapType, minRequiredSize);
 }
+
+void CommandQueue::allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap) {
+    this->getDevice().getCommandStreamReceiver().allocateHeapMemory(heapType, minRequiredSize, indirectHeap);
+}
+
+void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
+    this->getDevice().getCommandStreamReceiver().releaseIndirectHeap(heapType);
+}
+
 } // namespace OCLRT

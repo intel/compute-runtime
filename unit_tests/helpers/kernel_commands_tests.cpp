@@ -566,6 +566,10 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
 
         program.setGlobalSurface(nullptr);
         program.setConstantSurface(nullptr);
+
+        //exhaust space to trigger reload
+        ssh.getSpace(ssh.getAvailableSpace());
+        dsh.getSpace(dsh.getAvailableSpace());
     }
     alignedFree(surfaceStateHeap);
     delete pKernel;

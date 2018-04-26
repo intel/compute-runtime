@@ -25,6 +25,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/os_interface/os_interface.h"
@@ -42,9 +43,21 @@ CommandStreamReceiver::CommandStreamReceiver() {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
     flushStamp.reset(new FlushStampTracker(true));
+    for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
+        indirectHeap[i] = nullptr;
+    }
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
+    for (int i = 0; i < IndirectHeap::NUM_TYPES; ++i) {
+        if (indirectHeap[i] != nullptr) {
+            auto allocation = indirectHeap[i]->getGraphicsAllocation();
+            if (allocation != nullptr) {
+                memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+            }
+            delete indirectHeap[i];
+        }
+    }
     cleanupResources();
 }
 
@@ -230,6 +243,82 @@ GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     debugSurface = memoryManager->allocateGraphicsMemory(size);
     return debugSurface;
+}
+
+IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
+                                                     size_t minRequiredSize) {
+    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
+    auto &heap = indirectHeap[heapType];
+    GraphicsAllocation *heapMemory = nullptr;
+
+    if (heap)
+        heapMemory = heap->getGraphicsAllocation();
+
+    if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
+        memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        heapMemory = nullptr;
+    }
+
+    if (!heapMemory) {
+        allocateHeapMemory(heapType, minRequiredSize, heap);
+    }
+
+    return *heap;
+}
+
+void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
+                                               size_t minRequiredSize, IndirectHeap *&indirectHeap) {
+    size_t reservedSize = 0;
+    auto finalHeapSize = defaultHeapSize;
+    bool requireInternalHeap = IndirectHeap::INDIRECT_OBJECT == heapType ? true : false;
+
+    if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
+        requireInternalHeap = false;
+    }
+
+    minRequiredSize += reservedSize;
+
+    finalHeapSize = alignUp(std::max(finalHeapSize, minRequiredSize), MemoryConstants::pageSize);
+
+    auto heapMemory = memoryManager->obtainReusableAllocation(finalHeapSize, requireInternalHeap).release();
+
+    if (!heapMemory) {
+        if (requireInternalHeap) {
+            heapMemory = memoryManager->createInternalGraphicsAllocation(nullptr, finalHeapSize);
+        } else {
+            heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
+        }
+    } else {
+        finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
+    }
+
+    heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+
+    if (IndirectHeap::SURFACE_STATE == heapType) {
+        DEBUG_BREAK_IF(minRequiredSize > maxSshSize);
+        finalHeapSize = maxSshSize;
+    }
+
+    if (indirectHeap) {
+        indirectHeap->replaceBuffer(heapMemory->getUnderlyingBuffer(), finalHeapSize);
+        indirectHeap->replaceGraphicsAllocation(heapMemory);
+    } else {
+        indirectHeap = new IndirectHeap(heapMemory, requireInternalHeap);
+        indirectHeap->overrideMaxSize(finalHeapSize);
+    }
+}
+
+void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
+    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
+    auto &heap = indirectHeap[heapType];
+
+    if (heap) {
+        auto heapMemory = heap->getGraphicsAllocation();
+        if (heapMemory != nullptr)
+            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
+        heap->replaceBuffer(nullptr, 0);
+        heap->replaceGraphicsAllocation(nullptr);
+    }
 }
 
 } // namespace OCLRT

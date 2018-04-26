@@ -35,7 +35,9 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
   public:
     using BaseClass::dshState;
     using BaseClass::hwInfo;
+    using BaseClass::indirectHeap;
     using BaseClass::iohState;
+    using BaseClass::programPreamble;
     using BaseClass::sshState;
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::disableL3Cache;
@@ -53,7 +55,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::requiredThreadArbitrationPolicy;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
-    using BaseClass::programPreamble;
 
     UltCommandStreamReceiver(const UltCommandStreamReceiver &) = delete;
     UltCommandStreamReceiver &operator=(const UltCommandStreamReceiver &) = delete;

@@ -104,7 +104,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
     EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
 
     EXPECT_EQ(CL_SUCCESS, retVal1);
     EXPECT_EQ(CL_SUCCESS, retVal2);
@@ -124,7 +128,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
     EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
 
     EXPECT_EQ(CL_SUCCESS, retVal1);
     EXPECT_EQ(CL_SUCCESS, retVal2);
@@ -144,7 +152,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
     EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
 
     EXPECT_EQ(CL_SUCCESS, retVal1);
     EXPECT_EQ(CL_SUCCESS, retVal2);
@@ -164,7 +176,11 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
     EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
 
     EXPECT_EQ(CL_SUCCESS, retVal1);
     EXPECT_EQ(CL_SUCCESS, retVal2);

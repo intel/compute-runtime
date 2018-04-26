@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(DeviceHelper<>::create());
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
+    csr.setMemoryManager(device->getMemoryManager());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -53,6 +54,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
     std::unique_ptr<Device> device(DeviceHelper<>::create());
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
+    csr.setMemoryManager(device->getMemoryManager());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();
@@ -73,6 +75,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
     std::unique_ptr<Device> device(DeviceHelper<>::create());
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
+    csr.setMemoryManager(device->getMemoryManager());
     MockBuffer buffer;
 
     auto initialTaskCount = csr.peekTaskCount();

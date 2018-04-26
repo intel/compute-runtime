@@ -1530,6 +1530,25 @@ HWTEST_F(EnqueueKernelTest, givenKernelWhenItIsEnqueuedThenAllResourceGraphicsAl
         EXPECT_EQ(csrTaskCount, allocation->taskCount);
     }
 }
+
+HWTEST_F(EnqueueKernelTest, givenKernelWhenItIsSubmittedFromTwoDifferentCommandQueuesThenCsrDoesntReloadAnyCommands) {
+    auto &csr = this->pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals mockKernel(*pDevice);
+    size_t gws[3] = {1, 0, 0};
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    auto currentUsed = csr.commandStream.getUsed();
+
+    const cl_queue_properties props[] = {0};
+    auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
+    clEnqueueNDRangeKernel(inOrderQueue, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    auto usedAfterSubmission = csr.commandStream.getUsed();
+
+    EXPECT_EQ(usedAfterSubmission, currentUsed);
+    clReleaseCommandQueue(inOrderQueue);
+}
+
 TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreNotAndEventExistSetThenClEnqueueNDRangeKernelReturnsInvalidKernelArgsAndSetEventToNull) {
     const size_t n = 512;
     size_t globalWorkSize[3] = {n, 1, 1};

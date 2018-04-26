@@ -27,6 +27,7 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/address_patch.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/command_stream/csr_definitions.h"
 #include <cstddef>
@@ -126,6 +127,10 @@ class CommandStreamReceiver {
     FlatBatchBufferHelper &getFlatBatchBufferHelper() { return *flatBatchBufferHelper.get(); }
     void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
+    IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);
+    void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
+    void releaseIndirectHeap(IndirectHeap::Type heapType);
+
   protected:
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
@@ -173,6 +178,7 @@ class CommandStreamReceiver {
     uint32_t requiredScratchSize = 0;
     uint64_t totalMemoryUsed = 0u;
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
+    IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
 };
 
