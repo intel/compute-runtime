@@ -97,10 +97,6 @@ if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
-if(NEO_DRIVER_VERSION)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps_tests.cpp PROPERTIES COMPILE_DEFINITIONS "NEO_DRIVER_VERSION=${NEO_DRIVER_VERSION}")
-endif()
-
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_tests igdrcl_mocks)
 

@@ -21,21 +21,24 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/device/driver_info.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/os_interface/32bit_memory.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/device/driver_info.h"
-#include "hw_cmds.h"
 #include "runtime/helpers/options.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/os_interface/32bit_memory.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/os_interface.h"
+
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_builtins.h"
+
+#include "hw_cmds.h"
 #include "test.h"
-#include "gmock/gmock.h"
+#include "driver_version.h"
+
 #include <memory>
-#include "runtime/os_interface/os_interface.h"
 
 namespace OCLRT {
 extern const char *familyName[];

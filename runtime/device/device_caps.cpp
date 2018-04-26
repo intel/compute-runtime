@@ -21,17 +21,20 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
-#include <algorithm>
 #include "runtime/device/device.h"
+#include "runtime/device/driver_info.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
-#include "runtime/sharings/sharing_factory.h"
-#include "runtime/device/driver_info.h"
-#include "CL/cl_ext_intel.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/extensions.h"
+#include "runtime/sharings/sharing_factory.h"
+
+#include "CL/cl_ext_intel.h"
+#include "driver_version.h"
+
+#include <algorithm>
 
 namespace OCLRT {
 extern const char *familyName[];

@@ -548,3 +548,4 @@ include(package.cmake)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
 configure_file(compiler.config.h.in ${IGDRCL_BUILD_DIR}/compiler.config.h)
+configure_file(driver_version.h.in driver_version.h) # Put Driver version into define

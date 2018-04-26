@@ -55,11 +55,6 @@ else()
   set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/command_queue/local_id_gen_sse4.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
 endif()
 
-# Put Driver version into define
-if(NEO_DRIVER_VERSION)
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/device/device_caps.cpp PROPERTIES COMPILE_DEFINITIONS "NEO_DRIVER_VERSION=${NEO_DRIVER_VERSION}")
-endif()
-
 if(WIN32)
   if("${IGDRCL_OPTION__BITS}" STREQUAL "32" )
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /SAFESEH:NO")
