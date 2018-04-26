@@ -22,7 +22,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/gen_common/reg_configs.h"
+#include "reg_configs_common.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"

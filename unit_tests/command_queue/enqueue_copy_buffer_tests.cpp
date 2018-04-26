@@ -24,7 +24,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
-#include "runtime/gen_common/reg_configs.h"
+#include "reg_configs_common.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_copy_buffer_fixture.h"

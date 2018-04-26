@@ -21,7 +21,7 @@
  */
 
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/gen_common/reg_configs.h"
+#include "reg_configs_common.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "unit_tests/command_queue/enqueue_write_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"

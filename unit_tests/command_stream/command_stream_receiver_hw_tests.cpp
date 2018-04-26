@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "reg_configs_common.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -34,7 +35,6 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/gen_common/reg_configs.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/built_in_fixture.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
  */
 
 #include <algorithm>
-#include "runtime/gen_common/reg_configs.h"
+#include "reg_configs_common.h"
 #include "unit_tests/command_queue/enqueue_fill_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "runtime/helpers/convert_color.h"

@@ -24,7 +24,7 @@
 #include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/gen_common/reg_configs.h"
+#include "reg_configs_common.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/dispatch_info.h"
