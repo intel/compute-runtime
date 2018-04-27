@@ -111,42 +111,7 @@ class Wddm {
     bool configureDeviceAddressSpace();
 
     template <typename GfxFamily>
-    bool init() {
-        bool success = false;
-        if (gdi != nullptr && gdi->isInitialized() && !initialized) {
-            do {
-                success = openAdapter();
-                if (!success)
-                    break;
-                success = queryAdapterInfo();
-                if (!success)
-                    break;
-                success = createDevice();
-                if (!success)
-                    break;
-                success = createPagingQueue();
-                if (!success)
-                    break;
-                success = Gmm::initContext(gfxPlatform.get(),
-                                           featureTable.get(),
-                                           waTable.get(),
-                                           gtSystemInfo.get());
-                if (!success)
-                    break;
-                success = configureDeviceAddressSpace<GfxFamily>();
-                if (!success)
-                    break;
-                context = createContext();
-                if (context == static_cast<D3DKMT_HANDLE>(0))
-                    break;
-                success = createMonitoredFence();
-                if (!success)
-                    break;
-                initialized = true;
-            } while (!success);
-        }
-        return initialized;
-    }
+    bool init();
 
     bool isInitialized() const {
         return initialized;
