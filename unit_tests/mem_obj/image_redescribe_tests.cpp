@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,29 +33,16 @@ extern GFXCORE_FAMILY renderCoreFamily;
 
 using namespace OCLRT;
 
-typedef decltype(&Image::redescribe) RedescribeMethod;
-
-class ImageRedescribeTest : public testing::TestWithParam<std::tuple<RedescribeMethod, size_t, uint32_t>> {
-  public:
-    ImageRedescribeTest()
-
-    {
-    }
-
+class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uint32_t>> {
   protected:
     void SetUp() override {
 
         cl_image_format imageFormat;
         cl_image_desc imageDesc;
 
-        std::tie(redescribeMethod, indexImageFormat, ImageType) = this->GetParam();
-
-        std::stringstream streamTestString;
-        streamTestString << "Format: " << indexImageFormat;
-        testString = streamTestString.str();
+        std::tie(indexImageFormat, ImageType) = this->GetParam();
 
         auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
-        // clang-format off
         imageFormat = surfaceFormatInfo.OCLImageFormat;
 
         auto imageHeight = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 0 : 32;
@@ -72,161 +59,98 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<RedescribeM
         imageDesc.num_mip_levels    = 0;
         imageDesc.num_samples       = 0;
         imageDesc.mem_object = NULL;
-        // clang-format on
 
         retVal = CL_INVALID_VALUE;
         cl_mem_flags flags = CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat);
-        image = Image::create(
+        image.reset(Image::create(
             &context,
             flags,
             surfaceFormat,
             &imageDesc,
             nullptr,
-            retVal);
+            retVal));
 
         ASSERT_NE(nullptr, image);
     }
 
-    void TearDown() override {
-        delete image;
-    }
-
     cl_int retVal = CL_SUCCESS;
     MockContext context;
-    Image *image = nullptr;
+    std::unique_ptr<Image> image;
     size_t indexImageFormat = 0;
-    std::string testString;
-    RedescribeMethod redescribeMethod;
     uint32_t ImageType;
 };
 
-TEST_P(ImageRedescribeTest, returnsImagePointer) {
-    auto imageNew = image->redescribe();
-    ASSERT_NE(image, imageNew) << testString;
-    EXPECT_NE(nullptr, imageNew) << testString;
-    delete imageNew;
-}
+TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenItContainsProperFormatFlagsAddressAndSameElementSizeInBytes) {
+    std::unique_ptr<Image> imageNew(image->redescribe());
+    ASSERT_NE(nullptr, imageNew);
+    ASSERT_NE(image, imageNew);
 
-TEST_P(ImageRedescribeTest, newImageHasUseHostPtrFlags) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
-    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), imageNew->getFlags() & CL_MEM_USE_HOST_PTR) << testString;
-    delete imageNew;
-}
-
-TEST_P(ImageRedescribeTest, newImageHasSameAddress) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
-    EXPECT_EQ(image->getCpuAddress(), imageNew->getCpuAddress()) << testString;
-    delete imageNew;
-}
-
-TEST_P(ImageRedescribeTest, newImageHasNoFloatsOrHalfFloats) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
-    EXPECT_NE(static_cast<cl_channel_type>(CL_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type) << testString;
-    EXPECT_NE(static_cast<cl_channel_type>(CL_HALF_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type) << testString;
-    delete imageNew;
-}
-
-TEST_P(ImageRedescribeTest, newImageFormatHasSameImageElementSizeInBytes) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
-    if (redescribeMethod == &Image::redescribe) {
-        EXPECT_EQ(image->getSurfaceFormatInfo().ImageElementSizeInBytes,
-                  imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes)
-            << testString;
-    } else {
-        EXPECT_EQ(1u, imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes) << testString;
-    }
-    delete imageNew;
-}
-
-TEST_P(ImageRedescribeTest, newImageFormatHasNumberOfChannelsDependingOnBytesPerPixel) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
-    if (redescribeMethod == &Image::redescribe) {
-        size_t bytesPerPixel = image->getSurfaceFormatInfo().NumChannels * image->getSurfaceFormatInfo().PerChannelSizeInBytes;
-        size_t channelsExpected = 0;
-        switch (bytesPerPixel) {
-        case 1:
-        case 2:
-        case 4:
-            channelsExpected = 1;
-            break;
-        case 8:
-            channelsExpected = 2;
-            break;
-        case 16:
-            channelsExpected = 4;
-            break;
-        }
-        EXPECT_EQ(channelsExpected,
-                  imageNew->getSurfaceFormatInfo().NumChannels)
-            << testString;
-    } else {
-        EXPECT_EQ(1u, imageNew->getSurfaceFormatInfo().NumChannels) << testString;
-    }
-    delete imageNew;
-}
-
-TEST_P(ImageRedescribeTest, newImageFormatChannels_PerChannelSize_ElementSize_Jive) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
-
+    EXPECT_EQ(static_cast<cl_mem_flags>(CL_MEM_USE_HOST_PTR), imageNew->getFlags() & CL_MEM_USE_HOST_PTR);
+    EXPECT_EQ(image->getCpuAddress(), imageNew->getCpuAddress());
+    EXPECT_NE(static_cast<cl_channel_type>(CL_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type);
+    EXPECT_NE(static_cast<cl_channel_type>(CL_HALF_FLOAT), imageNew->getSurfaceFormatInfo().OCLImageFormat.image_channel_data_type);
     EXPECT_EQ(imageNew->getSurfaceFormatInfo().NumChannels * imageNew->getSurfaceFormatInfo().PerChannelSizeInBytes,
-              imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes)
-        << testString;
-    delete imageNew;
+              imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes);
+    EXPECT_EQ(image->getSurfaceFormatInfo().ImageElementSizeInBytes,
+              imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes);
 }
 
-TEST_P(ImageRedescribeTest, newImageDimensionsConsistent) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew) << testString;
+TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageFormatHasNumberOfChannelsDependingOnBytesPerPixel) {
+    std::unique_ptr<Image> imageNew(image->redescribe());
+    ASSERT_NE(nullptr, imageNew);
+
+    size_t bytesPerPixel = image->getSurfaceFormatInfo().NumChannels * image->getSurfaceFormatInfo().PerChannelSizeInBytes;
+    size_t channelsExpected = 0;
+    switch (bytesPerPixel) {
+    case 1:
+    case 2:
+    case 4:
+        channelsExpected = 1;
+        break;
+    case 8:
+        channelsExpected = 2;
+        break;
+    case 16:
+        channelsExpected = 4;
+        break;
+    }
+    EXPECT_EQ(channelsExpected, imageNew->getSurfaceFormatInfo().NumChannels);
+}
+
+TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenNewImageDimensionsAreMatchingTheRedescribedImage) {
+    std::unique_ptr<Image> imageNew(image->redescribe());
+    ASSERT_NE(nullptr, imageNew);
 
     auto bytesWide = image->getSurfaceFormatInfo().ImageElementSizeInBytes * image->getImageDesc().image_width;
     auto bytesWideNew = imageNew->getSurfaceFormatInfo().ImageElementSizeInBytes * imageNew->getImageDesc().image_width;
 
-    EXPECT_EQ(bytesWide, bytesWideNew) << testString;
+    EXPECT_EQ(bytesWide, bytesWideNew);
     EXPECT_EQ(imageNew->getImageDesc().image_height, image->getImageDesc().image_height);
     EXPECT_EQ(imageNew->getImageDesc().image_array_size, image->getImageDesc().image_array_size);
     EXPECT_EQ(imageNew->getImageDesc().image_depth, image->getImageDesc().image_depth);
     EXPECT_EQ(imageNew->getImageDesc().image_type, image->getImageDesc().image_type);
     EXPECT_EQ(imageNew->getQPitch(), image->getQPitch());
-
-    delete imageNew;
+    EXPECT_EQ(imageNew->getImageDesc().image_width, image->getImageDesc().image_width);
 }
 
-TEST_P(ImageRedescribeTest, VerifyCubeFaceIndices) {
-    auto imageNew = (image->*redescribeMethod)();
+TEST_P(ImageRedescribeTest, givenImageWhenItIsRedescribedThenCubeFaceIndexIsProperlySet) {
+    std::unique_ptr<Image> imageNew(image->redescribe());
     ASSERT_NE(nullptr, imageNew);
     ASSERT_EQ(imageNew->getCubeFaceIndex(), __GMM_NO_CUBE_MAP);
-    delete imageNew;
 
     for (uint32_t n = __GMM_CUBE_FACE_POS_X; n < __GMM_MAX_CUBE_FACE; n++) {
         image->setCubeFaceIndex(n);
-        auto imageNew2 = image->redescribe();
-        ASSERT_NE(nullptr, imageNew2);
-        ASSERT_EQ(imageNew2->getCubeFaceIndex(), n);
-        delete imageNew2;
-    }
-
-    for (uint32_t n = __GMM_CUBE_FACE_POS_X; n < __GMM_MAX_CUBE_FACE; n++) {
-        image->setCubeFaceIndex(n);
-        auto imageNew2 = image->redescribeFillImage();
-        ASSERT_NE(nullptr, imageNew2);
-        ASSERT_EQ(imageNew2->getCubeFaceIndex(), n);
-        delete imageNew2;
+        imageNew.reset(image->redescribe());
+        ASSERT_NE(nullptr, imageNew);
+        ASSERT_EQ(imageNew->getCubeFaceIndex(), n);
+        imageNew.reset(image->redescribeFillImage());
+        ASSERT_NE(nullptr, imageNew);
+        ASSERT_EQ(imageNew->getCubeFaceIndex(), n);
     }
 }
 
-TEST_P(ImageRedescribeTest, newImageDoesNotExceedMaxSizes) {
+TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImageDoesNotExceedMaxSizes) {
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
 
@@ -284,20 +208,15 @@ TEST_P(ImageRedescribeTest, newImageDoesNotExceedMaxSizes) {
                                                          nullptr,
                                                          retVal));
 
-    auto imageNew = (bigImage.get()->*redescribeMethod)();
+    std::unique_ptr<Image> imageNew(bigImage->redescribe());
+
     ASSERT_NE(nullptr, imageNew);
 
-    if (redescribeMethod == &Image::redescribe) {
-        EXPECT_GE(maxImageWidth,
-                  imageNew->getImageDesc().image_width);
-        EXPECT_GE(maxImageHeight,
-                  imageNew->getImageDesc().image_height);
-    }
-    delete imageNew;
+    EXPECT_GE(maxImageWidth,
+              imageNew->getImageDesc().image_width);
+    EXPECT_GE(maxImageHeight,
+              imageNew->getImageDesc().image_height);
 }
-
-static RedescribeMethod redescribeMethods[] = {
-    &Image::redescribe};
 
 static uint32_t ImageType[] = {
     CL_MEM_OBJECT_IMAGE1D,
@@ -310,26 +229,5 @@ INSTANTIATE_TEST_CASE_P(
     Redescribe,
     ImageRedescribeTest,
     testing::Combine(
-        ::testing::ValuesIn(redescribeMethods),
-        ::testing::Range(static_cast<ReadWriteSurfaceFormatsCountType>(0u), numReadWriteSurfaceFormats),
-        ::testing::ValuesIn(ImageType)));
-
-typedef ImageRedescribeTest ImageRedescribeTestWidth;
-
-TEST_P(ImageRedescribeTestWidth, newImageFormatHasSameWidth) {
-    auto imageNew = (image->*redescribeMethod)();
-    ASSERT_NE(nullptr, imageNew);
-
-    EXPECT_EQ(image->getImageDesc().image_width,
-              imageNew->getImageDesc().image_width);
-
-    delete imageNew;
-}
-
-INSTANTIATE_TEST_CASE_P(
-    Redescribe,
-    ImageRedescribeTestWidth,
-    testing::Combine(
-        ::testing::Values(&Image::redescribe),
         ::testing::Range(static_cast<ReadWriteSurfaceFormatsCountType>(0u), numReadWriteSurfaceFormats),
         ::testing::ValuesIn(ImageType)));
