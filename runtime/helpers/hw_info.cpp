@@ -55,7 +55,7 @@ const HardwareInfo unknownHardware = {
     {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PreemptionMode::Disabled, {false, false}, nullptr}};
 
 const char *getPlatformType(const HardwareInfo &hwInfo) {
-    if (hwInfo.capabilityTable.isBigCore) {
+    if (hwInfo.capabilityTable.isCore) {
         return "core";
     }
     return "lp";

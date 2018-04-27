@@ -65,7 +65,7 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     true,                           // ftr64KBpages
     EngineType::ENGINE_RCS,         // defaultEngineType
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
-    true                            // isBigCore
+    true                            // isCore
 };
 
 const HardwareInfo KBL_1x2x6::hwInfo = {

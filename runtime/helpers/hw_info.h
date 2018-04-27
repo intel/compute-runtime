@@ -72,7 +72,7 @@ struct RuntimeCapabilityTable {
     EngineType defaultEngineType;
 
     size_t requiredPreemptionSurfaceSize;
-    bool isBigCore;
+    bool isCore;
 };
 
 struct HardwareCapabilities {

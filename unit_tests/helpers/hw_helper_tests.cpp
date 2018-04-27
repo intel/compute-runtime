@@ -146,3 +146,17 @@ HWTEST_F(LriHelperTests, givenAddressAndOffsetWhenHelperIsUsedThenProgramCmdStre
     EXPECT_EQ(lri, stream.getCpuBase());
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
+
+TEST(HwInfoTest, givenHwInfoWhenIsCoreThenPlatformTypeIsCore) {
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.isCore = true;
+    auto platformType = getPlatformType(hwInfo);
+    EXPECT_STREQ("core", platformType);
+}
+
+TEST(HwInfoTest, givenHwInfoWhenIsNotCoreThenPlatformTypeIsLp) {
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.isCore = false;
+    auto platformType = getPlatformType(hwInfo);
+    EXPECT_STREQ("lp", platformType);
+}
