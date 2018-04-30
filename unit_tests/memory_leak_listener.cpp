@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -52,7 +52,7 @@ void MemoryLeakListener::OnTestEnd(const TestInfo &testInfo) {
         EXPECT_EQ(MemoryManagement::indexAllocation.load(), MemoryManagement::indexDeallocation.load());
     } else if (MemoryManagement::fastEventsAllocatedCount != MemoryManagement::fastEventsDeallocatedCount) {
         auto leak = MemoryManagement::detectLeaks();
-        EXPECT_EQ(leak, (int)MemoryManagement::failingAllocation);
+        EXPECT_EQ(leak, (int)MemoryManagement::failingAllocation) << "To locate call stack, change the value of captureCallStacks to true";
     }
     MemoryManagement::fastEventsAllocatedCount = 0;
     MemoryManagement::fastEventsDeallocatedCount = 0;
