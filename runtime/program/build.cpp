@@ -24,6 +24,7 @@
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/helpers/validators.h"
 #include "program.h"
 #include <cstring>
@@ -91,12 +92,23 @@ cl_int Program::build(
                 break;
             }
 
-            internalOptions.append(platform()->peekCompilerExtensions());
-
             if (isKernelDebugEnabled()) {
                 internalOptions.append(CompilerOptions::debugKernelEnable);
                 options.append(" -g ");
+                if (pDevice->getSourceLevelDebugger()) {
+                    if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
+                        options.append("-cl-opt-disable ");
+                    }
+                    std::string filename;
+                    pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
+                    if (!filename.empty()) {
+                        // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
+                        options = std::string("-s ") + filename + " " + options;
+                    }
+                }
             }
+
+            internalOptions.append(platform()->peekCompilerExtensions());
 
             inputArgs.pInput = (char *)(sourceCode.c_str());
             inputArgs.InputSize = (uint32_t)sourceCode.size();
@@ -120,6 +132,15 @@ cl_int Program::build(
         retVal = processGenBinary();
         if (retVal != CL_SUCCESS) {
             break;
+        }
+
+        if (isKernelDebugEnabled()) {
+            processDebugData();
+            if (pDevice->getSourceLevelDebugger()) {
+                for (size_t i = 0; i < kernelInfoArray.size(); i++) {
+                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfoArray[i]);
+                }
+            }
         }
 
         separateBlockKernels();

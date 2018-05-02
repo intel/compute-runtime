@@ -83,7 +83,7 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     pPlatform->initialize(numPlatformDevices, platformDevices);
     compilerExtensions = pPlatform->peekCompilerExtensions();
 
-    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
+    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
@@ -160,7 +160,7 @@ TEST_F(PlatformTest, getAsCompilerEnabledExtensionsString) {
     EXPECT_THAT(extensionsList, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str());
-    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("-cl-ext=-all,+cl")));
+    EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
 
     if (hwInfo->capabilityTable.clVersionSupport > 20) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));

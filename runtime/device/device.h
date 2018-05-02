@@ -136,6 +136,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::string deviceExtensions;
     bool getEnabled64kbPages();
     bool isSourceLevelDebuggerActive() const;
+    SourceLevelDebugger *getSourceLevelDebugger() { return sourceLevelDebugger.get(); }
 
   protected:
     Device() = delete;

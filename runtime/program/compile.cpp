@@ -24,6 +24,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/platform/platform.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/helpers/validators.h"
 #include "program.h"
 #include <cstring>
@@ -155,6 +156,16 @@ cl_int Program::compile(
         if (isKernelDebugEnabled()) {
             internalOptions.append(CompilerOptions::debugKernelEnable);
             options.append(" -g ");
+            if (pDevice->getSourceLevelDebugger()) {
+                if (pDevice->getSourceLevelDebugger()->isOptimizationDisabled()) {
+                    options.append("-cl-opt-disable ");
+                }
+                std::string filename;
+                pDevice->getSourceLevelDebugger()->notifySourceCode(sourceCode.c_str(), sourceCode.size(), filename);
+                if (!filename.empty()) {
+                    options = std::string("-s ") + filename + " " + options;
+                }
+            }
         }
 
         inputArgs.pInput = pCompileData;

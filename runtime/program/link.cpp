@@ -23,6 +23,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/platform/platform.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "program.h"
 #include "elf/writer.h"
 #include <cstring>
@@ -147,6 +148,13 @@ cl_int Program::link(
                 break;
             }
             programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+
+            if (isKernelDebugEnabled()) {
+                processDebugData();
+                for (size_t i = 0; i < kernelInfoArray.size(); i++) {
+                    pDevice->getSourceLevelDebugger()->notifyKernelDebugData(kernelInfoArray[i]);
+                }
+            }
         } else {
             retVal = pCompilerInterface->createLibrary(*this, inputArgs);
             if (retVal != CL_SUCCESS) {

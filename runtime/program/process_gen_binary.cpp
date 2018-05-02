@@ -28,6 +28,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "patch_list.h"
 #include "patch_shared.h"
+#include "program_debug_data.h"
 #include "program.h"
 #include "runtime/kernel/kernel.h"
 
@@ -992,4 +993,34 @@ bool Program::validateGenBinaryHeader(const iOpenCL::SProgramBinaryHeader *pGenB
            pGenBinaryHeader->Version == CURRENT_ICBE_VERSION &&
            validateGenBinaryDevice(static_cast<GFXCORE_FAMILY>(pGenBinaryHeader->Device));
 }
+
+void Program::processDebugData() {
+    if (debugData != nullptr) {
+        SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(debugData);
+
+        DEBUG_BREAK_IF(programDebugHeader->NumberOfKernels != kernelInfoArray.size());
+
+        const SKernelDebugDataHeaderIGC *kernelDebugHeader = reinterpret_cast<SKernelDebugDataHeaderIGC *>(ptrOffset(programDebugHeader, sizeof(SProgramDebugDataHeaderIGC)));
+        const char *kernelName = nullptr;
+        const char *kernelDebugData = nullptr;
+
+        for (uint32_t i = 0; i < programDebugHeader->NumberOfKernels; i++) {
+            kernelName = reinterpret_cast<const char *>(ptrOffset(kernelDebugHeader, sizeof(SKernelDebugDataHeaderIGC)));
+
+            auto kernelInfo = kernelInfoArray[i];
+            UNRECOVERABLE_IF(kernelInfo->name.compare(0, kernelInfo->name.size(), kernelName) != 0);
+
+            kernelDebugData = ptrOffset(kernelName, kernelDebugHeader->KernelNameSize);
+
+            kernelInfo->debugData.vIsa = kernelDebugData;
+            kernelInfo->debugData.genIsa = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes);
+            kernelInfo->debugData.vIsaSize = kernelDebugHeader->SizeVisaDbgInBytes;
+            kernelInfo->debugData.genIsaSize = kernelDebugHeader->SizeGenIsaDbgInBytes;
+
+            kernelDebugData = ptrOffset(kernelDebugData, kernelDebugHeader->SizeVisaDbgInBytes + kernelDebugHeader->SizeGenIsaDbgInBytes);
+            kernelDebugHeader = reinterpret_cast<const SKernelDebugDataHeaderIGC *>(kernelDebugData);
+        }
+    }
+}
+
 } // namespace OCLRT

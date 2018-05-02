@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/os_interface/os_library.h"
 #include <memory>
+#include <string>
 
 namespace OCLRT {
 struct KernelInfo;
@@ -30,17 +31,18 @@ struct KernelInfo;
 class SourceLevelDebugger {
   public:
     SourceLevelDebugger(OsLibrary *library);
-    ~SourceLevelDebugger();
+    virtual ~SourceLevelDebugger();
     SourceLevelDebugger(const SourceLevelDebugger &ref) = delete;
     SourceLevelDebugger &operator=(const SourceLevelDebugger &) = delete;
     static SourceLevelDebugger *create();
 
-    bool isDebuggerActive();
-    void notifyNewDevice(uint32_t deviceHandle) const;
-    void notifySourceCode(uint32_t deviceHandle, const char *sourceCode, size_t size) const;
-    bool isOptimizationDisabled() const;
-    void notifyKernelDebugData(uint32_t deviceHandle, const KernelInfo *kernelInfo) const;
-    void initialize(bool useLocalMemory);
+    MOCKABLE_VIRTUAL bool isDebuggerActive();
+    MOCKABLE_VIRTUAL bool notifyNewDevice(uint32_t deviceHandle);
+    MOCKABLE_VIRTUAL bool notifyDeviceDestruction();
+    MOCKABLE_VIRTUAL bool notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const;
+    MOCKABLE_VIRTUAL bool isOptimizationDisabled() const;
+    MOCKABLE_VIRTUAL bool notifyKernelDebugData(const KernelInfo *kernelInfo) const;
+    MOCKABLE_VIRTUAL bool initialize(bool useLocalMemory);
 
   protected:
     class SourceLevelDebuggerInterface;
@@ -51,6 +53,7 @@ class SourceLevelDebugger {
 
     std::unique_ptr<OsLibrary> debuggerLibrary;
     bool isActive = false;
+    uint32_t deviceHandle = 0;
 
     static const char *notifyNewDeviceSymbol;
     static const char *notifySourceCodeSymbol;
@@ -58,6 +61,7 @@ class SourceLevelDebugger {
     static const char *notifyKernelDebugDataSymbol;
     static const char *initSymbol;
     static const char *isDebuggerActiveSymbol;
+    static const char *notifyDeviceDestructionSymbol;
     // OS specific library name
     static const char *dllName;
 };

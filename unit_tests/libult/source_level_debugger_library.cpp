@@ -42,6 +42,8 @@ void *DebuggerLibrary::getProcAddress(const std::string &procName) {
         return reinterpret_cast<void *>(init);
     } else if (procName == "isDebuggerActive") {
         return reinterpret_cast<void *>(isDebuggerActive);
+    } else if (procName == "notifyDeviceDestruction") {
+        return reinterpret_cast<void *>(notifyDeviceDestruction);
     }
     return nullptr;
 }
@@ -66,6 +68,9 @@ int DebuggerLibrary::notifySourceCode(GfxDbgSourceCode *sourceCode) {
     if (interceptor) {
         interceptor->sourceCodeArgIn = *sourceCode;
         interceptor->sourceCodeCalled = true;
+        if (interceptor->sourceCodeArgOut && sourceCode->sourceNameMaxLen > 0) {
+            memcpy_s(sourceCode->sourceName, sourceCode->sourceNameMaxLen, interceptor->sourceCodeArgOut->sourceName, interceptor->sourceCodeArgOut->sourceNameMaxLen);
+        }
         return interceptor->sourceCodeRetVal;
     }
     return IgfxdbgRetVal::IGFXDBG_SUCCESS;
@@ -104,4 +109,13 @@ int DebuggerLibrary::init(GfxDbgTargetCaps *targetCaps) {
 
 int DebuggerLibrary::isDebuggerActive(void) {
     return debuggerActive ? 1 : 0;
+}
+
+int DebuggerLibrary::notifyDeviceDestruction(GfxDbgDeviceDestructionData *deviceDestruction) {
+    if (interceptor) {
+        interceptor->deviceDestructionArgIn = *deviceDestruction;
+        interceptor->deviceDestructionCalled = true;
+        return interceptor->deviceDestructionRetVal;
+    }
+    return IgfxdbgRetVal::IGFXDBG_SUCCESS;
 }

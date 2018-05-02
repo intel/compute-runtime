@@ -25,12 +25,14 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_source_level_debugger.h"
 
 #include "test.h"
 
 using PreambleTest = ::testing::Test;
 using namespace OCLRT;
 
+template <typename T = SourceLevelDebugger>
 class MockDeviceWithActiveDebugger : public MockDevice {
   public:
     class MockOsLibrary : public OsLibrary {
@@ -43,13 +45,18 @@ class MockDeviceWithActiveDebugger : public MockDevice {
         }
     };
     MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {
-        sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
+        sourceLevelDebuggerCreated = new T(new MockOsLibrary);
+        sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }
 
     void initializeCaps() override {
         MockDevice::initializeCaps();
         this->setSourceLevelDebuggerActive(true);
     }
+    T *getSourceLevelDebugger() {
+        return sourceLevelDebuggerCreated;
+    }
+    T *sourceLevelDebuggerCreated = nullptr;
 };
 
 TEST(DeviceCreation, givenDeviceWithMidThreadPreemptionAndDebuggingActiveWhenDeviceIsCreatedThenCorrectSipKernelIsCreated) {
@@ -65,7 +72,7 @@ TEST(DeviceCreation, givenDeviceWithMidThreadPreemptionAndDebuggingActiveWhenDev
         EXPECT_FALSE(mockBuiltins->getSipKernelCalled);
 
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
-        auto device = std::unique_ptr<MockDeviceWithActiveDebugger>(Device::create<MockDeviceWithActiveDebugger>(nullptr));
+        auto device = std::unique_ptr<MockDeviceWithActiveDebugger<>>(Device::create<MockDeviceWithActiveDebugger<>>(nullptr));
 
         EXPECT_TRUE(mockBuiltins->getSipKernelCalled);
         EXPECT_LE(SipKernelType::DbgCsr, mockBuiltins->getSipKernelType);
@@ -88,7 +95,7 @@ TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDevi
         EXPECT_FALSE(mockBuiltins->getSipKernelCalled);
 
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::Disabled);
-        auto device = std::unique_ptr<MockDeviceWithActiveDebugger>(Device::create<MockDeviceWithActiveDebugger>(nullptr));
+        auto device = std::unique_ptr<MockDeviceWithActiveDebugger<>>(Device::create<MockDeviceWithActiveDebugger<>>(nullptr));
 
         EXPECT_TRUE(mockBuiltins->getSipKernelCalled);
         EXPECT_LE(SipKernelType::DbgCsr, mockBuiltins->getSipKernelType);
@@ -96,4 +103,10 @@ TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDevi
         //make sure to release builtins prior to device as they use device
         mockBuiltins.reset();
     }
+}
+
+TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
+    auto device = std::unique_ptr<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(Device::create<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(nullptr));
+    GMockSourceLevelDebugger *gmock = device->getSourceLevelDebugger();
+    EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
 }

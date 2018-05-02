@@ -39,16 +39,28 @@ bool SourceLevelDebugger::isDebuggerActive() {
     return false;
 }
 
-void SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) const {
+bool SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) {
+    return false;
 }
-void SourceLevelDebugger::notifySourceCode(uint32_t deviceHandle, const char *sourceCode, size_t size) const {
+
+bool SourceLevelDebugger::notifyDeviceDestruction() {
+    return false;
 }
+
+bool SourceLevelDebugger::notifySourceCode(const char *sourceCode, size_t size, std::string &filename) const {
+    return false;
+}
+
 bool SourceLevelDebugger::isOptimizationDisabled() const {
     return false;
 }
-void SourceLevelDebugger::notifyKernelDebugData(uint32_t deviceHandle, const KernelInfo *kernelInfo) const {
+
+bool SourceLevelDebugger::notifyKernelDebugData(const KernelInfo *kernelInfo) const {
+    return false;
 }
-void SourceLevelDebugger::initialize(bool useLocalMemory) {
+
+bool SourceLevelDebugger::initialize(bool useLocalMemory) {
+    return false;
 }
 
 } // namespace OCLRT

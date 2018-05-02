@@ -34,6 +34,7 @@ const char *SourceLevelDebugger::getDebuggerOptionSymbol = "getDebuggerOption";
 const char *SourceLevelDebugger::notifyKernelDebugDataSymbol = "notifyKernelDebugData";
 const char *SourceLevelDebugger::initSymbol = "init";
 const char *SourceLevelDebugger::isDebuggerActiveSymbol = "isDebuggerActive";
+const char *SourceLevelDebugger::notifyDeviceDestructionSymbol = "notifyDeviceDestruction";
 
 class SourceLevelDebugger::SourceLevelDebuggerInterface {
   public:
@@ -46,6 +47,7 @@ class SourceLevelDebugger::SourceLevelDebuggerInterface {
     typedef int (*NotifyKernelDebugDataFunction)(GfxDbgKernelDebugData *data);
     typedef int (*InitFunction)(GfxDbgTargetCaps *data);
     typedef int (*IsDebuggerActiveFunction)(void);
+    typedef int (*NotifyDeviceDestructionFunction)(GfxDbgDeviceDestructionData *data);
 
     NotifyNewDeviceFunction notifyNewDeviceFunc = nullptr;
     NotifySourceCodeFunction notifySourceCodeFunc = nullptr;
@@ -53,6 +55,7 @@ class SourceLevelDebugger::SourceLevelDebuggerInterface {
     NotifyKernelDebugDataFunction notifyKernelDebugDataFunc = nullptr;
     InitFunction initFunc = nullptr;
     IsDebuggerActiveFunction isDebuggerActive = nullptr;
+    NotifyDeviceDestructionFunction notifyDeviceDestructionFunc = nullptr;
 };
 
 SourceLevelDebugger *SourceLevelDebugger::create() {
@@ -88,6 +91,7 @@ SourceLevelDebugger::SourceLevelDebugger(OsLibrary *library) {
         UNRECOVERABLE_IF(sourceLevelDebuggerInterface->notifyKernelDebugDataFunc == nullptr);
         UNRECOVERABLE_IF(sourceLevelDebuggerInterface->notifyNewDeviceFunc == nullptr);
         UNRECOVERABLE_IF(sourceLevelDebuggerInterface->notifySourceCodeFunc == nullptr);
+        UNRECOVERABLE_IF(sourceLevelDebuggerInterface->notifyDeviceDestructionFunc == nullptr);
         isActive = true;
     }
 }
@@ -111,31 +115,55 @@ void SourceLevelDebugger::getFunctions() {
     sourceLevelDebuggerInterface->notifyKernelDebugDataFunc = reinterpret_cast<SourceLevelDebuggerInterface::NotifyKernelDebugDataFunction>(debuggerLibrary->getProcAddress(notifyKernelDebugDataSymbol));
     sourceLevelDebuggerInterface->initFunc = reinterpret_cast<SourceLevelDebuggerInterface::InitFunction>(debuggerLibrary->getProcAddress(initSymbol));
     sourceLevelDebuggerInterface->isDebuggerActive = reinterpret_cast<SourceLevelDebuggerInterface::IsDebuggerActiveFunction>(debuggerLibrary->getProcAddress(isDebuggerActiveSymbol));
+    sourceLevelDebuggerInterface->notifyDeviceDestructionFunc = reinterpret_cast<SourceLevelDebuggerInterface::NotifyDeviceDestructionFunction>(debuggerLibrary->getProcAddress(notifyDeviceDestructionSymbol));
 }
 
-void SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) const {
+bool SourceLevelDebugger::notifyNewDevice(uint32_t deviceHandle) {
     if (isActive) {
         GfxDbgNewDeviceData newDevice;
         newDevice.version = IGFXDBG_CURRENT_VERSION;
         newDevice.dh = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandle));
         newDevice.udh = GfxDeviceHandle(0);
-        sourceLevelDebuggerInterface->notifyNewDeviceFunc(&newDevice);
+        int result = sourceLevelDebuggerInterface->notifyNewDeviceFunc(&newDevice);
+        DEBUG_BREAK_IF(static_cast<IgfxdbgRetVal>(result) != IgfxdbgRetVal::IGFXDBG_SUCCESS);
+        static_cast<void>(result);
+        this->deviceHandle = deviceHandle;
     }
+    return false;
 }
-void SourceLevelDebugger::notifySourceCode(uint32_t deviceHandle, const char *source, size_t sourceSize) const {
+
+bool SourceLevelDebugger::notifyDeviceDestruction() {
+    if (isActive) {
+        GfxDbgDeviceDestructionData deviceDestruction;
+        deviceDestruction.version = IGFXDBG_CURRENT_VERSION;
+        deviceDestruction.dh = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
+        int result = sourceLevelDebuggerInterface->notifyDeviceDestructionFunc(&deviceDestruction);
+        DEBUG_BREAK_IF(static_cast<IgfxdbgRetVal>(result) != IgfxdbgRetVal::IGFXDBG_SUCCESS);
+        static_cast<void>(result);
+        this->deviceHandle = 0;
+        return true;
+    }
+    return false;
+}
+
+bool SourceLevelDebugger::notifySourceCode(const char *source, size_t sourceSize, std::string &file) const {
     if (isActive) {
         GfxDbgSourceCode sourceCode;
         char fileName[FILENAME_MAX] = "";
 
         sourceCode.version = IGFXDBG_CURRENT_VERSION;
-        sourceCode.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandle));
+        sourceCode.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         sourceCode.sourceCode = source;
         sourceCode.sourceCodeSize = static_cast<unsigned int>(sourceSize);
         sourceCode.sourceName = &fileName[0];
         sourceCode.sourceNameMaxLen = sizeof(fileName);
 
-        sourceLevelDebuggerInterface->notifySourceCodeFunc(&sourceCode);
+        int result = sourceLevelDebuggerInterface->notifySourceCodeFunc(&sourceCode);
+        DEBUG_BREAK_IF(static_cast<IgfxdbgRetVal>(result) != IgfxdbgRetVal::IGFXDBG_SUCCESS);
+        static_cast<void>(result);
+        file = fileName;
     }
+    return false;
 }
 
 bool SourceLevelDebugger::isOptimizationDisabled() const {
@@ -157,10 +185,10 @@ bool SourceLevelDebugger::isOptimizationDisabled() const {
     return false;
 }
 
-void SourceLevelDebugger::notifyKernelDebugData(uint32_t deviceHandle, const KernelInfo *kernelInfo) const {
+bool SourceLevelDebugger::notifyKernelDebugData(const KernelInfo *kernelInfo) const {
     if (isActive) {
         GfxDbgKernelDebugData kernelDebugData;
-        kernelDebugData.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandle));
+        kernelDebugData.hDevice = reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(this->deviceHandle));
         kernelDebugData.version = IGFXDBG_CURRENT_VERSION;
         kernelDebugData.hProgram = reinterpret_cast<GenRtProgramHandle>(0);
 
@@ -173,11 +201,14 @@ void SourceLevelDebugger::notifyKernelDebugData(uint32_t deviceHandle, const Ker
         kernelDebugData.dbgGenIsaBuffer = kernelInfo->debugData.genIsa;
         kernelDebugData.dbgGenIsaSize = kernelInfo->debugData.genIsaSize;
 
-        sourceLevelDebuggerInterface->notifyKernelDebugDataFunc(&kernelDebugData);
+        int result = sourceLevelDebuggerInterface->notifyKernelDebugDataFunc(&kernelDebugData);
+        DEBUG_BREAK_IF(static_cast<IgfxdbgRetVal>(result) != IgfxdbgRetVal::IGFXDBG_SUCCESS);
+        static_cast<void>(result);
     }
+    return false;
 }
 
-void SourceLevelDebugger::initialize(bool useLocalMemory) {
+bool SourceLevelDebugger::initialize(bool useLocalMemory) {
     if (isActive) {
         GfxDbgTargetCaps caps = {IGFXDBG_CURRENT_VERSION, useLocalMemory};
         int result = sourceLevelDebuggerInterface->initFunc(&caps);
@@ -185,5 +216,6 @@ void SourceLevelDebugger::initialize(bool useLocalMemory) {
             isActive = false;
         }
     }
+    return false;
 }
 } // namespace OCLRT

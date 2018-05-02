@@ -108,6 +108,10 @@ Device::~Device() {
         commandStreamReceiver = nullptr;
     }
 
+    if (deviceInfo.sourceLevelDebuggerActive && sourceLevelDebugger) {
+        sourceLevelDebugger->notifyDeviceDestruction();
+    }
+
     if (memoryManager) {
         if (preemptionAllocation) {
             memoryManager->freeGraphicsMemory(preemptionAllocation);

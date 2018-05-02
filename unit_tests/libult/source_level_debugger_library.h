@@ -32,24 +32,28 @@ struct DebuggerLibraryInterceptor {
     GfxDbgOption optionArgIn;
     GfxDbgKernelDebugData kernelDebugDataArgIn;
     GfxDbgTargetCaps targetCapsArgIn;
+    GfxDbgDeviceDestructionData deviceDestructionArgIn;
 
     GfxDbgNewDeviceData *newDeviceArgOut = nullptr;
     GfxDbgSourceCode *sourceCodeArgOut = nullptr;
     GfxDbgOption *optionArgOut = nullptr;
     GfxDbgKernelDebugData *kernelDebugDataArgOut = nullptr;
     GfxDbgTargetCaps *targetCapsArgOut = nullptr;
+    GfxDbgDeviceDestructionData *deviceDestructionArgOut = nullptr;
 
     bool newDeviceCalled = false;
     bool sourceCodeCalled = false;
     bool optionCalled = false;
     bool kernelDebugDataCalled = false;
     bool initCalled = false;
+    bool deviceDestructionCalled = false;
 
     int newDeviceRetVal = 0;
     int sourceCodeRetVal = 0;
     int optionRetVal = 0;
     int kernelDebugDataRetVal = 0;
     int initRetVal = 0;
+    int deviceDestructionRetVal = 0;
 };
 
 class DebuggerLibrary : public OCLRT::OsLibrary {
@@ -96,6 +100,7 @@ class DebuggerLibrary : public OCLRT::OsLibrary {
     static int notifyKernelDebugData(GfxDbgKernelDebugData *);
     static int init(GfxDbgTargetCaps *);
     static int isDebuggerActive(void);
+    static int notifyDeviceDestruction(GfxDbgDeviceDestructionData *);
 
     static bool isLibraryAvailable;
     static bool debuggerActive;

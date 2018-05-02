@@ -188,6 +188,7 @@ class Program : public BaseObject<_cl_program> {
     void storeLlvmBinary(const void *pSrc, const size_t srcSize);
 
     void storeDebugData(const void *pSrc, const size_t srcSize);
+    void processDebugData();
 
     void updateBuildLog(const Device *pDevice, const char *pErrorString, const size_t errorStringSize);
 

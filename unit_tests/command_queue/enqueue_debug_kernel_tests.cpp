@@ -23,6 +23,7 @@
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/program/program.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/kernel_filename_helper.h"
@@ -44,6 +45,8 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
     void SetUp() override {
         ProgramSimpleFixture::SetUp();
         device = pDevice;
+        pDevice->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
+
         if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
             std::string filename;
             std::string kernelOption(CompilerOptions::debugKernelEnable);

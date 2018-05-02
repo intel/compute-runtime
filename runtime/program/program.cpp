@@ -87,6 +87,7 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
         if (DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
         }
+        kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
     }
 
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get()) {
