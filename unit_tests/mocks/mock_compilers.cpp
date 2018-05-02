@@ -30,6 +30,7 @@
 #include "unit_tests/mocks/mock_sip.h"
 
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
+#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 
 #include <fstream>
 #include <map>
@@ -314,6 +315,11 @@ IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 1)::Crea
                                                                                                      IGC::CodeType::CodeType_t outType) {
     return nullptr;
 }
+
+CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 2)::GetPreferredIntermediateRepresentation() {
+    return CodeType::llvmBc;
+}
+
 } // namespace IGC
 
 #include "cif/macros/disable.h"
