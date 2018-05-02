@@ -720,7 +720,7 @@ void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
 }
 
-D3DKMT_HANDLE Wddm::createContext() {
+bool Wddm::createContext() {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};
     CREATECONTEXT_PVTDATA PrivateData = {{0}};
@@ -747,10 +747,9 @@ D3DKMT_HANDLE Wddm::createContext() {
     CreateContext.hDevice = device;
 
     status = gdi->createContext(&CreateContext);
-    if (status == STATUS_SUCCESS) {
-        return CreateContext.hContext;
-    }
-    return static_cast<D3DKMT_HANDLE>(0);
+    context = CreateContext.hContext;
+
+    return status == STATUS_SUCCESS;
 }
 
 bool Wddm::destroyContext(D3DKMT_HANDLE context) {
@@ -761,7 +760,7 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
         DestroyContext.hContext = context;
         status = gdi->destroyContext(&DestroyContext);
     }
-    return status == STATUS_SUCCESS ? true : false;
+    return status == STATUS_SUCCESS;
 }
 
 bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {

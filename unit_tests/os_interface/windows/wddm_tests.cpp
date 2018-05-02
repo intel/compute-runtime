@@ -172,12 +172,16 @@ TEST(WddmTestEnumAdapters, devIdExpectFalse) {
 }
 
 HWTEST_F(WddmTest, context) {
+    EXPECT_TRUE(wddm->getOsDeviceContext() == static_cast<D3DKMT_HANDLE>(0));
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());
-    D3DKMT_HANDLE context = wddm->createContext();
+
+    EXPECT_TRUE(wddm->createContext());
+
+    auto context = wddm->getOsDeviceContext();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
-    bool error = wddm->destroyContext(context);
-    EXPECT_TRUE(error);
+
+    EXPECT_TRUE(wddm->destroyContext(context));
 }
 
 HWTEST_F(WddmTest, allocation) {

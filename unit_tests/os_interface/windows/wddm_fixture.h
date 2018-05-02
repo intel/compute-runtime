@@ -194,11 +194,9 @@ class WddmMock : public Wddm {
         }
     }
 
-    D3DKMT_HANDLE createContext() override {
+    bool createContext() override {
         createContextResult.called++;
-        D3DKMT_HANDLE context = Wddm::createContext();
-        createContextResult.success = context != 0;
-        return context;
+        return createContextResult.success = Wddm::createContext();
     }
     bool destroyContext(D3DKMT_HANDLE context) override {
         destroyContextResult.called++;
