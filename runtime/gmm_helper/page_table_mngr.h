@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,11 +23,12 @@
 #pragma once
 #include "runtime/gmm_helper/gmm_lib.h"
 #include <memory>
+#include <functional>
 
 namespace OCLRT {
 class GmmPageTableMngr {
   public:
-    virtual ~GmmPageTableMngr() = default;
+    MOCKABLE_VIRTUAL ~GmmPageTableMngr() = default;
 
     static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
@@ -44,12 +45,13 @@ class GmmPageTableMngr {
     }
 
   protected:
+    static void customDeleter(GMM_PAGETABLE_MGR *gmmPageTableManager);
+    using UniquePtrType = std::unique_ptr<GMM_PAGETABLE_MGR, std::function<void(GMM_PAGETABLE_MGR *)>>;
+
     GmmPageTableMngr() = default;
 
-    GmmPageTableMngr(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-        pageTableManager.reset(new GMM_PAGETABLE_MGR(deviceCb, translationTableFlags, translationTableCb));
-    }
+    GmmPageTableMngr(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
-    std::unique_ptr<GMM_PAGETABLE_MGR> pageTableManager;
+    UniquePtrType pageTableManager;
 };
 } // namespace OCLRT

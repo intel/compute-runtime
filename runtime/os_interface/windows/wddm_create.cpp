@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/wddm.h"
 #include <dxgi.h>
 namespace OCLRT {
@@ -42,6 +43,17 @@ Wddm::VirtualFreeFcn getVirtualFree() {
 
 Wddm::VirtualAllocFcn getVirtualAlloc() {
     return VirtualAlloc;
+}
+
+bool Wddm::initGmmContext() {
+    return Gmm::initContext(gfxPlatform.get(),
+                            featureTable.get(),
+                            waTable.get(),
+                            gtSystemInfo.get());
+}
+
+void Wddm::destroyGmmContext() {
+    Gmm::destroyContext();
 }
 
 } // namespace OCLRT

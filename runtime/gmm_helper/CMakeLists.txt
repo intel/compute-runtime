@@ -24,13 +24,16 @@ set(RUNTIME_SRCS_GMM_HELPER_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_lib.h
   ${CMAKE_CURRENT_SOURCE_DIR}/resource_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/resource_info_impl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/gmm_utils.cpp
 )
 
 set(RUNTIME_SRCS_GMM_HELPER_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr_impl.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/gmm_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_base.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_base.cpp
 )
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_GMM_HELPER_BASE})

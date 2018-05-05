@@ -55,4 +55,10 @@ Wddm::VirtualFreeFcn getVirtualFree() {
 Wddm::VirtualAllocFcn getVirtualAlloc() {
     return ULTVirtualAlloc;
 }
+
+bool Wddm::initGmmContext() {
+    return true;
+}
+
+void Wddm::destroyGmmContext() {}
 } // namespace OCLRT

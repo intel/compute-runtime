@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,7 +63,7 @@ class Gmm {
     static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
 
     static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
-    static void destroyContext() { GmmDestroyGlobalContext(); }
+    static void destroyContext();
 
     static uint32_t getMOCS(uint32_t type);
 
@@ -99,5 +99,6 @@ class Gmm {
 
     bool isRenderCompressed = false;
     static bool useSimplifiedMocsTable;
+    static GMM_CLIENT_CONTEXT *gmmClientContext;
 };
 } // namespace OCLRT

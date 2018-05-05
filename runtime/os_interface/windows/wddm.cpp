@@ -90,7 +90,7 @@ Wddm::Wddm() : Wddm(new Gdi()) {
 Wddm::~Wddm() {
     resetPageTableManager(nullptr);
     if (initialized)
-        Gmm::destroyContext();
+        destroyGmmContext();
     destroyContext(context);
     destroyPagingQueue();
     destroyDevice();

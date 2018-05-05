@@ -66,15 +66,25 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
                       const FeatureTable *pSkuTable,
                       const WorkaroundTable *pWaTable,
                       const GT_SYSTEM_INFO *pGtSysInfo) {
-    // fill values Gmmlib requested
-    _SKU_FEATURE_TABLE gmmFtrTable = {};
-    _WA_TABLE gmmWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
-    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
+    if (!Gmm::gmmClientContext) {
+        _SKU_FEATURE_TABLE gmmFtrTable = {};
+        _WA_TABLE gmmWaTable = {};
+        SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
+        SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
 
-    bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_OGL_VISTA);
-    DEBUG_BREAK_IF(!success);
-    return success;
+        bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
+        UNRECOVERABLE_IF(!success);
+        Gmm::gmmClientContext = GmmCreateClientContext(GMM_CLIENT::GMM_OCL_VISTA);
+    }
+    return Gmm::gmmClientContext != nullptr;
+}
+
+void Gmm::destroyContext() {
+    if (Gmm::gmmClientContext) {
+        GmmDeleteClientContext(Gmm::gmmClientContext);
+        Gmm::gmmClientContext = nullptr;
+        GmmDestroyGlobalContext();
+    }
 }
 
 uint32_t Gmm::getMOCS(uint32_t type) {
@@ -86,8 +96,7 @@ uint32_t Gmm::getMOCS(uint32_t type) {
         }
     }
 
-    MEMORY_OBJECT_CONTROL_STATE mocs =
-        pGmmGlobalContext->GetCachePolicyObj()->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
+    MEMORY_OBJECT_CONTROL_STATE mocs = Gmm::gmmClientContext->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
 }
@@ -404,5 +413,6 @@ bool Gmm::unifiedAuxTranslationCapable() const {
 }
 
 bool Gmm::useSimplifiedMocsTable = false;
+GMM_CLIENT_CONTEXT *Gmm::gmmClientContext = nullptr;
 
 } // namespace OCLRT

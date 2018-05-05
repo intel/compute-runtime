@@ -20,28 +20,17 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-#include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace OCLRT {
-class GmmMemoryBase {
-  public:
-    virtual ~GmmMemoryBase() = default;
+void GmmPageTableMngr::customDeleter(GMM_PAGETABLE_MGR *gmmPageTableManager) {
+    Gmm::gmmClientContext->DestroyPageTblMgrObject(gmmPageTableManager);
+}
 
-    MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
-                                                      GMM_ESCAPE_HANDLE hDevice,
-                                                      GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                      GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN FaultableSvm,
-                                                      BOOLEAN SparseReady,
-                                                      BOOLEAN BDWL3Coherency,
-                                                      GMM_GFX_SIZE_T SizeOverride,
-                                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve);
+GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+    auto pageTableMngrPtr = Gmm::gmmClientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
+    this->pageTableManager = UniquePtrType(pageTableMngrPtr, GmmPageTableMngr::customDeleter);
+}
 
-    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
-
-  protected:
-    GmmMemoryBase() = default;
-};
 } // namespace OCLRT

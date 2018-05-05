@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/gmm_helper/gmm_lib.h"
 #include <memory>
+#include <functional>
 
 namespace OCLRT {
 class GmmResourceInfo {
@@ -31,11 +32,7 @@ class GmmResourceInfo {
 
     static GmmResourceInfo *create(GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
-    virtual ~GmmResourceInfo() {
-        if (resourceInfo) {
-            GmmResFree(resourceInfo);
-        }
-    }
+    MOCKABLE_VIRTUAL ~GmmResourceInfo() = default;
 
     MOCKABLE_VIRTUAL size_t getSizeAllocation() { return static_cast<size_t>(resourceInfo->GetSizeAllocation()); }
 
@@ -81,15 +78,18 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint64_t getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE auxType) { return resourceInfo->GetUnifiedAuxSurfaceOffset(auxType); }
 
-    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekHandle() const { return resourceInfo; }
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *peekHandle() const { return resourceInfo.get(); }
 
   protected:
+    static void customDeleter(GMM_RESOURCE_INFO *gmmResourceInfoHandle);
+    using UniquePtrType = std::unique_ptr<GMM_RESOURCE_INFO, std::function<void(GMM_RESOURCE_INFO *)>>;
+
     GmmResourceInfo() = default;
 
-    GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) { resourceInfo = GmmResCreate(resourceCreateParams); }
+    GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams);
 
-    GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) { resourceInfo = GmmResCopy(inputGmmResourceInfo); }
+    GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo);
 
-    GMM_RESOURCE_INFO *resourceInfo = nullptr;
+    UniquePtrType resourceInfo;
 };
 } // namespace OCLRT

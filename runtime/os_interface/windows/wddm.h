@@ -219,6 +219,8 @@ class Wddm {
     void getDeviceState();
     void handleCompletion();
     unsigned int readEnablePreemptionRegKey();
+    bool initGmmContext();
+    void destroyGmmContext();
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;

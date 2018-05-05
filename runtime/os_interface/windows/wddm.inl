@@ -52,7 +52,7 @@ bool Wddm::init() {
         if (!createPagingQueue()) {
             return false;
         }
-        if (!Gmm::initContext(gfxPlatform.get(), featureTable.get(), waTable.get(), gtSystemInfo.get())) {
+        if (!initGmmContext()) {
             return false;
         }
         if (!configureDeviceAddressSpace<GfxFamily>()) {

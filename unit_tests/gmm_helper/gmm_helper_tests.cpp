@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -602,6 +602,55 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
     mockResource->mockResourceCreateParams.Flags.Gpu.UnifiedAuxSurface = 1;
     mockResource->mockResourceCreateParams.Flags.Info.RenderCompressed = 0;
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
+}
+
+TEST(GmmTest, whenContextIsInitializedMultipleTimesThenDontOverride) {
+    const HardwareInfo *hwinfo = *platformDevices;
+    EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+    auto currentClientContext = Gmm::gmmClientContext;
+
+    EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+
+    EXPECT_EQ(currentClientContext, Gmm::gmmClientContext);
+}
+
+TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {
+    const HardwareInfo *hwinfo = *platformDevices;
+    EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+
+    Gmm::destroyContext();
+    EXPECT_EQ(nullptr, Gmm::gmmClientContext);
+    Gmm::destroyContext();
+
+    EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+}
+
+TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
+    struct MyMockResourecInfo : public GmmResourceInfo {
+        using GmmResourceInfo::resourceInfo;
+
+        MyMockResourecInfo(GMM_RESCREATE_PARAMS *inputParams) : GmmResourceInfo(inputParams){};
+        MyMockResourecInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) : GmmResourceInfo(inputGmmResourceInfo){};
+    };
+
+    GMM_RESCREATE_PARAMS gmmParams = {};
+    gmmParams.Type = RESOURCE_BUFFER;
+    gmmParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    gmmParams.BaseWidth = 1;
+    gmmParams.BaseHeight = 1;
+    gmmParams.Depth = 1;
+    gmmParams.Flags.Info.Linear = 1;
+    gmmParams.Flags.Info.Cacheable = 1;
+    gmmParams.Flags.Gpu.Texture = 1;
+    gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+
+    MyMockResourecInfo myMockResourceInfo1(&gmmParams);
+    EXPECT_NE(nullptr, myMockResourceInfo1.resourceInfo.get());
+
+    MyMockResourecInfo myMockResourceInfo2(myMockResourceInfo1.resourceInfo.get());
+    EXPECT_NE(nullptr, myMockResourceInfo2.resourceInfo.get());
+
+    EXPECT_NE(myMockResourceInfo1.resourceInfo.get(), myMockResourceInfo2.resourceInfo.get());
 }
 
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {

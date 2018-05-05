@@ -20,28 +20,22 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-#include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+#include "runtime/gmm_helper/resource_info.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
-class GmmMemoryBase {
-  public:
-    virtual ~GmmMemoryBase() = default;
+void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {
+    Gmm::gmmClientContext->DestroyResInfoObject(gmmResourceInfo);
+}
 
-    MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
-                                                      GMM_ESCAPE_HANDLE hDevice,
-                                                      GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                      GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN FaultableSvm,
-                                                      BOOLEAN SparseReady,
-                                                      BOOLEAN BDWL3Coherency,
-                                                      GMM_GFX_SIZE_T SizeOverride,
-                                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve);
+GmmResourceInfo::GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {
+    auto resourceInfoPtr = Gmm::gmmClientContext->CreateResInfoObject(resourceCreateParams);
+    this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
+}
 
-    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
+GmmResourceInfo::GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
+    auto resourceInfoPtr = Gmm::gmmClientContext->CopyResInfoObject(inputGmmResourceInfo);
+    this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
+}
 
-  protected:
-    GmmMemoryBase() = default;
-};
 } // namespace OCLRT
