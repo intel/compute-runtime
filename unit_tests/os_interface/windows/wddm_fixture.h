@@ -21,7 +21,6 @@
  */
 
 #pragma once
-#if defined(_WIN32)
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
@@ -30,10 +29,10 @@
 #include "runtime/os_interface/windows/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/gmm_fixture.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 #include "mock_gmm_memory.h"
-#include "unit_tests//os_interface/windows/mock_gdi_interface.h"
+#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #pragma warning(push)
 #pragma warning(disable : 4005)
 #include <ntstatus.h>
@@ -112,6 +111,10 @@ class WddmMock : public Wddm {
                          reserveValidAddressRangeResult() {
         reservedAddresses.clear();
         virtualAllocAddress = OCLRT::windowsMinAddress;
+    }
+
+    ~WddmMock() {
+        EXPECT_EQ(0, reservedAddresses.size());
     }
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override {
@@ -396,113 +399,40 @@ class WddmMockReserveAddress : public WddmMock {
     uint32_t returnNullIter;
 };
 
-class WddmFixture {
-  protected:
-    Wddm *wddm;
-    WddmMock *mockWddm = nullptr;
-    OsLibrary *mockGdiDll;
-    decltype(&MockSetSizes) setSizesFunction;
-    decltype(&GetMockSizes) getSizesFunction;
-    decltype(&GetMockLastDestroyedResHandle) getMockLastDestroyedResHandleFcn;
-    decltype(&SetMockLastDestroyedResHandle) setMockLastDestroyedResHandleFcn;
-    decltype(&GetMockCreateDeviceParams) getMockCreateDeviceParamsFcn;
-    decltype(&SetMockCreateDeviceParams) setMockCreateDeviceParamsFcn;
-    decltype(&getMockAllocation) getMockAllocationFcn;
-    decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn;
-    decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn;
-    decltype(&setMapGpuVaFailConfig) setMapGpuVaFailConfigFcn = nullptr;
-    decltype(&getCreateContextData) getCreateContextDataFcn;
-
-  public:
+struct WddmFixture {
     virtual void SetUp() {
-        const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
-
-        setSizesFunction = reinterpret_cast<decltype(&MockSetSizes)>(mockGdiDll->getProcAddress("MockSetSizes"));
-        getSizesFunction = reinterpret_cast<decltype(&GetMockSizes)>(mockGdiDll->getProcAddress("GetMockSizes"));
-        getMockLastDestroyedResHandleFcn =
-            reinterpret_cast<decltype(&GetMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("GetMockLastDestroyedResHandle"));
-        setMockLastDestroyedResHandleFcn =
-            reinterpret_cast<decltype(&SetMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("SetMockLastDestroyedResHandle"));
-        getMockCreateDeviceParamsFcn =
-            reinterpret_cast<decltype(&GetMockCreateDeviceParams)>(mockGdiDll->getProcAddress("GetMockCreateDeviceParams"));
-        setMockCreateDeviceParamsFcn =
-            reinterpret_cast<decltype(&SetMockCreateDeviceParams)>(mockGdiDll->getProcAddress("SetMockCreateDeviceParams"));
-        getMockAllocationFcn = reinterpret_cast<decltype(&getMockAllocation)>(mockGdiDll->getProcAddress("getMockAllocation"));
-        getAdapterInfoAddressFcn = reinterpret_cast<decltype(&getAdapterInfoAddress)>(mockGdiDll->getProcAddress("getAdapterInfoAddress"));
-        getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
-        setMapGpuVaFailConfigFcn = reinterpret_cast<decltype(&setMapGpuVaFailConfig)>(mockGdiDll->getProcAddress("setMapGpuVaFailConfig"));
-        setMapGpuVaFailConfigFcn(0, 0);
-        getCreateContextDataFcn = reinterpret_cast<decltype(&getCreateContextData)>(mockGdiDll->getProcAddress("getCreateContextData"));
-        wddm = Wddm::createWddm();
-        mockWddm = static_cast<WddmMock *>(wddm);
-        wddm->registryReader.reset(new RegistryReaderMock());
-        setMockLastDestroyedResHandleFcn((D3DKMT_HANDLE)0);
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(&gdi)));
     }
 
-    virtual void SetUp(Gdi *gdi) {
-        mockGdiDll = nullptr;
-        wddm = Wddm::createWddm(gdi);
-        mockWddm = static_cast<WddmMock *>(wddm);
-        wddm->registryReader.reset(new RegistryReaderMock());
-    }
+    virtual void TearDown(){};
 
-    virtual void TearDown() {
-        if (wddm != nullptr) {
-            EXPECT_EQ(0, mockWddm->reservedAddresses.size());
-            delete wddm;
-        }
-        if (mockGdiDll != nullptr) {
-            if (setMapGpuVaFailConfigFcn != nullptr) {
-                setMapGpuVaFailConfigFcn(0, 0);
-            }
-            delete mockGdiDll;
-        }
-    }
+    std::unique_ptr<WddmMock> wddm;
+    MockGdi gdi;
 };
 
-class WddmFixtureMock {
-  protected:
-    WddmMock *wddm;
-    OsLibrary *mockGdiDll;
-
-  public:
-    virtual void SetUp() {
-        const HardwareInfo hwInfo = *platformDevices[0];
-        mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
-        wddm = new WddmMock();
+struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
+    void SetUp() override {
+        GdiDllFixture::SetUp();
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
     }
 
-    virtual void TearDown() {
-        delete mockGdiDll;
+    void TearDown() override {
+        GdiDllFixture::TearDown();
     }
+
+    std::unique_ptr<WddmMock> wddm;
 };
 
-class WddmGmmFixture : public GmmFixture, public WddmFixture {
-  public:
-    virtual void SetUp() {
-        GmmFixture::SetUp();
-        WddmFixture::SetUp();
-    }
-
-    virtual void TearDown() {
-        WddmFixture::TearDown();
-        GmmFixture::TearDown();
-    }
-};
-
-class WddmInstrumentationGmmFixture : public WddmGmmFixture {
-  public:
+struct WddmInstrumentationGmmFixture {
     virtual void SetUp() {
         MockGmmMemory::MockGmmMemoryFlag = MockGmmMemory::MockType::MockInstrumentation;
-        WddmGmmFixture::SetUp();
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        gmmMem = static_cast<GmockGmmMemory *>(wddm->getGmmMemory());
     }
     virtual void TearDown() {
-        WddmGmmFixture::TearDown();
         MockGmmMemory::MockGmmMemoryFlag = MockGmmMemory::MockType::MockDummy;
     }
+
+    std::unique_ptr<WddmMock> wddm;
+    GmockGmmMemory *gmmMem = nullptr;
 };
-
-typedef ::testing::Test WddmDummyFixture;
-
-#endif

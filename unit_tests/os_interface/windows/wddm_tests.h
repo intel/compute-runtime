@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,57 +31,38 @@ using namespace OCLRT;
 
 OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo);
 
-typedef Test<WddmGmmFixture> WddmTest;
+typedef Test<WddmFixture> WddmTest;
+typedef Test<WddmFixtureWithMockGdiDll> WddmTestWithMockGdiDll;
 
 typedef Test<WddmInstrumentationGmmFixture> WddmInstrumentationTest;
 
-typedef WddmDummyFixture WddmTestSingle;
+typedef ::testing::Test WddmTestSingle;
 
-class WddmPreemptionTests : public WddmTest {
+class WddmPreemptionTests : public WddmTestWithMockGdiDll {
   public:
     void SetUp() override {
-        WddmTest::SetUp();
+        WddmTestWithMockGdiDll::SetUp();
         const HardwareInfo hwInfo = *platformDevices[0];
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
     }
 
     void TearDown() override {
-        if (mockWddm) {
-            delete mockWddm;
-        }
         delete dbgRestorer;
-        WddmTest::TearDown();
+        WddmTestWithMockGdiDll::TearDown();
     }
 
     template <typename GfxFamily>
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
-        mockWddm = new WddmMock();
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         auto regReader = new RegistryReaderMock();
-        mockWddm->registryReader.reset(regReader);
+        wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
-        mockWddm->setPreemptionMode(preemptionMode);
-        mockWddm->init<GfxFamily>();
+        wddm->setPreemptionMode(preemptionMode);
+        wddm->init<GfxFamily>();
     }
 
-    WddmMock *mockWddm = nullptr;
     DebugManagerStateRestore *dbgRestorer = nullptr;
     HardwareInfo hwInfoTest;
 };
-
-class WddmGmmMockGdiFixture : public GmmFixture, public WddmFixture {
-  public:
-    virtual void SetUp() {
-        GmmFixture::SetUp();
-        WddmFixture::SetUp(&gdi);
-    }
-
-    virtual void TearDown() {
-        WddmFixture::TearDown();
-        GmmFixture::TearDown();
-    }
-    MockGdi gdi;
-};
-
-typedef Test<WddmGmmMockGdiFixture> WddmWithMockGdiTest;

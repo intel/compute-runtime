@@ -33,7 +33,8 @@ using namespace OCLRT;
 using namespace ::testing;
 
 void WddmMemoryManagerFixture::SetUp() {
-    WddmFixture::SetUp();
+    GdiDllFixture::SetUp();
+    wddm = static_cast<WddmMock *>(Wddm::createWddm());
     ASSERT_NE(nullptr, wddm);
     if (platformDevices[0]->capabilityTable.ftrCompression) {
         GMM_DEVICE_CALLBACKS dummyDeviceCallbacks = {};
@@ -110,7 +111,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
@@ -127,7 +128,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCa
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1));
     auto wddmAlloc = static_cast<WddmAllocation *>(gpuAllocation);
@@ -144,12 +145,12 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThen
 
     auto ptr = memoryManager->lockResource(alloc);
     EXPECT_NE(nullptr, ptr);
-    EXPECT_EQ(1u, mockWddm->lockResult.called);
-    EXPECT_TRUE(mockWddm->lockResult.success);
+    EXPECT_EQ(1u, wddm->lockResult.called);
+    EXPECT_TRUE(wddm->lockResult.success);
 
     memoryManager->unlockResource(alloc);
-    EXPECT_EQ(1u, mockWddm->unlockResult.called);
-    EXPECT_TRUE(mockWddm->unlockResult.success);
+    EXPECT_EQ(1u, wddm->unlockResult.called);
+    EXPECT_TRUE(wddm->unlockResult.success);
 
     memoryManager->freeGraphicsMemory(alloc);
 }
@@ -161,7 +162,7 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllo
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -184,7 +185,7 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32B
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
 
@@ -207,7 +208,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHan
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_NE(nullptr, gpuAllocation);
@@ -229,7 +230,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShar
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, size, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     ASSERT_NE(nullptr, gpuAllocation);
@@ -244,9 +245,9 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
     std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, size, false));
-    auto status = setSizesFunction(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
+    auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
-    mockWddm->failOpenSharedHandle = true;
+    wddm->failOpenSharedHandle = true;
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false);
     EXPECT_EQ(nullptr, gpuAllocation);
@@ -255,7 +256,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.setMemoryManager(memoryManager.get());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -283,7 +284,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.setMemoryManager(memoryManager.get());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -313,7 +314,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCount
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.setMemoryManager(memoryManager.get());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -343,7 +344,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreat
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.setMemoryManager(memoryManager.get());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -372,7 +373,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCoun
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
     SetUpMm<FamilyType>();
     MockContext context;
-    context.setMemoryManager(memoryManager);
+    context.setMemoryManager(memoryManager.get());
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -591,7 +592,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
     auto destroyWithResourceHandleCalled = 0u;
     D3DKMT_DESTROYALLOCATION2 *ptrToDestroyAlloc2 = nullptr;
 
-    getSizesFunction(destroyWithResourceHandleCalled, ptrToDestroyAlloc2);
+    getSizesFcn(destroyWithResourceHandleCalled, ptrToDestroyAlloc2);
 
     EXPECT_EQ(0u, ptrToDestroyAlloc2->Flags.SynchronousDestroy);
     EXPECT_EQ(1u, ptrToDestroyAlloc2->Flags.AssumeNotInUse);
@@ -616,13 +617,12 @@ HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAligned
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
 
     WddmAllocation *allocation = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(size, cpuPtr));
 
-    void *expectReserve = reinterpret_cast<void *>(mockWddm->virtualAllocAddress);
+    void *expectReserve = reinterpret_cast<void *>(wddm->virtualAllocAddress);
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectReserve, allocation->getReservedAddress());
@@ -636,17 +636,12 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGp
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
 
-    WddmMock *mockedWddm = new WddmMock;
-    EXPECT_TRUE(mockedWddm->init<FamilyType>());
-
-    MockWddmMemoryManager mockMemoryManager(mockedWddm);
-    mockMemoryManager.setDeferredDeleter(nullptr);
-
+    memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
 }
 
@@ -656,18 +651,14 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstM
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
 
-    WddmMock *mockedWddm = new WddmMock;
-    EXPECT_TRUE(mockedWddm->init<FamilyType>());
-
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
-    MockWddmMemoryManager mockMemoryManager(mockedWddm);
-    mockMemoryManager.setDeferredDeleter(deleter);
+    memoryManager->setDeferredDeleter(deleter);
 
     setMapGpuVaFailConfigFcn(0, 1);
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_TRUE(ret);
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), allocation.getGpuAddress());
 }
@@ -678,18 +669,14 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstA
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(Gmm::create(ptr, size, false));
 
-    WddmMock *mockedWddm = new WddmMock;
-    EXPECT_TRUE(mockedWddm->init<FamilyType>());
-
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
-    MockWddmMemoryManager mockMemoryManager(mockedWddm);
-    mockMemoryManager.setDeferredDeleter(deleter);
+    memoryManager->setDeferredDeleter(deleter);
 
     setMapGpuVaFailConfigFcn(0, 2);
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = mockMemoryManager.createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
 }
 
@@ -955,9 +942,8 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdates
 
 HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTripleAllocationsResident) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     WddmAllocation allocation1, allocation2;
-    void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1500);
+    void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
 
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
 
@@ -1000,7 +986,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLas
 HWTEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManagerCtor) {
     SetUpMm<FamilyType>();
     EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi.getRegisterTrimNotificationArg().Callback);
-    EXPECT_EQ(reinterpret_cast<void *>(memoryManager), gdi.getRegisterTrimNotificationArg().Context);
+    EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi.getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi.getRegisterTrimNotificationArg().hDevice);
 }
 
@@ -1020,7 +1006,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeri
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1030,7 +1016,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeri
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 2 allocations evicted
-    EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
     // removed from trim candidate list
     EXPECT_EQ(0u, memoryManager->trimCandidateList.size());
     // marked nonresident
@@ -1056,7 +1042,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPerio
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1066,7 +1052,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPerio
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 1 allocation evicted
-    EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     // removed from trim candidate list
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
 
@@ -1078,11 +1064,10 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPerio
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFragmentsSincePreviousTrimWhenTrimResidencyPeriodicTrimIsCalledThenProperFragmentsAreEvictedAndMarked) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
-    void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1500);
+    void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
     // 3-fragment Allocation
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
     // whole allocation unused since previous trim
@@ -1103,7 +1088,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedF
     // Set current fence value to greater value
     wddm->getMonitoredFence().currentFenceValue = 20;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1112,7 +1097,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedF
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 2 fragments evicted with one call
-    EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     // marked nonresident
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident);
@@ -1179,7 +1164,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
     wddm->getMonitoredFence().lastSubmittedFence = 1;
     wddm->getMonitoredFence().currentFenceValue = 1;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1189,7 +1174,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
 
     memoryManager->trimResidencyToBudget(3 * 4096);
 
-    EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
 
     EXPECT_EQ(1u, memoryManager->trimCandidatesCount);
     memoryManager->compactTrimCandidateList();
@@ -1211,14 +1196,14 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToT
     *wddm->getMonitoredFence().cpuAddress = 1;
     wddm->getMonitoredFence().lastSubmittedFence = 1;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
     memoryManager->trimCandidateList.resize(0);
 
     memoryManager->addToTrimCandidateList(&allocation1);
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
-    EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     EXPECT_EQ(0u, memoryManager->trimCandidateList.size());
 
     EXPECT_FALSE(status);
@@ -1243,7 +1228,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesTo
     wddm->getMonitoredFence().lastSubmittedFence = 1;
     wddm->getMonitoredFence().currentFenceValue = 1;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1254,7 +1239,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesTo
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(status);
-    EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
     EXPECT_EQ(1u, memoryManager->trimCandidateList.size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
@@ -1280,7 +1265,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonRe
     wddm->getMonitoredFence().lastSubmittedFence = 1;
     wddm->getMonitoredFence().currentFenceValue = 1;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1307,8 +1292,8 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIs
     wddm->getMonitoredFence().lastSubmittedFence = 2;
     wddm->getMonitoredFence().currentFenceValue = 3;
 
-    mockWddm->makeNonResidentResult.called = 0;
-    mockWddm->waitFromCpuResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
+    wddm->waitFromCpuResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1318,17 +1303,16 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIs
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
-    EXPECT_EQ(1u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident);
 
-    EXPECT_EQ(mockWddm->getDevice(), gdi.getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(wddm->getDevice(), gdi.getWaitFromCpuArg().hDevice);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     gdi.setNonZeroNumBytesToTrimInEvict();
-    void *ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1000);
+    void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     WddmAllocation allocation1(ptr, 0x1000, ptr, 0x1000, nullptr);
     WddmAllocation allocation2(ptr, 0x1000, ptr, 0x1000, nullptr);
     allocation1.getResidencyData().resident = true;
@@ -1363,11 +1347,11 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     wddm->getMonitoredFence().lastSubmittedFence = 1;
     wddm->getMonitoredFence().currentFenceValue = 2;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
-    EXPECT_EQ(2u, mockWddm->makeNonResidentResult.called);
+    EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
 
     EXPECT_FALSE(allocationTriple->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->resident);
@@ -1402,7 +1386,6 @@ HWTEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerThanAllocSizeWhenBudgetEqualTwoAlignedAllocationThenEvictOnlyTwo) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     gdi.setNonZeroNumBytesToTrimInEvict();
     size_t underlyingSize = 0xF00;
     size_t alignedSize = 0x1000;
@@ -1411,9 +1394,9 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerT
     //trim budget should consider aligned size, not underlying, so if function considers underlying, it should evict three, not two
     EXPECT_GT((3 * underlyingSize), budget);
     EXPECT_LT((2 * underlyingSize), budget);
-    void *ptr1 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1000);
-    void *ptr2 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x3000);
-    void *ptr3 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x5000);
+    void *ptr1 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
+    void *ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x3000);
+    void *ptr3 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x5000);
 
     WddmAllocation allocation1(ptr1, underlyingSize, ptr1, alignedSize, nullptr);
     WddmAllocation allocation2(ptr2, underlyingSize, ptr2, alignedSize, nullptr);
@@ -1432,7 +1415,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerT
     wddm->getMonitoredFence().lastSubmittedFence = 1;
     wddm->getMonitoredFence().currentFenceValue = 1;
 
-    mockWddm->makeNonResidentResult.called = 0;
+    wddm->makeNonResidentResult.called = 0;
 
     memoryManager->trimCandidateList.resize(0);
 
@@ -1489,8 +1472,7 @@ HWTEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFille
 
 HWTEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
-    auto ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1001);
+    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, ptr);
 
@@ -1519,11 +1501,10 @@ HWTEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsk
 
 HWTEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocationThenGraphicsAllocationIsCreated) {
     SetUpMm<FamilyType>();
-    WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
     OsHandleStorage handleStorage;
 
-    auto ptr = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1000);
-    auto ptr2 = reinterpret_cast<void *>(mockWddm->virtualAllocAddress + 0x1001);
+    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
+    auto ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize;
 
     handleStorage.fragmentStorageData[0].cpuPtr = ptr;

@@ -36,67 +36,51 @@
 using namespace OCLRT;
 using namespace ::testing;
 
-class WddmMemoryManagerFixture : public WddmFixture {
+class WddmMemoryManagerFixture : public GdiDllFixture {
   public:
-    WddmMemoryManager *memoryManager = nullptr;
-
-    virtual void SetUp();
+    void SetUp() override;
 
     template <typename FamiltyType>
     void SetUpMm() {
-        WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
         EXPECT_TRUE(wddm->init<FamiltyType>());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
         }
-        mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager = new (std::nothrow) WddmMemoryManager(false, wddm);
+        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
-    virtual void TearDown() {
-        WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
-        EXPECT_EQ(0, mockWddm->reservedAddresses.size());
-        delete memoryManager;
-        this->wddm = nullptr;
-        WddmFixture::TearDown();
-    }
+    std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    WddmMock *wddm = nullptr;
 };
 
 typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 
-class MockWddmMemoryManagerFixture : public WddmFixture {
+class MockWddmMemoryManagerFixture {
   public:
-    MockWddmMemoryManager *memoryManager = nullptr;
-
-    virtual void SetUp() {
-        WddmFixture::SetUp(&gdi);
-        ASSERT_NE(nullptr, wddm);
+    void SetUp() {
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(&gdi));
     }
 
     template <typename FamiltyType>
     void SetUpMm() {
-        WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
         EXPECT_TRUE(wddm->init<FamiltyType>());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
         }
-        mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
+        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
-    virtual void TearDown() {
-        WddmMock *mockWddm = static_cast<WddmMock *>(this->wddm);
-        EXPECT_EQ(0, mockWddm->reservedAddresses.size());
-        delete memoryManager;
-        this->wddm = nullptr;
-        WddmFixture::TearDown();
-    }
+    virtual void TearDown() {}
+    std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    WddmMock *wddm = nullptr;
     MockGdi gdi;
 };
 
@@ -171,17 +155,16 @@ class BufferWithWddmMemory : public ::testing::Test,
 
     template <typename FamiltyType>
     void SetUpMm() {
-        WddmMock *mockWddm = static_cast<WddmMock *>(wddm);
         EXPECT_TRUE(wddm->init<FamiltyType>());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
         }
-        mockWddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager = new (std::nothrow) WddmMemoryManager(false, wddm);
+        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        context.setMemoryManager(memoryManager);
+        context.setMemoryManager(memoryManager.get());
         flags = 0;
     }
 
