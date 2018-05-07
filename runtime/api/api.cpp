@@ -1836,6 +1836,7 @@ cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue commandQueue,
             event);
     }
 
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -1949,6 +1950,12 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "srcBuffer", srcBuffer, "dstBuffer", dstBuffer,
+                   "srcOffset", srcOffset, "dstOffset", dstOffset, "cb", cb,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pSrcBuffer = nullptr;
     Buffer *pDstBuffer = nullptr;
@@ -1976,6 +1983,7 @@ cl_int CL_API_CALL clEnqueueCopyBuffer(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -1994,6 +2002,16 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
                                            cl_event *event) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "srcBuffer", srcBuffer, "dstBuffer", dstBuffer,
+                   "srcOrigin[0]", DebugManager.getInput(srcOrigin, 0), "srcOrigin[1]", DebugManager.getInput(srcOrigin, 1), "srcOrigin[2]", DebugManager.getInput(srcOrigin, 2),
+                   "dstOrigin[0]", DebugManager.getInput(dstOrigin, 0), "dstOrigin[1]", DebugManager.getInput(dstOrigin, 1), "dstOrigin[2]", DebugManager.getInput(dstOrigin, 2),
+                   "region[0]", DebugManager.getInput(region, 0), "region[1]", DebugManager.getInput(region, 1), "region[2]", DebugManager.getInput(region, 2),
+                   "srcRowPitch", srcRowPitch, "srcSlicePitch", srcSlicePitch,
+                   "dstRowPitch", dstRowPitch, "dstSlicePitch", dstSlicePitch,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pSrcBuffer = nullptr;
@@ -2019,6 +2037,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferRect(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2047,7 +2066,9 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
                    "origin[0]", DebugManager.getInput(origin, 0), "origin[1]", DebugManager.getInput(origin, 1), "origin[2]", DebugManager.getInput(origin, 2),
                    "region[0]", DebugManager.getInput(region, 0), "region[1]", DebugManager.getInput(region, 1), "region[2]", DebugManager.getInput(region, 2),
                    "rowPitch", rowPitch, "slicePitch", slicePitch, "ptr", ptr,
-                   "numEventsInWaitList", numEventsInWaitList, "event", event);
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS == retVal) {
 
@@ -2076,6 +2097,7 @@ cl_int CL_API_CALL clEnqueueReadImage(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2104,7 +2126,9 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
                    "origin[0]", DebugManager.getInput(origin, 0), "origin[1]", DebugManager.getInput(origin, 1), "origin[2]", DebugManager.getInput(origin, 2),
                    "region[0]", DebugManager.getInput(region, 0), "region[1]", DebugManager.getInput(region, 1), "region[2]", DebugManager.getInput(region, 2),
                    "inputRowPitch", inputRowPitch, "inputSlicePitch", inputSlicePitch, "ptr", ptr,
-                   "numEventsInWaitList", numEventsInWaitList, "event", event);
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS == retVal) {
         if (pImage->writeMemObjFlagsInvalid()) {
@@ -2132,7 +2156,7 @@ cl_int CL_API_CALL clEnqueueWriteImage(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
-
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2159,7 +2183,9 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
     DBG_LOG_INPUTS("commandQueue", commandQueue, "image", image, "fillColor", fillColor,
                    "origin[0]", origin[0], "origin[1]", origin[1], "origin[2]", origin[2],
                    "region[0]", region[0], "region[1]", region[1], "region[2]", region[2],
-                   "numEventsInWaitList", numEventsInWaitList, "event", event);
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS == retVal) {
         if (!Image::validateRegionAndOrigin(origin, region, dstImage->getImageDesc())) {
@@ -2175,6 +2201,7 @@ cl_int CL_API_CALL clEnqueueFillImage(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2202,7 +2229,9 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
                    "origin[0]", DebugManager.getInput(srcOrigin, 0), "origin[1]", DebugManager.getInput(srcOrigin, 1), "origin[2]", DebugManager.getInput(srcOrigin, 2),
                    "region[0]", DebugManager.getInput(dstOrigin, 0), "region[1]", DebugManager.getInput(dstOrigin, 1), "region[2]", DebugManager.getInput(dstOrigin, 2),
                    "region[0]", region ? region[0] : 0, "region[1]", region ? region[1] : 0, "region[2]", region ? region[2] : 0,
-                   "numEventsInWaitList", numEventsInWaitList, "event", event);
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS == retVal) {
         if (memcmp(&pSrcImage->getImageFormat(), &pDstImage->getImageFormat(), sizeof(cl_image_format))) {
@@ -2237,6 +2266,7 @@ cl_int CL_API_CALL clEnqueueCopyImage(cl_command_queue commandQueue,
             eventWaitList,
             event);
     }
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2257,7 +2287,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
                    "region[0]", region[0], "region[1]", region[1], "region[2]", region[2],
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     Image *pSrcImage = nullptr;
@@ -2289,6 +2319,7 @@ cl_int CL_API_CALL clEnqueueCopyImageToBuffer(cl_command_queue commandQueue,
             event);
     }
 
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2309,7 +2340,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
                    "region[0]", region[0], "region[1]", region[1], "region[2]", region[2],
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pSrcBuffer = nullptr;
@@ -2341,6 +2372,7 @@ cl_int CL_API_CALL clEnqueueCopyBufferToImage(cl_command_queue commandQueue,
             event);
     }
 
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2362,7 +2394,7 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
                    "mapFlags", mapFlags, "offset", offset, "cb", cb,
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     do {
         auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
@@ -2396,7 +2428,8 @@ void *CL_API_CALL clEnqueueMapBuffer(cl_command_queue commandQueue,
     } while (false);
 
     err.set(retVal);
-    DBG_LOG_INPUTS("retPtr", retPtr);
+    DBG_LOG_INPUTS("retPtr", retPtr, "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
+
     return retPtr;
 }
 
@@ -2431,7 +2464,7 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
                    "region[2]", region[2],
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     do {
         Image *pImage = nullptr;
@@ -2476,7 +2509,8 @@ void *CL_API_CALL clEnqueueMapImage(cl_command_queue commandQueue,
     } while (false);
 
     err.set(retVal);
-    DBG_LOG_INPUTS("retPtr", retPtr);
+    DBG_LOG_INPUTS("retPtr", retPtr, "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
+
     return retPtr;
 }
 
@@ -2501,7 +2535,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
                    "mappedPtr", mappedPtr,
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal == CL_SUCCESS) {
         if (pMemObj->peekClMemObjType() == CL_MEM_OBJECT_PIPE) {
@@ -2511,6 +2545,7 @@ cl_int CL_API_CALL clEnqueueUnmapMemObject(cl_command_queue commandQueue,
         retVal = pCommandQueue->enqueueUnmapMemObject(pMemObj, mappedPtr, numEventsInWaitList, eventWaitList, event);
     }
 
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -2550,12 +2585,14 @@ cl_int CL_API_CALL clEnqueueMigrateMemObjects(cl_command_queue commandQueue,
         return CL_INVALID_VALUE;
     }
 
-    return pCommandQueue->enqueueMigrateMemObjects(numMemObjects,
-                                                   memObjects,
-                                                   flags,
-                                                   numEventsInWaitList,
-                                                   eventWaitList,
-                                                   event);
+    retVal = pCommandQueue->enqueueMigrateMemObjects(numMemObjects,
+                                                     memObjects,
+                                                     flags,
+                                                     numEventsInWaitList,
+                                                     eventWaitList,
+                                                     event);
+    DBG_LOG_INPUTS("event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
+    return retVal;
 }
 
 cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
@@ -2573,7 +2610,7 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
                    DebugManager.getSizes(globalWorkSize, workDim, false), DebugManager.getSizes(localWorkSize, workDim, true),
                    "numEventsInWaitList", numEventsInWaitList,
                    "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
-                   "event", event);
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
 
@@ -3543,7 +3580,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
     if (!commandQueue)
         retVal = CL_OUT_OF_HOST_MEMORY;
 
-    DBG_LOG_INPUTS("commandQueue", commandQueue);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "properties", static_cast<int>(getCmdQueueProperties<cl_command_queue_properties>(properties)));
 
     err.set(retVal);
 
