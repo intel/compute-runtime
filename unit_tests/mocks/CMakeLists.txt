@@ -69,6 +69,8 @@ if (WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
   )
 endif()
 

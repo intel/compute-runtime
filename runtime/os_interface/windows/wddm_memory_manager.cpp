@@ -33,12 +33,6 @@
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm.h"
 #include <algorithm>
-#pragma warning(push)
-#pragma warning(disable : 4005)
-#include <ntstatus.h>
-#pragma warning(pop)
-
-#undef max
 
 namespace OCLRT {
 

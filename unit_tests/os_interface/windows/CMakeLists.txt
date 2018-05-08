@@ -40,12 +40,13 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_tests.h
 )
 if(WIN32)
   target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_os_interface_windows})

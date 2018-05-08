@@ -20,26 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#pragma warning(push)
-#pragma warning(disable : 4005)
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/options.h"
 #include "runtime/gen_common/hw_cmds.h"
+#include "runtime/helpers/options.h"
+#include "runtime/helpers/translationtable_callbacks.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
-#include "runtime/helpers/translationtable_callbacks.h"
-#pragma warning(pop)
 
-#include "test.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -50,6 +44,8 @@
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+
+#include "test.h"
 
 using namespace OCLRT;
 using namespace ::testing;

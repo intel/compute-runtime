@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/ult_dxgi_factory.h"
 
 namespace OCLRT {

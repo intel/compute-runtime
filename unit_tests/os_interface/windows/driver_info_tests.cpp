@@ -20,7 +20,6 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -28,6 +27,7 @@
 #include "runtime/helpers/options.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "gtest/gtest.h"
 

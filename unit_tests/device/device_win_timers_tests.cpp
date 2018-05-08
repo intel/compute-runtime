@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_ostime_win.h"
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "test.h"
 
 using namespace OCLRT;

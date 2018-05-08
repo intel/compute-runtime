@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,8 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include "runtime/os_interface/windows/deferrable_deletion_win.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "gtest/gtest.h"
 using namespace OCLRT;
 

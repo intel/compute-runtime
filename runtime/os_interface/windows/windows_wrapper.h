@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,9 +22,10 @@
 
 #pragma once
 #include <Windows.h>
-#ifndef NTSTATUS
-#define NTSTATUS LONG
-#endif
+#pragma warning(push)
+#pragma warning(disable : 4005)
+#include <ntstatus.h>
+#pragma warning(pop)
 // There is a conflict with max/min defined as macro in windows headers with std::max/std::min
 #undef min
 #undef max

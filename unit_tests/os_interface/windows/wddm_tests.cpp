@@ -21,7 +21,6 @@
  */
 
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
-#include "unit_tests/os_interface/windows/wddm_tests.h"
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
@@ -668,60 +667,6 @@ HWTEST_F(WddmTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThe
     EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    unsigned int expectedVal = 1u;
-    createAndInitWddm<FamilyType>(1u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(1u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    unsigned int expectedVal = 1u;
-    createAndInitWddm<FamilyType>(1u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
-    DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
-    hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
-    unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
-    EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
-    EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
-}
-
 HWTEST_F(WddmTest, makeResidentMultipleHandles) {
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());
@@ -941,89 +886,6 @@ HWTEST_F(WddmTest, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
     auto ret = wddm->openSharedHandle(handle, alloc);
 
     EXPECT_EQ(false, ret);
-}
-
-using WddmReserveAddressTest = WddmTestSingle;
-
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
-    size_t size = 0x1000;
-    void *reserve = nullptr;
-
-    bool ret = wddm->init<FamilyType>();
-    EXPECT_TRUE(ret);
-
-    wddm->returnGood = 1;
-
-    ret = wddm->reserveValidAddressRange(size, reserve);
-    uintptr_t expectedReserve = wddm->virtualAllocAddress;
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
-    wddm->releaseReservedAddress(reserve);
-}
-
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
-    size_t size = 0x1000;
-    void *reserve = nullptr;
-
-    bool ret = wddm->init<FamilyType>();
-    EXPECT_TRUE(ret);
-    uintptr_t expectedReserve = 0;
-    ret = wddm->reserveValidAddressRange(size, reserve);
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
-}
-
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
-    size_t size = 0x1000;
-    void *reserve = nullptr;
-
-    bool ret = wddm->init<FamilyType>();
-    EXPECT_TRUE(ret);
-
-    wddm->returnInvalidCount = 1;
-
-    ret = wddm->reserveValidAddressRange(size, reserve);
-    uintptr_t expectedReserve = wddm->virtualAllocAddress;
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
-    wddm->releaseReservedAddress(reserve);
-}
-
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
-    size_t size = 0x1000;
-    void *reserve = nullptr;
-
-    bool ret = wddm->init<FamilyType>();
-    EXPECT_TRUE(ret);
-
-    wddm->returnInvalidCount = 2;
-
-    ret = wddm->reserveValidAddressRange(size, reserve);
-    uintptr_t expectedReserve = wddm->virtualAllocAddress;
-    EXPECT_TRUE(ret);
-    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
-    wddm->releaseReservedAddress(reserve);
-}
-
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
-    std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
-    size_t size = 0x1000;
-    void *reserve = nullptr;
-
-    bool ret = wddm->init<FamilyType>();
-    EXPECT_TRUE(ret);
-
-    wddm->returnInvalidCount = 2;
-    wddm->returnNullCount = 1;
-    uintptr_t expectedReserve = 0;
-
-    ret = wddm->reserveValidAddressRange(size, reserve);
-    EXPECT_FALSE(ret);
-    EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }
 
 HWTEST_F(WddmTest, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemoryThenCorrectStatusIsReturned) {

@@ -38,7 +38,6 @@
 #include "runtime/sku_info/operations/sku_info_receiver.h"
 #include "runtime/utilities/stackvec.h"
 #include <dxgi.h>
-#include <ntstatus.h>
 #include "CL/cl.h"
 
 namespace OCLRT {

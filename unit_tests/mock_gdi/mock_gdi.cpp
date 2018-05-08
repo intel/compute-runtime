@@ -20,15 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#define UMDF_USING_NTSTATUS
-#include <Windows.h>
-
-#ifndef NTSTATUS
-#define NTSTATUS LONG
-#endif
-#include "mock_gdi.h"
-#include <ntstatus.h>
 #include "runtime/os_interface/windows/os_time.h"
+#include "mock_gdi.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
 D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};

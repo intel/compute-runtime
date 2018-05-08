@@ -20,10 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
-#include "unit_tests/os_interface/windows/wddm_tests.h"
 #include "runtime/os_interface/windows/wddm.h"
-#include "gtest/gtest.h"
+#include "runtime/os_interface/windows/wddm_allocation.h"
+#include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
+#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
+#include "unit_tests/mock_gdi/mock_gdi.h"
+#include "test.h"
 
 using namespace OCLRT;
 

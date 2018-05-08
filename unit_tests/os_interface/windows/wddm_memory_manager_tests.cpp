@@ -20,14 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_library.h"
 
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 
 using namespace OCLRT;
 using namespace ::testing;

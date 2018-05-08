@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,9 +21,6 @@
 */
 
 #include <memory>
-#include <ntstatus.h>
-//For not redefining STATUS_* from ntstatus.h
-#define WIN32_NO_STATUS
 #include "runtime/os_interface/windows/wddm.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/os_time.h"
