@@ -27,20 +27,11 @@
 
 namespace OCLRT {
 
-namespace MockGmmMemory {
-enum MockType {
-    MockDummy,
-    MockInstrumentation
-};
-
-extern MockType MockGmmMemoryFlag;
-} // namespace MockGmmMemory
-
-class MockGmmMemoryDummy : public GmmMemory {
+class MockGmmMemory : public GmmMemory {
   public:
-    ~MockGmmMemoryDummy() = default;
+    ~MockGmmMemory() = default;
 
-    MockGmmMemoryDummy() = default;
+    MockGmmMemory() = default;
 
     bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                      GMM_ESCAPE_HANDLE hDevice,
@@ -50,11 +41,11 @@ class MockGmmMemoryDummy : public GmmMemory {
                                      BOOLEAN SparseReady,
                                      BOOLEAN BDWL3Coherency,
                                      GMM_GFX_SIZE_T SizeOverride,
-                                     GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
+                                     GMM_GFX_SIZE_T SlmGfxSpaceReserve) override {
         return true;
     }
 
-    uintptr_t getInternalGpuVaRangeLimit() {
+    uintptr_t getInternalGpuVaRangeLimit() override {
         return OCLRT::windowsMinAddress;
     }
 };
@@ -76,6 +67,8 @@ class GmockGmmMemory : public GmmMemory {
                       GMM_GFX_SIZE_T SizeOverride,
                       GMM_GFX_SIZE_T SlmGfxSpaceReserve));
 
-    MOCK_METHOD0(getInternalGpuVaRangeLimit, uintptr_t());
+    uintptr_t getInternalGpuVaRangeLimit() override {
+        return OCLRT::windowsMinAddress;
+    }
 };
 } // namespace OCLRT

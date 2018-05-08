@@ -53,6 +53,7 @@ class WddmMock : public Wddm {
     using Wddm::device;
     using Wddm::gdi;
     using Wddm::getSystemInfo;
+    using Wddm::gmmMemory;
     using Wddm::pagingQueue;
 
     WddmMock() : Wddm(){};

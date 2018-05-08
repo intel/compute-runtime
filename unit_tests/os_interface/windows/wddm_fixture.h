@@ -56,13 +56,11 @@ struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
 
 struct WddmInstrumentationGmmFixture {
     virtual void SetUp() {
-        MockGmmMemory::MockGmmMemoryFlag = MockGmmMemory::MockType::MockInstrumentation;
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
-        gmmMem = static_cast<GmockGmmMemory *>(wddm->getGmmMemory());
+        gmmMem = new ::testing::NiceMock<GmockGmmMemory>();
+        wddm->gmmMemory.reset(gmmMem);
     }
-    virtual void TearDown() {
-        MockGmmMemory::MockGmmMemoryFlag = MockGmmMemory::MockType::MockDummy;
-    }
+    virtual void TearDown() {}
 
     std::unique_ptr<WddmMock> wddm;
     GmockGmmMemory *gmmMem = nullptr;

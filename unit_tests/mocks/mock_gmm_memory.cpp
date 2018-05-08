@@ -26,19 +26,7 @@
 using namespace ::testing;
 
 namespace OCLRT {
-
-namespace MockGmmMemory {
-MockType MockGmmMemoryFlag = MockType::MockDummy;
-}
-
 GmmMemory *GmmMemory::create() {
-    if (MockGmmMemory::MockGmmMemoryFlag == MockGmmMemory::MockType::MockDummy) {
-        return new MockGmmMemoryDummy();
-    } else {
-        GmockGmmMemory *gmmMemory = new NiceMock<GmockGmmMemory>();
-        ON_CALL(*gmmMemory, getInternalGpuVaRangeLimit()).WillByDefault(::testing::Return(OCLRT::windowsMinAddress));
-        return gmmMemory;
-    }
+    return new MockGmmMemory();
 }
-
 } // namespace OCLRT
