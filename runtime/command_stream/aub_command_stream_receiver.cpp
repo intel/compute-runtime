@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,6 +80,10 @@ void AubFileStream::close() {
     fileHandle.close();
 }
 
+void AubFileStream::write(const char *data, size_t size) {
+    fileHandle.write(data, size);
+}
+
 bool AubFileStream::init(uint32_t stepping, uint32_t device) {
     CmdServicesMemTraceVersion header;
     memset(&header, 0, sizeof(header));
@@ -102,7 +106,7 @@ bool AubFileStream::init(uint32_t stepping, uint32_t device) {
     header.commandLine[2] = 'O';
     header.commandLine[3] = 0;
 
-    fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+    write(reinterpret_cast<char *>(&header), sizeof(header));
     return true;
 }
 
@@ -110,13 +114,13 @@ void AubFileStream::writeMemory(uint64_t physAddress, const void *memory, size_t
     writeMemoryWriteHeader(physAddress, size, addressSpace, hint);
 
     // Copy the contents from source to destination.
-    fileHandle.write(reinterpret_cast<const char *>(memory), size);
+    write(reinterpret_cast<const char *>(memory), size);
 
     auto sizeRemainder = size % sizeof(uint32_t);
     if (sizeRemainder) {
         //if input size is not 4 byte aligned, write extra zeros to AUB
         uint32_t zero = 0;
-        fileHandle.write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - sizeRemainder);
+        write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - sizeRemainder);
     }
 }
 
@@ -136,7 +140,7 @@ void AubFileStream::writeMemoryWriteHeader(uint64_t physAddress, size_t size, ui
     header.addressSpace = addressSpace;
     header.dataSizeInBytes = static_cast<uint32_t>(size);
 
-    fileHandle.write(reinterpret_cast<const char *>(&header), sizeMemoryWriteHeader);
+    write(reinterpret_cast<const char *>(&header), sizeMemoryWriteHeader);
 }
 
 void AubFileStream::writeGTT(uint32_t gttOffset, uint64_t entry) {
@@ -144,7 +148,7 @@ void AubFileStream::writeGTT(uint32_t gttOffset, uint64_t entry) {
 }
 
 void AubFileStream::writePTE(uint64_t physAddress, uint64_t entry) {
-    fileHandle.write(reinterpret_cast<char *>(&entry), sizeof(entry));
+    write(reinterpret_cast<char *>(&entry), sizeof(entry));
 }
 
 void AubFileStream::writeMMIO(uint32_t offset, uint32_t value) {
@@ -160,7 +164,7 @@ void AubFileStream::writeMMIO(uint32_t offset, uint32_t value) {
     header.writeMaskHigh = 0x00000000;
     header.data[0] = value;
 
-    fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+    write(reinterpret_cast<char *>(&header), sizeof(header));
 }
 
 void AubFileStream::registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) {
@@ -177,7 +181,7 @@ void AubFileStream::registerPoll(uint32_t registerOffset, uint32_t mask, uint32_
     header.data[0] = value;
     header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;
 
-    fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+    write(reinterpret_cast<char *>(&header), sizeof(header));
 }
 
 void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_t sizeRemaining) {
@@ -209,10 +213,10 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
         header.dataSizeInBytes = static_cast<uint32_t>(sizeThisIteration);
 
         // Write the header
-        fileHandle.write(reinterpret_cast<char *>(&header), headerSize);
+        write(reinterpret_cast<char *>(&header), headerSize);
 
         // Copy the contents from source to destination.
-        fileHandle.write(reinterpret_cast<const char *>(memory), sizeThisIteration);
+        write(reinterpret_cast<const char *>(memory), sizeThisIteration);
 
         sizeRemaining -= sizeThisIteration;
         memory = (uint8_t *)memory + sizeThisIteration;
@@ -222,13 +226,13 @@ void AubFileStream::expectMemory(uint64_t physAddress, const void *memory, size_
         if (remainder) {
             //if size is not 4 byte aligned, write extra zeros to AUB
             uint32_t zero = 0;
-            fileHandle.write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
+            write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
         }
     }
 }
 
 void AubFileStream::createContext(const AubPpgttContextCreate &cmd) {
-    fileHandle.write(reinterpret_cast<const char *>(&cmd), sizeof(cmd));
+    write(reinterpret_cast<const char *>(&cmd), sizeof(cmd));
 }
 
 bool AubFileStream::addComment(const char *message) {
@@ -243,13 +247,13 @@ bool AubFileStream::addComment(const char *message) {
     auto dwordLen = ((messageLen + sizeof(uint32_t) - 1) & ~(sizeof(uint32_t) - 1)) / sizeof(uint32_t);
     cmd.dwordCount = static_cast<uint32_t>(dwordLen + 1);
 
-    fileHandle.write(reinterpret_cast<char *>(&cmd), sizeof(cmd) - sizeof(cmd.comment));
-    fileHandle.write(message, messageLen);
+    write(reinterpret_cast<char *>(&cmd), sizeof(cmd) - sizeof(cmd.comment));
+    write(message, messageLen);
     auto remainder = messageLen & (sizeof(uint32_t) - 1);
     if (remainder) {
         //if size is not 4 byte aligned, write extra zeros to AUB
         uint32_t zero = 0;
-        fileHandle.write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
+        write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
     }
     return true;
 }

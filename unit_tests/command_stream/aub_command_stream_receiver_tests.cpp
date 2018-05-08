@@ -61,6 +61,27 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     MOCK_METHOD1(addComment, bool(const char *message));
 };
 
+TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseSetterGetterFunctionsToSetGetValue) {
+    const uint64_t value = 0x0123456789ABCDEFu;
+    AubMemDump::AubCaptureBinaryDumpHD aubCaptureBinaryDumpHD{};
+    aubCaptureBinaryDumpHD.setBaseAddr(value);
+    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getBaseAddr());
+    aubCaptureBinaryDumpHD.setWidth(value);
+    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getWidth());
+    aubCaptureBinaryDumpHD.setHeight(value);
+    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getHeight());
+    aubCaptureBinaryDumpHD.setPitch(value);
+    EXPECT_EQ(value, aubCaptureBinaryDumpHD.getPitch());
+
+    AubMemDump::AubCmdDumpBmpHd aubCmdDumpBmpHd{};
+    aubCmdDumpBmpHd.setBaseAddr(value);
+    EXPECT_EQ(value, aubCmdDumpBmpHd.getBaseAddr());
+
+    AubMemDump::CmdServicesMemTraceDumpCompress cmdServicesMemTraceDumpCompress{};
+    cmdServicesMemTraceDumpCompress.setSurfaceAddress(value);
+    EXPECT_EQ(value, cmdServicesMemTraceDumpCompress.getSurfaceAddress());
+}
+
 TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedWithWrongGfxCoreFamilyThenNullPointerShouldBeReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
     GFXCORE_FAMILY family = hwInfo.pPlatform->eRenderCoreFamily;

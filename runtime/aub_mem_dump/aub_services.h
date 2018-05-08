@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1303,6 +1303,12 @@ struct CmdServicesMemTraceDumpCompress {
         };
     };
     uint64_t surfaceAddress;
+    uint64_t getSurfaceAddress() const {
+        return getMisalignedUint64(&this->surfaceAddress);
+    }
+    void setSurfaceAddress(const uint64_t surfaceAddress) {
+        setMisalignedUint64(&this->surfaceAddress, surfaceAddress);
+    }
     int getSurfaceAddressLength() const {
         return 2 - (1) + 1;
     }
@@ -1339,8 +1345,8 @@ struct CmdServicesMemTraceDumpCompress {
         uint32_t blockHeight : 8;
         uint32_t blockDepth : 8;
         uint32_t mode : 1;
-        uint32_t algorithm : 2;
-        uint32_t : 5;
+        uint32_t algorithm : 3;
+        uint32_t : 4;
     };
     uint32_t tileWidth;
     uint32_t tileHeight;
@@ -1349,6 +1355,16 @@ struct CmdServicesMemTraceDumpCompress {
     uint32_t clearColorGreen;
     uint32_t clearColorBlue;
     uint32_t clearColorAlpha;
+    struct {
+        uint32_t gttType : 2;
+        uint32_t clearColorType : 1;
+        uint32_t : 29;
+    };
+    uint32_t directoryHandle;
+    uint64_t clearColorAddress;
+    int getClearColorAddressLength() const {
+        return 24 - (23) + 1;
+    }
     int32_t getPacketSize() const {
         return dwordCount + 1;
     }
@@ -1375,57 +1391,65 @@ struct CmdServicesMemTraceDumpCompress {
     static uint32_t type() { return 0x7; }
     static uint32_t opcode() { return 0x2e; }
     static uint32_t subOpcode() { return 0x10; }
-    struct DumpTypeValues {
-        enum { Bmp32 = 2,
-               Tre = 3,
-               Bmp = 0,
-               Bin = 1,
-               Png = 4 };
-    };
-    struct AlgorithmValues {
-        enum { Lossless = 2,
-               Msaa = 3,
-               Astc = 1,
-               Media = 0 };
-    };
-    struct TiledResourceModeValues {
-        enum { TrmodeYs = 2,
-               TrmodeYf = 1,
-               TrmodeNone = 0 };
+    struct GttTypeValues {
+        enum { Ppgtt = 1,
+               Ggtt = 0 };
     };
     struct SurfaceTilingTypeValues {
         enum { YmajorS = 4,
-               Ymajor = 3,
+               Xmajor = 2,
                YmajorF = 5,
                Linear = 0,
-               Xmajor = 2,
-               Wmajor = 1 };
+               Wmajor = 1,
+               Ymajor = 3 };
+    };
+    struct ModeValues {
+        enum { Horizontal = 1,
+               Vertical = 0 };
+    };
+    struct ClearColorTypeValues {
+        enum { Immediate = 0,
+               Address = 1 };
     };
     struct SurfaceTypeValues {
         enum {
-            SurftypeBuffer = 4,
-            SurftypeStrbuf = 5,
-            SurftypeNull = 6,
             SurftypeCube = 3,
+            SurftypeStrbuf = 5,
+            SurftypeBuffer = 4,
             Surftype3D = 2,
             Surftype2D = 1,
-            Surftype1D = 0
+            Surftype1D = 0,
+            SurftypeNull = 6
         };
     };
-    struct ModeValues {
-        enum { Vertical = 0,
-               Horizontal = 1 };
+    struct AlgorithmValues {
+        enum { Uncompressed = 4,
+               Astc = 1,
+               Lossless = 2,
+               Media = 0,
+               Msaa = 3 };
     };
     struct AuxSurfaceTilingTypeValues {
         enum { YmajorS = 4,
-               Ymajor = 3,
+               Xmajor = 2,
                YmajorF = 5,
                Linear = 0,
-               Xmajor = 2,
-               Wmajor = 1 };
+               Wmajor = 1,
+               Ymajor = 3 };
+    };
+    struct DumpTypeValues {
+        enum { Bin = 1,
+               Png = 4,
+               Bmp = 0,
+               Bmp32 = 2,
+               Tre = 3 };
+    };
+    struct TiledResourceModeValues {
+        enum { TrmodeNone = 0,
+               TrmodeYf = 1,
+               TrmodeYs = 2 };
     };
 };
-
 #ifndef WIN32
 #pragma pack()
 #else

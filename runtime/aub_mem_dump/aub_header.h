@@ -30,6 +30,17 @@
 #pragma pack(push, 4)
 #endif
 
+inline void setMisalignedUint64(uint64_t *address, const uint64_t value) {
+    uint32_t *addressBits = reinterpret_cast<uint32_t *>(address);
+    addressBits[0] = static_cast<uint32_t>(value);
+    addressBits[1] = static_cast<uint32_t>(value >> 32);
+}
+
+inline uint64_t getMisalignedUint64(const uint64_t *address) {
+    const uint32_t *addressBits = reinterpret_cast<const uint32_t *>(address);
+    return static_cast<uint64_t>(static_cast<uint64_t>(addressBits[1]) << 32) | addressBits[0];
+}
+
 struct AubCmdHdr {
     uint32_t DwordLength : 16,
         SubOp : 7,
@@ -58,6 +69,12 @@ struct AubCmdDumpBmpHd {
         UseFullFormat : 1,
         Reserved_1 : 25;
     uint32_t DirectoryHandle;
+    uint64_t getBaseAddr() const {
+        return getMisalignedUint64(&this->BaseAddr);
+    }
+    void setBaseAddr(const uint64_t baseAddr) {
+        setMisalignedUint64(&this->BaseAddr, baseAddr);
+    }
 };
 static_assert(44 == sizeof(AubCmdDumpBmpHd), "Invalid size for AubCmdDumpBmpHd");
 
@@ -84,6 +101,30 @@ struct AubCaptureBinaryDumpHD {
     uint32_t ReservedDW1;
     uint32_t ReservedDW2;
     char OutputFile[4];
+    uint64_t getBaseAddr() const {
+        return getMisalignedUint64(&this->BaseAddr);
+    }
+    void setBaseAddr(const uint64_t baseAddr) {
+        setMisalignedUint64(&this->BaseAddr, baseAddr);
+    }
+    uint64_t getWidth() const {
+        return getMisalignedUint64(&this->Width);
+    }
+    void setWidth(const uint64_t width) {
+        setMisalignedUint64(&this->Width, width);
+    }
+    uint64_t getHeight() const {
+        return getMisalignedUint64(&this->Height);
+    }
+    void setHeight(const uint64_t height) {
+        setMisalignedUint64(&this->Height, height);
+    }
+    uint64_t getPitch() const {
+        return getMisalignedUint64(&this->Pitch);
+    }
+    void setPitch(const uint64_t pitch) {
+        setMisalignedUint64(&this->Pitch, pitch);
+    }
 };
 static_assert(56 == sizeof(AubCaptureBinaryDumpHD), "Invalid size for AubCaptureBinaryDumpHD");
 
