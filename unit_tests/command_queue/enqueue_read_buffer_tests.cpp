@@ -174,25 +174,9 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
-    typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
-
-    // All state should be programmed before walker
-    auto itorCmd = findMmio<FamilyType>(cmdList.begin(), itorWalker, L3CNTLRegisterOffset<FamilyType>::registerOffset);
-    ASSERT_NE(itorWalker, itorCmd);
-
-    auto *cmd = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itorCmd);
-    ASSERT_NE(nullptr, cmd);
-
-    auto RegisterOffset = L3CNTLRegisterOffset<FamilyType>::registerOffset;
-    EXPECT_EQ(RegisterOffset, cmd->getRegisterOffset());
-    auto l3Cntlreg = cmd->getDataDword();
-    auto numURBWays = (l3Cntlreg >> 1) & 0x7f;
-    auto L3ClientPool = (l3Cntlreg >> 25) & 0x7f;
-    EXPECT_NE(0u, numURBWays);
-    EXPECT_NE(0u, L3ClientPool);
+    validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
 HWTEST_F(EnqueueReadBufferTypeTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
