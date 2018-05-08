@@ -45,7 +45,7 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <memory>
 
 using namespace OCLRT;

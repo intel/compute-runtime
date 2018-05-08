@@ -30,7 +30,7 @@
 #include "unit_tests/program/program_tests.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "test.h"
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include <algorithm>
 #include <memory>
 #include <string>

@@ -19,8 +19,6 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 * GmmLib - https://github.com/intel/gmmlib  
 * Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler  
-* Google Test v1.7.0 - https://github.com/google/googletest  
-* Google Mock v1.7.0 - https://github.com/google/googlemock  
 * Khronos OpenCL Headers - https://github.com/KhronosGroup/OpenCL-Headers  
 
 ## Optional dependencies

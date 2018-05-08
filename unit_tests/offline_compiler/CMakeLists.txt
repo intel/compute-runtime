@@ -50,12 +50,10 @@ add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})
 
 target_include_directories(cloc_tests PRIVATE
   $<TARGET_PROPERTY:cloc,INCLUDE_DIRECTORIES>
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
 )
 target_compile_definitions(cloc_tests PUBLIC MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:cloc,INTERFACE_COMPILE_DEFINITIONS>)
 
-target_link_libraries(cloc_tests igdrcl_mocks gtest elflib)
+target_link_libraries(cloc_tests igdrcl_mocks gmock-gtest elflib)
 
 if(UNIX)
   target_link_libraries(cloc_tests dl pthread)

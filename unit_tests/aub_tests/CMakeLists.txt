@@ -36,11 +36,6 @@ set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER}
 add_custom_target(run_aub_tests)
 set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
-target_include_directories(igdrcl_aub_tests PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
-)
-
 if(WIN32)
   target_include_directories(igdrcl_aub_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
@@ -62,7 +57,7 @@ add_subdirectories()
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
 target_link_libraries(igdrcl_aub_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)
-target_link_libraries(igdrcl_aub_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_aub_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 target_include_directories(igdrcl_aub_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit_tests/gen_common)
 

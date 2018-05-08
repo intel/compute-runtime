@@ -31,7 +31,7 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 
 using namespace OCLRT;
 

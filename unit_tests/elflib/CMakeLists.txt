@@ -30,13 +30,8 @@ set(CLELFLIB_UNIT_TESTS_SRCS
 )
 
 add_executable(elflib_tests ${CLELFLIB_UNIT_TESTS_SRCS})
-target_link_libraries(elflib_tests gtest elflib)
+target_link_libraries(elflib_tests gmock-gtest elflib)
 set_property(TARGET elflib_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-
-target_include_directories(elflib_tests PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
-)
 
 if(UNIX)
   target_link_libraries(elflib_tests ${IGDRCL_EXTRA_LIBS})

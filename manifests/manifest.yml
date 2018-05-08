@@ -6,20 +6,6 @@ components:
     repository: https://github.com/intel/gmmlib.git
     revision: a5015343bc932e39747c57ea5dec0cbf28685465
     type: git
-  gmock:
-    branch: master
-    clean_on_sync: true
-    dest_dir: gmock
-    repository: https://github.com/google/googlemock.git
-    revision: c440c8fafc6f60301197720617ce64028e09c79d
-    type: git
-  gtest:
-    branch: master
-    clean_on_sync: true
-    dest_dir: gtest
-    repository: https://github.com/google/googletest.git
-    revision: c99458533a9b4c743ed51537e25989ea55944908
-    type: git
   igc:
     branch: igc
     clean_on_sync: true
@@ -31,7 +17,7 @@ components:
     branch: infra
     clean_on_sync: true
     dest_dir: infra
-    revision: 3e03c6a5e6a12c1bbf8fd276fc00cd3c5ea806f1
+    revision: c174a6eaf351ae68abbc285c837ab29c7544fcfc
     type: git
   internal:
     branch: master

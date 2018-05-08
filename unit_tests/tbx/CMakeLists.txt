@@ -26,7 +26,7 @@ add_executable(igdrcl_tbx_tests
   $<TARGET_OBJECTS:igdrcl_libult>
 )
 
-target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gtest gmock ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_tbx_tests ${NEO_MOCKABLE_LIB_NAME} igdrcl_mocks gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 if(WIN32)
   target_include_directories(igdrcl_tbx_tests PRIVATE
@@ -44,11 +44,6 @@ else()
     ${IGDRCL_SOURCE_DIR}/runtime/dll/linux/options.cpp
   )
 endif()
-
-target_include_directories(igdrcl_tbx_tests PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
-)
 
 create_project_source_tree(igdrcl_tbx_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
 

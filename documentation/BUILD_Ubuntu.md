@@ -22,8 +22,6 @@ See [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/docume
 	  |- llvm_patches       https://github.com/intel/llvm-patches
 	  |- llvm_source        https://github.com/llvm-mirror/llvm
 	  |- gmmlib             https://github.com/intel/gmmlib
-	  |- gmock              https://github.com/google/googlemock
-	  |- gtest              https://github.com/google/googletest
 	  |- igc                https://github.com/intel/intel-graphics-compiler
 	  |- khronos            https://github.com/KhronosGroup/OpenCL-Headers
 	  |- neo                https://github.com/intel/compute-runtime
@@ -37,8 +35,6 @@ git clone https://github.com/intel/opencl-clang common_clang
 git clone https://github.com/intel/llvm-patches llvm_patches
 git clone -b release_40 https://github.com/llvm-mirror/llvm llvm_source
 git clone https://github.com/intel/gmmlib gmmlib
-git clone -b release-1.7.0 https://github.com/google/googlemock gmock
-git clone -b release-1.7.0 https://github.com/google/googletest gtest
 git clone https://github.com/intel/intel-graphics-compiler igc
 git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
 git clone https://github.com/intel/compute-runtime neo

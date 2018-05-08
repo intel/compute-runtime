@@ -77,7 +77,7 @@ add_library (igdrcl_libult_cs OBJECT
   ${IGDRCL_SRCS_LIB_ULT_CS}
 )
 target_include_directories(igdrcl_libult PRIVATE
-  ${GTEST_INCLUDE_DIR}
+  $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
 )
 
 set(IGDRCL_SRCS_LIB_ULT_ENV
@@ -130,8 +130,7 @@ else()
 endif()
 
 target_include_directories(igdrcl_libult_env PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
+  $<TARGET_PROPERTY:gmock-gtest,INTERFACE_INCLUDE_DIRECTORIES>
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
 )
 

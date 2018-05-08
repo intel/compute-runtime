@@ -26,7 +26,7 @@
 #include "runtime/utilities/stackvec.h"
 #include "unit_tests/utilities/containers_tests_helpers.h"
 
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
 #include <cinttypes>

@@ -34,7 +34,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_program.h"
 
-#include "gmock/gmock-matchers.h"
+#include "gmock/gmock.h"
 
 using namespace OCLRT;
 

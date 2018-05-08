@@ -39,13 +39,8 @@ MESSAGE(STATUS "GTest filter for mt tests:" ${GTEST_FILTER} )
 
 target_link_libraries(igdrcl_mt_tests ${TSAN_LIB})
 target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
-target_link_libraries(igdrcl_mt_tests gtest gmock)
+target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
-
-target_include_directories(igdrcl_mt_tests PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
-)
 
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
 

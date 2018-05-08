@@ -107,12 +107,10 @@ if(NOT SHOW_VERBOSE_UTESTS_RESULTS)
 endif()
 
 target_include_directories(igdrcl_tests PRIVATE
-  ${GTEST_INCLUDE_DIR}
-  ${GMOCK_INCLUDE_DIR}
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
 )
 
-target_link_libraries(igdrcl_tests gtest gmock ${IGDRCL_EXTRA_LIBS})
+target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})
 
 set(BUILT_IN_KERNEL_DIR "${IGDRCL_SOURCE_DIR}/runtime/built_ins")
 
