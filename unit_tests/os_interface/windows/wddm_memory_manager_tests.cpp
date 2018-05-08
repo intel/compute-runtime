@@ -80,6 +80,46 @@ HWTEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtual
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
+TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
+    memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
+    void *cpuPtr = (void *)0x30000;
+    size_t size = 0x1000;
+
+    WddmAllocation gfxAllocation(cpuPtr, size, nullptr);
+    memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
+    auto fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_NE(fragment, nullptr);
+    EXPECT_TRUE(fragment->driverAllocation);
+    EXPECT_EQ(fragment->refCount, 1);
+    EXPECT_EQ(fragment->fragmentCpuPointer, cpuPtr);
+    EXPECT_EQ(fragment->fragmentSize, size);
+    EXPECT_NE(fragment->osInternalStorage, nullptr);
+    EXPECT_EQ(fragment->osInternalStorage->gmm, gfxAllocation.gmm);
+    EXPECT_NE(fragment->osInternalStorage->gpuPtr, 0ULL);
+    EXPECT_EQ(fragment->osInternalStorage->handle, gfxAllocation.peekSharedHandle());
+    EXPECT_NE(fragment->residency, nullptr);
+
+    FragmentStorage fragmentStorage = {};
+    fragmentStorage.fragmentCpuPointer = cpuPtr;
+    memoryManager->hostPtrManager.storeFragment(fragmentStorage);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 2);
+
+    fragment->driverAllocation = false;
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 2);
+    fragment->driverAllocation = true;
+
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 1);
+
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment, nullptr);
+}
+
 HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
     SetUpMm<FamilyType>();
     // three pages

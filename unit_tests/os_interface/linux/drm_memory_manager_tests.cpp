@@ -183,6 +183,43 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManger
     EXPECT_NE(nullptr, memoryManager->getDrmInternal32BitAllocator());
 }
 
+TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
+    void *cpuPtr = (void *)0x30000;
+    size_t size = 0x1000;
+
+    DrmAllocation gfxAllocation(nullptr, cpuPtr, size);
+    memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
+    auto fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_NE(fragment, nullptr);
+    EXPECT_TRUE(fragment->driverAllocation);
+    EXPECT_EQ(fragment->refCount, 1);
+    EXPECT_EQ(fragment->refCount, 1);
+    EXPECT_EQ(fragment->fragmentCpuPointer, cpuPtr);
+    EXPECT_EQ(fragment->fragmentSize, size);
+    EXPECT_NE(fragment->osInternalStorage, nullptr);
+    EXPECT_EQ(fragment->osInternalStorage->bo, gfxAllocation.getBO());
+
+    FragmentStorage fragmentStorage = {};
+    fragmentStorage.fragmentCpuPointer = cpuPtr;
+    memoryManager->hostPtrManager.storeFragment(fragmentStorage);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 2);
+
+    fragment->driverAllocation = false;
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 2);
+    fragment->driverAllocation = true;
+
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment->refCount, 1);
+
+    memoryManager->removeAllocationFromHostPtrManager(&gfxAllocation);
+    fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
+    EXPECT_EQ(fragment, nullptr);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenforcePinAllowedWhenMemoryManagerIsCreatedThenPinBbIsCreated) {
     auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
     EXPECT_NE(nullptr, memoryManager->getPinBB());

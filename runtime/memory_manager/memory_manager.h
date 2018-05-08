@@ -90,6 +90,9 @@ class MemoryManager {
     virtual ~MemoryManager();
     MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
 
+    virtual void addAllocationToHostPtrManager(GraphicsAllocation *memory) = 0;
+    virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
+
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size) {
         return allocateGraphicsMemory(size, static_cast<size_t>(0u));
     }

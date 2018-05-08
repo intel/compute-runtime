@@ -72,6 +72,7 @@ MemObj::~MemObj() {
             peekSharingHandler()->releaseReusedGraphicsAllocation();
         }
         if (graphicsAllocation && !associatedMemObject && !isObjectRedescribed && !isHostPtrSVM && graphicsAllocation->peekReuseCount() == 0) {
+            memoryManager->removeAllocationFromHostPtrManager(graphicsAllocation);
             bool doAsyncDestrucions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
             if (!doAsyncDestrucions) {
                 needWait = true;

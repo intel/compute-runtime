@@ -248,6 +248,32 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void
     return createAllocationFromHandle((osHandle)((UINT_PTR)handle), false, true);
 }
 
+void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
+    WddmAllocation *wddmMemory = static_cast<WddmAllocation *>(gfxAllocation);
+    FragmentStorage fragment = {};
+    fragment.driverAllocation = true;
+    fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
+    fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+
+    fragment.osInternalStorage = new OsHandle();
+    fragment.osInternalStorage->gpuPtr = gfxAllocation->getGpuAddress();
+    fragment.osInternalStorage->handle = gfxAllocation->peekSharedHandle();
+    fragment.osInternalStorage->gmm = gfxAllocation->gmm;
+    fragment.residency = &wddmMemory->getResidencyData();
+    hostPtrManager.storeFragment(fragment);
+}
+
+void WddmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
+    auto buffer = gfxAllocation->getUnderlyingBuffer();
+    auto fragment = hostPtrManager.getFragment(buffer);
+    if (fragment && fragment->driverAllocation) {
+        OsHandle *osStorageToRelease = fragment->osInternalStorage;
+        if (hostPtrManager.releaseHostPtr(buffer)) {
+            delete osStorageToRelease;
+        }
+    }
+}
+
 void *WddmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
     return wddm->lockResource(static_cast<WddmAllocation *>(graphicsAllocation));
 };
@@ -277,6 +303,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         }
         delete input->gmm;
     }
+
     if (input->peekSharedHandle() == false &&
         input->cpuPtrAllocated == false &&
         input->fragmentsStorage.fragmentCount > 0) {

@@ -40,7 +40,8 @@ class DrmMemoryManager : public MemoryManager {
     ~DrmMemoryManager() override;
 
     BufferObject *getPinBB() const;
-
+    void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
+    void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment) override {
         return allocateGraphicsMemory(size, alignment, false, false);

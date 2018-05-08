@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -102,6 +102,28 @@ TEST_F(clEnqueueMapBufferTests, validInputs_returnsSuccess) {
     delete[] pHostMem;
 
     clReleaseEvent(eventReturned);
+}
+
+TEST_F(clEnqueueMapBufferTests, GivenMappedPointerWhenCreateBufferFormThisPointerThenReturnInvalidHostPointer) {
+    unsigned int bufferSize = 16;
+
+    cl_mem buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, bufferSize, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    void *hostPointer = clEnqueueMapBuffer(pCommandQueue, buffer, CL_TRUE, CL_MAP_READ, 0, bufferSize, 0, nullptr, nullptr, &retVal);
+    EXPECT_NE(nullptr, hostPointer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clEnqueueUnmapMemObject(pCommandQueue, buffer, hostPointer, 0, NULL, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto bufferFromHostPtr = clCreateBuffer(pContext, CL_MEM_USE_HOST_PTR, bufferSize, hostPointer, &retVal);
+    EXPECT_EQ(CL_INVALID_HOST_PTR, retVal);
+    EXPECT_EQ(nullptr, bufferFromHostPtr);
+
+    retVal = clReleaseMemObject(buffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
 class EnqueueMapBufferFlagsTest : public api_fixture,

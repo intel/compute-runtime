@@ -124,6 +124,9 @@ Buffer *Buffer::create(Context *context,
             }
             if (allocateMemory) {
                 memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
+                if (memory) {
+                    memoryManager->addAllocationToHostPtrManager(memory);
+                }
                 if (context->isProvidingPerformanceHints()) {
                     context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
                 }
@@ -166,6 +169,7 @@ Buffer *Buffer::create(Context *context,
                                      isHostPtrSVM,
                                      false);
             if (!pBuffer && allocateMemory) {
+                memoryManager->removeAllocationFromHostPtrManager(memory);
                 memoryManager->freeGraphicsMemory(memory);
                 memory = nullptr;
             }
@@ -208,6 +212,11 @@ void Buffer::checkMemory(cl_mem_flags flags,
 
     if (flags & CL_MEM_USE_HOST_PTR) {
         if (hostPtr) {
+            auto fragment = memMngr->hostPtrManager.getFragment(hostPtr);
+            if (fragment && fragment->driverAllocation) {
+                errcodeRet = CL_INVALID_HOST_PTR;
+                return;
+            }
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
                 minAddress > reinterpret_cast<uintptr_t>(hostPtr) ||

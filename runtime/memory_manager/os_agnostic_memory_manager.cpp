@@ -110,6 +110,26 @@ GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedH
     return graphicsAllocation;
 }
 
+void OsAgnosticMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {
+    FragmentStorage fragment = {};
+    fragment.driverAllocation = true;
+    fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
+    fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+    fragment.osInternalStorage = new OsHandle();
+    hostPtrManager.storeFragment(fragment);
+}
+
+void OsAgnosticMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) {
+    auto buffer = gfxAllocation->getUnderlyingBuffer();
+    auto fragment = hostPtrManager.getFragment(buffer);
+    if (fragment && fragment->driverAllocation) {
+        OsHandle *osStorageToRelease = fragment->osInternalStorage;
+        if (hostPtrManager.releaseHostPtr(buffer)) {
+            delete osStorageToRelease;
+        }
+    }
+}
+
 void OsAgnosticMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {
     if (gfxAllocation == nullptr)
         return;
@@ -166,7 +186,7 @@ MemoryManager::AllocationStatus OsAgnosticMemoryManager::populateOsHandles(OsHan
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
 
-            FragmentStorage newFragment;
+            FragmentStorage newFragment = {};
             newFragment.fragmentCpuPointer = const_cast<void *>(handleStorage.fragmentStorageData[i].cpuPtr);
             newFragment.fragmentSize = handleStorage.fragmentStorageData[i].fragmentSize;
             newFragment.osInternalStorage = handleStorage.fragmentStorageData[i].osHandleStorage;

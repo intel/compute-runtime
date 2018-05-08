@@ -512,9 +512,9 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointThe
 HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndMemObjWithOffsetPointDiffrentStorageWithHostWhenReadBufferIsExecutedThenTaskLevelShouldBeIncreased) {
     cl_int retVal = CL_SUCCESS;
     void *ptr = buffer->getCpuAddressForMemoryTransfer();
-    size_t bufferOrigin[] = {50, 50, 0};
-    size_t hostOrigin[] = {10, 10, 0};
-    size_t region[] = {50, 50, 1};
+    size_t bufferOrigin[] = {0, 0, 0};
+    size_t hostOrigin[] = {1, 1, 0};
+    size_t region[] = {1, 1, 1};
     retVal = pCmdQ->enqueueReadBufferRect(
         buffer.get(),
         CL_FALSE,
@@ -539,7 +539,7 @@ HWTEST_F(EnqueueReadBufferRectTest, givenInOrderQueueAndDstPtrEqualSrcPtrAndNonZ
     void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
     size_t bufferOrigin[] = {0, 0, 0};
     size_t hostOrigin[] = {0, 0, 0};
-    size_t region[] = {50, 50, 1};
+    size_t region[] = {1, 1, 1};
     retVal = pCmdQ->enqueueReadBufferRect(
         nonZeroCopyBuffer.get(),
         CL_FALSE,

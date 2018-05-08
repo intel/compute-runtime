@@ -76,6 +76,7 @@ struct FragmentStorage {
     int refCount = 0;
     OsHandle *osInternalStorage = nullptr;
     ResidencyData *residency = nullptr;
+    bool driverAllocation = false;
 };
 
 struct AllocationStorageData {
