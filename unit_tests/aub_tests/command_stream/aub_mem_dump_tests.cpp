@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,11 +23,11 @@
 #include "aub_mem_dump_tests.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-using OCLRT::folderAUB;
-using OCLRT::AUBFamilyMapper;
 using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
+using OCLRT::AUBFamilyMapper;
 using OCLRT::EngineType;
+using OCLRT::folderAUB;
 
 std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseName) {
     const auto pGtSystemInfo = pDevice->getHardwareInfo().pSysInfo;
@@ -66,7 +66,7 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
 
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7);
 
     aubFile.fileHandle.close();
 }
@@ -85,7 +85,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
     uint8_t byte = 0xbf;
     auto gAddress = reinterpret_cast<uintptr_t>(&byte);
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte));
 
@@ -105,7 +105,8 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
 
     uint8_t byte = 0xbf;
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
-    AUB::reserveAddressGGTT(aubFile, &byte, sizeof(byte), physAddress);
+    AubGTTData data = {true, true, true};
+    AUB::reserveAddressGGTT(aubFile, &byte, sizeof(byte), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte));
 
@@ -126,7 +127,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     auto gAddress = reinterpret_cast<uintptr_t>(bytes);
     auto physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes));
 
@@ -146,7 +147,8 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
 
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     uint64_t physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
-    AUB::reserveAddressGGTT(aubFile, bytes, sizeof(bytes), physAddress);
+    AubGTTData data = {true, true, true};
+    AUB::reserveAddressGGTT(aubFile, bytes, sizeof(bytes), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes));
 

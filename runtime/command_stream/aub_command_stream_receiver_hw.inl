@@ -117,7 +117,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
             stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP);
+        AubGTTData data = {0};
+        getGTTData(reinterpret_cast<void *>(physHWSP), data);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttHWSP, sizeHWSP, physHWSP, data);
         stream->writeMMIO(mmioBase + 0x2080, engineInfo.ggttHWSP);
     }
 
@@ -145,7 +147,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
             stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, physRingBuffer);
+        AubGTTData data = {0};
+        getGTTData(reinterpret_cast<void *>(physRingBuffer), data);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, physRingBuffer, data);
     }
 
     // Initialize the ring MMIO registers
@@ -171,7 +175,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
             stream->addComment(str.str().c_str());
         }
 
-        AUB::reserveAddressGGTT(*stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys);
+        AubGTTData data = {0};
+        getGTTData(reinterpret_cast<void *>(lrcAddressPhys), data);
+        AUB::reserveAddressGGTT(*stream, engineInfo.ggttLRCA, sizeLRCA, lrcAddressPhys, data);
         AUB::addMemoryWrite(
             *stream,
             lrcAddressPhys,
@@ -236,7 +242,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         }
 
         auto physBatchBuffer = ppgtt.map(reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer);
-        AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer);
+        AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer, getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
         AUB::addMemoryWrite(
             *stream,
@@ -486,7 +492,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     }
 
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset);
+        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation));
     };
     ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
 
@@ -547,7 +553,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
 
     auto physBufferAddres = ppgtt.map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize);
-    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres);
+    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres, getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()));
 
     AUB::addMemoryWrite(
         *stream,
@@ -564,6 +570,18 @@ template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader(EngineType engineType) {
     uint32_t GUCWorkQueueItemHeader = 0x00030001;
     return GUCWorkQueueItemHeader;
+}
+
+template <typename GfxFamily>
+uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
+    return 7;
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
+    data.present = true;
+    data.writable = true;
+    data.userSupervisor = true;
 }
 
 } // namespace OCLRT

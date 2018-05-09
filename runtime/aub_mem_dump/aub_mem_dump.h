@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,8 @@
 #ifndef BIT
 #define BIT(x) (((uint64_t)1) << (x))
 #endif
+
+#include "runtime/aub_mem_dump/aub_data.h"
 
 namespace AubMemDump {
 #include "aub_services.h"
@@ -65,7 +67,9 @@ union IAPageTableEntry {
         uint64_t Dirty : 1;            //[6]
         uint64_t PAT : 1;              //[7]
         uint64_t Global : 1;           //[8]
-        uint64_t Reserved_11_9 : 3;    //[11:9]
+        uint64_t Reserved_9 : 1;       //[9]
+        uint64_t Reserved_10 : 1;      //[10]
+        uint64_t Reserved_11 : 1;      //[11]
         uint64_t PhysicalAddress : 27; //[38:12]
         uint64_t Reserved_51_39 : 13;  //[51:39]
         uint64_t Ignored : 11;         //[62:52]
@@ -76,14 +80,6 @@ union IAPageTableEntry {
 };
 
 typedef IAPageTableEntry MiGttEntry;
-
-static inline void setGttEntry(IAPageTableEntry &entry, uint64_t address) {
-    entry.uiData = 0;
-    entry.pageConfig.PhysicalAddress = address / 4096;
-    entry.pageConfig.Present = true;
-    entry.pageConfig.Writable = true;
-    entry.pageConfig.UserSupervisor = true;
-}
 
 // Use the latest DeviceValues enumerations available
 typedef CmdServicesMemTraceVersion::DeviceValues DeviceValues;
@@ -236,7 +232,7 @@ struct AubPageTableHelper32 : public AubPageTableHelper<Traits>, PageTableTraits
     typedef AubPageTableHelper<Traits> BaseClass;
 
     static void createContext(typename Traits::Stream &stream, uint32_t context);
-    static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress, size_t blockSize, uint64_t physAddress);
+    static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress, size_t blockSize, uint64_t physAddress, uint64_t additionalBits);
 
     static void fixupLRC(uint8_t *pLrc);
 };
@@ -250,7 +246,7 @@ struct AubPageTableHelper64 : public AubPageTableHelper<Traits>, PageTableTraits
     }
 
     static void createContext(typename Traits::Stream &stream, uint32_t context);
-    static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress, size_t blockSize, uint64_t physAddress);
+    static uint64_t reserveAddressPPGTT(typename Traits::Stream &stream, uintptr_t gfxAddress, size_t blockSize, uint64_t physAddress, uint64_t additionalBits);
 
     static void fixupLRC(uint8_t *pLrc);
 };
@@ -282,12 +278,13 @@ struct AubDump : public TypeSelector<AubPageTableHelper32<TraitsIn>, AubPageTabl
 
     // Write a block of memory to a given address space using an optional hint
     static void addMemoryWrite(Stream &stream, uint64_t addr, const void *memory, size_t blockSize, int addressSpace, int hint = DataTypeHintValues::TraceNotype);
-    static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart);
-    static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart);
-    static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress, size_t size, size_t offset);
+    static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart, AubGTTData data);
+    static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart, AubGTTData data);
+    static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress, size_t size, size_t offset, uint64_t additionalBits);
+    static void setGttEntry(IAPageTableEntry &entry, uint64_t address, AubGTTData data);
 
   private:
-    static uint64_t reserveAddress(Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace /* = AddressSpaceValues::TraceGttEntry*/, uint64_t physStart);
+    static uint64_t reserveAddress(Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace /* = AddressSpaceValues::TraceGttEntry*/, uint64_t physStart, AubGTTData data);
 };
 
 struct LrcaHelper {
@@ -381,4 +378,4 @@ struct LrcaHelperVecs : public LrcaHelper {
 
 extern const uint64_t g_pageMask;
 extern const size_t g_dwordCountMax;
-}
+} // namespace AubMemDump

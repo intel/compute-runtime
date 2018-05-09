@@ -51,7 +51,8 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     auto pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
 
     uint32_t ggttGlobalHardwareStatusPage = (uint32_t)((uintptr_t)pGlobalHWStatusPage);
-    AUB::reserveAddressGGTT(aubFile, ggttGlobalHardwareStatusPage, sizeHWSP, physAddress);
+    AubGTTData data = {true, true, true};
+    AUB::reserveAddressGGTT(aubFile, ggttGlobalHardwareStatusPage, sizeHWSP, physAddress, data);
     physAddress += sizeHWSP;
 
     aubFile.writeMMIO(mmioBase + 0x2080, ggttGlobalHardwareStatusPage);
@@ -65,7 +66,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     const auto sizeBatchBuffer = 0x1000;
     auto gpuBatchBuffer = static_cast<uintptr_t>(gpuBatchBufferAddr);
     physAddress += sizeBatchBuffer;
-    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer);
+    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7);
     uint8_t batchBuffer[sizeBatchBuffer];
 
     auto noop = MI_NOOP::sInit();
@@ -98,7 +99,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     auto ggttRing = (uint32_t)(uintptr_t)pRing;
     auto physRing = physAddress;
     physAddress += sizeRing;
-    auto rRing = AUB::reserveAddressGGTT(aubFile, ggttRing, sizeRing, physRing);
+    auto rRing = AUB::reserveAddressGGTT(aubFile, ggttRing, sizeRing, physRing, data);
     ASSERT_NE(static_cast<uint64_t>(-1), rRing);
     EXPECT_EQ(rRing, physRing);
 
@@ -129,7 +130,7 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     auto ggttLRCA = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(pLRCABase));
     auto physLRCA = physAddress;
     physAddress += sizeLRCA;
-    AUB::reserveAddressGGTT(aubFile, ggttLRCA, sizeLRCA, physLRCA);
+    AUB::reserveAddressGGTT(aubFile, ggttLRCA, sizeLRCA, physLRCA, data);
     AUB::addMemoryWrite(aubFile, physLRCA, pLRCABase, sizeLRCA, AubMemDump::AddressSpaceValues::TraceNonlocal, csTraits.aubHintLRCA);
 
     typename AUB::MiContextDescriptorReg contextDescriptor = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};

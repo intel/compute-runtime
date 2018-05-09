@@ -20,6 +20,7 @@
 
 set(RUNTIME_SRCS_AUB_MEM_DUMP
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_data.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_header.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_mem_dump.h

@@ -84,6 +84,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     TbxMemoryManager *getMemoryManager() {
         return (TbxMemoryManager *)CommandStreamReceiver::getMemoryManager();
     }
+    uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
+    void getGTTData(void *memory, AubGTTData &data);
 
     TbxCommandStreamReceiver::TbxStream stream;
 
