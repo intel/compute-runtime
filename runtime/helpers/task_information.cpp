@@ -223,6 +223,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = preemptionMode;
+    dispatchFlags.mediaSamplerRequired = (kernel != nullptr) ? kernel->isVmeKernel() : false;
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

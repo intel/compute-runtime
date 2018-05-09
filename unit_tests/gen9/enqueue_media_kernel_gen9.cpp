@@ -27,6 +27,74 @@
 using namespace OCLRT;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+
+    UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
+
+    auto retVal = pCmdQ->enqueueKernel(
+        pVmeKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        nullptr,
+        1,
+        &blockedEvent,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    parseCommands<SKLFamily>(*pCmdQ);
+    ASSERT_NE(cmdPipelineSelect, nullptr);
+    auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
+
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
+    EXPECT_FALSE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
+GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
+    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+
+    cl_uint workDim = 1;
+    size_t globalWorkOffset[3] = {0, 0, 0};
+    size_t globalWorkSize[3] = {1, 1, 1};
+
+    UserEvent userEvent(context);
+    cl_event blockedEvent = &userEvent;
+
+    auto retVal = pCmdQ->enqueueKernel(
+        pKernel,
+        workDim,
+        globalWorkOffset,
+        globalWorkSize,
+        nullptr,
+        1,
+        &blockedEvent,
+        nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    userEvent.setStatus(CL_COMPLETE);
+
+    parseCommands<SKLFamily>(*pCmdQ);
+    ASSERT_NE(cmdPipelineSelect, nullptr);
+    auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
+
+    auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
+    auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
+    EXPECT_EQ(expectedMask, pCmd->getMaskBits());
+    EXPECT_EQ(expectedPipelineSelection, pCmd->getPipelineSelection());
+    EXPECT_TRUE(pCmd->getMediaSamplerDopClockGateEnable());
+}
+
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
     typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
     enqueueVmeKernel<SKLFamily>();
