@@ -4,7 +4,7 @@ components:
     clean_on_sync: true
     dest_dir: gmmlib
     repository: https://github.com/intel/gmmlib.git
-    revision: b7ce36f5ab352490195f86dc82d65071d336ca15
+    revision: a5015343bc932e39747c57ea5dec0cbf28685465
     type: git
   gmock:
     branch: master
