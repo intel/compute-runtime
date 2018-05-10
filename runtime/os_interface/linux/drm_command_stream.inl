@@ -78,16 +78,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
                  batchBuffer.requiresCoherency,
                  batchBuffer.low_priority);
 
-        if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {
-            // Consume all space in CS to force new allocation
-            batchBuffer.stream->replaceBuffer(nullptr, 0);
-            batchBuffer.stream->replaceGraphicsAllocation(nullptr);
-
-            // Push for asynchronous cleanup
-            getMemoryManager()->push(alloc);
-        } else {
-            bb->getResidency()->clear();
-        }
+        bb->getResidency()->clear();
     }
 
     return flushStamp;
@@ -105,9 +96,6 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxAl
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
     if (bo) {
-        if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {
-            bo->reference();
-        }
         residency.push_back(bo);
     }
 }
@@ -138,11 +126,6 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
     // If makeNonResident is called before flush, vector will be cleared.
     if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
         if (this->residency.size() != 0) {
-            if (this->gemCloseWorkerOperationMode == gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {
-                for (auto it : residency) {
-                    getMemoryManager()->unreference(it);
-                }
-            }
             this->residency.clear();
         }
         if (gfxAllocation.fragmentsStorage.fragmentCount) {

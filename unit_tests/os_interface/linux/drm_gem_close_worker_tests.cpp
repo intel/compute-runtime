@@ -79,7 +79,7 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_cnt = 0;
         this->drmMock->gem_close_expected = 0;
 
-        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false, false);
+        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerInactive, false, false);
     }
 
     void TearDown() {
@@ -174,4 +174,29 @@ TEST_F(DrmGemCloseWorkerTests, givenAllocationWhenAskedForUnreferenceWithForceFl
     EXPECT_EQ(drmMock->ioctl_caller_thread_id, std::this_thread::get_id());
 
     delete worker;
+}
+
+TEST_F(DrmGemCloseWorkerTests, givenDrmGemCloseWorkerWhenCloseIsCalledWithBlockingFlagThenThreadIsClosed) {
+    struct mockDrmGemCloseWorker : DrmGemCloseWorker {
+        using DrmGemCloseWorker::DrmGemCloseWorker;
+        using DrmGemCloseWorker::thread;
+    };
+
+    std::unique_ptr<mockDrmGemCloseWorker> worker(new mockDrmGemCloseWorker(*mm));
+    EXPECT_NE(nullptr, worker->thread);
+    worker->close(true);
+    EXPECT_EQ(nullptr, worker->thread);
+}
+
+TEST_F(DrmGemCloseWorkerTests, givenDrmGemCloseWorkerWhenCloseIsCalledMultipleTimeWithBlockingFlagThenThreadIsClosed) {
+    struct mockDrmGemCloseWorker : DrmGemCloseWorker {
+        using DrmGemCloseWorker::DrmGemCloseWorker;
+        using DrmGemCloseWorker::thread;
+    };
+
+    std::unique_ptr<mockDrmGemCloseWorker> worker(new mockDrmGemCloseWorker(*mm));
+    worker->close(true);
+    worker->close(true);
+    worker->close(true);
+    EXPECT_EQ(nullptr, worker->thread);
 }

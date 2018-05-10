@@ -82,7 +82,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::allocUserptr;
     using DrmMemoryManager::setDomainCpu;
 
-    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, false, false) {
+    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -92,7 +92,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         mmapMockCallCount = 0;
         munmapMockCallCount = 0;
     };
-    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, allowForcePin, validateHostPtrMemory) {
+    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -131,7 +131,9 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
-        memoryManager->getgemCloseWorker()->close(true);
+        if (memoryManager->getgemCloseWorker()) {
+            memoryManager->getgemCloseWorker()->close(true);
+        }
     }
 
     void TearDown() override {
@@ -158,7 +160,9 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation : public MemoryManagem
         this->mock = new DrmMockCustom;
         memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock);
         ASSERT_NE(nullptr, memoryManager);
-        memoryManager->getgemCloseWorker()->close(true);
+        if (memoryManager->getgemCloseWorker()) {
+            memoryManager->getgemCloseWorker()->close(true);
+        }
     }
 
     void TearDown() override {
@@ -379,6 +383,17 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreate
 
     MyTestedDrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerInactive);
     EXPECT_EQ(nullptr, drmMemoryManger.getgemCloseWorker());
+}
+
+TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
+    class MyTestedDrmMemoryManager : public DrmMemoryManager {
+      public:
+        MyTestedDrmMemoryManager(Drm *drm, gemCloseWorkerMode mode) : DrmMemoryManager(drm, mode, false, false) {}
+        DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
+    };
+
+    MyTestedDrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerActive);
+    EXPECT_NE(nullptr, drmMemoryManger.getgemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerTest, AllocateThenFree) {
@@ -2330,19 +2345,6 @@ TEST(DrmMemoryManager, givenDefaultDrmMemoryManagerWhenItIsQueriedForInternalHea
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
     auto heapBase = internalAllocator->getBase();
     EXPECT_EQ(heapBase, memoryManager->getInternalHeapBaseAddress());
-}
-
-TEST(DrmMemoryManager, givenEnabledGemCloseWorkerWhenWaitForDeletionsIsCalledThenGemCloseWorkerIsEmpty) {
-    TestedDrmMemoryManager memoryManager(Drm::get(0));
-    auto gemCloseWorker = memoryManager.getgemCloseWorker();
-
-    EXPECT_TRUE(gemCloseWorker->isEmpty());
-    auto allocation = memoryManager.allocateGraphicsMemory(1024, 4096, false, false);
-
-    memoryManager.push(allocation);
-    memoryManager.waitForDeletions();
-
-    EXPECT_TRUE(gemCloseWorker->isEmpty());
 }
 
 TEST(DrmMemoryManager, givenMemoryManagerWithEnabledHostMemoryValidationWhenFeatureIsQueriedThenTrueIsReturned) {

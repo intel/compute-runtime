@@ -39,7 +39,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
         std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
         ASSERT_NE(nullptr, mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers);
+        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive);
 
         auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
         ASSERT_NE(nullptr, mm);
@@ -58,7 +58,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
         std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
         ASSERT_NE(nullptr, mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers);
+        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive);
 
         auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
         csr.setMemoryManager(nullptr);

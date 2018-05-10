@@ -62,7 +62,7 @@ class DrmCommandStreamFixture {
 
         this->mock = new DrmMockImpl(mockFd);
 
-        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers);
+        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, gemCloseWorkerMode::gemCloseWorkerInactive);
         ASSERT_NE(nullptr, csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
@@ -77,8 +77,8 @@ class DrmCommandStreamFixture {
 
     void TearDown() {
         mm->waitForDeletions();
-        ::testing::Mock::VerifyAndClearExpectations(mock);
         delete csr;
+        ::testing::Mock::VerifyAndClearExpectations(mock);
         // Memory manager closes pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(::testing::AtLeast(1));
@@ -205,19 +205,20 @@ TEST_F(DrmCommandStreamTest, Flush) {
         .Times(1)
         .RetiresOnSaturation();
 
-    DrmAllocation *commandBuffer = static_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024, 4096));
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     EXPECT_EQ(boHandle, commandBuffer->getBO()->peekHandle());
-    LinearStream cs(commandBuffer);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto availableSpacePriorToFlush = cs.getAvailableSpace();
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
     EXPECT_EQ(static_cast<uint64_t>(boHandle), flushStamp);
-    EXPECT_EQ(cs.getCpuBase(), nullptr);
-    EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
+    EXPECT_NE(cs.getCpuBase(), nullptr);
+    EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
 }
 
 TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
@@ -240,17 +241,17 @@ TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
         .Times(1)
         .RetiresOnSaturation();
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
+
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, true, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getCpuBase(), nullptr);
-    EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
+    EXPECT_NE(cs.getCpuBase(), nullptr);
 }
 
 TEST_F(DrmCommandStreamTest, FlushInvalidAddress) {
@@ -282,37 +283,6 @@ TEST_F(DrmCommandStreamTest, FlushInvalidAddress) {
     delete[] commandBuffer;
 }
 
-TEST_F(DrmCommandStreamTest, FlushMultipleTimes) {
-    auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
-
-    ::testing::InSequence inSequence;
-
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_USERPTR, ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, BoExecFlushEq(0u, expectedSize)))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(0))
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
-    EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
-        .Times(1)
-        .RetiresOnSaturation();
-
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
-    csr->addBatchBufferEnd(cs, nullptr);
-    csr->alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(0u, cs.getAvailableSpace());
-}
-
 TEST_F(DrmCommandStreamTest, FlushNotEmptyBB) {
     uint32_t bbUsed = 16 * sizeof(uint32_t);
     auto expectedSize = alignUp(bbUsed + 8, MemoryConstants::cacheLineSize); // bbUsed + bbEnd
@@ -334,10 +304,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyBB) {
         .Times(1)
         .RetiresOnSaturation();
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
     cs.getSpace(bbUsed);
 
     csr->addBatchBufferEnd(cs, nullptr);
@@ -366,10 +333,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyNotPaddedBB) {
         .Times(1)
         .RetiresOnSaturation();
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
     cs.getSpace(bbUsed);
 
     csr->addBatchBufferEnd(cs, nullptr);
@@ -383,13 +347,12 @@ TEST_F(DrmCommandStreamTest, FlushNotAligned) {
         .Times(1)
         .WillRepeatedly(::testing::Return(0));
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024 + 4, 128);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     //make sure command buffer with offset is not page aligned
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
-    LinearStream cs(commandBuffer);
 
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
 
@@ -444,9 +407,7 @@ TEST_F(DrmCommandStreamTest, FlushCheckFlags) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .WillRepeatedly(::testing::Return(0));
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 128);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
 
     EXPECT_CALL(*mock, ioctl(
                            DRM_IOCTL_I915_GEM_EXECBUFFER2,
@@ -469,13 +430,12 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
         .Times(1)
         .WillOnce(::testing::DoAll(UserptrSetHandle(17), ::testing::Return(0)));
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024 + 4, 128);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     //make sure command buffer with offset is not page aligned
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
-    LinearStream cs(commandBuffer);
 
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
 
@@ -511,13 +471,12 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
         .Times(1)
         .WillOnce(::testing::DoAll(UserptrSetHandle(17), ::testing::Return(0)));
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024 + 4, 128);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     //make sure command buffer with offset is not page aligned
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & (this->alignment - 1));
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
-    LinearStream cs(commandBuffer);
 
     auto expectedSize = alignUp(8u, MemoryConstants::cacheLineSize); // bbEnd
 
@@ -547,7 +506,7 @@ struct DrmCsrVfeTests : ::testing::Test {
         using DrmCommandStreamReceiver<FamilyType>::mediaVfeStateLowPriorityDirty;
         using CommandStreamReceiver::commandStream;
 
-        MyCsr() : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], nullptr, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {}
+        MyCsr() : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], nullptr, gemCloseWorkerMode::gemCloseWorkerInactive) {}
         FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
             return (FlushStamp)0;
         }
@@ -749,7 +708,7 @@ class DrmCommandStreamEnhancedFixture
 
         TestedDrmCommandStreamReceiver(Drm *drm, gemCloseWorkerMode mode) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, mode) {
         }
-        TestedDrmCommandStreamReceiver(Drm *drm) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers) {
+        TestedDrmCommandStreamReceiver(Drm *drm) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, gemCloseWorkerMode::gemCloseWorkerInactive) {
         }
 
         void overrideGemCloseWorkerOperationMode(gemCloseWorkerMode overrideValue) {
@@ -824,8 +783,8 @@ class DrmCommandStreamEnhancedFixture
 };
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamGemWorkerTests;
 
-TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsConsumigCommandBuffer) {
-    EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerConsumingCommandBuffers, tCsr->peekGemCloseWorkerOperationMode());
+TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemCloseWorkerModeIsInactive) {
+    EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, tCsr->peekGemCloseWorkerOperationMode());
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
@@ -1128,7 +1087,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     EXPECT_TRUE(isResident(buffer));
     auto bo = getResident(buffer);
     EXPECT_EQ(bo, buffer);
-    EXPECT_EQ(2u, bo->getRefCount());
+    EXPECT_EQ(1u, bo->getRefCount());
 
     csr->makeNonResident(*allocation);
     EXPECT_FALSE(isResident(buffer));
@@ -1156,8 +1115,8 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
     auto bo2 = getResident(buffer2);
     EXPECT_EQ(bo1, buffer1);
     EXPECT_EQ(bo2, buffer2);
-    EXPECT_EQ(2u, bo1->getRefCount());
-    EXPECT_EQ(2u, bo2->getRefCount());
+    EXPECT_EQ(1u, bo1->getRefCount());
+    EXPECT_EQ(1u, bo2->getRefCount());
 
     // dont call makeNonResident on allocation2, any other makeNonResident call will clean this
     // we want to keep all makeResident calls before flush and makeNonResident everyting after flush
@@ -1177,7 +1136,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     EXPECT_TRUE(isResident(buffer));
     auto bo1 = getResident(buffer);
     EXPECT_EQ(buffer, bo1);
-    EXPECT_EQ(2u, bo1->getRefCount());
+    EXPECT_EQ(1u, bo1->getRefCount());
 
     csr->getMemoryManager()->clearResidencyAllocations();
     csr->makeResident(*allocation);
@@ -1187,7 +1146,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     auto bo2 = getResident(buffer);
     EXPECT_EQ(buffer, bo2);
     EXPECT_EQ(bo1, bo2);
-    EXPECT_EQ(2u, bo1->getRefCount());
+    EXPECT_EQ(1u, bo1->getRefCount());
 
     csr->makeNonResident(*allocation);
     EXPECT_FALSE(isResident(buffer));
@@ -1218,7 +1177,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
         ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(2u, bo1->getRefCount()); // only 1 refCount incrementation
+        EXPECT_EQ(1u, bo1->getRefCount());
     }
 
     csr->makeNonResident(*allocation);
@@ -1322,7 +1281,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
         ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(2u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo1->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (int i = 0; i < max_fragments_count; i++) {
@@ -1360,7 +1319,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
         ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(2u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo1->getRefCount());
     }
     csr->makeNonResident(*allocation);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
@@ -1392,7 +1351,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
         EXPECT_TRUE(isResident(bo));
         auto bo1 = getResident(bo);
         ASSERT_EQ(bo, bo1);
-        EXPECT_EQ(2u, bo1->getRefCount());
+        EXPECT_EQ(1u, bo1->getRefCount());
     }
     csr->makeNonResident(*allocation2);
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
@@ -1421,25 +1380,19 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, Flush) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getCpuBase(), nullptr);
-    EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
+    EXPECT_NE(cs.getCpuBase(), nullptr);
+    EXPECT_NE(cs.getGraphicsAllocation(), nullptr);
 }
 
 TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
-
     auto allocation1 = mm->allocateGraphicsMemory(1024, 4096);
     auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, allocation1);
@@ -1454,8 +1407,8 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
     EXPECT_TRUE(isResident(allocation2->getBO()));
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
-    EXPECT_EQ(allocation1->getBO()->getRefCount(), 2u);
-    EXPECT_EQ(allocation2->getBO()->getRefCount(), 2u);
+    EXPECT_EQ(allocation1->getBO()->getRefCount(), 1u);
+    EXPECT_EQ(allocation2->getBO()->getRefCount(), 1u);
 
     // makeNonResident without flush
     csr->makeNonResident(*allocation1);
@@ -1469,68 +1422,17 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
 
     mm->freeGraphicsMemory(allocation1);
     mm->freeGraphicsMemory(allocation2);
-    mm->freeGraphicsMemory(commandBuffer);
-}
-
-TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushCalled) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
-
-    auto allocation1 = mm->allocateGraphicsMemory(1024, 4096);
-    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
-
-    ASSERT_NE(nullptr, allocation1);
-    ASSERT_NE(nullptr, allocation2);
-
-    csr->makeResident(*allocation1);
-    csr->makeResident(*allocation2);
-
-    csr->addBatchBufferEnd(cs, nullptr);
-    csr->alignToCacheLine(cs);
-
-    EXPECT_EQ(0u, tCsr->getResidencyVector()->size());
-
-    EXPECT_FALSE(isResident(allocation1->getBO()));
-    EXPECT_FALSE(isResident(allocation2->getBO()));
-
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
-    EXPECT_EQ(cs.getCpuBase(), nullptr);
-    EXPECT_EQ(cs.getGraphicsAllocation(), nullptr);
-
-    EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
-
-    // wait for async thread to finish
-    while (allocation1->getBO()->getRefCount() > 1 ||
-           allocation2->getBO()->getRefCount() > 1)
-        ;
-
-    csr->makeNonResident(*allocation1);
-    csr->makeNonResident(*allocation2);
-
-    EXPECT_FALSE(allocation1->isResident());
-    EXPECT_FALSE(allocation2->isResident());
-    EXPECT_EQ(allocation1->getBO()->getRefCount(), 1u);
-    EXPECT_EQ(allocation2->getBO()->getRefCount(), 1u);
-
-    mm->freeGraphicsMemory(allocation1);
-    mm->freeGraphicsMemory(allocation2);
 }
 
 TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
+
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
-    commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
     cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
     cs.replaceGraphicsAllocation(commandBuffer);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1546,6 +1448,8 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
+    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
+
     commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
@@ -1558,6 +1462,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
+    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
     commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
     cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
@@ -1571,10 +1476,8 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
 TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyBB) {
     int bbUsed = 16 * sizeof(uint32_t);
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
+
     cs.getSpace(bbUsed);
 
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1586,10 +1489,8 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyBB) {
 TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyNotPaddedBB) {
     int bbUsed = 15 * sizeof(uint32_t);
 
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
-    LinearStream cs(commandBuffer);
+    auto &cs = csr->getCS();
+
     cs.getSpace(bbUsed);
 
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1599,13 +1500,12 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotEmptyNotPaddedBB) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, FlushNotAligned) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024 + 4, 128);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     //make sure command buffer with offset is not page aligned
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0xFFF);
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
-    LinearStream cs(commandBuffer);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
@@ -1614,13 +1514,12 @@ TEST_F(DrmCommandStreamLeaksTest, FlushNotAligned) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
-    auto *commandBuffer = mm->allocateGraphicsMemory(1024 + 4, 128);
-    ASSERT_NE(nullptr, commandBuffer);
+    auto &cs = csr->getCS();
+    auto commandBuffer = static_cast<DrmAllocation *>(cs.getGraphicsAllocation());
 
     //make sure command buffer with offset is not page aligned
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0xFFF);
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
-    LinearStream cs(commandBuffer);
 
     auto allocation = mm->allocateGraphicsMemory(1024, 128);
 

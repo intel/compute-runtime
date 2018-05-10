@@ -77,10 +77,6 @@ DrmMemoryManager::~DrmMemoryManager() {
     }
 }
 
-void DrmMemoryManager::push(DrmAllocation *alloc) {
-    gemCloseWorker->push(alloc);
-}
-
 void DrmMemoryManager::eraseSharedBufferObject(OCLRT::BufferObject *bo) {
     std::lock_guard<decltype(mtx)> lock(mtx);
 
@@ -109,9 +105,6 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
     uint32_t r = bo->refCount.fetch_sub(1);
 
     if (r == 1) {
-        for (auto it : *bo->getResidency()) {
-            unreference(it);
-        }
         auto unmapSize = bo->peekUnmapSize();
         auto address = bo->isAllocated || unmapSize > 0 ? bo->address : nullptr;
         auto allocatorType = bo->peekAllocationType();
@@ -535,14 +528,6 @@ void DrmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
 BufferObject *DrmMemoryManager::getPinBB() const {
     return pinBB;
-}
-
-void DrmMemoryManager::waitForDeletions() {
-    if (gemCloseWorker.get()) {
-        while (!gemCloseWorker->isEmpty())
-            ;
-    }
-    MemoryManager::waitForDeletions();
 }
 
 bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool writeEnable) {

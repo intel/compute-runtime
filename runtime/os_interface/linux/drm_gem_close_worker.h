@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,9 +35,8 @@ class DrmMemoryManager;
 class DrmAllocation;
 
 enum gemCloseWorkerMode {
-    gemCloseWorkerConsumingCommandBuffers,
     gemCloseWorkerInactive,
-    gemCloseWorkerConsumingResources
+    gemCloseWorkerActive
 };
 
 class DrmGemCloseWorker {
@@ -53,7 +52,7 @@ class DrmGemCloseWorker {
 
     bool isEmpty();
 
-  private:
+  protected:
     void close(DrmAllocation *workItem);
     void closeThread();
     void worker();

@@ -70,11 +70,7 @@ class DrmMemoryManager : public MemoryManager {
     // drm/i915 ioctl wrappers
     uint32_t unreference(BufferObject *bo, bool synchronousDestroy = false);
 
-    // CloseWorker delegate
-    void push(DrmAllocation *alloc);
-
     DrmAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
-    void waitForDeletions() override;
     bool isValidateHostMemoryEnabled() const {
         return validateHostPtrMemory;
     }

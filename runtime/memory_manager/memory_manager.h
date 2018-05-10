@@ -220,7 +220,7 @@ class MemoryManager {
         return deferredDeleter.get();
     }
 
-    virtual void waitForDeletions();
+    void waitForDeletions();
 
     bool isAsyncDeleterEnabled() const;
     virtual bool isMemoryBudgetExhausted() const;
