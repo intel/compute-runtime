@@ -28,6 +28,7 @@ if(TESTS_GEN8)
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen8.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/l3_helper_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_dispatch_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen8.cpp

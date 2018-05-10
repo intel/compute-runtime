@@ -26,8 +26,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "unit_tests/helpers/l3_helper.inl"
+#include "unit_tests/helpers/l3_helper.h"
 #include "test.h"
 
 namespace OCLRT {

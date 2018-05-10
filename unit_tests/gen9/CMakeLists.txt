@@ -28,6 +28,7 @@ if(TESTS_GEN9)
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_tests_gen9.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/l3_helper_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests_gen9.cpp

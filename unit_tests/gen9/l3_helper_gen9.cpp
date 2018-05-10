@@ -20,10 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gen9/hw_info.h"
+#include "unit_tests/helpers/l3_helper.h"
+#include "unit_tests/helpers/l3_helper.inl"
+
 namespace OCLRT {
 
-template <typename GfxFamily>
-bool L3Helper<GfxFamily>::isL3ConfigProgrammable() {
-    return true;
-};
+template struct L3Helper<SKLFamily>;
 } // namespace OCLRT
