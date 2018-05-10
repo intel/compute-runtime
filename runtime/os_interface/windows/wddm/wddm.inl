@@ -21,7 +21,7 @@
  */
 
 #include "runtime/os_interface/windows/gdi_interface.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace OCLRT {
 

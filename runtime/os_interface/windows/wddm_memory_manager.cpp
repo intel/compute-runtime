@@ -31,7 +31,7 @@
 #include "runtime/memory_manager/deferrable_deletion.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include <algorithm>
 
 namespace OCLRT {

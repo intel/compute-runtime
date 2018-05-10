@@ -958,7 +958,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTr
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
     }
 
-    EXPECT_EQ(5u, gdi.getMakeResidentArg().NumAllocations);
+    EXPECT_EQ(5u, gdi->getMakeResidentArg().NumAllocations);
 
     memoryManager->freeGraphicsMemory(allocationTriple);
 }
@@ -986,9 +986,9 @@ HWTEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLas
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManagerCtor) {
     SetUpMm<FamilyType>();
-    EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi.getRegisterTrimNotificationArg().Callback);
-    EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi.getRegisterTrimNotificationArg().Context);
-    EXPECT_EQ(wddm->getDevice(), gdi.getRegisterTrimNotificationArg().hDevice);
+    EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi->getRegisterTrimNotificationArg().Callback);
+    EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi->getRegisterTrimNotificationArg().Context);
+    EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenAllocationsAreEvictedMarkedAndRemovedFromTrimCandidateList) {
@@ -1149,7 +1149,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
 
     WddmAllocation allocation1, allocation2, allocation3;
     allocation1.getResidencyData().resident = true;
@@ -1188,7 +1188,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTrimIsNotZero) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
 
     WddmAllocation allocation1;
     allocation1.getResidencyData().resident = true;
@@ -1250,7 +1250,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesTo
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResident) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
 
     WddmAllocation allocation1, allocation2, allocation3;
     allocation1.getResidencyData().resident = true;
@@ -1283,7 +1283,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonRe
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGreaterThanMonitored) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
 
     WddmAllocation allocation1;
     allocation1.getResidencyData().resident = true;
@@ -1300,19 +1300,19 @@ HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIs
 
     memoryManager->addToTrimCandidateList(&allocation1);
 
-    gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     EXPECT_FALSE(allocation1.getResidencyData().resident);
 
-    EXPECT_EQ(wddm->getDevice(), gdi.getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
 }
 
 HWTEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     WddmAllocation allocation1(ptr, 0x1000, ptr, 0x1000, nullptr);
     WddmAllocation allocation2(ptr, 0x1000, ptr, 0x1000, nullptr);
@@ -1387,7 +1387,7 @@ HWTEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
 
 HWTEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerThanAllocSizeWhenBudgetEqualTwoAlignedAllocationThenEvictOnlyTwo) {
     SetUpMm<FamilyType>();
-    gdi.setNonZeroNumBytesToTrimInEvict();
+    gdi->setNonZeroNumBytesToTrimInEvict();
     size_t underlyingSize = 0xF00;
     size_t alignedSize = 0x1000;
     size_t budget = 2 * alignedSize;

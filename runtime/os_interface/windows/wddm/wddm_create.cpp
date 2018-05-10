@@ -21,11 +21,11 @@
  */
 
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include <dxgi.h>
 namespace OCLRT {
 
-Wddm *Wddm::createWddm(Gdi *gdi) {
+Wddm *Wddm::createWddm() {
     return new Wddm();
 }
 

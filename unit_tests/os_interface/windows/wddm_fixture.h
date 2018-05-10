@@ -32,13 +32,15 @@
 namespace OCLRT {
 struct WddmFixture {
     virtual void SetUp() {
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(&gdi)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        gdi = new MockGdi();
+        wddm->gdi.reset(gdi);
     }
 
     virtual void TearDown(){};
 
     std::unique_ptr<WddmMock> wddm;
-    MockGdi gdi;
+    MockGdi *gdi = nullptr;
 };
 
 struct WddmFixtureWithMockGdiDll : public GdiDllFixture {

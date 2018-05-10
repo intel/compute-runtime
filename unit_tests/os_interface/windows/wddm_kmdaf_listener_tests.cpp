@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
@@ -31,7 +31,9 @@ using namespace OCLRT;
 
 class WddmWithKmDafMock : public Wddm {
   public:
-    WddmWithKmDafMock(Gdi *gdi) : Wddm(gdi) {
+    using Wddm::gdi;
+
+    WddmWithKmDafMock() : Wddm() {
         kmDafListener.reset(new KmDafListenerMock);
     }
 
@@ -51,16 +53,13 @@ class WddmWithKmDafMock : public Wddm {
 class WddmKmDafListenerTest : public ::testing::Test {
   public:
     void SetUp() {
-        wddmWithKmDafMock = new WddmWithKmDafMock(&gdi);
+        wddmWithKmDafMock.reset(new WddmWithKmDafMock());
+        wddmWithKmDafMock->gdi.reset(new MockGdi());
         wddmWithKmDafMock->init<DEFAULT_TEST_FAMILY_NAME>();
         wddmWithKmDafMock->getFeatureTable()->ftrKmdDaf = true;
     }
-    void TearDown() {
-        delete wddmWithKmDafMock;
-    }
 
-    WddmWithKmDafMock *wddmWithKmDafMock;
-    MockGdi gdi;
+    std::unique_ptr<WddmWithKmDafMock> wddmWithKmDafMock;
 };
 
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenLockResourceIsCalledThenKmDafListenerNotifyLockIsFedWithCorrectParams) {

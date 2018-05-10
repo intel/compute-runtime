@@ -24,7 +24,7 @@
 
 #include "runtime/helpers/engine_node.h"
 #include "runtime/helpers/hw_info.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 
 #include <cstdint>
 

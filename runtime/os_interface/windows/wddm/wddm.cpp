@@ -27,7 +27,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/registry_reader.h"
@@ -53,18 +53,16 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm(Gdi *gdi) : initialized(false),
-                       gdiAllocated(false),
-                       gdi(gdi),
-                       adapter(0),
-                       context(0),
-                       device(0),
-                       pagingQueue(0),
-                       pagingQueueSyncObject(0),
-                       pagingFenceAddress(nullptr),
-                       currentPagingFenceValue(0),
-                       hwContextId(0),
-                       trimCallbackHandle(nullptr) {
+Wddm::Wddm() : initialized(false),
+               adapter(0),
+               context(0),
+               device(0),
+               pagingQueue(0),
+               pagingQueueSyncObject(0),
+               pagingFenceAddress(nullptr),
+               currentPagingFenceValue(0),
+               hwContextId(0),
+               trimCallbackHandle(nullptr) {
     featureTable.reset(new FeatureTable());
     waTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
@@ -81,10 +79,7 @@ Wddm::Wddm(Gdi *gdi) : initialized(false),
     gmmMemory = std::unique_ptr<GmmMemory>(GmmMemory::create());
     minAddress = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
-}
-
-Wddm::Wddm() : Wddm(new Gdi()) {
-    gdiAllocated = true;
+    gdi = std::unique_ptr<Gdi>(new Gdi());
 }
 
 Wddm::~Wddm() {
@@ -95,8 +90,6 @@ Wddm::~Wddm() {
     destroyPagingQueue();
     destroyDevice();
     closeAdapter();
-    if (gdiAllocated)
-        delete gdi;
 }
 
 bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {

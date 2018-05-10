@@ -29,7 +29,7 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/translationtable_callbacks.h"

@@ -34,10 +34,8 @@ LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type
     return malloc(size);
 }
 
-Wddm *Wddm::createWddm(Gdi *gdi) {
-    if (gdi == nullptr)
-        return new WddmMock();
-    return new WddmMock(gdi);
+Wddm *Wddm::createWddm() {
+    return new WddmMock();
 }
 
 Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {

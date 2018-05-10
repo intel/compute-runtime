@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include <vector>
 #include <set>
 
@@ -57,7 +57,6 @@ class WddmMock : public Wddm {
     using Wddm::pagingQueue;
 
     WddmMock() : Wddm(){};
-    WddmMock(Gdi *gdi) : Wddm(gdi) {}
     ~WddmMock();
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;

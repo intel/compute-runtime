@@ -28,7 +28,6 @@ using namespace OCLRT;
 class WddmMockReserveAddress : public WddmMock {
   public:
     WddmMockReserveAddress() : WddmMock() {}
-    WddmMockReserveAddress(Gdi *gdi) : WddmMock(gdi) {}
 
     void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override {
         if (returnGood != 0) {

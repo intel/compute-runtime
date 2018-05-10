@@ -680,14 +680,14 @@ HWTEST_F(WddmTest, makeResidentMultipleHandles) {
     handles[0] = allocation.handle;
     handles[1] = allocation.handle;
 
-    gdi.getMakeResidentArg().NumAllocations = 0;
-    gdi.getMakeResidentArg().AllocationList = nullptr;
+    gdi->getMakeResidentArg().NumAllocations = 0;
+    gdi->getMakeResidentArg().AllocationList = nullptr;
 
     bool error = wddm->makeResident(handles, 2, false, nullptr);
     EXPECT_TRUE(error);
 
-    EXPECT_EQ(2u, gdi.getMakeResidentArg().NumAllocations);
-    EXPECT_EQ(handles, gdi.getMakeResidentArg().AllocationList);
+    EXPECT_EQ(2u, gdi->getMakeResidentArg().NumAllocations);
+    EXPECT_EQ(handles, gdi->getMakeResidentArg().AllocationList);
 
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
@@ -705,15 +705,15 @@ HWTEST_F(WddmTest, makeResidentMultipleHandlesWithReturnBytesToTrim) {
     handles[0] = allocation.handle;
     handles[1] = allocation.handle;
 
-    gdi.getMakeResidentArg().NumAllocations = 0;
-    gdi.getMakeResidentArg().AllocationList = nullptr;
-    gdi.getMakeResidentArg().NumBytesToTrim = 30;
+    gdi->getMakeResidentArg().NumAllocations = 0;
+    gdi->getMakeResidentArg().AllocationList = nullptr;
+    gdi->getMakeResidentArg().NumBytesToTrim = 30;
 
     uint64_t bytesToTrim = 0;
     bool success = wddm->makeResident(handles, 2, false, &bytesToTrim);
     EXPECT_TRUE(success);
 
-    EXPECT_EQ(gdi.getMakeResidentArg().NumBytesToTrim, bytesToTrim);
+    EXPECT_EQ(gdi->getMakeResidentArg().NumBytesToTrim, bytesToTrim);
 
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
@@ -723,19 +723,19 @@ HWTEST_F(WddmTest, makeNonResidentCallsEvict) {
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
-    gdi.getEvictArg().AllocationList = nullptr;
-    gdi.getEvictArg().Flags.Value = 0;
-    gdi.getEvictArg().hDevice = 0;
-    gdi.getEvictArg().NumAllocations = 0;
-    gdi.getEvictArg().NumBytesToTrim = 20;
+    gdi->getEvictArg().AllocationList = nullptr;
+    gdi->getEvictArg().Flags.Value = 0;
+    gdi->getEvictArg().hDevice = 0;
+    gdi->getEvictArg().NumAllocations = 0;
+    gdi->getEvictArg().NumBytesToTrim = 20;
 
     uint64_t sizeToTrim = 10;
     wddm->evict(&handle, 1, sizeToTrim);
 
-    EXPECT_EQ(1u, gdi.getEvictArg().NumAllocations);
-    EXPECT_EQ(&handle, gdi.getEvictArg().AllocationList);
-    EXPECT_EQ(wddm->getDevice(), gdi.getEvictArg().hDevice);
-    EXPECT_EQ(0u, gdi.getEvictArg().NumBytesToTrim);
+    EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
+    EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
+    EXPECT_EQ(wddm->getDevice(), gdi->getEvictArg().hDevice);
+    EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
 }
 
 HWTEST_F(WddmTest, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCallsWaitFromCpu) {
@@ -749,28 +749,28 @@ HWTEST_F(WddmTest, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCal
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
-    gdi.getWaitFromCpuArg().FenceValueArray = nullptr;
-    gdi.getWaitFromCpuArg().Flags.Value = 0;
-    gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getWaitFromCpuArg().ObjectCount = 0;
-    gdi.getWaitFromCpuArg().ObjectHandleArray = nullptr;
+    gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
+    gdi->getWaitFromCpuArg().Flags.Value = 0;
+    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().ObjectCount = 0;
+    gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    gdi.getDestroyArg().AllocationCount = 0;
-    gdi.getDestroyArg().Flags.Value = 0;
-    gdi.getDestroyArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getDestroyArg().hResource = (D3DKMT_HANDLE)0;
-    gdi.getDestroyArg().phAllocationList = nullptr;
+    gdi->getDestroyArg().AllocationCount = 0;
+    gdi->getDestroyArg().Flags.Value = 0;
+    gdi->getDestroyArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
+    gdi->getDestroyArg().phAllocationList = nullptr;
 
     wddm->destroyAllocation(&allocation);
 
-    EXPECT_NE(nullptr, gdi.getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ(wddm->getDevice(), gdi.getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(1u, gdi.getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(&wddm->getMonitoredFence().fenceHandle, gdi.getWaitFromCpuArg().ObjectHandleArray);
+    EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
+    EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(&wddm->getMonitoredFence().fenceHandle, gdi->getWaitFromCpuArg().ObjectHandleArray);
 
-    EXPECT_EQ(wddm->getDevice(), gdi.getDestroyArg().hDevice);
-    EXPECT_EQ(1u, gdi.getDestroyArg().AllocationCount);
-    EXPECT_NE(nullptr, gdi.getDestroyArg().phAllocationList);
+    EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
+    EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
+    EXPECT_NE(nullptr, gdi->getDestroyArg().phAllocationList);
 }
 
 HWTEST_F(WddmTest, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoesNotCallWaitFromCpu) {
@@ -784,28 +784,28 @@ HWTEST_F(WddmTest, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoe
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
-    gdi.getWaitFromCpuArg().FenceValueArray = nullptr;
-    gdi.getWaitFromCpuArg().Flags.Value = 0;
-    gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getWaitFromCpuArg().ObjectCount = 0;
-    gdi.getWaitFromCpuArg().ObjectHandleArray = nullptr;
+    gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
+    gdi->getWaitFromCpuArg().Flags.Value = 0;
+    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().ObjectCount = 0;
+    gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    gdi.getDestroyArg().AllocationCount = 0;
-    gdi.getDestroyArg().Flags.Value = 0;
-    gdi.getDestroyArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getDestroyArg().hResource = (D3DKMT_HANDLE)0;
-    gdi.getDestroyArg().phAllocationList = nullptr;
+    gdi->getDestroyArg().AllocationCount = 0;
+    gdi->getDestroyArg().Flags.Value = 0;
+    gdi->getDestroyArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
+    gdi->getDestroyArg().phAllocationList = nullptr;
 
     wddm->destroyAllocation(&allocation);
 
-    EXPECT_EQ(nullptr, gdi.getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ((D3DKMT_HANDLE)0, gdi.getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(0u, gdi.getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(nullptr, gdi.getWaitFromCpuArg().ObjectHandleArray);
+    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
+    EXPECT_EQ((D3DKMT_HANDLE)0, gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(0u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().ObjectHandleArray);
 
-    EXPECT_EQ(wddm->getDevice(), gdi.getDestroyArg().hDevice);
-    EXPECT_EQ(1u, gdi.getDestroyArg().AllocationCount);
-    EXPECT_NE(nullptr, gdi.getDestroyArg().phAllocationList);
+    EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
+    EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
+    EXPECT_NE(nullptr, gdi->getDestroyArg().phAllocationList);
 }
 
 HWTEST_F(WddmTest, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
@@ -817,20 +817,20 @@ HWTEST_F(WddmTest, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled
 
     *wddm->getMonitoredFence().cpuAddress = 10;
 
-    gdi.getWaitFromCpuArg().FenceValueArray = nullptr;
-    gdi.getWaitFromCpuArg().Flags.Value = 0;
-    gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getWaitFromCpuArg().ObjectCount = 0;
-    gdi.getWaitFromCpuArg().ObjectHandleArray = nullptr;
+    gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
+    gdi->getWaitFromCpuArg().Flags.Value = 0;
+    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().ObjectCount = 0;
+    gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
     auto status = wddm->waitFromCpu(10);
 
     EXPECT_TRUE(status);
 
-    EXPECT_EQ(nullptr, gdi.getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ((D3DKMT_HANDLE)0, gdi.getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(0u, gdi.getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(nullptr, gdi.getWaitFromCpuArg().ObjectHandleArray);
+    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
+    EXPECT_EQ((D3DKMT_HANDLE)0, gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(0u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().ObjectHandleArray);
 }
 
 HWTEST_F(WddmTest, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
@@ -842,32 +842,32 @@ HWTEST_F(WddmTest, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
 
     *wddm->getMonitoredFence().cpuAddress = 10;
 
-    gdi.getWaitFromCpuArg().FenceValueArray = nullptr;
-    gdi.getWaitFromCpuArg().Flags.Value = 0;
-    gdi.getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi.getWaitFromCpuArg().ObjectCount = 0;
-    gdi.getWaitFromCpuArg().ObjectHandleArray = nullptr;
+    gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
+    gdi->getWaitFromCpuArg().Flags.Value = 0;
+    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
+    gdi->getWaitFromCpuArg().ObjectCount = 0;
+    gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
     auto status = wddm->waitFromCpu(20);
 
     EXPECT_TRUE(status);
 
-    EXPECT_NE(nullptr, gdi.getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ((D3DKMT_HANDLE)wddm->getDevice(), gdi.getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(1u, gdi.getWaitFromCpuArg().ObjectCount);
-    EXPECT_NE(nullptr, gdi.getWaitFromCpuArg().ObjectHandleArray);
+    EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
+    EXPECT_EQ((D3DKMT_HANDLE)wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
+    EXPECT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
+    EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().ObjectHandleArray);
 }
 
 HWTEST_F(WddmTest, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurrentFenceValueIsSetToOne) {
     wddm->init<FamilyType>();
 
-    gdi.createSynchronizationObject2 = gdi.createSynchronizationObject2Mock;
+    gdi->createSynchronizationObject2 = gdi->createSynchronizationObject2Mock;
 
-    gdi.getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
+    gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
     wddm->createMonitoredFence();
 
-    EXPECT_EQ(0u, gdi.getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
+    EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
     EXPECT_EQ(1u, wddm->getMonitoredFence().currentFenceValue);
 }
 
@@ -882,7 +882,7 @@ HWTEST_F(WddmTest, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
     D3DKMT_HANDLE handle = 0;
     WddmAllocation *alloc = nullptr;
 
-    gdi.queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);
+    gdi->queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);
     auto ret = wddm->openSharedHandle(handle, alloc);
 
     EXPECT_EQ(false, ret);
@@ -895,7 +895,7 @@ HWTEST_F(WddmTest, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemory
             return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
         };
     };
-    gdi.createAllocation = MockCreateAllocation::mockCreateAllocation;
+    gdi->createAllocation = MockCreateAllocation::mockCreateAllocation;
     wddm->init<FamilyType>();
 
     OsHandleStorage handleStorage;

@@ -96,13 +96,15 @@ class WddmCommandStreamWithMockGdiFixture {
     MemoryManager *memManager = nullptr;
     MockDevice *device = nullptr;
     WddmMock *wddm = nullptr;
-    MockGdi gdi;
+    MockGdi *gdi = nullptr;
     DebugManagerStateRestore stateRestore;
     GraphicsAllocation *tagAllocation;
     GraphicsAllocation *preemptionAllocation = nullptr;
 
     virtual void SetUp() {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(&gdi));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        gdi = new MockGdi();
+        wddm->gdi.reset(gdi);
         ASSERT_NE(wddm, nullptr);
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
         csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], wddm);
@@ -605,12 +607,12 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
 
     EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
 
-    gdi.getMakeResidentArg().NumAllocations = 0;
+    gdi->getMakeResidentArg().NumAllocations = 0;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr);
 
-    EXPECT_NE(0u, gdi.getMakeResidentArg().NumAllocations);
+    EXPECT_NE(0u, gdi->getMakeResidentArg().NumAllocations);
 
     memManager->freeGraphicsMemory(commandBuffer);
 }

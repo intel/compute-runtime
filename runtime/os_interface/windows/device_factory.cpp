@@ -26,7 +26,7 @@
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace OCLRT {
 

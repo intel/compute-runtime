@@ -21,7 +21,7 @@
 */
 
 #include <memory>
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/os_time.h"
 

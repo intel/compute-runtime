@@ -62,7 +62,9 @@ typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 class MockWddmMemoryManagerFixture {
   public:
     void SetUp() {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(&gdi));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        gdi = new MockGdi();
+        wddm->gdi.reset(gdi);
     }
 
     template <typename FamiltyType>
@@ -81,7 +83,7 @@ class MockWddmMemoryManagerFixture {
     virtual void TearDown() {}
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     WddmMock *wddm = nullptr;
-    MockGdi gdi;
+    MockGdi *gdi = nullptr;
 };
 
 typedef ::Test<MockWddmMemoryManagerFixture> WddmMemoryManagerResidencyTest;

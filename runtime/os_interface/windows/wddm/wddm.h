@@ -50,19 +50,6 @@ struct WorkaroundTable;
 struct KmDafListener;
 
 class Wddm {
-  private:
-    struct MonitoredFence {
-        D3DKMT_HANDLE fenceHandle;
-        D3DGPU_VIRTUAL_ADDRESS gpuAddress;
-        volatile uint64_t *cpuAddress;
-        volatile uint64_t currentFenceValue;
-        uint64_t lastSubmittedFence;
-    };
-
-  protected:
-    Wddm();
-    Wddm(Gdi *gdi);
-
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
@@ -71,7 +58,7 @@ class Wddm {
 
     virtual ~Wddm();
 
-    static Wddm *createWddm(Gdi *gdi = nullptr);
+    static Wddm *createWddm();
 
     static bool enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo);
 
@@ -140,7 +127,7 @@ class Wddm {
     D3DKMT_HANDLE getDevice() const { return device; }
     D3DKMT_HANDLE getPagingQueue() const { return pagingQueue; }
     D3DKMT_HANDLE getPagingQueueSyncObject() const { return pagingQueueSyncObject; }
-    Gdi *getGdi() const { return gdi; }
+    Gdi *getGdi() const { return gdi.get(); }
 
     PFND3DKMT_ESCAPE getEscapeHandle() const;
 
@@ -175,8 +162,7 @@ class Wddm {
 
   protected:
     bool initialized;
-    bool gdiAllocated;
-    Gdi *gdi;
+    std::unique_ptr<Gdi> gdi;
     D3DKMT_HANDLE adapter;
     D3DKMT_HANDLE context;
     D3DKMT_HANDLE device;
@@ -208,6 +194,7 @@ class Wddm {
     std::unique_ptr<GmmMemory> gmmMemory;
     uintptr_t minAddress;
 
+    Wddm();
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     MOCKABLE_VIRTUAL bool openAdapter();
     bool createDevice();

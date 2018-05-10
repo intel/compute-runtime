@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "runtime/os_interface/windows/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/os_interface/windows/driver_info.h"
 #include "runtime/os_interface/windows/os_interface.h"
