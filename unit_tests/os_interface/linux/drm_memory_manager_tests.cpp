@@ -179,31 +179,31 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDefaultDrmMemoryManger
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenforcePinAllowedWhenMemoryManagerIsCreatedThenPinBbIsCreated) {
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    EXPECT_NE(nullptr, mm->getPinBB());
-    delete mm;
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    EXPECT_NE(nullptr, memoryManager->getPinBB());
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, pinBBisCreated) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    EXPECT_NE(nullptr, mm->getPinBB());
-    delete mm;
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    EXPECT_NE(nullptr, memoryManager->getPinBB());
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, givenNotAllowedForcePinWhenMemoryManagerIsCreatedThenPinBBIsNotCreated) {
-    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false));
-    EXPECT_EQ(nullptr, mm->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false));
+    EXPECT_EQ(nullptr, memoryManager->getPinBB());
 }
 
 TEST_F(DrmMemoryManagerTest, pinBBnotCreatedWhenIoctlFailed) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_res = -1;
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    EXPECT_EQ(nullptr, mm->getPinBB());
-    delete mm;
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    EXPECT_EQ(nullptr, memoryManager->getPinBB());
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation) {
@@ -212,16 +212,16 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
-    auto alloc = mm->allocateGraphicsMemory(10 * 1014 * 1024, 1024, true, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(10 * 1014 * 1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAllocation) {
@@ -229,17 +229,17 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedAndAllowedButSmallAll
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning
-    auto alloc = mm->allocateGraphicsMemory(4 * 1024, 1024, true, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(4 * 1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
@@ -247,16 +247,16 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowed) {
     mock->ioctl_expected.gemClose = 2;
     mock->ioctl_expected.gemWait = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
-    auto alloc = mm->allocateGraphicsMemory(1024, 1024, false, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(1024, 1024, false, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
 }
 
 TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
@@ -264,15 +264,15 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowed) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
 
-    auto alloc = mm->allocateGraphicsMemory(1024, 1024, true, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(1024, 1024, true, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
 }
 
 // ---- HostPtr
@@ -282,18 +282,18 @@ TEST_F(DrmMemoryManagerTest, pinAfterAllocateWhenAskedAndAllowedAndBigAllocation
     mock->ioctl_expected.execbuffer2 = 1;
     mock->ioctl_expected.gemWait = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     size_t size = 10 * 1024 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, true);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
     ::alignedFree(ptr);
 }
 
@@ -302,19 +302,19 @@ TEST_F(DrmMemoryManagerTest, givenSmallAllocationHostPtrAllocationWhenForcePinIs
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning
     size_t size = 4 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, true);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
     ::alignedFree(ptr);
 }
 
@@ -323,18 +323,18 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenNotAskedButAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
-    ASSERT_NE(nullptr, mm->getPinBB());
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false);
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     size_t size = 4 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
     ::alignedFree(ptr);
 }
 
@@ -343,17 +343,17 @@ TEST_F(DrmMemoryManagerTest, doNotPinAfterAllocateWhenAskedButNotAllowedHostPtr)
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto mm = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
+    auto memoryManager = new (std::nothrow) TestedDrmMemoryManager(this->mock, false, false);
 
     size_t size = 4 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, true);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
 
-    delete mm;
+    delete memoryManager;
     ::alignedFree(ptr);
 }
 
@@ -2472,16 +2472,16 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenValidateHostPtrMemoryE
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 2;
 
-    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
-    ASSERT_NE(nullptr, mm->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     size_t size = 10 * 1024 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
     ::alignedFree(ptr);
 }
 
@@ -2505,17 +2505,17 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAndHostMemoryValidationEnabledWhenSmal
     mock->ioctl_expected.gemWait = 1;     // in freeGraphicsAllocation
     mock->ioctl_expected.gemClose = 2;    // 1 pinBB, 1 small allocation
 
-    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
-    ASSERT_NE(nullptr, mm->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, true));
+    ASSERT_NE(nullptr, memoryManager->getPinBB());
 
     // one page is too small for early pinning but pinning is used for host memory validation
     size_t size = 4 * 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, false);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, false);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
     ::alignedFree(ptr);
 }
 
@@ -2524,17 +2524,17 @@ TEST_F(DrmMemoryManagerTest, givenForcePinAllowedAndNoPinBBInMemoryManagerWhenAl
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
     mock->ioctl_res = -1;
-    std::unique_ptr<TestedDrmMemoryManager> mm(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false));
-    EXPECT_EQ(nullptr, mm->getPinBB());
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(this->mock, true, false));
+    EXPECT_EQ(nullptr, memoryManager->getPinBB());
     mock->ioctl_res = 0;
 
-    auto allocation = mm->allocateGraphicsMemory(4096, 4096, true, false);
+    auto allocation = memoryManager->allocateGraphicsMemory(4096, 4096, true, false);
     EXPECT_NE(nullptr, allocation);
-    mm->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationEnabledWhenAllocationIsCreatedThenBufferObjectIsPinnedOnlyOnce) {
-    std::unique_ptr<TestedDrmMemoryManager> mm(new TestedDrmMemoryManager(this->mock, false, true));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock, false, true));
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.execbuffer2 = 1;
@@ -2543,18 +2543,18 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
     size_t size = 1024;
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, true);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
     mock->testIoctls();
 
     ::alignedFree(ptr);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndHostMemoryValidationDisabledWhenAllocationIsCreatedThenBufferObjectIsNotPinned) {
-    std::unique_ptr<TestedDrmMemoryManager> mm(new TestedDrmMemoryManager(this->mock, false, false));
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new TestedDrmMemoryManager(this->mock, false, false));
     mock->reset();
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_expected.gemClose = 1;
@@ -2562,11 +2562,11 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenForcePinNotAllowedAndH
 
     size_t size = 10 * 1024 * 1024; // bigger than threshold
     void *ptr = ::alignedMalloc(size, 4096);
-    auto alloc = mm->allocateGraphicsMemory(size, ptr, true);
+    auto alloc = memoryManager->allocateGraphicsMemory(size, ptr, true);
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
-    mm->freeGraphicsMemory(alloc);
+    memoryManager->freeGraphicsMemory(alloc);
     mock->testIoctls();
 
     ::alignedFree(ptr);
