@@ -362,6 +362,9 @@ int main(int argc, char **argv) {
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);
 
+    // globally override-disable preemption to speed-up test execution
+    OCLRT::DebugManager.flags.ForcePreemptionMode.set(static_cast<int>(PreemptionMode::Disabled));
+
 #if defined(__linux__)
     //ULTs timeout
     if (enable_alarm) {
