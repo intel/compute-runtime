@@ -121,9 +121,8 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandSt
         this->surfaces.push_back(surface);
     }
     this->kernel = kernel;
-    if (kernel) {
-        kernel->incRefInternal();
-    }
+    UNRECOVERABLE_IF(nullptr == this->kernel);
+    kernel->incRefInternal();
     this->kernelCount = kernelCount;
     this->preemptionMode = preemptionMode;
 }
@@ -136,16 +135,14 @@ CommandComputeKernel::~CommandComputeKernel() {
     if (kernelOperation->ioh.get() == kernelOperation->dsh.get()) {
         kernelOperation->doNotFreeISH = true;
     }
-    if (kernel) {
-        kernel->decRefInternal();
-    }
+    kernel->decRefInternal();
 }
 
 CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
     if (terminated) {
         return completionStamp;
     }
-    bool executionModelKernel = kernel != nullptr ? kernel->isParentKernel : false;
+    bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 
     TakeOwnershipWrapper<Device> deviceOwnership(commandQueue.getDevice());
@@ -223,7 +220,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.lowPriority = commandQueue.getPriority() == QueuePriority::LOW;
     dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = preemptionMode;
-    dispatchFlags.mediaSamplerRequired = (kernel != nullptr) ? kernel->isVmeKernel() : false;
+    dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

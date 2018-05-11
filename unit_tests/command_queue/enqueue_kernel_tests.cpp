@@ -1587,3 +1587,27 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandThatLwsExceedsDeviceCapabilitiesWhe
     auto status = pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_WORK_GROUP_SIZE, status);
 }
+
+HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHaveMediaSamplerRequired) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    size_t gws[3] = {1, 0, 0};
+    mockKernel.kernelInfo.isVmeWorkload = true;
+    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.mediaSamplerRequired);
+}
+
+HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {
+    auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    size_t gws[3] = {1, 0, 0};
+    mockKernel.kernelInfo.isVmeWorkload = false;
+    clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_FALSE(mockCsr->passedDispatchFlags.mediaSamplerRequired);
+}

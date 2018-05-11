@@ -462,13 +462,16 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
                                                    UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getDevice().getMemoryManager());
 
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
     SurfaceMock *surface = new SurfaceMock;
     surface->graphicsAllocation = new GraphicsAllocation((void *)0x1234, 100u);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     v.push_back(surface);
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -478,7 +481,6 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     auto taskLevelAfter = csr.peekTaskLevel();
 
     EXPECT_EQ(taskLevelBefore + 1, taskLevelAfter);
-
     delete pCmdQ;
 
     EXPECT_EQ(surface->resident, 1u);
@@ -500,12 +502,15 @@ TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
     auto blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(cmdStream), UniqueIH(dsh),
                                                    UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getDevice().getMemoryManager());
 
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
     NullSurface *surface = new NullSurface;
     v.push_back(surface);
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     auto taskLevelBefore = csr.peekTaskLevel();
@@ -544,14 +549,12 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     printfStringInfo.SizeInBytes = sizeof("test");
     printfStringInfo.pStringData = testString;
 
-    KernelInfo *pKernelInfo = new KernelInfo();
-    pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
-    pKernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, printfStringInfo));
-
-    MockProgram *pProgram = new MockProgram(mockContext, false);
-
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+    KernelInfo *kernelInfo = const_cast<KernelInfo *>(&pKernel->getKernelInfo());
+    kernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
+    kernelInfo->patchInfo.stringDataMap.insert(std::make_pair(0, printfStringInfo));
     uint64_t crossThread[10];
-    MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(pKernel);
@@ -566,7 +569,7 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     auto &csr = pDevice->getCommandStreamReceiver();
     std::vector<Surface *> v;
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, std::move(printfHandler), preemptionMode, pKernel);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, std::move(printfHandler), preemptionMode, pKernel, 1);
     event.setCommand(std::unique_ptr<Command>(cmd));
 
     event.submitCommand(false);
@@ -576,9 +579,6 @@ TEST_F(InternalsEventTest, givenBlockedKernelWithPrintfWhenSubmittedThenPrintOut
     EXPECT_FALSE(surface->isResident());
 
     delete pPrintfSurface;
-    delete pKernelInfo;
-    pKernel->decRefInternal();
-    pProgram->decRefInternal();
     delete pCmdQ;
 }
 
@@ -1436,6 +1436,9 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.flushStamp->setStamp(5);
 
+    MockKernelWithInternals mockKernelWithInternals(*pDevice);
+    auto pKernel = mockKernelWithInternals.mockKernel;
+
     auto cmdStream = new LinearStream(alignedMalloc(4096, 4096), 4096);
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     pCmdQ->allocateHeapMemory(IndirectHeap::DYNAMIC_STATE, 4096u, dsh);
@@ -1446,7 +1449,7 @@ HWTEST_F(InternalsEventTest, givenAbortedCommandWhenSubmitCalledThenDontUpdateFl
                                                    UniqueIH(ioh), UniqueIH(ssh), *pCmdQ->getDevice().getMemoryManager());
     PreemptionMode preemptionMode = pDevice->getPreemptionMode();
     std::vector<Surface *> v;
-    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode);
+    auto cmd = new CommandComputeKernel(*pCmdQ, csr, std::unique_ptr<KernelOperation>(blockedCommandsData), v, false, false, false, nullptr, preemptionMode, pKernel, 1);
     event->setCommand(std::unique_ptr<Command>(cmd));
 
     FlushStamp expectedFlushStamp = 0;
