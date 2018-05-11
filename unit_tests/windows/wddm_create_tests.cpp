@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/mocks/mock_wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "test.h"
 
-namespace OCLRT {
-Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
-    return new WddmMock20();
+using namespace OCLRT;
+
+TEST(wddmCreateTests, givenInputVersionWhenCreatingThenAlwaysUse20) {
+    std::unique_ptr<Wddm> wddm1(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+    std::unique_ptr<Wddm> wddm2(Wddm::createWddm(21));
+    std::unique_ptr<Wddm> wddm3(Wddm::createWddm(0));
+
+    EXPECT_EQ(WddmInterfaceVersion::Wddm20, wddm1->wddmInterfaceVersion);
+    EXPECT_EQ(WddmInterfaceVersion::Wddm20, wddm2->wddmInterfaceVersion);
+    EXPECT_EQ(WddmInterfaceVersion::Wddm20, wddm3->wddmInterfaceVersion);
 }
-} // namespace OCLRT

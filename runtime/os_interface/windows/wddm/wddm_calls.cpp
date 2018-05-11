@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,35 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/mocks/mock_wddm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
+#include <dxgi.h>
 
 namespace OCLRT {
-Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
-    return new WddmMock20();
+Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
+    return CreateDXGIFactory;
+}
+
+Wddm::GetSystemInfoFcn getGetSystemInfo() {
+    return GetSystemInfo;
+}
+
+Wddm::VirtualFreeFcn getVirtualFree() {
+    return VirtualFree;
+}
+
+Wddm::VirtualAllocFcn getVirtualAlloc() {
+    return VirtualAlloc;
+}
+
+bool Wddm::initGmmContext() {
+    return Gmm::initContext(gfxPlatform.get(),
+                            featureTable.get(),
+                            waTable.get(),
+                            gtSystemInfo.get());
+}
+
+void Wddm::destroyGmmContext() {
+    Gmm::destroyContext();
 }
 } // namespace OCLRT

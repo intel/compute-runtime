@@ -62,7 +62,8 @@ Wddm::Wddm() : initialized(false),
                pagingFenceAddress(nullptr),
                currentPagingFenceValue(0),
                hwContextId(0),
-               trimCallbackHandle(nullptr) {
+               trimCallbackHandle(nullptr),
+               wddmInterfaceVersion(WddmInterfaceVersion::Wddm20) {
     featureTable.reset(new FeatureTable());
     waTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
@@ -97,7 +98,7 @@ bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
     if (devNum > 0)
         return false;
 
-    std::unique_ptr<Wddm> wddm(createWddm());
+    std::unique_ptr<Wddm> wddm(createWddm(WddmInterfaceVersion::Wddm20));
     DEBUG_BREAK_IF(wddm == nullptr);
 
     if (wddm->gdi->isInitialized()) {

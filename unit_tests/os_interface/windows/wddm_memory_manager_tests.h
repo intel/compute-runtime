@@ -62,7 +62,7 @@ typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
 class MockWddmMemoryManagerFixture {
   public:
     void SetUp() {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
     }

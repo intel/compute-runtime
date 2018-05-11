@@ -45,7 +45,7 @@ struct KmDafLockCall : public CallResult {
 };
 } // namespace WddmMockHelpers
 
-class WddmMock : public Wddm {
+class WddmMock : public Wddm20 {
   public:
     using Wddm::adapter;
     using Wddm::context;
@@ -56,7 +56,7 @@ class WddmMock : public Wddm {
     using Wddm::gmmMemory;
     using Wddm::pagingQueue;
 
-    WddmMock() : Wddm(){};
+    WddmMock() : Wddm20(){};
     ~WddmMock();
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
@@ -128,4 +128,6 @@ class WddmMock : public Wddm {
     uintptr_t virtualAllocAddress = OCLRT::windowsMinAddress;
     bool kmDafEnabled = false;
 };
+
+using WddmMock20 = WddmMock;
 } // namespace OCLRT

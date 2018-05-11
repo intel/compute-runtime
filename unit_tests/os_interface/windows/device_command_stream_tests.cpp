@@ -62,7 +62,7 @@ class WddmCommandStreamFixture {
     DebugManagerStateRestore stateRestore;
 
     virtual void SetUp() {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
         ASSERT_NE(wddm, nullptr);
 
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
@@ -102,7 +102,7 @@ class WddmCommandStreamWithMockGdiFixture {
     GraphicsAllocation *preemptionAllocation = nullptr;
 
     virtual void SetUp() {
-        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         ASSERT_NE(wddm, nullptr);
@@ -763,7 +763,7 @@ struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
     }
 
     void createMockWddm() {
-        myMockWddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        myMockWddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
     }
 
     HardwareInfo hwInfo = {};

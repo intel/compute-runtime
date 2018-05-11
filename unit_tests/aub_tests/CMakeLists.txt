@@ -49,6 +49,7 @@ target_sources(igdrcl_aub_tests PRIVATE
 if(WIN32)
   target_sources(igdrcl_aub_tests PRIVATE
     ${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/gmm_memory.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows${BRANCH_DIR_SUFFIX}/wddm_create.cpp
   )
 endif()
 

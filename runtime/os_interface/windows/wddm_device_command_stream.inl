@@ -52,7 +52,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     : BaseClass(hwInfoIn) {
     this->wddm = wddm;
     if (this->wddm == nullptr) {
-        this->wddm = Wddm::createWddm();
+        this->wddm = Wddm::createWddm(WddmInterfaceVersion::Wddm20);
     }
     GPUNODE_ORDINAL nodeOrdinal = GPUNODE_3D;
     UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(hwInfoIn.capabilityTable.defaultEngineType, nodeOrdinal));

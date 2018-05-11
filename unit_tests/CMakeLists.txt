@@ -31,6 +31,10 @@ set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
 )
 
+if(WIN32)
+   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows${BRANCH_DIR_SUFFIX}/wddm_create.cpp)
+endif()
+
 add_subdirectory(libult)
 
 hide_subdir(libult)

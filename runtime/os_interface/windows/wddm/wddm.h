@@ -49,16 +49,21 @@ struct FeatureTable;
 struct WorkaroundTable;
 struct KmDafListener;
 
+namespace WddmInterfaceVersion {
+constexpr uint32_t Wddm20 = 20;
+} // namespace WddmInterfaceVersion
+
 class Wddm {
   public:
     typedef HRESULT(WINAPI *CreateDXGIFactoryFcn)(REFIID riid, void **ppFactory);
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
     typedef BOOL(WINAPI *VirtualFreeFcn)(LPVOID ptr, SIZE_T size, DWORD flags);
     typedef LPVOID(WINAPI *VirtualAllocFcn)(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type);
+    const uint32_t wddmInterfaceVersion;
 
     virtual ~Wddm();
 
-    static Wddm *createWddm();
+    static Wddm *createWddm(uint32_t interfaceVersion);
 
     static bool enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo);
 
@@ -218,5 +223,7 @@ class Wddm {
 
     std::unique_ptr<KmDafListener> kmDafListener;
 };
+
+using Wddm20 = Wddm;
 
 } // namespace OCLRT

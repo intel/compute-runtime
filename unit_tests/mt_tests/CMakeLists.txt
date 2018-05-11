@@ -42,6 +42,12 @@ target_link_libraries(igdrcl_mt_tests ${NEO_MOCKABLE_LIB_NAME})
 target_link_libraries(igdrcl_mt_tests gmock-gtest)
 target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
+if(WIN32)
+  target_sources(igdrcl_mt_tests PRIVATE
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows${BRANCH_DIR_SUFFIX}/wddm_create.cpp
+  )
+endif()
+
 option(SHOW_VERBOSE_UTESTS_RESULTS "Use the default/verbose test output" ON)
 
 if(NOT SHOW_VERBOSE_UTESTS_RESULTS)

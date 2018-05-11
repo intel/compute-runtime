@@ -20,40 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include <dxgi.h>
+
 namespace OCLRT {
-
-Wddm *Wddm::createWddm() {
-    return new Wddm();
+Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
+    return new Wddm20();
 }
-
-Wddm::CreateDXGIFactoryFcn getCreateDxgiFactory() {
-    return CreateDXGIFactory;
-}
-
-Wddm::GetSystemInfoFcn getGetSystemInfo() {
-    return GetSystemInfo;
-}
-
-Wddm::VirtualFreeFcn getVirtualFree() {
-    return VirtualFree;
-}
-
-Wddm::VirtualAllocFcn getVirtualAlloc() {
-    return VirtualAlloc;
-}
-
-bool Wddm::initGmmContext() {
-    return Gmm::initContext(gfxPlatform.get(),
-                            featureTable.get(),
-                            waTable.get(),
-                            gtSystemInfo.get());
-}
-
-void Wddm::destroyGmmContext() {
-    Gmm::destroyContext();
-}
-
 } // namespace OCLRT
