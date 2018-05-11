@@ -75,6 +75,8 @@ class DrmMemoryManager : public MemoryManager {
         return validateHostPtrMemory;
     }
 
+    DrmGemCloseWorker *peekGemCloseWorker() { return this->gemCloseWorker.get(); }
+
   protected:
     BufferObject *findAndReferenceSharedBufferObject(int boHandle);
     BufferObject *createSharedBufferObject(int boHandle, size_t size, bool requireSpecificBitness);

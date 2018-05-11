@@ -375,25 +375,13 @@ TEST_F(DrmMemoryManagerTest, UnreferenceNullPtr) {
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerModeInactiveThenGemCloseWorkerIsNotCreated) {
-    class MyTestedDrmMemoryManager : public DrmMemoryManager {
-      public:
-        MyTestedDrmMemoryManager(Drm *drm, gemCloseWorkerMode mode) : DrmMemoryManager(drm, mode, false, false) {}
-        DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
-    };
-
-    MyTestedDrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerInactive);
-    EXPECT_EQ(nullptr, drmMemoryManger.getgemCloseWorker());
+    DrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerInactive, false, false);
+    EXPECT_EQ(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerCreatedWithGemCloseWorkerActiveThenGemCloseWorkerIsCreated) {
-    class MyTestedDrmMemoryManager : public DrmMemoryManager {
-      public:
-        MyTestedDrmMemoryManager(Drm *drm, gemCloseWorkerMode mode) : DrmMemoryManager(drm, mode, false, false) {}
-        DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
-    };
-
-    MyTestedDrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerActive);
-    EXPECT_NE(nullptr, drmMemoryManger.getgemCloseWorker());
+    DrmMemoryManager drmMemoryManger(this->mock, gemCloseWorkerMode::gemCloseWorkerActive, false, false);
+    EXPECT_NE(nullptr, drmMemoryManger.peekGemCloseWorker());
 }
 
 TEST_F(DrmMemoryManagerTest, AllocateThenFree) {

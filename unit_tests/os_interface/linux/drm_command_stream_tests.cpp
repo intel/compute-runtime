@@ -50,7 +50,7 @@ using namespace OCLRT;
 class DrmCommandStreamFixture {
   public:
     DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    MemoryManager *mm = nullptr;
+    DrmMemoryManager *mm = nullptr;
     DrmMockImpl *mock;
     const int mockFd = 33;
 
@@ -62,13 +62,13 @@ class DrmCommandStreamFixture {
 
         this->mock = new DrmMockImpl(mockFd);
 
-        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, gemCloseWorkerMode::gemCloseWorkerInactive);
+        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
-        mm = csr->createMemoryManager(false);
+        mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
         ::testing::Mock::VerifyAndClearExpectations(mock);
 
         //assert we have memory manager
@@ -77,6 +77,7 @@ class DrmCommandStreamFixture {
 
     void TearDown() {
         mm->waitForDeletions();
+        mm->peekGemCloseWorker()->close(true);
         delete csr;
         ::testing::Mock::VerifyAndClearExpectations(mock);
         // Memory manager closes pinBB with ioctl, expect one call
@@ -199,7 +200,7 @@ TEST_F(DrmCommandStreamTest, Flush) {
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
+        .Times(2)
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
         .Times(1)
@@ -235,7 +236,7 @@ TEST_F(DrmCommandStreamTest, FlushWithLowPriorityContext) {
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
+        .Times(2)
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
         .Times(1)
@@ -298,7 +299,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyBB) {
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
+        .Times(2)
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
         .Times(1)
@@ -327,7 +328,7 @@ TEST_F(DrmCommandStreamTest, FlushNotEmptyNotPaddedBB) {
         .WillRepeatedly(::testing::Return(0))
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1)
+        .Times(2)
         .RetiresOnSaturation();
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
         .Times(1)
@@ -364,7 +365,7 @@ TEST_F(DrmCommandStreamTest, FlushNotAligned) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, ::testing::_))
         .Times(1);
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1);
+        .Times(2);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
@@ -447,7 +448,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_GEM_CLOSE, GemCloseEq(17u)))
         .Times(1);
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1);
+        .Times(2);
 
     DrmAllocation allocation(nullptr, nullptr, 1024);
 
@@ -489,7 +490,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
         .Times(1)
         .WillOnce(::testing::Return(-1));
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
-        .Times(1);
+        .Times(2);
     DrmAllocation allocation(nullptr, nullptr, 1024);
 
     csr->makeResident(allocation);
@@ -787,16 +788,10 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemC
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, tCsr->peekGemCloseWorkerOperationMode());
 }
 
-TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
-
+TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInDefaultModeThenWorkerDecreasesTheRefCount) {
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
-    ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
-
-    csr->makeResident(*dummyAllocation);
 
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
@@ -813,12 +808,14 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemC
     //no allocations should be connected
     EXPECT_EQ(bo->getResidency()->size(), 0u);
 
-    mm->freeGraphicsMemory(dummyAllocation);
+    //spin until gem close worker finishes execution
+    while (bo->getRefCount() > 1)
+        ;
+
     mm->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWhenItIsFlushedThenExecStorageIsResized) {
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
     std::vector<GraphicsAllocation *> graphicsAllocations;
 
     auto &execStorage = tCsr->getExecStorage();
@@ -847,9 +844,6 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeResidentIsCalledThenRefCountsAreNotUpdated) {
-
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
-
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
 
     auto bo = dummyAllocation->getBO();
@@ -867,8 +861,6 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
-
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -917,7 +909,6 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
 };
 
 TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsArePassed) {
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
     auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -944,7 +935,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsAr
 
 TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingThenCommandBufferIsNotSubmitted) {
     tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
@@ -1005,7 +995,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
 TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
     tCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    tCsr->overrideGemCloseWorkerOperationMode(gemCloseWorkerMode::gemCloseWorkerInactive);
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
