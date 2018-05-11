@@ -112,6 +112,19 @@ class MockDevice : public Device {
         return device;
     }
 
+    void allocatePreemptionAllocationIfNotPresent() {
+        if (this->preemptionAllocation == nullptr) {
+            if (preemptionMode == PreemptionMode::MidThread || isSourceLevelDebuggerActive()) {
+                size_t requiredSize = hwInfo.capabilityTable.requiredPreemptionSurfaceSize;
+                size_t alignment = 256 * MemoryConstants::kiloByte;
+                bool uncacheable = getWaTable()->waCSRUncachable;
+                this->preemptionAllocation = memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
+
+                commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+            }
+        }
+    }
+
   private:
     bool forceWhitelistedRegs = false;
     WhitelistedRegisters mockWhitelistedRegs = {0};

@@ -138,11 +138,12 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveWhenPreambleIsProgrammedThenPro
     auto miLoadRegImmCountWithoutDebugging = cmdList.size();
 
     mockDevice->setSourceLevelDebuggerActive(true);
+    mockDevice->allocatePreemptionAllocationIfNotPresent();
 
     StackVec<char, 8192> preambleBuffer2(8192);
     preambleStream.replaceBuffer(&*preambleBuffer2.begin(), preambleBuffer2.size());
     PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, nullptr);
+                                                ThreadArbitrationPolicy::RoundRobin, mockDevice->getPreemptionAllocation());
 
     HardwareParse hwParser2;
     hwParser2.parseCommands<FamilyType>(preambleStream);

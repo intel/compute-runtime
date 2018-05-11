@@ -63,7 +63,7 @@ class MockActiveSourceLevelDebugger : public SourceLevelDebugger {
         isActive = true;
     }
 
-    MockActiveSourceLevelDebugger(OsLibrary *library) : SourceLevelDebugger(nullptr) {
+    MockActiveSourceLevelDebugger(OsLibrary *library) : SourceLevelDebugger(library) {
         this->deviceHandle = mockDeviceHandle;
         isActive = true;
     }

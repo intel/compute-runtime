@@ -236,10 +236,10 @@ TEST(SourceLevelDebugger, givenActiveDebuggerAndOptDisabledWhenGetDebuggerOption
     DebuggerLibrary::setDebuggerActive(true);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-    char value = '1';
+    char value[2] = {'1', 0};
     GfxDbgOption optionArgOut;
     interceptor.optionArgOut = &optionArgOut;
-    interceptor.optionArgOut->value = &value;
+    interceptor.optionArgOut->value = value;
     interceptor.optionArgOut->valueLen = sizeof(value);
     interceptor.optionRetVal = 1;
 

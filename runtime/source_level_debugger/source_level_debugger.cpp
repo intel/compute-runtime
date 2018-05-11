@@ -168,12 +168,13 @@ bool SourceLevelDebugger::notifySourceCode(const char *source, size_t sourceSize
 
 bool SourceLevelDebugger::isOptimizationDisabled() const {
     if (isActive) {
-        char value;
+        const size_t optionValueSize = 4;
+        char value[optionValueSize] = {0};
         GfxDbgOption option;
         option.version = IGFXDBG_CURRENT_VERSION;
         option.optionName = DBG_OPTION_IS_OPTIMIZATION_DISABLED;
         option.valueLen = sizeof(value);
-        option.value = &value;
+        option.value = &value[0];
 
         int result = sourceLevelDebuggerInterface->getDebuggerOptionFunc(&option);
         if (result == 1) {

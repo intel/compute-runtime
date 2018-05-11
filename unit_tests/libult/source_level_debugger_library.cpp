@@ -81,8 +81,10 @@ int DebuggerLibrary::getDebuggerOption(GfxDbgOption *option) {
         interceptor->optionArgIn = *option;
         interceptor->optionCalled = true;
 
-        if (interceptor->optionArgOut && option->valueLen > 0) {
+        if (interceptor->optionArgOut && option->valueLen >= interceptor->optionArgOut->valueLen) {
             memcpy_s(option->value, option->valueLen, interceptor->optionArgOut->value, interceptor->optionArgOut->valueLen);
+        } else {
+            memset(option->value, 0, option->valueLen);
         }
         return interceptor->optionRetVal;
     }

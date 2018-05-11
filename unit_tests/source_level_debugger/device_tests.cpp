@@ -53,6 +53,7 @@ class MockDeviceWithActiveDebugger : public MockDevice {
         MockDevice::initializeCaps();
         this->setSourceLevelDebuggerActive(true);
     }
+
     T *getSourceLevelDebugger() {
         return sourceLevelDebuggerCreated;
     }
@@ -109,4 +110,9 @@ TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhen
     auto device = std::unique_ptr<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(Device::create<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(nullptr));
     GMockSourceLevelDebugger *gmock = device->getSourceLevelDebugger();
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
+}
+
+TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsCreatedThenPreemptionIsDisabled) {
+    auto device = std::unique_ptr<MockDeviceWithActiveDebugger<MockActiveSourceLevelDebugger>>(Device::create<MockDeviceWithActiveDebugger<MockActiveSourceLevelDebugger>>(nullptr));
+    EXPECT_EQ(PreemptionMode::Disabled, device->getPreemptionMode());
 }
