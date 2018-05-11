@@ -159,7 +159,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(size_t size, const voi
 }
 
 GraphicsAllocation *MemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
-    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), MemoryType::INTERNAL_ALLOCATION);
+    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), AllocationOrigin::INTERNAL_ALLOCATION);
 }
 
 void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *graphicsAllocation) {

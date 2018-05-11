@@ -46,7 +46,7 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override;
-    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) override;
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override;
     GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) override;
@@ -111,7 +111,7 @@ class WddmMemoryManager : public MemoryManager {
     static bool validateAllocation(WddmAllocation *alloc);
     bool checkTrimCandidateListCompaction();
     void checkTrimCandidateCount();
-    bool createWddmAllocation(WddmAllocation *allocation, MemoryType memoryType);
+    bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);
     ResidencyContainer trimCandidateList;
     std::mutex trimCandidateListMutex;
     std::atomic<bool> residencyLock;

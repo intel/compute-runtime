@@ -55,7 +55,7 @@ enum allocationType {
     REUSABLE_ALLOCATION
 };
 
-enum MemoryType {
+enum AllocationOrigin {
     EXTERNAL_ALLOCATION,
     INTERNAL_ALLOCATION
 };
@@ -107,7 +107,7 @@ class MemoryManager {
     }
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
-    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) = 0;
+    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
@@ -186,7 +186,7 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
         if (force32bitAllocations && is64bit) {
-            return allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
+            return allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
         } else {
             if (ptr) {
                 return allocateGraphicsMemory(size, ptr, forcePin);

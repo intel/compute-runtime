@@ -145,7 +145,7 @@ class FailMemoryManager : public MockMemoryManager {
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
         return nullptr;
     };
-    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) override {
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override {
         return nullptr;
     };
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override {

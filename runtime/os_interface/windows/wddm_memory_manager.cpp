@@ -67,7 +67,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     auto allocation = new WddmAllocation(nullptr, imgInfo.size, nullptr);
     allocation->gmm = gmm;
 
-    if (!WddmMemoryManager::createWddmAllocation(allocation, MemoryType::EXTERNAL_ALLOCATION)) {
+    if (!WddmMemoryManager::createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
         delete allocation;
         return nullptr;
     }
@@ -118,7 +118,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
 
     wddmAllocation->gmm = gmm;
 
-    if (!createWddmAllocation(wddmAllocation, MemoryType::EXTERNAL_ALLOCATION)) {
+    if (!createWddmAllocation(wddmAllocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
         delete gmm;
         delete wddmAllocation;
         freeSystemMemory(pSysMem);
@@ -151,7 +151,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
 
         Gmm *gmm = Gmm::create(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
-        if (createWddmAllocation(allocation, MemoryType::EXTERNAL_ALLOCATION)) {
+        if (createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
             return allocation;
         }
         freeGraphicsMemory(allocation);
@@ -161,7 +161,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
     return MemoryManager::allocateGraphicsMemory(size, ptr);
 }
 
-GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) {
+GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
     Gmm *gmm = nullptr;
     const void *ptrAligned = nullptr;
     size_t sizeAligned = size;
@@ -191,7 +191,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     gmm = Gmm::create(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
-    if (!createWddmAllocation(wddmAllocation, memoryType)) {
+    if (!createWddmAllocation(wddmAllocation, allocationOrigin)) {
         delete gmm;
         delete wddmAllocation;
         freeSystemMemory(pSysMem);
@@ -199,7 +199,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     }
 
     wddmAllocation->is32BitAllocation = true;
-    auto baseAddress = memoryType == MemoryType::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
+    auto baseAddress = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
     wddmAllocation->gpuBaseAddress = Gmm::canonize(baseAddress);
 
     return wddmAllocation;
@@ -249,7 +249,7 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void
 }
 
 GraphicsAllocation *WddmMemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
-    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), MemoryType::INTERNAL_ALLOCATION);
+    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), AllocationOrigin::INTERNAL_ALLOCATION);
 }
 
 void *WddmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
@@ -765,8 +765,8 @@ AlignedMallocRestrictions *WddmMemoryManager::getAlignedMallocRestrictions() {
     return &mallocRestrictions;
 }
 
-bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, MemoryType memoryType) {
-    bool useHeap1 = (memoryType == MemoryType::INTERNAL_ALLOCATION);
+bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, AllocationOrigin allocationOrigin) {
+    bool useHeap1 = (allocationOrigin == AllocationOrigin::INTERNAL_ALLOCATION);
     auto wddmSuccess = wddm->createAllocation(allocation);
     if (wddmSuccess == STATUS_GRAPHICS_NO_VIDEO_MEMORY && deferredDeleter) {
         deferredDeleter->drain(true);

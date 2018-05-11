@@ -483,7 +483,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGm
     bool success = false;
     uint32_t size = 4096;
     void *ptr = reinterpret_cast<void *>(4096);
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_EQ(ptr, reinterpret_cast<void *>(gpuAllocation->gmm->resourceParams.pExistingSysMem));
     EXPECT_EQ(size, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -495,7 +495,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMem
     bool success = false;
     uint32_t size = 0x1001;
     void *ptr = reinterpret_cast<void *>(0x1001);
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, MemoryType::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_EQ(reinterpret_cast<void *>(0x1000), reinterpret_cast<void *>(gpuAllocation->gmm->resourceParams.pExistingSysMem));
     EXPECT_EQ(0x2000, gpuAllocation->gmm->resourceParams.ExistingSysMemSize);
     memoryManager->freeGraphicsMemory(gpuAllocation);
@@ -519,7 +519,7 @@ HWTEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
 
 HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, MemoryType::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
     EXPECT_LE(Gmm::canonize(wddm->getHeap32Base()), gpuAllocation->getGpuAddress());
@@ -534,7 +534,7 @@ HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotD
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = reinterpret_cast<void *>(0x12500);
 
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr, MemoryType::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(misalignedSize, misalignedPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -554,7 +554,7 @@ HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotD
 
 HWTEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, MemoryType::EXTERNAL_ALLOCATION);
+    auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
 
@@ -642,7 +642,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGp
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
 }
 
@@ -659,7 +659,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstM
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_TRUE(ret);
     EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), allocation.getGpuAddress());
 }
@@ -677,7 +677,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstA
 
     WddmAllocation allocation(ptr, size, nullptr);
     allocation.gmm = gmm.get();
-    bool ret = memoryManager->createWddmAllocation(&allocation, MemoryType::EXTERNAL_ALLOCATION);
+    bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_FALSE(ret);
 }
 

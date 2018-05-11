@@ -67,7 +67,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t s
     return allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
     if (ptr) {
         auto allocationSize = alignSizeWholePage(reinterpret_cast<void *>(ptr), size);
         auto gpuVirtualAddress = allocator32Bit->allocate(allocationSize);

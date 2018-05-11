@@ -247,9 +247,9 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, MemoryType memoryType) {
-    auto allocatorToUse = memoryType == MemoryType::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
-    auto allocationType = memoryType == MemoryType::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
+DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
+    auto allocatorToUse = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
+    auto allocationType = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
 
     if (ptr) {
         uintptr_t inputPtr = (uintptr_t)ptr;
@@ -285,7 +285,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
     auto res = allocatorToUse->allocate(allocationSize);
 
     if (!res) {
-        if (memoryType == MemoryType::EXTERNAL_ALLOCATION && device && device->getProgramCount() == 0) {
+        if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION && device && device->getProgramCount() == 0) {
             this->force32bitAllocations = false;
             device->setForce32BitAddressing(false);
             return (DrmAllocation *)createGraphicsAllocationWithRequiredBitness(size, ptr);
@@ -313,7 +313,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
 }
 
 GraphicsAllocation *DrmMemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
-    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), MemoryType::INTERNAL_ALLOCATION);
+    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), AllocationOrigin::INTERNAL_ALLOCATION);
 }
 
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
