@@ -654,7 +654,7 @@ HWTEST_P(EnqueueScratchSpaceTests, GivenKernelRequiringScratchWhenItIsEnqueuedWi
     PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 
     // Trigger SBA generation
-    LinearStream dirtyDsh;
+    IndirectHeap dirtyDsh(nullptr);
     csr.dshState.updateAndCheck(&dirtyDsh);
 
     enqueueKernel<FamilyType>(mockKernel);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,15 +21,19 @@
  */
 
 #include "runtime/helpers/dirty_state_helpers.h"
-#include "runtime/command_stream/linear_stream.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 
 using namespace OCLRT;
 
-bool HeapDirtyState::updateAndCheck(const LinearStream *heap) {
-    bool dirty = address != heap->getCpuBase() || size != heap->getMaxAvailableSpace();
+bool HeapDirtyState::updateAndCheck(const IndirectHeap *heap) {
+    if (!heap->getGraphicsAllocation()) {
+        sizeInPages = 0llu;
+        return true;
+    }
+    bool dirty = gpuBaseAddress != heap->getHeapGpuBase() || sizeInPages != heap->getHeapSizeInPages();
     if (dirty) {
-        address = heap->getCpuBase();
-        size = heap->getMaxAvailableSpace();
+        gpuBaseAddress = heap->getHeapGpuBase();
+        sizeInPages = heap->getHeapSizeInPages();
     }
     return dirty;
 }

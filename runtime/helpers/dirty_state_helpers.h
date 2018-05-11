@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,16 +22,17 @@
 
 #pragma once
 #include <cstdlib>
+#include <cstdint>
 
 namespace OCLRT {
-class LinearStream;
+class IndirectHeap;
 
 class HeapDirtyState {
   public:
-    bool updateAndCheck(const LinearStream *heap);
+    bool updateAndCheck(const IndirectHeap *heap);
 
   protected:
-    void *address = nullptr;
-    size_t size = 0u;
+    uint64_t gpuBaseAddress = 0llu;
+    size_t sizeInPages = 0u;
 };
 } // namespace OCLRT
