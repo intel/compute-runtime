@@ -86,7 +86,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble() const {
     size_t size = sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
-    size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*memoryManager->device);
+
+    if (!this->isPreambleSent) {
+        size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*memoryManager->device);
+    }
     if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
     }
