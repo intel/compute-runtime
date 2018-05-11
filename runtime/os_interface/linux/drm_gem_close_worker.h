@@ -32,7 +32,7 @@
 
 namespace OCLRT {
 class DrmMemoryManager;
-class DrmAllocation;
+class BufferObject;
 
 enum gemCloseWorkerMode {
     gemCloseWorkerInactive,
@@ -47,20 +47,20 @@ class DrmGemCloseWorker {
     DrmGemCloseWorker(const DrmGemCloseWorker &) = delete;
     DrmGemCloseWorker &operator=(const DrmGemCloseWorker &) = delete;
 
-    void push(DrmAllocation *allocation);
+    void push(BufferObject *allocation);
     void close(bool blocking);
 
     bool isEmpty();
 
   protected:
-    void close(DrmAllocation *workItem);
+    void close(BufferObject *workItem);
     void closeThread();
     void worker();
     bool active;
 
     std::thread *thread;
 
-    std::queue<DrmAllocation *> queue;
+    std::queue<BufferObject *> queue;
     std::atomic<uint32_t> workCount;
 
     DrmMemoryManager &memoryManager;

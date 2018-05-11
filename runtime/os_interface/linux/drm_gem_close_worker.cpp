@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ DrmGemCloseWorker::~DrmGemCloseWorker() {
     closeThread();
 }
 
-void DrmGemCloseWorker::push(DrmAllocation *bo) {
+void DrmGemCloseWorker::push(BufferObject *bo) {
     std::unique_lock<std::mutex> lock(closeWorkerMutex);
     workCount++;
     queue.push(bo);
@@ -74,19 +74,15 @@ bool DrmGemCloseWorker::isEmpty() {
     return workCount.load() == 0;
 }
 
-inline void DrmGemCloseWorker::close(DrmAllocation *alloc) {
-    auto bo = alloc->getBO();
-
+inline void DrmGemCloseWorker::close(BufferObject *bo) {
     bo->wait(-1);
     memoryManager.unreference(bo);
     workCount--;
-
-    delete alloc;
 }
 
 void DrmGemCloseWorker::worker() {
-    DrmAllocation *workItem = nullptr;
-    std::queue<DrmAllocation *> localQueue;
+    BufferObject *workItem = nullptr;
+    std::queue<BufferObject *> localQueue;
     std::unique_lock<std::mutex> lock(closeWorkerMutex);
     lock.unlock();
 
