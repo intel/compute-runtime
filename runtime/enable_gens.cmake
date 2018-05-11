@@ -18,55 +18,63 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(RUNTIME_SRCS_GENX_WINDOWS
-  windows/command_stream_receiver.cpp
-  windows/translationtable_callbacks.cpp
-  windows/wddm_engine_mapper.cpp
-  windows/wddm.cpp
-)
-set(RUNTIME_SRCS_GENX_LINUX
-  linux/command_stream_receiver.cpp
-  linux/drm_engine_mapper.cpp
+set(RUNTIME_SRCS_GENX_CPP_WINDOWS
+  windows/command_stream_receiver
+  windows/translationtable_callbacks
+  windows/wddm_engine_mapper
+  windows/wddm
 )
 
-set(RUNTIME_SRCS_GENX_BASE
-  aub_command_stream_receiver.cpp
+set(RUNTIME_SRCS_GENX_CPP_LINUX
+  linux/command_stream_receiver
+  linux/drm_engine_mapper
+)
+
+set(RUNTIME_SRCS_GENX_H_BASE
   aub_mapper.h
-  aub_mem_dump.cpp
-  command_queue.cpp
   device_enqueue.h
-  device_queue.cpp
-  command_stream_receiver_hw.cpp
-  flat_batch_buffer_helper_hw.cpp
-  gpgpu_walker.cpp
   hw_cmds.h
   hw_cmds_generated.h
-  hw_helper.cpp
-  hw_info.cpp
   hw_info.h
-  buffer.cpp
-  image.cpp
-  kernel_commands.cpp
-  preamble.cpp
-  preemption.cpp
   reg_configs.h
-  sampler.cpp
   scheduler_definitions.h
   scheduler_igdrcl_built_in.inl
-  state_base_address.cpp
-  tbx_command_stream_receiver.cpp
+)
+
+set(RUNTIME_SRCS_GENX_CPP_BASE
+  aub_command_stream_receiver
+  aub_mem_dump
+  command_queue
+  device_queue
+  command_stream_receiver_hw
+  flat_batch_buffer_helper_hw
+  gpgpu_walker
+  hw_helper
+  hw_info
+  buffer
+  image
+  kernel_commands
+  preamble
+  preemption
+  sampler
+  state_base_address
+  tbx_command_stream_receiver
 )
 
 macro(macro_for_each_platform)
   string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
-  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h" "hw_info_${PLATFORM_IT_LOWER}.cpp")
+  foreach(PLATFORM_FILE "hw_cmds_${PLATFORM_IT_LOWER}.h")
     if(EXISTS ${GENX_PREFIX}/${PLATFORM_FILE})
-      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
     endif()
   endforeach()
 
-  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
-  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+  foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
+  endforeach()
+
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX ${GENX_PREFIX}/linux/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
+  list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS ${GENX_PREFIX}/windows/hw_info_config_${PLATFORM_IT_LOWER}.cpp)
 
   # Enable platform
   list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_${PLATFORM_IT_LOWER}.cpp)
@@ -76,28 +84,33 @@ endmacro()
 macro(macro_for_each_gen)
   set(GENX_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER})
   # Add default GEN files
+  foreach(SRC_IT ${RUNTIME_SRCS_GENX_H_BASE})
+    list(APPEND RUNTIME_SRCS_${GEN_TYPE}_H_BASE ${GENX_PREFIX}/${SRC_IT})
+  endforeach()
+
   foreach(OS_IT "BASE" "WINDOWS" "LINUX")
-    foreach(SRC_IT ${RUNTIME_SRCS_GENX_${OS_IT}})
-      if(EXISTS ${GENX_PREFIX}/${SRC_IT})
-        list(APPEND RUNTIME_SRCS_${GEN_TYPE}_${OS_IT} ${GENX_PREFIX}/${SRC_IT})
-      endif()
+    foreach(SRC_IT ${RUNTIME_SRCS_GENX_CPP_${OS_IT}})
+      list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_${OS_IT} ${GENX_PREFIX}/${SRC_IT}_${GEN_TYPE_LOWER}.cpp)
     endforeach()
   endforeach()
 
   apply_macro_for_each_platform()
 
-  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full.cpp)
+  list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/enable_family_full_${GEN_TYPE_LOWER}.cpp)
 
-  list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_BASE})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_H_BASE})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_BASE ${RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE})
   list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_BASE})
-  list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_WINDOWS})
-  list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_LINUX})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_WINDOWS ${RUNTIME_SRCS_${GEN_TYPE}_CPP_WINDOWS})
+  list(APPEND RUNTIME_SRCS_GENX_ALL_LINUX ${RUNTIME_SRCS_${GEN_TYPE}_CPP_LINUX})
+
   if(UNIX)
     list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_LINUX})
   endif()
   if(GTPIN_HEADERS_DIR)
     list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
   endif()
+
 endmacro()
 
 apply_macro_for_each_gen("SUPPORTED")

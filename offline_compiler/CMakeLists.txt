@@ -50,8 +50,8 @@ set(CLOC_LIB_FLAGS_DEFINITIONS
   -DCIF_HEADERS_ONLY_BUILD
 )
 
-set(OPTIONAL_RUNTIME_GENX_FILES
-  hw_info.cpp
+set(RUNTIME_GENX_CPP_FILES
+  hw_info
 )
 
 macro(macro_for_each_platform)
@@ -62,10 +62,10 @@ macro(macro_for_each_platform)
 endmacro()
 
 macro(macro_for_each_gen)
-  foreach(SRC_IT ${OPTIONAL_RUNTIME_GENX_FILES})
+  foreach(SRC_IT ${RUNTIME_GENX_CPP_FILES})
     set(SRC_FILE ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/${SRC_IT})
-    if(EXISTS ${SRC_FILE})
-      list(APPEND CLOC_SRCS_LIB ${SRC_FILE})
+    if(EXISTS ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
+      list(APPEND CLOC_SRCS_LIB ${SRC_FILE}_${GEN_TYPE_LOWER}.cpp)
     endif()
   endforeach()
   apply_macro_for_each_platform()

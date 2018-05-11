@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,20 +21,12 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/mem_obj/image.h"
-#include "runtime/mem_obj/image.inl"
-#include <map>
+#include "runtime/mem_obj/buffer.inl"
 
 namespace OCLRT {
 
-typedef BDWFamily Family;
-static auto gfxCore = IGFX_GEN8_CORE;
+typedef SKLFamily Family;
+static auto gfxCore = IGFX_GEN9_CORE;
 
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setMediaSurfaceRotation(void *) {}
-
-template <typename GfxFamily>
-void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void *, uint32_t) {}
-
-#include "runtime/mem_obj/image_factory_init.inl"
+#include "runtime/mem_obj/buffer_factory_init.inl"
 }

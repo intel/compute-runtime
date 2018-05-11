@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,13 +21,12 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/sampler/sampler.h"
-#include "runtime/sampler/sampler.inl"
+#include "runtime/mem_obj/buffer.inl"
 
 namespace OCLRT {
 
-typedef SKLFamily Family;
-static auto gfxCore = IGFX_GEN9_CORE;
+typedef BDWFamily Family;
+static auto gfxCore = IGFX_GEN8_CORE;
 
-#include "runtime/sampler/sampler_factory_init.inl"
+#include "runtime/mem_obj/buffer_factory_init.inl"
 }

@@ -29,7 +29,7 @@ macro(macro_for_each_gen)
     ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/cmd_parse_${GEN_TYPE_LOWER}.cpp
     ${IGDRCL_SOURCE_DIR}/unit_tests/${GEN_TYPE_LOWER}/gen_cmd_parse.h
     ${IGDRCL_SOURCE_DIR}/unit_tests/libult/${GEN_TYPE_LOWER}.cpp
-    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_family_full_${GEN_TYPE_LOWER}.cpp
   )
   apply_macro_for_each_platform()
 endmacro()

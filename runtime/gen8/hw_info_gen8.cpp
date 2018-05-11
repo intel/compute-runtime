@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,15 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdint>
-#include "runtime/helpers/kernel_commands.h"
 #include "hw_cmds.h"
-#include "runtime/helpers/kernel_commands.inl"
 
 namespace OCLRT {
-
-template <>
-bool KernelCommandsHelper<SKLFamily>::isPipeControlWArequired() { return true; }
-
-template struct KernelCommandsHelper<SKLFamily>;
-}
+const char *GfxFamilyMapper<IGFX_GEN8_CORE>::name = "Gen8";
+} // namespace OCLRT

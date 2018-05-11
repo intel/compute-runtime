@@ -27,7 +27,6 @@
 
 namespace OCLRT {
 
-const char *GfxFamilyMapper<IGFX_GEN8_CORE>::name = "Gen8";
 const char *HwMapper<IGFX_BROADWELL>::abbreviation = "bdw";
 
 bool isSimulationBDW(unsigned short deviceId) {

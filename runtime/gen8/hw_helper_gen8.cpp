@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/mem_obj/buffer.inl"
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_helper.inl"
 
 namespace OCLRT {
+typedef BDWFamily Family;
 
-typedef SKLFamily Family;
-static auto gfxCore = IGFX_GEN9_CORE;
-
-#include "runtime/mem_obj/buffer_factory_init.inl"
+template <>
+size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
+    return 16;
 }
+
+template <>
+bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
+    return false;
+}
+
+template <>
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
+    caps->image3DMaxHeight = 2048;
+    caps->image3DMaxWidth = 2048;
+}
+
+template class HwHelperHw<Family>;
+} // namespace OCLRT
