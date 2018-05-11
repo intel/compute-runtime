@@ -41,8 +41,9 @@ struct MultiDispatchInfo;
 
 template <typename GfxFamily>
 struct KernelCommandsHelper : public PerThreadDataHelper {
-    typedef typename GfxFamily::BINDING_TABLE_STATE BINDING_TABLE_STATE;
-    typedef typename GfxFamily::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
+    using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
+    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
 
     static uint32_t computeSlmValues(uint32_t valueIn);
 
@@ -58,7 +59,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         uint32_t threadsPerThreadGroup,
         uint32_t sizeSlm,
         bool barrierEnable,
-        PreemptionMode preemptionMode);
+        PreemptionMode preemptionMode,
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 
     static void sendMediaStateFlush(
         LinearStream &commandStream,
@@ -100,7 +102,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         const size_t localWorkSize[3],
         const uint64_t offsetInterfaceDescriptorTable,
         const uint32_t interfaceDescriptorIndex,
-        PreemptionMode preemptionMode);
+        PreemptionMode preemptionMode,
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
 
     static size_t getSizeRequiredCS();
     static bool isPipeControlWArequired();

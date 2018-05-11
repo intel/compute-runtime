@@ -144,9 +144,9 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     uint32_t threadsPerThreadGroup,
     uint32_t sizeSlm,
     bool barrierEnable,
-    PreemptionMode preemptionMode) {
-    typedef typename GfxFamily::SAMPLER_STATE SAMPLER_STATE;
-    typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
+    PreemptionMode preemptionMode,
+    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     // Allocate some memory for the interface descriptor
     auto pInterfaceDescriptor = static_cast<INTERFACE_DESCRIPTOR_DATA *>(ptrOffset(indirectHeap.getCpuBase(), (size_t)offsetInterfaceDescriptor));
@@ -305,11 +305,9 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     const size_t localWorkSize[3],
     const uint64_t offsetInterfaceDescriptorTable,
     const uint32_t interfaceDescriptorIndex,
-    PreemptionMode preemptionMode) {
-
-    typedef typename GfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-    typedef typename GfxFamily::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
-    typedef typename GfxFamily::SAMPLER_STATE SAMPLER_STATE;
+    PreemptionMode preemptionMode,
+    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
 
@@ -395,7 +393,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         threadsPerThreadGroup,
         kernel.slmTotalSize,
         !!patchInfo.executionEnvironment->HasBarriers,
-        preemptionMode);
+        preemptionMode,
+        inlineInterfaceDescriptor);
 
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         PatchInfoData patchInfoData(kernelStartOffset, 0, PatchInfoAllocationType::InstructionHeap, dsh.getGraphicsAllocation()->getGpuAddress(), offsetInterfaceDescriptor, PatchInfoAllocationType::DynamicStateHeap);

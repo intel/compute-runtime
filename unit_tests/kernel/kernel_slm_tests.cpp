@@ -109,8 +109,9 @@ HWTEST_P(KernelSLMAndBarrierTest, test_SLMProgramming) {
         0,
         1,
         kernelInfo.workloadInfo.slmStaticSize,
-        !!executionEnvironment.HasBarriers,
-        pDevice->getPreemptionMode()); // Barriers Enabled
+        !!executionEnvironment.HasBarriers, // Barriers Enabled
+        pDevice->getPreemptionMode(),
+        nullptr);
 
     // add the heap base + offset
     uint32_t *pIdData = (uint32_t *)indirectHeap.getCpuBase() + offsetInterfaceDescriptorData;

@@ -103,7 +103,7 @@ HWTEST_F(KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
 
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     KernelCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, false, pDevice->getPreemptionMode());
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, false, pDevice->getPreemptionMode(), nullptr);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -327,7 +327,8 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
         localWorkSizes,
         IDToffset,
         0,
-        pDevice->getPreemptionMode());
+        pDevice->getPreemptionMode(),
+        nullptr);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -404,7 +405,8 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
         localWorkSizes,
         0,
         0,
-        pDevice->getPreemptionMode());
+        pDevice->getPreemptionMode(),
+        nullptr);
 
     EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -556,7 +558,8 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAn
             localWorkSizes,
             0,
             0,
-            pDevice->getPreemptionMode());
+            pDevice->getPreemptionMode(),
+            nullptr);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -792,7 +795,8 @@ HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgramme
         localWorkSizes,
         interfaceDescriptorTableOffset,
         0,
-        pDevice->getPreemptionMode());
+        pDevice->getPreemptionMode(),
+        nullptr);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);

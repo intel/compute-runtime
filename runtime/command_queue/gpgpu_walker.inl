@@ -595,7 +595,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
             localWorkSizes,
             offsetInterfaceDescriptorTable,
             interfaceDescriptorIndex,
-            preemptionMode);
+            preemptionMode,
+            nullptr);
 
         if (&dispatchInfo == &*multiDispatchInfo.begin()) {
             // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
@@ -761,7 +762,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         localWorkSizes,
         offsetInterfaceDescriptorTable,
         interfaceDescriptorIndex,
-        preemptionMode);
+        preemptionMode,
+        nullptr);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);
