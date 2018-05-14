@@ -77,7 +77,7 @@ GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
 
 BDWTEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(83u, caps.outProfilingTimerResolution);
+    EXPECT_EQ(80u, caps.outProfilingTimerResolution);
 }
 
 typedef Test<DeviceFixture> BdwUsDeviceIdTest;

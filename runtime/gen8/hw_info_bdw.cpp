@@ -56,7 +56,7 @@ const PLATFORM BDW::platform = {
 
 const RuntimeCapabilityTable BDW::capabilityTable{
     0,
-    83.333,
+    80,
     21,
     true,
     true,
