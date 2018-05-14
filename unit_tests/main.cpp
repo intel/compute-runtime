@@ -27,6 +27,7 @@
 #include "helpers/test_files.h"
 #include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sip.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -139,12 +140,12 @@ void initializeTestHelpers() {
     auto initialized = Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
                                         hwinfo->pWaTable, hwinfo->pSysInfo);
     ASSERT_TRUE(initialized);
-    MockSipKernel::initDummyBinary();
+    GlobalMockSipProgram::initSipProgram();
 }
 
 void cleanTestHelpers() {
+    GlobalMockSipProgram::shutDownSipProgram();
     Gmm::destroyContext();
-    MockSipKernel::shutDown();
 }
 
 std::string getHardwarePrefix() {
@@ -361,9 +362,6 @@ int main(int argc, char **argv) {
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, device);
-
-    // globally override-disable preemption to speed-up test execution
-    OCLRT::DebugManager.flags.ForcePreemptionMode.set(static_cast<int>(PreemptionMode::Disabled));
 
 #if defined(__linux__)
     //ULTs timeout

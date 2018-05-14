@@ -40,6 +40,7 @@
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
@@ -666,6 +667,14 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
 };
 
 HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
+    //preemption allocation + sip allocation
+    size_t csrSurfaceCount = 0;
+    GraphicsAllocation *tmpAllocation = nullptr;
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
+        csrSurfaceCount = 2;
+        tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
+        GlobalMockSipProgram::sipProgram->resetAllocation(memManager->allocateGraphicsMemory(1024, 4096));
+    }
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm));
     mockCsr->setMemoryManager(memManager);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -701,9 +710,6 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     mockCsr->flushBatchedSubmissions();
 
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
-
-    //preemption allocation + sip Kernel
-    size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     auto csrCommandStream = mockCsr->commandStream.getGraphicsAllocation();
@@ -741,6 +747,10 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     memManager->freeGraphicsMemory(iohAlloc);
     memManager->freeGraphicsMemory(sshAlloc);
     memManager->freeGraphicsMemory(commandBuffer);
+    if (device->getPreemptionMode() == PreemptionMode::MidThread) {
+        memManager->freeGraphicsMemory(GlobalMockSipProgram::sipProgram->getAllocation());
+        GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
+    }
 }
 
 HWTEST_F(WddmDefaultTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {

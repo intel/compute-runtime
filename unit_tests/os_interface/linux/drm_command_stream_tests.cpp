@@ -36,6 +36,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/gen_common/gen_cmd_parse_base.h"
 #include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 #include "test.h"
@@ -898,12 +899,21 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
   public:
     DrmAllocation *tagAllocation;
     DrmAllocation *preemptionAllocation;
+    GraphicsAllocation *tmpAllocation;
     void SetUp() override {
         DrmCommandStreamEnhancedFixture::SetUp();
+        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
+            tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
+            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemory(1024, 4096));
+        }
         tagAllocation = static_cast<DrmAllocation *>(device->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getPreemptionAllocation());
     }
     void TearDown() override {
+        if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
+            device->getMemoryManager()->freeGraphicsMemory((GlobalMockSipProgram::sipProgram)->getAllocation());
+            GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
+        }
         DrmCommandStreamEnhancedFixture::TearDown();
     }
 };

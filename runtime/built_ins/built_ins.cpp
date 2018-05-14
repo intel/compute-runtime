@@ -29,6 +29,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -128,11 +129,10 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         UNRECOVERABLE_IF(ret != CL_SUCCESS);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
-        auto program = Program::createFromGenBinary(nullptr,
-                                                    sipBinary.data(),
-                                                    sipBinary.size(),
-                                                    true,
-                                                    &retVal);
+        auto program = createProgramForSip(nullptr,
+                                           sipBinary,
+                                           sipBinary.size(),
+                                           &retVal);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         UNRECOVERABLE_IF(program == nullptr);
 

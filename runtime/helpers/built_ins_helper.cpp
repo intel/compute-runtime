@@ -21,9 +21,24 @@
 */
 
 #include "runtime/helpers/built_ins_helper.h"
+#include "runtime/program/program.h"
 
 namespace OCLRT {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     return BuiltIns::getInstance().getSipKernel(type, device);
+}
+Program *createProgramForSip(Context *context,
+                             std::vector<char> &binary,
+                             size_t size,
+                             cl_int *errcodeRet) {
+
+    cl_int retVal = 0;
+    auto program = Program::createFromGenBinary(nullptr,
+                                                binary.data(),
+                                                size,
+                                                true,
+                                                &retVal);
+    DEBUG_BREAK_IF(retVal != 0);
+    return program;
 }
 } // namespace OCLRT

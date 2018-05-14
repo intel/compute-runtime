@@ -80,7 +80,10 @@ const char *getSipLlSrc(const Device &device) {
 
 SipKernel::SipKernel(SipKernelType type, Program *sipProgram)
     : type(type) {
-    program.reset(sipProgram);
+    program = sipProgram;
+}
+SipKernel::~SipKernel() {
+    program->release();
 }
 
 GraphicsAllocation *SipKernel::getSipAllocation() const {
@@ -100,4 +103,4 @@ SipKernelType SipKernel::getSipKernelType(GFXCORE_FAMILY family, bool debuggingA
     auto &hwHelper = HwHelper::get(family);
     return hwHelper.getSipKernelType(debuggingActive);
 }
-}
+} // namespace OCLRT

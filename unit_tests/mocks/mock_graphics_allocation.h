@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,8 +25,13 @@
 
 namespace OCLRT {
 class MockGraphicsAllocation : public GraphicsAllocation {
+    using GraphicsAllocation::GraphicsAllocation;
+
   public:
     MockGraphicsAllocation(void *buffer, size_t sizeIn) : GraphicsAllocation(buffer, sizeIn) {
     }
+    void resetInspectionId() {
+        this->inspectionId = 0;
+    }
 };
-}
+} // namespace OCLRT

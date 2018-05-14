@@ -118,6 +118,25 @@ class MockProgram : public Program {
     bool contextSet = false;
 };
 
+class GlobalMockSipProgram : public Program {
+  public:
+    using Program::Program;
+    GlobalMockSipProgram() : Program() {
+    }
+    cl_int processGenBinary() override;
+    cl_int processGenBinaryOnce();
+    void resetAllocationState();
+    void resetAllocation(GraphicsAllocation *allocation);
+    void deleteAllocation();
+    GraphicsAllocation *getAllocation();
+    static void initSipProgram();
+    static void shutDownSipProgram();
+    static GlobalMockSipProgram *sipProgram;
+
+  protected:
+    void *sipAllocationStorage;
+};
+
 inline Program *getSipProgramWithCustomBinary() {
     char binary[1024];
     char *pBinary = binary;

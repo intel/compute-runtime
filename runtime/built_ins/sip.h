@@ -50,6 +50,7 @@ class SipKernel {
     SipKernel &operator=(const SipKernel &) = delete;
     SipKernel(SipKernel &&) = default;
     SipKernel &operator=(SipKernel &&) = default;
+    ~SipKernel();
 
     const char *getBinary() const;
 
@@ -66,6 +67,6 @@ class SipKernel {
 
   protected:
     SipKernelType type = SipKernelType::COUNT;
-    std::unique_ptr<Program> program;
+    Program *program = nullptr;
 };
 } // namespace OCLRT

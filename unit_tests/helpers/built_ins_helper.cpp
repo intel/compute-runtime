@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/built_ins_helper.h"
 #include "unit_tests/mocks/mock_compilers.h"
+#include "unit_tests/mocks/mock_program.h"
 
 namespace OCLRT {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
@@ -29,5 +30,13 @@ const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     mockCompilerInterface->overrideGlobalCompilerInterface();
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     return BuiltIns::getInstance().getSipKernel(type, device);
+}
+Program *createProgramForSip(Context *context,
+                             std::vector<char> &binary,
+                             size_t size,
+                             cl_int *errcodeRet) {
+    GlobalMockSipProgram::sipProgram->incRefApi();
+    GlobalMockSipProgram::sipProgram->resetAllocationState();
+    return GlobalMockSipProgram::sipProgram;
 }
 } // namespace OCLRT

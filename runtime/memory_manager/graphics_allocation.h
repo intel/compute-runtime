@@ -140,12 +140,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t peekReuseCount() const { return reuseCount; }
     bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
 
-  private:
-    uint32_t allocationType;
-
+  protected:
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;
     uint32_t inspectionId = 0;
+
+  private:
+    uint32_t allocationType;
 };
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;

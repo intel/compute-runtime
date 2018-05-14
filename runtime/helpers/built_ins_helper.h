@@ -26,4 +26,8 @@
 namespace OCLRT {
 
 const SipKernel &initSipKernel(SipKernelType type, Device &device);
+Program *createProgramForSip(Context *context,
+                             std::vector<char> &binary,
+                             size_t size,
+                             cl_int *errcodeRet);
 } // namespace OCLRT

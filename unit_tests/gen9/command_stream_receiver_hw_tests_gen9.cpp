@@ -95,7 +95,9 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     auto dbgLocalSipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getSipAllocation();
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
 
-    ASSERT_NE(sipAllocation, dbgLocalSipAllocation);
+    ASSERT_NE(BuiltIns::getInstance().getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getType(), BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getType());
+    ASSERT_NE(dbgLocalSipAllocation, nullptr);
+    ASSERT_NE(sipAllocation, nullptr);
 
     commandStreamReceiver.programPreamble(preambleStream, dispatchFlags, newL3Config);
 
