@@ -27,7 +27,7 @@
 #include "runtime/helpers/options.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm20.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "gtest/gtest.h"
 

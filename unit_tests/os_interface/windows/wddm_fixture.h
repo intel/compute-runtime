@@ -23,7 +23,7 @@
 #pragma once
 
 #include "runtime/os_interface/windows/gdi_interface.h"
-#include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm20.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "mock_gmm_memory.h"

@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm20.h"
 
 namespace OCLRT {
 Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
