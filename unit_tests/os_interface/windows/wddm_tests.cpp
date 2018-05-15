@@ -663,8 +663,28 @@ HWTEST_F(WddmTestWithMockGdiDll, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhen
     EXPECT_TRUE(!!privateData->NoRingFlushes);
 }
 
+HWTEST_F(WddmTestWithMockGdiDll, givenHwQueueSupportEnabledWhenCreateContextIsCalledThenSetAppropriateFlag) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.HwQueueSupported.set(true);
+
+    wddm->init<FamilyType>();
+    EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);
+}
+
+HWTEST_F(WddmTestWithMockGdiDll, givenHwQueueSupportDisabledWhenCreateContextIsCalledThenSetAppropriateFlag) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.HwQueueSupported.set(false);
+
+    wddm->init<FamilyType>();
+    EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
+}
+
 HWTEST_F(WddmTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {
     EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
+}
+
+HWTEST_F(WddmTest, givenDebugManagerWhenGetForHwQueueSupportedIsCalledThenFalseIsReturned) {
+    EXPECT_FALSE(DebugManager.flags.HwQueueSupported.get());
 }
 
 HWTEST_F(WddmTest, makeResidentMultipleHandles) {

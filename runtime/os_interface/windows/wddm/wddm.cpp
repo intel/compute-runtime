@@ -727,7 +727,8 @@ bool Wddm::createContext() {
     PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
 
     CreateContext.EngineAffinity = 0;
-    CreateContext.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
+    CreateContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());
+    CreateContext.Flags.HwQueueSupported = static_cast<UINT>(DebugManager.flags.HwQueueSupported.get());
 
     if (preemptionMode >= PreemptionMode::MidBatch) {
         CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
