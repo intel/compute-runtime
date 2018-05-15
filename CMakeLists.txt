@@ -365,6 +365,9 @@ add_definitions(-DGMM_OCL)
 # We want to organize our IDE targets into folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+# determine Neo version
+include(version.cmake)
+
 # Get available platfroms
 include(platforms.cmake)
 
