@@ -204,17 +204,9 @@ if(NOT IGC__IGC_TARGETS)
 
     message(STATUS "IGC source dir is: ${IGC_DIR}")
 
-    set(IGC_OPTION__LIBRARY_NAME "igdccl")
-    set(FCL_OPTION__LIBRARY_NAME "igdfcl")
     set(IGC_OPTION__OUTPUT_DIR "${IGDRCL_BUILD_DIR}/igc")
     set(IGC_OPTION__INCLUDE_IGC_COMPILER_TOOLS OFF)
     add_subdirectory("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
-    if(NOT IGC_LIBRARY_NAME)
-      set(IGC_LIBRARY_NAME "${IGC_OPTION__LIBRARY_NAME}")
-    endif()
-    if(NOT FCL_LIBRARY_NAME)
-      set(FCL_LIBRARY_NAME "${FCL_OPTION__LIBRARY_NAME}")
-    endif()
 endif()
 
 set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
