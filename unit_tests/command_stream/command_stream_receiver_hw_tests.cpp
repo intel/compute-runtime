@@ -98,6 +98,23 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingPreambleCm
     EXPECT_EQ(expectedDifference, actualDifference);
 }
 
+HWTEST_F(UltCommandStreamReceiverTest, givenMediaVfeStateDirtyEstimatingPreambleCmdSizeThenResultDependsVfeStateProgrammingCmdSize) {
+    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.overrideMediaVFEStateDirty(false);
+    auto notDirty = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    commandStreamReceiver.overrideMediaVFEStateDirty(true);
+    auto dirty = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+
+    auto actualDifference = dirty - notDirty;
+    auto expectedDifference = sizeof(PIPE_CONTROL) + sizeof(MEDIA_VFE_STATE);
+    EXPECT_EQ(expectedDifference, actualDifference);
+}
+
 HWTEST_F(UltCommandStreamReceiverTest, givenCommandStreamReceiverInInitialStateWhenHeapsAreAskedForDirtyStatusThenTrueIsReturned) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

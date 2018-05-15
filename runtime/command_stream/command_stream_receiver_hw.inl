@@ -85,8 +85,11 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble() const {
-    size_t size = sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
+    size_t size = 0;
 
+    if (mediaVfeStateDirty) {
+        size += sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
+    }
     if (!this->isPreambleSent) {
         size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*memoryManager->device);
     }
@@ -218,17 +221,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
 
-    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags));
-    auto commandStreamStartCSR = commandStreamCSR.getUsed();
-
-    initPageTableManagerRegisters(commandStreamCSR);
-    programPreemption(commandStreamCSR, dispatchFlags);
-    programCoherency(commandStreamCSR, dispatchFlags);
-    programL3(commandStreamCSR, dispatchFlags, newL3Config);
-    programPipelineSelect(commandStreamCSR, dispatchFlags);
-    programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
-    programMediaSampler(commandStreamCSR, dispatchFlags);
-
     size_t requiredScratchSizeInBytes = requiredScratchSize * (hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice * hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount);
 
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
@@ -246,6 +238,17 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             stateBaseAddressDirty = true;
         }
     }
+
+    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags));
+    auto commandStreamStartCSR = commandStreamCSR.getUsed();
+
+    initPageTableManagerRegisters(commandStreamCSR);
+    programPreemption(commandStreamCSR, dispatchFlags);
+    programCoherency(commandStreamCSR, dispatchFlags);
+    programL3(commandStreamCSR, dispatchFlags, newL3Config);
+    programPipelineSelect(commandStreamCSR, dispatchFlags);
+    programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
+    programMediaSampler(commandStreamCSR, dispatchFlags);
 
     if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         PreambleHelper<GfxFamily>::programThreadArbitration(&commandStreamCSR, this->requiredThreadArbitrationPolicy);
