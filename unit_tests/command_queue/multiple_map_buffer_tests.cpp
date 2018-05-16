@@ -119,7 +119,7 @@ struct MultipleMapBufferTest : public DeviceFixture, public ::testing::Test {
     }
 
     void TearDown() override {
-        delete context;
+        context->decRefInternal();
         DeviceFixture::TearDown();
     }
 

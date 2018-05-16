@@ -123,7 +123,7 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
     }
 
     void TearDown() override {
-        delete context;
+        context->decRefInternal();
         DeviceFixture::TearDown();
     }
 

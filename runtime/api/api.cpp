@@ -1229,7 +1229,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         pContext = castToObject<Context>(context);
     }
     if (pContext != nullptr) {
-        program = new Program(pContext, false);
+        program = new Program(pContext);
         Program *pProgram = castToObject<Program>(program);
         retVal = pProgram->link(numDevices, deviceList, options,
                                 numInputPrograms, inputPrograms,

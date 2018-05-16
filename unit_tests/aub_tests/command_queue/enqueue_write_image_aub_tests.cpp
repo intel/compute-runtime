@@ -60,7 +60,7 @@ struct AUBWriteImage
 
     void TearDown() override {
         delete dstImage;
-        delete context;
+        context->decRefInternal();
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

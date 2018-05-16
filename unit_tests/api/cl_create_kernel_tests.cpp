@@ -93,7 +93,7 @@ TEST_F(clCreateKernelTests, invalidKernel) {
     pKernelInfo->isValid = false;
     pKernelInfo->name = "CopyBuffer";
 
-    MockProgram *pMockProg = new MockProgram(pContext, false);
+    MockProgram *pMockProg = new MockProgram(pContext);
     pMockProg->addKernelInfo(pKernelInfo);
 
     kernel = clCreateKernel(

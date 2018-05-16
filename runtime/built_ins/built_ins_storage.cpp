@@ -188,10 +188,10 @@ std::unique_ptr<Program> BuiltinsLib::createProgramFromCode(const BuiltinCode &b
         break;
     case BuiltinCode::ECodeType::Source:
     case BuiltinCode::ECodeType::Intermediate:
-        ret.reset(Program::create(data, &context, device, true, &err));
+        ret.reset(Program::create(data, &context, device, &err));
         break;
     case BuiltinCode::ECodeType::Binary:
-        ret.reset(Program::createFromGenBinary(&context, data, dataLen, true, nullptr));
+        ret.reset(Program::createFromGenBinary(&context, data, dataLen, nullptr));
         break;
     }
     return ret;

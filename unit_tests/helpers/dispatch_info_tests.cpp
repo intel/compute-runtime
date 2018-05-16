@@ -51,7 +51,7 @@ class DispatchInfoFixture : public ContextFixture, public DeviceFixture {
         pKernelInfo->patchInfo.mediavfestate = pMediaVFEstate;
         pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
         pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
-        pProgram = new MockProgram(pContext, false);
+        pProgram = new MockProgram(pContext);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         pKernel->slmTotalSize = 128;

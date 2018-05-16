@@ -1613,7 +1613,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
 
     {
         // whatever method we choose CL_INVALID_BINARY is always returned
-        std::unique_ptr<Program> pProgram(Program::createFromGenBinary(nullptr, &binHeader, binSize, false, &retVal));
+        std::unique_ptr<Program> pProgram(Program::createFromGenBinary(nullptr, &binHeader, binSize, &retVal));
         ASSERT_NE(nullptr, pProgram.get());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1624,7 +1624,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
 
 class FailProgram : public Program {
   public:
-    FailProgram(Context *context, bool isBuiltIn = false) : Program(context, isBuiltIn) {}
+    FailProgram(Context *context) : Program(context) {}
     cl_int rebuildProgramFromLLVM() override {
         return CL_INVALID_PROGRAM;
     }
@@ -1653,7 +1653,7 @@ TEST(ProgramFromBinaryTests, CreateWithBinary_FailRecompile) {
     binHeader.PatchListSize = 0;
     size_t binSize = sizeof(SProgramBinaryHeader);
 
-    std::unique_ptr<FailProgram> pProgram(FailProgram::createFromGenBinary<FailProgram>(nullptr, &binHeader, binSize, false, &retVal));
+    std::unique_ptr<FailProgram> pProgram(FailProgram::createFromGenBinary<FailProgram>(nullptr, &binHeader, binSize, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1665,7 +1665,7 @@ TEST(ProgramFromBinaryTests, CreateWithBinary_FailRecompile) {
 TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     class TestedProgram : public Program {
       public:
-        TestedProgram(Context *context, bool isBuiltIn) : Program(context, isBuiltIn) {}
+        TestedProgram(Context *context) : Program(context) {}
         char *setGenBinary(char *binary) {
             auto res = genBinary;
             genBinary = binary;
@@ -1688,7 +1688,7 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     binHeader.PatchListSize = 0;
     size_t binSize = sizeof(SProgramBinaryHeader);
 
-    std::unique_ptr<TestedProgram> pProgram(TestedProgram::createFromGenBinary<TestedProgram>(nullptr, &binHeader, binSize, false, &retVal));
+    std::unique_ptr<TestedProgram> pProgram(TestedProgram::createFromGenBinary<TestedProgram>(nullptr, &binHeader, binSize, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1717,7 +1717,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptions) {
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
-        MockProgram program(pContext, false);
+        MockProgram program(pContext);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1740,7 +1740,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsForced20) {
 
     pDevice->getMutableDeviceInfo()->clVersion = "OpenCL 2.0 ";
     if (pDevice) {
-        MockProgram program(pContext, false);
+        MockProgram program(pContext);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         ASSERT_EQ(std::string(paramValue), "OpenCL 2.0 ");
@@ -1755,7 +1755,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenStatelessToStateful
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
     if (pDevice) {
-        MockProgram program(pContext, false);
+        MockProgram program(pContext);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1784,7 +1784,7 @@ TEST_F(ProgramTests, ProgramCtorSetsProperInternalOptionsWhenForcing32BitAddress
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
-        MockProgram program(pContext, false);
+        MockProgram program(pContext);
         char paramValue[32];
         pDevice->getDeviceInfo(CL_DEVICE_VERSION, 32, paramValue, 0);
         if (strstr(paramValue, "2.1")) {
@@ -1809,7 +1809,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptions) {
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
+        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, nullptr);
         EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("")));
         delete pProgram;
 
@@ -1825,7 +1825,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenStatelessT
 
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(true);
     if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
+        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, nullptr);
         EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
         delete pProgram;
 
@@ -1836,7 +1836,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenStatelessT
 }
 
 TEST_F(ProgramTests, givenProgramWhenItIsCompiledThenItAlwyasHavePreserveVec3TypeInternalOptionSet) {
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, nullptr));
     EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-fpreserve-vec3-type ")));
 }
 
@@ -1847,7 +1847,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32B
     DebugManager.flags.DisableStatelessToStatefulOptimization.set(false);
     if (pDevice) {
         const_cast<DeviceInfo *>(&pDevice->getDeviceInfo())->force32BitAddressess = true;
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
+        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, nullptr);
         if (is32bit) {
             EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-greater-than-4GB-buffer-required")));
         } else {
@@ -1867,7 +1867,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatel
 
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(true);
     if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
+        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, nullptr);
         EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg ")));
         delete pProgram;
 
@@ -1879,7 +1879,7 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatel
 
 TEST_F(ProgramTests, ProgramCtorSetsProperProgramScopePatchListSize) {
 
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
     EXPECT_EQ((size_t)0, program.getProgramScopePatchListSize());
 }
 
@@ -1888,7 +1888,7 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramThenIncrementContextRefCount) 
     auto initialInternalRefCount = pContext->getRefInternalCount();
     MockProgram tempProgram;
 
-    MockProgram *program = new MockProgram(pContext, false);
+    MockProgram *program = new MockProgram(pContext);
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount + 1);
@@ -1901,10 +1901,8 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramFromSourceThenIncrementContext
     auto initialApiRefCount = pContext->getReference();
     auto initialInternalRefCount = pContext->getRefInternalCount();
 
-    auto tempProgram = Program::create("", nullptr, *pDevice, false, nullptr);
-    EXPECT_FALSE(tempProgram->getIsBuiltIn());
-    auto program = Program::create("", pContext, *pDevice, false, nullptr);
-    EXPECT_FALSE(program->getIsBuiltIn());
+    auto tempProgram = Program::create("", nullptr, *pDevice, nullptr);
+    auto program = Program::create("", pContext, *pDevice, nullptr);
 
     EXPECT_EQ(pContext->getReference(), initialApiRefCount);
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount + 1);
@@ -1916,40 +1914,21 @@ TEST_F(ProgramTests, GivenContextWhenCreateProgramFromSourceThenIncrementContext
     EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount);
 }
 
-TEST_F(ProgramTests, GivenContextWhenCreateBuiltInProgramFromSourceThenDontIncrementContextRefCount) {
-    auto initialApiRefCount = pContext->getReference();
-    auto initialInternalRefCount = pContext->getRefInternalCount();
-
-    auto tempProgram = Program::create("", nullptr, *pDevice, true, nullptr);
-    EXPECT_TRUE(tempProgram->getIsBuiltIn());
-    auto program = Program::create("", pContext, *pDevice, true, nullptr);
-    EXPECT_TRUE(program->getIsBuiltIn());
-
-    EXPECT_EQ(pContext->getReference(), initialApiRefCount);
-    EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount);
-    program->release();
-    EXPECT_EQ(pContext->getReference(), initialApiRefCount);
-    EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount);
-    tempProgram->release();
-    EXPECT_EQ(pContext->getReference(), initialApiRefCount);
-    EXPECT_EQ(pContext->getRefInternalCount(), initialInternalRefCount);
-}
-
 TEST_F(ProgramTests, ProgramCreateT3Success) {
     cl_int retVal = CL_DEVICE_NOT_FOUND;
-    Program *pProgram = Program::create("", pContext, *pDevice, false, &retVal);
+    Program *pProgram = Program::create("", pContext, *pDevice, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     delete pProgram;
 
-    pProgram = Program::create("", pContext, *pDevice, false, nullptr);
+    pProgram = Program::create("", pContext, *pDevice, nullptr);
     EXPECT_NE(nullptr, pProgram);
     delete pProgram;
 }
 
 TEST_F(ProgramTests, ProgramFromGenBinaryWithNullBinary) {
     cl_int retVal = CL_SUCCESS;
-    Program *pProgram = Program::createFromGenBinary(pContext, nullptr, 0, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(pContext, nullptr, 0, &retVal);
     EXPECT_EQ(nullptr, pProgram);
     EXPECT_NE(CL_SUCCESS, retVal);
 }
@@ -1959,12 +1938,11 @@ TEST_F(ProgramTests, ProgramFromGenBinary) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
-    EXPECT_FALSE(pProgram->getIsBuiltIn());
 
     cl_device_id deviceId = pContext->getDevice(0);
     cl_build_status status = 0;
@@ -1975,25 +1953,11 @@ TEST_F(ProgramTests, ProgramFromGenBinary) {
     delete pProgram;
 }
 
-TEST_F(ProgramTests, ProgramFromGenBinaryWithBuiltInFlagSet) {
-    cl_int retVal = CL_INVALID_BINARY;
-    char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t size = 10;
-
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, true, &retVal);
-    EXPECT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_TRUE(pProgram->getIsBuiltIn());
-
-    delete pProgram;
-}
-
 TEST_F(ProgramTests, ProgramFromGenBinaryWithoutRetVal) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, false, nullptr);
+    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, nullptr);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
 
@@ -2011,7 +1975,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithNullcontext) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, binary, size, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(nullptr, binary, size, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
@@ -2030,7 +1994,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
     char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
@@ -2095,7 +2059,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
     char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
@@ -2507,7 +2471,7 @@ TEST_F(ProgramTests, GetProgramCompilerVersion) {
 }
 
 TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenNoSurfaceIsCreated) {
-    MockProgram *program = new MockProgram(pContext, false);
+    MockProgram *program = new MockProgram(pContext);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2533,7 +2497,7 @@ TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfaces
 }
 
 TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenSurfaceIsCreated) {
-    MockProgram *program = new MockProgram(pContext, false);
+    MockProgram *program = new MockProgram(pContext);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2559,7 +2523,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 }
 
 TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenSecondSurfaceIsNotCreated) {
-    MockProgram *program = new MockProgram(pContext, false);
+    MockProgram *program = new MockProgram(pContext);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2593,7 +2557,7 @@ TEST_F(ProgramTests, GivenNonZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfa
 }
 
 TEST_F(ProgramTests, givenProgramWithBlockKernelsWhenfreeBlockResourcesisCalledThenFreeGraphhicsAllocationsFromBlockKernelManagerIsCalled) {
-    MockProgram *program = new MockProgram(pContext, false);
+    MockProgram *program = new MockProgram(pContext);
 
     uint32_t crossThreadOffsetBlock = 0;
 
@@ -2640,7 +2604,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenBultinIsCreat
 }
 
 TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCreatedThen32bitFlagIsPassedAsInternalOption) {
-    MockProgram pProgram(pContext, false);
+    MockProgram pProgram(pContext);
     auto &internalOptions = pProgram.getInternalOptions();
     std::string s1 = internalOptions;
     size_t pos = s1.find("-m32");
@@ -2654,7 +2618,7 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
 TEST_F(Program32BitTests, givenDeviceWhenProgramIsCreatedThenProgramCountInDeviceIncreases) {
     auto device = pContext->getDevice(0);
     EXPECT_EQ(0u, device->getProgramCount());
-    MockProgram pProgram(pContext, false);
+    MockProgram pProgram(pContext);
     EXPECT_EQ(1u, device->getProgramCount());
 }
 
@@ -2668,8 +2632,8 @@ TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizatio
 template <int32_t ErrCodeToReturn, bool spirv = true>
 struct CreateProgramFromBinaryMock : MockProgram {
     using MockProgram::MockProgram;
-    CreateProgramFromBinaryMock(Context *context, bool isBuiltIn)
-        : MockProgram(context, isBuiltIn) {
+    CreateProgramFromBinaryMock(Context *context)
+        : MockProgram(context) {
     }
 
     cl_int createProgramFromBinary(const void *pBinary,
@@ -2801,7 +2765,7 @@ TEST_F(ProgramTests, linkingTwoValidSpirvProgramsReturnsValidProgram) {
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenNoParentAndSubgroupKernelsThenSeparateNoneKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     EXPECT_EQ(0u, program.getKernelInfoArray().size());
     EXPECT_EQ(0u, program.getParentKernelInfoArray().size());
@@ -2814,7 +2778,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenNoParentAndSubgroupKernelsThen
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNoneKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     auto pRegularKernel1Info = KernelInfo::create();
     pRegularKernel1Info->name = "regular_kernel_1";
@@ -2836,7 +2800,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNone
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKernelThenSeparateNoneKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     auto pParentKernelInfo = KernelInfo::create();
     pParentKernelInfo->name = "another_parent_kernel";
@@ -2860,7 +2824,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKe
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroupKernelThenSeparateNoneKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     auto pSubgroupKernelInfo = KernelInfo::create();
     pSubgroupKernelInfo->name = "another_subgroup_kernel";
@@ -2884,7 +2848,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroup
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThenSeparateChildKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     auto pParentKernelInfo = KernelInfo::create();
     pParentKernelInfo->name = "parent_kernel";
@@ -2908,7 +2872,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThe
 }
 
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelThenSeparateChildKernel) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
 
     auto pSubgroupKernelInfo = KernelInfo::create();
     pSubgroupKernelInfo->name = "subgroup_kernel";
@@ -2932,7 +2896,7 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelT
 }
 
 TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet) {
-    MockProgram pProgram(nullptr, false);
+    MockProgram pProgram(nullptr);
     EXPECT_EQ(nullptr, pProgram.getDevicePtr());
     auto dummyDevice = (Device *)0x1337;
     pProgram.SetDevice(dummyDevice);

@@ -63,7 +63,7 @@ struct AUBMapImage
 
     void TearDown() override {
         delete srcImage;
-        delete context;
+        context->decRefInternal();
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

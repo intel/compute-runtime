@@ -113,7 +113,7 @@ struct AubFillImage
 
     void TearDown() override {
         delete image;
-        delete context;
+        context->decRefInternal();
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

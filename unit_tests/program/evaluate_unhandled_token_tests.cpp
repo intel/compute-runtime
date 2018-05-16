@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,7 +55,7 @@ inline cl_int GetDecodeErrorCode(const std::vector<char> &binary, bool allowUnha
     prog.reset(OCLRT::Program::createFromGenBinary<PT>(nullptr,
                                                        binary.data(),
                                                        binary.size(),
-                                                       false, &errorCode));
+                                                       &errorCode));
     prog->allowUnhandledTokens = allowUnhandledTokens;
     prog->lastUnhandledTokenFound = defaultUnhandledTokenId;
     auto ret = prog->processGenBinary();

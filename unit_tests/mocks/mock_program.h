@@ -25,20 +25,18 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/program/program.h"
+#include "runtime/context/context.h"
 
 namespace OCLRT {
 
 class GraphicsAllocation;
 
-////////////////////////////////////////////////////////////////////////////////
-// Program - Core implementation
-////////////////////////////////////////////////////////////////////////////////
 class MockProgram : public Program {
   public:
     using Program::isKernelDebugEnabled;
 
     MockProgram() : Program() {}
-    MockProgram(Context *context, bool isBuiltinKernel) : Program(context, isBuiltinKernel) {}
+    MockProgram(Context *context) : Program(context) {}
     ~MockProgram() {
         if (contextSet)
             context = nullptr;
@@ -88,6 +86,7 @@ class MockProgram : public Program {
     void setContext(Context *context) {
         this->context = context;
         contextSet = true;
+        this->context->incRefInternal();
     }
 
     void SetBuildStatus(cl_build_status st) { buildStatus = st; }
@@ -166,7 +165,7 @@ inline Program *getSipProgramWithCustomBinary() {
     pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
 
     auto errCode = CL_SUCCESS;
-    auto program = Program::createFromGenBinary(nullptr, binary, totalSize, false, &errCode);
+    auto program = Program::createFromGenBinary(nullptr, binary, totalSize, &errCode);
     UNRECOVERABLE_IF(errCode != CL_SUCCESS);
     errCode = program->processGenBinary();
     UNRECOVERABLE_IF(errCode != CL_SUCCESS);

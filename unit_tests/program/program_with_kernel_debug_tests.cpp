@@ -38,12 +38,12 @@
 using namespace OCLRT;
 
 TEST_F(ProgramTests, givenDeafultProgramObjectWhenKernelDebugEnabledIsQueriedThenFalseIsReturned) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
     EXPECT_FALSE(program.isKernelDebugEnabled());
 }
 
 TEST_F(ProgramTests, givenProgramObjectWhenEnableKernelDebugIsCalledThenProgramHasKernelDebugEnabled) {
-    MockProgram program(pContext, false);
+    MockProgram program(pContext);
     program.enableKernelDebug();
     EXPECT_TRUE(program.isKernelDebugEnabled());
 }

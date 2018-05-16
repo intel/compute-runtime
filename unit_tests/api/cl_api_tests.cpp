@@ -47,7 +47,7 @@ void api_fixture::SetUp() {
 
     pCommandQueue = new CommandQueue(pContext, pDevice, 0);
 
-    pProgram = new MockProgram(pContext, false);
+    pProgram = new MockProgram(pContext);
 
     pKernel = new MockKernel(pProgram, *pProgram->MockProgram::getKernelInfo(), *pDevice);
     ASSERT_NE(nullptr, pKernel);
@@ -76,7 +76,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
 
     commandQueue = new CommandQueue(context, devPtr, 0);
 
-    program = new MockProgram(ctxPtr, false);
+    program = new MockProgram(ctxPtr);
     Program *prgPtr = reinterpret_cast<Program *>(program);
 
     kernel = new MockKernel(prgPtr, *program->MockProgram::getKernelInfo(), *devPtr);

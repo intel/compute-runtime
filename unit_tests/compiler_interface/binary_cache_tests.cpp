@@ -352,7 +352,7 @@ TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
 }
 TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(&context);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -383,7 +383,7 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
 
 TEST_F(CompilerInterfaceCachedTests, wasCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(&context);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -414,7 +414,7 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
 
 TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(&context);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -444,7 +444,7 @@ TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
 
 TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(&context);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -478,7 +478,7 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheW
 
 TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(&context);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
