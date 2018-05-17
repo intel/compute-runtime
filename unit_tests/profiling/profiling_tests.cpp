@@ -38,8 +38,6 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
-#include "runtime/gen9/hw_cmds_generated.h"
-#include "gen_cmd_parse.h"
 #include "test.h"
 
 namespace OCLRT {
