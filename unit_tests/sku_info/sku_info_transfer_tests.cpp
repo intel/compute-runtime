@@ -30,7 +30,7 @@ TEST(SkuInfoTransferTest, givenFeatureTableWhenFillingStructureForGmmThenCopyOnl
     _SKU_FEATURE_TABLE requestedFtrTable = {};
     _SKU_FEATURE_TABLE refFtrTable = {};
     FeatureTable featureTable;
-    memset(&featureTable, 1, sizeof(FeatureTable));
+    memset(reinterpret_cast<void *>(&featureTable), 1, sizeof(FeatureTable));
     SkuInfoTransfer::transferFtrTableForGmm(&requestedFtrTable, &featureTable);
 
     SkuInfoBaseReference::fillReferenceFtrForTransfer(refFtrTable);
@@ -43,7 +43,7 @@ TEST(SkuInfoTransferTest, givenWaTableWhenFillingStructureForGmmThenCopyOnlySele
     _WA_TABLE refWaTable = {};
     WorkaroundTable waTable;
     refWaTable = {};
-    memset(&waTable, 1, sizeof(WorkaroundTable));
+    memset(reinterpret_cast<void *>(&waTable), 1, sizeof(WorkaroundTable));
     SkuInfoTransfer::transferWaTableForGmm(&requestedWaTable, &waTable);
 
     SkuInfoBaseReference::fillReferenceWaForTransfer(refWaTable);

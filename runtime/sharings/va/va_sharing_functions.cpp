@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -56,12 +56,12 @@ void VASharingFunctions::initFunctions() {
     if (DebugManager.flags.EnableVaLibCalls.get()) {
         libHandle = fdlopen(Os::libvaDllName, RTLD_LAZY);
         if (libHandle) {
-            vaDisplayIsValidPFN = (VADisplayIsValidPFN)fdlsym(libHandle, "vaDisplayIsValid");
-            vaDeriveImagePFN = (VADeriveImagePFN)fdlsym(libHandle, "vaDeriveImage");
-            vaDestroyImagePFN = (VADestroyImagePFN)fdlsym(libHandle, "vaDestroyImage");
-            vaSyncSurfacePFN = (VASyncSurfacePFN)fdlsym(libHandle, "vaSyncSurface");
-            vaGetLibFuncPFN = (VAGetLibFuncPFN)fdlsym(libHandle, "vaGetLibFunc");
-            vaExtGetSurfaceHandlePFN = (VAExtGetSurfaceHandlePFN)getLibFunc("DdiMedia_ExtGetSurfaceHandle");
+            vaDisplayIsValidPFN = reinterpret_cast<VADisplayIsValidPFN>(fdlsym(libHandle, "vaDisplayIsValid"));
+            vaDeriveImagePFN = reinterpret_cast<VADeriveImagePFN>(fdlsym(libHandle, "vaDeriveImage"));
+            vaDestroyImagePFN = reinterpret_cast<VADestroyImagePFN>(fdlsym(libHandle, "vaDestroyImage"));
+            vaSyncSurfacePFN = reinterpret_cast<VASyncSurfacePFN>(fdlsym(libHandle, "vaSyncSurface"));
+            vaGetLibFuncPFN = reinterpret_cast<VAGetLibFuncPFN>(fdlsym(libHandle, "vaGetLibFunc"));
+            vaExtGetSurfaceHandlePFN = reinterpret_cast<VAExtGetSurfaceHandlePFN>(getLibFunc("DdiMedia_ExtGetSurfaceHandle"));
         } else {
             vaDisplayIsValidPFN = nullptr;
             vaDeriveImagePFN = nullptr;

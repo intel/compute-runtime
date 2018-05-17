@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,20 +27,17 @@
 #include <cstring>
 #include <string>
 
-inline int strcpy_s(char *dst, size_t numberOfElements, const char *src) {
+inline int strcpy_s(char *dst, size_t dstSize, const char *src) {
     if ((dst == nullptr) || (src == nullptr)) {
         return -EINVAL;
     }
     size_t length = strlen(src);
-    if (numberOfElements < length) {
+    if (dstSize <= length) {
         return -ERANGE;
     }
 
-#ifndef strlcpy
-#define strlcpy(d, s, n) snprintf((d), (n), "%s", (s))
-#endif
-
-    strlcpy(dst, src, numberOfElements);
+    strncpy(dst, src, length);
+    dst[length] = '\0';
 
     return 0;
 }

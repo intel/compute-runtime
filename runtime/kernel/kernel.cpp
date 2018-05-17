@@ -915,7 +915,7 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
                 commandStreamReceiver.makeResident(*pSVMAlloc);
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = (const cl_mem)kernelArguments[argIndex].object;
+                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
                 DEBUG_BREAK_IF(memObj == nullptr);
                 if (memObj->isImageFromImage()) {
@@ -935,7 +935,7 @@ void Kernel::updateWithCompletionStamp(CommandStreamReceiver &commandStreamRecei
     for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
         if (kernelArguments[argIndex].object) {
             if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = (const cl_mem)kernelArguments[argIndex].object;
+                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
                 DEBUG_BREAK_IF(memObj == nullptr);
                 memObj->setCompletionStamp(*completionStamp, nullptr, nullptr);
@@ -999,7 +999,7 @@ void Kernel::getResidency(std::vector<Surface *> &dst) {
                 auto pSVMAlloc = (GraphicsAllocation *)kernelArguments[argIndex].object;
                 dst.push_back(new GeneralSurface(pSVMAlloc));
             } else if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = (const cl_mem)kernelArguments[argIndex].object;
+                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObject<MemObj>(clMem);
                 DEBUG_BREAK_IF(memObj == nullptr);
                 dst.push_back(new MemObjSurface(memObj));
@@ -1028,7 +1028,7 @@ bool Kernel::requiresCoherency() {
             }
 
             if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = (const cl_mem)kernelArguments[argIndex].object;
+                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
                 auto memObj = castToObjectOrAbort<MemObj>(clMem);
                 if (memObj->getGraphicsAllocation()->isCoherent()) {
                     return true;

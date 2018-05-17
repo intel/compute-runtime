@@ -30,4 +30,4 @@ typedef VAStatus (*VADeriveImagePFN)(VADisplay vaDisplay, VASurfaceID vaSurface,
 typedef VAStatus (*VADestroyImagePFN)(VADisplay vaDisplay, VAImageID vaImageId);
 typedef VAStatus (*VAExtGetSurfaceHandlePFN)(VADisplay vaDisplay, VASurfaceID *vaSurface, unsigned int *handleId);
 typedef VAStatus (*VASyncSurfacePFN)(VADisplay vaDisplay, VASurfaceID vaSurface);
-typedef VAPrivFunc (*VAGetLibFuncPFN)(VADisplay vaDisplay, const char *func);
+typedef void *(*VAGetLibFuncPFN)(VADisplay vaDisplay, const char *func);

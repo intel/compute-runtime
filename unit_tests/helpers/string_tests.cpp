@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -91,21 +91,35 @@ TEST(StringHelpers, strcpy) {
 
     ASSERT_EQ(sizeof(dst), sizeof(src));
 
-    auto ret = strcpy_s(nullptr, sizeof(dst), src);
+    auto ret = strcpy_s(nullptr, 0, src);
     EXPECT_EQ(ret, -EINVAL);
 
-    ret = strcpy_s(dst, sizeof(dst), nullptr);
+    ret = strcpy_s(nullptr, sizeof(dst), src);
+    EXPECT_EQ(ret, -EINVAL);
+
+    ret = strcpy_s(nullptr, 0, nullptr);
+    EXPECT_EQ(ret, -EINVAL);
+
+    ret = strcpy_s(nullptr, sizeof(dst), nullptr);
+    EXPECT_EQ(ret, -EINVAL);
+
+    ret = strcpy_s(dst, 0, nullptr);
     EXPECT_EQ(ret, -EINVAL);
 
     ret = strcpy_s(dst, strlen(src) / 2, src);
     EXPECT_EQ(ret, -ERANGE);
 
-    memset(dst, 0, sizeof(dst));
+    ret = strcpy_s(dst, strlen(src), src);
+    EXPECT_EQ(ret, -ERANGE);
+
+    char pattern = 0x5a;
+    memset(dst, pattern, sizeof(dst));
     ret = strcpy_s(dst, sizeof(dst), src);
     EXPECT_EQ(ret, 0);
     EXPECT_EQ(0, memcmp(dst, src, strlen(src)));
-    for (size_t i = strlen(src); i < sizeof(dst); i++)
-        EXPECT_EQ(0, dst[i]);
+    EXPECT_EQ(0, dst[strlen(src)]);
+    for (size_t i = strlen(src) + 1; i < sizeof(dst); i++)
+        EXPECT_EQ(pattern, dst[i]);
 }
 
 TEST(StringHelpers, strnlen) {

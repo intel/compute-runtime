@@ -224,10 +224,10 @@ static uint32_t ImageType[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-typedef decltype(numReadWriteSurfaceFormats) ReadWriteSurfaceFormatsCountType;
+decltype(numReadWriteSurfaceFormats) readWriteSurfaceFormatsStart = 0u;
 INSTANTIATE_TEST_CASE_P(
     Redescribe,
     ImageRedescribeTest,
     testing::Combine(
-        ::testing::Range(static_cast<ReadWriteSurfaceFormatsCountType>(0u), numReadWriteSurfaceFormats),
+        ::testing::Range(readWriteSurfaceFormatsStart, numReadWriteSurfaceFormats),
         ::testing::ValuesIn(ImageType)));

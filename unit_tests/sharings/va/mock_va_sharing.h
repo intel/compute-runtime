@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -60,7 +60,7 @@ class VASharingFunctionsMock : public VASharingFunctions {
         return (VAStatus)0; // success
     };
 
-    static VAPrivFunc mockVaGetLibFunc(VADisplay vaDisplay, const char *func) {
+    static void *mockVaGetLibFunc(VADisplay vaDisplay, const char *func) {
         vaGetLibFuncCalled++;
         return nullptr;
     };
