@@ -30,7 +30,7 @@ class GmmPageTableMngr {
   public:
     MOCKABLE_VIRTUAL ~GmmPageTableMngr() = default;
 
-    static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
     MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
         return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
@@ -50,7 +50,7 @@ class GmmPageTableMngr {
 
     GmmPageTableMngr() = default;
 
-    GmmPageTableMngr(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
+    GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
     UniquePtrType pageTableManager;
 };

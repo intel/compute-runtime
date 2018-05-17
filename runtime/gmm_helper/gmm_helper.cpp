@@ -31,28 +31,6 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/sku_info/operations/sku_info_transfer.h"
 
-extern "C" {
-
-void GMMDebugBreak(const char *file, const char *function, const int line) {
-}
-
-void GMMPrintMessage(uint32_t debugLevel, const char *debugMessageFmt, ...) {
-}
-
-typedef struct GfxDebugControlRec {
-    uint32_t Version;
-    uint32_t Size;
-    uint32_t AssertEnableMask;
-    uint32_t EnableDebugFileDump;
-    uint32_t DebugEnableMask;
-    uint32_t RingBufDbgMask;
-    uint32_t ReportAssertEnable;
-    uint32_t AssertBreakDisable;
-
-} GFX_DEBUG_CONTROL, *PGFX_DEBUG_CONTROL;
-PGFX_DEBUG_CONTROL pDebugControl;
-}
-
 namespace OCLRT {
 void Gmm::create() {
     if (resourceParams.BaseWidth >= maxPossiblePitch) {
@@ -71,19 +49,21 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
         _WA_TABLE gmmWaTable = {};
         SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
         SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
-
-        bool success = GMM_SUCCESS == GmmInitGlobalContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
+        if (!isLoaded) {
+            loadLib();
+        }
+        bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
         UNRECOVERABLE_IF(!success);
-        Gmm::gmmClientContext = GmmCreateClientContext(GMM_CLIENT::GMM_OCL_VISTA);
+        Gmm::gmmClientContext = createClientContextFunc(GMM_CLIENT::GMM_OCL_VISTA);
     }
     return Gmm::gmmClientContext != nullptr;
 }
 
 void Gmm::destroyContext() {
     if (Gmm::gmmClientContext) {
-        GmmDeleteClientContext(Gmm::gmmClientContext);
+        deleteClientContextFunc(Gmm::gmmClientContext);
         Gmm::gmmClientContext = nullptr;
-        GmmDestroyGlobalContext();
+        destroyGlobalContextFunc();
     }
 }
 
@@ -414,5 +394,6 @@ bool Gmm::unifiedAuxTranslationCapable() const {
 
 bool Gmm::useSimplifiedMocsTable = false;
 GMM_CLIENT_CONTEXT *Gmm::gmmClientContext = nullptr;
+bool Gmm::isLoaded = false;
 
 } // namespace OCLRT

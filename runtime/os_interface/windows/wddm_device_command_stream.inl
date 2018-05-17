@@ -176,27 +176,27 @@ bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushSt
 
 template <typename GfxFamily>
 GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager() {
-    GMM_DEVICE_CALLBACKS deviceCallbacks = {};
+    GMM_DEVICE_CALLBACKS_INT deviceCallbacks = {};
     GMM_TRANSLATIONTABLE_CALLBACKS ttCallbacks = {};
     auto gdi = wddm->getGdi();
 
     // clang-format off
-    deviceCallbacks.Adapter         = wddm->getAdapter();
-    deviceCallbacks.hDevice         = wddm->getDevice();
+    deviceCallbacks.Adapter.KmtHandle         = wddm->getAdapter();
+    deviceCallbacks.hDevice.KmtHandle         = wddm->getDevice();
     deviceCallbacks.PagingQueue     = wddm->getPagingQueue();
     deviceCallbacks.PagingFence     = wddm->getPagingQueueSyncObject();
 
-    deviceCallbacks.pfnAllocate     = gdi->createAllocation;
-    deviceCallbacks.pfnDeallocate   = gdi->destroyAllocation;
-    deviceCallbacks.pfnMapGPUVA     = gdi->mapGpuVirtualAddress;
-    deviceCallbacks.pfnMakeResident = gdi->makeResident;
-    deviceCallbacks.pfnEvict        = gdi->evict;
-    deviceCallbacks.pfnReserveGPUVA = gdi->reserveGpuVirtualAddress;
-    deviceCallbacks.pfnUpdateGPUVA  = gdi->updateGpuVirtualAddress;
-    deviceCallbacks.pfnWaitFromCpu  = gdi->waitForSynchronizationObjectFromCpu;
-    deviceCallbacks.pfnLock         = gdi->lock2;
-    deviceCallbacks.pfnUnLock       = gdi->unlock2;
-    deviceCallbacks.pfnEscape       = gdi->escape;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnAllocate     = gdi->createAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnDeallocate   = gdi->destroyAllocation;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA     = gdi->mapGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnMakeResident = gdi->makeResident;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEvict        = gdi->evict;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = gdi->reserveGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA  = gdi->updateGpuVirtualAddress;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu  = gdi->waitForSynchronizationObjectFromCpu;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnLock         = gdi->lock2;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock       = gdi->unlock2;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape       = gdi->escape;
 
     ttCallbacks.pfWriteL3Adr        = TTCallbacks<GfxFamily>::writeL3Address;
     // clang-format on

@@ -99,7 +99,5 @@ class Gdi {
 
   private:
     OCLRT::Windows::OsLibrary gdiDll;
-    static const std::string gdiDllName;
-    static const std::string gdiMockDllName;
 };
 } // namespace OCLRT

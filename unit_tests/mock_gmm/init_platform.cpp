@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace OCLRT {
-unsigned int ultIterationMaxTime = 45;
-bool useMockGmm = true;
-}
+#include "mock_gmm.h"
+
+void initPlatform(GMM_PLATFORM_INFO *platform) {}

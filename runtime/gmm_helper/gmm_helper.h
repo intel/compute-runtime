@@ -27,12 +27,6 @@
 #include "runtime/gmm_helper/gmm_lib.h"
 #include "runtime/api/cl_types.h"
 
-extern "C" {
-void GMMDebugBreak(const char *file, const char *function, const int line);
-
-void GMMPrintMessage(uint32_t debugLevel, const char *debugMessageFmt, ...);
-}
-
 namespace OCLRT {
 struct HardwareInfo;
 struct FeatureTable;
@@ -63,6 +57,7 @@ class Gmm {
     static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
 
     static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
+    static void loadLib();
     static void destroyContext();
 
     static uint32_t getMOCS(uint32_t type);
@@ -97,8 +92,14 @@ class Gmm {
     GMM_RESCREATE_PARAMS resourceParams = {};
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
+    static decltype(&GmmInitGlobalContext) initGlobalContextFunc;
+    static decltype(&GmmDestroyGlobalContext) destroyGlobalContextFunc;
+    static decltype(&GmmCreateClientContext) createClientContextFunc;
+    static decltype(&GmmDeleteClientContext) deleteClientContextFunc;
+
     bool isRenderCompressed = false;
     static bool useSimplifiedMocsTable;
     static GMM_CLIENT_CONTEXT *gmmClientContext;
+    static bool isLoaded;
 };
 } // namespace OCLRT

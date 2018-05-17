@@ -240,7 +240,26 @@ if(NOT GMMUMD_LIB_NAME)
         endif()
     endif()
 endif()
+get_target_property(target_type ${GMMUMD_LIB_NAME} TYPE)
+
+if(target_type STREQUAL "STATIC_LIBRARY")
+  set(USE_STATIC_GMM TRUE)
+endif()
+
 set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
+
+set(GMM_LIB_FILENAME "igdgmm${NEO_BITS}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+macro(copy_gmm_dll_for target)
+  if(WIN32 AND NOT USE_STATIC_GMM)
+    add_dependencies(${target} ${GMMUMD_LIB_NAME})
+    add_custom_command(
+      TARGET ${target}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:${GMMUMD_LIB_NAME}> $<TARGET_FILE_DIR:${target}>
+    )
+  endif()
+endmacro()
 
 # Instrumentation detection
 if(NOT INSTRUMENTATION_LIB_NAME)
@@ -534,3 +553,4 @@ include(package.cmake)
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
 configure_file(compiler.config.h.in ${IGDRCL_BUILD_DIR}/compiler.config.h)
 configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define
+configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)

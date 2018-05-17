@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,7 @@
 namespace OCLRT {
 using namespace ::testing;
 
-GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
     auto pageTableMngr = new ::testing::NiceMock<MockGmmPageTableMngr>(deviceCb, translationTableFlags, translationTableCb);
     ON_CALL(*pageTableMngr, initContextAuxTableRegister(_, _)).WillByDefault(Return(GMM_SUCCESS));
     ON_CALL(*pageTableMngr, initContextTRTableRegister(_, _)).WillByDefault(Return(GMM_SUCCESS));

@@ -31,6 +31,7 @@
 #include "unit_tests/mocks/mock_sip.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "lib_names.h"
 #include "gmock/gmock.h"
 #include <algorithm>
 #include <mutex>
@@ -51,9 +52,13 @@ extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
 extern const unsigned int ultIterationMaxTime;
+extern bool useMockGmm;
 
 std::thread::id tempThreadID;
 } // namespace OCLRT
+namespace Os {
+extern const char *gmmDllName;
+}
 
 using namespace OCLRT;
 TestEnvironment *gEnvironment;
@@ -403,6 +408,9 @@ int main(int argc, char **argv) {
     }
 #else
     SetUnhandledExceptionFilter(&UltExceptionFilter);
+    if (!useMockGmm) {
+        Os::gmmDllName = GMM_LIB_FILENAME;
+    }
 #endif
     initializeTestHelpers();
 

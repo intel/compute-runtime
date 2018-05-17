@@ -53,6 +53,7 @@ if(WIN32)
   )
 endif()
 
+copy_gmm_dll_for(igdrcl_aub_tests)
 add_subdirectories()
 
 target_link_libraries(igdrcl_aub_tests igdrcl_mocks)

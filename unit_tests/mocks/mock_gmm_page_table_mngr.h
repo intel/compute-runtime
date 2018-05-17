@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
   public:
     MockGmmPageTableMngr() = default;
 
-    MockGmmPageTableMngr(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
+    MockGmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb)
         : deviceCb(*deviceCb), translationTableFlags(translationTableFlags), translationTableCb(*translationTableCb){};
 
     MOCK_METHOD2(initContextAuxTableRegister, GMM_STATUS(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType));
@@ -39,7 +39,7 @@ class MockGmmPageTableMngr : public GmmPageTableMngr {
 
     MOCK_METHOD1(updateAuxTable, GMM_STATUS(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable));
 
-    GMM_DEVICE_CALLBACKS deviceCb = {};
+    GMM_DEVICE_CALLBACKS_INT deviceCb = {};
     GMM_TRANSLATIONTABLE_CALLBACKS translationTableCb = {};
     unsigned int translationTableFlags = 0;
 };

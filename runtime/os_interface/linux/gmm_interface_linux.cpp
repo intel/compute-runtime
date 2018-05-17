@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,7 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gmm_helper/gmm_helper.h"
+
 namespace OCLRT {
-unsigned int ultIterationMaxTime = 45;
-bool useMockGmm = true;
+
+decltype(Gmm::initGlobalContextFunc) Gmm::initGlobalContextFunc = nullptr;
+decltype(Gmm::destroyGlobalContextFunc) Gmm::destroyGlobalContextFunc = nullptr;
+decltype(Gmm::createClientContextFunc) Gmm::createClientContextFunc = nullptr;
+decltype(Gmm::deleteClientContextFunc) Gmm::deleteClientContextFunc = nullptr;
+
+void Gmm::loadLib() {
+    Gmm::initGlobalContextFunc = GmmInitGlobalContext;
+    Gmm::destroyGlobalContextFunc = GmmDestroyGlobalContext;
+    Gmm::createClientContextFunc = GmmCreateClientContext;
+    Gmm::deleteClientContextFunc = GmmDeleteClientContext;
+    isLoaded = true;
+}
 }

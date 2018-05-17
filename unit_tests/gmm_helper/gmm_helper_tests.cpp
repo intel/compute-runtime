@@ -34,12 +34,6 @@ using namespace ::testing;
 
 namespace OCLRT {
 class GmmTests : public ::testing::Test {
-  public:
-    void SetUp() override {
-        // empty calls
-        GMMDebugBreak(nullptr, nullptr, 0);
-        GMMPrintMessage(0, nullptr);
-    }
 };
 
 TEST_F(GmmTests, resourceCreation) {

@@ -46,7 +46,7 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
 }
 
 uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
-    return static_cast<uintptr_t>(pGmmGlobalContext->GetInternalGpuVaRangeLimit());
+    return static_cast<uintptr_t>(Gmm::gmmClientContext->GetInternalGpuVaRangeLimit());
 }
 
 }; // namespace OCLRT

@@ -38,7 +38,7 @@ void WddmMemoryManagerFixture::SetUp() {
     wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
     ASSERT_NE(nullptr, wddm);
     if (platformDevices[0]->capabilityTable.ftrCompression) {
-        GMM_DEVICE_CALLBACKS dummyDeviceCallbacks = {};
+        GMM_DEVICE_CALLBACKS_INT dummyDeviceCallbacks = {};
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,6 +32,7 @@ namespace Os {
 const char *frontEndDllName = "mock_igdfcl.dll";
 const char *igcDllName = "mock_igc.dll";
 const char *gdiDllName = "gdi32_mock.dll";
+const char *gmmDllName = "mock_gmm.dll";
 const char *testDllName = "test_dynamic_lib.dll";
 }
 

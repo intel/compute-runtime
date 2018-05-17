@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,7 @@
 #include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace OCLRT {
-GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
+GmmPageTableMngr *GmmPageTableMngr::create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
     return new GmmPageTableMngr(deviceCb, translationTableFlags, translationTableCb);
 }
 

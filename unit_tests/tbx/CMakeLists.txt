@@ -46,6 +46,7 @@ else()
   )
 endif()
 
+copy_gmm_dll_for(igdrcl_tbx_tests)
 create_project_source_tree(igdrcl_tbx_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
 
 add_custom_target(run_tbx_tests ALL DEPENDS unit_tests igdrcl_tbx_tests)
