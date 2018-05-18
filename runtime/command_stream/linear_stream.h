@@ -37,8 +37,6 @@ class LinearStream {
     LinearStream(void *buffer, size_t bufferSize);
     LinearStream(GraphicsAllocation *buffer);
     void *getCpuBase() const;
-    uint64_t getGpuBase() const;
-    uint64_t getCurrentGpuOffsetFromHeapBase() const;
     void *getSpace(size_t size);
     size_t getMaxAvailableSpace() const;
     size_t getAvailableSpace() const;
@@ -63,14 +61,6 @@ class LinearStream {
 
 inline void *LinearStream::getCpuBase() const {
     return buffer;
-}
-
-inline uint64_t LinearStream::getGpuBase() const {
-    return this->graphicsAllocation->gpuBaseAddress;
-}
-
-inline uint64_t LinearStream::getCurrentGpuOffsetFromHeapBase() const {
-    return ptrOffset(this->graphicsAllocation->getGpuAddressToPatch(), sizeUsed);
 }
 
 inline void *LinearStream::getSpace(size_t size) {
