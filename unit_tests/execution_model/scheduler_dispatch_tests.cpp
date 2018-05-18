@@ -47,7 +47,7 @@ class ExecutionModelSchedulerFixture : public ExecutionModelSchedulerTest,
     }
 };
 
-HWTEST_F(ExecutionModelSchedulerFixture, dispatchScheduler) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -172,7 +172,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchScheduler) {
     }
 }
 
-HWTEST_F(ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQIOH) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQIOH) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
@@ -204,7 +204,7 @@ HWTEST_F(ExecutionModelSchedulerFixture, dispatchSchedulerDoesNotUseStandardCmdQ
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToFirstInstanceDoesNotPutBBStartCmd) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWithEarlyReturnSetToFirstInstanceDoesNotPutBBStartCmd) {
 
     if (device->getSupportedClVersion() >= 20) {
 

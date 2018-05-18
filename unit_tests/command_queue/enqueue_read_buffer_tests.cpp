@@ -66,7 +66,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, null_user_pointer) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, GPGPUWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GPGPUWalker) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -107,7 +107,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     srcBuffer->forceDisallowCPUCopy = true;
-    enqueueReadBuffer<FamilyType>();
+    EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
@@ -119,7 +119,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_Blocking) {
     auto oldCsrTaskLevel = csr.peekTaskLevel();
 
     srcBuffer->forceDisallowCPUCopy = true;
-    enqueueReadBuffer<FamilyType>(CL_TRUE);
+    EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
@@ -130,7 +130,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, alignsToCSR_NonBlocking) {
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
 
-    enqueueReadBuffer<FamilyType>(CL_FALSE);
+    EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_FALSE);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
@@ -139,7 +139,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     srcBuffer->forceDisallowCPUCopy = true;
-    enqueueReadBuffer<FamilyType>();
+    EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
@@ -149,7 +149,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     auto sshBefore = pSSH->getUsed();
 
     srcBuffer->forceDisallowCPUCopy = true;
-    enqueueReadBuffer<FamilyType>();
+    EnqueueReadBufferHelper<>::enqueueReadBuffer(pCmdQ, srcBuffer.get(), CL_TRUE);
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
@@ -173,20 +173,20 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     }
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, MediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, MediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -215,7 +215,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, MediaInterfaceDescriptorLoad) {
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, InterfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, InterfaceDescriptorData) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -254,14 +254,14 @@ HWTEST_F(EnqueueReadBufferTypeTest, InterfaceDescriptorData) {
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, PipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, PipelineSelect) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, MediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, MediaVFEState) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     srcBuffer->forceDisallowCPUCopy = true;
@@ -282,7 +282,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, MediaVFEState) {
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 }
 
-HWTEST_F(EnqueueReadBufferTypeTest, blockingRequiresPipeControlAfterWalkerWithDCFlushSet) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, blockingRequiresPipeControlAfterWalkerWithDCFlushSet) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     srcBuffer->forceDisallowCPUCopy = true;

@@ -291,7 +291,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
     }
 }
 
-HWTEST_F(MockParentKernelDispatch, GivenParentKernelWhenDispatchedThenMediaInterfaceDescriptorLoadIsCorrectlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispatchedThenMediaInterfaceDescriptorLoadIsCorrectlyProgrammed) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 

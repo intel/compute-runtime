@@ -31,13 +31,17 @@ extern GFXCORE_FAMILY renderCoreFamily;
 
 #ifdef TESTS_GEN8
 #define BDW_TYPED_TEST_BODY testBodyHw<typename OCLRT::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
+#define BDW_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename OCLRT::GfxFamilyMapper<IGFX_GEN8_CORE>::GfxFamily>();
 #else
 #define BDW_TYPED_TEST_BODY
+#define BDW_TYPED_CMDTEST_BODY
 #endif
 #ifdef TESTS_GEN9
 #define SKL_TYPED_TEST_BODY testBodyHw<typename OCLRT::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
+#define SKL_TYPED_CMDTEST_BODY runCmdTestHwIfSupported<typename OCLRT::GfxFamilyMapper<IGFX_GEN9_CORE>::GfxFamily>();
 #else
 #define SKL_TYPED_TEST_BODY
+#define SKL_TYPED_CMDTEST_BODY
 #endif
 
 // Macros to provide template based testing.
@@ -85,6 +89,62 @@ extern GFXCORE_FAMILY renderCoreFamily;
 #define HWTEST_F(test_fixture, test_name)               \
     HWTEST_TEST_(test_fixture, test_name, test_fixture, \
                  ::testing::internal::GetTypeId<test_fixture>())
+
+// Macros to provide template based testing.
+// Test can use FamilyType in the test -- equivalent to SKLFamily
+#define HWCMDTEST_TEST_(cmdset_gen_base, test_case_name, test_name, parent_class, parent_id)              \
+    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                       \
+                                                                                                          \
+      public:                                                                                             \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                 \
+        () {}                                                                                             \
+                                                                                                          \
+      private:                                                                                            \
+        template <typename FamilyType>                                                                    \
+        void testBodyHw();                                                                                \
+                                                                                                          \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)> \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                 \
+            testBodyHw<FamilyType>();                                                                     \
+        }                                                                                                 \
+                                                                                                          \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)> \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {        \
+            /* do nothing */                                                                              \
+        }                                                                                                 \
+                                                                                                          \
+        void TestBody() override {                                                                        \
+            switch (::renderCoreFamily) {                                                                 \
+            case IGFX_GEN8_CORE:                                                                          \
+                BDW_TYPED_CMDTEST_BODY                                                                    \
+                break;                                                                                    \
+            case IGFX_GEN9_CORE:                                                                          \
+                SKL_TYPED_CMDTEST_BODY                                                                    \
+                break;                                                                                    \
+            default:                                                                                      \
+                ASSERT_TRUE((false && "Unknown hardware family"));                                        \
+                break;                                                                                    \
+            }                                                                                             \
+        }                                                                                                 \
+        static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                             \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                  \
+            GTEST_TEST_CLASS_NAME_(test_case_name, test_name));                                           \
+    };                                                                                                    \
+                                                                                                          \
+    ::testing::TestInfo *const GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::test_info_ =            \
+        ::testing::internal::MakeAndRegisterTestInfo(                                                     \
+            #test_case_name, #test_name, NULL, NULL,                                                      \
+            (parent_id),                                                                                  \
+            parent_class::SetUpTestCase,                                                                  \
+            parent_class::TearDownTestCase,                                                               \
+            new ::testing::internal::TestFactoryImpl<                                                     \
+                GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>);                                      \
+    template <typename FamilyType>                                                                        \
+    void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
+
+#define HWCMDTEST_F(cmdset_gen_base, test_fixture, test_name)               \
+    HWCMDTEST_TEST_(cmdset_gen_base, test_fixture, test_name, test_fixture, \
+                    ::testing::internal::GetTypeId<test_fixture>())
 
 #define FAMILYTEST_TEST_(test_case_name, test_name, parent_class, parent_id, match_core, match_product) \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                     \
@@ -164,6 +224,60 @@ extern GFXCORE_FAMILY renderCoreFamily;
         GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::AddToRegistry();                                             \
     template <typename FamilyType>                                                                                      \
     void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
+
+#define HWCMDTEST_P(cmdset_gen_base, test_case_name, test_name)                                                         \
+    class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public test_case_name {                                   \
+      public:                                                                                                           \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)                                                               \
+        () {}                                                                                                           \
+        template <typename FamilyType>                                                                                  \
+        void testBodyHw();                                                                                              \
+                                                                                                                        \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>               \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<ShouldBeTested>::type {                               \
+            testBodyHw<FamilyType>();                                                                                   \
+        }                                                                                                               \
+                                                                                                                        \
+        template <typename FamilyType, bool ShouldBeTested = FamilyType::supportsCmdSet(cmdset_gen_base)>               \
+        auto runCmdTestHwIfSupported() -> typename std::enable_if<false == ShouldBeTested>::type {                      \
+            /* do nothing */                                                                                            \
+        }                                                                                                               \
+                                                                                                                        \
+        virtual void TestBody() {                                                                                       \
+            switch (::renderCoreFamily) {                                                                               \
+            case IGFX_GEN8_CORE:                                                                                        \
+                BDW_TYPED_CMDTEST_BODY                                                                                  \
+                break;                                                                                                  \
+            case IGFX_GEN9_CORE:                                                                                        \
+                SKL_TYPED_CMDTEST_BODY                                                                                  \
+                break;                                                                                                  \
+            default:                                                                                                    \
+                ASSERT_TRUE((false && "Unknown hardware family"));                                                      \
+                break;                                                                                                  \
+            }                                                                                                           \
+        }                                                                                                               \
+                                                                                                                        \
+      private:                                                                                                          \
+        static int AddToRegistry() {                                                                                    \
+            ::testing::UnitTest::GetInstance()->parameterized_test_registry().GetTestCasePatternHolder<test_case_name>( \
+                                                                                 #test_case_name, __FILE__, __LINE__)   \
+                ->AddTestPattern(                                                                                       \
+                    #test_case_name,                                                                                    \
+                    #test_name,                                                                                         \
+                    new ::testing::internal::TestMetaFactory<                                                           \
+                        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)>());                                          \
+            return 0;                                                                                                   \
+        }                                                                                                               \
+        static int gtest_registering_dummy_;                                                                            \
+        GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                                \
+            GTEST_TEST_CLASS_NAME_(test_case_name, test_name));                                                         \
+    };                                                                                                                  \
+    int GTEST_TEST_CLASS_NAME_(test_case_name,                                                                          \
+                               test_name)::gtest_registering_dummy_ =                                                   \
+        GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::AddToRegistry();                                             \
+    template <typename FamilyType>                                                                                      \
+    void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::testBodyHw()
+
 #ifdef TESTS_GEN8
 #define GEN8TEST_F(test_fixture, test_name)                          \
     FAMILYTEST_TEST_(test_fixture, test_name, test_fixture,          \

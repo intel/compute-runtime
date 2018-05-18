@@ -30,7 +30,7 @@
 
 using namespace OCLRT;
 
-HWTEST_F(EnqueueCopyImageTest, gpgpuWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, gpgpuWalker) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueCopyImage<FamilyType>();
 
@@ -70,7 +70,7 @@ HWTEST_F(EnqueueCopyImageTest, alignsToCSR) {
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
 
-    enqueueCopyImage<FamilyType>();
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
@@ -78,14 +78,14 @@ HWTEST_F(EnqueueCopyImageTest, alignsToCSR) {
 HWTEST_F(EnqueueCopyImageTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
-    enqueueCopyImage<FamilyType>();
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
 HWTEST_F(EnqueueCopyImageTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
-    enqueueCopyImage<FamilyType>();
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
@@ -94,24 +94,24 @@ HWTEST_F(EnqueueCopyImageTest, addsIndirectData) {
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    enqueueCopyImage<FamilyType>();
+    EnqueueCopyImageHelper<>::enqueueCopyImage(pCmdQ, srcImage, dstImage);
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
-HWTEST_F(EnqueueCopyImageTest, loadRegisterImmediateL3CNTLREG) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, loadRegisterImmediateL3CNTLREG) {
     enqueueCopyImage<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWTEST_F(EnqueueCopyImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueCopyImage<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWTEST_F(EnqueueCopyImageTest, mediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, mediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -137,7 +137,7 @@ HWTEST_F(EnqueueCopyImageTest, mediaInterfaceDescriptorLoad) {
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWTEST_F(EnqueueCopyImageTest, interfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, interfaceDescriptorData) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -164,7 +164,7 @@ HWTEST_F(EnqueueCopyImageTest, interfaceDescriptorData) {
     EXPECT_NE(kernelStartPointer, interfaceDescriptorData.getBindingTablePointer());
 }
 
-HWTEST_F(EnqueueCopyImageTest, surfaceState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, surfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     enqueueCopyImage<FamilyType>();
@@ -195,13 +195,13 @@ HWTEST_F(EnqueueCopyImageTest, surfaceState) {
     EXPECT_EQ(reinterpret_cast<uint64_t>(dstImage->getCpuAddress()), dstSurfaceState.getSurfaceBaseAddress());
 }
 
-HWTEST_F(EnqueueCopyImageTest, pipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, pipelineSelect) {
     enqueueCopyImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(EnqueueCopyImageTest, mediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageTest, mediaVFEState) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     enqueueCopyImage<FamilyType>();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -59,7 +59,7 @@ HWTEST_F(CommandParse, getCommandLengthWithGarbage) {
     EXPECT_EQ(0u, PARSE::getCommandLength(&buffer));
 }
 
-HWTEST_F(CommandParse, parseCommandBufferWithLength) {
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandParse, parseCommandBufferWithLength) {
     typedef typename FamilyType::PARSE PARSE;
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     GenCmdList cmds;

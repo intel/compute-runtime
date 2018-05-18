@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,7 +80,6 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     }
 
   protected:
-    template <typename FamilyType>
     void enqueueCopyBuffer() {
         auto retVal = EnqueueCopyBufferHelper::enqueueCopyBuffer(
             pCmdQ,
@@ -93,7 +92,11 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
             nullptr,
             nullptr);
         EXPECT_EQ(CL_SUCCESS, retVal);
+    }
 
+    template <typename FamilyType>
+    void enqueueCopyBufferAndParse() {
+        enqueueCopyBuffer();
         parseCommands<FamilyType>(*pCmdQ);
     }
 

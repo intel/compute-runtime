@@ -109,7 +109,7 @@ HWTEST_F(KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
 }
 
-HWTEST_F(KernelCommandsTest, programMediaInterfaceDescriptorLoadResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programMediaInterfaceDescriptorLoadResourceUsage) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -127,7 +127,7 @@ HWTEST_F(KernelCommandsTest, programMediaInterfaceDescriptorLoadResourceUsage) {
     EXPECT_EQ(sizeof(MEDIA_INTERFACE_DESCRIPTOR_LOAD) + sizeof(MEDIA_STATE_FLUSH), usedAfter - usedBefore);
 }
 
-HWTEST_F(KernelCommandsTest, programMediaStateFlushResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programMediaStateFlushResourceUsage) {
     CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
 
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;

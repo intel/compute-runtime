@@ -529,7 +529,7 @@ struct DrmCsrVfeTests : ::testing::Test {
     CommandStreamReceiver *oldCsr = nullptr;
 };
 
-HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlushedThenReprogram) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlushedThenReprogram) {
     std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
@@ -557,7 +557,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlush
     mockCsr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
-HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorityIsFlushedThenReprogram) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorityIsFlushedThenReprogram) {
     std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
@@ -585,7 +585,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorit
     mockCsr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }
 
-HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsFlushedThenDontReprogram) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsFlushedThenDontReprogram) {
     std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 

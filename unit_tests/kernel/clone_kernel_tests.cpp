@@ -395,7 +395,7 @@ TEST_F(CloneKernelTest, cloneKernelWithArgSampler) {
     EXPECT_EQ(GetNormCoordsEnum(sampler->normalizedCoordinates), *pNormalizedCoords);
 }
 
-HWTEST_F(CloneKernelTest, cloneKernelWithArgDeviceQueue) {
+HWCMDTEST_F(IGFX_GEN8_CORE, CloneKernelTest, cloneKernelWithArgDeviceQueue) {
     cl_queue_properties queueProps[5] = {
         CL_QUEUE_PROPERTIES,
         CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE,

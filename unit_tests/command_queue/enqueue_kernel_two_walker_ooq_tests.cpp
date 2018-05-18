@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,26 +32,26 @@ struct OOQFixtureFactory : public HelloWorldFixtureFactory {
 
 typedef TwoWalkerTest<OOQFixtureFactory> OOQWithTwoWalkers;
 
-HWTEST_F(OOQWithTwoWalkers, shouldHaveTwoWalkers) {
+HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldHaveTwoWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(OOQWithTwoWalkers, shouldHaveOnePS) {
+HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldHaveOnePS) {
     enqueueTwoKernels<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(OOQWithTwoWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldHaveOneVFEState) {
     enqueueTwoKernels<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(OOQWithTwoWalkers, shouldntHaveAPipecontrolBetweenWalkers) {
+HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldntHaveAPipecontrolBetweenWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     auto itorCmd = find<typename FamilyType::PIPE_CONTROL *>(itorWalker1, itorWalker2);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,8 +53,7 @@ class SchedulerSourceTest : public testing::Test {
     MockContext context;
 };
 
-HWTEST_F(SchedulerSourceTest, PatchGpgpuWalker) {
-
+HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, PatchGpgpuWalker) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;

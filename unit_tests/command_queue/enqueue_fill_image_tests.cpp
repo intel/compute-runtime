@@ -46,12 +46,12 @@ HWTEST_F(EnqueueFillImageTest, alignsToCSR) {
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
 
-    enqueueFillImage<FamilyType>();
+    EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueFillImageTest, gpgpuWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, gpgpuWalker) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueFillImage<FamilyType>();
 
@@ -85,14 +85,14 @@ HWTEST_F(EnqueueFillImageTest, gpgpuWalker) {
 HWTEST_F(EnqueueFillImageTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
-    enqueueFillImage<FamilyType>();
+    EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
 HWTEST_F(EnqueueFillImageTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
-    enqueueFillImage<FamilyType>();
+    EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
@@ -101,24 +101,24 @@ HWTEST_F(EnqueueFillImageTest, addsIndirectData) {
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    enqueueFillImage<FamilyType>();
+    EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
     EXPECT_NE(dshBefore, pDSH->getUsed());
     EXPECT_NE(iohBefore, pIOH->getUsed());
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
-HWTEST_F(EnqueueFillImageTest, loadRegisterImmediateL3CNTLREG) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, loadRegisterImmediateL3CNTLREG) {
     enqueueFillImage<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWTEST_F(EnqueueFillImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueFillImage<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWTEST_F(EnqueueFillImageTest, mediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, mediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -144,7 +144,7 @@ HWTEST_F(EnqueueFillImageTest, mediaInterfaceDescriptorLoad) {
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWTEST_F(EnqueueFillImageTest, interfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, interfaceDescriptorData) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -171,7 +171,7 @@ HWTEST_F(EnqueueFillImageTest, interfaceDescriptorData) {
     EXPECT_NE(kernelStartPointer, interfaceDescriptorData.getBindingTablePointer());
 }
 
-HWTEST_F(EnqueueFillImageTest, surfaceState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, surfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     enqueueFillImage<FamilyType>();
@@ -189,13 +189,13 @@ HWTEST_F(EnqueueFillImageTest, surfaceState) {
     EXPECT_EQ(reinterpret_cast<uint64_t>(image->getCpuAddress()), srcSurfaceState.getSurfaceBaseAddress());
 }
 
-HWTEST_F(EnqueueFillImageTest, pipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, pipelineSelect) {
     enqueueFillImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(EnqueueFillImageTest, mediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillImageTest, mediaVFEState) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     enqueueFillImage<FamilyType>();

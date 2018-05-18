@@ -115,7 +115,7 @@ HWTEST_F(DispatchWalkerTest, computeDimensions) {
     EXPECT_EQ(3u, computeDimensions(workItems3D));
 }
 
-HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     MockKernel kernel(&program, kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
@@ -158,7 +158,7 @@ HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
 
-HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, noLocalIdsShouldntCrash) {
     threadPayload.LocalIDXPresent = 0;
     threadPayload.LocalIDYPresent = 0;
     threadPayload.LocalIDZPresent = 0;
@@ -777,7 +777,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsInterfaceDesriptors) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsInterfaceDesriptors) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto memoryManager = this->pDevice->getMemoryManager();
@@ -872,7 +872,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
     memoryManager->freeGraphicsMemory(kernelIsaWithSamplerAllocation);
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsGpgpuWalkerIDOffset) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProgramsGpgpuWalkerIDOffset) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(&program, kernelInfo, *pDevice);
@@ -917,7 +917,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoCorrectlyProg
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoAndDifferentKernelsCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoAndDifferentKernelsCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel1(&program, kernelInfo, *pDevice);
@@ -966,7 +966,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoAndDifferentK
     }
 }
 
-HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoButSameKernelCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoButSameKernelCorrectlyProgramsGpgpuWalkerThreadGroupIdStartingCoordinates) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
 
     MockKernel kernel(&program, kernelInfo, *pDevice);
@@ -1016,7 +1016,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfoButSameKernel
     }
 }
 
-HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
+HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     WhitelistedRegisters registers = {0};
     registers.chicken0hdc_0xE5F0 = true;

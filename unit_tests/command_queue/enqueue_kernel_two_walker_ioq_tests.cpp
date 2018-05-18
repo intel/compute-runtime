@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,26 +28,26 @@ using namespace OCLRT;
 
 typedef TwoWalkerTest<HelloWorldFixtureFactory> IOQWithTwoWalkers;
 
-HWTEST_F(IOQWithTwoWalkers, shouldHaveTwoWalkers) {
+HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveTwoWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(IOQWithTwoWalkers, shouldHaveOnePS) {
+HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveOnePS) {
     enqueueTwoKernels<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(IOQWithTwoWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveOneVFEState) {
     enqueueTwoKernels<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
+HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
     enqueueTwoKernels<FamilyType>();
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
 

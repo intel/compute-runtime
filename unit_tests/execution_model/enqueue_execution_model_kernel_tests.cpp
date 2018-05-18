@@ -44,7 +44,7 @@ static const char *KernelNames[] = {"kernel_reflection", "simple_block_kernel"};
 
 typedef ExecutionModelKernelTest ParentKernelEnqueueTest;
 
-HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDSHHasCorrectlyFilledInterfaceDesriptorTables) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenDeviceQueueDSHHasCorrectlyFilledInterfaceDesriptorTables) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
@@ -330,7 +330,7 @@ HWTEST_P(ParentKernelEnqueueTest, givenParentKernelWhenEnqueuedThenReflectionSur
     }
 }
 
-HWTEST_P(ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueIsNotReset) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueIsNotReset) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
 
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -354,7 +354,7 @@ HWTEST_P(ParentKernelEnqueueTest, givenBlockedQueueWhenParentKernelIsEnqueuedThe
     }
 }
 
-HWTEST_P(ParentKernelEnqueueTest, givenNonBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueDSHAddressIsProgrammedInStateBaseAddressAndDSHIsMadeResident) {
+HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenParentKernelIsEnqueuedThenDeviceQueueDSHAddressIsProgrammedInStateBaseAddressAndDSHIsMadeResident) {
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
@@ -531,7 +531,7 @@ HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueuedToNonBlockedQueueFlushe
     }
 }
 
-HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueuedWithSchedulerReturnInstanceRunsSimulation) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedWithSchedulerReturnInstanceRunsSimulation) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
 

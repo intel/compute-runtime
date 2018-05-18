@@ -106,7 +106,7 @@ HWTEST_F(EnqueueReadBufferRectTest, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -118,7 +118,7 @@ HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_NonBlocking) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, alignsToCSR_NonBlocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -129,7 +129,7 @@ HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_NonBlocking) {
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_GPGPUWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_GPGPUWalker) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     enqueueReadBufferRect2D<FamilyType>();
 
@@ -160,21 +160,21 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_GPGPUWalker) {
     }
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_bumpsTaskLevel) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueReadBufferRect2D<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_addsCommands) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueReadBufferRect2D<FamilyType>();
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_addsIndirectData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_addsIndirectData) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -210,18 +210,18 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_addsIndirectData) {
     }
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
     enqueueReadBufferRect2D<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, When2DEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueReadBufferRect2D<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_MediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_MediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
@@ -249,7 +249,7 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_MediaInterfaceDescriptorLoad) {
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_InterfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_InterfaceDescriptorData) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -287,13 +287,13 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_InterfaceDescriptorData) {
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_PipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_PipelineSelect) {
     enqueueReadBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, 2D_MediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_MediaVFEState) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
     enqueueReadBufferRect2D<FamilyType>();
@@ -313,7 +313,7 @@ HWTEST_F(EnqueueReadBufferRectTest, 2D_MediaVFEState) {
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
 }
 
-HWTEST_F(EnqueueReadBufferRectTest, blockingRequiresPipeControlAfterWalkerWithDCFlushSet) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, blockingRequiresPipeControlAfterWalkerWithDCFlushSet) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     auto blocking = CL_TRUE;

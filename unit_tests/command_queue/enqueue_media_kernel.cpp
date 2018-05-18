@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,13 +32,13 @@ TEST_F(MediaKernelTest, VmeKernelProperlyIdentifiesItself) {
     ASSERT_EQ(true, pVmeKernel->isVmeKernel());
 }
 
-HWTEST_F(MediaKernelTest, EnqueueVmeKernelUsesSinglePipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, MediaKernelTest, EnqueueVmeKernelUsesSinglePipelineSelect) {
     enqueueVmeKernel<FamilyType>();
     auto numCommands = getCommandsList<typename FamilyType::PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(MediaKernelTest, EnqueueRegularKernelUsesSinglePipelineSelect) {
+HWCMDTEST_F(IGFX_GEN8_CORE, MediaKernelTest, EnqueueRegularKernelUsesSinglePipelineSelect) {
     enqueueRegularKernel<FamilyType>();
     auto numCommands = getCommandsList<typename FamilyType::PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);

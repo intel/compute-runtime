@@ -86,14 +86,14 @@ HWTEST_F(EnqueueCopyBufferTest, alignsToCSR) {
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBuffer();
     EXPECT_EQ(csr.peekTaskCount(), pCmdQ->taskCount);
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, GPGPUWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, GPGPUWalker) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBufferAndParse<FamilyType>();
 
     auto *cmd = (GPGPU_WALKER *)cmdWalker;
     ASSERT_NE(nullptr, cmd);
@@ -125,14 +125,14 @@ HWTEST_F(EnqueueCopyBufferTest, GPGPUWalker) {
 HWTEST_F(EnqueueCopyBufferTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBuffer();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
 HWTEST_F(EnqueueCopyBufferTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBuffer();
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
@@ -141,7 +141,7 @@ HWTEST_F(EnqueueCopyBufferTest, addsIndirectData) {
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBuffer();
 
     MultiDispatchInfo multiDispatchInfo;
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
@@ -166,22 +166,22 @@ HWTEST_F(EnqueueCopyBufferTest, addsIndirectData) {
     }
 }
 
-HWTEST_F(EnqueueCopyBufferTest, LoadRegisterImmediateL3CNTLREG) {
-    enqueueCopyBuffer<FamilyType>();
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, LoadRegisterImmediateL3CNTLREG) {
+    enqueueCopyBufferAndParse<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
-    enqueueCopyBuffer<FamilyType>();
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+    enqueueCopyBufferAndParse<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList, 0llu);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, MediaInterfaceDescriptorLoad) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, MediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBufferAndParse<FamilyType>();
 
     auto *cmd = (MEDIA_INTERFACE_DESCRIPTOR_LOAD *)cmdMediaInterfaceDescriptorLoad;
     ASSERT_NE(nullptr, cmd);
@@ -202,12 +202,12 @@ HWTEST_F(EnqueueCopyBufferTest, MediaInterfaceDescriptorLoad) {
     FamilyType::PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorMediaInterfaceDescriptorLoad);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, InterfaceDescriptorData) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, InterfaceDescriptorData) {
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBufferAndParse<FamilyType>();
 
     auto cmdIDD = (INTERFACE_DESCRIPTOR_DATA *)cmdInterfaceDescriptorData;
     auto cmdSBA = (STATE_BASE_ADDRESS *)cmdStateBaseAddress;
@@ -221,16 +221,16 @@ HWTEST_F(EnqueueCopyBufferTest, InterfaceDescriptorData) {
     EXPECT_NE(0u, cmdIDD->getConstantIndirectUrbEntryReadLength());
 }
 
-HWTEST_F(EnqueueCopyBufferTest, PipelineSelect) {
-    enqueueCopyBuffer<FamilyType>();
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, PipelineSelect) {
+    enqueueCopyBufferAndParse<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, MediaVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, MediaVFEState) {
     typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
 
-    enqueueCopyBuffer<FamilyType>();
+    enqueueCopyBufferAndParse<FamilyType>();
 
     auto *cmd = (MEDIA_VFE_STATE *)cmdMediaVfeState;
     ASSERT_NE(nullptr, cmd);
@@ -244,8 +244,8 @@ HWTEST_F(EnqueueCopyBufferTest, MediaVFEState) {
     FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
-    enqueueCopyBuffer<FamilyType>();
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
+    enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
@@ -271,8 +271,8 @@ HWTEST_F(EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
     EXPECT_EQ((void *)((uintptr_t)srcBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
 }
 
-HWTEST_F(EnqueueCopyBufferTest, argumentOneShouldMatchDestAddress) {
-    enqueueCopyBuffer<FamilyType>();
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentOneShouldMatchDestAddress) {
+    enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;

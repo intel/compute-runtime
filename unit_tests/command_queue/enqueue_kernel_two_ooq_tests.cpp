@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -118,25 +118,25 @@ struct TwoOOQsTwoDependentWalkers : public HelloWorldTest<OOQFixtureFactory>,
     CommandQueue *pCmdQ2 = nullptr;
 };
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
     parseWalkers<FamilyType>();
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveOnePS) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOnePS) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveOneVFEState) {
     parseWalkers<FamilyType>();
 
     auto numCommands = getCommandsList<typename FamilyType::MEDIA_VFE_STATE>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWTEST_F(TwoOOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TwoOOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     parseWalkers<FamilyType>();

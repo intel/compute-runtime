@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -43,7 +43,7 @@ struct MarkerFixture : public CommandEnqueueFixture {
 
 typedef Test<MarkerFixture> MarkerTest;
 
-HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
+HWCMDTEST_F(IGFX_GEN8_CORE, MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

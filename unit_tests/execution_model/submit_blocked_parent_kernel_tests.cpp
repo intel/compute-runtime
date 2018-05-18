@@ -320,7 +320,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*device);
@@ -376,7 +376,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKer
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
         MockParentKernel *parentKernel = MockParentKernel::create(*device);
@@ -425,7 +425,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmi
     }
 }
 
-HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
+HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
         std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*device));

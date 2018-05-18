@@ -312,7 +312,12 @@ struct BDWFamily : public GEN8 {
     static const MI_BATCH_BUFFER_END cmdInitBatchBufferEnd;
     static const MI_BATCH_BUFFER_START cmdInitBatchBufferStart;
     static const PIPE_CONTROL cmdInitPipeControl;
+
+    static constexpr bool supportsCmdSet(GFXCORE_FAMILY cmdSetBaseFamily) {
+        return cmdSetBaseFamily == IGFX_GEN8_CORE;
+    }
 };
+
 struct BDW : public BDWFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;

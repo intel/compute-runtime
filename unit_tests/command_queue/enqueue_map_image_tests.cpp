@@ -1000,7 +1000,7 @@ struct EnqueueMapImageTypeTest : public CommandEnqueueFixture,
     Image *image = nullptr;
 };
 
-HWTEST_F(EnqueueMapImageTypeTest, blockingEnqueueRequiresPCWithDCFlushSetAfterWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueMapImageTypeTest, blockingEnqueueRequiresPCWithDCFlushSetAfterWalker) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     // Set taskCount to 1 to call finish on map operation
