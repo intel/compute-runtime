@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,7 +63,7 @@ extern std::array<OCLRT::Drm *, 1> drms;
 inline void resetOSMockGlobalState() {
     fakeFd = 1023;
     haveDri = 0;
-    deviceId = 0x1916;
+    deviceId = OCLRT::deviceDescriptorTable[0].deviceId;
     haveSoftPin = 1;
     failOnDeviceId = 0;
     failOnRevisionId = 0;

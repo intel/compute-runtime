@@ -73,7 +73,7 @@ TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallGetDeviceIdTHENreturnProper
     int deviceId = 0;
     int ret = drmNullDevice->getDeviceID(deviceId);
     EXPECT_EQ(0, ret);
-    EXPECT_EQ(0x1916, deviceId);
+    EXPECT_EQ(deviceDescriptorTable[0].deviceId, deviceId);
 }
 
 TEST_F(DrmNullDeviceTests, GIVENdrmNullDeviceWHENcallIoctlTHENalwaysSuccess) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,15 +23,14 @@
 #include "mock_os_layer.h"
 #include <cassert>
 #include <iostream>
-
 const char *devDri[2] = {"/dev/dri/renderD128", "/dev/dri/card0"};
 
 int (*c_open)(const char *pathname, int flags, ...) = nullptr;
 int (*c_ioctl)(int fd, unsigned long int request, ...) = nullptr;
 
 int fakeFd = 1023;
-int haveDri = 0;       // index of dri to serve, -1 - none
-int deviceId = 0x1916; // known DeviceID
+int haveDri = 0;                                         // index of dri to serve, -1 - none
+int deviceId = OCLRT::deviceDescriptorTable[0].deviceId; // default supported DeviceID
 int haveSoftPin = 1;
 int havePreemption = 1;
 int failOnDeviceId = 0;
