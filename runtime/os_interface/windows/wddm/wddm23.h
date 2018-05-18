@@ -20,35 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#pragma once
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm/wddm23.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "test.h"
 
-#include <typeinfo>
+namespace OCLRT {
+class Wddm23 : public Wddm20 {
+  protected:
+    friend Wddm20;
+    Wddm23();
+    ~Wddm23();
 
-using namespace OCLRT;
+    bool createHwQueue() override;
+    void destroyHwQueue();
+    bool createMonitoredFence() override { return true; }
+    const bool hwQueuesSupported() const override { return true; }
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
 
-TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
-    std::unique_ptr<Wddm> wddm20(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
-    std::unique_ptr<Wddm> wddm23(Wddm::createWddm(WddmInterfaceVersion::Wddm23));
-
-    EXPECT_EQ(typeid(*wddm20.get()), typeid(Wddm20));
-    EXPECT_EQ(typeid(*wddm23.get()), typeid(Wddm23));
-}
-
-TEST(wddmCreateTests, givenInvalidInputVersionWhenCreatingThenThrowException) {
-    EXPECT_THROW(Wddm::createWddm(0), std::exception);
-    EXPECT_THROW(Wddm::createWddm(21), std::exception);
-    EXPECT_THROW(Wddm::createWddm(22), std::exception);
-    EXPECT_THROW(Wddm::createWddm(24), std::exception);
-}
-
-TEST(wddmCreateTests, givenHwQueuesSupportedDebugVariableWhenCreatingThenForceWddm23) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.HwQueueSupported.set(true);
-
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
-
-    EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm23));
-}
+    D3DKMT_HANDLE hwQueueHandle = 0;
+};
+} // namespace OCLRT

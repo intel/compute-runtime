@@ -667,20 +667,26 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToTrueW
     EXPECT_TRUE(!!privateData->NoRingFlushes);
 }
 
-HWTEST_F(Wddm20WithMockGdiDllTests, givenHwQueueSupportEnabledWhenCreateContextIsCalledThenSetAppropriateFlag) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.HwQueueSupported.set(true);
-
+HWTEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) {
     wddm->init<FamilyType>();
-    EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);
+    EXPECT_FALSE(wddm->hwQueuesSupported());
+    EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
-HWTEST_F(Wddm20WithMockGdiDllTests, givenHwQueueSupportDisabledWhenCreateContextIsCalledThenSetAppropriateFlag) {
-    DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.HwQueueSupported.set(false);
+TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
+    EXPECT_FALSE(wddm->createHwQueue());
+}
 
+HWTEST_F(Wddm20Tests, whenInitCalledThenDontCallToCreateHwQueue) {
     wddm->init<FamilyType>();
-    EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
+    EXPECT_EQ(0u, wddm->createHwQueueResult.called);
+}
+
+HWTEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
+    wddm->init<FamilyType>();
+    EXPECT_EQ(nullptr, wddm->gdi->createHwQueue.mFunc);
+    EXPECT_EQ(nullptr, wddm->gdi->destroyHwQueue.mFunc);
+    EXPECT_EQ(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
 }
 
 HWTEST_F(Wddm20Tests, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {

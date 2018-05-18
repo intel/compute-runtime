@@ -32,7 +32,7 @@ set(IGDRCL_SRCS_tests_local
 )
 
 if(WIN32)
-   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows${BRANCH_DIR_SUFFIX}/wddm_create.cpp)
+   list(APPEND IGDRCL_SRCS_tests_local ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp)
 endif()
 
 add_subdirectory(libult)

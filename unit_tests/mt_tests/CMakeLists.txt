@@ -44,7 +44,7 @@ target_link_libraries(igdrcl_mt_tests igdrcl_mocks ${IGDRCL_EXTRA_LIBS})
 
 if(WIN32)
   target_sources(igdrcl_mt_tests PRIVATE
-    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows${BRANCH_DIR_SUFFIX}/wddm_create.cpp
+    ${IGDRCL_SOURCE_DIR}/unit_tests/os_interface/windows/wddm_create.cpp
   )
 endif()
 

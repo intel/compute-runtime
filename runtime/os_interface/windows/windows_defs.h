@@ -30,11 +30,11 @@ namespace OCLRT {
 constexpr uintptr_t windowsMinAddress = 0x200000;
 
 struct MonitoredFence {
-    D3DKMT_HANDLE fenceHandle;
-    D3DGPU_VIRTUAL_ADDRESS gpuAddress;
-    volatile uint64_t *cpuAddress;
-    volatile uint64_t currentFenceValue;
-    uint64_t lastSubmittedFence;
+    D3DKMT_HANDLE fenceHandle = 0;
+    D3DGPU_VIRTUAL_ADDRESS gpuAddress = 0;
+    volatile uint64_t *cpuAddress = nullptr;
+    volatile uint64_t currentFenceValue = 0;
+    uint64_t lastSubmittedFence = 0;
 };
 
 } // namespace OCLRT

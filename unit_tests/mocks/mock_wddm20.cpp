@@ -125,6 +125,11 @@ bool WddmMock::createContext() {
     return createContextResult.success = Wddm::createContext();
 }
 
+bool WddmMock::createHwQueue() {
+    createHwQueueResult.called++;
+    return createHwQueueResult.success = Wddm::createHwQueue();
+}
+
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
     destroyContextResult.called++;
     return destroyContextResult.success = Wddm::destroyContext(context);

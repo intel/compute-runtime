@@ -49,11 +49,13 @@ class WddmMock : public Wddm20 {
   public:
     using Wddm::adapter;
     using Wddm::context;
+    using Wddm::createHwQueue;
     using Wddm::createMonitoredFence;
     using Wddm::device;
     using Wddm::gdi;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
+    using Wddm::hwQueuesSupported;
     using Wddm::pagingQueue;
 
     WddmMock() : Wddm20(){};
@@ -69,6 +71,7 @@ class WddmMock : public Wddm20 {
     bool destroyAllocation(WddmAllocation *alloc);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext() override;
+    bool createHwQueue() override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
@@ -118,6 +121,7 @@ class WddmMock : public Wddm20 {
     WddmMockHelpers::CallResult waitFromCpuResult;
     WddmMockHelpers::CallResult releaseReservedAddressResult;
     WddmMockHelpers::CallResult reserveValidAddressRangeResult;
+    WddmMockHelpers::CallResult createHwQueueResult;
 
     NTSTATUS createAllocationStatus;
     bool mapGpuVaStatus;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -79,6 +79,11 @@ class Gdi {
     ThkWrapper<OCL_RUNTIME_PROFILING, IN D3DKMT_REGISTERTRIMNOTIFICATION *> registerTrimNotification;
     ThkWrapper<OCL_RUNTIME_PROFILING, IN D3DKMT_UNREGISTERTRIMNOTIFICATION *> unregisterTrimNotification;
 
+    // HW queue
+    ThkWrapper<OCL_RUNTIME_PROFILING, IN OUT D3DKMT_CREATEHWQUEUE *> createHwQueue;
+    ThkWrapper<OCL_RUNTIME_PROFILING, IN CONST D3DKMT_DESTROYHWQUEUE *> destroyHwQueue;
+    ThkWrapper<OCL_RUNTIME_PROFILING, IN CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *> submitCommandToHwQueue;
+
     // For debug purposes
     ThkWrapper<OCL_RUNTIME_PROFILING, IN OUT D3DKMT_GETDEVICESTATE *> getDeviceState;
 
@@ -86,8 +91,10 @@ class Gdi {
         return initialized;
     }
 
+    MOCKABLE_VIRTUAL bool setupHwQueueProcAddresses();
+
   protected:
-    virtual bool getAllProcAddresses();
+    MOCKABLE_VIRTUAL bool getAllProcAddresses();
     bool initialized;
 
   private:

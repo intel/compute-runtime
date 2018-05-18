@@ -62,6 +62,9 @@ D3DKMTEvict
 D3DKMTGetDeviceState
 D3DKMTRegisterTrimNotification
 D3DKMTUnregisterTrimNotification
+D3DKMTCreateHwQueue
+D3DKMTDestroyHwQueue
+D3DKMTSubmitCommandToHwQueue
 MockSetAdapterInfo
 MockSetSizes
 GetMockSizes
@@ -74,3 +77,6 @@ getAdapterInfoAddress
 getLastCallMapGpuVaArg
 setMapGpuVaFailConfig
 getCreateContextData
+getCreateHwQueueData
+getDestroyHwQueueData
+getSubmitCommandToHwQueueData

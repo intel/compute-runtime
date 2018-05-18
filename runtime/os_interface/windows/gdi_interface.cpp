@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,6 +29,17 @@ Gdi::Gdi() : gdiDll(Os::gdiDllName),
     if (gdiDll.isLoaded()) {
         initialized = getAllProcAddresses();
     }
+}
+
+bool Gdi::setupHwQueueProcAddresses() {
+    createHwQueue = reinterpret_cast<PFND3DKMT_CREATEHWQUEUE>(gdiDll.getProcAddress("D3DKMTCreateHwQueue"));
+    destroyHwQueue = reinterpret_cast<PFND3DKMT_DESTROYHWQUEUE>(gdiDll.getProcAddress("D3DKMTDestroyHwQueue"));
+    submitCommandToHwQueue = reinterpret_cast<PFND3DKMT_SUBMITCOMMANDTOHWQUEUE>(gdiDll.getProcAddress("D3DKMTSubmitCommandToHwQueue"));
+
+    if (!createHwQueue || !destroyHwQueue || !submitCommandToHwQueue) {
+        return false;
+    }
+    return true;
 }
 
 bool Gdi::getAllProcAddresses() {

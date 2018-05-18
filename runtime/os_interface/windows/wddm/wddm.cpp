@@ -62,8 +62,7 @@ Wddm::Wddm() : initialized(false),
                pagingFenceAddress(nullptr),
                currentPagingFenceValue(0),
                hwContextId(0),
-               trimCallbackHandle(nullptr),
-               wddmInterfaceVersion(WddmInterfaceVersion::Wddm20) {
+               trimCallbackHandle(nullptr) {
     featureTable.reset(new FeatureTable());
     waTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
@@ -235,12 +234,9 @@ bool Wddm::createMonitoredFence() {
 
     DEBUG_BREAK_IF(STATUS_SUCCESS != Status);
 
-    monitoredFence.currentFenceValue = 1;
-    monitoredFence.fenceHandle = CreateSynchronizationObject.hSyncObject;
-    monitoredFence.cpuAddress = reinterpret_cast<UINT64 *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress);
-    monitoredFence.lastSubmittedFence = 0;
-
-    monitoredFence.gpuAddress = CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress;
+    resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
+                              reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
+                              CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
 
     return Status == STATUS_SUCCESS;
 }
@@ -728,7 +724,7 @@ bool Wddm::createContext() {
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());
-    CreateContext.Flags.HwQueueSupported = static_cast<UINT>(DebugManager.flags.HwQueueSupported.get());
+    CreateContext.Flags.HwQueueSupported = hwQueuesSupported();
 
     if (preemptionMode >= PreemptionMode::MidBatch) {
         CreateContext.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
@@ -951,8 +947,17 @@ bool Wddm::reserveValidAddressRange(size_t size, void *&reservedMem) {
 void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {
     return virtualAllocFnc(inPtr, size, flags, type);
 }
+
 int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
     return virtualFreeFnc(ptr, size, flags);
+}
+
+void Wddm::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
+    monitoredFence.lastSubmittedFence = 0;
+    monitoredFence.currentFenceValue = 1;
+    monitoredFence.fenceHandle = handle;
+    monitoredFence.cpuAddress = cpuAddress;
+    monitoredFence.gpuAddress = gpuAddress;
 }
 
 } // namespace OCLRT

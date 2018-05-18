@@ -61,6 +61,9 @@ bool Wddm::init() {
         if (!createContext()) {
             return false;
         }
+        if (hwQueuesSupported() && !createHwQueue()) {
+            return false;
+        }
         if (!createMonitoredFence()) {
             return false;
         }

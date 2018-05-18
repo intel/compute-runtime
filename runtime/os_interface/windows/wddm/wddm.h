@@ -51,6 +51,7 @@ struct KmDafListener;
 
 namespace WddmInterfaceVersion {
 constexpr uint32_t Wddm20 = 20;
+constexpr uint32_t Wddm23 = 23;
 } // namespace WddmInterfaceVersion
 
 class Wddm {
@@ -59,7 +60,6 @@ class Wddm {
     typedef void(WINAPI *GetSystemInfoFcn)(SYSTEM_INFO *pSystemInfo);
     typedef BOOL(WINAPI *VirtualFreeFcn)(LPVOID ptr, SIZE_T size, DWORD flags);
     typedef LPVOID(WINAPI *VirtualAllocFcn)(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type);
-    const uint32_t wddmInterfaceVersion;
 
     virtual ~Wddm();
 
@@ -72,6 +72,7 @@ class Wddm {
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, uint64_t size, bool allocation32bit, bool use64kbPages, bool useHeap1);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
     MOCKABLE_VIRTUAL bool createContext();
+    virtual bool createHwQueue() { return false; }
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);
@@ -87,7 +88,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
-    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
+    virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
     MOCKABLE_VIRTUAL bool waitOnGPU();
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue);
 
@@ -207,12 +208,14 @@ class Wddm {
     bool destroyPagingQueue();
     bool destroyDevice();
     bool closeAdapter();
-    bool createMonitoredFence();
+    virtual bool createMonitoredFence();
     void getDeviceState();
     void handleCompletion();
     unsigned int readEnablePreemptionRegKey();
     bool initGmmContext();
     void destroyGmmContext();
+    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
+    virtual const bool hwQueuesSupported() const { return false; }
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;

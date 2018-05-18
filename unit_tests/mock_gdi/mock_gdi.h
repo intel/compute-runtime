@@ -83,3 +83,6 @@ ADAPTER_INFO *getAdapterInfoAddress();
 D3DDDI_MAPGPUVIRTUALADDRESS *getLastCallMapGpuVaArg();
 void setMapGpuVaFailConfig(uint32_t count, uint32_t max);
 D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData();
+D3DKMT_CREATEHWQUEUE *getCreateHwQueueData();
+D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData();
+D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData();

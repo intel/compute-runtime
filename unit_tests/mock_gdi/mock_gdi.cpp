@@ -387,6 +387,31 @@ NTSTATUS __stdcall D3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHR
     return STATUS_SUCCESS;
 }
 
+static D3DKMT_CREATEHWQUEUE createHwQueueData = {};
+
+NTSTATUS __stdcall D3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueue) {
+    createHwQueue->hHwQueueProgressFence = 1;
+    createHwQueue->HwQueueProgressFenceCPUVirtualAddress = reinterpret_cast<void *>(2);
+    createHwQueue->HwQueueProgressFenceGPUVirtualAddress = 3;
+    createHwQueue->hHwQueue = 4;
+    createHwQueueData = *createHwQueue;
+    return STATUS_SUCCESS;
+}
+
+static D3DKMT_DESTROYHWQUEUE destroyHwQueueData = {};
+
+NTSTATUS __stdcall D3DKMTDestroyHwQueue(IN CONST D3DKMT_DESTROYHWQUEUE *destroyHwQueue) {
+    destroyHwQueueData = *destroyHwQueue;
+    return STATUS_SUCCESS;
+}
+
+static D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommandToHwQueueData = {};
+
+NTSTATUS __stdcall D3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *submitCommandToHwQueue) {
+    submitCommandToHwQueueData = *submitCommandToHwQueue;
+    return STATUS_SUCCESS;
+}
+
 #ifdef __cplusplus
 }
 #endif
@@ -440,4 +465,16 @@ void setMapGpuVaFailConfig(uint32_t count, uint32_t max) {
 
 D3DKMT_CREATECONTEXTVIRTUAL *getCreateContextData() {
     return &createContextData;
+}
+
+D3DKMT_CREATEHWQUEUE *getCreateHwQueueData() {
+    return &createHwQueueData;
+}
+
+D3DKMT_DESTROYHWQUEUE *getDestroyHwQueueData() {
+    return &destroyHwQueueData;
+}
+
+D3DKMT_SUBMITCOMMANDTOHWQUEUE *getSubmitCommandToHwQueueData() {
+    return &submitCommandToHwQueueData;
 }
