@@ -49,7 +49,6 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override;
-    GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) override;
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     void *lockResource(GraphicsAllocation *graphicsAllocation) override;
     void unlockResource(GraphicsAllocation *graphicsAllocation) override;

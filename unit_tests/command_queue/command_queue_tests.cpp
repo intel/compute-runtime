@@ -497,7 +497,7 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     GraphicsAllocation *allocation = nullptr;
 
     if (this->GetParam() == IndirectHeap::INDIRECT_OBJECT) {
-        allocation = memoryManager->createInternalGraphicsAllocation(nullptr, allocationSize);
+        allocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     } else {
         allocation = memoryManager->allocateGraphicsMemory(allocationSize);
     }

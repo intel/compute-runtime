@@ -312,10 +312,6 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
     return drmAllocation;
 }
 
-GraphicsAllocation *DrmMemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
-    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), AllocationOrigin::INTERNAL_ALLOCATION);
-}
-
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
     BufferObject *bo = nullptr;
 

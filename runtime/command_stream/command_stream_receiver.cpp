@@ -284,7 +284,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 
     if (!heapMemory) {
         if (requireInternalHeap) {
-            heapMemory = memoryManager->createInternalGraphicsAllocation(nullptr, finalHeapSize);
+            heapMemory = memoryManager->allocate32BitGraphicsMemory(finalHeapSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
         } else {
             heapMemory = memoryManager->allocateGraphicsMemory(finalHeapSize, MemoryConstants::pageSize);
         }

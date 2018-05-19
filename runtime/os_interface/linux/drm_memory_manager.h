@@ -53,7 +53,6 @@ class DrmMemoryManager : public MemoryManager {
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) override;
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     DrmAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override;
-    GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }

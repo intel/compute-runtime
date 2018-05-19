@@ -781,8 +781,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     auto memoryManager = this->pDevice->getMemoryManager();
-    auto kernelIsaAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
-    auto kernelIsaWithSamplerAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
+    auto kernelIsaAllocation = memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
+    auto kernelIsaWithSamplerAllocation = memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     kernelInfo.kernelAllocation = kernelIsaAllocation;
     kernelInfoWithSampler.kernelAllocation = kernelIsaWithSamplerAllocation;
     auto gpuAddress1 = kernelIsaAllocation->getGpuAddressToPatch();

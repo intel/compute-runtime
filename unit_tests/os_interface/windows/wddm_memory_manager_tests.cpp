@@ -683,7 +683,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstA
 
 HWTEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
     SetUpMm<FamilyType>();
-    auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(nullptr, 4096u);
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
     EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
     EXPECT_NE(nullptr, wddmAllocation->getUnderlyingBuffer());
@@ -703,7 +703,7 @@ HWTEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocat
 HWTEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
     SetUpMm<FamilyType>();
     auto ptr = reinterpret_cast<void *>(0x1000000);
-    auto wddmAllocation = (WddmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, 4096u);
+    auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
     EXPECT_EQ(wddmAllocation->gpuBaseAddress, Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
     EXPECT_EQ(ptr, wddmAllocation->getUnderlyingBuffer());

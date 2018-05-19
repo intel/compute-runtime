@@ -1138,7 +1138,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     EXPECT_NE(0llu, alloc);
 
     size_t allocationSize = 4096 * 3;
-    auto graphicsAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, allocationSize);
+    auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     EXPECT_EQ(nullptr, graphicsAllocation);
     EXPECT_TRUE(memoryManager->device->getDeviceInfo().force32BitAddressess);
 }
@@ -1937,7 +1937,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = nullptr;
-    auto drmAllocation = (DrmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, bufferSize);
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, drmAllocation);
 
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();
@@ -1972,7 +1972,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerWhenAskedForInternalAllocationWit
 
     auto bufferSize = MemoryConstants::pageSize;
     void *ptr = reinterpret_cast<void *>(0x100000);
-    auto drmAllocation = (DrmAllocation *)memoryManager->createInternalGraphicsAllocation(ptr, bufferSize);
+    auto drmAllocation = static_cast<DrmAllocation *>(memoryManager->allocate32BitGraphicsMemory(bufferSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, drmAllocation);
 
     auto internalAllocator = memoryManager->getDrmInternal32BitAllocator();

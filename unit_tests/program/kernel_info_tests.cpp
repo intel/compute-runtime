@@ -149,7 +149,7 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
 
 class MyMemoryManager : public OsAgnosticMemoryManager {
   public:
-    GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) override { return nullptr; }
+    GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override { return nullptr; }
 };
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {

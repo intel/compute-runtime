@@ -248,10 +248,6 @@ GraphicsAllocation *WddmMemoryManager::createGraphicsAllocationFromNTHandle(void
     return createAllocationFromHandle((osHandle)((UINT_PTR)handle), false, true);
 }
 
-GraphicsAllocation *WddmMemoryManager::createInternalGraphicsAllocation(const void *ptr, size_t allocationSize) {
-    return allocate32BitGraphicsMemory(allocationSize, const_cast<void *>(ptr), AllocationOrigin::INTERNAL_ALLOCATION);
-}
-
 void *WddmMemoryManager::lockResource(GraphicsAllocation *graphicsAllocation) {
     return wddm->lockResource(static_cast<WddmAllocation *>(graphicsAllocation));
 };

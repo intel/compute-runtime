@@ -1168,7 +1168,7 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     OsAgnosticMemoryManager memoryManager;
     auto ptr = (void *)0x100000;
     size_t allocationSize = 4096;
-    auto graphicsAllocation = memoryManager.createInternalGraphicsAllocation(ptr, allocationSize);
+    auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(allocationSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION);
     EXPECT_EQ(ptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(allocationSize, graphicsAllocation->getUnderlyingBufferSize());
     memoryManager.freeGraphicsMemory(graphicsAllocation);

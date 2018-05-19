@@ -121,8 +121,6 @@ class MemoryManager {
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
 
-    virtual GraphicsAllocation *createInternalGraphicsAllocation(const void *ptr, size_t allocationSize);
-
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; };
 
     virtual void *lockResource(GraphicsAllocation *graphicsAllocation) = 0;

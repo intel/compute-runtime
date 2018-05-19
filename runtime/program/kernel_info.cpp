@@ -504,7 +504,7 @@ uint32_t KernelInfo::getConstantBufferSize() const {
 bool KernelInfo::createKernelAllocation(MemoryManager *memoryManager) {
     UNRECOVERABLE_IF(kernelAllocation);
     auto kernelIsaSize = heapInfo.pKernelHeader->KernelHeapSize;
-    kernelAllocation = memoryManager->createInternalGraphicsAllocation(nullptr, kernelIsaSize);
+    kernelAllocation = memoryManager->allocate32BitGraphicsMemory(kernelIsaSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     if (kernelAllocation) {
         memcpy_s(kernelAllocation->getUnderlyingBuffer(), kernelIsaSize, heapInfo.pKernelHeap, kernelIsaSize);
     } else {
