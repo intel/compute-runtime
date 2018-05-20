@@ -210,7 +210,8 @@ void Buffer::checkMemory(cl_mem_flags flags,
         if (hostPtr) {
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
-                minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
+                minAddress > reinterpret_cast<uintptr_t>(hostPtr) ||
+                DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
                 allocateMemory = true;
                 isZeroCopy = false;
                 copyMemoryFromHostPtr = true;
