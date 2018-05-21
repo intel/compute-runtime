@@ -975,11 +975,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWithDCFlush) {
     WhitelistedRegisters forceRegs = {0};
     pDevice->setForceWhitelistedRegs(true, &forceRegs);
-    typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     configureCSRtoNonDirtyState<FamilyType>();
 
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+
+    size_t pipeControlCount = static_cast<CommandStreamReceiverHw<FamilyType> &>(commandStreamReceiver).getRequiredPipeControlSize() / sizeof(PIPE_CONTROL);
 
     auto &commandStreamTask = commandQueue.getCS();
 
@@ -1007,14 +1009,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
         auto pCmdWA = reinterpret_cast<PIPE_CONTROL *>(*itorPC);
         EXPECT_EQ(true, pCmdWA->getDcFlushEnable());
 
-        // Search taskCS for PC to analyze
-        auto pipeControlTask = genCmdCast<typename FamilyType::PIPE_CONTROL *>(
-            ptrOffset(commandStreamTask.getCpuBase(), 24));
-        ASSERT_NE(nullptr, pipeControlTask);
+        if (pipeControlCount > 1) {
+            // Search taskCS for PC to analyze
+            auto pipeControlTask = genCmdCast<typename FamilyType::PIPE_CONTROL *>(
+                ptrOffset(commandStreamTask.getCpuBase(), 24));
+            ASSERT_NE(nullptr, pipeControlTask);
 
-        // Verify that the dcFlushEnabled bit is not set in PC
-        auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pipeControlTask);
-        EXPECT_EQ(false, pCmd->getDcFlushEnable());
+            // Verify that the dcFlushEnabled bit is not set in PC
+            auto pCmd = reinterpret_cast<PIPE_CONTROL *>(pipeControlTask);
+            EXPECT_EQ(false, pCmd->getDcFlushEnable());
+        }
     } else {
         // Verify that the dcFlushEnabled bit is not set in PC
         auto pCmd = reinterpret_cast<PIPE_CONTROL *>(*itorPC);

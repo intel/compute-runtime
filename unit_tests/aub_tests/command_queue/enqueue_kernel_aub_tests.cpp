@@ -76,7 +76,7 @@ struct AUBHelloWorld
     }
 };
 
-HWTEST_F(AUBHelloWorld, simple) {
+HWCMDTEST_F(IGFX_GEN8_CORE, AUBHelloWorld, simple) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -209,7 +209,7 @@ struct AUBSimpleArg
     }
 };
 
-HWTEST_F(AUBSimpleArg, simple) {
+HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef typename FamilyType::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
@@ -264,7 +264,7 @@ HWTEST_F(AUBSimpleArg, simple) {
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
-HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
+HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};

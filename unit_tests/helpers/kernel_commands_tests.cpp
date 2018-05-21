@@ -71,7 +71,7 @@ struct KernelCommandsTest : DeviceFixture,
     size_t sizeRequiredISH;
 };
 
-HWTEST_F(KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programInterfaceDescriptorDataResourceUsage) {
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
     std::unique_ptr<Image> srcImage(Image2dHelper<>::create(pContext));
@@ -269,7 +269,7 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     EXPECT_EQ(PatchInfoAllocationType::IndirectObjectHeap, kernel->getPatchInfoDataList()[0].targetType);
 }
 
-HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) {
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
@@ -347,7 +347,7 @@ HWTEST_F(KernelCommandsTest, sendIndirectStateResourceUsage) {
     EXPECT_GE(KernelCommandsHelper<FamilyType>::getSizeRequiredCS(), usedAfterCS - usedBeforeCS);
 }
 
-HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
@@ -412,7 +412,7 @@ HWTEST_F(KernelCommandsTest, usedBindingTableStatePointer) {
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
 }
 
-HWTEST_F(KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAndPrivateAndEventPoolAndDefaultCommandQueueSurfaces) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersForGlobalAndConstantAndPrivateAndEventPoolAndDefaultCommandQueueSurfaces) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     // define kernel info
@@ -734,7 +734,7 @@ HWTEST_F(KernelCommandsTest, slmValueScenarios) {
     }
 }
 
-HWTEST_F(KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgrammedThenBorderColorIsCorrectlyCopiedToDshAndSamplerStatesAreProgrammedWithPointer) {
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, GivenKernelWithSamplersWhenIndirectStateIsProgrammedThenBorderColorIsCorrectlyCopiedToDshAndSamplerStatesAreProgrammedWithPointer) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;

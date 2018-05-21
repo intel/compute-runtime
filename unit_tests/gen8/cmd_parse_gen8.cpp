@@ -21,6 +21,8 @@
  */
 
 #include "unit_tests/gen_common/gen_cmd_parse.h"
+#include "unit_tests/helpers/hw_parse.h"
+#include "unit_tests/helpers/hw_parse.inl"
 #include "gtest/gtest.h"
 
 // clang-format off
@@ -428,3 +430,6 @@ void BdwParse::validateCommand<MEDIA_VFE_STATE *>(GenCmdList::iterator itorBegin
 
     ASSERT_TRUE(false) << "A PIPE_CONTROL w/ CS stall is required before a MEDIA_VFE_STATE.";
 }
+
+template void HardwareParse::findHardwareCommands<BDWFamily>();
+template const void *HardwareParse::getStatelessArgumentPointer<BDWFamily>(const Kernel &kernel, uint32_t indexArg, IndirectHeap &ioh);
