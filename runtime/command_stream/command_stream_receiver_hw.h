@@ -92,6 +92,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void addPipeControlWA(LinearStream &commandStream, bool flushDC);
     void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
+    void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
 
     uint64_t getScratchPatchAddress();

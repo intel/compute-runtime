@@ -653,6 +653,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, Dis
         *pCmd = GfxFamily::cmdInitPipeControl;
         pCmd->setCommandStreamerStallEnable(true);
         pCmd->setDcFlushEnable(true);
+        addClearSLMWorkAround(pCmd);
 
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
@@ -725,6 +726,10 @@ void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *n
     if (kmdNotifyHelper->quickKmdSleepForSporadicWaitsEnabled()) {
         kmdNotifyHelper->updateLastWaitForCompletionTimestamp();
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd) {
 }
 
 } // namespace OCLRT

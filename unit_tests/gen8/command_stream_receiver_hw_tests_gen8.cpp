@@ -49,3 +49,30 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenKernelWithSlmWhenPreviousNOSLML
 GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentOnThenProgramL3WithSLML3ConfigAfterUnblocking) {
     givenBlockedKernelWithSlmWhenPreviousNOSLML3WasSentThenProgramL3WithSLML3ConfigAfterUnblockingImpl();
 }
+
+GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgrammedThenClearSLMWorkAroundIsAdded) {
+    MockCsrHw2<FamilyType> csr(pDevice->getHardwareInfo());
+    csr.csrSizeRequestFlags.l3ConfigChanged = true;
+    csr.isPreambleSent = true;
+
+    size_t bufferSize = 2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM) + sizeof(typename FamilyType::PIPE_CONTROL);
+    void *buffer = alignedMalloc(bufferSize, 64);
+
+    LinearStream stream(buffer, bufferSize);
+    DispatchFlags flags;
+    uint32_t l3Config = 0x12345678;
+
+    csr.programL3(stream, flags, l3Config);
+
+    this->parseCommands<FamilyType>(stream);
+
+    typename FamilyType::PIPE_CONTROL *pc = getCommand<typename FamilyType::PIPE_CONTROL>();
+    ASSERT_NE(nullptr, pc);
+    EXPECT_TRUE(pc->getProtectedMemoryDisable() != 0);
+
+    typename FamilyType::MI_LOAD_REGISTER_IMM *lri = getCommand<typename FamilyType::MI_LOAD_REGISTER_IMM>();
+    ASSERT_NE(nullptr, lri);
+    EXPECT_EQ(l3Config, lri->getDataDword());
+
+    alignedFree(buffer);
+}

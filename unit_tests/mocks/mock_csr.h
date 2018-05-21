@@ -149,12 +149,15 @@ template <typename GfxFamily>
 class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
   public:
     using CommandStreamReceiverHw<GfxFamily>::flushStamp;
+    using CommandStreamReceiverHw<GfxFamily>::programL3;
+    using CommandStreamReceiverHw<GfxFamily>::csrSizeRequestFlags;
     using CommandStreamReceiver::commandStream;
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::lastSentCoherencyRequest;
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
+    using CommandStreamReceiver::isPreambleSent;
 
     MockCsrHw2(const HardwareInfo &hwInfoIn) : CommandStreamReceiverHw<GfxFamily>(hwInfoIn) {}
 

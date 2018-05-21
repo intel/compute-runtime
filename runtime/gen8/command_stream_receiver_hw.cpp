@@ -58,6 +58,11 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
     commandStreamReceiverFactory[gfxCore] = DeviceCommandStreamReceiver<Family>::create;
 }
 
+template <>
+void CommandStreamReceiverHw<Family>::addClearSLMWorkAround(Family::PIPE_CONTROL *pCmd) {
+    pCmd->setProtectedMemoryDisable(1);
+}
+
 // Explicitly instantiate CommandStreamReceiverHw for this device family
 template class CommandStreamReceiverHw<Family>;
 
