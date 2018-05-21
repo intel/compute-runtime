@@ -1210,14 +1210,19 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
 
     switch (imageDesc.image_type) {
     case CL_MEM_OBJECT_IMAGE1D_ARRAY:
-        offset += slicePitch * origin[1];
+        if (imageDesc.num_mip_levels <= 1) {
+            offset += slicePitch * origin[1];
+        }
         break;
     case CL_MEM_OBJECT_IMAGE2D:
         offset += rowPitch * origin[1];
         break;
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     case CL_MEM_OBJECT_IMAGE3D:
-        offset += rowPitch * origin[1] + slicePitch * origin[2];
+        offset += rowPitch * origin[1];
+        if (imageDesc.num_mip_levels <= 1) {
+            offset += slicePitch * origin[2];
+        }
         break;
     default:
         break;

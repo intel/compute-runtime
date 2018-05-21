@@ -865,32 +865,33 @@ TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnGpuThenReturnHostRo
     EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
 }
 
-TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitch) {
-    const size_t origin[3] = {0, 0, 0};
+TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitchForMap) {
+    const size_t origin[4] = {0, 0, 0, 1};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
     size_t retImageSlicePitch = 0;
 
     cl_image_desc imageDesc = {};
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     imageDesc.num_mip_levels = 10;
     imageDesc.image_width = 4;
+    imageDesc.image_height = 4;
+    imageDesc.image_depth = 4;
 
-    std::unique_ptr<Image> image(ImageHelper<ImageUseHostPtr<Image1dArrayDefaults>>::create(context, &imageDesc));
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(context, &imageDesc));
     image->setSharingHandler(new SharingHandler());
     EXPECT_FALSE(image->mappingOnCpuAllowed());
-    EXPECT_FALSE(image->isMemObjZeroCopy());
 
     pCmdQ->enqueueMapImage(image.get(), true, CL_MAP_READ, origin, region,
                            &retImageRowPitch, &retImageSlicePitch,
                            0, nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
-    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
+    EXPECT_EQ(image->getHostPtrRowPitchForMap(static_cast<uint32_t>(origin[3])), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitchForMap(static_cast<uint32_t>(origin[3])), retImageSlicePitch);
 }
 
-TEST_F(EnqueueMapImageTest, givenMipMapImageWhen1DArrayThenReturnRowAndSlicePitchAreEqual) {
+TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenReturnRowAndSlicePitchAreEqual) {
     class MockImage : public Image {
       public:
         MockImage(Context *context, cl_mem_flags flags, GraphicsAllocation *allocation, const SurfaceFormatInfo &surfaceFormat,
@@ -909,6 +910,8 @@ TEST_F(EnqueueMapImageTest, givenMipMapImageWhen1DArrayThenReturnRowAndSlicePitc
         void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
         void transformImage2dArrayTo3d(void *memory) override {}
         void transformImage3dTo2dArray(void *memory) override {}
+        size_t getHostPtrRowPitchForMap(uint32_t mipLevel) override { return getHostPtrRowPitch(); }
+        size_t getHostPtrSlicePitchForMap(uint32_t mipLevel) override { return getHostPtrSlicePitch(); }
     };
 
     const size_t origin[3] = {0, 0, 0};

@@ -185,6 +185,9 @@ class Image : public MemObj {
     virtual void transformImage2dArrayTo3d(void *memory) = 0;
     virtual void transformImage3dTo2dArray(void *memory) = 0;
 
+    virtual size_t getHostPtrRowPitchForMap(uint32_t mipLevel) = 0;
+    virtual size_t getHostPtrSlicePitchForMap(uint32_t mipLevel) = 0;
+
     const bool isTiledImage;
 
     bool hasSameDescriptor(const cl_image_desc &imageDesc) const;
@@ -271,6 +274,8 @@ class ImageHw : public Image {
         }
     }
 
+    size_t getHostPtrRowPitchForMap(uint32_t mipLevel) override;
+    size_t getHostPtrSlicePitchForMap(uint32_t mipLevel) override;
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
     void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
