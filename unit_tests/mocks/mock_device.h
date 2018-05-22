@@ -216,4 +216,13 @@ class MockAlignedMallocManagerDevice : public MockDevice {
     MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, bool isRootDevice = true);
 };
 
+template <typename T = SourceLevelDebugger>
+class MockDeviceWithSourceLevelDebugger : public MockDevice {
+  public:
+    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {
+        T *sourceLevelDebuggerCreated = new T(nullptr);
+        sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
+    }
+};
+
 } // namespace OCLRT

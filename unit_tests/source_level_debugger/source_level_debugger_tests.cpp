@@ -403,35 +403,39 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructe
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedThenDebuggerIsNotified) {
     DebuggerLibraryRestorer restorer;
 
-    DebuggerLibraryInterceptor interceptor;
-    DebuggerLibrary::setLibraryAvailable(true);
-    DebuggerLibrary::setDebuggerActive(true);
-    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibraryInterceptor interceptor;
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-    unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
-    MockDevice::createDeviceImpl(platformDevices[0], true, *device.get());
-    EXPECT_TRUE(interceptor.newDeviceCalled);
-    uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface() != nullptr ? device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
-    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+        unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+        MockDevice::createDeviceImpl(platformDevices[0], true, *device.get());
+        EXPECT_TRUE(interceptor.newDeviceCalled);
+        uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface() != nullptr ? device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
+        EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+    }
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedWithOsCsrThenDebuggerIsNotifiedWithCorrectDeviceHandle) {
     DebuggerLibraryRestorer restorer;
 
-    DebuggerLibraryInterceptor interceptor;
-    DebuggerLibrary::setLibraryAvailable(true);
-    DebuggerLibrary::setDebuggerActive(true);
-    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibraryInterceptor interceptor;
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-    overrideCommandStreamReceiverCreation = true;
+        overrideCommandStreamReceiverCreation = true;
 
-    // Device::create must be used to create correct OS memory manager
-    unique_ptr<Device> device(Device::create<Device>(platformDevices[0]));
-    ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
+        // Device::create must be used to create correct OS memory manager
+        unique_ptr<Device> device(Device::create<Device>(platformDevices[0]));
+        ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
 
-    EXPECT_TRUE(interceptor.newDeviceCalled);
-    uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle();
-    EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+        EXPECT_TRUE(interceptor.newDeviceCalled);
+        uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle();
+        EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
+    }
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreatedThenDebuggerIsNotCreatedInitializedAndNotNotified) {

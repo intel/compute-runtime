@@ -73,7 +73,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     true,                           // ftr64KBpages
     EngineType::ENGINE_RCS,         // defaultEngineType
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
-    true                            // isCore
+    true,                           // isCore
+    true                            // sourceLevelDebuggerSupported
 };
 
 const HardwareInfo SKL_1x2x6::hwInfo = {

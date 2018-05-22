@@ -107,7 +107,7 @@ TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDevi
 }
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
-    auto device = std::unique_ptr<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(Device::create<MockDeviceWithActiveDebugger<GMockSourceLevelDebugger>>(nullptr));
+    auto device = std::unique_ptr<MockDeviceWithActiveDebugger<::testing::NiceMock<GMockSourceLevelDebugger>>>(Device::create<MockDeviceWithActiveDebugger<::testing::NiceMock<GMockSourceLevelDebugger>>>(nullptr));
     GMockSourceLevelDebugger *gmock = device->getSourceLevelDebugger();
     EXPECT_CALL(*gmock, notifyDeviceDestruction()).Times(1);
 }

@@ -29,10 +29,13 @@
 #include "runtime/os_interface/32bit_memory.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_helper_tests.h"
 #include "unit_tests/mocks/mock_builtins.h"
+#include "unit_tests/mocks/mock_device.h"
 
 #include "hw_cmds.h"
 #include "test.h"
@@ -741,4 +744,25 @@ TEST(Device_GetCaps, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
 
     OSInterface::osEnabled64kbPages = orgOsEnabled64kbPages;
     hwInfo.capabilityTable.ftr64KBpages = orgftr64KBpages;
+}
+
+TEST(Device_GetCaps, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {
+    std::unique_ptr<Device> device(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
+    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
+}
+
+typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
+
+TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
+
+    hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
+
+    std::unique_ptr<MockDeviceWithSourceLevelDebugger<>> device(Device::create<MockDeviceWithSourceLevelDebugger<>>(&hwInfo));
+
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_NE(nullptr, device->getSourceLevelDebugger());
+    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
 }

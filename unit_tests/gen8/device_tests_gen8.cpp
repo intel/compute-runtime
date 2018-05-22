@@ -21,6 +21,8 @@
  */
 
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_source_level_debugger.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -38,4 +40,11 @@ struct Gen8DeviceTest : public DeviceFixture,
 BDWTEST_F(Gen8DeviceTest, givenGen8DeviceWhenAskedForClVersionThenReport21) {
     auto version = pDevice->getSupportedClVersion();
     EXPECT_EQ(21u, version);
+}
+
+BDWTEST_F(Gen8DeviceTest, givenSourceLevelDebuggerAvailableWhenDeviceIsCreatedThenSourceLevelDebuggerIsDisabled) {
+    auto device = std::unique_ptr<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(Device::create<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(nullptr));
+    const auto &caps = device->getDeviceInfo();
+    EXPECT_NE(nullptr, device->getSourceLevelDebugger());
+    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
 }
