@@ -26,16 +26,16 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_dll_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_kmdaf_listener.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_memory_manager.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_win_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win_tests.cpp

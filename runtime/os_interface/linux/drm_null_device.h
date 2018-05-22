@@ -22,7 +22,7 @@
 
 #pragma once
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/os_time.h"
+#include "runtime/os_interface/linux/os_time_linux.h"
 #include "drm/i915_drm.h"
 
 #include <cstdio>

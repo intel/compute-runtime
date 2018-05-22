@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/os_interface/windows/os_interface_tests.h"
+#include "unit_tests/os_interface/windows/os_interface_win_tests.h"
 
 TEST_F(OsInterfaceTest, givenOsInterfaceWithoutWddmWhenGetHwContextIdIsCalledThenReturnsZero) {
     auto retVal = osInterface->getHwContextId();

@@ -25,7 +25,7 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/os_time.h"
+#include "runtime/os_interface/linux/os_time_linux.h"
 #include "runtime/utilities/stackvec.h"
 
 #include <sys/syscall.h>

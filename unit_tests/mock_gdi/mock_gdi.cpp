@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/windows/os_time.h"
+#include "runtime/os_interface/windows/os_time_win.h"
 #include "mock_gdi.h"
 
 ADAPTER_INFO gAdapterInfo = {0};

@@ -21,7 +21,7 @@
 set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/allocator_helper.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/api_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_env_reader.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.inl
@@ -52,8 +52,8 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_linux.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp

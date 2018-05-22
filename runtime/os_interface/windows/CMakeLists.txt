@@ -26,7 +26,7 @@ endif()
 
 set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/api_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d10_11_sharing_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d9_sharing_functions.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/d3d_sharing_functions.h
@@ -49,8 +49,8 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_socket.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp

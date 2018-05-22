@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
  */
 
 #pragma once
-#include "runtime/os_interface/windows/os_time.h"
+#include "runtime/os_interface/windows/os_time_win.h"
 
 namespace OCLRT {
 class MockOSTimeWin : public OSTimeWin {

@@ -23,7 +23,7 @@
 #include <memory>
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/os_interface.h"
-#include "runtime/os_interface/windows/os_time.h"
+#include "runtime/os_interface/windows/os_time_win.h"
 
 #undef WIN32_NO_STATUS
 

@@ -21,7 +21,7 @@
  */
 
 #include "unit_tests/helpers/gtest_helpers.h"
-#include "unit_tests/os_interface/linux/hw_info_config_tests.h"
+#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace OCLRT;
 using namespace std;
