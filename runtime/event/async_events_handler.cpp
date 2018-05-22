@@ -22,6 +22,7 @@
 
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event.h"
+#include "runtime/os_interface/os_thread.h"
 #include <iterator>
 
 namespace OCLRT {
@@ -68,29 +69,31 @@ Event *AsyncEventsHandler::processList() {
     return sleepCandidate;
 }
 
-void AsyncEventsHandler::asyncProcess() {
-    std::unique_lock<std::mutex> lock(asyncMtx, std::defer_lock);
+void *AsyncEventsHandler::asyncProcess(void *arg) {
+    auto self = reinterpret_cast<AsyncEventsHandler *>(arg);
+    std::unique_lock<std::mutex> lock(self->asyncMtx, std::defer_lock);
     Event *sleepCandidate = nullptr;
 
     while (true) {
         lock.lock();
-        transferRegisterList();
-        if (!allowAsyncProcess) {
-            processList();
-            releaseEvents();
+        self->transferRegisterList();
+        if (!self->allowAsyncProcess) {
+            self->processList();
+            self->releaseEvents();
             break;
         }
-        if (list.empty()) {
-            asyncCond.wait(lock);
+        if (self->list.empty()) {
+            self->asyncCond.wait(lock);
         }
         lock.unlock();
 
-        sleepCandidate = processList();
+        sleepCandidate = self->processList();
         if (sleepCandidate) {
             sleepCandidate->wait(true, true);
         }
         std::this_thread::yield();
     }
+    return nullptr;
 }
 
 void AsyncEventsHandler::closeThread() {
@@ -108,7 +111,7 @@ void AsyncEventsHandler::openThread() {
     if (!thread.get()) {
         DEBUG_BREAK_IF(allowAsyncProcess);
         allowAsyncProcess = true;
-        thread.reset(new std::thread([this] { asyncProcess(); }));
+        thread = Thread::create(asyncProcess, reinterpret_cast<void *>(this));
     }
 }
 

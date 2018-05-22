@@ -47,6 +47,8 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_socket.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_thread_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time.h
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.cpp

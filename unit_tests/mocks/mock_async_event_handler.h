@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -25,7 +25,6 @@
 #include "runtime/event/async_events_handler.h"
 #include <vector>
 #include <memory>
-#include <thread>
 #include <atomic>
 #include <mutex>
 #include <iterator>
@@ -42,7 +41,7 @@ class MockHandler : public AsyncEventsHandler {
 
     ~MockHandler() override {
         if (!allowThreadCreating) {
-            asyncProcess(); // process once for cleanup
+            asyncProcess(this); // process once for cleanup
         }
     }
 

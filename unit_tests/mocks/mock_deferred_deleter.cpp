@@ -22,6 +22,7 @@
 
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
+#include "runtime/os_interface/os_thread.h"
 #include "gtest/gtest.h"
 
 namespace OCLRT {
@@ -109,8 +110,8 @@ bool MockDeferredDeleter::baseShouldStop() {
     return DeferredDeleter::shouldStop();
 }
 
-std::thread *MockDeferredDeleter::getThreadHandle() {
-    return worker;
+Thread *MockDeferredDeleter::getThreadHandle() {
+    return worker.get();
 }
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter() {
@@ -118,7 +119,7 @@ std::unique_ptr<DeferredDeleter> createDeferredDeleter() {
 }
 
 void MockDeferredDeleter::runThread() {
-    worker = new std::thread(run, this);
+    worker = Thread::create(run, reinterpret_cast<void *>(this));
 }
 
 void MockDeferredDeleter::forceStop() {

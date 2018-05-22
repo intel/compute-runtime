@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,36 +21,13 @@
  */
 
 #pragma once
-#include <vector>
 #include <memory>
-#include <atomic>
-#include <mutex>
-#include <condition_variable>
-
 namespace OCLRT {
-class Event;
-class Thread;
 
-class AsyncEventsHandler {
+class Thread {
   public:
-    AsyncEventsHandler();
-    virtual ~AsyncEventsHandler();
-    void registerEvent(Event *event);
-    void closeThread();
-
-  protected:
-    Event *processList();
-    static void *asyncProcess(void *arg);
-    void releaseEvents();
-    MOCKABLE_VIRTUAL void openThread();
-    MOCKABLE_VIRTUAL void transferRegisterList();
-    std::vector<Event *> registerList;
-    std::vector<Event *> list;
-    std::vector<Event *> pendingList;
-
-    std::unique_ptr<Thread> thread;
-    std::mutex asyncMtx;
-    std::condition_variable asyncCond;
-    std::atomic<bool> allowAsyncProcess;
+    static std::unique_ptr<Thread> create(void *(*func)(void *), void *arg);
+    virtual void join() = 0;
+    virtual ~Thread() = default;
 };
-} // namespace OCLRT
+}

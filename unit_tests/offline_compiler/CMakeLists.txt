@@ -44,6 +44,16 @@ set(IGDRCL_SRCS_offline_compiler_tests
   ${CLOC_SRCS_LIB}
 )
 
+if(WIN32)
+  list(APPEND IGDRCL_SRCS_offline_compiler_tests
+    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/windows/os_thread_win.cpp
+  )
+else()
+  list(APPEND IGDRCL_SRCS_offline_compiler_tests
+    ${IGDRCL_SOURCE_DIR}/runtime/os_interface/linux/os_thread_linux.cpp
+  )
+endif()
+
 link_directories(${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 add_executable(cloc_tests ${IGDRCL_SRCS_offline_compiler_tests})

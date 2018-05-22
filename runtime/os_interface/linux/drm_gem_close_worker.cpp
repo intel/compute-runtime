@@ -25,16 +25,16 @@
 #include <queue>
 #include <stdio.h>
 #include "runtime/helpers/aligned_memory.h"
-#include "drm_buffer_object.h"
-#include "drm_command_stream.h"
-#include "drm_gem_close_worker.h"
-#include "drm_memory_manager.h"
+#include "runtime/os_interface/linux/drm_buffer_object.h"
+#include "runtime/os_interface/linux/drm_command_stream.h"
+#include "runtime/os_interface/linux/drm_gem_close_worker.h"
+#include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/os_thread.h"
 
 namespace OCLRT {
 
-DrmGemCloseWorker::DrmGemCloseWorker(DrmMemoryManager &memoryManager) : active(true), thread(nullptr), workCount(0), memoryManager(memoryManager),
-                                                                        workerDone(false) {
-    thread = new std::thread(&DrmGemCloseWorker::worker, this);
+DrmGemCloseWorker::DrmGemCloseWorker(DrmMemoryManager &memoryManager) : memoryManager(memoryManager) {
+    thread = Thread::create(worker, reinterpret_cast<void *>(this));
 }
 
 void DrmGemCloseWorker::closeThread() {
@@ -44,8 +44,7 @@ void DrmGemCloseWorker::closeThread() {
         }
 
         thread->join();
-        delete thread;
-        thread = nullptr;
+        thread.reset();
     }
 }
 
@@ -80,40 +79,42 @@ inline void DrmGemCloseWorker::close(BufferObject *bo) {
     workCount--;
 }
 
-void DrmGemCloseWorker::worker() {
+void *DrmGemCloseWorker::worker(void *arg) {
+    DrmGemCloseWorker *self = reinterpret_cast<DrmGemCloseWorker *>(arg);
     BufferObject *workItem = nullptr;
     std::queue<BufferObject *> localQueue;
-    std::unique_lock<std::mutex> lock(closeWorkerMutex);
+    std::unique_lock<std::mutex> lock(self->closeWorkerMutex);
     lock.unlock();
 
-    while (active) {
+    while (self->active) {
         lock.lock();
         workItem = nullptr;
 
-        while (queue.empty() && active) {
-            condition.wait(lock);
+        while (self->queue.empty() && self->active) {
+            self->condition.wait(lock);
         }
 
-        if (!queue.empty()) {
-            localQueue.swap(queue);
+        if (!self->queue.empty()) {
+            localQueue.swap(self->queue);
         }
 
         lock.unlock();
         while (!localQueue.empty()) {
             workItem = localQueue.front();
             localQueue.pop();
-            close(workItem);
+            self->close(workItem);
         }
     }
 
     lock.lock();
-    while (!queue.empty()) {
-        workItem = queue.front();
-        queue.pop();
-        close(workItem);
+    while (!self->queue.empty()) {
+        workItem = self->queue.front();
+        self->queue.pop();
+        self->close(workItem);
     }
 
     lock.unlock();
-    workerDone.store(true);
+    self->workerDone.store(true);
+    return nullptr;
 }
 }

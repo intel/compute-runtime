@@ -22,6 +22,7 @@
 
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
+#include "runtime/os_interface/os_thread.h"
 
 namespace OCLRT {
 DeferredDeleter::DeferredDeleter() {
@@ -46,8 +47,7 @@ void DeferredDeleter::stop() {
         // Wait for the working job to exit
         worker->join();
         // Delete working thread
-        delete worker;
-        worker = nullptr;
+        worker.reset();
     }
     drain(false);
 }
@@ -87,7 +87,7 @@ void DeferredDeleter::ensureThread() {
     if (worker != nullptr) {
         return;
     }
-    worker = new std::thread(run, this);
+    worker = Thread::create(run, reinterpret_cast<void *>(this));
 }
 
 bool DeferredDeleter::areElementsReleased() {
@@ -98,7 +98,8 @@ bool DeferredDeleter::shouldStop() {
     return !doWorkInBackground;
 }
 
-void DeferredDeleter::run(DeferredDeleter *self) {
+void *DeferredDeleter::run(void *arg) {
+    auto self = reinterpret_cast<DeferredDeleter *>(arg);
     std::unique_lock<std::mutex> lock(self->queueMutex);
     // Mark that working thread really started
     self->doWorkInBackground = true;
@@ -114,6 +115,7 @@ void DeferredDeleter::run(DeferredDeleter *self) {
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
     lock.unlock();
+    return nullptr;
 }
 
 void DeferredDeleter::drain(bool blocking) {

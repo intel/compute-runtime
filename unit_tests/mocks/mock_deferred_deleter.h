@@ -62,7 +62,7 @@ class MockDeferredDeleter : public DeferredDeleter {
 
     bool baseShouldStop();
 
-    std::thread *getThreadHandle();
+    Thread *getThreadHandle();
 
     void runThread();
 

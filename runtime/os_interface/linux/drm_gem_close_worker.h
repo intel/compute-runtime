@@ -24,7 +24,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <thread>
 #include <map>
 #include <set>
 #include <queue>
@@ -33,6 +32,7 @@
 namespace OCLRT {
 class DrmMemoryManager;
 class BufferObject;
+class Thread;
 
 enum gemCloseWorkerMode {
     gemCloseWorkerInactive,
@@ -55,18 +55,18 @@ class DrmGemCloseWorker {
   protected:
     void close(BufferObject *workItem);
     void closeThread();
-    void worker();
-    bool active;
+    static void *worker(void *arg);
+    bool active = true;
 
-    std::thread *thread;
+    std::unique_ptr<Thread> thread;
 
     std::queue<BufferObject *> queue;
-    std::atomic<uint32_t> workCount;
+    std::atomic<uint32_t> workCount{0};
 
     DrmMemoryManager &memoryManager;
 
     std::mutex closeWorkerMutex;
     std::condition_variable condition;
-    std::atomic<bool> workerDone;
+    std::atomic<bool> workerDone{false};
 };
 }

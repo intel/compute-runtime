@@ -25,11 +25,11 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <thread>
 #include <utility>
 
 namespace OCLRT {
 class DeferrableDeletion;
+class Thread;
 class DeferredDeleter {
   public:
     DeferredDeleter();
@@ -54,11 +54,11 @@ class DeferredDeleter {
     MOCKABLE_VIRTUAL bool areElementsReleased();
     MOCKABLE_VIRTUAL bool shouldStop();
 
-    static void run(DeferredDeleter *self);
+    static void *run(void *);
 
     std::atomic<bool> doWorkInBackground;
     std::atomic<int> elementsToRelease;
-    std::thread *worker = nullptr;
+    std::unique_ptr<Thread> worker;
     int32_t numClients = 0;
     IDList<DeferrableDeletion, true> queue;
     std::mutex queueMutex;

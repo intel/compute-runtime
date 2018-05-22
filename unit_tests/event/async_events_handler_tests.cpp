@@ -221,7 +221,7 @@ TEST_F(AsyncEventsHandlerTests, givenEventsNotHandledByHandlderWhenAsyncExecutio
     EXPECT_EQ(3, event1->getRefInternalCount());
     EXPECT_EQ(3, event2->getRefInternalCount());
     handler->allowAsyncProcess.store(false);
-    handler->asyncProcess(); // enter and exit because of allowAsyncProcess == false
+    MockHandler::asyncProcess(reinterpret_cast<void *>(handler.get())); // enter and exit because of allowAsyncProcess == false
     EXPECT_EQ(2, event1->getRefInternalCount());
     EXPECT_EQ(2, event2->getRefInternalCount());
     EXPECT_TRUE(handler->peekIsListEmpty());
@@ -363,7 +363,7 @@ TEST_F(AsyncEventsHandlerTests, givenSleepCandidateWhenProcessedThenCallWaitWith
 
     EXPECT_CALL(*event1, wait(true, true)).Times(1).WillOnce(Invoke(unsetAsyncFlag));
 
-    handler->asyncProcess();
+    MockHandler::asyncProcess(reinterpret_cast<void *>(handler.get()));
 
     event1->setStatus(CL_COMPLETE);
 }
@@ -374,7 +374,7 @@ TEST_F(AsyncEventsHandlerTests, asyncProcessCallsProcessListBeforeReturning) {
     handler->registerEvent(event);
     handler->allowAsyncProcess.store(false);
 
-    handler->asyncProcess();
+    MockHandler::asyncProcess(reinterpret_cast<void *>(handler.get()));
     EXPECT_TRUE(handler->peekIsListEmpty());
     EXPECT_EQ(1, event->getRefInternalCount());
 
