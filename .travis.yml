@@ -34,6 +34,12 @@ matrix:
         - os: linux
           compiler: gcc
           env: BUILD_OS=arch COMPILER=gcc-5
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=arch COMPILER=gcc-8 GEN=gen-8
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=arch COMPILER=gcc-8 GEN=gen-9
 
 script: ./scripts/run-build.sh
 

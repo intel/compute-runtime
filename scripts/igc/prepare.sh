@@ -21,7 +21,6 @@
 
 
 NEO_TOP_DIR=`git rev-parse --show-toplevel`
-ARCH=`dpkg --print-architecture`
 WRK_DIR=${NEO_TOP_DIR}/..
 mkdir -p ${WRK_DIR}/igc/inc
 cp CMakeLists.txt ${WRK_DIR}/igc
@@ -30,8 +29,9 @@ pushd ${WRK_DIR}/igc
 VER=2018ww19-010806
 IGC_REV=858e183
 
-wget https://github.com/intel/compute-runtime/releases/download/${VER}/intel-opencl_${VER}_${ARCH}.deb
-dpkg-deb -x intel-opencl_${VER}_${ARCH}.deb .
+wget https://github.com/intel/compute-runtime/releases/download/${VER}/intel-opencl_${VER}_amd64.deb
+ar -x intel-opencl_${VER}_amd64.deb
+tar -xJf data.tar.xz
 rm opt/intel/opencl/libigdrcl.so
 ln -s opt/intel/opencl lib
 
