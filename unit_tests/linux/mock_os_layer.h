@@ -33,8 +33,6 @@
 #include <cstring>
 #include <array>
 
-extern const char *devDri[2];
-
 extern "C" {
 int open(const char *pathname, int flags, ...);
 int ioctl(int fd, unsigned long int request, ...) throw();
