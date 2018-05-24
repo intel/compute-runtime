@@ -38,6 +38,7 @@ git clone https://github.com/intel/gmmlib gmmlib
 git clone https://github.com/intel/intel-graphics-compiler igc
 git clone https://github.com/KhronosGroup/OpenCL-Headers khronos
 git clone https://github.com/intel/compute-runtime neo
+ln -s khronos opencl_headers
 ```
 
 Note: Instructions for compiling *Intel Graphics Compiler* copied from https://github.com/intel/intel-graphics-compiler/blob/master/README.md 
