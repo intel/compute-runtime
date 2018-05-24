@@ -40,6 +40,8 @@ uint32_t getMipLevelOriginIdx(cl_mem_object_type imageType) {
     case CL_MEM_OBJECT_IMAGE2D_ARRAY:
     case CL_MEM_OBJECT_IMAGE3D:
         return 3;
+    case CL_MEM_OBJECT_IMAGE1D_BUFFER:
+        return 0;
     default:
         DEBUG_BREAK_IF(true);
         return -1;

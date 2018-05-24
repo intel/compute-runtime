@@ -47,6 +47,7 @@ INSTANTIATE_TEST_CASE_P(MipLevel,
                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, testOrigin[3]),
                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, testOrigin[3]),
                                           std::make_pair(CL_MEM_OBJECT_BUFFER, 0U),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
                                           std::make_pair(CL_MEM_OBJECT_PIPE, 0U)));
 
 typedef ::testing::TestWithParam<std::pair<uint32_t, uint32_t>> MipLevelOriginIdxTest;
@@ -63,6 +64,7 @@ INSTANTIATE_TEST_CASE_P(MipLevelOriginIdx,
                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D, 2U),
                                           std::make_pair(CL_MEM_OBJECT_IMAGE2D_ARRAY, 3U),
                                           std::make_pair(CL_MEM_OBJECT_IMAGE3D, 3U),
+                                          std::make_pair(CL_MEM_OBJECT_IMAGE1D_BUFFER, 0U),
                                           std::make_pair(CL_MEM_OBJECT_BUFFER, static_cast<uint32_t>(-1)),
                                           std::make_pair(CL_MEM_OBJECT_PIPE, static_cast<uint32_t>(-1))));
 
