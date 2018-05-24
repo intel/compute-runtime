@@ -33,8 +33,14 @@ class ArrayRef {
     using const_iterator = const DataType *;
 
     template <typename IteratorType>
-    ArrayRef(IteratorType b, IteratorType e)
-        : b(&*b), e(&*(e - 1) + 1) {
+    ArrayRef(IteratorType b, IteratorType e) {
+        if (b != nullptr) {
+            this->b = &*b;
+            this->e = &*(e - 1) + 1;
+        } else {
+            this->b = nullptr;
+            this->e = nullptr;
+        }
     }
 
     template <typename IteratorType>
@@ -52,9 +58,7 @@ class ArrayRef {
         : b(&array[0]), e(&array[Size]) {
     }
 
-    ArrayRef()
-        : b(0), e(0) {
-    }
+    ArrayRef() = default;
 
     size_t size() const {
         return e - b;
@@ -94,8 +98,8 @@ class ArrayRef {
     }
 
   private:
-    DataType *b;
-    DataType *e;
+    DataType *b = nullptr;
+    DataType *e = nullptr;
 };
 
 template <typename T>

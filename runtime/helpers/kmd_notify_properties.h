@@ -48,6 +48,7 @@ class KmdNotifyHelper {
   public:
     KmdNotifyHelper() = delete;
     KmdNotifyHelper(const KmdNotifyProperties *properties) : properties(properties){};
+    MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
     bool obtainTimeoutParams(int64_t &timeoutValueOutput,
                              bool quickKmdSleepRequest,

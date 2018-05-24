@@ -107,6 +107,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     };
     std::call_once(schedulerBuiltIn.programIsInitialized, initializeSchedulerProgramAndKernel);
 
+    UNRECOVERABLE_IF(schedulerBuiltIn.pKernel == nullptr);
     return *static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
 }
 

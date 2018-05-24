@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -81,8 +81,8 @@ TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenFailsThenFunctionsAreNull) 
     EXPECT_TRUE(functions.wereFunctionsAssignedNull());
 }
 
-VAPrivFunc GetLibFunc(VADisplay vaDisplay, const char *func) {
-    return (VAPrivFunc)0xdeadbeef;
+void *GetLibFunc(VADisplay vaDisplay, const char *func) {
+    return (void *)0xdeadbeef;
 }
 
 TEST(VASharingFunctions, GivenInitFunctionsWhenDLOpenSuccedsThenFunctionsAreNotNull) {

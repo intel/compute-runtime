@@ -157,4 +157,6 @@ HWTEST_F(EnqueueDebugKernelSimpleTest, givenKernelFromProgramWithoutDebugEnabled
 
     size_t gws[] = {1, 1, 1};
     mockCmdQ->enqueueKernel(kernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    ::testing::Mock::VerifyAndClearExpectations(mockCmdQ.get());
 }

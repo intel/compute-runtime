@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -103,7 +103,7 @@ class D3DSharingFunctions : public SharingFunctions {
     }
 
     D3DSharingFunctions() = delete;
-    virtual ~D3DSharingFunctions(){};
+
     static const uint32_t sharingId;
 
     MOCKABLE_VIRTUAL void createQuery(D3DQuery **query);

@@ -80,6 +80,8 @@ class Storage {
         : rootPath(rootPath) {
     }
 
+    virtual ~Storage() = default;
+
     BuiltinResourceT load(const std::string &resourceName);
 
   protected:

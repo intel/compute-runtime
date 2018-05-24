@@ -48,6 +48,7 @@ class SharingContextBuilder {
 
 class SharingBuilderFactory {
   public:
+    virtual ~SharingBuilderFactory() = default;
     virtual std::unique_ptr<SharingContextBuilder> createContextBuilder() = 0;
     virtual std::string getExtensions() = 0;
     virtual void fillGlobalDispatchTable() = 0;

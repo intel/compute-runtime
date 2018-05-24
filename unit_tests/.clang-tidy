@@ -1,5 +1,5 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*,readability-identifier-naming,-clang-analyzer-core.StackAddressEscape,-clang-analyzer-optin.performance.Padding,-clang-analyzer-security.insecureAPI.strcpy,-clang-analyzer-cplusplus.NewDeleteLeaks,-clang-analyzer-core.CallAndMessage,-clang-analyzer-core.uninitialized.Assign,-clang-analyzer-unix.MismatchedDeallocator,-clang-analyzer-core.NonNullParamChecker,-clang-analyzer-core.NullDereference,-clang-analyzer-cplusplus.NewDelete'
+Checks:          'clang-diagnostic-*,clang-analyzer-*,google-default-arguments,modernize-use-override,modernize-use-default-member-init,-clang-analyzer-alpha*,readability-identifier-naming,-clang-analyzer-core.StackAddressEscape,-clang-analyzer-optin.performance.Padding,-clang-analyzer-security.insecureAPI.strcpy,-clang-analyzer-cplusplus.NewDeleteLeaks,-clang-analyzer-core.CallAndMessage,-clang-analyzer-core.uninitialized.Assign,-clang-analyzer-unix.MismatchedDeallocator,-clang-analyzer-core.NonNullParamChecker,-clang-analyzer-core.NullDereference,-clang-analyzer-cplusplus.NewDelete,-clang-analyzer-optin.cplusplus.VirtualCall'
 # WarningsAsErrors: '.*'
 HeaderFilterRegex: 'runtime/'
 AnalyzeTemporaryDtors: false

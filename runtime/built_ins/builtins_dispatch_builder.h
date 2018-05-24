@@ -65,6 +65,7 @@ class BuiltinDispatchInfoBuilder {
     };
 
     BuiltinDispatchInfoBuilder(BuiltIns &kernelLib) : kernelsLib(kernelLib) {}
+    virtual ~BuiltinDispatchInfoBuilder() = default;
 
     template <typename... KernelsDescArgsT>
     void populate(Context &context, Device &device, EBuiltInOps operation, const char *options, KernelsDescArgsT &&... desc);

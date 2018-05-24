@@ -29,7 +29,7 @@ namespace OCLRT {
 class VASharingFunctions : public SharingFunctions {
   public:
     VASharingFunctions(VADisplay vaDisplay);
-    ~VASharingFunctions();
+    ~VASharingFunctions() override;
 
     uint32_t getId() const override {
         return VASharingFunctions::sharingId;
