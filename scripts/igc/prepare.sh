@@ -26,7 +26,7 @@ mkdir -p ${WRK_DIR}/igc/inc
 cp CMakeLists.txt ${WRK_DIR}/igc
 pushd ${WRK_DIR}/igc
 
-VER=2018ww19-010806
+VER=18.20.10830
 IGC_REV=858e183
 
 wget https://github.com/intel/compute-runtime/releases/download/${VER}/intel-opencl_${VER}_amd64.deb
