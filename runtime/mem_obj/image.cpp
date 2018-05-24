@@ -206,6 +206,12 @@ Image *Image::create(Context *context,
             hostPtrToSet = const_cast<void *>(hostPtr);
             parentBuffer->incRefInternal();
             Gmm::queryImgFromBufferParams(imgInfo, memory);
+
+            auto bufferOffset = static_cast<uint32_t>(parentBuffer->getOffset());
+            if (bufferOffset != 0) {
+                imgInfo.offset = bufferOffset;
+            }
+
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);

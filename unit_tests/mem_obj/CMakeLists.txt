@@ -27,6 +27,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/destructor_callback_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_subbufer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_mem_object_info_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/image_from_subbuffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image1d_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image2d_from_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/image2d_tests.cpp
