@@ -40,6 +40,21 @@ matrix:
         - os: linux
           compiler: gcc
           env: BUILD_OS=arch COMPILER=gcc-8 GEN=gen-9
+        - os: linux
+          compiler: clang
+          env: BUILD_OS=arch COMPILER=clang-6
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=fedora-27 COMPILER=gcc-7
+        - os: linux
+          compiler: clang
+          env: BUILD_OS=fedora-27 COMPILER=clang-5
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=fedora-28 COMPILER=gcc-8
+        - os: linux
+          compiler: clang
+          env: BUILD_OS=fedora-28 COMPILER=clang-6
 
 script: ./scripts/run-build.sh
 
