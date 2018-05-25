@@ -250,7 +250,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     DEBUG_BREAK_IF(nullptr == createFunction);
     auto buffer = createFunction(this->context, flags, region->size,
                                  ptrOffset(this->memoryStorage, region->origin),
-                                 ptrOffset(this->hostPtr, region->origin),
+                                 this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  this->graphicsAllocation,
                                  this->isZeroCopy, this->isHostPtrSVM, true);
 

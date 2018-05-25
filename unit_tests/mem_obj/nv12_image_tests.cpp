@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,9 +39,9 @@ using namespace OCLRT;
 class Nv12ImageTest : public testing::Test {
   public:
     void computeExpectedOffsets(Image *image) {
-        SurfaceOffsets expectedSurfaceOffsets = {};
+        SurfaceOffsets expectedSurfaceOffsets = {0};
         GMM_REQ_OFFSET_INFO reqOffsetInfo = {};
-        SurfaceOffsets requestedOffsets = {};
+        SurfaceOffsets requestedOffsets = {0};
 
         auto mockResInfo = reinterpret_cast<::testing::NiceMock<MockGmmResourceInfo> *>(image->getGraphicsAllocation()->gmm->gmmResourceInfo.get());
         mockResInfo->getOffset(reqOffsetInfo);
@@ -55,7 +55,10 @@ class Nv12ImageTest : public testing::Test {
 
         image->getSurfaceOffsets(requestedOffsets);
 
-        EXPECT_TRUE(memcmp(&expectedSurfaceOffsets, &requestedOffsets, sizeof(SurfaceOffsets)) == 0);
+        EXPECT_EQ(expectedSurfaceOffsets.offset, requestedOffsets.offset);
+        EXPECT_EQ(expectedSurfaceOffsets.xOffset, requestedOffsets.xOffset);
+        EXPECT_EQ(expectedSurfaceOffsets.yOffset, requestedOffsets.yOffset);
+        EXPECT_EQ(expectedSurfaceOffsets.yOffsetForUVplane, requestedOffsets.yOffsetForUVplane);
     }
 
   protected:

@@ -218,7 +218,7 @@ struct ImageInfo {
     size_t rowPitch;
     size_t slicePitch;
     uint32_t qPitch;
-    uint32_t offset;
+    size_t offset;
     uint32_t xOffset;
     uint32_t yOffset;
     uint32_t yOffsetForUVPlane;

@@ -101,3 +101,29 @@ TEST_F(ImageFromSubBufferTest, CreateImage2dFromSubBufferWithOffset) {
     EXPECT_EQ(0u, surfaceOffsets.yOffset);
     EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
 }
+
+TEST_F(ImageFromSubBufferTest, givenSubbufferWithOffsetGreaterThan4GBWhenImageIsCreatedThenSurfaceOffsetsOffsetHasCorrectValue) {
+    Buffer *buffer = castToObject<Buffer>(parentBuffer);
+    uint64_t offsetExpected = 0;
+    cl_buffer_region region = {0, size / 2};
+
+    if (is64bit) {
+        offsetExpected = 8 * GB;
+        region = {static_cast<size_t>(offsetExpected), size / 2};
+    }
+
+    Buffer *subBufferWithBigOffset = buffer->createSubBuffer(CL_MEM_READ_WRITE, &region, retVal);
+    imageDesc.mem_object = subBufferWithBigOffset;
+
+    std::unique_ptr<Image> imageFromSubBuffer(createImage());
+    EXPECT_NE(nullptr, imageFromSubBuffer);
+
+    SurfaceOffsets surfaceOffsets = {0};
+    imageFromSubBuffer->getSurfaceOffsets(surfaceOffsets);
+
+    EXPECT_EQ(offsetExpected, surfaceOffsets.offset);
+    EXPECT_EQ(0u, surfaceOffsets.xOffset);
+    EXPECT_EQ(0u, surfaceOffsets.yOffset);
+    EXPECT_EQ(0u, surfaceOffsets.yOffsetForUVplane);
+    subBufferWithBigOffset->release();
+}

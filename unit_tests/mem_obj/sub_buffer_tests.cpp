@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -112,4 +113,53 @@ TEST_F(SubBufferTest, givenSharingHandlerFromParentBufferWhenCreateThenShareHand
     delete subBuffer;
     EXPECT_EQ(1, buffer->getRefInternalCount());
 }
+
+TEST_F(SubBufferTest, GivenBufferWithAlignedHostPtrAndSameMemoryStorageWhenSubBufferIsCreatedThenHostPtrAndMemoryStorageAreOffseted) {
+    cl_buffer_region region = {2, 2};
+    cl_int retVal = 0;
+
+    void *alignedPointer = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::preferredAlignment);
+    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
+                                    MemoryConstants::pageSize, alignedPointer, retVal);
+
+    ASSERT_NE(nullptr, buffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(alignedPointer, buffer->getHostPtr());
+    EXPECT_EQ(alignedPointer, buffer->getCpuAddress());
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_ONLY, &region, retVal);
+    EXPECT_NE(nullptr, subBuffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(ptrOffset(alignedPointer, 2), subBuffer->getHostPtr());
+    EXPECT_EQ(ptrOffset(alignedPointer, 2), subBuffer->getCpuAddress());
+
+    subBuffer->release();
+    buffer->release();
+    alignedFree(alignedPointer);
+}
+
+TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsCreatedThenMemoryStorageIsOffsetedAndHostPtrIsNull) {
+    cl_buffer_region region = {2, 2};
+    cl_int retVal = 0;
+
+    Buffer *buffer = Buffer::create(&context, CL_MEM_READ_WRITE,
+                                    MemoryConstants::pageSize, nullptr, retVal);
+
+    ASSERT_NE(nullptr, buffer);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(nullptr, buffer->getHostPtr());
+    EXPECT_NE(nullptr, buffer->getCpuAddress());
+
+    auto subBuffer = buffer->createSubBuffer(CL_MEM_READ_ONLY, &region, retVal);
+    EXPECT_NE(nullptr, subBuffer);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_EQ(nullptr, subBuffer->getHostPtr());
+    EXPECT_EQ(ptrOffset(buffer->getCpuAddress(), 2), subBuffer->getCpuAddress());
+
+    subBuffer->release();
+    buffer->release();
+}
+
 } // namespace ULT

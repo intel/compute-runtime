@@ -32,7 +32,7 @@ struct KernelInfo;
 struct SurfaceFormatInfo;
 
 struct SurfaceOffsets {
-    uint32_t offset;
+    uint64_t offset;
     uint32_t xOffset;
     uint32_t yOffset;
     uint32_t yOffsetForUVplane;
@@ -156,7 +156,7 @@ class Image : public MemObj {
     bool allowTiling() const override { return this->isTiledImage; }
     void setImageRowPitch(size_t rowPitch) { imageDesc.image_row_pitch = rowPitch; }
     void setImageSlicePitch(size_t slicePitch) { imageDesc.image_slice_pitch = slicePitch; }
-    void setSurfaceOffsets(uint32_t offset, uint32_t xOffset, uint32_t yOffset, uint32_t yOffsetForUVPlane) {
+    void setSurfaceOffsets(uint64_t offset, uint32_t xOffset, uint32_t yOffset, uint32_t yOffsetForUVPlane) {
         surfaceOffsets.offset = offset;
         surfaceOffsets.xOffset = xOffset;
         surfaceOffsets.yOffset = yOffset;
@@ -225,7 +225,7 @@ class Image : public MemObj {
     size_t imageCount = 0;
     uint32_t cubeFaceIndex;
     cl_uint mediaPlaneType;
-    SurfaceOffsets surfaceOffsets;
+    SurfaceOffsets surfaceOffsets = {0};
     uint32_t baseMipLevel = 0;
     uint32_t mipCount = 1;
 

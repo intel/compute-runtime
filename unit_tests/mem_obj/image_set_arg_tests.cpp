@@ -25,6 +25,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/basic_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/image.h"
@@ -964,4 +965,19 @@ HWTEST_F(ImageShaderChanelValueTest, ChannelRGBA) {
     inputChannel = SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE;
     outputChannel = ImageHw<FamilyType>::getShaderChannelValue(inputChannel, CL_RGBA);
     EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_RED_BLUE, outputChannel);
+}
+
+HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsProgrammedThenCorrectStataBaseAddressIsSet) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState;
+
+    uint64_t surfaceOffset = 8 * GB;
+
+    srcImage->setSurfaceOffsets(surfaceOffset, 0, 0, 0);
+    srcImage->setImageArg(&surfaceState, false, 0);
+
+    auto expectedAddress = srcImage->getGraphicsAllocation()->getGpuAddressToPatch() + surfaceOffset;
+    auto surfaceAddress = surfaceState.getSurfaceBaseAddress();
+
+    EXPECT_EQ(expectedAddress, surfaceAddress);
 }
