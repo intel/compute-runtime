@@ -59,6 +59,7 @@ int KernelCreateCallbackCount = 0;
 int KernelSubmitCallbackCount = 0;
 int CommandBufferCreateCallbackCount = 0;
 int CommandBufferCompleteCallbackCount = 0;
+bool returnNullResource = false;
 
 context_handle_t currContext = nullptr;
 
@@ -87,15 +88,16 @@ void OnKernelCreate(context_handle_t context, const instrument_params_in_t *para
 void OnKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {
     resource_handle_t currResource = nullptr;
     ASSERT_NE(nullptr, currContext);
-    GTPIN_DI_STATUS st = gtpinCreateBuffer(currContext, (uint32_t)256, &currResource);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, st);
-    EXPECT_NE(nullptr, currResource);
+    if (!returnNullResource) {
+        GTPIN_DI_STATUS st = gtpinCreateBuffer(currContext, (uint32_t)256, &currResource);
+        EXPECT_EQ(GTPIN_DI_SUCCESS, st);
+        EXPECT_NE(nullptr, currResource);
 
-    uint8_t *bufAddress = nullptr;
-    st = gtpinMapBuffer(currContext, currResource, &bufAddress);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, st);
-    EXPECT_NE(nullptr, bufAddress);
-
+        uint8_t *bufAddress = nullptr;
+        st = gtpinMapBuffer(currContext, currResource, &bufAddress);
+        EXPECT_EQ(GTPIN_DI_SUCCESS, st);
+        EXPECT_NE(nullptr, bufAddress);
+    }
     *entryOffset = 0;
     *resource = currResource;
     kernelResources.push_back(currResource);
@@ -1404,6 +1406,99 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseEvent(userEvent);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseContext(context);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenNullResourceReturnedFromOnKernelSubmitThenResourceNotSetAndNotBecomingResident) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    cl_kernel kernel1 = nullptr;
+    cl_program pProgram = nullptr;
+    cl_device_id device = (cl_device_id)pDevice;
+    void *pSource = nullptr;
+    size_t sourceSize = 0;
+    std::string testFile;
+    cl_command_queue cmdQ = nullptr;
+    cl_queue_properties properties = 0;
+    cl_context context = nullptr;
+
+    KernelBinaryHelper kbHelper("CopyBuffer_simd8", false);
+    testFile.append(clFiles);
+    testFile.append("CopyBuffer_simd8.cl");
+    sourceSize = loadDataFromFile(testFile.c_str(), pSource);
+    EXPECT_NE(0u, sourceSize);
+    EXPECT_NE(nullptr, pSource);
+
+    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, context);
+
+    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
+    ASSERT_NE(nullptr, cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    pProgram = clCreateProgramWithSource(
+        context,
+        1,
+        (const char **)&pSource,
+        &sourceSize,
+        &retVal);
+    ASSERT_NE(nullptr, pProgram);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &device,
+        nullptr,
+        nullptr,
+        nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    kernel1 = clCreateKernel(pProgram, "CopyBuffer", &retVal);
+    EXPECT_NE(nullptr, kernel1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    Kernel *pKernel1 = (Kernel *)kernel1;
+    returnNullResource = true;
+
+    auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
+
+    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    EXPECT_EQ(nullptr, (resource_handle_t)kernelExecQueue[0].gtpinResource);
+
+    CommandStreamReceiver &csr = pCmdQueue->getDevice().getCommandStreamReceiver();
+    gtpinNotifyMakeResident(pKernel1, &csr);
+    EXPECT_FALSE(kernelExecQueue[0].isResourceResident);
+
+    std::vector<Surface *> residencyVector;
+    gtpinNotifyUpdateResidencyList(pKernel1, &residencyVector);
+    EXPECT_EQ(0u, residencyVector.size());
+
+    retVal = clFinish(cmdQ);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    // Cleanup
+    returnNullResource = false;
+    kernelResources.clear();
+    retVal = clReleaseKernel(kernel1);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    deleteDataReadFromFile(pSource);
+
+    retVal = clReleaseCommandQueue(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseContext(context);

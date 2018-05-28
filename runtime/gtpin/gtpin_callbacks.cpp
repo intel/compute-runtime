@@ -136,6 +136,9 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         kernelExecQueue.push_back(kExec);
         lock.leave(kernelExecQueueLock);
         // Patch SSH[gtpinBTI] with GT-Pin resource
+        if (!resource) {
+            return;
+        }
         auto pPlatform = platform();
         auto pDevice = pPlatform->getDevice(0);
         GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily;
@@ -202,6 +205,9 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
                 // It's time for kernel to make resident its GT-Pin resource
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
+                if (!gtpinBuffer) {
+                    break;
+                }
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
                 GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
                 pCommandStreamReceiver->makeResident(*pGfxAlloc);
@@ -223,6 +229,9 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
                 // It's time for kernel to update its residency list with its GT-Pin resource
                 std::vector<Surface *> *pResidencyVector = (std::vector<Surface *> *)pResVec;
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
+                if (!gtpinBuffer) {
+                    break;
+                }
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
                 GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
                 GeneralSurface *pSurface = new GeneralSurface(pGfxAlloc);
