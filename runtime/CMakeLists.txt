@@ -125,13 +125,6 @@ if(WIN32)
 endif(WIN32)
 
 if(${GENERATE_EXECUTABLE})
-  if(GTPIN_HEADERS_DIR)
-    macro(macro_for_each_gen)
-      target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
-    endmacro()
-    apply_macro_for_each_gen("SUPPORTED")
-  endif()
-
   list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS
     $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
     $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
@@ -141,6 +134,13 @@ if(${GENERATE_EXECUTABLE})
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
   )
+
+  if(GTPIN_HEADERS_DIR)
+    macro(macro_for_each_gen)
+      target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
+    endmacro()
+    apply_macro_for_each_gen("SUPPORTED")
+  endif()
 
   add_subdirectory(dll)
 
