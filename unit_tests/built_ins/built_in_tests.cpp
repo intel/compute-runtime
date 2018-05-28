@@ -832,16 +832,6 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeBinary) {
     EXPECT_EQ(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::COUNT, BuiltinCode::ECodeType::Binary, *pDevice).size());
 }
 
-TEST_F(BuiltInTests, givenCreateProgramFromCodeWhenReferenceCountedContextThenContextRefCountIncreases) {
-    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
-    const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
-    EXPECT_NE(0u, bc.resource.size());
-    auto refCount = pContext->getRefInternalCount();
-    auto program = std::unique_ptr<Program>(BuiltinsLib::createProgramFromCode(bc, *pContext, *pDevice));
-    EXPECT_EQ(pContext->getRefInternalCount(), refCount + 1);
-    EXPECT_NE(nullptr, program.get());
-}
-
 TEST_F(BuiltInTests, createProgramFromCodeForTypeAny) {
     auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
     const BuiltinCode bc = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
@@ -1490,7 +1480,8 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     mockCompilerInterface.overrideGlobalCompilerInterface();
     mockCompilerInterface.sipKernelBinaryOverride = mockCompilerInterface.getDummyGenBinary();
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
-    auto p = Program::createFromGenBinary(pContext, mockCompilerInterface.sipKernelBinaryOverride.data(), mockCompilerInterface.sipKernelBinaryOverride.size(), &errCode);
+    auto p = Program::createFromGenBinary(pContext, mockCompilerInterface.sipKernelBinaryOverride.data(), mockCompilerInterface.sipKernelBinaryOverride.size(),
+                                          false, &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
     errCode = p->processGenBinary();
     ASSERT_EQ(CL_SUCCESS, errCode);

@@ -37,7 +37,7 @@ T *Program::create(
     auto pContext = castToObject<Context>(context);
     DEBUG_BREAK_IF(!pContext);
 
-    auto program = new T(pContext);
+    auto program = new T(pContext, false);
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
 
@@ -76,7 +76,7 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        program = new T(pContext);
+        program = new T(pContext, false);
         program->sourceCode.swap(combinedString);
     }
 
@@ -89,6 +89,7 @@ T *Program::create(
     const char *nullTerminatedString,
     Context *context,
     Device &device,
+    bool isBuiltIn,
     cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     T *program = nullptr;
@@ -101,7 +102,8 @@ T *Program::create(
         program = new T();
         program->setSource((char *)nullTerminatedString);
         program->context = context;
-        if (program->context) {
+        program->isBuiltIn = isBuiltIn;
+        if (program->context && !program->isBuiltIn) {
             program->context->incRefInternal();
         }
         program->pDevice = &device;
@@ -130,7 +132,7 @@ T *Program::createFromIL(Context *ctx,
         return nullptr;
     }
 
-    T *program = new T(ctx);
+    T *program = new T(ctx, false);
     errcodeRet = program->createProgramFromBinary(il, length);
     if (errcodeRet != CL_SUCCESS) {
         delete program;

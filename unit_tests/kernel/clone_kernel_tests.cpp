@@ -94,7 +94,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
         pKernelInfo->kernelArgInfo[0].offsetVmeSadAdjustMode = 0x14;
         pKernelInfo->kernelArgInfo[0].offsetVmeSearchPathType = 0x1c;
 
-        pProgram = new MockProgram(pContext);
+        pProgram = new MockProgram(pContext, false);
 
         pSourceKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pSourceKernel->initialize());

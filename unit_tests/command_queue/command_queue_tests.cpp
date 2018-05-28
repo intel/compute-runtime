@@ -711,39 +711,35 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
 
     void SetUp() override {
         device.reset(Device::create<MockDevice>(*platformDevices));
-        context = new MockContext(device.get());
-    }
-
-    void TearDown() override {
-        context->decRefInternal();
+        context.reset(new MockContext(device.get()));
     }
 
     std::unique_ptr<MockDevice> device;
-    MockContext *context = nullptr;
+    std::unique_ptr<MockContext> context;
 };
 
 HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndUnblockedQueueWhenEnqueuedThenCallWaitWithoutQuickKmdSleepRequest) {
-    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context, device.get()));
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     uint32_t tmpPtr = 0;
-    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context));
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
     cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 0, nullptr, nullptr);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
 }
 
 HWTEST_F(WaitForQueueCompletionTests, givenBlockingCallAndBlockedQueueWhenEnqueuedThenCallWaitWithoutQuickKmdSleepRequest) {
-    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context, device.get()));
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     std::unique_ptr<Event> blockingEvent(new Event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 0, 0));
     cl_event clBlockingEvent = blockingEvent.get();
     uint32_t tmpPtr = 0;
-    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context));
+    auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create(context.get()));
     cmdQ->enqueueReadBuffer(buffer.get(), CL_TRUE, 0, 1, &tmpPtr, 1, &clBlockingEvent, nullptr);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);
 }
 
 HWTEST_F(WaitForQueueCompletionTests, whenFinishIsCalledThenCallWaitWithoutQuickKmdSleepRequest) {
-    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context, device.get()));
+    std::unique_ptr<MyCmdQueue<FamilyType>> cmdQ(new MyCmdQueue<FamilyType>(context.get(), device.get()));
     cmdQ->finish(false);
     EXPECT_EQ(1u, cmdQ->waitUntilCompleteCounter);
     EXPECT_FALSE(cmdQ->requestedUseQuickKmdSleep);

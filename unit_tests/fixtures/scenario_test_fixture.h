@@ -49,7 +49,7 @@ class ScenarioTest : public ::testing::Test,
         cl_device_id clDevice = pDevice;
         context = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
         commandQueue = new MockCommandQueue(context, pDevice, 0);
-        program = new MockProgram(context);
+        program = new MockProgram(context, false);
 
         kernelInternals = new MockKernelWithInternals(*pDevice, context);
         kernel = kernelInternals->mockKernel;

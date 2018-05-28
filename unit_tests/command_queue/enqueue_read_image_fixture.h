@@ -51,7 +51,7 @@ struct EnqueueReadImageTest : public CommandEnqueueFixture,
     virtual void TearDown(void) override {
         delete srcImage;
         delete[] dstPtr;
-        context->decRefInternal();
+        delete context;
         CommandEnqueueFixture::TearDown();
     }
 

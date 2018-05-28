@@ -79,7 +79,7 @@ class BufferSetArgTest : public ContextFixture,
         pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
         pKernelInfo->usesSsh = true;
 
-        pProgram = new MockProgram(pContext);
+        pProgram = new MockProgram(pContext, false);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);

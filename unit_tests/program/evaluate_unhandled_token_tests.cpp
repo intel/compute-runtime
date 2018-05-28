@@ -55,7 +55,7 @@ inline cl_int GetDecodeErrorCode(const std::vector<char> &binary, bool allowUnha
     prog.reset(OCLRT::Program::createFromGenBinary<PT>(nullptr,
                                                        binary.data(),
                                                        binary.size(),
-                                                       &errorCode));
+                                                       false, &errorCode));
     prog->allowUnhandledTokens = allowUnhandledTokens;
     prog->lastUnhandledTokenFound = defaultUnhandledTokenId;
     auto ret = prog->processGenBinary();

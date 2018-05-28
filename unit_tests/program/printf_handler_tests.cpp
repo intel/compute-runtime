@@ -42,7 +42,7 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     KernelInfo *pKernelInfo = new KernelInfo();
     pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
 
-    MockProgram *pProgram = new MockProgram(&context);
+    MockProgram *pProgram = new MockProgram(&context, false);
     MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *device);
 
     MockMultiDispatchInfo multiDispatchInfo(pKernel);
@@ -68,7 +68,7 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
     KernelInfo *pKernelInfo = new KernelInfo();
     pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
 
-    MockProgram *pProgram = new MockProgram(&context);
+    MockProgram *pProgram = new MockProgram(&context, false);
 
     uint64_t crossThread[10];
     MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *device);

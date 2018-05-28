@@ -76,6 +76,7 @@ class Program : public BaseObject<_cl_program> {
         const char *nullTerminatedString,
         Context *context,
         Device &device,
+        bool isBuiltIn,
         cl_int *errcodeRet);
 
     template <typename T = Program>
@@ -83,6 +84,7 @@ class Program : public BaseObject<_cl_program> {
         Context *context,
         const void *binary,
         size_t size,
+        bool isBuiltIn,
         cl_int *errcodeRet) {
         cl_int retVal = CL_SUCCESS;
         T *program = nullptr;
@@ -92,7 +94,7 @@ class Program : public BaseObject<_cl_program> {
         }
 
         if (CL_SUCCESS == retVal) {
-            program = new T(context);
+            program = new T(context, isBuiltIn);
             program->numDevices = 1;
             program->storeGenBinary(binary, size);
             program->isCreatedFromBinary = true;
@@ -114,7 +116,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(Context *context);
+    Program(Context *context, bool isBuiltIn);
     ~Program() override;
 
     Program(const Program &) = delete;
@@ -227,7 +229,9 @@ class Program : public BaseObject<_cl_program> {
     bool getAllowNonUniform() const {
         return allowNonUniform;
     }
-
+    bool getIsBuiltIn() const {
+        return isBuiltIn;
+    }
     uint32_t getProgramOptionVersion() const {
         return programOptionVersion;
     }
@@ -329,6 +333,7 @@ class Program : public BaseObject<_cl_program> {
     Device*                   pDevice;
     cl_uint                   numDevices;
 
+    bool                      isBuiltIn;
     bool                      kernelDebugEnabled = false;
     friend class OfflineCompiler;
     // clang-format on

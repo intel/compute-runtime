@@ -86,6 +86,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
         auto program = Program::createFromGenBinary(&context,
                                                     src.resource.data(),
                                                     src.resource.size(),
+                                                    true,
                                                     &retVal);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         DEBUG_BREAK_IF(!program);
@@ -130,6 +131,7 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         auto program = Program::createFromGenBinary(nullptr,
                                                     sipBinary.data(),
                                                     sipBinary.size(),
+                                                    true,
                                                     &retVal);
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
         UNRECOVERABLE_IF(program == nullptr);
@@ -198,7 +200,7 @@ Program *BuiltIns::createBuiltInProgram(
 
     Program *pBuiltInProgram = nullptr;
 
-    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, device, nullptr);
+    pBuiltInProgram = Program::create(programSourceStr.c_str(), &context, device, true, nullptr);
 
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;

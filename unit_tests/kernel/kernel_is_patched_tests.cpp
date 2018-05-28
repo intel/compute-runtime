@@ -31,8 +31,8 @@ class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
         device.reset(MockDevice::create<MockDevice>(nullptr));
-        context = new MockContext(device.get());
-        program.reset(Program::create("FillBufferBytes", context, *device.get(), &retVal));
+        context.reset(new MockContext(device.get()));
+        program.reset(Program::create("FillBufferBytes", context.get(), *device.get(), true, &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);
         cl_device_id clDevice = device.get();
         program->build(1, &clDevice, nullptr, nullptr, nullptr, false);
@@ -40,10 +40,10 @@ class PatchedKernelTest : public ::testing::Test {
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
     void TearDown() override {
-        context->decRefInternal();
+        context.reset();
     }
 
-    MockContext *context = nullptr;
+    std::unique_ptr<MockContext> context;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<Program> program;
     std::unique_ptr<Kernel> kernel;
@@ -55,7 +55,7 @@ TEST_F(PatchedKernelTest, givenKernelWithoutPatchedArgsWhenIsPatchedIsCalledThen
 }
 
 TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithBufferWhenIsPatchedIsCalledThenReturnsTrue) {
-    auto buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int), nullptr, &retVal);
+    auto buffer = clCreateBuffer(context.get(), CL_MEM_READ_ONLY, sizeof(int), nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto argsNum = kernel->getKernelArgsNumber();
     for (uint32_t i = 0; i < argsNum; i++) {
@@ -66,7 +66,7 @@ TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithBufferWhenIsPatchedIsCall
 }
 
 TEST_F(PatchedKernelTest, givenKernelWithoutAllArgsSetWhenIsPatchedIsCalledThenReturnsFalse) {
-    auto buffer = clCreateBuffer(context, CL_MEM_READ_ONLY, sizeof(int), nullptr, &retVal);
+    auto buffer = clCreateBuffer(context.get(), CL_MEM_READ_ONLY, sizeof(int), nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     auto argsNum = kernel->getKernelArgsNumber();
     for (uint32_t i = 0; i < argsNum; i++) {
@@ -103,7 +103,7 @@ TEST_F(PatchedKernelTest, givenKernelWithAllArgsSetWithSvmWhenIsPatchedIsCalledT
 
 TEST_F(PatchedKernelTest, givenKernelWithOneArgumentToPatchWhichIsNonzeroIndexedWhenThatArgumentIsSetThenKernelIsPatched) {
     uint32_t size = sizeof(int);
-    MockKernelWithInternals mockKernel(*device.get(), context);
+    MockKernelWithInternals mockKernel(*device.get(), context.get());
     EXPECT_EQ(0u, mockKernel.kernelInfo.argumentsToPatchNum);
     mockKernel.kernelInfo.storeKernelArgPatchInfo(1, 0, 0, 0, 0);
     EXPECT_EQ(1u, mockKernel.kernelInfo.argumentsToPatchNum);

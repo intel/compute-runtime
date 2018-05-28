@@ -69,7 +69,7 @@ class KernelArgPipeFixture : public ContextFixture, public DeviceFixture {
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = (uint32_t)sizeof(void *);
 
-        pProgram = new MockProgram(pContext);
+        pProgram = new MockProgram(pContext, false);
 
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());

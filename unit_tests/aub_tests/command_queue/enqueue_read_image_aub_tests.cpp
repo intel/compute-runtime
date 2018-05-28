@@ -62,7 +62,7 @@ struct AUBReadImage
 
     void TearDown() override {
         delete srcImage;
-        context->decRefInternal();
+        delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

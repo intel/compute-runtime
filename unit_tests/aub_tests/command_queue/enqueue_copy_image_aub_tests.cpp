@@ -52,7 +52,7 @@ struct AUBCopyImage
     void TearDown() override {
         delete srcImage;
         delete dstImage;
-        context->decRefInternal();
+        delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
     }

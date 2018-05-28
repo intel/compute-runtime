@@ -32,16 +32,12 @@ class ImageHostPtrTransferTests : public testing::Test {
   public:
     void SetUp() override {
         device.reset(Device::create<MockDevice>(*platformDevices));
-        context = new MockContext(device.get());
-    }
-
-    void TearDown() override {
-        context->decRefInternal();
+        context.reset(new MockContext(device.get()));
     }
 
     template <typename ImageTraits>
     void createImageAndSetTestParams() {
-        image.reset(ImageHelper<ImageUseHostPtr<ImageTraits>>::create(context));
+        image.reset(ImageHelper<ImageUseHostPtr<ImageTraits>>::create(context.get()));
 
         imgDesc = &image->getImageDesc();
 
@@ -69,7 +65,7 @@ class ImageHostPtrTransferTests : public testing::Test {
     }
 
     std::unique_ptr<MockDevice> device;
-    MockContext *context = nullptr;
+    std::unique_ptr<MockContext> context;
     std::unique_ptr<Image> image;
 
     const cl_image_desc *imgDesc = nullptr;

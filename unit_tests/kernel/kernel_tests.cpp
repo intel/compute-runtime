@@ -488,7 +488,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
 
     // create kernel
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
@@ -528,7 +528,7 @@ TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWh
     pKernelInfo->patchInfo.executionEnvironment = &tokenEE;
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
     pKernel->initialize();
 
@@ -572,7 +572,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurfaceAllocationFailure) {
 
     // create kernel
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MemoryManagementFixture::InjectedFunction method = [&](size_t failureIndex) {
         MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
@@ -619,7 +619,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
 
         // create kernel
         MockContext context;
-        MockProgram program(&context);
+        MockProgram program(&context, false);
         MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -652,7 +652,7 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = &AllocateStatelessPrivateMemorySurface;
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
@@ -703,7 +703,7 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
     GraphicsAllocation gfxAlloc(buffer, sizeof(buffer));
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     program.setConstantSurface(&gfxAlloc);
 
     // create kernel
@@ -751,7 +751,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
     pKernelInfo->gpuPointerSize = 4;
     pDevice->getMemoryManager()->setForce32BitAllocations(false);
@@ -769,7 +769,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
     pKernelInfo->gpuPointerSize = 4;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
@@ -787,7 +787,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockKernel> pKernel(new MockKernel(&program, *pKernelInfo, *pDevice));
     pKernelInfo->gpuPointerSize = 8;
     pDevice->getMemoryManager()->setForce32BitAllocations(true);
@@ -825,7 +825,7 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     // create kernel
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     program.setGlobalSurface(&gfxAlloc);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
@@ -906,7 +906,7 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
     void *bufferAddress = gfxAlloc.getUnderlyingBuffer();
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     program.setGlobalSurface(&gfxAlloc);
 
     // create kernel
@@ -1084,7 +1084,7 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
     void *bufferAddress = gfxAlloc.getUnderlyingBuffer();
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     program.setConstantSurface(&gfxAlloc);
 
     // create kernel
@@ -1173,7 +1173,7 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenE
     pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
 
     // create kernel
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
     // setup surface state heap
@@ -1226,7 +1226,7 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedTh
     pKernelInfo->patchInfo.pAllocateStatelessEventPoolSurface = &AllocateStatelessEventPoolSurface;
 
     // create kernel
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
     // setup surface state heap
@@ -1388,7 +1388,7 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCre
     pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
 
     // create kernel
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
     // setup surface state heap
@@ -1441,7 +1441,7 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDevi
     pKernelInfo->patchInfo.pAllocateStatelessDefaultDeviceQueueSurface = &AllocateStatelessDefaultDeviceQueueSurface;
 
     // create kernel
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
 
     // setup surface state heap
@@ -2189,7 +2189,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith32bitPointerSizeThenReport32bit) {
     info.gpuPointerSize = 4;
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
 
@@ -2201,7 +2201,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
     info.gpuPointerSize = 8;
 
     MockContext context;
-    MockProgram program(&context);
+    MockProgram program(&context, false);
     std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
 
