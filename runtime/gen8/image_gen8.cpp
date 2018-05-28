@@ -38,12 +38,18 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 
 template <>
 size_t ImageHw<BDWFamily>::getHostPtrRowPitchForMap(uint32_t mipLevel) {
+    if (getImageDesc().num_mip_levels <= 1) {
+        return getHostPtrRowPitch();
+    }
     size_t mipWidth = (getImageDesc().image_width >> mipLevel) > 0 ? (getImageDesc().image_width >> mipLevel) : 1;
     return mipWidth * getSurfaceFormatInfo().ImageElementSizeInBytes;
 }
 
 template <>
 size_t ImageHw<BDWFamily>::getHostPtrSlicePitchForMap(uint32_t mipLevel) {
+    if (getImageDesc().num_mip_levels <= 1) {
+        return getHostPtrSlicePitch();
+    }
     size_t mipHeight = (getImageDesc().image_height >> mipLevel) > 0 ? (getImageDesc().image_height >> mipLevel) : 1;
     size_t rowPitch = getHostPtrRowPitchForMap(mipLevel);
 

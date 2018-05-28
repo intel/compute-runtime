@@ -43,7 +43,7 @@ GEN8TEST_F(gen8ImageTests, appendSurfaceStateParamsDoesNothing) {
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }
 
-GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLevelZeroThenReturnWidthTimesBytesPerPixelAndRowPitchTimesHeight) {
+GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledOnMipMappedImageWithMipLevelZeroThenReturnWidthTimesBytesPerPixelAndRowPitchTimesHeight) {
     MockContext context;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
@@ -59,7 +59,7 @@ GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLev
     EXPECT_EQ(imageDesc.image_height * rowPitch, slicePitch);
 }
 
-GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLevelNonZeroThenReturnScaledWidthTimesBytesPerPixelAndRowPitchTimesScaledHeight) {
+GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledOnMipMappedImageWithMipLevelNonZeroThenReturnScaledWidthTimesBytesPerPixelAndRowPitchTimesScaledHeight) {
     MockContext context;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
@@ -75,7 +75,7 @@ GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLev
     EXPECT_EQ((imageDesc.image_height >> 1) * rowPitch, slicePitch);
 }
 
-GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLevelNonZeroThenReturnedScaledWidthTimesBytesPerPixelAndRowPitchTimesScaledHeightCannotBeZero) {
+GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledOnMipMappedImageWithMipLevelNonZeroThenReturnScaledWidthTimesBytesPerPixelAndRowPitchTimesScaledHeightCannotBeZero) {
     MockContext context;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
@@ -89,4 +89,20 @@ GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLev
     auto slicePitch = image->getHostPtrSlicePitchForMap(4u);
     EXPECT_EQ(4u, rowPitch);
     EXPECT_EQ(rowPitch, slicePitch);
+}
+
+GEN8TEST_F(gen8ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledOnNonMipMappedImageThenReturnRowPitchAndSlicePitch) {
+    MockContext context;
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+    imageDesc.image_depth = 5;
+    imageDesc.num_mip_levels = 0;
+
+    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context, &imageDesc));
+    auto rowPitch = image->getHostPtrRowPitchForMap(0u);
+    auto slicePitch = image->getHostPtrSlicePitchForMap(0u);
+    EXPECT_EQ(image->getHostPtrRowPitch(), rowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), slicePitch);
 }
