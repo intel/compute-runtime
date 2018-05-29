@@ -41,7 +41,7 @@ if(LIBVA_FOUND)
 endif(LIBVA_FOUND)
 
 macro(macro_for_each_platform)
-  list(APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp)
+  list(APPEND IGDRCL_SRCS_linux_dll_tests ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl)
 endmacro()
 macro(macro_for_each_gen)
   apply_macro_for_each_platform()

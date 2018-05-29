@@ -20,7 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
+#ifdef SUPPORT_BDW
+#include "hw_info_bdw.inl"
+#endif
 
 namespace OCLRT {
 const char *GfxFamilyMapper<IGFX_GEN8_CORE>::name = "Gen8";

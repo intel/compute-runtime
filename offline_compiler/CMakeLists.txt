@@ -56,7 +56,7 @@ set(RUNTIME_GENX_CPP_FILES
 
 macro(macro_for_each_platform)
   list(APPEND CLOC_SRCS_LIB
-    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.cpp
+    ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/hw_info_${PLATFORM_IT_LOWER}.inl
     ${IGDRCL_SOURCE_DIR}/runtime/${GEN_TYPE_LOWER}/enable_${PLATFORM_IT_LOWER}.cpp
   )
 endmacro()

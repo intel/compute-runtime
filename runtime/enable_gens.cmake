@@ -69,7 +69,7 @@ macro(macro_for_each_platform)
     endif()
   endforeach()
 
-  foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.cpp")
+  foreach(PLATFORM_FILE "hw_info_${PLATFORM_IT_LOWER}.inl")
     list(APPEND RUNTIME_SRCS_${GEN_TYPE}_CPP_BASE ${GENX_PREFIX}/${PLATFORM_FILE})
   endforeach()
 
