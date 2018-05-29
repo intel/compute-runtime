@@ -21,7 +21,7 @@
 */
 
 #include "runtime/os_interface/os_thread.h"
-#include <thread>
+#include <pthread.h>
 
 namespace OCLRT {
 class ThreadLinux : public Thread {
