@@ -26,6 +26,7 @@ set(IGDRCL_SRCS_tests_event
   ${CMAKE_CURRENT_SOURCE_DIR}/event_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/event_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/event_tests_mt.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/event_tracker_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/user_events_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/user_events_tests_mt.cpp
 )

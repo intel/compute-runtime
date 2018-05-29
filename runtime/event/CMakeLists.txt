@@ -26,6 +26,8 @@ set(RUNTIME_SRCS_EVENT
   ${CMAKE_CURRENT_SOURCE_DIR}/event.h
   ${CMAKE_CURRENT_SOURCE_DIR}/event_builder.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/event_builder.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/event_tracker.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/event_tracker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/user_event.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/user_event.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_timestamps.h

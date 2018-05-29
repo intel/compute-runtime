@@ -25,6 +25,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/base_object_tests_mt.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/basic_math_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager_state_restore.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp

@@ -27,6 +27,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
+#include "runtime/event/event_tracker.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/api/cl_types.h"
@@ -59,6 +60,9 @@ Event::Event(
       perfCounterNode(nullptr),
       perfConfigurationData(nullptr),
       taskCount(taskCount) {
+    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+        EventsTracker::getEventsTracker().notifyCreation(this);
+    }
     parentCount = 0;
     executionStatus = CL_QUEUED;
     flushStamp.reset(new FlushStampTracker(true));
@@ -103,6 +107,10 @@ Event::Event(
 }
 
 Event::~Event() {
+    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+        EventsTracker::getEventsTracker().notifyDestruction(this);
+    }
+
     DBG_LOG(EventsDebugEnable, "~Event()", this);
     //no commands should be registred
     DEBUG_BREAK_IF(this->cmdToSubmit.load());
@@ -423,6 +431,18 @@ bool Event::setStatus(cl_int status) {
     executeCallbacks(status);
     this->decRefInternal();
     return true;
+}
+
+void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
+    int32_t prevStatus = executionStatus;
+    DBG_LOG(EventsDebugEnable, "transitionExecutionStatus event", this, " new status", newExecutionStatus, "previousStatus", prevStatus);
+
+    while (prevStatus > newExecutionStatus) {
+        executionStatus.compare_exchange_weak(prevStatus, newExecutionStatus);
+    }
+    if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
+        EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
+    }
 }
 
 void Event::submitCommand(bool abortTasks) {

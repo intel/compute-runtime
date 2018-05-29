@@ -339,14 +339,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     // transitions event to new execution state
     // guarantees that newStatus <= oldStatus
-    void transitionExecutionStatus(int32_t newExecutionStatus) const {
-        int32_t prevStatus = executionStatus;
-        DBG_LOG(EventsDebugEnable, "transitionExecutionStatus event", this, " new status", newExecutionStatus, "previousStatus", prevStatus);
-
-        while (prevStatus > newExecutionStatus) {
-            executionStatus.compare_exchange_weak(prevStatus, newExecutionStatus);
-        }
-    }
+    void transitionExecutionStatus(int32_t newExecutionStatus) const;
 
     //vector storing events that needs to be notified when this event is ready to go
     IFRefList<Event, true, true> childEventsToNotify;
