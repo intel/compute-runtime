@@ -430,6 +430,8 @@ void DeviceQueueHw<GfxFamily>::addMediaStateClearCmds() {
     pipeControl->setGenericMediaStateClear(true);
     pipeControl->setCommandStreamerStallEnable(true);
 
+    addDcFlushToPipeControlWa(pipeControl);
+
     PreambleHelper<GfxFamily>::programVFEState(&slbCS, device->getHardwareInfo(), 0, 0);
 }
 
@@ -470,5 +472,8 @@ size_t DeviceQueueHw<GfxFamily>::getProfilingEndCmdsSize() {
     size += sizeof(MI_LOAD_REGISTER_IMM);
     return size;
 }
+
+template <typename GfxFamily>
+void DeviceQueueHw<GfxFamily>::addDcFlushToPipeControlWa(PIPE_CONTROL *pc) {}
 
 } // namespace OCLRT

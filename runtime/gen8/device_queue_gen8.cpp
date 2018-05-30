@@ -81,5 +81,10 @@ void DeviceQueueHw<Family>::addProfilingEndCmds(uint64_t timestampAddress) {
     pPipeControlCmd->setAddress(timestampAddress & (0xffffffff));
 }
 
+template <>
+void DeviceQueueHw<Family>::addDcFlushToPipeControlWa(PIPE_CONTROL *pc) {
+    pc->setDcFlushEnable(true);
+}
+
 template class DeviceQueueHw<Family>;
 } // namespace OCLRT

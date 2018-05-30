@@ -91,6 +91,7 @@ class DeviceQueueHw : public DeviceQueue {
     void addPipeControlCmdWa(bool isNoopCmd = false);
     void initPipeControl(PIPE_CONTROL *pc);
     void buildSlbDummyCommands();
+    void addDcFlushToPipeControlWa(PIPE_CONTROL *pc);
 
     void addProfilingEndCmds(uint64_t timestampAddress);
     static size_t getProfilingEndCmdsSize();
