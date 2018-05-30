@@ -24,5 +24,9 @@
 #include "runtime/os_interface/hw_info_config.h"
 
 namespace OCLRT {
-static EnableProductHwInfoConfig<IGFX_BROXTON> enable;
+
+#ifdef SUPPORT_BDW
+static EnableProductHwInfoConfig<IGFX_BROADWELL> enableBDW;
+#endif
+
 } // namespace OCLRT
