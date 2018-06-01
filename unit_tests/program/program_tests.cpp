@@ -35,6 +35,7 @@
 #include "program_tests.h"
 #include "unit_tests/fixtures/program_fixture.inl"
 #include "unit_tests/global_environment.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/program/program_from_binary.h"
@@ -1862,19 +1863,17 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32B
 }
 
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatelessToStatefulBufferOffsetOptimization) {
-    cl_int retVal = CL_DEVICE_NOT_FOUND;
-    auto defaultSetting = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get();
-
+    DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(true);
-    if (pDevice) {
-        MockProgram *pProgram = Program::create<MockProgram>("", pContext, *pDevice, true, nullptr);
-        EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg ")));
-        delete pProgram;
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg ")));
+}
 
-    } else {
-        EXPECT_NE(CL_DEVICE_NOT_FOUND, retVal);
-    }
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(defaultSetting);
+TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    EXPECT_THAT(pProgram->getInternalOptions(), Not(testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg "))));
 }
 
 TEST_F(ProgramTests, ProgramCtorSetsProperProgramScopePatchListSize) {
@@ -2662,7 +2661,7 @@ TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizatio
     MockProgram prog;
     auto &internalOpts = prog.getInternalOptions();
     auto it = internalOpts.find("-cl-intel-has-buffer-offset-arg ");
-    EXPECT_EQ(std::string::npos, it);
+    EXPECT_NE(std::string::npos, it);
 }
 
 template <int32_t ErrCodeToReturn, bool spirv = true>
