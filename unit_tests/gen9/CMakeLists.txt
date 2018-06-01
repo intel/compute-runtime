@@ -31,6 +31,7 @@ if(TESTS_GEN9)
     ${CMAKE_CURRENT_SOURCE_DIR}/l3_helper_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/preamble_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen9.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sip_tests_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen9.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen9.cpp

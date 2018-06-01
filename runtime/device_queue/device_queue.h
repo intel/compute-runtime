@@ -117,7 +117,7 @@ class DeviceQueue : public BaseObject<_device_queue> {
     static const uint32_t interfaceDescriptorEntries = 64;
     static const uint32_t colorCalcStateSize = 192;
     static const uint32_t schedulerIDIndex = 62;
-    static const uint32_t numberOfDeviceEnqueues = 128;
+    static const uint32_t numberOfDeviceEnqueues;
 
   protected:
     void allocateResources();

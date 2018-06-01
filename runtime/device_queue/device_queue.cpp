@@ -31,6 +31,8 @@
 namespace OCLRT {
 DeviceQueueCreateFunc deviceQueueFactory[IGFX_MAX_CORE] = {};
 
+const uint32_t DeviceQueue::numberOfDeviceEnqueues = 128;
+
 DeviceQueue::DeviceQueue(Context *context,
                          Device *device,
                          cl_queue_properties &properties) : DeviceQueue() {

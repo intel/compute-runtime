@@ -31,6 +31,7 @@
 #include "unit_tests/fixtures/execution_model_fixture.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_device_queue.h"
+#include "unit_tests/scheduler/scheduler_source_tests.h"
 // Keep this include after execution_model_fixture.h otherwise there is high chance of conflict with macros
 #include "runtime/builtin_kernels_simulation/opencl_c.h"
 #include "runtime/builtin_kernels_simulation/scheduler_simulation.h"
@@ -39,19 +40,6 @@ extern PRODUCT_FAMILY defaultProductFamily;
 
 using namespace OCLRT;
 using namespace BuiltinKernelsSimulation;
-
-class SchedulerSourceTest : public testing::Test {
-  public:
-    void SetUp() override {
-        pDevice = DeviceHelper<>::create();
-    }
-    void TearDown() override {
-        delete pDevice;
-    }
-
-    Device *pDevice;
-    MockContext context;
-};
 
 HWCMDTEST_F(IGFX_GEN8_CORE, SchedulerSourceTest, PatchGpgpuWalker) {
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
