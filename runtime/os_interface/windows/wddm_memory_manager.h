@@ -42,6 +42,9 @@ class WddmMemoryManager : public MemoryManager {
     ~WddmMemoryManager();
     WddmMemoryManager(bool enable64kbPages, Wddm *wddm);
 
+    WddmMemoryManager(const WddmMemoryManager &) = delete;
+    WddmMemoryManager &operator=(const WddmMemoryManager &) = delete;
+
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;

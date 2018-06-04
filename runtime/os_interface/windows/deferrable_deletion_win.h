@@ -36,6 +36,9 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
     void apply() override;
     ~DeferrableDeletionImpl();
 
+    DeferrableDeletionImpl(const DeferrableDeletionImpl &) = delete;
+    DeferrableDeletionImpl &operator=(const DeferrableDeletionImpl &) = delete;
+
   protected:
     Wddm *wddm;
     D3DKMT_HANDLE *handles = nullptr;

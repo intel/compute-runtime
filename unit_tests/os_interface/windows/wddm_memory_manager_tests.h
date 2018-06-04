@@ -32,9 +32,20 @@
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
+#include <type_traits>
 
 using namespace OCLRT;
 using namespace ::testing;
+
+TEST(WddmMemoryManager, NonCopyable) {
+    EXPECT_FALSE(std::is_move_constructible<WddmMemoryManager>::value);
+    EXPECT_FALSE(std::is_copy_constructible<WddmMemoryManager>::value);
+}
+
+TEST(WddmMemoryManager, NonAssignable) {
+    EXPECT_FALSE(std::is_move_assignable<WddmMemoryManager>::value);
+    EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
+}
 
 class WddmMemoryManagerFixture : public GdiDllFixture {
   public:
