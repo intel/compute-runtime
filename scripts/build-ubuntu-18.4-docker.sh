@@ -19,6 +19,6 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-git clone --depth 1 ../compute-runtime neo
+git clone ../compute-runtime neo
 docker build -f scripts/docker/Dockerfile-ubuntu-18.04-gcc-7 -t neo-ubuntu-18.4-gcc-7:ci .
 

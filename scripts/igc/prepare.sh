@@ -19,15 +19,20 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+git tag -l
+
+VER=`git describe --tags --abbrev=0`
+IGC_INFO=($(git show ${VER}:../../manifests/manifest.yml | grep -U -A 1  intelgraphicscompiler ))
+IGC_REV=${IGC_INFO[3]}
+
+echo "NEO release: ${VER}"
+echo "IGC_REV: ${IGC_REV}"
 
 NEO_TOP_DIR=`git rev-parse --show-toplevel`
 WRK_DIR=${NEO_TOP_DIR}/..
 mkdir -p ${WRK_DIR}/igc/inc
 cp CMakeLists.txt ${WRK_DIR}/igc
 pushd ${WRK_DIR}/igc
-
-VER=18.21.10858
-IGC_REV=858e183
 
 wget https://github.com/intel/compute-runtime/releases/download/${VER}/intel-opencl_${VER}_amd64.deb
 ar -x intel-opencl_${VER}_amd64.deb

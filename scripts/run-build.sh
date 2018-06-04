@@ -28,6 +28,6 @@ then
     IMAGE=neo-${BUILD_OS}-${COMPILER}-${GEN}:ci
 fi
 
-git clone --depth 1 ../compute-runtime neo && \
+git clone ../compute-runtime neo && \
 docker build -f scripts/docker/${DOCKERFILE} -t ${IMAGE} . && \
 docker images

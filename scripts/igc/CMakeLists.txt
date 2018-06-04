@@ -22,7 +22,7 @@ cmake_minimum_required(VERSION 3.2.0 FATAL_ERROR)
 
 project(IntelGraphicsCompiler)
 
-set(IGC_LIBRARY_NAME "igdccl")
+set(IGC_LIBRARY_NAME "igc")
 set(IGC_LIBRARY_NAME "${IGC_LIBRARY_NAME}" PARENT_SCOPE)
 set(FCL_LIBRARY_NAME "igdfcl")
 set(FCL_LIBRARY_NAME "${FCL_LIBRARY_NAME}" PARENT_SCOPE)
