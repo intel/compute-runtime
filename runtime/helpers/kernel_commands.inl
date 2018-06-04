@@ -319,7 +319,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     if (kernelAllocation) {
         kernelStartOffset = kernelInfo.getGraphicsAllocation()->getGpuAddressToPatch();
     }
-
+    kernelStartOffset += kernel.getStartOffset();
     const auto &patchInfo = kernelInfo.patchInfo;
 
     auto dstBindingTablePointer = pushBindingTableAndSurfaceStates(ssh, kernel);

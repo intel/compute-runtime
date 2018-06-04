@@ -171,6 +171,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool isKernelHeapSubstituted() const;
     uint64_t getKernelId() const;
     void setKernelId(uint64_t newKernelId);
+    uint32_t getStartOffset() const;
+    void setStartOffset(uint32_t offset);
 
     const std::vector<SimpleKernelArgInfo> &getKernelArguments() const {
         return kernelArguments;
@@ -487,6 +489,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     bool usingSharedObjArgs;
     uint32_t patchedArgumentsNum = 0;
+    uint32_t startOffset = 0;
 
     std::vector<PatchInfoData> patchInfoDataList;
     std::unique_ptr<ImageTransformer> imageTransformer;

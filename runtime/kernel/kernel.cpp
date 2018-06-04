@@ -726,6 +726,12 @@ void Kernel::setKernelId(uint64_t newKernelId) {
     KernelInfo *pKernelInfo = const_cast<KernelInfo *>(&kernelInfo);
     pKernelInfo->kernelId = newKernelId;
 }
+uint32_t Kernel::getStartOffset() const {
+    return this->startOffset;
+}
+void Kernel::setStartOffset(uint32_t offset) {
+    this->startOffset = offset;
+}
 
 const void *Kernel::getSurfaceStateHeap() const {
     return kernelInfo.usesSsh

@@ -126,6 +126,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         // Notify GT-Pin that kernel was submited for execution
         (*GTPinCallbacks.onKernelSubmit)(commandBuffer, kernelId, &kernelOffset, &resource);
         // Create new record in Kernel Execution Queue describing submited kernel
+        pKernel->setStartOffset(kernelOffset);
         gtpinkexec_t kExec;
         kExec.pKernel = pKernel;
         kExec.gtpinResource = (cl_mem)resource;
@@ -250,4 +251,4 @@ void gtpinNotifyPlatformShutdown() {
         kernelExecQueue.clear();
     }
 }
-}
+} // namespace OCLRT

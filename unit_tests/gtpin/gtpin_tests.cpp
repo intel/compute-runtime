@@ -39,6 +39,10 @@
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/helpers/variable_backup.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
 #include "gtest/gtest.h"
 #include <deque>
@@ -59,6 +63,7 @@ int KernelCreateCallbackCount = 0;
 int KernelSubmitCallbackCount = 0;
 int CommandBufferCreateCallbackCount = 0;
 int CommandBufferCompleteCallbackCount = 0;
+uint32_t kernelOffset = 0;
 bool returnNullResource = false;
 
 context_handle_t currContext = nullptr;
@@ -98,7 +103,7 @@ void OnKernelSubmit(command_buffer_handle_t cb, uint64_t kernelId, uint32_t *ent
         EXPECT_EQ(GTPIN_DI_SUCCESS, st);
         EXPECT_NE(nullptr, bufAddress);
     }
-    *entryOffset = 0;
+    *entryOffset = kernelOffset;
     *resource = currResource;
     kernelResources.push_back(currResource);
 
@@ -122,15 +127,10 @@ void OnCommandBufferComplete(command_buffer_handle_t cb) {
 
     CommandBufferCompleteCallbackCount++;
 }
-
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     using ContextFixture::SetUp;
 
   public:
-    GTPinFixture() {
-    }
-
-  protected:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         pPlatform = platform();
@@ -152,6 +152,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         gtpinCallbacks.onCommandBufferComplete = nullptr;
 
         OCLRT::isGTPinInitialized = false;
+        kernelOffset = 0;
     }
 
     void TearDown() override {
@@ -2182,5 +2183,46 @@ TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAre
     gtpinNotifyTaskCompletion(dummyCompletedTask);
     gtpinNotifyFlushTask(dummyCompletedTask);
     EXPECT_FALSE(gtpinIsGTPinInitialized());
+}
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCorrectOffsetisSetInKernel) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    VariableBackup<bool> returnNullResourceBckp(&returnNullResource);
+    VariableBackup<uint32_t> kernelOffsetBckp(&kernelOffset);
+    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
+
+    char surfaceStateHeap[0x80];
+    SKernelBinaryHeaderCommon kernelHeader;
+    std::unique_ptr<MockContext> context(new MockContext(pDevice));
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
+    pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
+    pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;
+    pKernelInfo->usesSsh = true;
+
+    std::unique_ptr<MockProgram> pProgramm(new MockProgram(context.get(), false));
+    std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(context.get(), pDevice, nullptr));
+    std::unique_ptr<MockKernel> pKernel(new MockKernel(pProgramm.get(), *pKernelInfo, *pDevice));
+
+    pKernel->setSshLocal(nullptr, sizeof(surfaceStateHeap));
+
+    kernelOffset = 0x1234;
+    EXPECT_NE(pKernel->getStartOffset(), kernelOffset);
+    returnNullResource = true;
+    cl_context ctxt = (cl_context)((Context *)context.get());
+    currContext = (gtpin::context_handle_t)ctxt;
+    gtpinNotifyKernelSubmit(pKernel.get(), cmdQ.get());
+    EXPECT_EQ(pKernel->getStartOffset(), kernelOffset);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    kernelResources.clear();
 }
 } // namespace ULT
