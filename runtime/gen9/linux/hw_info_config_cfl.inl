@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,13 +22,11 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/hw_info_config.inl"
 
 namespace OCLRT {
 
 template <>
-int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
+int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
@@ -74,16 +72,8 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
     pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
-    if (pPlatform->usRevId <= 0x6) {
-        pWaTable->waDisableLSQCROPERFforOCL = 1;
-        pWaTable->waEncryptedEdramOnlyPartials = 1;
-    }
-    if (pPlatform->usRevId <= 0x8) {
-        pWaTable->waForcePcBbFullCfgRestore = 1;
-    }
-
-    if (hwInfo->pPlatform->usDeviceID == IKBL_GT3_28W_ULT_DEVICE_F0_ID ||
-        hwInfo->pPlatform->usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_28W_DEVICE_F0_ID ||
+        hwInfo->pPlatform->usDeviceID == ICFL_GT3_ULT_15W_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
     }
 
@@ -98,5 +88,5 @@ int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo,
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_KABYLAKE>;
+template class HwInfoConfigHw<IGFX_COFFEELAKE>;
 } // namespace OCLRT

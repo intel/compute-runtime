@@ -22,26 +22,26 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/hw_info_config.inl"
-#include "runtime/os_interface/linux/drm_neo.h"
-#include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/gen_common/hw_cmds.h"
 
 namespace OCLRT {
 
 template <>
-int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    Drm *drm = osIface->get()->getDrm();
-    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
+int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
 
-    pSysInfo->SliceCount = 1;
+    if (pSysInfo->SubSliceCount > 3) {
+        pSysInfo->SliceCount = 2;
+    } else {
+        pSysInfo->SliceCount = 1;
+    }
 
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
+    pSysInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
-    pSkuTable->ftrVEBOX = 1;
-    pSkuTable->ftrULT = 1;
+    pSysInfo->VDBoxInfo.IsValid = true;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = 1;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
@@ -50,14 +50,15 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSkuTable->ftr3dObjectLevelPreempt = 1;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = 1;
 
-    pSkuTable->ftrLCIA = 1;
     pSkuTable->ftrPPGTT = 1;
+    pSkuTable->ftrSVM = 1;
     pSkuTable->ftrL3IACoherency = 1;
     pSkuTable->ftrIA32eGfxPTEs = 1;
 
     pSkuTable->ftrDisplayYTiling = 1;
     pSkuTable->ftrTranslationTable = 1;
     pSkuTable->ftrUserModeTranslationTable = 1;
+
     pSkuTable->ftrEnableGuC = 1;
 
     pSkuTable->ftrFbc = 1;
@@ -65,42 +66,43 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSkuTable->ftrFbcBlitterTracking = 1;
     pSkuTable->ftrFbcCpuTracking = 1;
 
-    if (pPlatform->usRevId >= 3) {
-        pSkuTable->ftrGttCacheInvalidation = 1;
-    }
+    pSkuTable->ftrVcs2 = pSkuTable->ftrGT3 || pSkuTable->ftrGT4;
+    pSkuTable->ftrVEBOX = 1;
+    pSkuTable->ftrSingleVeboxSlice = pSkuTable->ftrGT1 || pSkuTable->ftrGT2;
 
-    pWaTable->waLLCCachingUnsupported = 1;
-    pWaTable->waMsaa8xTileYDepthPitchAlignment = 1;
-    pWaTable->waFbcLinearSurfaceStride = 1;
-    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
     pWaTable->waEnablePreemptionGranularityControlByUMD = 1;
     pWaTable->waSendMIFLUSHBeforeVFE = 1;
-    pWaTable->waForcePcBbFullCfgRestore = 1;
     pWaTable->waReportPerfCountUseGlobalContextID = 1;
+    pWaTable->waDisableLSQCROPERFforOCL = 1;
+    pWaTable->waMsaa8xTileYDepthPitchAlignment = 1;
+    pWaTable->waLosslessCompressionSurfaceStride = 1;
+    pWaTable->waFbcLinearSurfaceStride = 1;
+    pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
+    pWaTable->waEncryptedEdramOnlyPartials = 1;
+    pWaTable->waDisableEdramForDisplayRT = 1;
+    pWaTable->waForcePcBbFullCfgRestore = 1;
     pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
-    int enabled = 0;
-    int retVal = drm->getEnabledPooledEu(enabled);
-    if (retVal == 0) {
-        pSkuTable->ftrPooledEuEnabled = (enabled != 0) ? 1 : 0;
+    if ((1 << hwInfo->pPlatform->usRevId) & 0x0eu) {
+        pWaTable->waCompressedResourceRequiresConstVA21 = 1;
     }
-    if (enabled) {
-        int num = 0;
-        retVal = drm->getMinEuInPool(num);
-        if (retVal == 0 && ((num == 3) || (num == 6) || (num == 9))) {
-            pSysInfo->EuCountPerPoolMin = static_cast<uint32_t>(num);
-        }
-        //in case of failure or not getting right values, fallback to default
-        else {
-            if (pSysInfo->SubSliceCount == 3) {
-                // Native 3x6, PooledEU 2x9
-                pSysInfo->EuCountPerPoolMin = 9;
-            } else {
-                // Native 3x6 fused down to 2x6, PooledEU worst case 3+9
-                pSysInfo->EuCountPerPoolMin = 3;
-            }
-        }
-        pSysInfo->EuCountPerPoolMax = pSysInfo->EUCount - pSysInfo->EuCountPerPoolMin;
+    if ((1 << hwInfo->pPlatform->usRevId) & 0x0fu) {
+        pWaTable->waDisablePerCtxtPreemptionGranularityControl = 1;
+        pWaTable->waModifyVFEStateAfterGPGPUPreemption = 1;
+    }
+    if ((1 << hwInfo->pPlatform->usRevId) & 0x3f) {
+        pWaTable->waCSRUncachable = 1;
+    }
+
+    if (hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
+        hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||
+        hwInfo->pPlatform->usDeviceID == ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID) {
+        pSysInfo->EdramSizeInKb = 64 * 1024;
+    }
+
+    if (hwInfo->pPlatform->usDeviceID == ISKL_GT4_HALO_MOBL_DEVICE_F0_ID ||
+        hwInfo->pPlatform->usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
+        pSysInfo->EdramSizeInKb = 128 * 1024;
     }
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
@@ -110,9 +112,8 @@ int HwInfoConfigHw<IGFX_BROXTON>::configureHardwareCustom(HardwareInfo *hwInfo, 
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
     kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 5000;
     kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
-
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_BROXTON>;
+template class HwInfoConfigHw<IGFX_SKYLAKE>;
 } // namespace OCLRT

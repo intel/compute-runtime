@@ -22,13 +22,12 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/hw_info_config.inl"
-#include "runtime/gen_common/hw_cmds.h"
 
 namespace OCLRT {
 
 template <>
-int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<IGFX_KABYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+    PLATFORM *pPlatform = const_cast<PLATFORM *>(hwInfo->pPlatform);
     FeatureTable *pSkuTable = const_cast<FeatureTable *>(hwInfo->pSkuTable);
     GT_SYSTEM_INFO *pSysInfo = const_cast<GT_SYSTEM_INFO *>(hwInfo->pSysInfo);
     WorkaroundTable *pWaTable = const_cast<WorkaroundTable *>(hwInfo->pWaTable);
@@ -40,9 +39,8 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     }
 
     pSysInfo->VEBoxInfo.Instances.Bits.VEBox0Enabled = 1;
-    pSysInfo->VDBoxInfo.Instances.Bits.VDBox0Enabled = 1;
     pSysInfo->VEBoxInfo.IsValid = true;
-    pSysInfo->VDBoxInfo.IsValid = true;
+    pSkuTable->ftrVEBOX = 1;
 
     pSkuTable->ftrGpGpuMidBatchPreempt = 1;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
@@ -59,7 +57,6 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSkuTable->ftrDisplayYTiling = 1;
     pSkuTable->ftrTranslationTable = 1;
     pSkuTable->ftrUserModeTranslationTable = 1;
-
     pSkuTable->ftrEnableGuC = 1;
 
     pSkuTable->ftrFbc = 1;
@@ -67,43 +64,26 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     pSkuTable->ftrFbcBlitterTracking = 1;
     pSkuTable->ftrFbcCpuTracking = 1;
 
-    pSkuTable->ftrVcs2 = pSkuTable->ftrGT3 || pSkuTable->ftrGT4;
-    pSkuTable->ftrVEBOX = 1;
-    pSkuTable->ftrSingleVeboxSlice = pSkuTable->ftrGT1 || pSkuTable->ftrGT2;
-
     pWaTable->waEnablePreemptionGranularityControlByUMD = 1;
     pWaTable->waSendMIFLUSHBeforeVFE = 1;
     pWaTable->waReportPerfCountUseGlobalContextID = 1;
-    pWaTable->waDisableLSQCROPERFforOCL = 1;
     pWaTable->waMsaa8xTileYDepthPitchAlignment = 1;
     pWaTable->waLosslessCompressionSurfaceStride = 1;
     pWaTable->waFbcLinearSurfaceStride = 1;
     pWaTable->wa4kAlignUVOffsetNV12LinearSurface = 1;
-    pWaTable->waEncryptedEdramOnlyPartials = 1;
-    pWaTable->waDisableEdramForDisplayRT = 1;
-    pWaTable->waForcePcBbFullCfgRestore = 1;
     pWaTable->waSamplerCacheFlushBetweenRedescribedSurfaceReads = 1;
 
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0eu) {
-        pWaTable->waCompressedResourceRequiresConstVA21 = 1;
+    if (pPlatform->usRevId <= 0x6) {
+        pWaTable->waDisableLSQCROPERFforOCL = 1;
+        pWaTable->waEncryptedEdramOnlyPartials = 1;
     }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x0fu) {
-        pWaTable->waDisablePerCtxtPreemptionGranularityControl = 1;
-        pWaTable->waModifyVFEStateAfterGPGPUPreemption = 1;
-    }
-    if ((1 << hwInfo->pPlatform->usRevId) & 0x3f) {
-        pWaTable->waCSRUncachable = 1;
+    if (pPlatform->usRevId <= 0x8) {
+        pWaTable->waForcePcBbFullCfgRestore = 1;
     }
 
-    if (hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_540 ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT3e_ULT_DEVICE_F0_ID_550 ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT3_MEDIA_SERV_DEVICE_F0_ID) {
+    if (hwInfo->pPlatform->usDeviceID == IKBL_GT3_28W_ULT_DEVICE_F0_ID ||
+        hwInfo->pPlatform->usDeviceID == IKBL_GT3_15W_ULT_DEVICE_F0_ID) {
         pSysInfo->EdramSizeInKb = 64 * 1024;
-    }
-
-    if (hwInfo->pPlatform->usDeviceID == ISKL_GT4_HALO_MOBL_DEVICE_F0_ID ||
-        hwInfo->pPlatform->usDeviceID == ISKL_GT4_WRK_DEVICE_F0_ID) {
-        pSysInfo->EdramSizeInKb = 128 * 1024;
     }
 
     auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
@@ -113,8 +93,9 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
     kmdNotifyProperties.delayKmdNotifyMicroseconds = 50000;
     kmdNotifyProperties.delayQuickKmdSleepMicroseconds = 5000;
     kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds = 200000;
+
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_SKYLAKE>;
+template class HwInfoConfigHw<IGFX_KABYLAKE>;
 } // namespace OCLRT
