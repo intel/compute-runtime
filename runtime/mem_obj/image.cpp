@@ -444,9 +444,12 @@ cl_int Image::validate(Context *context,
             pDevice->getCap<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>(reinterpret_cast<const void *&>(pitchAlignment), srcSize, retSize);
             pDevice->getCap<CL_DEVICE_IMAGE_BASE_ADDRESS_ALIGNMENT>(reinterpret_cast<const void *&>(baseAddressAlignment), srcSize, retSize);
 
+            const auto rowSize = imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : alignUp(imageDesc->image_width * surfaceFormat->NumChannels * surfaceFormat->PerChannelSizeInBytes, *pitchAlignment);
+            const auto minimumBufferSize = imageDesc->image_height * rowSize;
+
             if ((imageDesc->image_row_pitch % (*pitchAlignment)) ||
                 ((parentBuffer->getFlags() & CL_MEM_USE_HOST_PTR) && (reinterpret_cast<uint64_t>(parentBuffer->getHostPtr()) % (*baseAddressAlignment))) ||
-                (imageDesc->image_height * (imageDesc->image_row_pitch != 0 ? imageDesc->image_row_pitch : imageDesc->image_width) > parentBuffer->getSize())) {
+                (minimumBufferSize > parentBuffer->getSize())) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             } else if (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_COPY_HOST_PTR)) {
                 return CL_INVALID_VALUE;
@@ -1299,4 +1302,4 @@ bool Image::hasValidParentImageFormat(const cl_image_format &imageFormat) const 
         return false;
     }
 }
-}
+} // namespace OCLRT

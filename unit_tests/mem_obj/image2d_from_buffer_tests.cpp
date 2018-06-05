@@ -107,7 +107,7 @@ TEST_F(Image2dFromBufferTest, CalculateRowPitch) {
 }
 TEST_F(Image2dFromBufferTest, givenInvalidRowPitchWhenCreateImage2dFromBufferThenReturnsError) {
     char ptr[10];
-    imageDesc.image_row_pitch = 257;
+    imageDesc.image_row_pitch = 255;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
     auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
     retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, ptr);
@@ -152,10 +152,84 @@ TEST_F(Image2dFromBufferTest, InvalidFlags) {
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(Image2dFromBufferTest, InvalidSize) {
-    imageDesc.image_height = 1024;
+TEST_F(Image2dFromBufferTest, givenOneChannel8BitColorsNoRowPitchSpecifiedAndTooLargeImageWhenValidatingSurfaceFormatThenReturnError) {
+    imageDesc.image_height = 1 + castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
     cl_mem_flags flags = CL_MEM_READ_ONLY;
-    auto surfaceFormat = (SurfaceFormatInfo *)Image::getSurfaceFormatFromTable(flags, &imageFormat);
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenOneChannel16BitColorsNoRowPitchSpecifiedAndTooLargeImageWhenValidatingSurfaceFormatThenReturnError) {
+    imageDesc.image_height = 1 + castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width / 2;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT16;
+    imageFormat.image_channel_order = CL_R;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsNoRowPitchSpecifiedAndTooLargeImageWhenValidatingSurfaceFormatThenReturnError) {
+    imageDesc.image_height = 1 + castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width / 4;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenFourChannel16BitColorsNoRowPitchSpecifiedAndTooLargeImageWhenValidatingSurfaceFormatThenReturnError) {
+    imageDesc.image_height = 1 + castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width / 8;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT16;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndNotTooLargeRowPitchSpecifiedWhenValidatingSurfaceFormatThenDoNotReturnError) {
+    imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
+    imageDesc.image_row_pitch = imageDesc.image_width;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenFourChannel8BitColorsAndTooLargeRowPitchSpecifiedWhenValidatingSurfaceFormatThenReturnError) {
+    const auto pitchAlignment = &DeviceInfoTable::Map<CL_DEVICE_IMAGE_PITCH_ALIGNMENT>::getValue(context.getDevice(0u)->getDeviceInfo());
+    imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
+    imageDesc.image_row_pitch = imageDesc.image_width + *pitchAlignment;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_RGBA;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
+    retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
+}
+
+TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlignmentWhenValidatingSurfaceFormatThenReturnError) {
+    context.getDevice(0u)->getMutableDeviceInfo()->imagePitchAlignment = 128;
+    imageDesc.image_width = 64;
+    imageDesc.image_height = castToObject<Buffer>(imageDesc.mem_object)->getSize() / imageDesc.image_width;
+    cl_mem_flags flags = CL_MEM_READ_ONLY;
+    imageFormat.image_channel_data_type = CL_UNORM_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    const auto surfaceFormat = static_cast<const SurfaceFormatInfo *>(Image::getSurfaceFormatFromTable(flags, &imageFormat));
     retVal = Image::validate(&context, flags, surfaceFormat, &imageDesc, NULL);
     EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, retVal);
 }
