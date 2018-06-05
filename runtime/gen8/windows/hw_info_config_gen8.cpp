@@ -26,10 +26,13 @@
 
 namespace OCLRT {
 
+#ifdef SUPPORT_BDW
 template <>
-int HwInfoConfigHw<IGFX_COFFEELAKE>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int HwInfoConfigHw<IGFX_BROADWELL>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
     return 0;
 }
 
-template class HwInfoConfigHw<IGFX_COFFEELAKE>;
+template class HwInfoConfigHw<IGFX_BROADWELL>;
+#endif
+
 } // namespace OCLRT
