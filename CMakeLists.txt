@@ -36,6 +36,10 @@ if(TR_DEPRECATED)
     add_definitions(-D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING=1)
 endif(TR_DEPRECATED)
 
+if(RELEASE_WITH_REGKEYS)
+    add_definitions(-D_RELEASE_BUILD_WITH_REGKEYS)
+endif(RELEASE_WITH_REGKEYS)
+
 if(NOT CMAKE_BUILD_TYPE)
 	message(STATUS "CMAKE_BUILD_TYPE not specified, using Release")
 	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type: [Release, ReleaseInternal, Debug]" FORCE)
