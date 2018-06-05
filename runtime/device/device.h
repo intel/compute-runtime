@@ -147,6 +147,7 @@ class Device : public BaseObject<_cl_device_id> {
                                  bool isRootDevice, Device &outDevice);
     static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
     MOCKABLE_VIRTUAL void initializeCaps();
+    void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
 
     unsigned int enabledClVersion;

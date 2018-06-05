@@ -51,6 +51,13 @@ static std::string driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
 const char *builtInKernels = ""; // the "always available" (extension-independent) builtin kernels
 
+static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
+                                                                                       CL_FP_ROUND_TO_ZERO |
+                                                                                       CL_FP_ROUND_TO_INF |
+                                                                                       CL_FP_INF_NAN |
+                                                                                       CL_FP_DENORM |
+                                                                                       CL_FP_FMA);
+
 bool Device::getEnabled64kbPages() {
     if (DebugManager.flags.Enable64kbpages.get() == -1) {
         // assign value according to os and hw configuration
@@ -60,6 +67,29 @@ bool Device::getEnabled64kbPages() {
         return (DebugManager.flags.Enable64kbpages.get() != 0);
     }
 };
+
+void Device::setupFp64Flags() {
+    if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
+        if (hwInfo.capabilityTable.ftrSupportsFP64) {
+            deviceExtensions += "cl_khr_fp64 ";
+        }
+
+        deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(
+            hwInfo.capabilityTable.ftrSupports64BitMath
+                ? CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT
+                : 0);
+
+        deviceInfo.doubleFpConfig = hwInfo.capabilityTable.ftrSupportsFP64
+                                        ? defaultFpFlags
+                                        : 0;
+    } else {
+        if (DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
+            deviceExtensions += "cl_khr_fp64 ";
+            deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
+            deviceInfo.doubleFpConfig = defaultFpFlags;
+        }
+    }
+}
 
 void Device::initializeCaps() {
     deviceExtensions.clear();
@@ -89,6 +119,8 @@ void Device::initializeCaps() {
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
+
+    setupFp64Flags();
 
     deviceInfo.vendor = vendor.c_str();
     deviceInfo.profile = profile.c_str();
@@ -129,10 +161,6 @@ void Device::initializeCaps() {
 
     if (enabledClVersion >= 20) {
         deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
-    }
-
-    if (hwInfo.capabilityTable.ftrSupportsFP64) {
-        deviceExtensions += "cl_khr_fp64 ";
     }
 
     if (DebugManager.flags.EnableNV12.get()) {
@@ -271,33 +299,10 @@ void Device::initializeCaps() {
     deviceInfo.maxWorkItemSizes[2] = deviceInfo.maxWorkGroupSize;
     deviceInfo.maxSamplers = 16;
 
-    deviceInfo.singleFpConfig = CL_FP_ROUND_TO_NEAREST |
-                                CL_FP_ROUND_TO_ZERO |
-                                CL_FP_ROUND_TO_INF |
-                                CL_FP_INF_NAN |
-                                CL_FP_FMA |
-                                CL_FP_DENORM;
+    deviceInfo.singleFpConfig |= defaultFpFlags;
 
-    deviceInfo.singleFpConfig |= static_cast<cl_device_fp_config>(
-        hwInfo.capabilityTable.ftrSupports64BitMath
-            ? CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT
-            : 0);
+    deviceInfo.halfFpConfig = defaultFpFlags;
 
-    deviceInfo.halfFpConfig = CL_FP_ROUND_TO_NEAREST |
-                              CL_FP_ROUND_TO_ZERO |
-                              CL_FP_ROUND_TO_INF |
-                              CL_FP_INF_NAN |
-                              CL_FP_DENORM |
-                              CL_FP_FMA;
-
-    deviceInfo.doubleFpConfig = hwInfo.capabilityTable.ftrSupportsFP64
-                                    ? CL_FP_ROUND_TO_NEAREST |
-                                          CL_FP_ROUND_TO_ZERO |
-                                          CL_FP_ROUND_TO_INF |
-                                          CL_FP_INF_NAN |
-                                          CL_FP_DENORM |
-                                          CL_FP_FMA
-                                    : 0;
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "hwInfo: {%d, %d}: (%d, %d, %d)\n",
                      systemInfo.EUCount,
                      systemInfo.ThreadCount,
