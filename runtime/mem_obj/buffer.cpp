@@ -211,7 +211,8 @@ void Buffer::checkMemory(cl_mem_flags flags,
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
                 minAddress > reinterpret_cast<uintptr_t>(hostPtr) ||
-                DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+                DebugManager.flags.DisableZeroCopyForUseHostPtr.get() ||
+                DebugManager.flags.DisableZeroCopyForBuffers.get()) {
                 allocateMemory = true;
                 isZeroCopy = false;
                 copyMemoryFromHostPtr = true;
@@ -224,6 +225,9 @@ void Buffer::checkMemory(cl_mem_flags flags,
     } else {
         allocateMemory = true;
         isZeroCopy = true;
+        if (DebugManager.flags.DisableZeroCopyForBuffers.get()) {
+            isZeroCopy = false;
+        }
     }
 
     if (flags & CL_MEM_COPY_HOST_PTR) {
