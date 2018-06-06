@@ -275,20 +275,16 @@ void Device::initializeCaps() {
     deviceInfo.numThreadsPerEU = 0;
     auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 32 : 8;
 
-    if (systemInfo.EUCount > 0) {
-        deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.pSkuTable->ftrPooledEuEnabled == 0)
-                                              ? (systemInfo.EUCount / systemInfo.SubSliceCount)
-                                              : systemInfo.EuCountPerPoolMin;
-        deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
-        auto maxWkgSize = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 1024u : 256u;
-        auto maxWS = deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU * simdSizeUsed;
+    deviceInfo.maxNumEUsPerSubSlice = (systemInfo.EuCountPerPoolMin == 0 || hwInfo.pSkuTable->ftrPooledEuEnabled == 0)
+                                          ? (systemInfo.EUCount / systemInfo.SubSliceCount)
+                                          : systemInfo.EuCountPerPoolMin;
+    deviceInfo.numThreadsPerEU = systemInfo.ThreadCount / systemInfo.EUCount;
+    auto maxWkgSize = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() ? 1024u : 256u;
+    auto maxWS = deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU * simdSizeUsed;
 
-        maxWS = Math::prevPowerOfTwo(uint32_t(maxWS));
-        deviceInfo.maxWorkGroupSize = std::min(uint32_t(maxWS), maxWkgSize);
-    } else {
-        //default value if systemInfo not provided
-        deviceInfo.maxWorkGroupSize = 128;
-    }
+    maxWS = Math::prevPowerOfTwo(uint32_t(maxWS));
+    deviceInfo.maxWorkGroupSize = std::min(uint32_t(maxWS), maxWkgSize);
+
     DEBUG_BREAK_IF(!DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get() && deviceInfo.maxWorkGroupSize > 256);
 
     // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
@@ -310,9 +306,7 @@ void Device::initializeCaps() {
                      systemInfo.MaxSlicesSupported,
                      systemInfo.MaxSubSlicesSupported);
 
-    if (systemInfo.EUCount > 0) {
-        deviceInfo.computeUnitsUsedForScratch = systemInfo.MaxSubSlicesSupported * systemInfo.MaxEuPerSubSlice * systemInfo.ThreadCount / systemInfo.EUCount;
-    }
+    deviceInfo.computeUnitsUsedForScratch = hwHelper.getComputeUnitsUsedForScratch(&hwInfo);
 
     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "computeUnitsUsedForScratch: %d\n", deviceInfo.computeUnitsUsedForScratch);
 

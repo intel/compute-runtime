@@ -40,6 +40,12 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
 }
 
 template <typename Family>
+uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+    return pHwInfo->pSysInfo->MaxSubSlicesSupported * pHwInfo->pSysInfo->MaxEuPerSubSlice *
+           pHwInfo->pSysInfo->ThreadCount / pHwInfo->pSysInfo->EUCount;
+}
+
+template <typename Family>
 SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     if (!debuggingActive) {
         return SipKernelType::Csr;

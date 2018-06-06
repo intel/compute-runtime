@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
 #include "test.h"
@@ -56,4 +57,15 @@ GEN9TEST_F(Gen9DeviceCaps, whitelistedRegisters) {
 
 GEN9TEST_F(Gen9DeviceCaps, compression) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
+}
+
+GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+
+    uint32_t expectedValue = hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice *
+                             hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount;
+
+    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }

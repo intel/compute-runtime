@@ -221,7 +221,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
 
-    size_t requiredScratchSizeInBytes = requiredScratchSize * (hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice * hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount);
+    size_t requiredScratchSizeInBytes = requiredScratchSize * device->getDeviceInfo().computeUnitsUsedForScratch;
 
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
 
@@ -731,5 +731,4 @@ void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *n
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd) {
 }
-
 } // namespace OCLRT

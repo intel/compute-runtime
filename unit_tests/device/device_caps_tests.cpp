@@ -134,12 +134,6 @@ TEST(Device_GetCaps, validate) {
     EXPECT_GE((4 * GB) - (8 * KB), caps.maxMemAllocSize);
     EXPECT_LE(65536u, caps.imageMaxBufferSize);
 
-    if (sysInfo.EUCount > 0) {
-        auto expected = sysInfo.MaxSubSlicesSupported * sysInfo.MaxEuPerSubSlice *
-                        sysInfo.ThreadCount / sysInfo.EUCount;
-        EXPECT_EQ(expected, caps.computeUnitsUsedForScratch);
-    }
-
     EXPECT_GT(caps.maxWorkGroupSize, 0u);
     EXPECT_EQ(caps.maxWorkItemSizes[0], caps.maxWorkGroupSize);
     EXPECT_EQ(caps.maxWorkItemSizes[1], caps.maxWorkGroupSize);
@@ -216,20 +210,6 @@ TEST(Device_GetCaps, validateImage3DDimensions) {
     }
 
     EXPECT_EQ(2048u, caps.image3DMaxDepth);
-}
-
-TEST(DeviceGetCapsSimple, givenDeviceWhenEUCountIsZeroThenmaxWgsIsDefault) {
-    auto hardwareInfo = hardwareInfoTable[productFamily];
-    GT_SYSTEM_INFO sysInfo = *hardwareInfo->pSysInfo;
-    sysInfo.EUCount = 0;
-    HardwareInfo hwInfo = {hardwareInfo->pPlatform, hardwareInfo->pSkuTable, hardwareInfo->pWaTable, &sysInfo, hardwareInfo->capabilityTable};
-
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(&hwInfo));
-    const auto &caps = device->getDeviceInfo();
-
-    //default value
-    uint32_t expected = 128u;
-    EXPECT_EQ(expected, caps.maxWorkGroupSize);
 }
 
 TEST(Device_GetCaps, givenDontForcePreemptionModeDebugVariableWhenCreateDeviceThenSetDefaultHwPreemptionMode) {

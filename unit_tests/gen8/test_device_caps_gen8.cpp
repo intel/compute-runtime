@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
 
@@ -78,6 +79,17 @@ GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
 BDWTEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(80u, caps.outProfilingTimerResolution);
+}
+
+BDWTEST_F(Gen8DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
+    const auto &hwInfo = pDevice->getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+
+    uint32_t expectedValue = hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice *
+                             hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount;
+
+    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
 }
 
 typedef Test<DeviceFixture> BdwUsDeviceIdTest;
