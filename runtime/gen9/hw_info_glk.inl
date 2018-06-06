@@ -22,6 +22,7 @@
 
 #include "hw_info_glk.h"
 #include "hw_cmds.h"
+#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
 
@@ -66,8 +67,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     EngineType::ENGINE_RCS,            // defaultEngineType
     MemoryConstants::pageSize,         //requiredPreemptionSurfaceSize
     false,                             // isCore
-    true                               // sourceLevelDebuggerSupported
-};
+    true,                              // sourceLevelDebuggerSupported
+    CmdServicesMemTraceVersion::DeviceValues::Glk};
 
 const HardwareInfo GLK_1x3x6::hwInfo = {
     &GLK::platform,

@@ -81,6 +81,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     } engineInfoTable[EngineType::NUM_ENGINES];
 
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> stream;
+    uint32_t aubDeviceId;
     bool standalone;
 
     TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type ppgtt;

@@ -22,6 +22,7 @@
 
 #include "hw_info.h"
 #include "hw_cmds.h"
+#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
 
@@ -74,8 +75,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     EngineType::ENGINE_RCS,                  // defaultEngineType
     MemoryConstants::pageSize,               //requiredPreemptionSurfaceSize
     true,                                    // isCore
-    false                                    // sourceLevelDebuggerSupported
-};
+    false,                                   // sourceLevelDebuggerSupported
+    CmdServicesMemTraceVersion::DeviceValues::Bdw};
 
 const HardwareInfo BDW_1x2x6::hwInfo = {
     &BDW::platform,

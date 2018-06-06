@@ -74,6 +74,7 @@ struct RuntimeCapabilityTable {
     size_t requiredPreemptionSurfaceSize;
     bool isCore;
     bool sourceLevelDebuggerSupported;
+    uint32_t aubDeviceId;
 };
 
 struct HardwareCapabilities {

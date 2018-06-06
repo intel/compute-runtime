@@ -48,7 +48,8 @@ HWTEST_F(AubMemDumpTests, testHeader) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     aubFile.fileHandle.close();
 }
@@ -62,7 +63,8 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
@@ -80,7 +82,8 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     uint8_t byte = 0xbf;
     auto gAddress = reinterpret_cast<uintptr_t>(&byte);
@@ -101,7 +104,8 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     uint8_t byte = 0xbf;
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
@@ -122,7 +126,8 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     auto gAddress = reinterpret_cast<uintptr_t>(bytes);
@@ -143,7 +148,8 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
     aubFile.fileHandle.open(filePath.c_str(), std::ofstream::binary);
 
     // Header
-    aubFile.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    auto deviceId = pDevice->getHardwareInfo().capabilityTable.aubDeviceId;
+    aubFile.init(AubMemDump::SteppingValues::A, deviceId);
 
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     uint64_t physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;

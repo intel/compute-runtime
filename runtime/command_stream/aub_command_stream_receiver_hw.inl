@@ -28,6 +28,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/string.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
 
 namespace OCLRT {
@@ -51,6 +52,10 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
         engineInfo.sizeRingBuffer = 0;
         engineInfo.tailRingBuffer = 0;
     }
+    auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
+    this->aubDeviceId = debugDeviceId == -1
+                            ? hwInfoIn.capabilityTable.aubDeviceId
+                            : static_cast<uint32_t>(debugDeviceId);
 }
 
 template <typename GfxFamily>
@@ -204,7 +209,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
         DEBUG_BREAK_IF(true);
     }
     // Add the file header.
-    csr->stream->init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
 
     return csr;
 }

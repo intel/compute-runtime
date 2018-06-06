@@ -22,6 +22,7 @@
 
 #include "hw_info_kbl.h"
 #include "hw_cmds.h"
+#include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
 
@@ -66,8 +67,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     EngineType::ENGINE_RCS,         // defaultEngineType
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     true,                           // isCore
-    true                            // sourceLevelDebuggerSupported
-};
+    true,                           // sourceLevelDebuggerSupported
+    CmdServicesMemTraceVersion::DeviceValues::Kbl};
 
 const HardwareInfo KBL_1x2x6::hwInfo = {
     &KBL::platform,

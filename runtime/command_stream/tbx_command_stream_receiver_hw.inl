@@ -26,6 +26,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
 
 namespace OCLRT {
@@ -43,6 +44,10 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
         engineInfo.sizeRCS = 0;
         engineInfo.tailRCS = 0;
     }
+    auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
+    this->aubDeviceId = debugDeviceId == -1
+                            ? hwInfoIn.capabilityTable.aubDeviceId
+                            : static_cast<uint32_t>(debugDeviceId);
 }
 
 template <typename GfxFamily>
@@ -175,7 +180,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     csr->stream.open(nullptr);
 
     // Add the file header.
-    csr->stream.init(AubMemDump::SteppingValues::A, AUB::Traits::device);
+    csr->stream.init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
 
     return csr;
 }

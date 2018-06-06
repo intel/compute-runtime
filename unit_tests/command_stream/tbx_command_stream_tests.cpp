@@ -25,9 +25,11 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 #include <cstdint>
 
@@ -288,4 +290,18 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
 TEST(TbxMemoryManagerTest, givenTbxMemoryManagerWhenItIsQueriedForSystemSharedMemoryThen1GBIsReturned) {
     TbxMemoryManager memoryManager;
     EXPECT_EQ(1 * GB, memoryManager.getSystemSharedMemory());
+}
+
+HWTEST_F(TbxCommandStreamTests, givenNoDbgDeviceIdFlagWhenTbxCsrIsCreatedThenUseDefaultDeviceId) {
+    const HardwareInfo &hwInfo = *platformDevices[0];
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(pCommandStreamReceiver);
+    EXPECT_EQ(hwInfo.capabilityTable.aubDeviceId, tbxCsr->aubDeviceId);
+}
+
+HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThenUseDebugDeviceId) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
+    const HardwareInfo &hwInfoIn = *platformDevices[0];
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, false)));
+    EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
