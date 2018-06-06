@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -259,4 +259,17 @@ TEST(SchedulerKernelTest, getCurbeSizeWithNullKernelInfo) {
 
     uint32_t expectedCurbeSize = alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
+}
+
+TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableWhenSchedulerKernelIsCreatedThenGwsIsSetToForcedValue) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SchedulerGWS.set(48);
+
+    MockProgram program;
+    MockDevice device(*platformDevices[0]);
+    KernelInfo info;
+    MockSchedulerKernel kernel(&program, info, device);
+
+    size_t gws = kernel.getGws();
+    EXPECT_EQ(static_cast<size_t>(48u), gws);
 }

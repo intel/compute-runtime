@@ -132,6 +132,7 @@ function(neo_copy_test_files target product)
     COMMAND echo copying test files from ${IGDRCL_SOURCE_DIR}/unit_tests/test_files to ${outputdir}/test_files
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${IGDRCL_SOURCE_DIR}/unit_tests/test_files ${outputdir}/test_files
     COMMAND WORKING_DIRECTORY ${TargetDir}
+    DEPENDS ${IGDRCL_SOURCE_DIR}/unit_tests/test_files
   )
   add_dependencies(${target} copy_compiler_files)
   set_target_properties(${target} PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${product}")

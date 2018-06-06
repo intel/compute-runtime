@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -2838,7 +2838,8 @@ void SchedulerParallel20(
                 secondaryBatchBuffer[ DwordOffset ] = OCLRT_BATCH_BUFFER_BEGIN_CMD_DWORD0;
                 DwordOffset++;
                 //BB_START 2nd DWORD - Address, 3rd DWORD Address high
-                *( ( __global ulong * )&secondaryBatchBuffer[ DwordOffset ] ) = pQueue->m_controls.m_CleanupSectionAddress;
+                secondaryBatchBuffer[ DwordOffset++ ] = (uint)(pQueue->m_controls.m_CleanupSectionAddress & 0xFFFFFFFF);
+                secondaryBatchBuffer[ DwordOffset ] = (uint)((pQueue->m_controls.m_CleanupSectionAddress >> 32) & 0xFFFFFFFF);
             }
             return;
         }
