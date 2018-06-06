@@ -31,6 +31,8 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_csr.h"
 
+#include <memory>
+
 using namespace OCLRT;
 
 using ::testing::Invoke;
@@ -92,6 +94,13 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreat
     EXPECT_EQ(nullptr, aubCsr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
+}
+
+TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsCheckedThenAubCsrIsReturned) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    std::unique_ptr<CommandStreamReceiver> aubCsr(AUBCommandStreamReceiver::create(hwInfo, "", true));
+    EXPECT_NE(nullptr, aubCsr);
+    EXPECT_EQ(CommandStreamReceiverType::CSR_AUB, aubCsr->getType());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {

@@ -81,6 +81,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     void resetKmdNotifyHelper(KmdNotifyHelper *newHelper);
 
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_HW;
+    }
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config);

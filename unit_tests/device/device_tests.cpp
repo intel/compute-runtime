@@ -150,3 +150,46 @@ TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCal
 
     EXPECT_EQ(1, flushedBatchedSubmissionsCalledCount);
 }
+
+TEST(DeviceCreation, givenSelectedAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_AUB);
+
+    overrideCommandStreamReceiverCreation = true;
+    auto mockDevice = std::unique_ptr<Device>(Device::create<Device>(nullptr));
+    EXPECT_TRUE(mockDevice->isSimulation());
+}
+
+TEST(DeviceCreation, givenSelectedTbxCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX);
+
+    overrideCommandStreamReceiverCreation = true;
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr));
+    EXPECT_TRUE(device->isSimulation());
+}
+
+TEST(DeviceCreation, givenSelectedTbxWithAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsTrue) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+
+    overrideCommandStreamReceiverCreation = true;
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr));
+    EXPECT_TRUE(device->isSimulation());
+}
+
+TEST(DeviceCreation, givenHwWithAubCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsFalse) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SetCommandStreamReceiver.set(CommandStreamReceiverType::CSR_HW_WITH_AUB);
+
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr));
+    EXPECT_FALSE(device->isSimulation());
+}
+
+TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimulationReturnsFalse) {
+    int32_t defaultHwCsr = CommandStreamReceiverType::CSR_HW;
+    EXPECT_EQ(defaultHwCsr, DebugManager.flags.SetCommandStreamReceiver.get());
+
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr));
+    EXPECT_FALSE(device->isSimulation());
+}

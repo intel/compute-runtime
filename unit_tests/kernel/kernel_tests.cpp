@@ -459,6 +459,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
 
     void flushBatchedSubmissions() override {}
 
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_HW;
+    }
+
     std::map<const void *, size_t> residency;
 };
 

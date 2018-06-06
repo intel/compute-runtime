@@ -93,5 +93,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     PDPE ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;
+
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_TBX;
+    }
 };
 } // namespace OCLRT

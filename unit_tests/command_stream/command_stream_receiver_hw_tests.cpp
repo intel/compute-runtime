@@ -54,6 +54,8 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 
+#include <memory>
+
 using namespace OCLRT;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyNotChangedWhenEstimatingPreambleCmdSizeThenReturnItsValue) {
@@ -141,4 +143,13 @@ HWTEST_F(CommandStreamReceiverFlushTests, shouldAlignToCacheLineSize) {
     CommandStreamReceiverHw<FamilyType>::alignToCacheLine(commandStream);
 
     EXPECT_EQ(0u, commandStream.getUsed() % MemoryConstants::cacheLineSize);
+}
+
+typedef Test<DeviceFixture> CommandStreamReceiverHwTest;
+
+HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(hwInfo));
+
+    EXPECT_EQ(CommandStreamReceiverType::CSR_HW, csr->getType());
 }

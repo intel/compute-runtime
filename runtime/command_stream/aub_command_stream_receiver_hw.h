@@ -93,5 +93,9 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
+
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_AUB;
+    }
 };
 } // namespace OCLRT

@@ -273,7 +273,11 @@ unique_ptr_if_unused<Device> Device::release() {
 }
 
 bool Device::isSimulation() {
-    return hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
+    bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
+    if (commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+        simulation = true;
+    }
+    return simulation;
 }
 
 double Device::getPlatformHostTimerResolution() const {

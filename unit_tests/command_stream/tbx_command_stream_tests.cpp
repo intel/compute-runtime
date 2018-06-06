@@ -155,6 +155,13 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
 }
 
+TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
+    HardwareInfo hwInfo = *platformDevices[0];
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, false));
+    EXPECT_NE(nullptr, csr);
+    EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
+}
+
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsCalledForGraphicsAllocationThenItShouldPushAllocationForResidencyToMemoryManager) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();

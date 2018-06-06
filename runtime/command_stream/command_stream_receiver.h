@@ -27,6 +27,7 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/address_patch.h"
+#include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/command_stream/csr_definitions.h"
@@ -132,6 +133,8 @@ class CommandStreamReceiver {
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);
     void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
     void releaseIndirectHeap(IndirectHeap::Type heapType);
+
+    virtual enum CommandStreamReceiverType getType() = 0;
 
   protected:
     void setDisableL3Cache(bool val) {

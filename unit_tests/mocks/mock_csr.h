@@ -249,6 +249,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     }
 
     void setOSInterface(OSInterface *osInterface);
+
+    CommandStreamReceiverType getType() override {
+        return CommandStreamReceiverType::CSR_HW;
+    }
 };
 
 #if defined(__clang__)
