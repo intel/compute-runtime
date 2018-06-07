@@ -83,14 +83,7 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
         case CSR_TBX_WITH_AUB:
             auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
             auto hwInfoConst = *platformDevices;
-            for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-                if (hardwarePrefix[j] == nullptr)
-                    continue;
-                if (strcmp(hardwarePrefix[j], productFamily.c_str()) == 0) {
-                    hwInfoConst = hardwareInfoTable[j];
-                    break;
-                }
-            }
+            getHwInfoForPlatformString(productFamily.c_str(), hwInfoConst);
             *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
             hardwareInfoSetupGt[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo));
             numDevicesReturned = 1;

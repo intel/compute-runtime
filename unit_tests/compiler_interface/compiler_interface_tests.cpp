@@ -24,10 +24,13 @@
 #include "runtime/compiler_interface/compiler_interface.inl"
 #include "runtime/context/context.h"
 #include "runtime/helpers/file_io.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_cif.h"
 #include "unit_tests/mocks/mock_compilers.h"
@@ -795,6 +798,44 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPop
     }
 
     setIgcDebugVars(prevDebugVars);
+}
+
+TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
+    auto device = this->pContext->getDevice(0);
+    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    EXPECT_NE(nullptr, retIgc);
+    IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
+    auto igcPlatform = devCtx->GetPlatformHandle();
+    auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
+    EXPECT_EQ(device->getHardwareInfo().pPlatform->eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(device->getHardwareInfo().pPlatform->eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(device->getHardwareInfo().pSysInfo->SliceCount, igcSysInfo->GetSliceCount());
+    EXPECT_EQ(device->getHardwareInfo().pSysInfo->SubSliceCount, igcSysInfo->GetSubSliceCount());
+    EXPECT_EQ(device->getHardwareInfo().pSysInfo->EUCount, igcSysInfo->GetEUCount());
+    EXPECT_EQ(device->getHardwareInfo().pSysInfo->ThreadCount, igcSysInfo->GetThreadCount());
+}
+
+TEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDbgKeyPlatform) {
+    DebugManagerStateRestore dbgRestore;
+    auto dbgProdFamily = DEFAULT_TEST_PLATFORM::hwInfo.pPlatform->eProductFamily;
+    std::string dbgPlatformString(hardwarePrefix[dbgProdFamily]);
+    const PLATFORM dbgPlatform = *hardwareInfoTable[dbgProdFamily]->pPlatform;
+    const GT_SYSTEM_INFO dbgSystemInfo = *hardwareInfoTable[dbgProdFamily]->pSysInfo;
+    DebugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
+
+    auto device = this->pContext->getDevice(0);
+    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    EXPECT_NE(nullptr, retIgc);
+    IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
+    auto igcPlatform = devCtx->GetPlatformHandle();
+    auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
+
+    EXPECT_EQ(dbgPlatform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(dbgPlatform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(dbgSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
+    EXPECT_EQ(dbgSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
+    EXPECT_EQ(dbgSystemInfo.EUCount, igcSysInfo->GetEUCount());
+    EXPECT_EQ(dbgSystemInfo.ThreadCount, igcSysInfo->GetThreadCount());
 }
 
 TEST_F(CompilerInterfaceTest, IsCompilerAvailable) {

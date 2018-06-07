@@ -60,4 +60,18 @@ const char *getPlatformType(const HardwareInfo &hwInfo) {
     }
     return "lp";
 }
+
+bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn) {
+    bool ret = false;
+    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
+        if (hardwarePrefix[j] == nullptr)
+            continue;
+        if (strcmp(hardwarePrefix[j], str) == 0) {
+            hwInfoIn = hardwareInfoTable[j];
+            ret = true;
+            break;
+        }
+    }
+    return ret;
+}
 } // namespace OCLRT

@@ -117,5 +117,5 @@ struct EnableGfxFamilyHw {
 };
 
 const char *getPlatformType(const HardwareInfo &hwInfo);
-
+bool getHwInfoForPlatformString(const char *str, const HardwareInfo *&hwInfoIn);
 } // namespace OCLRT

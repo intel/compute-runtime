@@ -30,7 +30,9 @@
 #include "runtime/compiler_interface/binary_cache.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/compiler_interface/compiler_interface.inl"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/program/program.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/os_inc_base.h"
 
 #include <fstream>
@@ -426,9 +428,13 @@ CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcT
             DEBUG_BREAK_IF(true); // could not acquire handles to device descriptors
             return nullptr;
         }
-
-        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, *device.getHardwareInfo().pPlatform);
-        IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, *device.getHardwareInfo().pSysInfo);
+        const HardwareInfo *hwInfo = &device.getHardwareInfo();
+        auto productFamily = DebugManager.flags.ForceCompilerUsePlatform.get();
+        if (productFamily != "unk") {
+            getHwInfoForPlatformString(productFamily.c_str(), hwInfo);
+        }
+        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, *hwInfo->pPlatform);
+        IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, *hwInfo->pSysInfo);
 
         igcFeWa.get()->SetFtrDesktop(device.getHardwareInfo().pSkuTable->ftrDesktop);
         igcFeWa.get()->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().pSkuTable->ftrChannelSwizzlingXOREnabled);

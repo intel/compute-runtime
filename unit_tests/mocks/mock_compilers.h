@@ -73,9 +73,55 @@ MockCompilerDebugVars getFclDebugVars();
 MockCompilerDebugVars getIgcDebugVars();
 
 struct MockPlatform : MockCIF<IGC::PlatformTagOCL> {
+    IGC::TypeErasedEnum GetProductFamily() const override {
+        return productFamily;
+    }
+    void SetProductFamily(IGC::TypeErasedEnum v) override {
+        productFamily = v;
+    }
+    IGC::TypeErasedEnum GetRenderCoreFamily() const override {
+        return renderCoreFamily;
+    }
+    void SetRenderCoreFamily(IGC::TypeErasedEnum v) override {
+        renderCoreFamily = v;
+    }
+
+  protected:
+    IGC::TypeErasedEnum productFamily;
+    IGC::TypeErasedEnum renderCoreFamily;
 };
 
 struct MockGTSystemInfo : MockCIF<IGC::GTSystemInfoTagOCL> {
+    uint32_t GetEUCount() const override {
+        return this->euCount;
+    }
+    void SetEUCount(uint32_t v) override {
+        euCount = v;
+    }
+    uint32_t GetThreadCount() const override {
+        return this->threadCount;
+    }
+    void SetThreadCount(uint32_t v) override {
+        threadCount = v;
+    }
+    uint32_t GetSliceCount() const override {
+        return this->sliceCount;
+    }
+    void SetSliceCount(uint32_t v) override {
+        sliceCount = v;
+    }
+    uint32_t GetSubSliceCount() const override {
+        return this->subsliceCount;
+    }
+    void SetSubSliceCount(uint32_t v) override {
+        subsliceCount = v;
+    }
+
+  protected:
+    uint32_t euCount;
+    uint32_t threadCount;
+    uint32_t sliceCount;
+    uint32_t subsliceCount;
 };
 
 struct MockIgcFeaturesAndWorkarounds : MockCIF<IGC::IgcFeaturesAndWorkaroundsTagOCL> {
@@ -305,6 +351,8 @@ class MockCompilerInterface : public CompilerInterface {
 
     std::vector<char> sipKernelBinaryOverride;
     SipKernelType requestedSipKernel = SipKernelType::COUNT;
+
+    IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
 };
 
 template <>
