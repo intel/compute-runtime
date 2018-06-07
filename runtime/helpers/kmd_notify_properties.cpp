@@ -50,8 +50,7 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
 
 bool KmdNotifyHelper::applyQuickKmdSleepForSporadicWait() const {
     if (properties->enableQuickKmdSleepForSporadicWaits) {
-        auto now = std::chrono::high_resolution_clock::now();
-        auto timeDiff = std::chrono::duration_cast<std::chrono::microseconds>(now - lastWaitForCompletionTimestamp).count();
+        auto timeDiff = getMicrosecondsSinceEpoch() - lastWaitForCompletionTimestampUs.load();
         if (timeDiff > properties->delayQuickKmdSleepForSporadicWaitsMicroseconds) {
             return true;
         }
@@ -60,7 +59,12 @@ bool KmdNotifyHelper::applyQuickKmdSleepForSporadicWait() const {
 }
 
 void KmdNotifyHelper::updateLastWaitForCompletionTimestamp() {
-    lastWaitForCompletionTimestamp = std::chrono::high_resolution_clock::now();
+    lastWaitForCompletionTimestampUs = getMicrosecondsSinceEpoch();
+}
+
+int64_t KmdNotifyHelper::getMicrosecondsSinceEpoch() const {
+    auto now = std::chrono::high_resolution_clock::now().time_since_epoch();
+    return std::chrono::duration_cast<std::chrono::microseconds>(now).count();
 }
 
 void KmdNotifyHelper::overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination) {

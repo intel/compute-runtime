@@ -57,7 +57,9 @@ struct KmdNotifyTests : public ::testing::Test {
     class MockKmdNotifyHelper : public KmdNotifyHelper {
       public:
         using KmdNotifyHelper::acLineConnected;
-        using KmdNotifyHelper::lastWaitForCompletionTimestamp;
+        using KmdNotifyHelper::getMicrosecondsSinceEpoch;
+        using KmdNotifyHelper::lastWaitForCompletionTimestampUs;
+        using KmdNotifyHelper::properties;
 
         MockKmdNotifyHelper() = delete;
         MockKmdNotifyHelper(const KmdNotifyProperties *newProperties) : KmdNotifyHelper(newProperties){};
@@ -190,14 +192,15 @@ HWTEST_F(KmdNotifyTests, givenZeroFlushStampWhenWaitIsCalledThenDisableTimeout) 
 }
 
 HWTEST_F(KmdNotifyTests, givenNonQuickSleepRequestWhenItsSporadicWaitThenOverrideQuickSleepRequest) {
-    overrideKmdNotifyParams(true, 3, true, 2, true, 0);
+    overrideKmdNotifyParams(true, 3, true, 2, true, 1);
     auto csr = createMockCsr<FamilyType>();
 
     auto expectedDelay = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayQuickKmdSleepMicroseconds;
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(::testing::_, expectedDelay, ::testing::_)).Times(1).WillOnce(::testing::Return(true));
 
-    auto now = std::chrono::high_resolution_clock::now();
-    mockKmdNotifyHelper->lastWaitForCompletionTimestamp = now - std::chrono::hours(24);
+    int64_t timeSinceLastWait = mockKmdNotifyHelper->properties->delayQuickKmdSleepForSporadicWaitsMicroseconds + 1;
+
+    mockKmdNotifyHelper->lastWaitForCompletionTimestampUs = mockKmdNotifyHelper->getMicrosecondsSinceEpoch() - timeSinceLastWait;
     csr->waitForTaskCountWithKmdNotifyFallback(taskCountToWait, 1, false);
 }
 
@@ -247,7 +250,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWhenWaitCalledThenUpda
     overrideKmdNotifyParams(true, 3, true, 2, true, 1);
 
     auto csr = createMockCsr<FamilyType>();
-    EXPECT_NE(0, mockKmdNotifyHelper->lastWaitForCompletionTimestamp.time_since_epoch().count());
+    EXPECT_NE(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
 
     EXPECT_EQ(1u, mockKmdNotifyHelper->updateLastWaitForCompletionTimestampCalled);
     csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false);
@@ -258,7 +261,7 @@ HWTEST_F(KmdNotifyTests, givenDefaultCommandStreamReceiverWithDisabledSporadicWa
     overrideKmdNotifyParams(true, 3, true, 2, false, 0);
 
     auto csr = createMockCsr<FamilyType>();
-    EXPECT_EQ(0, mockKmdNotifyHelper->lastWaitForCompletionTimestamp.time_since_epoch().count());
+    EXPECT_EQ(0, mockKmdNotifyHelper->lastWaitForCompletionTimestampUs.load());
 
     csr->waitForTaskCountWithKmdNotifyFallback(0, 0, false);
     EXPECT_EQ(0u, mockKmdNotifyHelper->updateLastWaitForCompletionTimestampCalled);

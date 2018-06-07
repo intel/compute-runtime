@@ -25,6 +25,7 @@
 
 #include <cstdint>
 #include <chrono>
+#include <atomic>
 
 namespace OCLRT {
 struct KmdNotifyProperties {
@@ -66,9 +67,10 @@ class KmdNotifyHelper {
   protected:
     bool applyQuickKmdSleepForSporadicWait() const;
     int64_t getBaseTimeout(const int64_t &multiplier) const;
+    int64_t getMicrosecondsSinceEpoch() const;
 
     const KmdNotifyProperties *properties = nullptr;
-    std::chrono::high_resolution_clock::time_point lastWaitForCompletionTimestamp;
-    bool acLineConnected = true;
+    std::atomic<int64_t> lastWaitForCompletionTimestampUs{0};
+    std::atomic<bool> acLineConnected{true};
 };
 } // namespace OCLRT
