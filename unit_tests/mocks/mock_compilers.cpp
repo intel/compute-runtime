@@ -256,6 +256,17 @@ OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 1)::Tran
     return nullptr;
 }
 
+OclTranslationOutputBase *CIF_GET_INTERFACE_CLASS(IgcOclTranslationCtx, 2)::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtPinInput) {
+    return nullptr;
+}
+
 // OclTranslationOutput
 OclTranslationOutput<0>::~OclTranslationOutput() {}
 
