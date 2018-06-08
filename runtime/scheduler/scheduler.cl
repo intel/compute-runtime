@@ -1823,9 +1823,9 @@ int PatchDSH( __global IGIL_CommandQueue* pQueue,
         if( pCommandHeader->m_numGlobalCapturedBuffer > 0 )
         {
             //Handle global pointers patching in stateless mode, info about layout in declaration of IGIL_CommandHeader
-            __global    uint*  pGlobalIndexes                  = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments ] );
-            __global    ulong*   pGlobalPtrs                   = ( __global ulong* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments + pCommandHeader->m_numGlobalCapturedBuffer ] );
-            uint        StartIndex                             = CurrentIndex;
+            __global    uint*  pGlobalIndexes = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments ] );
+            __global    uint*  pGlobalPtrs    = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments + pCommandHeader->m_numGlobalCapturedBuffer ] );
+            uint        StartIndex            = CurrentIndex;
 
             //Argument in command header are not in correct sequence, that's why proper key needs to be located
             for( uint glIdx = 0 ; glIdx < pCommandHeader->m_numGlobalCapturedBuffer; glIdx++)
@@ -1841,13 +1841,15 @@ int PatchDSH( __global IGIL_CommandQueue* pQueue,
                         //64 bit patching
                         if( pKernelCurbeParams[ CurrentIndex ].m_parameterSize == 8 )
                         {
-                            __global ulong* pDst         = ( __global ulong * ) &pDsh[ PatchOffset ];
-                            *pDst                         = *pGlobalPtrs;
+                            __global uint* pDst = (__global uint *) &pDsh[PatchOffset];
+                            pDst[ 0 ] = pGlobalPtrs[ 0 ];
+                            pDst[ 1 ] = pGlobalPtrs[ 1 ];
+                            pGlobalPtrs++;
                         }
                         else
                         {
-                            __global uint* pDst         = ( __global uint* ) &pDsh[ PatchOffset ];
-                            *pDst                        = ( uint ) *pGlobalPtrs;
+                            __global uint* pDst = ( __global uint* ) &pDsh[ PatchOffset ];
+                            *pDst               = ( uint ) *pGlobalPtrs;
                         }
                     }
                     CurrentIndex++;
@@ -2257,9 +2259,9 @@ void PatchDSHParallelWithDynamicDSH20( uint slbOffsetBase,
                 if( pCommandHeader->m_numGlobalCapturedBuffer > 0 )
                 {
                     //Handle global pointers patching in stateless mode, info about layout in declaration of IGIL_CommandHeader
-                    __global    uint*  pGlobalIndexes                  = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments ] );
-                    __global    ulong*   pGlobalPtrs                    = ( __global ulong* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments + pCommandHeader->m_numGlobalCapturedBuffer ] );
-                    uint        StartIndex                              = CurrentIndex;
+                    __global    uint*  pGlobalIndexes = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments ] );
+                    __global    uint*  pGlobalPtrs    = ( __global uint* ) ( &pCommandHeader->m_data[ NumberOfDepencies + pCommandHeader->m_numScalarArguments + pCommandHeader->m_numGlobalCapturedBuffer ] );
+                    uint        StartIndex            = CurrentIndex;
 
                     //Argument in command header are not in correct sequence, that's why proper key needs to be located
                     for( uint glIdx = 0 ; glIdx < pCommandHeader->m_numGlobalCapturedBuffer; glIdx++)
@@ -2275,13 +2277,15 @@ void PatchDSHParallelWithDynamicDSH20( uint slbOffsetBase,
                                 //64 bit patching
                                 if( pKernelCurbeParams[ CurrentIndex ].m_parameterSize == 8 )
                                 {
-                                    __global ulong* pDst         = ( __global ulong * ) &pDsh[ PatchOffset ];
-                                    *pDst                         = *pGlobalPtrs;
+                                    __global uint* pDst = (__global uint *) &pDsh[PatchOffset];
+                                    pDst[0] = pGlobalPtrs[0];
+                                    pDst[1] = pGlobalPtrs[1];
+                                    pGlobalPtrs++;
                                 }
                                 else
                                 {
-                                    __global uint* pDst         = ( __global uint* ) &pDsh[ PatchOffset ];
-                                    *pDst                        = ( uint ) *pGlobalPtrs;
+                                    __global uint* pDst = ( __global uint* ) &pDsh[ PatchOffset ];
+                                    *pDst               = ( uint ) *pGlobalPtrs;
                                 }
                             }
                             CurrentIndex++;
