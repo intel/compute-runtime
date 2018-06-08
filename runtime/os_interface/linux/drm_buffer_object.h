@@ -88,8 +88,11 @@ class BufferObject {
     ResidencyVector *getResidency() { return &residency; }
     StorageAllocatorType peekAllocationType() const { return storageAllocatorType; }
     void setAllocationType(StorageAllocatorType allocatorType) { this->storageAllocatorType = allocatorType; }
+    bool peekIsResident() const { return isResident; }
+    void setIsResident(bool isResident) { this->isResident = isResident; }
 
   protected:
+    bool isResident;
     BufferObject(Drm *drm, int handle, bool isAllocated);
 
     Drm *drm;
@@ -112,11 +115,11 @@ class BufferObject {
 
     uint64_t offset64; // last-seen GPU offset
     size_t size;
-    void *address; // GPU side virtual address
+    void *address;       // GPU side virtual address
     void *lockedAddress; // CPU side virtual address
 
     bool isAllocated = false;
     uint64_t unmapSize = 0;
     StorageAllocatorType storageAllocatorType = UNKNOWN_ALLOCATOR;
 };
-}
+} // namespace OCLRT

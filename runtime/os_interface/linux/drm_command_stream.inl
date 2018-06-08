@@ -100,7 +100,8 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxAl
 
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
-    if (bo) {
+    if (bo && !bo->peekIsResident()) {
+        bo->setIsResident(true);
         residency.push_back(bo);
     }
 }
@@ -108,14 +109,12 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 template <typename GfxFamily>
 void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *inputAllocationsForResidency) {
     auto &allocationsForResidency = inputAllocationsForResidency ? *inputAllocationsForResidency : getMemoryManager()->getResidencyAllocations();
-    for (uint32_t i = 0; i < allocationsForResidency.size(); i++) {
-        DrmAllocation *drmAlloc = reinterpret_cast<DrmAllocation *>(allocationsForResidency[i]);
+    for (uint32_t a = 0; a < allocationsForResidency.size(); a++) {
+        DrmAllocation *drmAlloc = reinterpret_cast<DrmAllocation *>(allocationsForResidency[a]);
         if (drmAlloc->fragmentsStorage.fragmentCount) {
-            for (unsigned int i = 0; i < drmAlloc->fragmentsStorage.fragmentCount; i++) {
-                if (!drmAlloc->fragmentsStorage.fragmentStorageData[i].residency->resident) {
-                    makeResident(drmAlloc->fragmentsStorage.fragmentStorageData[i].osHandleStorage->bo);
-                    drmAlloc->fragmentsStorage.fragmentStorageData[i].residency->resident = true;
-                }
+            for (unsigned int f = 0; f < drmAlloc->fragmentsStorage.fragmentCount; f++) {
+                makeResident(drmAlloc->fragmentsStorage.fragmentStorageData[f].osHandleStorage->bo);
+                drmAlloc->fragmentsStorage.fragmentStorageData[f].residency->resident = true;
             }
         } else {
             BufferObject *bo = drmAlloc->getBO();
@@ -130,11 +129,15 @@ void DrmCommandStreamReceiver<GfxFamily>::makeNonResident(GraphicsAllocation &gf
     // If flush wasn't called we need to make all objects non-resident.
     // If makeNonResident is called before flush, vector will be cleared.
     if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
+        for (auto &surface : residency) {
+            surface->setIsResident(false);
+        }
         if (this->residency.size() != 0) {
             this->residency.clear();
         }
         if (gfxAllocation.fragmentsStorage.fragmentCount) {
             for (auto fragmentId = 0u; fragmentId < gfxAllocation.fragmentsStorage.fragmentCount; fragmentId++) {
+                gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].osHandleStorage->bo->setIsResident(false);
                 gfxAllocation.fragmentsStorage.fragmentStorageData[fragmentId].residency->resident = false;
             }
         }

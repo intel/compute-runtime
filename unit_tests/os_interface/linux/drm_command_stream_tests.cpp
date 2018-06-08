@@ -1364,6 +1364,29 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
 }
 
+TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSameThenMakeResidentShouldAddOnlyOneLocation) {
+    auto ptr = (void *)0x1000;
+    auto size = MemoryConstants::pageSize;
+    auto ptr2 = (void *)0x1000;
+
+    auto allocation = mm->allocateGraphicsMemory(size, ptr);
+    auto allocation2 = mm->allocateGraphicsMemory(size, ptr2);
+
+    csr->makeResident(*allocation);
+    csr->makeResident(*allocation2);
+
+    csr->processResidency(nullptr);
+
+    EXPECT_EQ(tCsr->getResidencyVector()->size(), 1u);
+
+    csr->makeNonResident(*allocation);
+    csr->makeNonResident(*allocation2);
+
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(allocation2);
+    mm->clearResidencyAllocations();
+}
+
 TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     std::unique_ptr<BufferObject> buffer(this->createBO(0));
     DrmAllocation allocation(buffer.get(), nullptr, buffer->peekSize());
