@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 template <typename Family>
@@ -37,6 +38,9 @@ template <typename Family>
 void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     caps->image3DMaxHeight = 16384;
     caps->image3DMaxWidth = 16384;
+    //With statefull messages we have an allocation cap of 4GB
+    //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
+    caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
 }
 
 template <typename Family>

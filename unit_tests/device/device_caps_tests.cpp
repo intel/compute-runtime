@@ -352,6 +352,20 @@ TEST(Device_GetCaps, checkGlobalMemSize) {
     EXPECT_EQ(caps.globalMemSize, expectedSize);
 }
 
+TEST(Device_GetCaps, givenGlobalMemSizeWhenCalculatingMaxAllocSizeThenAdjustToHWCap) {
+    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    const auto &caps = device->getDeviceInfo();
+
+    HardwareCapabilities hwCaps = {0};
+    auto &hwHelper = HwHelper::get(platformDevices[0]->pPlatform->eRenderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&hwCaps);
+
+    uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
+    expectedSize = std::min(expectedSize, hwCaps.maxMemAllocSize);
+
+    EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
+}
+
 TEST(Device_GetCaps, extensionsStringEndsWithSpace) {
     auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();

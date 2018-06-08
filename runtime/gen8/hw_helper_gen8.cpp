@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper.inl"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 typedef BDWFamily Family;
@@ -40,6 +41,7 @@ template <>
 void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     caps->image3DMaxHeight = 2048;
     caps->image3DMaxWidth = 2048;
+    caps->maxMemAllocSize = 2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte;
 }
 
 template class HwHelperHw<Family>;

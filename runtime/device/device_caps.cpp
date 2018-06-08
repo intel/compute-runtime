@@ -259,9 +259,8 @@ void Device::initializeCaps() {
 
     // OpenCL 1.2 requires 128MB minimum
     auto maxMemAllocSize = std::max((uint64_t)(deviceInfo.globalMemSize / 2), (uint64_t)(128 * MB));
-    //With statefull messages we have an allocation cap of 4GB
-    //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
-    deviceInfo.maxMemAllocSize = std::min((uint64_t)((4 * GB) - (8 * KB)), maxMemAllocSize);
+    deviceInfo.maxMemAllocSize = std::min(maxMemAllocSize, hwCaps.maxMemAllocSize);
+
     deviceInfo.maxConstantBufferSize = deviceInfo.maxMemAllocSize;
 
     static const int maxPixelSize = 16;
