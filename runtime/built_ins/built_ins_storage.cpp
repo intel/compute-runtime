@@ -23,6 +23,7 @@
 #include <cstdint>
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "os_inc.h"
 
 namespace OCLRT {
@@ -156,8 +157,13 @@ BuiltinCode BuiltinsLib::getBuiltinCode(EBuiltInOps builtin, BuiltinCode::ECodeT
 
     BuiltinResourceT bc;
     BuiltinCode::ECodeType usedCodetType = BuiltinCode::ECodeType::INVALID;
+
     if (requestedCodeType == BuiltinCode::ECodeType::Any) {
-        for (uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Binary), e = static_cast<uint32_t>(BuiltinCode::ECodeType::COUNT);
+        uint32_t codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Binary);
+        if (DebugManager.flags.RebuildPrecompiledKernels.get()) {
+            codeType = static_cast<uint32_t>(BuiltinCode::ECodeType::Source);
+        }
+        for (uint32_t e = static_cast<uint32_t>(BuiltinCode::ECodeType::COUNT);
              codeType != e; ++codeType) {
             bc = getBuiltinResource(builtin, static_cast<BuiltinCode::ECodeType>(codeType), device);
             if (bc.size() > 0) {

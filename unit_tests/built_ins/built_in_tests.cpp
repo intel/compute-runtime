@@ -29,13 +29,15 @@
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/platform/platform.h"
-#include "unit_tests/global_environment.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/run_kernel_fixture.h"
+#include "unit_tests/global_environment.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_compilers.h"
@@ -1504,4 +1506,24 @@ TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationFor
     const SipKernel &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
     auto sipAllocation = sipKern.getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
+}
+
+TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsBinaryThenReturnBuiltinCodeBinary) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::Binary, code.type);
+    EXPECT_NE(0u, code.resource.size());
+    EXPECT_EQ(pDevice, code.targetDevice);
+}
+
+TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCodeSource) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.RebuildPrecompiledKernels.set(true);
+    auto builtinsLib = std::unique_ptr<BuiltinsLib>(new BuiltinsLib());
+    BuiltinCode code = builtinsLib->getBuiltinCode(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Any, *pDevice);
+    EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);
+    EXPECT_NE(0u, code.resource.size());
+    EXPECT_EQ(pDevice, code.targetDevice);
 }
