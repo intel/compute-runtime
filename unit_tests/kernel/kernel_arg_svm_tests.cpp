@@ -263,7 +263,7 @@ HWTEST_F(KernelArgSvmTest, PatchWithImplicitSurface) {
         {
             void *addressToPatch = svmAlloc.getUnderlyingBuffer();
             size_t sizeToPatch = svmAlloc.getUnderlyingBufferSize();
-            Buffer::setSurfaceState(pContext, &expectedSurfaceState, sizeToPatch, addressToPatch, &svmAlloc);
+            Buffer::setSurfaceState(pDevice, &expectedSurfaceState, sizeToPatch, addressToPatch, &svmAlloc);
         }
 
         // verify ssh was properly patched
@@ -369,6 +369,8 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     constexpr size_t rendSurfSize = sizeof(RENDER_SURFACE_STATE);
 
+    std::unique_ptr<Device> device(Device::create<MockDevice>(*platformDevices));
+
     uint32_t svmSize = MemoryConstants::pageSize;
     char *svmPtr = reinterpret_cast<char *>(alignedMalloc(svmSize, MemoryConstants::pageSize));
 
@@ -416,7 +418,7 @@ HWTEST_TYPED_TEST(KernelArgSvmTestTyped, GivenBufferKernelArgWhenBufferOffsetIsN
             EXPECT_EQ(0U, *expectedOffsetPatchPtr);
         }
 
-        Buffer::setSurfaceState(this->pContext, &expectedSurfaceState, svmAlloc.getUnderlyingBufferSize(), svmAlloc.getUnderlyingBuffer(), &svmAlloc);
+        Buffer::setSurfaceState(device.get(), &expectedSurfaceState, svmAlloc.getUnderlyingBufferSize(), svmAlloc.getUnderlyingBuffer(), &svmAlloc);
 
         // verify ssh was properly patched
         int32_t cmpResult = memcmp(&expectedSurfaceState, surfState, rendSurfSize);

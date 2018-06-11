@@ -171,7 +171,7 @@ void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, Graphic
         auto surfaceState = ptrOffset(ssh, sshOffset);
         void *addressToPatch = reinterpret_cast<void *>(allocation.getUnderlyingBuffer());
         size_t sizeToPatch = allocation.getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&getContext(), surfaceState, sizeToPatch, addressToPatch, &allocation);
+        Buffer::setSurfaceState(&getDevice(), surfaceState, sizeToPatch, addressToPatch, &allocation);
     }
 }
 
@@ -295,7 +295,7 @@ cl_int Kernel::initialize() {
             if (requiresSshForBuffers()) {
                 auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                               patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&getContext(), surfaceState, 0, nullptr);
+                Buffer::setSurfaceState(&getDevice(), surfaceState, 0, nullptr);
             }
         }
 
@@ -304,7 +304,7 @@ cl_int Kernel::initialize() {
             if (requiresSshForBuffers()) {
                 auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                               patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-                Buffer::setSurfaceState(&getContext(), surfaceState, 0, nullptr);
+                Buffer::setSurfaceState(&getDevice(), surfaceState, 0, nullptr);
             }
         }
 
@@ -841,7 +841,7 @@ cl_int Kernel::setArgSvm(uint32_t argIndex, size_t svmAllocSize, void *svmPtr, G
     if (requiresSshForBuffers()) {
         const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
         auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-        Buffer::setSurfaceState(&getContext(), surfaceState, svmAllocSize + ptrDiff(svmPtr, ptrToPatch), ptrToPatch, svmAlloc, svmFlags);
+        Buffer::setSurfaceState(&getDevice(), surfaceState, svmAllocSize + ptrDiff(svmPtr, ptrToPatch), ptrToPatch, svmAlloc, svmFlags);
     }
     if (!kernelArguments[argIndex].isPatched) {
         patchedArgumentsNum++;
@@ -875,7 +875,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
             size_t offset = ptrDiff(ptrToPatch, svmAlloc->getUnderlyingBuffer());
             allocSize -= offset;
         }
-        Buffer::setSurfaceState(&getContext(), surfaceState, allocSize, ptrToPatch, nullptr);
+        Buffer::setSurfaceState(&getDevice(), surfaceState, allocSize, ptrToPatch, nullptr);
     }
 
     if (!kernelArguments[argIndex].isPatched) {
@@ -1141,7 +1141,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-            Buffer::setSurfaceState(&getContext(), surfaceState, 0, nullptr);
+            Buffer::setSurfaceState(&getDevice(), surfaceState, 0, nullptr);
         }
 
         return CL_SUCCESS;
@@ -1188,7 +1188,7 @@ cl_int Kernel::setArgPipe(uint32_t argIndex,
 
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-            Buffer::setSurfaceState(&getContext(), surfaceState,
+            Buffer::setSurfaceState(&getDevice(), surfaceState,
                                     pipe->getSize(), pipe->getCpuAddress(),
                                     pipe->getGraphicsAllocation());
         }
@@ -2016,7 +2016,7 @@ void Kernel::patchDefaultDeviceQueue(DeviceQueue *devQueue) {
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                           patchInfo.pAllocateStatelessDefaultDeviceQueueSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&getContext(), surfaceState, devQueue->getQueueBuffer()->getUnderlyingBufferSize(), (void *)devQueue->getQueueBuffer()->getGpuAddress(), devQueue->getQueueBuffer());
+            Buffer::setSurfaceState(&getDevice(), surfaceState, devQueue->getQueueBuffer()->getUnderlyingBufferSize(), (void *)devQueue->getQueueBuffer()->getGpuAddress(), devQueue->getQueueBuffer());
         }
     }
 }
@@ -2036,7 +2036,7 @@ void Kernel::patchEventPool(DeviceQueue *devQueue) {
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(reinterpret_cast<uintptr_t *>(getSurfaceStateHeap()),
                                           patchInfo.pAllocateStatelessEventPoolSurface->SurfaceStateHeapOffset);
-            Buffer::setSurfaceState(&getContext(), surfaceState, devQueue->getEventPoolBuffer()->getUnderlyingBufferSize(), (void *)devQueue->getEventPoolBuffer()->getGpuAddress(), devQueue->getEventPoolBuffer());
+            Buffer::setSurfaceState(&getDevice(), surfaceState, devQueue->getEventPoolBuffer()->getUnderlyingBufferSize(), (void *)devQueue->getEventPoolBuffer()->getGpuAddress(), devQueue->getEventPoolBuffer());
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -66,7 +66,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
                                       kernel->getKernelInfo().patchInfo.pAllocateStatelessPrintfSurface->SurfaceStateHeapOffset);
         void *addressToPatch = printfSurface->getUnderlyingBuffer();
         size_t sizeToPatch = printfSurface->getUnderlyingBufferSize();
-        Buffer::setSurfaceState(&kernel->getContext(), surfaceState, sizeToPatch, addressToPatch, printfSurface);
+        Buffer::setSurfaceState(&device, surfaceState, sizeToPatch, addressToPatch, printfSurface);
     }
 }
 

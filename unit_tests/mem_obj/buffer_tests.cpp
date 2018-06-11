@@ -765,10 +765,11 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
 class BufferTests : public ::testing::Test {
   protected:
     void SetUp() override {
+        device.reset(Device::create<MockDevice>(*platformDevices));
     }
     void TearDown() override {
     }
-    MockContext context;
+    std::unique_ptr<Device> device;
 };
 
 typedef BufferTests BufferSetSurfaceTests;
@@ -782,7 +783,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlign
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         size,
         ptr);
@@ -804,7 +805,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         size,
         offsetedPtr);
@@ -826,7 +827,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTo
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         offsetedSize,
         ptr);
@@ -848,7 +849,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         offsetedSize,
         ptr,
@@ -872,7 +873,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTh
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         offsetedSize,
         ptr);
@@ -892,7 +893,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNotNullThenB
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         size,
         ptr);
@@ -909,7 +910,7 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsNullThenNull
     RENDER_SURFACE_STATE surfaceState = {};
 
     Buffer::setSurfaceState(
-        &context,
+        device.get(),
         &surfaceState,
         0,
         nullptr);

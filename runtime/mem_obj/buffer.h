@@ -75,11 +75,21 @@ class Buffer : public MemObj {
                                   bool isHostPtrSVM,
                                   bool isImageRedescribed);
 
+    static Buffer *createBufferHwFromDevice(const Device *device,
+                                            cl_mem_flags flags,
+                                            size_t size,
+                                            void *memoryStorage,
+                                            void *hostPtr,
+                                            GraphicsAllocation *gfxAllocation,
+                                            bool zeroCopy,
+                                            bool isHostPtrSVM,
+                                            bool isImageRedescribed);
+
     Buffer *createSubBuffer(cl_mem_flags flags,
                             const cl_buffer_region *region,
                             cl_int &errcodeRet);
 
-    static void setSurfaceState(Context *context,
+    static void setSurfaceState(const Device *device,
                                 void *surfaceState,
                                 size_t svmSize,
                                 void *svmPtr,

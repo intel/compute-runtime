@@ -374,13 +374,32 @@ Buffer *Buffer::createBufferHw(Context *context,
     return pBuffer;
 }
 
-void Buffer::setSurfaceState(Context *context,
+Buffer *Buffer::createBufferHwFromDevice(const Device *device,
+                                         cl_mem_flags flags,
+                                         size_t size,
+                                         void *memoryStorage,
+                                         void *hostPtr,
+                                         GraphicsAllocation *gfxAllocation,
+                                         bool zeroCopy,
+                                         bool isHostPtrSVM,
+                                         bool isImageRedescribed) {
+
+    const auto &hwInfo = device->getHardwareInfo();
+
+    auto funcCreate = bufferFactory[hwInfo.pPlatform->eRenderCoreFamily].createBufferFunction;
+    DEBUG_BREAK_IF(nullptr == funcCreate);
+    auto pBuffer = funcCreate(nullptr, flags, size, memoryStorage, hostPtr, gfxAllocation,
+                              zeroCopy, isHostPtrSVM, isImageRedescribed);
+    return pBuffer;
+}
+
+void Buffer::setSurfaceState(const Device *device,
                              void *surfaceState,
                              size_t svmSize,
                              void *svmPtr,
                              GraphicsAllocation *gfxAlloc,
                              cl_mem_flags flags) {
-    auto buffer = Buffer::createBufferHw(context, flags, svmSize, svmPtr, svmPtr, gfxAlloc, false, false, false);
+    auto buffer = Buffer::createBufferHwFromDevice(device, flags, svmSize, svmPtr, svmPtr, gfxAlloc, false, false, false);
     buffer->setArgStateful(surfaceState);
     buffer->graphicsAllocation = nullptr;
     delete buffer;

@@ -25,6 +25,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
 
 using namespace OCLRT;
 
@@ -56,9 +57,9 @@ class MockBuffer : public MockBufferStorage, public Buffer {
         }
     }
     void setArgStateful(void *memory) override {
-        Buffer::setSurfaceState(&context, memory, getSize(), getCpuAddress(), (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation);
+        Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation);
     }
-    MockContext context;
+    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
     GraphicsAllocation *externalAlloc = nullptr;
 };
 
@@ -69,9 +70,9 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
     AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
     }
     void setArgStateful(void *memory) override {
-        Buffer::setSurfaceState(&context, memory, getSize(), getCpuAddress(), &mockGfxAllocation);
+        Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
-    MockContext context;
+    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
 };
 
 class UnalignedBuffer : public MockBufferStorage, public Buffer {
@@ -81,7 +82,7 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
     UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
     }
     void setArgStateful(void *memory) override {
-        Buffer::setSurfaceState(&context, memory, getSize(), getCpuAddress(), &mockGfxAllocation);
+        Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
-    MockContext context;
+    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
 };
