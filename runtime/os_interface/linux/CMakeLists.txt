@@ -58,7 +58,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_linux.cpp
 )
 
 if(UNIX)

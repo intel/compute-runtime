@@ -26,6 +26,7 @@
 #include "runtime/program/kernel_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/os_interface/os_interface.h"
+#include "lib_names.h"
 
 namespace OCLRT {
 const char *SourceLevelDebugger::notifyNewDeviceSymbol = "notifyNewDevice";
@@ -35,6 +36,7 @@ const char *SourceLevelDebugger::notifyKernelDebugDataSymbol = "notifyKernelDebu
 const char *SourceLevelDebugger::initSymbol = "init";
 const char *SourceLevelDebugger::isDebuggerActiveSymbol = "isDebuggerActive";
 const char *SourceLevelDebugger::notifyDeviceDestructionSymbol = "notifyDeviceDestruction";
+const char *SourceLevelDebugger::dllName = SLD_LIBRARY_NAME;
 
 class SourceLevelDebugger::SourceLevelDebuggerInterface {
   public:

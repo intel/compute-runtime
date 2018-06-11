@@ -22,14 +22,9 @@
 #include "lib_names.h"
 
 namespace Os {
-#if defined(_WIN64)
-const char *frontEndDllName = "igdfcl64.dll";
-const char *igcDllName = "igc64.dll";
-#else
-const char *frontEndDllName = "igdfcl32.dll";
-const char *igcDllName = "igc32.dll";
-#endif
 
+const char *frontEndDllName = FCL_LIBRARY_NAME;
+const char *igcDllName = IGC_LIBRARY_NAME;
 const char *gdiDllName = "gdi32.dll";
-const char *gmmDllName = GMM_LIB_FILENAME;
+const char *gmmDllName = GMM_LIBRARY_NAME;
 } // namespace Os

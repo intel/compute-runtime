@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "compiler.config.h"
+#include "lib_names.h"
 #include "runtime/os_interface/os_library.h"
 
 namespace Os {

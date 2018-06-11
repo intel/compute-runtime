@@ -21,12 +21,9 @@
  */
 
 #include "test_files.h"
+#include "config.h"
 
-#if defined(__LP64__) || (_WIN64)
-std::string testFiles("test_files/x64/");
-#else
-std::string testFiles("test_files/x86/");
-#endif
+std::string testFiles("test_files/" NEO_ARCH "/");
 std::string clFiles("test_files/");
 std::string binaryNameSuffix("");
 

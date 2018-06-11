@@ -31,5 +31,6 @@ static const bool clCacheEnabled = false;
 #endif
 
 #cmakedefine CL_CACHE_LOCATION "${CL_CACHE_LOCATION}"
+#cmakedefine NEO_ARCH "${NEO_ARCH}"
 
 #endif /* CONFIG_H */

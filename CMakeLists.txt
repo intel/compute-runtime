@@ -209,6 +209,11 @@ if(NOT IGC__IGC_TARGETS)
     add_subdirectory("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
 endif()
 
+if(WIN32)
+    set(IGC_LIBRARY_NAME "igc${NEO_BITS}")
+    set(FCL_LIBRARY_NAME "igdfcl${NEO_BITS}")
+endif()
+
 set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
 foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
     list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
@@ -248,7 +253,7 @@ endif()
 
 set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 
-set(GMM_LIB_FILENAME "igdgmm${NEO_BITS}${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(GMM_LIBRARY_NAME "igdgmm${NEO_BITS}")
 
 macro(copy_gmm_dll_for target)
   if(WIN32 AND NOT USE_STATIC_GMM)
@@ -280,6 +285,11 @@ if(NOT INSTRUMENTATION_LIB_NAME)
 else()
     set(HAVE_INSTRUMENTATION TRUE)
     message(STATUS "Instrumentation library name: ${INSTRUMENTATION_LIB_NAME}")
+endif()
+
+set(SLD_LIBRARY_NAME "igfxdbgxchg")
+if(NEO_BITS STREQUAL "64")
+  set(SLD_LIBRARY_NAME "${SLD_LIBRARY_NAME}${NEO_BITS}")
 endif()
 
 add_subdirectory(third_party/gtest)
@@ -551,6 +561,5 @@ endif(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 include(package.cmake)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
-configure_file(compiler.config.h.in ${IGDRCL_BUILD_DIR}/compiler.config.h)
 configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)

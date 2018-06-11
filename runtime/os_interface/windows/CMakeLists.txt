@@ -63,7 +63,6 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win.h
   ${CMAKE_CURRENT_SOURCE_DIR}/print.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/source_level_debugger_windows.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls.h
   ${CMAKE_CURRENT_SOURCE_DIR}/thk_wrapper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_32bit_memory.cpp

@@ -409,7 +409,7 @@ int main(int argc, char **argv) {
 #else
     SetUnhandledExceptionFilter(&UltExceptionFilter);
     if (!useMockGmm) {
-        Os::gmmDllName = GMM_LIB_FILENAME;
+        Os::gmmDllName = GMM_LIBRARY_NAME;
     }
 #endif
     initializeTestHelpers();
