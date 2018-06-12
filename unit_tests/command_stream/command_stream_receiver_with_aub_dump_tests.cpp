@@ -23,6 +23,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "runtime/helpers/dispatch_info.h"
 
 #include "test.h"
 
@@ -55,6 +56,11 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         makeNonResidentParameterization.receivedGfxAllocation = &gfxAllocation;
     }
 
+    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+        activateAubSubCaptureParameterization.wasCalled = true;
+        activateAubSubCaptureParameterization.receivedDispatchInfo = &dispatchInfo;
+    }
+
     struct FlushParameterization {
         bool wasCalled = false;
         FlushStamp flushStampToReturn = 1;
@@ -77,6 +83,11 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         bool wasCalled = false;
         GraphicsAllocation *receivedGfxAllocation = nullptr;
     } makeNonResidentParameterization;
+
+    struct ActivateAubSubCaptureParameterization {
+        bool wasCalled = false;
+        const MultiDispatchInfo *receivedDispatchInfo = nullptr;
+    } activateAubSubCaptureParameterization;
 };
 
 template <typename BaseCSR>
@@ -202,6 +213,21 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     }
 
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
+}
+
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
+    const DispatchInfo dispatchInfo;
+    const MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+
+    csrWithAubDump->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_TRUE(csrWithAubDump->activateAubSubCaptureParameterization.wasCalled);
+    EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->activateAubSubCaptureParameterization.receivedDispatchInfo);
+
+    if (createAubCSR) {
+        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().activateAubSubCaptureParameterization.wasCalled);
+        EXPECT_EQ(&multiDispatchInfo, csrWithAubDump->getAubMockCsr().activateAubSubCaptureParameterization.receivedDispatchInfo);
+    }
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenCreateMemoryManagerIsCalledThenItIsUsedByBothBaseAndAubCsr) {

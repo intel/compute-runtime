@@ -900,3 +900,15 @@ TEST(DebugSettingsManager, whenOnlyRegKeysAreEnabledThenAllOtherDebugFunctionali
     static_assert(false == debugManager.kernelArgDumpingAvailable(), "");
     static_assert(debugManager.registryReadAvailable(), "");
 }
+
+TEST(DebugSettingsManager, givenDebugSettingsManagerWithDebugFunctionalityWhenReadSettingIsCalledOnInvalidSettingNameThenDefaultValueIsReturned) {
+    FullyEnabledTestDebugManager debugManager;
+
+    EXPECT_EQ(true, debugManager.readSetting("invalid_setting_name", true));
+}
+
+TEST(DebugSettingsManager, givenDebugSettingsManagerWithoutDebugFunctionalityWhenReadSettingIsCalledOnInvalidSettingNameThenDefaultValueIsReturned) {
+    FullyDisabledTestDebugManager debugManager;
+
+    EXPECT_EQ(true, debugManager.readSetting("invalid_setting_name", true));
+}

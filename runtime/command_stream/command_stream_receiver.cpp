@@ -239,6 +239,21 @@ void CommandStreamReceiver::setRequiredScratchSize(uint32_t newRequiredScratchSi
     }
 }
 
+void CommandStreamReceiver::initProgrammingFlags() {
+    isPreambleSent = false;
+    GSBAFor32BitProgrammed = false;
+    mediaVfeStateDirty = true;
+    lastVmeSubslicesConfig = false;
+
+    lastSentL3Config = 0;
+    lastSentCoherencyRequest = -1;
+    lastMediaSamplerConfig = -1;
+    lastPreemptionMode = PreemptionMode::Initial;
+    latestSentStatelessMocsConfig = 0;
+}
+
+void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}
+
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     UNRECOVERABLE_IF(debugSurface != nullptr);
     debugSurface = memoryManager->allocateGraphicsMemory(size);

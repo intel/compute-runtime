@@ -66,6 +66,28 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, shouldSeeCommandsOnFirstFlush) {
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceCsrReprogrammingDebugVariableSetWhenFlushingThenInitProgrammingFlagsShouldBeCalled) {
+    DebugManagerStateRestore restore;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DebugManager.flags.ForceCsrReprogramming.set(true);
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver.initProgrammingFlagsCalled);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenForceCsrFlushingDebugVariableSetWhenFlushingThenFlushBatchedSubmissionsShouldBeCalled) {
+    DebugManagerStateRestore restore;
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    DebugManager.flags.ForceCsrFlushing.set(true);
+
+    flushTask(commandStreamReceiver);
+
+    EXPECT_TRUE(commandStreamReceiver.flushBatchedSubmissionsCalled);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenOverrideThreadArbitrationPolicyDebugVariableSetWhenFlushingThenRequestRequiredMode) {
     DebugManagerStateRestore restore;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();

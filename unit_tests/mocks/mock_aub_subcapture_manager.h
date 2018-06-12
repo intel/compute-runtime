@@ -20,28 +20,37 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#include "runtime/command_stream/command_stream_receiver.h"
+using namespace OCLRT;
 
-namespace OCLRT {
+#include "runtime/command_stream/aub_subcapture.h"
 
-template <typename BaseCSR>
-class CommandStreamReceiverWithAUBDump : public BaseCSR {
+class AubSubCaptureManagerMock : public AubSubCaptureManager {
   public:
-    CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn);
-    ~CommandStreamReceiverWithAUBDump() override;
+    void setSubCaptureIsActive(bool on) {
+        subCaptureIsActive = on;
+    }
+    bool isSubCaptureActive() const {
+        return subCaptureIsActive;
+    }
+    void setSubCaptureWasActive(bool on) {
+        subCaptureWasActive = on;
+    }
+    bool wasSubCaptureActive() const {
+        return subCaptureIsActive;
+    }
+    void setKernelCurrentIndex(uint32_t index) {
+        kernelCurrentIdx = index;
+    }
+    uint32_t getKernelCurrentIndex() {
+        return kernelCurrentIdx;
+    }
+    void setSubCaptureToggleActive(bool on) {
+        isToggledOn = on;
+    }
+    bool isSubCaptureToggleActive() const override {
+        return isToggledOn;
+    }
 
-    CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;
-    CommandStreamReceiverWithAUBDump &operator=(const CommandStreamReceiverWithAUBDump &) = delete;
-
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override;
-    void processResidency(ResidencyContainer *allocationsForResidency) override;
-
-    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
-
-    MemoryManager *createMemoryManager(bool enable64kbPages) override;
-
-    CommandStreamReceiver *aubCSR = nullptr;
+  protected:
+    bool isToggledOn = false;
 };
-
-} // namespace OCLRT

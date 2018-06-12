@@ -149,6 +149,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     void *epiloguePipeControlLocation = nullptr;
     Device *device = this->getMemoryManager()->device;
 
+    if (DebugManager.flags.ForceCsrFlushing.get()) {
+        flushBatchedSubmissions();
+    }
+    if (DebugManager.flags.ForceCsrReprogramming.get()) {
+        initProgrammingFlags();
+    }
+
     if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             //for ImmediateDispatch we will send this right away, therefore this pipe control will close the level

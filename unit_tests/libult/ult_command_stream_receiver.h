@@ -79,6 +79,15 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
+    bool isPreambleProgrammed() const { return this->isPreambleSent; }
+    bool isGSBAFor32BitProgrammed() const { return this->GSBAFor32BitProgrammed; }
+    bool isMediaVfeStateDirty() const { return this->mediaVfeStateDirty; }
+    bool isLastVmeSubslicesConfig() const { return this->lastVmeSubslicesConfig; }
+    uint32_t getLastSentL3Config() const { return this->lastSentL3Config; }
+    int8_t getLastSentCoherencyRequest() const { return this->lastSentCoherencyRequest; }
+    int8_t getLastMediaSamplerConfig() const { return this->lastMediaSamplerConfig; }
+    PreemptionMode getLastPreemptionMode() const { return this->lastPreemptionMode; }
+    uint32_t getLatestSentStatelessMocsConfig() const { return this->latestSentStatelessMocsConfig; }
 
     virtual ~UltCommandStreamReceiver() override;
     GraphicsAllocation *getTagAllocation() { return tagAllocation; }
@@ -108,6 +117,23 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
     bool storeMakeResidentAllocations;
+
+    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
+        CommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(dispatchInfo);
+        activateAubSubCaptureCalled = true;
+    }
+    void flushBatchedSubmissions() override {
+        CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
+        flushBatchedSubmissionsCalled = true;
+    }
+    void initProgrammingFlags() override {
+        CommandStreamReceiverHw<GfxFamily>::initProgrammingFlags();
+        initProgrammingFlagsCalled = true;
+    }
+
+    bool activateAubSubCaptureCalled = false;
+    bool flushBatchedSubmissionsCalled = false;
+    bool initProgrammingFlagsCalled = false;
 
   protected:
     using BaseClass::CommandStreamReceiver::memoryManager;

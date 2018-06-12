@@ -21,6 +21,7 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
@@ -37,10 +38,19 @@ template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone)
     : BaseClass(hwInfoIn),
       stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
+      subCaptureManager(std::unique_ptr<AubSubCaptureManager>(new AubSubCaptureManager())),
       standalone(standalone) {
     this->dispatchMode = DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
+    }
+    if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
+        this->subCaptureManager->subCaptureMode = static_cast<AubSubCaptureManager::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
+        this->subCaptureManager->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());
+        this->subCaptureManager->subCaptureFilter.dumpKernelEndIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get());
+        if (DebugManager.flags.AUBDumpFilterKernelName.get() != "unk") {
+            this->subCaptureManager->subCaptureFilter.dumpKernelName = DebugManager.flags.AUBDumpFilterKernelName.get();
+        }
     }
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
@@ -223,6 +233,16 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     if (!engineInfo.pLRCA) {
         initializeEngine(engineType);
         DEBUG_BREAK_IF(!engineInfo.pLRCA);
+    }
+
+    if (subCaptureManager->isSubCaptureMode()) {
+        if (!subCaptureManager->isSubCaptureEnabled()) {
+            if (this->standalone) {
+                *this->tagAddress = this->peekLatestSentTaskCount();
+            }
+            return 0;
+        }
+        subCaptureManager->deactivateSubCapture();
     }
 
     // Write our batch buffer
@@ -517,6 +537,15 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
     auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
 
+    if (subCaptureManager->isSubCaptureMode()) {
+        if (!subCaptureManager->isSubCaptureEnabled()) {
+            for (auto &gfxAllocation : residencyAllocations) {
+                gfxAllocation->clearTypeAubNonWritable();
+            }
+            return;
+        }
+    }
+
     for (auto &gfxAllocation : residencyAllocations) {
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || gfxAllocation->isTypeAubNonWritable()));
@@ -530,6 +559,19 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &
     if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
         this->getMemoryManager()->pushAllocationForEviction(&gfxAllocation);
         gfxAllocation.residencyTaskCount = ObjectNotResident;
+    }
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+    subCaptureManager->activateSubCapture(dispatchInfo);
+    if (this->standalone) {
+        if (DebugManager.flags.ForceCsrFlushing.get()) {
+            this->flushBatchedSubmissions();
+        }
+        if (DebugManager.flags.ForceCsrReprogramming.get()) {
+            this->initProgrammingFlags();
+        }
     }
 }
 

@@ -64,9 +64,6 @@ inline bool isCommandWithoutKernel(uint32_t commandType) {
 }
 
 template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo) {}
-
-template <typename GfxFamily>
 template <uint32_t commandType, size_t surfaceCount>
 void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount],
                                                bool blocking,
@@ -197,16 +194,20 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
-    if (DebugManager.flags.MakeEachEnqueueBlocking.get()) {
-        blocking = true;
-    }
-
     if (executionModelKernel && !blockQueue) {
         while (!devQueueHw->isEMCriticalSectionFree())
             ;
     }
 
     enqueueHandlerHook(commandType, multiDispatchInfo);
+
+    if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
+        commandStreamReceiver.activateAubSubCapture(multiDispatchInfo);
+    }
+
+    if (DebugManager.flags.MakeEachEnqueueBlocking.get()) {
+        blocking = true;
+    }
 
     if (multiDispatchInfo.empty() == false) {
         HwPerfCounter *hwPerfCounter = nullptr;

@@ -22,6 +22,11 @@
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
+DECLARE_DEBUG_VARIABLE(std::string, AUBDumpFilterKernelName, std::string("unk"), "Name of kernel to AUB capture")
+DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpSubCaptureMode, 0, "AUB dump subcapture mode (off, toggle, filter)")
+DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelStartIdx, 0, "Start index of kernel to AUB capture")
+DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelEndIdx, -1, "End index of kernel to AUB capture")
+DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpToggleCaptureOnOff, 0, "Toggle AUB capture on/off")
 DECLARE_DEBUG_VARIABLE(int32_t, SetCommandStreamReceiver, 0, "Set command stream receiver")
 DECLARE_DEBUG_VARIABLE(int32_t, TbxPort, 4321, "TCP-IP port of TBX server")
 DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-level batch buffers to AUB as single, flat batch buffer")
@@ -59,12 +64,15 @@ DECLARE_DEBUG_VARIABLE(bool, EnableNullHardware, false, "works on Windows only, 
 DECLARE_DEBUG_VARIABLE(bool, ForceLinearImages, false, "Force linear images. Default is Y-tiled.")
 DECLARE_DEBUG_VARIABLE(bool, ForceSLML3Config, false, "Forces L3Config with SLM for all kernels")
 DECLARE_DEBUG_VARIABLE(bool, Force32bitAddressing, false, "Forces 32 bit addresses to be used in 64 bit dll")
+DECLARE_DEBUG_VARIABLE(bool, ForceCsrFlushing, false, "Forces flushing of command stream receiver")
+DECLARE_DEBUG_VARIABLE(bool, ForceCsrReprogramming, false, "Forces reprogramming of command stream receiver")
 DECLARE_DEBUG_VARIABLE(bool, DisableStatelessToStatefulOptimization, false, "Disables stateless to stateful optimization for buffers")
 DECLARE_DEBUG_VARIABLE(bool, DisableConcurrentBlockExecution, 0, "disables concurrent block kernel execution")
 DECLARE_DEBUG_VARIABLE(bool, UseNewHeapAllocator, true, "Custom 4GB heap allocator is used")
 DECLARE_DEBUG_VARIABLE(bool, UseNoRingFlushesKmdMode, true, "Windows only, passes flag to KMD that informs KMD to not emit any ring buffer flushes.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForUseHostPtr, false, "When active all buffer allocations created with CL_MEM_USE_HOST_PTR flag will not share memory with CPU.")
 DECLARE_DEBUG_VARIABLE(bool, DisableZeroCopyForBuffers, false, "When active all buffer allocations will not share memory with CPU.")
+
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")

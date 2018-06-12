@@ -56,6 +56,14 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContai
 }
 
 template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
+    BaseCSR::activateAubSubCapture(dispatchInfo);
+    if (aubCSR) {
+        aubCSR->activateAubSubCapture(dispatchInfo);
+    }
+}
+
+template <typename BaseCSR>
 MemoryManager *CommandStreamReceiverWithAUBDump<BaseCSR>::createMemoryManager(bool enable64kbPages) {
     auto memoryManager = BaseCSR::createMemoryManager(enable64kbPages);
     if (aubCSR) {

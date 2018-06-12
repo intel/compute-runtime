@@ -29,6 +29,9 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
 namespace OCLRT {
+
+class AubSubCaptureManager;
+
 template <typename GfxFamily>
 class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
@@ -41,7 +44,10 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer *allocationsForResidency) override;
+
     bool writeMemory(GraphicsAllocation &gfxAllocation);
+
+    void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
     // Family specific version
     void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
@@ -81,6 +87,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     } engineInfoTable[EngineType::NUM_ENGINES];
 
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> stream;
+    std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
     bool standalone;
 

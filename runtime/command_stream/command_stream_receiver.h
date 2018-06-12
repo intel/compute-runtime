@@ -130,6 +130,9 @@ class CommandStreamReceiver {
     FlatBatchBufferHelper &getFlatBatchBufferHelper() { return *flatBatchBufferHelper.get(); }
     void overwriteFlatBatchBufferHelper(FlatBatchBufferHelper *newHelper) { flatBatchBufferHelper.reset(newHelper); }
 
+    MOCKABLE_VIRTUAL void initProgrammingFlags();
+    virtual void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo);
+
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType, size_t minRequiredSize);
     void allocateHeapMemory(IndirectHeap::Type heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
     void releaseIndirectHeap(IndirectHeap::Type heapType);
@@ -163,7 +166,7 @@ class CommandStreamReceiver {
     int8_t lastSentCoherencyRequest = -1;
     int8_t lastMediaSamplerConfig = -1;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
-    uint32_t latestSentStatelessMocsConfig;
+    uint32_t latestSentStatelessMocsConfig = 0;
 
     LinearStream commandStream;
 

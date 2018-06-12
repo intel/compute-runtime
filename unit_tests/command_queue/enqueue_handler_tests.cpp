@@ -21,6 +21,7 @@
  */
 
 #include "runtime/event/event.h"
+#include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/memory_manager/surface.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
@@ -302,5 +303,49 @@ HWTEST_F(EnqueueHandlerTest, givenExternallySynchronizedParentEventWhenRequestin
     EXPECT_EQ(0U, ouputEvent->peekTaskCount());
 
     ouputEvent->release();
+    mockCmdQ->release();
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOffThenActivateSubCaptureIsNotCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Off));
+
+    MockKernelWithInternals kernelInternals(*pDevice, context);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
+
+    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
+                                                                 0,
+                                                                 false,
+                                                                 multiDispatchInfo,
+                                                                 0,
+                                                                 nullptr,
+                                                                 nullptr);
+    EXPECT_FALSE(pDevice->getUltCommandStreamReceiver<FamilyType>().activateAubSubCaptureCalled);
+
+    mockCmdQ->release();
+}
+
+HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSubCaptureIsCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+
+    MockKernelWithInternals kernelInternals(*pDevice, context);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context, pDevice, 0);
+
+    mockCmdQ->template enqueueHandler<CL_COMMAND_NDRANGE_KERNEL>(nullptr,
+                                                                 0,
+                                                                 false,
+                                                                 multiDispatchInfo,
+                                                                 0,
+                                                                 nullptr,
+                                                                 nullptr);
+    EXPECT_TRUE(pDevice->getUltCommandStreamReceiver<FamilyType>().activateAubSubCaptureCalled);
+
     mockCmdQ->release();
 }
