@@ -23,6 +23,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 namespace OCLRT {
+const char *SourceLevelDebugger::dllName = "";
 
 SourceLevelDebugger::SourceLevelDebugger(OsLibrary *library) {
     debuggerLibrary.reset(library);
