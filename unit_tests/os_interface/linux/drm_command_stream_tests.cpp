@@ -695,7 +695,7 @@ class DrmCommandStreamEnhancedFixture
     }
 
     bool isResident(BufferObject *bo) {
-        return tCsr->isResident(bo);
+        return tCsr->isResident(bo) && bo->peekIsResident();
     }
 
     const BufferObject *getResident(BufferObject *bo) {
@@ -859,6 +859,34 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
     EXPECT_EQ(1u, bo->getRefCount());
 
     mm->freeGraphicsMemory(dummyAllocation);
+}
+
+TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
+    auto allocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
+
+    auto bo1 = allocation->getBO();
+    auto bo2 = allocation2->getBO();
+    csr->makeResident(*allocation);
+    csr->makeResident(*allocation2);
+
+    EXPECT_FALSE(bo1->peekIsResident());
+    EXPECT_FALSE(bo2->peekIsResident());
+
+    csr->processResidency(nullptr);
+
+    EXPECT_TRUE(bo1->peekIsResident());
+    EXPECT_TRUE(bo2->peekIsResident());
+    EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
+
+    csr->makeNonResident(*allocation);
+    csr->makeNonResident(*allocation2);
+    EXPECT_FALSE(bo1->peekIsResident());
+    EXPECT_FALSE(bo2->peekIsResident());
+
+    EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(allocation2);
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
@@ -1378,6 +1406,29 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSame
     csr->processResidency(nullptr);
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 1u);
+
+    csr->makeNonResident(*allocation);
+    csr->makeNonResident(*allocation2);
+
+    mm->freeGraphicsMemory(allocation);
+    mm->freeGraphicsMemory(allocation2);
+    mm->clearResidencyAllocations();
+}
+
+TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
+    auto ptr = (void *)0x1000;
+    auto size = MemoryConstants::pageSize;
+    auto ptr2 = (void *)0x3000;
+
+    auto allocation = mm->allocateGraphicsMemory(size, ptr);
+    auto allocation2 = mm->allocateGraphicsMemory(size, ptr2);
+
+    csr->makeResident(*allocation);
+    csr->makeResident(*allocation2);
+
+    csr->processResidency(nullptr);
+
+    EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
     csr->makeNonResident(*allocation);
     csr->makeNonResident(*allocation2);
