@@ -21,7 +21,6 @@
 set(RUNTIME_SRCS_GENX_CPP_WINDOWS
   windows/command_stream_receiver
   windows/translationtable_callbacks
-  windows/wddm_engine_mapper
   windows/wddm
 )
 
