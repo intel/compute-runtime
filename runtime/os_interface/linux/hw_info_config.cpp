@@ -102,13 +102,13 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     int val = 0;
     ret = drm->getDeviceID(val);
     if (ret != 0 || val == 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return (ret == 0) ? -1 : ret;
     }
     pPlatform->usDeviceID = static_cast<unsigned short>(val);
     ret = drm->getDeviceRevID(val);
     if (ret != 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return ret;
     }
     pPlatform->usRevId = static_cast<unsigned short>(val);
@@ -116,7 +116,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     int euCount;
     ret = drm->getEuTotal(euCount);
     if (ret != 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return ret;
     }
     pSysInfo->EUCount = static_cast<uint32_t>(euCount);
@@ -126,7 +126,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     int subSliceCount;
     ret = drm->getSubsliceTotal(subSliceCount);
     if (ret != 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return ret;
     }
     pSysInfo->SubSliceCount = static_cast<uint32_t>(subSliceCount);
@@ -138,7 +138,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     GTTYPE gtType = drm->getGtType();
     if (gtType == GTTYPE_UNDEFINED) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return -1;
     }
     pPlatform->eGTType = gtType;
@@ -154,7 +154,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     ret = configureHardwareCustom(outHwInfo, osIface);
     if (ret != 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        *outHwInfo = {};
         return ret;
     }
     configureCacheInfo(outHwInfo);

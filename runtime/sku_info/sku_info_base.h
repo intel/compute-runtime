@@ -86,14 +86,15 @@ struct FeatureTableBase {
     bool ftrAstcHdr2D = false;
     bool ftrAstcLdr2D = false;
 
-    bool ftrStandardMipTailFormat = false; // Gmmlib
-    bool ftrFrameBufferLLC = false;        // Gmmlib
-    bool ftrCrystalwell = false;           // Gmmlib
-    bool ftrLLCBypass = false;             // Gmmlib
-    bool ftrDisplayEngineS3d = false;      // Gmmlib
-    bool ftrVERing = false;                // Gmmlib
-    bool ftrWddm2GpuMmu = false;           // Gmmlib
-    bool ftrWddm2_1_64kbPages = false;     // Gmmlib
+    bool ftrStandardMipTailFormat = false;
+    bool ftrFrameBufferLLC = false;
+    bool ftrCrystalwell = false;
+    bool ftrLLCBypass = false;
+    bool ftrDisplayEngineS3d = false;
+    bool ftrVERing = false;
+    bool ftrWddm2GpuMmu = false;
+    bool ftrWddm2_1_64kbPages = false;
+    bool ftrWddmHwQueues = false;
 
     bool ftrKmdDaf = false;
 };
@@ -107,10 +108,10 @@ struct WorkaroundTableBase {
     bool waDisableLSQCROPERFforOCL = false;
     bool waMsaa8xTileYDepthPitchAlignment = false;
     bool waLosslessCompressionSurfaceStride = false;
-    bool waFbcLinearSurfaceStride = false; // Gmmlib
+    bool waFbcLinearSurfaceStride = false;
     bool wa4kAlignUVOffsetNV12LinearSurface = false;
-    bool waEncryptedEdramOnlyPartials = false; // Gmmlib
-    bool waDisableEdramForDisplayRT = false;   // Gmmlib
+    bool waEncryptedEdramOnlyPartials = false;
+    bool waDisableEdramForDisplayRT = false;
     bool waForcePcBbFullCfgRestore = false;
     bool waCompressedResourceRequiresConstVA21 = false;
     bool waDisablePerCtxtPreemptionGranularityControl = false;

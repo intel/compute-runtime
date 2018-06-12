@@ -693,10 +693,6 @@ HWTEST_F(Wddm20Tests, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalled
     EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
 }
 
-HWTEST_F(Wddm20Tests, givenDebugManagerWhenGetForHwQueueSupportedIsCalledThenFalseIsReturned) {
-    EXPECT_FALSE(DebugManager.flags.HwQueueSupported.get());
-}
-
 HWTEST_F(Wddm20Tests, makeResidentMultipleHandles) {
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());

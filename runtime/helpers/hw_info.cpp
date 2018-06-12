@@ -24,6 +24,10 @@
 #include "hw_cmds.h"
 
 namespace OCLRT {
+HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
+                           const GT_SYSTEM_INFO *sysInfo, RuntimeCapabilityTable capabilityTable)
+    : pPlatform(platform), pSkuTable(skuTable), pWaTable(waTable), pSysInfo(sysInfo), capabilityTable(capabilityTable) {
+}
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
 void (*hardwareInfoSetupGt[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *) = {
@@ -32,27 +36,6 @@ void (*hardwareInfoSetupGt[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *) = {
 
 const FeatureTable emptySkuTable = {};
 const WorkaroundTable emptyWaTable = {};
-
-const PLATFORM unknownPlatform = {
-    IGFX_UNKNOWN,
-    PCH_UNKNOWN,
-    IGFX_UNKNOWN_CORE,
-    IGFX_UNKNOWN_CORE,
-    PLATFORM_NONE, // default init
-    0,             // usDeviceID
-    0,             // usRevId. 0 sets the stepping to A0
-    0,             // usDeviceID_PCH
-    0,             // usRevId_PCH
-    GTTYPE_UNDEFINED};
-
-const GT_SYSTEM_INFO unknownSysInfo = {};
-
-const HardwareInfo unknownHardware = {
-    &unknownPlatform,
-    &emptySkuTable,
-    &emptyWaTable,
-    &unknownSysInfo,
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PreemptionMode::Disabled, {false, false}, nullptr}};
 
 const char *getPlatformType(const HardwareInfo &hwInfo) {
     if (hwInfo.capabilityTable.isCore) {

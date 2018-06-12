@@ -48,7 +48,6 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         const HardwareInfo *pCurrDevice = platformDevices[devNum];
 
         HardwareInfo tmpHwInfo;
-        memset(&tmpHwInfo, 0, sizeof(tmpHwInfo));
 
         osInterface.get()->get()->setDrm(drm);
 

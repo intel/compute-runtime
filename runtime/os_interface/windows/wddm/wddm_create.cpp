@@ -25,11 +25,7 @@
 #include "runtime/os_interface/windows/wddm/wddm23.h"
 
 namespace OCLRT {
-Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
-    if (DebugManager.flags.HwQueueSupported.get()) {
-        interfaceVersion = WddmInterfaceVersion::Wddm23;
-    }
-
+Wddm *Wddm::createWddm(WddmInterfaceVersion interfaceVersion) {
     switch (interfaceVersion) {
     case WddmInterfaceVersion::Wddm20:
         return new Wddm20();

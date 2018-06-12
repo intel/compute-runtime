@@ -49,10 +49,10 @@ struct FeatureTable;
 struct WorkaroundTable;
 struct KmDafListener;
 
-namespace WddmInterfaceVersion {
-constexpr uint32_t Wddm20 = 20;
-constexpr uint32_t Wddm23 = 23;
-} // namespace WddmInterfaceVersion
+enum class WddmInterfaceVersion {
+    Wddm20 = 20,
+    Wddm23 = 23,
+};
 
 class Wddm {
   public:
@@ -63,8 +63,8 @@ class Wddm {
 
     virtual ~Wddm();
 
-    static Wddm *createWddm(uint32_t interfaceVersion);
-
+    static Wddm *createWddm(WddmInterfaceVersion interfaceVersion);
+    static WddmInterfaceVersion pickWddmInterfaceVersion(const HardwareInfo &hwInfo);
     static bool enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo);
 
     MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);

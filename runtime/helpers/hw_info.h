@@ -84,17 +84,20 @@ struct HardwareCapabilities {
 };
 
 struct HardwareInfo {
-    const PLATFORM *pPlatform;
-    const FeatureTable *pSkuTable;
-    const WorkaroundTable *pWaTable;
-    const GT_SYSTEM_INFO *pSysInfo;
+    HardwareInfo() = default;
+    HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
+                 const GT_SYSTEM_INFO *sysInfo, RuntimeCapabilityTable capabilityTable);
 
-    RuntimeCapabilityTable capabilityTable;
+    const PLATFORM *pPlatform = nullptr;
+    const FeatureTable *pSkuTable = nullptr;
+    const WorkaroundTable *pWaTable = nullptr;
+    const GT_SYSTEM_INFO *pSysInfo = nullptr;
+
+    RuntimeCapabilityTable capabilityTable = {};
 };
 
 extern const WorkaroundTable emptyWaTable;
 extern const FeatureTable emptySkuTable;
-extern const HardwareInfo unknownHardware;
 
 template <PRODUCT_FAMILY product>
 struct HwMapper {};

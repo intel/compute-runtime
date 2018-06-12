@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm/wddm23.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -38,17 +39,13 @@ TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
 }
 
 TEST(wddmCreateTests, givenInvalidInputVersionWhenCreatingThenThrowException) {
-    EXPECT_THROW(Wddm::createWddm(0), std::exception);
-    EXPECT_THROW(Wddm::createWddm(21), std::exception);
-    EXPECT_THROW(Wddm::createWddm(22), std::exception);
-    EXPECT_THROW(Wddm::createWddm(24), std::exception);
+    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(0)), std::exception);
+    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(21)), std::exception);
+    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(22)), std::exception);
+    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(24)), std::exception);
 }
 
-TEST(wddmCreateTests, givenHwQueuesSupportedDebugVariableWhenCreatingThenForceWddm23) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.HwQueueSupported.set(true);
-
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
-
-    EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm23));
+TEST(wddmCreateTests, givenNotPopulatedHwInfoWhenAskingForWddmVersionThenReturn20) {
+    HardwareInfo hwInfo = {};
+    EXPECT_TRUE(WddmInterfaceVersion::Wddm20 == Wddm::pickWddmInterfaceVersion(hwInfo));
 }

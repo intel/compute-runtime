@@ -43,6 +43,7 @@
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
+#include "unit_tests/mocks/mock_wddm23.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
@@ -757,6 +758,30 @@ HWTEST_F(WddmDefaultTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurned
     DebugManager.flags.CsrDispatchMode.set(0);
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm));
     EXPECT_EQ(DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
+}
+
+HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVersionBasingOnFtrFlag) {
+    HardwareInfo myHwInfo = *platformDevices[0];
+    FeatureTable myFtrTable = *myHwInfo.pSkuTable;
+    myHwInfo.pSkuTable = &myFtrTable;
+
+    myFtrTable.ftrWddmHwQueues = false;
+    EXPECT_TRUE(WddmInterfaceVersion::Wddm20 == Wddm::pickWddmInterfaceVersion(myHwInfo));
+    {
+        WddmCommandStreamReceiver<FamilyType> wddmCsr20(myHwInfo, nullptr);
+        auto wddm20 = wddmCsr20.peekWddm();
+        EXPECT_EQ(typeid(*wddm20), typeid(WddmMock20));
+        delete wddm20;
+    }
+
+    myFtrTable.ftrWddmHwQueues = true;
+    EXPECT_TRUE(WddmInterfaceVersion::Wddm23 == Wddm::pickWddmInterfaceVersion(myHwInfo));
+    {
+        WddmCommandStreamReceiver<FamilyType> wddmCsr23(myHwInfo, nullptr);
+        auto wddm23 = wddmCsr23.peekWddm();
+        EXPECT_EQ(typeid(*wddm23), typeid(WddmMock23));
+        delete wddm23;
+    }
 }
 
 struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {

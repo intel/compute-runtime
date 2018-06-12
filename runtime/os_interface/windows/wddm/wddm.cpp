@@ -93,41 +93,41 @@ Wddm::~Wddm() {
 }
 
 bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
-    bool success = false;
-    if (devNum > 0)
+    if (devNum > 0) {
         return false;
-
-    std::unique_ptr<Wddm> wddm(createWddm(WddmInterfaceVersion::Wddm20));
-    DEBUG_BREAK_IF(wddm == nullptr);
-
-    if (wddm->gdi->isInitialized()) {
-        do {
-            success = wddm->openAdapter();
-            if (!success)
-                break;
-            success = wddm->queryAdapterInfo();
-            if (!success)
-                break;
-        } while (!success);
     }
-    if (success) {
-        auto productFamily = wddm->gfxPlatform->eProductFamily;
-        if (hardwareInfoTable[productFamily] == nullptr)
-            return false;
 
-        outHardwareInfo.pPlatform = new PLATFORM(*wddm->gfxPlatform);
-        outHardwareInfo.pSkuTable = new FeatureTable(*wddm->featureTable);
-        outHardwareInfo.pWaTable = new WorkaroundTable(*wddm->waTable);
-        outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*wddm->gtSystemInfo);
+    std::unique_ptr<Wddm> wddm(createWddm(Wddm::pickWddmInterfaceVersion(outHardwareInfo)));
+    UNRECOVERABLE_IF(!wddm.get());
 
-        outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
-        outHardwareInfo.capabilityTable.maxRenderFrequency = wddm->maxRenderFrequency;
-        outHardwareInfo.capabilityTable.instrumentationEnabled &= wddm->instrumentationEnabled;
-
-        HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
-        hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
+    if (!wddm->gdi->isInitialized()) {
+        return false;
     }
-    return success;
+    if (!wddm->openAdapter()) {
+        return false;
+    }
+    if (!wddm->queryAdapterInfo()) {
+        return false;
+    }
+
+    auto productFamily = wddm->gfxPlatform->eProductFamily;
+    if (!hardwareInfoTable[productFamily]) {
+        return false;
+    }
+
+    outHardwareInfo.pPlatform = new PLATFORM(*wddm->gfxPlatform);
+    outHardwareInfo.pSkuTable = new FeatureTable(*wddm->featureTable);
+    outHardwareInfo.pWaTable = new WorkaroundTable(*wddm->waTable);
+    outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*wddm->gtSystemInfo);
+
+    outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
+    outHardwareInfo.capabilityTable.maxRenderFrequency = wddm->maxRenderFrequency;
+    outHardwareInfo.capabilityTable.instrumentationEnabled &= wddm->instrumentationEnabled;
+
+    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
+    hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);
+
+    return true;
 }
 
 bool Wddm::queryAdapterInfo() {
@@ -958,6 +958,14 @@ void Wddm::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress
     monitoredFence.fenceHandle = handle;
     monitoredFence.cpuAddress = cpuAddress;
     monitoredFence.gpuAddress = gpuAddress;
+}
+
+WddmInterfaceVersion Wddm::pickWddmInterfaceVersion(const HardwareInfo &hwInfo) {
+    if (hwInfo.pSkuTable && hwInfo.pSkuTable->ftrWddmHwQueues) {
+        return WddmInterfaceVersion::Wddm23;
+    }
+    // Use default version when hwInfo is not yet populated (eg. during enumAdapter call)
+    return WddmInterfaceVersion::Wddm20;
 }
 
 } // namespace OCLRT

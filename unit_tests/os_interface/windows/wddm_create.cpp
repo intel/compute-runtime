@@ -24,7 +24,7 @@
 #include "unit_tests/mocks/mock_wddm23.h"
 
 namespace OCLRT {
-Wddm *Wddm::createWddm(uint32_t interfaceVersion) {
+Wddm *Wddm::createWddm(WddmInterfaceVersion interfaceVersion) {
     switch (interfaceVersion) {
     case WddmInterfaceVersion::Wddm20:
         return new WddmMock20();
