@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,7 +36,7 @@ const char *libvaDllName = nullptr;
 const char *testDllName = "libtest_dynamic_lib.so";
 #endif
 const char *sysFsPciPath = "./test_files";
-}
+} // namespace Os
 
 OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo) {
     return nullptr;

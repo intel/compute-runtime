@@ -39,4 +39,4 @@ struct StateBaseAddressHelper {
         uint32_t statelessMocsIndex,
         uint64_t internalHeapBase);
 };
-}
+} // namespace OCLRT

@@ -149,4 +149,4 @@ struct KmDafListenerMock : public KmDafListener {
         PFND3DKMT_ESCAPE pfnEscape = nullptr;
     } notifyWriteTargetParametrization;
 };
-}
+} // namespace OCLRT

@@ -360,4 +360,4 @@ class BDW_2x3x8 : public BDW {
   private:
     static GT_SYSTEM_INFO gtSystemInfo;
 };
-}
+} // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,6 +27,6 @@ namespace CacheSettings {
 constexpr uint32_t l3CacheOn = GMM_RESOURCE_USAGE_OCL_BUFFER;
 constexpr uint32_t l3CacheOff = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
 constexpr uint32_t unknownMocs = GMM_RESOURCE_USAGE_UNKNOWN;
-}
+} // namespace CacheSettings
 
 bool isL3Capable(void *ptr, size_t size);

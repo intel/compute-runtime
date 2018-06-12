@@ -52,4 +52,4 @@ void KmDafListener::notifyEvict(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_H
 void KmDafListener::notifyWriteTarget(bool ftrKmdDaf, D3DKMT_HANDLE hAdapter, D3DKMT_HANDLE hDevice, const D3DKMT_HANDLE hAllocation, PFND3DKMT_ESCAPE pfnEscape) {
     KM_DAF_NOTIFY_WRITE_TARGET(ftrKmdDaf, hAdapter, hDevice, hAllocation, pfnEscape);
 }
-}
+} // namespace OCLRT

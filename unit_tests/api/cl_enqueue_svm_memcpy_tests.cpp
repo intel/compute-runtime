@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ TEST_F(clEnqueueSVMMemcpyTests, invalidCommandQueue) {
         0,        // cl_uint num_events_in_wait_list
         nullptr,  // const cl_event *event_wait_list
         nullptr   // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
@@ -60,7 +60,7 @@ TEST_F(clEnqueueSVMMemcpyTests, invalidValueDstPtrIsNull) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
         clSVMFree(pContext, pSrcSvm);
@@ -82,7 +82,7 @@ TEST_F(clEnqueueSVMMemcpyTests, invalidValueSrcPtrIsNull) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
         clSVMFree(pContext, pDstSvm);
@@ -99,7 +99,7 @@ TEST_F(clEnqueueSVMMemcpyTests, invalidEventWaitListEventWaitListIsNullAndNumEve
         1,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -115,7 +115,7 @@ TEST_F(clEnqueueSVMMemcpyTests, invalidEventWaitListEventWaitListIsNotNullAndNum
         0,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -136,7 +136,7 @@ TEST_F(clEnqueueSVMMemcpyTests, successSizeIsNonZero) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, pDstSvm);
@@ -161,7 +161,7 @@ TEST_F(clEnqueueSVMMemcpyTests, successSizeIsZero) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, pDstSvm);

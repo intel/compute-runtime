@@ -146,4 +146,4 @@ typedef Sampler *(*SamplerCreateFunc)(Context *context,
                                       float lodMax);
 
 typedef size_t (*getSamplerStateSizeHwFunc)();
-}
+} // namespace OCLRT

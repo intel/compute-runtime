@@ -60,4 +60,4 @@ bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
     }
     return getDevicesImpl(hwInfo, numDevicesReturned);
 }
-}
+} // namespace OCLRT

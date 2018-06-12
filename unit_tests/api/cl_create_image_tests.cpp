@@ -871,4 +871,4 @@ TEST_P(clCreateNon2dImageFromImageTest, givenImage2dWhenCreateImageFromNon2dImag
 INSTANTIATE_TEST_CASE_P(clCreateNon2dImageFromImageTests,
                         clCreateNon2dImageFromImageTest,
                         ::testing::ValuesIn(non2dImageTypes));
-}
+} // namespace ULT

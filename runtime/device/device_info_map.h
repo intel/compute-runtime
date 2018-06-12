@@ -149,4 +149,4 @@ template<> struct Map<CL_DEVICE_VERSION                                   > : pu
 template<> struct Map<CL_DRIVER_VERSION                                   > : public MapBase<CL_DRIVER_VERSION,                                   const char *,                       &DeviceInfo::driverVersion> {};
 template<> struct Map<CL_DEVICE_DRIVER_VERSION_INTEL                      > : public MapBase<CL_DEVICE_DRIVER_VERSION_INTEL,                      uint32_t,                           &DeviceInfo::internalDriverVersion> {};
 // clang-format on
-}
+} // namespace DeviceInfoTable

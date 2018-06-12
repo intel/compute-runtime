@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@ struct PerformanceCountersGenTest : public ::testing::Test {
 namespace OCLRT {
 extern decltype(&instrGetPerfCountersQueryData) getPerfCountersQueryDataFactory[IGFX_MAX_CORE];
 extern size_t perfCountersQuerySize[IGFX_MAX_CORE];
-}
+} // namespace OCLRT
 
 class MockPerformanceCountersGen : public PerformanceCounters {
   public:
@@ -67,15 +67,15 @@ HWTEST_F(PerformanceCountersGenTest, givenPerfCountersWhenInitializedWithGenSpec
     VariableBackup<decltype(&instrGetPerfCountersQueryData)> bkp(&getPerfCountersQueryDataFactory[platformDevices[0]->pPlatform->eRenderCoreFamily]);
 
     auto mockFn = [](
-        InstrEscCbData cbData,
-        GTDI_QUERY *pData,
-        HwPerfCounters *pLayout,
-        uint64_t cpuRawTimestamp,
-        void *pASInterface,
-        InstrPmRegsCfg *pPmRegsCfg,
-        bool useMiRPC,
-        bool resetASData = false,
-        const InstrAllowedContexts *pAllowedContexts = nullptr) -> void {
+                      InstrEscCbData cbData,
+                      GTDI_QUERY *pData,
+                      HwPerfCounters *pLayout,
+                      uint64_t cpuRawTimestamp,
+                      void *pASInterface,
+                      InstrPmRegsCfg *pPmRegsCfg,
+                      bool useMiRPC,
+                      bool resetASData = false,
+                      const InstrAllowedContexts *pAllowedContexts = nullptr) -> void {
     };
 
     bkp = mockFn;

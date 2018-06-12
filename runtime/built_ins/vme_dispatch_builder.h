@@ -490,4 +490,4 @@ class BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirection
         return true;
     }
 };
-}
+} // namespace OCLRT

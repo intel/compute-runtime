@@ -46,4 +46,4 @@ class BinaryCache {
     static std::mutex cacheAccessMtx;
 };
 
-} // namesapce OCLRT
+} // namespace OCLRT

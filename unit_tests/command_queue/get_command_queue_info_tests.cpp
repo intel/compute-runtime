@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,8 +31,8 @@ struct GetCommandQueueInfoTest : public DeviceFixture,
                                  public ContextFixture,
                                  public CommandQueueFixture,
                                  ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
-    using ContextFixture::SetUp;
     using CommandQueueFixture::SetUp;
+    using ContextFixture::SetUp;
 
     GetCommandQueueInfoTest() {
     }

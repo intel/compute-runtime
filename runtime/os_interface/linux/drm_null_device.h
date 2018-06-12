@@ -59,4 +59,4 @@ class DrmNullDevice : public Drm {
 
     uint64_t gpuTimestamp;
 };
-}
+} // namespace OCLRT

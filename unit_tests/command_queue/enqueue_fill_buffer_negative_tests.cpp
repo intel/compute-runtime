@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -112,7 +112,7 @@ TEST_F(EnqueueFillBuffer, invalid_event_list_count) {
 
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
-}
+} // namespace ULT
 
 namespace ULT {
 
@@ -156,4 +156,4 @@ TEST_P(InvalidPatternSize, returns_CL_INVALID_VALUE) {
 INSTANTIATE_TEST_CASE_P(EnqueueFillBuffer,
                         InvalidPatternSize,
                         ::testing::Values(0, 3, 5, 256, 512, 1024));
-}
+} // namespace ULT

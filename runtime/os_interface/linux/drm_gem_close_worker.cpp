@@ -117,4 +117,4 @@ void *DrmGemCloseWorker::worker(void *arg) {
     self->workerDone.store(true);
     return nullptr;
 }
-}
+} // namespace OCLRT

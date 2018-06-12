@@ -31,4 +31,4 @@ const char *libvaDllName = "libva.so.2";
 
 const char *sysFsPciPath = "/sys/bus/pci/devices/";
 const char *tbxLibName = "libtbxAccess.so";
-}
+} // namespace Os

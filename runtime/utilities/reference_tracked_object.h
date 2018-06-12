@@ -190,4 +190,4 @@ template <typename DerivedClass>
 inline ReferenceTrackedObject<DerivedClass>::~ReferenceTrackedObject() {
     DEBUG_BREAK_IF(refInternal.peek() > 1);
 }
-}
+} // namespace OCLRT

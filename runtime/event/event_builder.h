@@ -76,4 +76,4 @@ class EventBuilder {
     StackVec<Event *, 16> parentEvents;
     bool doNotRegister = false;
 };
-}
+} // namespace OCLRT

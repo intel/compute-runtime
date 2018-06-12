@@ -319,4 +319,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMigrateMem(cl_uint numSvmPointers,
                                                    event);
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

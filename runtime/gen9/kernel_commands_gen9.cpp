@@ -31,4 +31,4 @@ template <>
 bool KernelCommandsHelper<SKLFamily>::isPipeControlWArequired() { return true; }
 
 template struct KernelCommandsHelper<SKLFamily>;
-}
+} // namespace OCLRT

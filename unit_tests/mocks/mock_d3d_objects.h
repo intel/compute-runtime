@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,8 +23,8 @@
 #pragma once
 #include "runtime/sharings/d3d/d3d_sharing.h"
 #include "gmock/gmock.h"
-using ::testing::NiceMock;
 using ::testing::_;
+using ::testing::NiceMock;
 using ::testing::SetArgPointee;
 
 namespace OCLRT {

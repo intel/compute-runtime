@@ -100,7 +100,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // cl_event *event_wait_list
         nullptr      // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder

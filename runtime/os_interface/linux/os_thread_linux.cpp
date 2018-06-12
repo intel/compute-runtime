@@ -34,4 +34,4 @@ std::unique_ptr<Thread> Thread::create(void *(*func)(void *), void *arg) {
 void ThreadLinux::join() {
     pthread_join(threadId, nullptr);
 }
-}
+} // namespace OCLRT

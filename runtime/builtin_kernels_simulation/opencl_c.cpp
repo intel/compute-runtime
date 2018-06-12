@@ -138,7 +138,7 @@ uint4 write_imageui(image *im, uint4 coord, uint4 color) {
         temp += im->bytesPerChannel;
         colorSrc += 4;
     }
-    return *(uint4 *)temp;
+    return *(uint4 *)temp; // NOLINT
 }
 
 uchar convert_uchar_sat(uint c) {

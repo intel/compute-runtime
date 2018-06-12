@@ -33,4 +33,4 @@ template void ProgramFixture::CreateProgramFromBinary<Program>(cl_context, cl_de
 template void ProgramFixture::CreateProgramFromBinary<Program>(cl_context, cl_device_id *, const std::string &, cl_int &, const std::string &);
 template void ProgramFixture::CreateProgramFromBinary<MockProgram>(cl_context, cl_device_id *, const std::string &, const std::string &);
 template void ProgramFixture::CreateProgramFromBinary<MockProgram>(cl_context, cl_device_id *, const std::string &, cl_int &, const std::string &);
-}
+} // namespace OCLRT

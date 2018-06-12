@@ -76,4 +76,4 @@ class SharingFactory {
 };
 
 extern SharingFactory sharingFactory;
-}
+} // namespace OCLRT

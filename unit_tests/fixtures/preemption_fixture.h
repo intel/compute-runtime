@@ -50,7 +50,7 @@ struct WorkaroundTable;
 
 using PreemptionEnqueueKernelFixture = HelloWorldFixture<HelloWorldFixtureFactory>;
 using PreemptionEnqueueKernelTest = Test<PreemptionEnqueueKernelFixture>;
-}
+} // namespace OCLRT
 
 class DevicePreemptionTests : public ::testing::Test {
   public:

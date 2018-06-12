@@ -52,8 +52,8 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public ::testing::TestWithParam<OOMSetting> {
 
     using CommandQueueFixture::SetUp;
-    using SimpleArgKernelFixture::SetUp;
     using HelloWorldKernelFixture::SetUp;
+    using SimpleArgKernelFixture::SetUp;
 
     OOMCommandQueueBufferTest() {
     }

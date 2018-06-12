@@ -30,4 +30,4 @@ typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 #include "runtime/sampler/sampler_factory_init.inl"
-}
+} // namespace OCLRT

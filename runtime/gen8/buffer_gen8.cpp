@@ -29,4 +29,4 @@ typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 #include "runtime/mem_obj/buffer_factory_init.inl"
-}
+} // namespace OCLRT

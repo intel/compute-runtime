@@ -36,7 +36,7 @@ void Gmm::loadLib() {
     Gmm::deleteClientContextFunc = GmmDeleteClientContext;
     isLoaded = true;
 }
-}
+} // namespace OCLRT
 extern "C" {
 void GMMDebugBreak(const char *file, const char *function, const int line) {
 }

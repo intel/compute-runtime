@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,8 +33,8 @@
 using namespace OCLRT;
 
 class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public DeviceFixture {
-    using PlatformFixture::SetUp;
     using DeviceFixture::SetUp;
+    using PlatformFixture::SetUp;
 
   public:
     void SetUp() override {

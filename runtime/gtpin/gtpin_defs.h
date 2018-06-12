@@ -48,4 +48,4 @@ struct GTPinKernelExec {
 };
 typedef struct GTPinKernelExec gtpinkexec_t;
 
-} // OCLRT
+} // namespace OCLRT

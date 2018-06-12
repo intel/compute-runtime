@@ -29,4 +29,4 @@ namespace OCLRT {
 const uint32_t VASharingFunctions::sharingId = SharingType::VA_SHARING;
 
 template VASharingFunctions *Context::getSharing<VASharingFunctions>();
-}
+} // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -81,5 +81,5 @@ bool OsLibrary::isLoaded() {
 void *OsLibrary::getProcAddress(const std::string &procName) {
     return ::GetProcAddress(this->handle, procName.c_str());
 }
-}
-}
+} // namespace Windows
+} // namespace OCLRT

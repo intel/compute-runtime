@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,10 +34,10 @@ struct TwoWalkerTest
       public HardwareParse {
     typedef HelloWorldTest<FactoryType> Parent;
 
+    using Parent::pCmdBuffer;
     using Parent::pCmdQ;
     using Parent::pCS;
     using Parent::pKernel;
-    using Parent::pCmdBuffer;
 
     template <typename FamilyType>
     void enqueueTwoKernels() {
@@ -79,4 +79,4 @@ struct TwoWalkerTest
     GenCmdList::iterator itorWalker1;
     GenCmdList::iterator itorWalker2;
 };
-}
+} // namespace OCLRT

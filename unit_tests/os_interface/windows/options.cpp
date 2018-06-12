@@ -34,7 +34,7 @@ const char *igcDllName = "mock_igc.dll";
 const char *gdiDllName = "gdi32_mock.dll";
 const char *gmmDllName = "mock_gmm.dll";
 const char *testDllName = "test_dynamic_lib.dll";
-}
+} // namespace Os
 
 OCLRT::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo) {
     OCLRT::OsLibrary *mockGdiDll;

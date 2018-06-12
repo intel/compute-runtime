@@ -33,7 +33,7 @@ using namespace OCLRT;
 namespace OCLRT {
 bool isGTPinInitialized = false;
 gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
-}
+} // namespace OCLRT
 
 GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
                            uint32_t *pDriverVersion) {

@@ -24,4 +24,4 @@ namespace OCLRT {
 // max time per single test iteration
 unsigned int ultIterationMaxTime = 180;
 bool useMockGmm = false;
-}
+} // namespace OCLRT

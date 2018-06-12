@@ -78,4 +78,4 @@ void AddressMapper::unmap(void *vm) {
         mapping.erase(it);
     }
 }
-}
+} // namespace OCLRT

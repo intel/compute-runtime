@@ -30,4 +30,4 @@ class Thread {
     virtual void join() = 0;
     virtual ~Thread() = default;
 };
-}
+} // namespace OCLRT

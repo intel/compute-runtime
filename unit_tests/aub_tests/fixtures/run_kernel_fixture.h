@@ -97,4 +97,4 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
         return pProgram;
     }
 };
-}
+} // namespace OCLRT

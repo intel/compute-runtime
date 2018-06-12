@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -70,7 +70,7 @@ TEST_F(clSetKernelExecInfoTests, invalidKernel) {
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         0,                            // size_t param_value_size
         nullptr                       // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
@@ -83,7 +83,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueIsNull) {
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -96,7 +96,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamValueHasNullPointer) {
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -109,7 +109,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsZero) {
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -122,7 +122,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamSizeIsNotValid) {
         CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,        // size_t param_value_size
         pSvmPtrList                   // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -135,7 +135,7 @@ TEST_F(clSetKernelExecInfoTests, invalidValue_ParamNameIsNotValid) {
         0,                     // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes, // size_t param_value_size
         pSvmPtrList            // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -148,7 +148,7 @@ TEST_F(clSetKernelExecInfoTests, invalidOperation) {
         CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM, // cl_kernel_exec_info param_name
         SvmPtrListSizeInBytes,                     // size_t param_value_size
         pSvmPtrList                                // const void *param_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);
 }
 
@@ -162,7 +162,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithSinglePointer) {
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());
@@ -185,7 +185,7 @@ TEST_F(clSetKernelExecInfoTests, success_SvmPtrListWithMultiplePointers) {
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(3u, pMockKernel->getKernelSvmGfxAllocations().size());
@@ -205,7 +205,7 @@ TEST_F(clSetKernelExecInfoTests, success_MultipleSetKernelExecInfo) {
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());
@@ -215,7 +215,7 @@ TEST_F(clSetKernelExecInfoTests, success_MultipleSetKernelExecInfo) {
             CL_KERNEL_EXEC_INFO_SVM_PTRS, // cl_kernel_exec_info param_name
             SvmPtrListSizeInBytes,        // size_t param_value_size
             pSvmPtrList                   // const void *param_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         EXPECT_EQ(1u, pMockKernel->getKernelSvmGfxAllocations().size());

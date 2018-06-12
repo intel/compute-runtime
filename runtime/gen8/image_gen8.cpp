@@ -57,4 +57,4 @@ size_t ImageHw<BDWFamily>::getHostPtrSlicePitchForMap(uint32_t mipLevel) {
 }
 
 #include "runtime/mem_obj/image_factory_init.inl"
-}
+} // namespace OCLRT

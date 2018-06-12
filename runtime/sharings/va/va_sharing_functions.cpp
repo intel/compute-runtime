@@ -72,4 +72,4 @@ void VASharingFunctions::initFunctions() {
         }
     }
 }
-}
+} // namespace OCLRT

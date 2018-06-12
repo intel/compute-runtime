@@ -53,4 +53,4 @@ void ImageHw<GfxFamily>::setSurfaceMemoryObjectControlStateIndexToMocsTable(void
 }
 
 #include "runtime/mem_obj/image_factory_init.inl"
-}
+} // namespace OCLRT

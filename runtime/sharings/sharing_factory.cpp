@@ -85,4 +85,4 @@ SharingBuilderFactory *SharingFactory::sharingContextBuilder[SharingType::MAX_SH
     nullptr,
 };
 SharingFactory sharingFactory;
-}
+} // namespace OCLRT

@@ -29,4 +29,4 @@ namespace OCLRT {
 template class DeviceCommandStreamReceiver<BDWFamily>;
 template class WddmCommandStreamReceiver<BDWFamily>;
 template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<BDWFamily>>;
-}
+} // namespace OCLRT

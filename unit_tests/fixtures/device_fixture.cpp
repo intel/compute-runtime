@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,9 +28,9 @@
 
 using OCLRT::Device;
 using OCLRT::HardwareInfo;
-using OCLRT::platformDevices;
-using OCLRT::OSTime;
 using OCLRT::MockOSTime;
+using OCLRT::OSTime;
+using OCLRT::platformDevices;
 
 void DeviceFixture::SetUp() {
     SetUpImpl(nullptr);

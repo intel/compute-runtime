@@ -37,4 +37,4 @@ class SpinLock {
     }
 };
 
-} // OCLRT
+} // namespace OCLRT

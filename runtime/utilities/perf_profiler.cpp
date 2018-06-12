@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -188,4 +188,4 @@ void PerfProfiler::logTimes(long long start, long long end, long long span, unsi
 void PerfProfiler::logSysTimes(long long start, unsigned long long time, unsigned int id) {
     systemLogs.emplace_back(SystemLog{id, start, time});
 }
-}
+} // namespace OCLRT

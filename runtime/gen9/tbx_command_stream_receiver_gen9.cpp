@@ -41,4 +41,4 @@ void populateFactoryTable<TbxCommandStreamReceiverHw<Family>>() {
 
 template class TbxCommandStreamReceiverHw<Family>;
 template class CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<Family>>;
-}
+} // namespace OCLRT

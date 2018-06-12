@@ -32,4 +32,4 @@ class ThreadLinux : public Thread {
   protected:
     pthread_t threadId;
 };
-}
+} // namespace OCLRT

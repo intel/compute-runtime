@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -38,7 +38,7 @@ TEST_F(clEnqueueSVMUnmapTests, invalidCommandQueue) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cl_event *event_wait_list
         nullptr  // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
@@ -49,7 +49,7 @@ TEST_F(clEnqueueSVMUnmapTests, invalidValue) {
         0,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -60,7 +60,7 @@ TEST_F(clEnqueueSVMUnmapTests, invalidEventWaitList_EventWaitListIsNullAndNumEve
         1,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -73,7 +73,7 @@ TEST_F(clEnqueueSVMUnmapTests, invalidEventWaitList_EventWaitListIsNotNullAndNum
         0,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -92,7 +92,7 @@ TEST_F(clEnqueueSVMUnmapTests, success) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cL_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         retVal = clEnqueueSVMUnmap(
@@ -101,7 +101,7 @@ TEST_F(clEnqueueSVMUnmapTests, success) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cL_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);

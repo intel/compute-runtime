@@ -96,8 +96,8 @@ bool BufferSimple::PushBackRawBytes(const void *newData, size_t size) {
 bool BufferSimple::IsConst() const {
     return false;
 }
-}
-}
+} // namespace Builtins
+} // namespace CIF
 
 namespace OCLRT {
 
@@ -135,7 +135,7 @@ CIF::ICIF *MockCIFMain::CreateInterfaceImpl(CIF::InterfaceId_t intId, CIF::Versi
 
     return it->second(intId, version);
 }
-}
+} // namespace OCLRT
 
 extern CIF::CIFMain *CreateCIFMainImpl() {
     if (OCLRT::failCreateCifMain) {

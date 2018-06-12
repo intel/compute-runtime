@@ -58,4 +58,4 @@ void Gmm::loadLib() {
     }
     UNRECOVERABLE_IF(!isLoaded);
 }
-}
+} // namespace OCLRT

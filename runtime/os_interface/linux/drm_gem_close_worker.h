@@ -69,4 +69,4 @@ class DrmGemCloseWorker {
     std::condition_variable condition;
     std::atomic<bool> workerDone{false};
 };
-}
+} // namespace OCLRT

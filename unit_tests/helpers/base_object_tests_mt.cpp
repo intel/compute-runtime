@@ -78,4 +78,4 @@ TYPED_TEST(BaseObjectTestsMt, takeOwner) {
 
     object->release();
 }
-}
+} // namespace OCLRT

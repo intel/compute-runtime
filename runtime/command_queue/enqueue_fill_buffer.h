@@ -93,4 +93,4 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
 
     return CL_SUCCESS;
 }
-}
+} // namespace OCLRT

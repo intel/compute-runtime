@@ -36,4 +36,4 @@ void Gmm::loadLib() {
     Gmm::deleteClientContextFunc = GmmDeleteClientContext;
     isLoaded = true;
 }
-}
+} // namespace OCLRT

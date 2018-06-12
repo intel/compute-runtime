@@ -23,4 +23,4 @@
 namespace OCLRT {
 unsigned int ultIterationMaxTime = 45;
 bool useMockGmm = true;
-}
+} // namespace OCLRT

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,4 +33,4 @@ class EnvironmentVariableReader : public SettingsReader {
     bool getSetting(const char *settingName, bool defaultValue) override;
     std::string getSetting(const char *settingName, const std::string &value) override;
 };
-}
+} // namespace OCLRT

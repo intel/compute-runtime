@@ -115,4 +115,4 @@ size_t SamplerHw<GfxFamily>::getSamplerStateSize() {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
     return sizeof(SAMPLER_STATE);
 }
-}
+} // namespace OCLRT

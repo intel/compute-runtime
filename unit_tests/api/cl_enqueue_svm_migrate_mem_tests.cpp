@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,7 +41,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidCommandQueue) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cl_event *event_wait_list
         nullptr  // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
@@ -55,7 +55,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_SvmPointersAreNull) {
         0,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -75,7 +75,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_NumSvmPointersIsZero) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -96,7 +96,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_SvmPointerIsHostPtr) {
         0,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
     delete[] ptrHost;
@@ -119,7 +119,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_NonZeroSizeIsNotContainedWithin
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -142,7 +142,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_FlagsAreNeitherZeroNorSupported
             0,                  // cl_uint num_events_in_wait_list
             nullptr,            // const cl_event *event_wait_list
             nullptr             // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_VALUE, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -159,7 +159,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidEventWaitList_EventWaitListIsNullAndN
         1,             // cl_uint num_events_in_wait_list
         nullptr,       // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -175,7 +175,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidEventWaitList_EventWaitListIsNotNullA
         0,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_EVENT_WAIT_LIST, retVal);
 }
 
@@ -198,7 +198,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidEventWaitList_CommandQueueAndEventsCo
             1,             // cl_uint num_events_in_wait_list
             eventWaitList, // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -221,7 +221,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, success_SizesAreNull) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -245,7 +245,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, success_SizesContainZeroSize) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -269,7 +269,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, success_SizesContainNonZeroSize) {
             0,             // cl_uint num_events_in_wait_list
             nullptr,       // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -294,7 +294,7 @@ TEST_F(clEnqueueSVMMigrateMemTests, success_CommandQueueAndEventsContextsAreTheS
             1,             // cl_uint num_events_in_wait_list
             eventWaitList, // const cl_event *event_wait_list
             nullptr        // cl_event *event
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);

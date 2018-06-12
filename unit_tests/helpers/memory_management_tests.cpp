@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,13 +24,13 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "gtest/gtest.h"
 
-using MemoryManagement::failingAllocation;
-using MemoryManagement::numAllocations;
-using MemoryManagement::indexAllocation;
-using MemoryManagement::indexDeallocation;
 using MemoryManagement::AllocationEvent;
 using MemoryManagement::eventsAllocated;
 using MemoryManagement::eventsDeallocated;
+using MemoryManagement::failingAllocation;
+using MemoryManagement::indexAllocation;
+using MemoryManagement::indexDeallocation;
+using MemoryManagement::numAllocations;
 
 TEST(allocation, nothrow_defaultShouldPass) {
     ASSERT_EQ(failingAllocation, static_cast<size_t>(-1));

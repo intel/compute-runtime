@@ -129,4 +129,4 @@ TEST_F(ContextTest, clRetainContext) {
 
     updateTestRatio(hash, ratio);
 }
-}
+} // namespace ULT

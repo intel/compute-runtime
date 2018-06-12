@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,4 +33,4 @@ extern const char *testDllName;
 extern const char *fileSeparator;
 // Pci Path
 extern const char *sysFsPciPath;
-};
+}; // namespace Os

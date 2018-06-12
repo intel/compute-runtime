@@ -63,4 +63,4 @@ void SharingHandler::release(MemObj *memObject) {
         releaseResource(memObject);
     }
 }
-}
+} // namespace OCLRT

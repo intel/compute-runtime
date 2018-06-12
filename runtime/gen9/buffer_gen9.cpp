@@ -29,4 +29,4 @@ typedef SKLFamily Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 #include "runtime/mem_obj/buffer_factory_init.inl"
-}
+} // namespace OCLRT

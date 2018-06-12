@@ -104,4 +104,4 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
     Buffer *srcBuffer;
     Buffer *dstBuffer;
 };
-}
+} // namespace OCLRT

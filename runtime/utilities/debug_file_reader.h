@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,4 +44,4 @@ class SettingsFileReader : public SettingsReader {
     std::map<std::string, int32_t> settingValueMap;
     std::map<std::string, std::string> settingStringMap;
 };
-};
+}; // namespace OCLRT

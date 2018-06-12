@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -88,7 +88,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidKernel) {
         nullptr, // cl_kernel kernel
         0,       // cl_uint arg_index
         nullptr  // const void *arg_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
@@ -97,7 +97,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgIndex) {
         pMockKernel, // cl_kernel kernel
         (cl_uint)-1, // cl_uint arg_index
         nullptr      // const void *arg_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_ARG_INDEX, retVal);
 }
 
@@ -108,7 +108,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgAddressQualif
         pMockKernel, // cl_kernel kernel
         0,           // cl_uint arg_index
         nullptr      // const void *arg_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 }
 
@@ -120,7 +120,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_invalidArgValue) {
         pMockKernel, // cl_kernel kernel
         0,           // cl_uint arg_index
         ptrHost      // const void *arg_value
-        );
+    );
     EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 
     free(ptrHost);
@@ -131,7 +131,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithNullArgValue_success
         pMockKernel, // cl_kernel kernel
         0,           // cl_uint arg_index
         nullptr      // const void *arg_value
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -145,7 +145,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointer_success) {
             pMockKernel, // cl_kernel kernel
             0,           // cl_uint arg_index
             ptrSvm       // const void *arg_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -164,7 +164,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerConst_success) {
             pMockKernel, // cl_kernel kernel
             0,           // cl_uint arg_index
             ptrSvm       // const void *arg_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -182,7 +182,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_success) {
             pMockKernel,            // cl_kernel kernel
             0,                      // cl_uint arg_index
             (char *)ptrSvm + offset // const void *arg_value
-            );
+        );
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         clSVMFree(pContext, ptrSvm);
@@ -200,7 +200,7 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_invalidArgVal
             pMockKernel,            // cl_kernel kernel
             0,                      // cl_uint arg_index
             (char *)ptrSvm + offset // const void *arg_value
-            );
+        );
         EXPECT_EQ(CL_INVALID_ARG_VALUE, retVal);
 
         clSVMFree(pContext, ptrSvm);

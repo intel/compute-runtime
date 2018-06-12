@@ -146,4 +146,4 @@ PageTable<T, level, bits>::~PageTable() {
 
 template class PageTable<class PDP, 3, 9>;
 template class PageTable<class PDE, 2, 2>;
-}
+} // namespace OCLRT

@@ -93,4 +93,4 @@ class MockVaSharing {
     VASharingFunctionsMock m_sharingFunctions;
     osHandle sharingHandle = 0;
 };
-}
+} // namespace OCLRT

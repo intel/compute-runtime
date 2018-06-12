@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,4 +53,4 @@ class D3DSharingBuilderFactory : public SharingBuilderFactory {
     void fillGlobalDispatchTable() override;
     void *getExtensionFunctionAddress(const std::string &functionName) override;
 };
-}
+} // namespace OCLRT

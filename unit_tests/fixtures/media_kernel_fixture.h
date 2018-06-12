@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,10 +33,10 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
                             public ::testing::Test {
     typedef HelloWorldFixture<FactoryType> Parent;
 
-    using Parent::pCS;
     using Parent::pCmdBuffer;
     using Parent::pCmdQ;
     using Parent::pContext;
+    using Parent::pCS;
     using Parent::pDevice;
     using Parent::pKernel;
     using Parent::pProgram;
@@ -105,4 +105,4 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
 
     Kernel *pVmeKernel = nullptr;
 };
-}
+} // namespace OCLRT

@@ -40,4 +40,4 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwIn
 
     return pCreate ? pCreate(hwInfo, withAubDump) : nullptr;
 }
-}
+} // namespace OCLRT

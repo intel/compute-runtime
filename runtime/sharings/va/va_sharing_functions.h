@@ -80,4 +80,4 @@ class VASharingFunctions : public SharingFunctions {
     VAExtGetSurfaceHandlePFN vaExtGetSurfaceHandlePFN;
     VAGetLibFuncPFN vaGetLibFuncPFN;
 };
-}
+} // namespace OCLRT

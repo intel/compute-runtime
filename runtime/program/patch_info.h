@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,36 +27,36 @@
 #include <map>
 
 namespace OCLRT {
-using iOpenCL::SPatchMediaInterfaceDescriptorLoad;
-using iOpenCL::SPatchAllocateLocalSurface;
-using iOpenCL::SPatchMediaVFEState;
-using iOpenCL::SPatchInterfaceDescriptorData;
-using iOpenCL::SPatchSamplerStateArray;
-using iOpenCL::SPatchBindingTableState;
-using iOpenCL::SPatchDataParameterBuffer;
-using iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument;
-using iOpenCL::SPatchGlobalMemoryObjectKernelArgument;
-using iOpenCL::SPatchStatelessConstantMemoryObjectKernelArgument;
-using iOpenCL::SPatchStatelessDeviceQueueKernelArgument;
-using iOpenCL::SPatchImageMemoryObjectKernelArgument;
-using iOpenCL::SPatchSamplerKernelArgument;
-using iOpenCL::SPatchDataParameterStream;
-using iOpenCL::SPatchThreadPayload;
-using iOpenCL::SPatchExecutionEnvironment;
-using iOpenCL::SPatchKernelAttributesInfo;
-using iOpenCL::SPatchKernelArgumentInfo;
 using iOpenCL::SKernelBinaryHeaderCommon;
-using iOpenCL::SProgramBinaryHeader;
-using iOpenCL::SPatchAllocateStatelessPrivateSurface;
+using iOpenCL::SPatchAllocateLocalSurface;
 using iOpenCL::SPatchAllocateStatelessConstantMemorySurfaceWithInitialization;
+using iOpenCL::SPatchAllocateStatelessDefaultDeviceQueueSurface;
+using iOpenCL::SPatchAllocateStatelessEventPoolSurface;
 using iOpenCL::SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization;
 using iOpenCL::SPatchAllocateStatelessPrintfSurface;
-using iOpenCL::SPatchAllocateStatelessEventPoolSurface;
-using iOpenCL::SPatchAllocateStatelessDefaultDeviceQueueSurface;
-using iOpenCL::SPatchString;
-using iOpenCL::SPatchGtpinFreeGRFInfo;
-using iOpenCL::SPatchStateSIP;
+using iOpenCL::SPatchAllocateStatelessPrivateSurface;
 using iOpenCL::SPatchAllocateSystemThreadSurface;
+using iOpenCL::SPatchBindingTableState;
+using iOpenCL::SPatchDataParameterBuffer;
+using iOpenCL::SPatchDataParameterStream;
+using iOpenCL::SPatchExecutionEnvironment;
+using iOpenCL::SPatchGlobalMemoryObjectKernelArgument;
+using iOpenCL::SPatchGtpinFreeGRFInfo;
+using iOpenCL::SPatchImageMemoryObjectKernelArgument;
+using iOpenCL::SPatchInterfaceDescriptorData;
+using iOpenCL::SPatchKernelArgumentInfo;
+using iOpenCL::SPatchKernelAttributesInfo;
+using iOpenCL::SPatchMediaInterfaceDescriptorLoad;
+using iOpenCL::SPatchMediaVFEState;
+using iOpenCL::SPatchSamplerKernelArgument;
+using iOpenCL::SPatchSamplerStateArray;
+using iOpenCL::SPatchStatelessConstantMemoryObjectKernelArgument;
+using iOpenCL::SPatchStatelessDeviceQueueKernelArgument;
+using iOpenCL::SPatchStatelessGlobalMemoryObjectKernelArgument;
+using iOpenCL::SPatchStateSIP;
+using iOpenCL::SPatchString;
+using iOpenCL::SPatchThreadPayload;
+using iOpenCL::SProgramBinaryHeader;
 
 typedef struct TagPrintfStringInfo {
     size_t SizeInBytes;

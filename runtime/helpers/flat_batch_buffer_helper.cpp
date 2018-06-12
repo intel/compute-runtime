@@ -75,4 +75,4 @@ void FlatBatchBufferHelper::fixCrossThreadDataInfo(std::vector<PatchInfoData> &d
         }
     }
 }
-};
+}; // namespace OCLRT

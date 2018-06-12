@@ -48,16 +48,15 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
         auto imageHeight = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY ? 0 : 32;
         auto imageArrays = ImageType == CL_MEM_OBJECT_IMAGE1D_ARRAY || ImageType == CL_MEM_OBJECT_IMAGE2D_ARRAY ? 7 : 1;
 
-
-        imageDesc.image_type        = ImageType;
-        imageDesc.image_width       = 32;
-        imageDesc.image_height      = imageHeight;
-        imageDesc.image_depth       = 1;
-        imageDesc.image_array_size  = imageArrays;
-        imageDesc.image_row_pitch   = 0;
+        imageDesc.image_type = ImageType;
+        imageDesc.image_width = 32;
+        imageDesc.image_height = imageHeight;
+        imageDesc.image_depth = 1;
+        imageDesc.image_array_size = imageArrays;
+        imageDesc.image_row_pitch = 0;
         imageDesc.image_slice_pitch = 0;
-        imageDesc.num_mip_levels    = 0;
-        imageDesc.num_samples       = 0;
+        imageDesc.num_mip_levels = 0;
+        imageDesc.num_samples = 0;
         imageDesc.mem_object = NULL;
 
         retVal = CL_INVALID_VALUE;

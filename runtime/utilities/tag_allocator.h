@@ -95,6 +95,7 @@ class TagAllocator {
         ((void)(usedNode));
         freeTags.pushFrontOne(*node);
     }
+
   protected:
     IDList<NodeType> freeTags;
     IDList<NodeType> usedTags;

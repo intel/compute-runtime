@@ -47,7 +47,7 @@ float __intel__getProfilingTimerResolution() {
 #include "runtime/gen9/scheduler_definitions.h"
 #include "runtime/gen9/scheduler_igdrcl_built_in.inl"
 #include "runtime/scheduler/scheduler.cl"
-}
+} // namespace Gen9SchedulerSimulation
 
 namespace BuiltinKernelsSimulation {
 

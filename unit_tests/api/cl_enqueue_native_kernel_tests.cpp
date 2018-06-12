@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -40,7 +40,7 @@ TEST_F(clEnqueueNativeKernelTests, notImplemented) {
         0,       // num_events
         nullptr, //event_list
         nullptr  // event
-        );
+    );
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 }
 } // namespace ULT

@@ -32,4 +32,4 @@ class ThreadWin : public Thread {
   protected:
     std::unique_ptr<std::thread> thread;
 };
-}
+} // namespace OCLRT

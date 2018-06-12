@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -32,8 +32,8 @@ struct ContextGetInfoTest : public PlatformFixture,
                             public ContextFixture,
                             public ::testing::Test {
 
-    using PlatformFixture::SetUp;
     using ContextFixture::SetUp;
+    using PlatformFixture::SetUp;
 
     ContextGetInfoTest() {
     }

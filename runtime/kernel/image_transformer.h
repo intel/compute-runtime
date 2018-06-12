@@ -37,4 +37,4 @@ class ImageTransformer {
     bool transformed = false;
     std::vector<uint32_t> argIndexes;
 };
-}
+} // namespace OCLRT

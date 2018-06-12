@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,4 +27,4 @@ namespace OCLRT {
 template void generateLocalIDsSimd<uint16x8_t, 32>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
 template void generateLocalIDsSimd<uint16x8_t, 16>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
 template void generateLocalIDsSimd<uint16x8_t, 8>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
-}
+} // namespace OCLRT

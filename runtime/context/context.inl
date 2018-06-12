@@ -37,4 +37,4 @@ Sharing *Context::getSharing() {
 
     return reinterpret_cast<Sharing *>(sharingFunctions[Sharing::sharingId].get());
 }
-}
+} // namespace OCLRT

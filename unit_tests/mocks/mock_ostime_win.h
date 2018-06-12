@@ -34,4 +34,4 @@ class MockOSTimeWin : public OSTimeWin {
         return OSTimeWin::getDynamicDeviceTimerResolution(hwInfo);
     };
 };
-}
+} // namespace OCLRT

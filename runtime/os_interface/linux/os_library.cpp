@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -63,5 +63,5 @@ void *OsLibrary::getProcAddress(const std::string &procName) {
 
     return dlsym(this->handle, procName.c_str());
 }
-}
-}
+} // namespace Linux
+} // namespace OCLRT

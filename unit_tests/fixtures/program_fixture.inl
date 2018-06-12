@@ -70,4 +70,4 @@ void ProgramFixture::CreateProgramFromBinary(cl_context pContext,
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
-}
+} // namespace OCLRT

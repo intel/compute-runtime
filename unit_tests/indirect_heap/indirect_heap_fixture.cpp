@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,4 +30,4 @@ void IndirectHeapFixture::SetUp(CommandQueue *pCmdQ) {
     pSSH = &pCmdQ->getIndirectHeap(IndirectHeap::SURFACE_STATE, 4096);
     pIOH = &pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 4096);
 }
-}
+} // namespace OCLRT

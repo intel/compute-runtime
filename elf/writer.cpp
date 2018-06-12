@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -201,7 +201,7 @@ bool CElfWriter::resolveBinary(
                     memcpy_s(pCurString, pNode->Name.size(), pNode->Name.c_str(), pNode->Name.size());
                     pCurString += pNode->Name.size();
                 }
-                *(pCurString++) = '\0';
+                *(pCurString++) = '\0'; // NOLINT
 
                 // delete the node and it's data
                 if (pNode->pData) {
@@ -282,4 +282,4 @@ bool CElfWriter::patchElfHeader(char *const pBinary) {
     return false;
 }
 
-} // namespace OclElfLib
+} // namespace CLElfLib

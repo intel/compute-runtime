@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,4 +27,4 @@ namespace OCLRT {
 bool operator<(const HeapChunk &hc1, const HeapChunk &hc2) {
     return hc1.ptr < hc2.ptr;
 }
-}
+} // namespace OCLRT

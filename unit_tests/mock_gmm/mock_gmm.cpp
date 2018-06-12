@@ -611,7 +611,7 @@ void GmmPageTableMgr::EvictPageTablePool(D3DKMT_HANDLE *BBQHandles, int NumBBFen
 void GmmPageTableMgr::__ReleaseUnusedPool(GMM_UMD_SYNCCONTEXT *UmdContext) {}
 GMM_PAGETABLEPool *GmmPageTableMgr::__GetFreePoolNode(uint32_t *FreePoolNodeIdx, POOL_TYPE PoolType) { return nullptr; }
 GmmPageTableMgr::~GmmPageTableMgr() {}
-}
+} // namespace GmmLib
 uint8_t GMM_STDCALL GmmIsPlanar(GMM_RESOURCE_FORMAT Format) {
     return 0;
 }

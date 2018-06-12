@@ -67,4 +67,4 @@ static const cl_command_queue_properties DefaultCommandQueueProperties[] = {
     0,
     CL_QUEUE_PROFILING_ENABLE,
 };
-}
+} // namespace OCLRT

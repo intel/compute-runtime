@@ -57,4 +57,4 @@ bool ImageTransformer::didTransform() const {
 bool ImageTransformer::hasRegisteredImages3d() const {
     return !argIndexes.empty();
 }
-}
+} // namespace OCLRT

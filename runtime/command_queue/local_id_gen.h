@@ -76,4 +76,4 @@ template <typename Vec, int simd>
 void generateLocalIDsSimd(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
 
 void generateLocalIDs(void *buffer, uint32_t simd, size_t lwsX, size_t lwsY, size_t lwsZ);
-}
+} // namespace OCLRT

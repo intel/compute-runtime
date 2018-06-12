@@ -57,7 +57,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_EU_COUNT)
                 || (gp->param == I915_PARAM_EU_COUNT)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForEUVal) {
                     *((int *)(gp->value)) = this->StoredEUVal;
                 }
@@ -67,7 +67,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_SUBSLICE_TOTAL)
                 || (gp->param == I915_PARAM_SUBSLICE_TOTAL)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForSSVal) {
                     *((int *)(gp->value)) = this->StoredSSVal;
                 }
@@ -77,7 +77,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_CHIPSET_ID)
                 || (gp->param == I915_PARAM_CHIPSET_ID)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForDeviceID) {
                     *((int *)(gp->value)) = this->StoredDeviceID;
                 }
@@ -87,7 +87,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_REVISION)
                 || (gp->param == I915_PARAM_REVISION)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForDeviceRevID) {
                     *((int *)(gp->value)) = this->StoredDeviceRevID;
                 }
@@ -97,7 +97,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_HAS_POOLED_EU)
                 || (gp->param == I915_PARAM_HAS_POOLED_EU)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForPooledEU) {
                     *((int *)(gp->value)) = this->StoredHasPooledEU;
                 }
@@ -107,7 +107,7 @@ class DrmMock : public Drm {
 #if defined(I915_PARAM_MIN_EU_IN_POOL)
                 || (gp->param == I915_PARAM_MIN_EU_IN_POOL)
 #endif
-                    ) {
+            ) {
                 if (0 == this->StoredRetValForMinEUinPool) {
                     *((int *)(gp->value)) = this->StoredMinEUinPool;
                 }

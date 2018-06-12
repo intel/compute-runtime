@@ -186,4 +186,4 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     setPDP2(pLRCIn, 0);
     setPDP3(pLRCIn, 0);
 }
-}
+} // namespace AubMemDump

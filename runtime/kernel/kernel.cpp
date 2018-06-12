@@ -1434,7 +1434,7 @@ void Kernel::createReflectionSurface() {
         uint32_t parentSamplerCount = objectCount.samplerCount;
         size_t maxConstantBufferSize = 0;
 
-        std::vector<IGIL_KernelCurbeParams> *curbeParamsForBlocks = new std::vector<IGIL_KernelCurbeParams>[ blockCount ];
+        std::vector<IGIL_KernelCurbeParams> *curbeParamsForBlocks = new std::vector<IGIL_KernelCurbeParams>[blockCount];
 
         uint64_t *tokenMask = new uint64_t[blockCount];
         uint32_t *sshTokenOffsetsFromKernelData = new uint32_t[blockCount];

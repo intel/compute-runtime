@@ -102,4 +102,4 @@ struct UnsignedFixedPointValue {
 };
 
 using FixedU4D8 = UnsignedFixedPointValue<4, 8>;
-}
+} // namespace OCLRT

@@ -87,4 +87,4 @@ inline uint32_t IndirectHeap::getHeapSizeInPages() const {
         return (static_cast<uint32_t>(getMaxAvailableSpace()) + MemoryConstants::pageMask) / MemoryConstants::pageSize;
     }
 }
-}
+} // namespace OCLRT

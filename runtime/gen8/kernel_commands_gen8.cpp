@@ -45,4 +45,4 @@ uint32_t KernelCommandsHelper<BDWFamily>::computeSlmValues(uint32_t valueIn) {
 
 // Explicitly instantiate KernelCommandsHelper for BDW device family
 template struct KernelCommandsHelper<BDWFamily>;
-}
+} // namespace OCLRT

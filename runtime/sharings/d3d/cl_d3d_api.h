@@ -22,7 +22,6 @@
 
 #pragma once
 
-
 #include "CL/cl.h"
 #include <d3d10_1.h>
 #include "CL/cl_dx9_media_sharing.h"

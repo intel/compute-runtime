@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -54,7 +54,7 @@ CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 
 template <template <CIF::Version_t> class EntryPointT>
 inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib,
-                  CIF::RAII::UPtr_t<CIF::CIFMain> &outLibMain) {
+                         CIF::RAII::UPtr_t<CIF::CIFMain> &outLibMain) {
     auto lib = std::unique_ptr<OsLibrary>(OsLibrary::load(libName));
     if (lib == nullptr) {
         DEBUG_BREAK_IF(true); // could not load library
@@ -81,5 +81,4 @@ inline bool loadCompiler(const char *libName, std::unique_ptr<OsLibrary> &outLib
     return true;
 }
 
-}
-
+} // namespace OCLRT

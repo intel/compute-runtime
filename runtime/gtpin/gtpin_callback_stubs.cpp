@@ -55,4 +55,4 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector) {
 
 void gtpinNotifyPlatformShutdown() {
 }
-}
+} // namespace OCLRT

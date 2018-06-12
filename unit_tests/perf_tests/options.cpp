@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -42,6 +42,6 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
 
 size_t numPlatformDevices = ARRAY_COUNT(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
-}
+} // namespace OCLRT
 
 bool printMemoryOpCallStack = true;

@@ -70,7 +70,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_InvalidValue) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
         nullptr      // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -83,7 +83,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMap_Success) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
         nullptr      // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -96,7 +96,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlocking_Success) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // const cL_event *event_wait_list
         nullptr      // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -111,7 +111,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMapBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cL_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -122,7 +122,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_InvalidValue) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cL_event *event_wait_list
         nullptr  // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -132,7 +132,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmap_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cL_event *event_wait_list
         nullptr  // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -144,7 +144,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMUnmapBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cL_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -161,7 +161,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithoutCallback_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // const cl_event *event_wait_list
         nullptr  // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(0U, this->context->getSVMAllocsManager()->getNumAllocs());
 }
@@ -191,7 +191,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallback_Success) {
         0,              // cl_uint num_events_in_wait_list
         nullptr,        // const cl_event *event_wait_list
         nullptr         // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(callbackWasCalled);
 }
@@ -222,7 +222,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeWithCallbackAndEvent_Success) {
         0,              // cl_uint num_events_in_wait_list
         nullptr,        // const cl_event *event_wait_list
         &event          // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(callbackWasCalled);
 
@@ -244,7 +244,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMFreeBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // const cl_event *event_wait_list
         nullptr        // cl_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -261,7 +261,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueDstPtrIsNull) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -277,7 +277,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_InvalidValueSrcPtrIsNull) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -292,7 +292,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpy_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -308,7 +308,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlocking_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -326,7 +326,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // cl_evebt *event_wait_list
         nullptr        // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -342,7 +342,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherent_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_evebt *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -360,7 +360,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemcpyCoherentBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // cl_evebt *event_wait_list
         nullptr        // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     context->getSVMAllocsManager()->freeSVMAlloc(pSrcSVM);
 }
@@ -377,7 +377,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFill_InvalidValue) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // cl_evebt *event_wait_list
         nullptr      // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 
@@ -392,7 +392,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFill_Success) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // cl_evebt *event_wait_list
         nullptr      // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -409,7 +409,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillBlockedOnEvent_Success) {
         1,             // cl_uint num_events_in_wait_list
         eventWaitList, // cl_evebt *event_wait_list
         nullptr        // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -424,7 +424,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // cl_evebt *event_wait_list
         nullptr      // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
     retVal = this->pCmdQ->enqueueSVMMemFill(
         ptrSVM,      // void *svm_ptr
@@ -434,7 +434,7 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
         0,           // cl_uint num_events_in_wait_list
         nullptr,     // cl_evebt *event_wait_list
         nullptr      // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
@@ -588,6 +588,6 @@ TEST_F(EnqueueSvmTest, enqueueSVMMigrateMem_Success) {
         0,       // cl_uint num_events_in_wait_list
         nullptr, // cl_event *event_wait_list
         nullptr  // cL_event *event
-        );
+    );
     EXPECT_EQ(CL_SUCCESS, retVal);
 }

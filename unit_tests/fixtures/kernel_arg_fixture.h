@@ -33,7 +33,7 @@ class MockKernel;
 class MockProgram;
 class Image;
 struct KernelInfo;
-}
+} // namespace OCLRT
 
 namespace iOpenCL {
 struct SKernelBinaryHeaderCommon;

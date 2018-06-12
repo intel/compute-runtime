@@ -267,4 +267,4 @@ TEST(ReferenceTrackedObject, whenNewReferenceTrackedObjectIsCreatedRefcountsAreZ
     EXPECT_EQ(0, obj.getRefApiCount());
     EXPECT_EQ(0, obj.getRefInternalCount());
 }
-}
+} // namespace OCLRT

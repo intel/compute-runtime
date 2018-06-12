@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -31,6 +31,7 @@ union GRF {
     uint16_t wRegs[16];
 };
 
+// clang-format off
 uint16_t gFlattenedIDsSimD8[] =
     {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -102,6 +103,7 @@ uint16_t gFlattenedIDsSimD1632[] =
         0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
         0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff,
 };
+// clang-format on
 
 size_t getSizeFlattenedIDs(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
     auto lws = lwsX * lwsY * lwsZ;

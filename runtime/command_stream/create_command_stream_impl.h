@@ -27,4 +27,4 @@
 namespace OCLRT {
 extern CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo);
 extern bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned);
-}
+} // namespace OCLRT

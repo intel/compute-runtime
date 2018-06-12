@@ -1021,4 +1021,4 @@ TEST_F(DispatchInfoBuilderTest, setKernelArgNullKernel) {
     delete diBuilder;
     delete buffer;
 }
-}
+} // namespace OCLRT

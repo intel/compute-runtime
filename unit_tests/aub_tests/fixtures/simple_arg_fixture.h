@@ -56,11 +56,11 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     typedef typename FixtureFactory::CommandQueueFixture CommandQueueFixture;
     typedef typename FixtureFactory::KernelFixture KernelFixture;
 
+    using AUBCommandStreamFixture::SetUp;
     using CommandQueueFixture::pCmdQ;
     using CommandStreamFixture::pCS;
-    using KernelFixture::pKernel;
     using IndirectHeapFixture::SetUp;
-    using AUBCommandStreamFixture::SetUp;
+    using KernelFixture::pKernel;
     using SimpleArgKernelFixture::SetUp;
 
     SimpleArgFixture()
@@ -112,4 +112,4 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     void *pExpectedMemory;
     size_t sizeUserMemory;
 };
-}
+} // namespace OCLRT
