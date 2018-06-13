@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,6 +23,10 @@
 #pragma once
 #include "gtest/gtest.h"
 
+namespace OCLRT {
+// capture allocations call stacks to print them during memory leak in ULTs
+constexpr bool captureCallStacks = false;
+
 class MemoryLeakListener : public ::testing::EmptyTestEventListener {
   private:
     void OnTestStart(const ::testing::TestInfo &) override;
@@ -30,3 +34,4 @@ class MemoryLeakListener : public ::testing::EmptyTestEventListener {
 
     unsigned int numInitialBaseObjects;
 };
+} // namespace OCLRT

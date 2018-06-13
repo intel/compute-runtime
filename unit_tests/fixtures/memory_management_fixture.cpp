@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,7 @@
  */
 
 #include "runtime/helpers/options.h"
+#include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 #include <cinttypes>
@@ -70,9 +71,9 @@ void MemoryManagementFixture::clearFailingAllocation() {
 }
 
 size_t MemoryManagementFixture::enumerateLeak(size_t indexAllocationTop, size_t indexDeallocationTop, bool lookFromBack, bool requireCallStack, bool fastLookup) {
+    using MemoryManagement::AllocationEvent;
     using MemoryManagement::eventsAllocated;
     using MemoryManagement::eventsDeallocated;
-    using MemoryManagement::AllocationEvent;
 
     static auto start = invalidLeakIndex;
     auto newIndex = start == invalidLeakIndex ? 0 : start;
@@ -197,8 +198,8 @@ std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
 ::testing::AssertionResult MemoryManagementFixture::assertLeak(
     const char *leakExpr,
     size_t leakIndex) {
-    using MemoryManagement::eventsAllocated;
     using MemoryManagement::AllocationEvent;
+    using MemoryManagement::eventsAllocated;
 
     if (leakIndex == invalidLeakIndex) {
         return ::testing::AssertionSuccess();

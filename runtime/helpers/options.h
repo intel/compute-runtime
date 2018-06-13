@@ -57,9 +57,4 @@ extern uint32_t initialHardwareTag;
 // Number of devices in the platform
 extern size_t numPlatformDevices;
 extern const HardwareInfo **platformDevices;
-
-// sets the log traces variable required by memory leak tests call stack prinitng
-const bool captureCallStacks = false;
-
-constexpr bool printDebugLogs = false;
 } // namespace OCLRT

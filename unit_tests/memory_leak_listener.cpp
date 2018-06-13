@@ -26,6 +26,7 @@
 #include "unit_tests/fixtures/memory_management_fixture.h"
 
 using ::testing::TestInfo;
+using namespace OCLRT;
 
 extern unsigned int numBaseObjects;
 
