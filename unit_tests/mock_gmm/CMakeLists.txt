@@ -18,7 +18,7 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-if(WIN32)
+if(NOT USE_STATIC_GMM)
   set(target_name mock_gmm)
   project(${target_name})
 
