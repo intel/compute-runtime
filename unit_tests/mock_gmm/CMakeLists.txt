@@ -29,7 +29,7 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/init_platform.cpp
   )
-  add_library(${target_name} SHARED ${IGDRCL_SRCS_tests_mock_gmm})
+  add_library(${target_name} EXCLUDE_FROM_ALL SHARED ${IGDRCL_SRCS_tests_mock_gmm})
 
   target_include_directories(${target_name} PRIVATE
     ${WDK_INCLUDE_PATHS}
@@ -47,5 +47,7 @@ if(WIN32)
   create_project_source_tree(${target_name})
   set_target_properties(${target_name} PROPERTIES FOLDER "test mocks")
   target_compile_definitions(${target_name} PUBLIC GMM_LIB_DLL GMM_LIB_DLL_EXPORTS)
-  add_dependencies(unit_tests ${target_name})
+  if(NOT USE_STATIC_GMM)
+    add_dependencies(unit_tests ${target_name})
+  endif()
 endif()
