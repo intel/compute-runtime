@@ -370,4 +370,32 @@ TEST_F(clGetImageInfoTests, imgNumSamples) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_EQ(this->imageDesc.num_samples, numSamplesRet);
 }
+
+TEST_F(clGetImageInfoTests, givenMultisampleCountForMcsWhenAskingForRowPitchThenReturnNewValueIfGreaterThanOne) {
+    McsSurfaceInfo mcsInfo = {1, 1, 0};
+    imageDesc.num_samples = 16;
+    size_t receivedRowPitch = 0;
+
+    clReleaseMemObject(image);
+    image = clCreateImage(pContext, CL_MEM_READ_WRITE, &imageFormat, &imageDesc, nullptr, &retVal);
+
+    auto imageObj = castToObject<Image>(image);
+    auto formatInfo = imageObj->getSurfaceFormatInfo();
+
+    size_t multisampleRowPitch = imageDesc.image_width * formatInfo.ImageElementSizeInBytes * imageDesc.num_samples;
+    EXPECT_NE(multisampleRowPitch, imageObj->getHostPtrRowPitch());
+
+    for (uint32_t multisampleCount = 0; multisampleCount <= 4; multisampleCount++) {
+        mcsInfo.multisampleCount = multisampleCount;
+        imageObj->setMcsSurfaceInfo(mcsInfo);
+
+        clGetImageInfo(image, CL_IMAGE_ROW_PITCH, sizeof(size_t), &receivedRowPitch, nullptr);
+
+        if (multisampleCount > 1) {
+            EXPECT_EQ(multisampleRowPitch, receivedRowPitch);
+        } else {
+            EXPECT_EQ(imageObj->getHostPtrRowPitch(), receivedRowPitch);
+        }
+    }
+}
 } // namespace ULT

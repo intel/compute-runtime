@@ -706,7 +706,12 @@ cl_int Image::getImageInfo(cl_image_info paramName,
 
     case CL_IMAGE_ROW_PITCH:
         srcParamSize = sizeof(size_t);
-        srcParam = &hostPtrRowPitch;
+        if (mcsSurfaceInfo.multisampleCount > 1) {
+            retParam = imageDesc.image_width * surfFmtInfo.ImageElementSizeInBytes * imageDesc.num_samples;
+        } else {
+            retParam = hostPtrRowPitch;
+        }
+        srcParam = &retParam;
         break;
 
     case CL_IMAGE_SLICE_PITCH:
