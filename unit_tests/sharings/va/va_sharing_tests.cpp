@@ -133,6 +133,45 @@ TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedThenMemObjectHasVaHandle
     delete vaSurface;
 }
 
+TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHeightThenSurfaceOffsetsUseAlignedValues) {
+    // this will create OS specific memory Manager
+    //overrideCommandStreamReceiverCreation = true;
+    ASSERT_FALSE(overrideCommandStreamReceiverCreation);
+    vaSharingFunctionsMockWidth = 256 + 16;
+    vaSharingFunctionsMockHeight = 512 + 16;
+    auto vaSurface = VASurface::createSharedVaSurface(&context, &vaSharing->m_sharingFunctions,
+                                                      CL_MEM_READ_WRITE, &vaSurfaceId, 1, &errCode);
+    EXPECT_NE(nullptr, vaSurface);
+    EXPECT_NE(nullptr, vaSurface->getGraphicsAllocation());
+    EXPECT_EQ(4096u, vaSurface->getGraphicsAllocation()->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, vaSurface->getGraphicsAllocation()->peekSharedHandle());
+
+    EXPECT_EQ(4096u, vaSurface->getSize());
+
+    auto handler = vaSurface->peekSharingHandler();
+    ASSERT_NE(nullptr, handler);
+
+    auto vaHandler = static_cast<VASharing *>(handler);
+    EXPECT_EQ(vaHandler->peekFunctionsHandler(), &vaSharing->m_sharingFunctions);
+
+    EXPECT_EQ(1u, acquiredVaHandle);
+
+    EXPECT_EQ(1, vaDeriveImageCalled);
+    EXPECT_EQ(1, vaDestroyImageCalled);
+    EXPECT_EQ(1, vaExtGetSurfaceHandleCalled);
+
+    SurfaceOffsets surfaceOffsets;
+    uint16_t alignedWidth = alignUp(vaSharingFunctionsMockWidth, 128);
+    uint16_t alignedHeight = alignUp(vaSharingFunctionsMockHeight, 32);
+    uint64_t alignedOffset = alignedWidth * alignedHeight;
+
+    vaSurface->getSurfaceOffsets(surfaceOffsets);
+    EXPECT_EQ(alignedHeight, surfaceOffsets.yOffsetForUVplane);
+    EXPECT_EQ(alignedOffset, surfaceOffsets.offset);
+
+    delete vaSurface;
+}
+
 TEST_F(VaSharingTests, givenContextWhenClCreateFromVaApiMediaSurfaceIsCalledThenSurfaceIsReturned) {
     sharedClMem = clCreateFromVA_APIMediaSurfaceINTEL(&context, CL_MEM_READ_WRITE, &vaSurfaceId, 0, &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);

@@ -31,6 +31,7 @@ int vaGetLibFuncCalled = 0;
 int vaExtGetSurfaceHandleCalled = 0;
 osHandle acquiredVaHandle = 0;
 VAImage mockVaImage = {};
+uint16_t vaSharingFunctionsMockWidth, vaSharingFunctionsMockHeight;
 
 void VASharingFunctionsMock::initMembers() {
     vaDisplayIsValidPFN = mockVaDisplayIsValid;
@@ -50,5 +51,7 @@ void VASharingFunctionsMock::initMembers() {
     mockVaImage = {};
 
     acquiredVaHandle = 0;
+    vaSharingFunctionsMockWidth = 256u;
+    vaSharingFunctionsMockHeight = 256u;
 }
 } // namespace OCLRT

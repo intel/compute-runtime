@@ -71,8 +71,6 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     imgSurfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
-    sharingFunctions->destroyImage(vaImage.image_id);
-
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, true);
@@ -88,7 +86,10 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
     if (plane == 1) {
         imgDesc.image_width /= 2;
         imgDesc.image_height /= 2;
+        imgInfo.offset = vaImage.offsets[1];
+        imgInfo.yOffsetForUVPlane = static_cast<uint32_t>(imgInfo.offset / vaImage.pitches[0]);
     }
+    sharingFunctions->destroyImage(vaImage.image_id);
 
     auto vaSurface = new VASurface(sharingFunctions, imageId, plane, surface, context->getInteropUserSyncEnabled());
 

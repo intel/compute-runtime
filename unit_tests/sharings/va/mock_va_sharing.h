@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "runtime/helpers/aligned_memory.h"
 #include "runtime/sharings/va/va_sharing.h"
 
 namespace OCLRT {
@@ -33,6 +34,7 @@ extern int vaGetLibFuncCalled;
 extern int vaExtGetSurfaceHandleCalled;
 extern osHandle acquiredVaHandle;
 extern VAImage mockVaImage;
+extern uint16_t vaSharingFunctionsMockWidth, vaSharingFunctionsMockHeight;
 
 class VASharingFunctionsMock : public VASharingFunctions {
 
@@ -42,9 +44,16 @@ class VASharingFunctionsMock : public VASharingFunctions {
     };
 
     static VAStatus mockVaDeriveImage(VADisplay vaDisplay, VASurfaceID vaSurface, VAImage *vaImage) {
+        uint32_t pitch;
         vaDeriveImageCalled++;
-        vaImage->height = 256u;
-        vaImage->width = 256u;
+        vaImage->height = vaSharingFunctionsMockHeight;
+        vaImage->width = vaSharingFunctionsMockWidth;
+        pitch = alignUp(vaSharingFunctionsMockWidth, 128);
+        vaImage->offsets[1] = alignUp(vaImage->height, 32) * pitch;
+        vaImage->offsets[2] = vaImage->offsets[1] + 1;
+        vaImage->pitches[0] = pitch;
+        vaImage->pitches[1] = pitch;
+        vaImage->pitches[2] = pitch;
         mockVaImage.width = vaImage->width;
         mockVaImage.height = vaImage->height;
         return (VAStatus)0; // success
