@@ -26,8 +26,7 @@ if(NOT USE_STATIC_GMM)
   set(IGDRCL_SRCS_tests_mock_gmm
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/init_platform.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.def
   )
   add_library(${target_name} EXCLUDE_FROM_ALL SHARED ${IGDRCL_SRCS_tests_mock_gmm})
 
@@ -46,7 +45,7 @@ if(NOT USE_STATIC_GMM)
 
   create_project_source_tree(${target_name})
   set_target_properties(${target_name} PROPERTIES FOLDER "test mocks")
-  target_compile_definitions(${target_name} PUBLIC GMM_LIB_DLL GMM_LIB_DLL_EXPORTS)
+  target_compile_definitions(${target_name} PUBLIC)
   if(NOT USE_STATIC_GMM)
     add_dependencies(unit_tests ${target_name})
   endif()

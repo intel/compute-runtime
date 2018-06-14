@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017 - 2018, Intel Corporation
+* Copyright (c) 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,36 +21,28 @@
 */
 
 #pragma once
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/gmm_lib.h"
 #include <memory>
-#include <functional>
 
 namespace OCLRT {
-class GmmPageTableMngr {
+class GmmClientContext;
+class GmmClientContextBase {
   public:
-    MOCKABLE_VIRTUAL ~GmmPageTableMngr();
+    virtual ~GmmClientContextBase();
 
-    static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
-
-    MOCKABLE_VIRTUAL GMM_STATUS initContextAuxTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
-        return pageTableManager->InitContextAuxTableRegister(initialBBHandle, engineType);
-    }
-
-    MOCKABLE_VIRTUAL GMM_STATUS initContextTRTableRegister(HANDLE initialBBHandle, GMM_ENGINE_TYPE engineType) {
-        return pageTableManager->InitContextTRTableRegister(initialBBHandle, engineType);
-    }
-
-    MOCKABLE_VIRTUAL GMM_STATUS updateAuxTable(const GMM_DDI_UPDATEAUXTABLE *ddiUpdateAuxTable) {
-        return pageTableManager->UpdateAuxTable(ddiUpdateAuxTable);
+    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams);
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes);
+    MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
+    GMM_CLIENT_CONTEXT *getHandle() const;
+    template <typename T>
+    static std::unique_ptr<GmmClientContext> create(GMM_CLIENT clientType) {
+        return std::unique_ptr<GmmClientContext>(new T(clientType));
     }
 
   protected:
-    GMM_CLIENT_CONTEXT *clientContext = nullptr;
-
-    GmmPageTableMngr() = default;
-
-    GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
-
-    GMM_PAGETABLE_MGR *pageTableManager = nullptr;
+    GMM_CLIENT_CONTEXT *clientContext;
+    GmmClientContextBase(GMM_CLIENT clientType);
 };
 } // namespace OCLRT

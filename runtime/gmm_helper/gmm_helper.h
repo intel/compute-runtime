@@ -34,6 +34,7 @@ struct WorkaroundTable;
 struct ImageInfo;
 class GraphicsAllocation;
 class GmmResourceInfo;
+class GmmClientContext;
 
 enum OCLPlane {
     NO_PLANE = 0,
@@ -50,7 +51,7 @@ class Gmm {
   public:
     static const uint32_t maxPossiblePitch = 2147483648;
 
-    virtual ~Gmm() = default;
+    virtual ~Gmm();
 
     void create();
     static Gmm *create(const void *alignedPtr, size_t alignedSize, bool uncacheable);
@@ -96,10 +97,11 @@ class Gmm {
     static decltype(&GmmDestroyGlobalContext) destroyGlobalContextFunc;
     static decltype(&GmmCreateClientContext) createClientContextFunc;
     static decltype(&GmmDeleteClientContext) deleteClientContextFunc;
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(GMM_CLIENT);
 
     bool isRenderCompressed = false;
     static bool useSimplifiedMocsTable;
-    static GMM_CLIENT_CONTEXT *gmmClientContext;
+    static std::unique_ptr<GmmClientContext> gmmClientContext;
     static bool isLoaded;
 };
 } // namespace OCLRT

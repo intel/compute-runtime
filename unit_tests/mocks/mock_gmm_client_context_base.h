@@ -21,28 +21,17 @@
 */
 
 #pragma once
-#include "runtime/gmm_helper/gmm_lib.h"
-#include <memory>
+#include "gmm_client_context.h"
 
 namespace OCLRT {
-class GmmMemoryBase {
+class MockGmmClientContextBase : public GmmClientContext {
   public:
-    virtual ~GmmMemoryBase() = default;
-
-    MOCKABLE_VIRTUAL bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
-                                                      GMM_ESCAPE_HANDLE hDevice,
-                                                      GMM_ESCAPE_FUNC_TYPE pfnEscape,
-                                                      GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN FaultableSvm,
-                                                      BOOLEAN SparseReady,
-                                                      BOOLEAN BDWL3Coherency,
-                                                      GMM_GFX_SIZE_T SizeOverride,
-                                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve);
-
-    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
+    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
+    GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
+    GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
+    void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
 
   protected:
-    GMM_CLIENT_CONTEXT *clientContext = nullptr;
-    GmmMemoryBase();
+    MockGmmClientContextBase(GMM_CLIENT clientType);
 };
 } // namespace OCLRT
