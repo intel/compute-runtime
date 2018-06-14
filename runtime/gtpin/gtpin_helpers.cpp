@@ -33,7 +33,7 @@ using namespace gtpin;
 
 namespace OCLRT {
 
-GTPIN_DI_STATUS gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, resource_handle_t *pResource) {
+GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, resource_handle_t *pResource) {
     cl_int diag = CL_SUCCESS;
     Context *pContext = castToObject<Context>((cl_context)context);
     if ((pContext == nullptr) || (pResource == nullptr)) {
@@ -49,7 +49,7 @@ GTPIN_DI_STATUS gtpinCreateBuffer(context_handle_t context, uint32_t reqSize, re
     return GTPIN_DI_SUCCESS;
 }
 
-GTPIN_DI_STATUS gtpinFreeBuffer(context_handle_t context, resource_handle_t resource) {
+GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinFreeBuffer(context_handle_t context, resource_handle_t resource) {
     cl_mem buffer = (cl_mem)resource;
     Context *pContext = castToObject<Context>((cl_context)context);
     if ((pContext == nullptr) || (buffer == nullptr)) {
@@ -64,7 +64,7 @@ GTPIN_DI_STATUS gtpinFreeBuffer(context_handle_t context, resource_handle_t reso
     return GTPIN_DI_SUCCESS;
 }
 
-GTPIN_DI_STATUS gtpinMapBuffer(context_handle_t context, resource_handle_t resource, uint8_t **pAddress) {
+GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinMapBuffer(context_handle_t context, resource_handle_t resource, uint8_t **pAddress) {
     cl_mem buffer = (cl_mem)resource;
     Context *pContext = castToObject<Context>((cl_context)context);
     if ((pContext == nullptr) || (buffer == nullptr) || (pAddress == nullptr)) {
@@ -78,7 +78,7 @@ GTPIN_DI_STATUS gtpinMapBuffer(context_handle_t context, resource_handle_t resou
     return GTPIN_DI_SUCCESS;
 }
 
-GTPIN_DI_STATUS gtpinUnmapBuffer(context_handle_t context, resource_handle_t resource) {
+GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinUnmapBuffer(context_handle_t context, resource_handle_t resource) {
     cl_mem buffer = (cl_mem)resource;
     Context *pContext = castToObject<Context>((cl_context)context);
     if ((pContext == nullptr) || (buffer == nullptr)) {
