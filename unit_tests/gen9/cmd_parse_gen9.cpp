@@ -47,6 +47,7 @@ using MI_MATH                         = GEN9::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GEN9::MI_LOAD_REGISTER_REG;
 using GPGPU_CSR_BASE_ADDRESS          = GEN9::GPGPU_CSR_BASE_ADDRESS;
 using STATE_SIP                       = GEN9::STATE_SIP;
+using MI_SEMAPHORE_WAIT               = GEN9::MI_SEMAPHORE_WAIT;
 // clang-format on
 
 template <>
@@ -267,6 +268,16 @@ STATE_SIP *genCmdCast<STATE_SIP *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+MI_SEMAPHORE_WAIT *genCmdCast<MI_SEMAPHORE_WAIT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+
+    return MI_SEMAPHORE_WAIT::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_SEMAPHORE_WAIT::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == pCmd->TheStructure.Common.MiCommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
 size_t SklParse::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(cmd);
@@ -365,6 +376,11 @@ size_t SklParse::getCommandLength(void *cmd) {
     }
     {
         auto pCmd = genCmdCast<STATE_SIP *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
+    {
+        auto pCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd);
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }

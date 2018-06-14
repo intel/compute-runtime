@@ -45,6 +45,7 @@ using STATE_BASE_ADDRESS              = GEN8::STATE_BASE_ADDRESS;
 using MI_REPORT_PERF_COUNT            = GEN8::MI_REPORT_PERF_COUNT;
 using MI_MATH                         = GEN8::MI_MATH;
 using MI_LOAD_REGISTER_REG            = GEN8::MI_LOAD_REGISTER_REG;
+using MI_SEMAPHORE_WAIT               = GEN8::MI_SEMAPHORE_WAIT;
 // clang-format on
 
 template <>
@@ -241,6 +242,16 @@ MI_LOAD_REGISTER_REG *genCmdCast<MI_LOAD_REGISTER_REG *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+MI_SEMAPHORE_WAIT *genCmdCast<MI_SEMAPHORE_WAIT *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_SEMAPHORE_WAIT *>(buffer);
+
+    return MI_SEMAPHORE_WAIT::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_SEMAPHORE_WAIT::MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT == pCmd->TheStructure.Common.MiCommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
 size_t BdwParse::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(cmd);
@@ -329,6 +340,11 @@ size_t BdwParse::getCommandLength(void *cmd) {
     }
     {
         auto pCmd = genCmdCast<MI_LOAD_REGISTER_REG *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 2;
+    }
+    {
+        auto pCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd);
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
     }
