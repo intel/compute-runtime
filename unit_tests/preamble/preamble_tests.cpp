@@ -54,27 +54,29 @@ HWTEST_F(PreambleTest, PreemptionIsTakenIntoAccountWhenProgrammingPreamble) {
     EXPECT_LE(cmdSizePreemptionDisabled, cmdSizePreemptionMidThread);
     EXPECT_LE((cmdSizePreemptionMidThread - cmdSizePreemptionDisabled), (cmdSizePreambleMidThread - cmdSizePreambleDisabled));
 
-    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
-    StackVec<char, 8192> preambleBuffer(8192);
-    LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
+    if (mockDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
+        mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+        StackVec<char, 8192> preambleBuffer(8192);
+        LinearStream preambleStream(&*preambleBuffer.begin(), preambleBuffer.size());
 
-    StackVec<char, 4096> preemptionBuffer;
-    preemptionBuffer.resize(cmdSizePreemptionMidThread);
-    LinearStream preemptionStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
+        StackVec<char, 4096> preemptionBuffer;
+        preemptionBuffer.resize(cmdSizePreemptionMidThread);
+        LinearStream preemptionStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
 
-    uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
-    MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
+        uintptr_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
+        MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(minCsrAlignment), 1024);
 
-    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
-                                                ThreadArbitrationPolicy::RoundRobin, &csrSurface);
+        PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
+                                                    ThreadArbitrationPolicy::RoundRobin, &csrSurface);
 
-    PreemptionHelper::programPreamble<FamilyType>(preemptionStream, *mockDevice, &csrSurface);
+        PreemptionHelper::programPreamble<FamilyType>(preemptionStream, *mockDevice, &csrSurface);
 
-    ASSERT_LE(preemptionStream.getUsed(), preambleStream.getUsed());
+        ASSERT_LE(preemptionStream.getUsed(), preambleStream.getUsed());
 
-    auto it = std::search(&preambleBuffer[0], &preambleBuffer[preambleStream.getUsed()],
-                          &preemptionBuffer[0], &preemptionBuffer[preemptionStream.getUsed()]);
-    EXPECT_NE(&preambleBuffer[preambleStream.getUsed()], it);
+        auto it = std::search(&preambleBuffer[0], &preambleBuffer[preambleStream.getUsed()],
+                              &preemptionBuffer[0], &preemptionBuffer[preemptionStream.getUsed()]);
+        EXPECT_NE(&preambleBuffer[preambleStream.getUsed()], it);
+    }
 }
 
 HWTEST_F(PreambleTest, givenActiveKernelDebuggingWhenPreambleKernelDebuggingCommandsSizeIsQueriedThenCorrectSizeIsReturned) {
