@@ -78,6 +78,9 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
                  batchBuffer.requiresCoherency,
                  batchBuffer.low_priority);
 
+        for (auto &surface : *(bb->getResidency())) {
+            surface->setIsResident(false);
+        }
         bb->getResidency()->clear();
 
         if (this->gemCloseWorkerOperationMode == gemCloseWorkerActive) {

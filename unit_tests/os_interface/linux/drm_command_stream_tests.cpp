@@ -839,6 +839,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     EXPECT_EQ(11u, this->mock->execBuffer.buffer_count);
     mm->freeGraphicsMemory(commandBuffer);
     for (auto graphicsAllocation : graphicsAllocations) {
+        DrmAllocation *drmAlloc = reinterpret_cast<DrmAllocation *>(graphicsAllocation);
+        EXPECT_FALSE(drmAlloc->getBO()->peekIsResident());
         mm->freeGraphicsMemory(graphicsAllocation);
     }
     EXPECT_EQ(11u, execStorage.size());
