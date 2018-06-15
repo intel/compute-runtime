@@ -96,7 +96,7 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
     EXPECT_NE(fragment->osInternalStorage, nullptr);
     EXPECT_EQ(fragment->osInternalStorage->gmm, gfxAllocation.gmm);
     EXPECT_NE(fragment->osInternalStorage->gpuPtr, 0ULL);
-    EXPECT_EQ(fragment->osInternalStorage->handle, gfxAllocation.peekSharedHandle());
+    EXPECT_EQ(fragment->osInternalStorage->handle, gfxAllocation.handle);
     EXPECT_NE(fragment->residency, nullptr);
 
     FragmentStorage fragmentStorage = {};

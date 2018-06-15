@@ -257,7 +257,7 @@ void WddmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAll
 
     fragment.osInternalStorage = new OsHandle();
     fragment.osInternalStorage->gpuPtr = gfxAllocation->getGpuAddress();
-    fragment.osInternalStorage->handle = gfxAllocation->peekSharedHandle();
+    fragment.osInternalStorage->handle = wddmMemory->handle;
     fragment.osInternalStorage->gmm = gfxAllocation->gmm;
     fragment.residency = &wddmMemory->getResidencyData();
     hostPtrManager.storeFragment(fragment);
