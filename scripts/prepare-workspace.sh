@@ -21,7 +21,6 @@
 
 cd /root
 git clone --depth 1 https://github.com/intel/gmmlib gmmlib
-git clone --depth 1 https://github.com/KhronosGroup/OpenCL-Headers khronos
 pushd neo/scripts/igc
 ./prepare.sh
 popd
