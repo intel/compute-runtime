@@ -157,7 +157,11 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit
 if(WIN32)
   set(cloc_cmd_prefix cloc)
 else()
-  set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+  if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:cloc>)
+  else()
+    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+  endif()
 endif()
 
 function(neo_gen_kernels target platform_name suffix)

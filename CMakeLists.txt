@@ -187,35 +187,62 @@ endif()
 
 # Intel Graphics Compiler detection
 if(NOT IGC__IGC_TARGETS)
-    if(IGC_DIR)
+    # check whether igc is part of workspace
+    if(DEFINED IGC_DIR)
         get_filename_component(IGC_DIR "${IGC_DIR}" ABSOLUTE)
-    else(IGC_DIR)
+    else()
         get_filename_component(IGC_DIR_tmp "${CMAKE_SOURCE_DIR}/../igc" ABSOLUTE)
         if(IS_DIRECTORY "${IGC_DIR_tmp}")
             set(IGC_DIR "${IGC_DIR_tmp}")
         endif()
     endif()
-    if(NOT IS_DIRECTORY "${IGC_DIR}")
-        message(FATAL_ERROR "Intel Graphics Compiler not found!")
+
+    if(UNIX)
+        # on Unix-like use pkg-config
+        find_package(PkgConfig)
+        if(IS_DIRECTORY "${IGC_DIR}/lib/pkgconfig/")
+            set(ENV{PKG_CONFIG_PATH} "${IGC_DIR}/lib/pkgconfig/")
+        endif()
+        pkg_check_modules(IGDRCL__IGC igc-opencl)
+        if(IS_DIRECTORY "${IGC_DIR}/lib/pkgconfig/")
+            unset(ENV{PKG_CONFIG_PATH})
+            set(IGDRCL__IGC_LIBRARY_PATH "${IGC_DIR}/lib/")
+            set(ENV{LD_LIBRARY_PATH} "${IGDRCL__IGC_LIBRARY_PATH}")
+        endif()
+
+        if(IGDRCL__IGC_FOUND)
+            if(IS_DIRECTORY "${IGC_DIR}/lib/pkgconfig/")
+                string(REPLACE "${IGDRCL__IGC_INCLUDEDIR}" "${IGC_DIR}/include/igc" IGDRCL__IGC_INCLUDE_DIRS "${IGDRCL__IGC_INCLUDE_DIRS}")
+            endif()
+
+            set(IGDRCL__IGC_INCLUDE_DIR ${IGDRCL__IGC_INCLUDE_DIRS})
+            message(STATUS "IGC include dirs: ${IGDRCL__IGC_INCLUDE_DIR}")
+        endif()
     endif()
 
-    message(STATUS "IGC source dir is: ${IGC_DIR}")
+    if(IGDRCL__IGC_FOUND)
+        # do nothing
+    elseif(EXISTS "${IGC_DIR}/CMakeLists.txt")
+        message(STATUS "IGC source dir is: ${IGC_DIR}")
 
-    set(IGC_OPTION__OUTPUT_DIR "${IGDRCL_BUILD_DIR}/igc")
-    set(IGC_OPTION__INCLUDE_IGC_COMPILER_TOOLS OFF)
-    add_subdirectory("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
+        set(IGC_OPTION__OUTPUT_DIR "${IGDRCL_BUILD_DIR}/igc")
+        set(IGC_OPTION__INCLUDE_IGC_COMPILER_TOOLS OFF)
+        add_subdirectory("${IGC_DIR}" "${IGDRCL_BUILD_DIR}/igc" EXCLUDE_FROM_ALL)
+
+        set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
+        foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+            list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
+        endforeach(TARGET_tmp)
+        message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
+    else()
+        message(FATAL_ERROR "Intel Graphics Compiler not found!")
+    endif()
 endif()
 
 if(WIN32)
     set(IGC_LIBRARY_NAME "igc${NEO_BITS}")
     set(FCL_LIBRARY_NAME "igdfcl${NEO_BITS}")
 endif()
-
-set(IGDRCL__IGC_TARGETS "${IGC__IGC_TARGETS}")
-foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
-    list(APPEND IGDRCL__IGC_INCLUDE_DIR $<TARGET_PROPERTY:${TARGET_tmp},INTERFACE_INCLUDE_DIRECTORIES>)
-endforeach(TARGET_tmp)
-message(STATUS "IGC targets: ${IGDRCL__IGC_TARGETS}")
 
 # GmmLib detection
 if(NOT GMMUMD_LIB_NAME)
@@ -554,6 +581,6 @@ endif(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 include(package.cmake)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
-configure_file(compiler.config.h.in ${IGDRCL_BUILD_DIR}/compiler.config.h)
+configure_file(igc.opencl.h.in ${IGDRCL_BUILD_DIR}/igc.opencl.h)
 configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)

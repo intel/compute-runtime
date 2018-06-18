@@ -48,7 +48,11 @@ function(compile_kernel target gen_type platform_type kernel)
   if(WIN32)
     set(cloc_cmd_prefix cloc)
   else()
-    set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+    if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:cloc>)
+    else()
+      set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
+    endif()
   endif()
   add_custom_command(
     OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
