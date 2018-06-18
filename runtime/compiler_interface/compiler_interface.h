@@ -117,6 +117,9 @@ class CompilerInterface {
     std::map<const Device *, fclDevCtxUptr> fclDeviceContexts;
     CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> fclBaseTranslationCtx = nullptr;
 
+    MOCKABLE_VIRTUAL IGC::FclOclDeviceCtxTagOCL *getFclDeviceCtx(const Device &device);
+    MOCKABLE_VIRTUAL IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device);
+
     MOCKABLE_VIRTUAL CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> createFclTranslationCtx(const Device &device,
                                                                                                 IGC::CodeType::CodeType_t inType,
                                                                                                 IGC::CodeType::CodeType_t outType);

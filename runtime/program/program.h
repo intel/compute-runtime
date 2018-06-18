@@ -185,7 +185,7 @@ class Program : public BaseObject<_cl_program> {
         return this->genBinary;
     }
 
-    void storeLlvmBinary(const void *pSrc, const size_t srcSize);
+    void storeIrBinary(const void *pSrc, const size_t srcSize, bool isSpirV);
 
     void storeDebugData(const void *pSrc, const size_t srcSize);
     void processDebugData();
@@ -264,7 +264,7 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int parseProgramScopePatchList();
 
-    MOCKABLE_VIRTUAL cl_int rebuildProgramFromLLVM();
+    MOCKABLE_VIRTUAL cl_int rebuildProgramFromIr();
 
     cl_int parsePatchList(KernelInfo &pKernelInfo);
 
@@ -295,8 +295,8 @@ class Program : public BaseObject<_cl_program> {
     char*                     genBinary;
     size_t                    genBinarySize;
 
-    char*                     llvmBinary;
-    size_t                    llvmBinarySize;
+    char*                     irBinary;
+    size_t                    irBinarySize;
 
     char*                     debugData;
     size_t                    debugDataSize;

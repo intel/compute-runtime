@@ -51,8 +51,8 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
     elfBinarySize = 0;
     genBinary = nullptr;
     genBinarySize = 0;
-    llvmBinary = nullptr;
-    llvmBinarySize = 0;
+    irBinary = nullptr;
+    irBinarySize = 0;
     debugData = nullptr;
     debugDataSize = 0;
     buildStatus = CL_BUILD_NONE;
@@ -109,8 +109,8 @@ Program::~Program() {
     delete[] genBinary;
     genBinary = nullptr;
 
-    delete[] llvmBinary;
-    llvmBinary = nullptr;
+    delete[] irBinary;
+    irBinary = nullptr;
 
     delete[] debugData;
     debugData = nullptr;
@@ -156,9 +156,9 @@ cl_int Program::createProgramFromBinary(
             isCreatedFromBinary = true;
         } else if (binaryVersion != iOpenCL::CURRENT_ICBE_VERSION) {
             // Version of compiler used to create program binary is invalid,
-            // needs to recompile program binary from its LLVM (if available).
+            // needs to recompile program binary from its IR (if available).
             // if recompile fails propagate error retVal from previous function
-            if (!rebuildProgramFromLLVM()) {
+            if (!rebuildProgramFromIr()) {
                 retVal = CL_SUCCESS;
             }
         }
@@ -167,26 +167,30 @@ cl_int Program::createProgramFromBinary(
     return retVal;
 }
 
-cl_int Program::rebuildProgramFromLLVM() {
+cl_int Program::rebuildProgramFromIr() {
     cl_int retVal = CL_SUCCESS;
     size_t dataSize;
     char *pData = nullptr;
     CLElfLib::CElfWriter *pElfWriter = nullptr;
 
     do {
-        if (!Program::isValidLlvmBinary(llvmBinary, llvmBinarySize)) {
-            retVal = CL_INVALID_PROGRAM;
-            break;
+        if (!Program::isValidLlvmBinary(irBinary, irBinarySize)) {
+            if ((!Program::isValidSpirvBinary(irBinary, irBinarySize))) {
+                retVal = CL_INVALID_PROGRAM;
+                break;
+            }
+            isSpirV = true;
         }
 
         pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::EH_TYPE_OPENCL_OBJECTS, CLElfLib::EH_MACHINE_NONE, 0);
+        UNRECOVERABLE_IF(pElfWriter == nullptr);
 
         CLElfLib::SSectionNode sectionNode;
         sectionNode.Name = "";
-        sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
+        sectionNode.Type = isSpirV ? CLElfLib::SH_TYPE_SPIRV : CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
         sectionNode.Flags = 0;
-        sectionNode.pData = llvmBinary;
-        sectionNode.DataSize = static_cast<unsigned int>(llvmBinarySize);
+        sectionNode.pData = irBinary;
+        sectionNode.DataSize = static_cast<unsigned int>(irBinarySize);
         pElfWriter->addSection(&sectionNode);
 
         pElfWriter->resolveBinary(nullptr, dataSize);
@@ -276,10 +280,12 @@ void Program::storeGenBinary(
     storeBinary(genBinary, genBinarySize, pSrc, srcSize);
 }
 
-void Program::storeLlvmBinary(
+void Program::storeIrBinary(
     const void *pSrc,
-    const size_t srcSize) {
-    storeBinary(llvmBinary, llvmBinarySize, pSrc, srcSize);
+    const size_t srcSize,
+    bool isSpirV) {
+    storeBinary(irBinary, irBinarySize, pSrc, srcSize);
+    this->isSpirV = isSpirV;
 }
 
 void Program::storeDebugData(

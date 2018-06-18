@@ -72,8 +72,6 @@ cl_int CompilerInterface::build(
         highLevelCodeType = IGC::CodeType::oclC;
         if (useLlvmText == true) {
             intermediateCodeType = IGC::CodeType::llvmLl;
-        } else {
-            intermediateCodeType = IGC::CodeType::llvmBc;
         }
     }
 
@@ -90,7 +88,10 @@ cl_int CompilerInterface::build(
     uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
     for (uint32_t i = 0; i < numDevices; i++) {
         const auto &device = program.getDevice(i);
-        UNRECOVERABLE_IF(intermediateCodeType == IGC::CodeType::undefined);
+        if (intermediateCodeType == IGC::CodeType::undefined) {
+            UNRECOVERABLE_IF(highLevelCodeType != IGC::CodeType::oclC);
+            intermediateCodeType = getPreferredIntermediateRepresentation(device);
+        }
 
         bool binaryLoaded = false;
         std::string kernelFileHash;
@@ -124,7 +125,7 @@ cl_int CompilerInterface::build(
                 return CL_BUILD_PROGRAM_FAILURE;
             }
 
-            program.storeLlvmBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
+            program.storeIrBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw(), intermediateCodeType == IGC::CodeType::spirV);
             program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
 
             fclOutput->GetOutput()->Retain(); // will be used as input to compiler
@@ -186,14 +187,15 @@ cl_int CompilerInterface::compile(
         inType = IGC::CodeType::elf;
         if (useLlvmText == true) {
             outType = IGC::CodeType::llvmLl;
-        } else {
-            outType = IGC::CodeType::llvmBc;
         }
     }
 
     uint32_t numDevices = static_cast<uint32_t>(program.getNumDevices());
     for (uint32_t i = 0; i < numDevices; i++) {
         const auto &device = program.getDevice(i);
+        if (outType == IGC::CodeType::undefined) {
+            outType = getPreferredIntermediateRepresentation(device);
+        }
 
         if (fromIntermediate == false) {
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), inputArgs.pInput, inputArgs.InputSize);
@@ -214,13 +216,13 @@ cl_int CompilerInterface::compile(
                 return CL_COMPILE_PROGRAM_FAILURE;
             }
 
-            program.storeLlvmBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
+            program.storeIrBinary(fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw(), outType == IGC::CodeType::spirV);
             program.updateBuildLog(&device, fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
         } else {
             char *pOutput;
             uint32_t OutputSize;
             program.getSource(pOutput, OutputSize);
-            program.storeLlvmBinary(pOutput, OutputSize);
+            program.storeIrBinary(pOutput, OutputSize, outType == IGC::CodeType::spirV);
         }
     }
 
@@ -249,8 +251,8 @@ cl_int CompilerInterface::link(
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
         inSrc->Retain(); // shared with currSrc
         CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
-
-        IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+        auto intermediateRepresentation = getPreferredIntermediateRepresentation(device);
+        IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, intermediateRepresentation, IGC::CodeType::oclGenBin};
         constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
         for (size_t ti = 1; ti < numTranslations; ti++) {
             IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
@@ -295,7 +297,8 @@ cl_int CompilerInterface::createLibrary(
         auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
         auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
 
-        auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, IGC::CodeType::llvmBc);
+        auto intermediateRepresentation = getPreferredIntermediateRepresentation(device);
+        auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, intermediateRepresentation);
 
         auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
                                    igcOptions.get(), igcInternalOptions.get());
@@ -309,7 +312,7 @@ cl_int CompilerInterface::createLibrary(
             return CL_BUILD_PROGRAM_FAILURE;
         }
 
-        program.storeLlvmBinary(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
+        program.storeIrBinary(igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw(), intermediateRepresentation == IGC::CodeType::spirV);
         program.updateBuildLog(&device, igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
     }
 
@@ -362,17 +365,17 @@ BinaryCache *CompilerInterface::replaceBinaryCache(BinaryCache *newCache) {
     return res;
 }
 
-CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &device) {
     auto it = fclDeviceContexts.find(&device);
     if (it != fclDeviceContexts.end()) {
-        return it->second->CreateTranslationCtx(inType, outType);
+        return it->second.get();
     }
 
     {
         auto ulock = this->lock();
         it = fclDeviceContexts.find(&device);
         if (it != fclDeviceContexts.end()) {
-            return it->second->CreateTranslationCtx(inType, outType);
+            return it->second.get();
         }
 
         if (fclMain == nullptr) {
@@ -388,12 +391,27 @@ CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclT
         newDeviceCtx->SetOclApiVersion(device.getHardwareInfo().capabilityTable.clVersionSupport * 10);
         fclDeviceContexts[&device] = std::move(newDeviceCtx);
 
-        if (fclBaseTranslationCtx == nullptr) {
-            fclBaseTranslationCtx = fclDeviceContexts[&device]->CreateTranslationCtx(inType, outType);
-        }
-
-        return fclDeviceContexts[&device]->CreateTranslationCtx(inType, outType);
+        return fclDeviceContexts[&device].get();
     }
+}
+
+IGC::CodeType::CodeType_t CompilerInterface::getPreferredIntermediateRepresentation(const Device &device) {
+    return IGC::CodeType::llvmBc;
+}
+
+CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {
+
+    auto deviceCtx = getFclDeviceCtx(device);
+    if (deviceCtx == nullptr) {
+        DEBUG_BREAK_IF(true); // could not create device context
+        return nullptr;
+    }
+
+    if (fclBaseTranslationCtx == nullptr) {
+        fclBaseTranslationCtx = fclDeviceContexts[&device]->CreateTranslationCtx(inType, outType);
+    }
+
+    return deviceCtx->CreateTranslationCtx(inType, outType);
 }
 
 CIF::RAII::UPtr_t<IGC::IgcOclTranslationCtxTagOCL> CompilerInterface::createIgcTranslationCtx(const Device &device, IGC::CodeType::CodeType_t inType, IGC::CodeType::CodeType_t outType) {

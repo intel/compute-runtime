@@ -96,7 +96,7 @@ OfflineCompiler::OfflineCompiler() = default;
 // dtor
 ////////////////////////////////////////////////////////////////////////////////
 OfflineCompiler::~OfflineCompiler() {
-    delete[] llvmBinary;
+    delete[] irBinary;
     delete[] genBinary;
     delete[] elfBinary;
 }
@@ -137,7 +137,7 @@ int OfflineCompiler::buildSourceCode() {
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
 
         if (!inputFileLlvm) {
-            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : IGC::CodeType::llvmBc;
+            IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : preferredIntermediateRepresentation;
             // sourceCode.size() returns the number of characters without null terminated char
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
             auto fclOptions = CIF::Builtins::CreateConstBuffer(fclMain.get(), options.c_str(), options.size());
@@ -169,7 +169,8 @@ int OfflineCompiler::buildSourceCode() {
                 break;
             }
 
-            storeBinary(llvmBinary, llvmBinarySize, fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
+            storeBinary(irBinary, irBinarySize, fclOutput->GetOutput()->GetMemory<char>(), fclOutput->GetOutput()->GetSizeRaw());
+            isSpirV = intermediateRepresentation == IGC::CodeType::spirV;
             updateBuildLog(fclOutput->GetBuildLog()->GetMemory<char>(), fclOutput->GetBuildLog()->GetSizeRaw());
 
             igcOutput = igcTranslationCtx->Translate(fclOutput->GetOutput(), fclOptions.get(),
@@ -359,6 +360,7 @@ int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
     }
 
     fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
+    preferredIntermediateRepresentation = IGC::CodeType::llvmBc;
 
     this->igcLib.reset(OsLibrary::load(Os::igcDllName));
     if (this->igcLib == nullptr) {
@@ -692,9 +694,9 @@ bool OfflineCompiler::generateElfBinary() {
 
             if (retVal) {
                 sectionNode.Name = "Intel(R) OpenCL LLVM Object";
-                sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
-                sectionNode.pData = llvmBinary;
-                sectionNode.DataSize = (uint32_t)llvmBinarySize;
+                sectionNode.Type = isSpirV ? CLElfLib::SH_TYPE_SPIRV : CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
+                sectionNode.pData = irBinary;
+                sectionNode.DataSize = (uint32_t)irBinarySize;
                 retVal = pElfWriter->addSection(&sectionNode);
             }
 
@@ -758,31 +760,17 @@ void OfflineCompiler::writeOutAllFiles() {
         }
     }
 
-    if (llvmBinary) {
-        std::string llvmOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
-        (useLlvmText == true) ? llvmOutputFile.append(fileBase + ".ll") : llvmOutputFile.append(fileBase + ".bc");
-
-        if (useOptionsSuffix) {
-            std::string opts(options.c_str());
-            std::replace(opts.begin(), opts.end(), ' ', '_');
-            llvmOutputFile.append(opts);
-        }
+    if (irBinary) {
+        std::string irOutputFileName = generateFilePathForIr(fileBase) + generateOptsSuffix();
 
         writeDataToFile(
-            llvmOutputFile.c_str(),
-            llvmBinary,
-            llvmBinarySize);
+            irOutputFileName.c_str(),
+            irBinary,
+            irBinarySize);
     }
 
     if (genBinary) {
-        std::string genOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
-        genOutputFile.append(fileBase + ".gen");
-
-        if (useOptionsSuffix) {
-            std::string opts(options.c_str());
-            std::replace(opts.begin(), opts.end(), ' ', '_');
-            genOutputFile.append(opts);
-        }
+        std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
 
         writeDataToFile(
             genOutputFile.c_str(),
@@ -790,23 +778,14 @@ void OfflineCompiler::writeOutAllFiles() {
             genBinarySize);
 
         if (useCppFile) {
-            std::string cppOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
-            cppOutputFile.append(fileBase + ".cpp");
+            std::string cppOutputFile = generateFilePath(outputDirectory, fileBase, ".cpp");
             std::string cpp = parseBinAsCharArray((uint8_t *)genBinary, genBinarySize, fileTrunk);
             writeDataToFile(cppOutputFile.c_str(), cpp.c_str(), cpp.size());
         }
     }
 
     if (elfBinary) {
-        std::string elfOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
-
-        elfOutputFile.append(fileBase + ".bin");
-
-        if (useOptionsSuffix) {
-            std::string opts(options.c_str());
-            std::replace(opts.begin(), opts.end(), ' ', '_');
-            elfOutputFile.append(opts);
-        }
+        std::string elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
 
         writeDataToFile(
             elfOutputFile.c_str(),
@@ -815,14 +794,7 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 
     if (debugDataBinary) {
-        std::string debugOutputFile = (outputDirectory == "") ? "" : outputDirectory + "/";
-        debugOutputFile.append(fileBase + ".dbg");
-
-        if (useOptionsSuffix) {
-            std::string opts(options.c_str());
-            std::replace(opts.begin(), opts.end(), ' ', '_');
-            debugOutputFile.append(opts);
-        }
+        std::string debugOutputFile = generateFilePath(outputDirectory, fileBase, ".dbg") + generateOptsSuffix();
 
         writeDataToFile(
             debugOutputFile.c_str(),
@@ -854,6 +826,26 @@ bool OfflineCompiler::readOptionsFromFile(std::string &options, const std::strin
     }
     deleteDataReadFromFile(pOptions);
     return true;
+}
+
+std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension) {
+    UNRECOVERABLE_IF(extension == nullptr);
+
+    if (directory.empty()) {
+        return fileNameBase + extension;
+    }
+
+    bool hasTrailingSlash = (*directory.rbegin() == '/');
+    std::string ret;
+    ret.reserve(directory.size() + (hasTrailingSlash ? 0 : 1) + fileNameBase.size() + strlen(extension) + 1);
+    ret.append(directory);
+    if (false == hasTrailingSlash) {
+        ret.append("/", 1);
+    }
+    ret.append(fileNameBase);
+    ret.append(extension);
+
+    return ret;
 }
 
 } // namespace OCLRT

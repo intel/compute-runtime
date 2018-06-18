@@ -1249,18 +1249,19 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail linking - code to be linked does not exist
-    char *pLLVMBin = p->GetLLVMBinary();
-    size_t LLVMBinSize = p->GetLLVMBinarySize();
-    p->SetLLVMBinary(nullptr);
+    bool isSpirvTmp = p->getIsSpirV();
+    char *pIrBin = p->GetIrBinary();
+    size_t irBinSize = p->GetIrBinarySize();
+    p->SetIrBinary(nullptr, false);
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
-    p->SetLLVMBinary(pLLVMBin);
+    p->SetIrBinary(pIrBin, isSpirvTmp);
 
     // fail linking - size of code to be linked is == 0
-    p->SetLLVMBinarySize(0);
+    p->SetIrBinarySize(0, isSpirvTmp);
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
-    p->SetLLVMBinarySize(LLVMBinSize);
+    p->SetIrBinarySize(irBinSize, isSpirvTmp);
 
     // fail linking - any link error (here caused by specifying unrecognized option)
     retVal = pProgram->link(0, nullptr, "-invalid-option", 1, &program, nullptr, nullptr);
@@ -1629,7 +1630,7 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
 class FailProgram : public Program {
   public:
     FailProgram(Context *context, bool isBuiltIn = false) : Program(context, isBuiltIn) {}
-    cl_int rebuildProgramFromLLVM() override {
+    cl_int rebuildProgramFromIr() override {
         return CL_INVALID_PROGRAM;
     }
     // make method visible
@@ -2183,8 +2184,8 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
         MyProgram3(){};
         cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
         void setDevice(Device *device) { pDevice = device; }
-        cl_int rebuildProgramFromLLVMPub() { return rebuildProgramFromLLVM(); }
-        char *getLlvmBinary() { return llvmBinary; };
+        using Program::rebuildProgramFromIr;
+        char *getIrBinary() { return irBinary; };
     };
 
     cl_int retVal;
@@ -2204,7 +2205,7 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     EXPECT_NE(0u, binarySize);
 
     // Find its OpenCL program data and mark that the data were created with unknown compiler version,
-    // which means that the program has to be rebuild from its LLVM binary
+    // which means that the program has to be rebuild from its IR binary
     CLElfLib::CElfReader *pElfReader = nullptr;
     pElfReader = CLElfLib::CElfReader::create((const char *)pBinary, binarySize);
     EXPECT_NE(nullptr, pElfReader);
@@ -2234,12 +2235,11 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Find its LLVM binary section and modify its header magic,
-    // then ask to rebuild program from its LLVM binary - it should fail
-    char *pLlvmBinary = pProgram->getLlvmBinary();
-    EXPECT_EQ(*pLlvmBinary, 'B');
-    (*pLlvmBinary)--;
-    retVal = pProgram->rebuildProgramFromLLVMPub();
+    // Get IR binary and modify its header magic,
+    // then ask to rebuild program from its IR binary - it should fail
+    char *pIrBinary = pProgram->getIrBinary();
+    (*pIrBinary)--;
+    retVal = pProgram->rebuildProgramFromIr();
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // Cleanup
@@ -2256,7 +2256,7 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
 
         cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
         void setDevice(Device *device) { pDevice = device; }
-        cl_int rebuildProgramFromLLVMPub() { return rebuildProgramFromLLVM(); }
+        using Program::rebuildProgramFromIr;
 
       protected:
         CompilerInterface *getCompilerInterface() const override { return nullptr; }
@@ -2279,8 +2279,8 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
     cl_int retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Ask to rebuild program from its LLVM binary - it should fail (no Compiler Interface)
-    retVal = pProgram->rebuildProgramFromLLVMPub();
+    // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
+    retVal = pProgram->rebuildProgramFromIr();
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 
     // Cleanup
@@ -2303,7 +2303,7 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
 
         cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
         void setDevice(Device *device) { pDevice = device; }
-        cl_int rebuildProgramFromLLVMPub() { return rebuildProgramFromLLVM(); }
+        using Program::rebuildProgramFromIr;
         void releaseCompilerInterface() {
             delete cip;
             cip = nullptr;
@@ -2334,8 +2334,8 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
     cl_int retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Ask to rebuild program from its LLVM binary - it should fail (linking error)
-    retVal = pProgram->rebuildProgramFromLLVMPub();
+    // Ask to rebuild program from its IR binary - it should fail (linking error)
+    retVal = pProgram->rebuildProgramFromIr();
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // Cleanup
@@ -2448,7 +2448,7 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
         MyProgram3(){};
         cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
         void setDevice(Device *device) { pDevice = device; }
-        cl_int rebuildProgramFromLLVMPub() { return rebuildProgramFromLLVM(); }
+        using Program::rebuildProgramFromIr;
         cl_int processGenBinary() override { return CL_INVALID_BINARY; }
     };
 
@@ -2472,8 +2472,8 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
     retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    // Ask to rebuild program from its LLVM binary - it should fail (simulated invalid binary)
-    retVal = pProgram->rebuildProgramFromLLVMPub();
+    // Ask to rebuild program from its IR binary - it should fail (simulated invalid binary)
+    retVal = pProgram->rebuildProgramFromIr();
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 
     // Cleanup
@@ -2694,10 +2694,10 @@ struct CreateProgramFromBinaryMock : MockProgram {
 
     cl_int createProgramFromBinary(const void *pBinary,
                                    size_t binarySize) override {
-        this->llvmBinary = new char[binarySize];
-        this->llvmBinarySize = binarySize;
+        this->irBinary = new char[binarySize];
+        this->irBinarySize = binarySize;
         this->isSpirV = spirv;
-        memcpy_s(this->llvmBinary, binarySize, pBinary, binarySize);
+        memcpy_s(this->irBinary, binarySize, pBinary, binarySize);
         return ErrCodeToReturn;
     }
 };
@@ -2975,4 +2975,104 @@ TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatf
     EXPECT_EQ(1, pProgram->getRefInternalCount());
     context->decRefInternal();
     pProgram->decRefInternal();
+}
+
+TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermediateRepresentationTypeIsUsed) {
+    struct SmallMockCompilerInterface : MockCompilerInterface {
+        using CompilerInterface::initialize;
+        using CompilerInterface::useLlvmText;
+        IGC::CodeType::CodeType_t intermediateRepresentation;
+        IGC::CodeType::CodeType_t getPreferredIntermediateRepresentation(const Device &device) override {
+            return intermediateRepresentation;
+        }
+    };
+
+    struct SmallMockProgram : public Program {};
+    using ProgramAutoPtr = std::unique_ptr<SmallMockProgram, void (*)(SmallMockProgram *)>;
+
+    auto device = castToObject<Device>(pContext->getDevice(0));
+
+    TranslationArgs input = {};
+    char inputData = 0;
+    input.pInput = &inputData;
+    input.InputSize = 1;
+
+    SmallMockCompilerInterface compilerInterface;
+    auto compilerMain = new MockCIFMain();
+    compilerInterface.overrideGlobalCompilerInterface();
+    compilerInterface.SetFclMain(compilerMain);
+    compilerMain->Retain();
+    compilerInterface.SetIgcMain(compilerMain);
+    compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+
+    compilerInterface.useLlvmText = true;
+    ProgramAutoPtr programLlvmText{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    programLlvmText->setDevice(device);
+    compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
+    compilerInterface.compile(*programLlvmText, input);
+    EXPECT_FALSE(programLlvmText->getIsSpirV());
+
+    compilerInterface.useLlvmText = false;
+    ProgramAutoPtr programSpirV{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    programSpirV->setDevice(device);
+    compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
+    compilerInterface.compile(*programSpirV, input);
+    EXPECT_TRUE(programSpirV->getIsSpirV());
+
+    ProgramAutoPtr programLlvmBc{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    programLlvmBc->setDevice(device);
+    compilerInterface.intermediateRepresentation = IGC::CodeType::llvmBc;
+    compilerInterface.compile(*programLlvmBc, input);
+    EXPECT_FALSE(programLlvmBc->getIsSpirV());
+}
+
+TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPathIsTaken) {
+    struct SmallMockProgram : public Program {
+        using Program::rebuildProgramFromIr;
+    };
+    using ProgramAutoPtr = std::unique_ptr<SmallMockProgram, void (*)(SmallMockProgram *)>;
+
+    auto device = castToObject<Device>(pContext->getDevice(0));
+
+    MockCompilerInterface compilerInterface;
+    auto compilerMain = new MockCIFMain();
+    compilerInterface.overrideGlobalCompilerInterface();
+    compilerInterface.SetFclMain(compilerMain);
+    compilerMain->Retain();
+    compilerInterface.SetIgcMain(compilerMain);
+    compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
+    compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+
+    std::string receivedInput;
+    MockCompilerDebugVars debugVars = {};
+    debugVars.receivedInput = &receivedInput;
+    debugVars.forceBuildFailure = true;
+    gEnvironment->igcPushDebugVars(debugVars);
+    std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
+
+    ProgramAutoPtr program{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    program->setDevice(device);
+    uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
+    program->storeIrBinary(spirv, sizeof(spirv), true);
+    auto buildRet = program->rebuildProgramFromIr();
+    EXPECT_NE(CL_SUCCESS, buildRet);
+
+    using namespace CLElfLib;
+    using AutoElfReader = std::unique_ptr<CElfReader, void (*)(CElfReader *)>;
+    AutoElfReader elfReader{CElfReader::create(receivedInput.data(), receivedInput.size()), [](CElfReader *r) { CElfReader::destroy(r); }};
+    const SElf64SectionHeader *spvSection = nullptr;
+    char *spvSectionData = nullptr;
+    size_t spvSectionDataSize = 0;
+    for (uint32_t i = 0; i < elfReader->getElfHeader()->NumSectionHeaderEntries; i++) {
+        const SElf64SectionHeader *section = elfReader->getSectionHeader(i);
+        if (section->Type == CLElfLib::SH_TYPE_SPIRV) {
+            EXPECT_EQ(nullptr, spvSection);
+            elfReader->getSectionData(i, spvSectionData, spvSectionDataSize);
+            spvSection = section;
+        }
+    }
+    ASSERT_NE(nullptr, spvSection);
+    EXPECT_EQ(sizeof(spirv), spvSectionDataSize);
+    EXPECT_EQ(0, memcmp(spirv, spvSectionData, spvSectionDataSize));
 }

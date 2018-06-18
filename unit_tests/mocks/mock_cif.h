@@ -77,6 +77,11 @@ struct MockCIFMain : MockCIF<CIF::CIFMain> {
     }
 
     template <typename InterfaceT>
+    void setDefaultCreatorFunc(CreatorFuncT func) {
+        defaultCreators[InterfaceT::GetInterfaceId()] = func;
+    }
+
+    template <typename InterfaceT>
     static CreatorFuncT getGlobalCreatorFunc() {
         auto it = globalCreators.find(InterfaceT::GetInterfaceId());
         if (it == globalCreators.end()) {

@@ -41,6 +41,8 @@ enum ErrorCode {
     PRINT_USAGE = -5152,
 };
 
+std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
+
 class OfflineCompiler {
   public:
     static OfflineCompiler *create(uint32_t numArgs, const char **argv, int &retVal);
@@ -72,6 +74,16 @@ class OfflineCompiler {
     int buildSourceCode();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     bool generateElfBinary();
+    std::string generateFilePathForIr(const std::string &fileNameBase) {
+        const char *ext = (isSpirV) ? ".spv" : ".bc";
+        return generateFilePath(outputDirectory, fileNameBase, useLlvmText ? ".ll" : ext);
+    }
+
+    std::string generateOptsSuffix() {
+        std::string suffix{useOptionsSuffix ? options : ""};
+        std::replace(suffix.begin(), suffix.end(), ' ', '_');
+        return suffix;
+    }
     void writeOutAllFiles();
     const HardwareInfo *hwInfo = nullptr;
 
@@ -95,8 +107,9 @@ class OfflineCompiler {
     size_t elfBinarySize = 0;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
-    char *llvmBinary = nullptr;
-    size_t llvmBinarySize = 0;
+    char *irBinary = nullptr;
+    size_t irBinarySize = 0;
+    bool isSpirV = false;
     char *debugDataBinary = nullptr;
     size_t debugDataBinarySize = 0;
 
@@ -107,5 +120,6 @@ class OfflineCompiler {
     std::unique_ptr<OsLibrary> fclLib = nullptr;
     CIF::RAII::UPtr_t<CIF::CIFMain> fclMain = nullptr;
     CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL> fclDeviceCtx = nullptr;
+    IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 };
 } // namespace OCLRT

@@ -731,4 +731,64 @@ TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadO
     EXPECT_FALSE(result);
 }
 
+TEST(OfflineCompilerTest, givenEmptyDirectoryWhenGenerateFilePathIsCalledThenTrailingSlashIsNotAppended) {
+    std::string path = generateFilePath("", "a", "b");
+    EXPECT_STREQ("ab", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenNonEmptyDirectoryWithTrailingSlashWhenGenerateFilePathIsCalledThenAdditionalTrailingSlashIsNotAppended) {
+    std::string path = generateFilePath("d/", "a", "b");
+    EXPECT_STREQ("d/ab", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenNonEmptyDirectoryWithoutTrailingSlashWhenGenerateFilePathIsCalledThenTrailingSlashIsAppended) {
+    std::string path = generateFilePath("d", "a", "b");
+    EXPECT_STREQ("d/ab", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenSpirvPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
+    MockOfflineCompiler compiler;
+    compiler.isSpirV = true;
+    compiler.outputDirectory = "d";
+    std::string path = compiler.generateFilePathForIr("a");
+    EXPECT_STREQ("d/a.spv", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenLlvmBcPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
+    MockOfflineCompiler compiler;
+    compiler.isSpirV = false;
+    compiler.outputDirectory = "d";
+    std::string path = compiler.generateFilePathForIr("a");
+    EXPECT_STREQ("d/a.bc", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenLlvmTextPathWhenGenerateFilePathForIrIsCalledThenProperExtensionIsReturned) {
+    MockOfflineCompiler compiler;
+    compiler.isSpirV = false;
+    compiler.useLlvmText = true;
+    compiler.outputDirectory = "d";
+    std::string path = compiler.generateFilePathForIr("a");
+    EXPECT_STREQ("d/a.ll", path.c_str());
+
+    compiler.isSpirV = true;
+    path = compiler.generateFilePathForIr("a");
+    EXPECT_STREQ("d/a.ll", path.c_str());
+}
+
+TEST(OfflineCompilerTest, givenDisabledOptsSuffixWhenGenerateOptsSuffixIsCalledThenEmptyStringIsReturned) {
+    MockOfflineCompiler compiler;
+    compiler.options = "A B C";
+    compiler.useOptionsSuffix = false;
+    std::string suffix = compiler.generateOptsSuffix();
+    EXPECT_STREQ("", suffix.c_str());
+}
+
+TEST(OfflineCompilerTest, givenEnabledOptsSuffixWhenGenerateOptsSuffixIsCalledThenEscapedStringIsReturned) {
+    MockOfflineCompiler compiler;
+    compiler.options = "A B C";
+    compiler.useOptionsSuffix = true;
+    std::string suffix = compiler.generateOptsSuffix();
+    EXPECT_STREQ("A_B_C", suffix.c_str());
+}
+
 } // namespace OCLRT

@@ -354,6 +354,7 @@ class MockCompilerInterface : public CompilerInterface {
     SipKernelType requestedSipKernel = SipKernelType::COUNT;
 
     IGC::IgcOclDeviceCtxTagOCL *peekIgcDeviceCtx(Device *device) { return igcDeviceContexts[device].get(); }
+    using CompilerInterface::useLlvmText;
 };
 
 template <>

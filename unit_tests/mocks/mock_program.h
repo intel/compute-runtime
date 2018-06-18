@@ -98,10 +98,16 @@ class MockProgram : public Program {
     void SetGlobalVariableTotalSize(size_t globalVarSize) { globalVarTotalSize = globalVarSize; }
     void SetDevice(Device *pDev) { pDevice = pDev; }
 
-    char *GetLLVMBinary() { return llvmBinary; }
-    size_t GetLLVMBinarySize() { return llvmBinarySize; }
-    void SetLLVMBinary(char *ptr) { llvmBinary = ptr; }
-    void SetLLVMBinarySize(size_t bsz) { llvmBinarySize = bsz; }
+    char *GetIrBinary() { return irBinary; }
+    size_t GetIrBinarySize() { return irBinarySize; }
+    void SetIrBinary(char *ptr, bool isSpirv) {
+        irBinary = ptr;
+        this->isSpirV = isSpirV;
+    }
+    void SetIrBinarySize(size_t bsz, bool isSpirv) {
+        irBinarySize = bsz;
+        this->isSpirV = isSpirV;
+    }
 
     uint64_t getHash();
     void setAllowNonUniform(bool allow) {

@@ -96,7 +96,7 @@ cl_int Program::link(
                 break;
             }
             inputProgramsInternal.push_back(pInputProgObj);
-            if ((pInputProgObj->llvmBinary == nullptr) || (pInputProgObj->llvmBinarySize == 0)) {
+            if ((pInputProgObj->irBinary == nullptr) || (pInputProgObj->irBinarySize == 0)) {
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
@@ -107,8 +107,8 @@ cl_int Program::link(
                 sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
             }
             sectionNode.Flags = 0;
-            sectionNode.pData = pInputProgObj->llvmBinary;
-            sectionNode.DataSize = static_cast<unsigned int>(pInputProgObj->llvmBinarySize);
+            sectionNode.pData = pInputProgObj->irBinary;
+            sectionNode.DataSize = static_cast<unsigned int>(pInputProgObj->irBinarySize);
 
             pElfWriter->addSection(&sectionNode);
         }

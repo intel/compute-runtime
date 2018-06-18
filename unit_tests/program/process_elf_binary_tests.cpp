@@ -77,11 +77,12 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     isSpirV = Program::isValidSpirvBinary(spirvBinary, spirvBinarySize);
     EXPECT_TRUE(isSpirV);
 
-    //clCompileProgram => SPIR-V stored as LLVM binary
-    storeLlvmBinary(spirvBinary, spirvBinarySize);
+    //clCompileProgram => SPIR-V stored as IR binary
+    storeIrBinary(spirvBinary, spirvBinarySize, true);
     programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
-    EXPECT_NE(nullptr, llvmBinary);
-    EXPECT_NE(0u, llvmBinarySize);
+    EXPECT_NE(nullptr, irBinary);
+    EXPECT_NE(0u, irBinarySize);
+    EXPECT_TRUE(isSpirV);
 
     //clGetProgramInfo => SPIR-V stored as ELF binary
     cl_int retVal = resolveProgramBinary();
@@ -142,11 +143,11 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
 
     size_t optionsSize = strlen(options.c_str()) + 1;
     auto pTmpGenBinary = new char[genBinarySize];
-    auto pTmpLlvmBinary = new char[llvmBinarySize];
+    auto pTmpIrBinary = new char[irBinarySize];
     auto pTmpOptions = new char[optionsSize];
 
     memcpy_s(pTmpGenBinary, genBinarySize, genBinary, genBinarySize);
-    memcpy_s(pTmpLlvmBinary, llvmBinarySize, llvmBinary, llvmBinarySize);
+    memcpy_s(pTmpIrBinary, irBinarySize, irBinary, irBinarySize);
     memcpy_s(pTmpOptions, optionsSize, options.c_str(), optionsSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -159,11 +160,11 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     retVal = resolveProgramBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(0, memcmp(pTmpGenBinary, genBinary, genBinarySize));
-    EXPECT_EQ(0, memcmp(pTmpLlvmBinary, llvmBinary, llvmBinarySize));
+    EXPECT_EQ(0, memcmp(pTmpIrBinary, irBinary, irBinarySize));
     EXPECT_EQ(0, memcmp(pTmpOptions, options.c_str(), optionsSize));
 
     delete[] pTmpGenBinary;
-    delete[] pTmpLlvmBinary;
+    delete[] pTmpIrBinary;
     delete[] pTmpOptions;
 
     deleteDataReadFromFile(pBinary);

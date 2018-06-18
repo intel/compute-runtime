@@ -277,8 +277,8 @@ TEST_F(CompilerInterfaceTest, CompileClToIsaWithOptions) {
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, CompileClToLLVM) {
-    // compile only from .cl to LLVM
+TEST_F(CompilerInterfaceTest, CompileClToIr) {
+    // compile only from .cl to IR
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = clFiles + "copybuffer.elf";
     gEnvironment->fclPushDebugVars(fclDebugVars);
@@ -325,8 +325,8 @@ TEST_F(CompilerInterfaceTest, whenFclTranslatorReturnsNullptrThenCompileFailsGra
     gEnvironment->fclPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, CompileClToLLVMCompileFailure) {
-    // compile only from .cl to LLVM
+TEST_F(CompilerInterfaceTest, CompileClToIrCompileFailure) {
+    // compile only from .cl to IR
     MockCompilerDebugVars fclDebugVars;
     fclDebugVars.fileName = "../copybuffer.elf";
     fclDebugVars.forceBuildFailure = true;
@@ -338,7 +338,7 @@ TEST_F(CompilerInterfaceTest, CompileClToLLVMCompileFailure) {
     gEnvironment->fclPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, LinkLLVMLinkFailure) {
+TEST_F(CompilerInterfaceTest, LinkIrLinkFailure) {
     // link only .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = "../copybuffer.ll";
@@ -351,7 +351,7 @@ TEST_F(CompilerInterfaceTest, LinkLLVMLinkFailure) {
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, LinkLLVM) {
+TEST_F(CompilerInterfaceTest, LinkIr) {
     // link only from .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
@@ -399,7 +399,7 @@ TEST_F(CompilerInterfaceTest, whenTranslateReturnsNullptrThenLinkFailsGracefully
 }
 
 TEST_F(CompilerInterfaceTest, CreateLibFailure) {
-    // create library from .ll to LLVM
+    // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = "../copybuffer.ll";
     igcDebugVars.forceBuildFailure = true;
@@ -412,7 +412,7 @@ TEST_F(CompilerInterfaceTest, CreateLibFailure) {
 }
 
 TEST_F(CompilerInterfaceTest, CreateLib) {
-    // create library from .ll to LLVM
+    // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
     gEnvironment->igcPushDebugVars(igcDebugVars);
@@ -683,13 +683,13 @@ struct LockListener {
 
 TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIsNotAvailableThenCreateNewDeviceCtxAndUseItToReturnValidTranslationCtx) {
     auto device = this->pContext->getDevice(0);
-    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_NE(nullptr, ret.get());
     auto firstBaseCtx = this->pCompilerInterface->getFclBaseTranslationCtx();
     EXPECT_NE(nullptr, firstBaseCtx);
 
     MockDevice md{device->getHardwareInfo()};
-    auto ret2 = this->pCompilerInterface->createFclTranslationCtx(md, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret2 = this->pCompilerInterface->createFclTranslationCtx(md, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_NE(nullptr, ret2.get());
     EXPECT_EQ(firstBaseCtx, this->pCompilerInterface->getFclBaseTranslationCtx());
 }
@@ -698,7 +698,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewFclTranslationCtxWhenDeviceCtxIs
     auto device = this->pContext->getDevice(0);
     auto deviceCtx = CIF::RAII::UPtr(new MockCompilerDeviceCtx<MockFclOclDeviceCtx, MockFclOclTranslationCtx>);
     this->pCompilerInterface->setFclDeviceCtx(*device, deviceCtx.get());
-    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_NE(nullptr, ret.get());
     EXPECT_EQ(deviceCtx->returned, ret.get());
 }
@@ -711,7 +711,7 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContex
     this->pCompilerInterface->lockListenerData = &listenerData;
     this->pCompilerInterface->lockListener = ListenerT::Listener;
 
-    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_NE(nullptr, ret.get());
     ASSERT_EQ(1U, this->pCompilerInterface->getFclDeviceContexts().size());
     ASSERT_NE(this->pCompilerInterface->getFclDeviceContexts().end(),
@@ -725,9 +725,9 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenFclMainIsNotAv
 
     auto device = this->pContext->getDevice(0);
     MockCompilerInterface tempCompilerInterface;
-    auto retFcl = tempCompilerInterface.createFclTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retFcl = tempCompilerInterface.createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retFcl);
-    auto retIgc = tempCompilerInterface.createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retIgc = tempCompilerInterface.createIgcTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retIgc);
 
     OCLRT::failCreateCifMain = false;
@@ -741,10 +741,10 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewTranslationCtxWhenCouldNotCreate
     OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>(nullptr);
     OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(nullptr);
 
-    auto retFcl = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retFcl = pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retFcl);
 
-    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
     EXPECT_EQ(nullptr, retIgc);
 
     OCLRT::MockCIFMain::setGlobalCreatorFunc<OCLRT::MockFclOclDeviceCtx>(befFclMock);
@@ -755,7 +755,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenDeviceCtxIs
     auto device = this->pContext->getDevice(0);
     auto deviceCtx = CIF::RAII::UPtr(new MockCompilerDeviceCtx<MockIgcOclDeviceCtx, MockIgcOclTranslationCtx>);
     this->pCompilerInterface->setIgcDeviceCtx(*device, deviceCtx.get());
-    auto ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, ret.get());
     EXPECT_EQ(deviceCtx->returned, ret.get());
 }
@@ -768,7 +768,7 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewIgcTranslationContex
     this->pCompilerInterface->lockListenerData = &listenerData;
     this->pCompilerInterface->lockListener = ListenerT::Listener;
 
-    auto ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto ret = this->pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, ret.get());
     ASSERT_EQ(1U, this->pCompilerInterface->getIgcDeviceContexts().size());
     ASSERT_NE(this->pCompilerInterface->getIgcDeviceContexts().end(),
@@ -791,7 +791,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPop
         debugVars.failCreateGtSystemInfoInterface = (i & (1 << 1)) != 0;
         setIgcDebugVars(debugVars);
 
-        auto ret = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+        auto ret = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
         EXPECT_EQ(nullptr, ret);
     }
 
@@ -800,7 +800,7 @@ TEST_F(CompilerInterfaceTest, GivenRequestForNewIgcTranslationCtxWhenCouldNotPop
 
 TEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenRequestForNewTranslationCtxThenUseDefaultPlatform) {
     auto device = this->pContext->getDevice(0);
-    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);
     IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();
@@ -822,7 +822,7 @@ TEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestFor
     DebugManager.flags.ForceCompilerUsePlatform.set(dbgPlatformString);
 
     auto device = this->pContext->getDevice(0);
-    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+    auto retIgc = pCompilerInterface->createIgcTranslationCtx(*device, IGC::CodeType::spirV, IGC::CodeType::oclGenBin);
     EXPECT_NE(nullptr, retIgc);
     IGC::IgcOclDeviceCtxTagOCL *devCtx = pCompilerInterface->peekIgcDeviceCtx(device);
     auto igcPlatform = devCtx->GetPlatformHandle();

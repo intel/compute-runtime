@@ -100,7 +100,7 @@ cl_int Program::processElfBinary(
             case CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY:
                 pElfReader->getSectionData(i, pSectionData, sectionDataSize);
                 if (pSectionData && sectionDataSize) {
-                    storeLlvmBinary(pSectionData, sectionDataSize);
+                    storeIrBinary(pSectionData, sectionDataSize, isSpirV);
                 }
                 break;
 
@@ -169,7 +169,7 @@ cl_int Program::resolveProgramBinary() {
         case CL_PROGRAM_BINARY_TYPE_LIBRARY:
             headerType = CLElfLib::EH_TYPE_OPENCL_LIBRARY;
 
-            if (!llvmBinary || !llvmBinarySize) {
+            if (!irBinary || !irBinarySize) {
                 retVal = CL_INVALID_BINARY;
             }
             break;
@@ -177,7 +177,7 @@ cl_int Program::resolveProgramBinary() {
         case CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT:
             headerType = CLElfLib::EH_TYPE_OPENCL_OBJECTS;
 
-            if (!llvmBinary || !llvmBinarySize) {
+            if (!irBinary || !irBinarySize) {
                 retVal = CL_INVALID_BINARY;
             }
             break;
@@ -209,13 +209,13 @@ cl_int Program::resolveProgramBinary() {
                     }
                     if (headerType == CLElfLib::EH_TYPE_OPENCL_LIBRARY) {
                         sectionNode.Name = "Intel(R) OpenCL LLVM Archive";
-                        sectionNode.pData = (char *)llvmBinary;
-                        sectionNode.DataSize = (uint32_t)llvmBinarySize;
+                        sectionNode.pData = (char *)irBinary;
+                        sectionNode.DataSize = (uint32_t)irBinarySize;
                         elfRetVal = pElfWriter->addSection(&sectionNode);
                     } else {
                         sectionNode.Name = "Intel(R) OpenCL LLVM Object";
-                        sectionNode.pData = (char *)llvmBinary;
-                        sectionNode.DataSize = (uint32_t)llvmBinarySize;
+                        sectionNode.pData = (char *)irBinary;
+                        sectionNode.DataSize = (uint32_t)irBinarySize;
                         elfRetVal = pElfWriter->addSection(&sectionNode);
                     }
                 }

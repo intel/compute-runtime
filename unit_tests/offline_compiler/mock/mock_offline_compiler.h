@@ -28,8 +28,15 @@ namespace OCLRT {
 
 class MockOfflineCompiler : public OfflineCompiler {
   public:
+    using OfflineCompiler::generateFilePathForIr;
+    using OfflineCompiler::generateOptsSuffix;
     using OfflineCompiler::inputFileLlvm;
+    using OfflineCompiler::isSpirV;
+    using OfflineCompiler::options;
+    using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
+    using OfflineCompiler::useLlvmText;
+    using OfflineCompiler::useOptionsSuffix;
 
     MockOfflineCompiler() : OfflineCompiler() {
     }
