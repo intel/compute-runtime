@@ -1,0 +1,60 @@
+%global neo_commit_id __NEO_COMMIT_ID__
+%global gmmlib_commit_id __GMMLIB_COMMIT_ID__
+
+Name: intel-opencl
+Version: __NEO_PACKAGE_VERSION__
+Release: __NEO_PACKAGE_RELEASE__%{?dist}
+Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
+
+Group: System Environment/Libraries
+License: MIT
+URL: https://github.com/intel/compute-runtime
+Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}/neo.tar.gz
+Source1: https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}/gmmlib.tar.gz
+
+BuildRequires: cmake clang gcc-c++ ninja-build make procps python2 sed libva-devel
+BuildRequires: intel-igc-opencl-devel >= __IGC_VERSION_REQUIRED__
+Requires: intel-igc-opencl >= __IGC_VERSION_REQUIRED__
+
+%description
+
+
+%prep
+
+
+%build
+echo "==== BUILD ===="
+rm -rf *
+
+mkdir neo gmmlib
+tar xzf $RPM_SOURCE_DIR/neo.tar.gz -C neo --strip-components=1
+tar xzf $RPM_SOURCE_DIR/gmmlib.tar.gz -C gmmlib --strip-components=1
+
+mkdir build
+cd build
+cmake ../neo -DCMAKE_BUILD_TYPE=Release -DNEO_DRIVER_VERSION=%{version}
+make -j`nproc` igdrcl_dll
+echo "==== DONE ===="
+
+
+%install
+echo "==== INSTALL ===="
+mkdir -p $RPM_BUILD_ROOT/usr/lib64
+mkdir -p $RPM_BUILD_ROOT/etc/OpenCL/vendors
+cp $RPM_BUILD_DIR/build/bin/libigdrcl.so $RPM_BUILD_ROOT/usr/lib64/
+strip $RPM_BUILD_ROOT/usr/lib64/libigdrcl.so
+echo "/usr/lib64/libigdrcl.so" > $RPM_BUILD_ROOT/etc/OpenCL/vendors/intel.icd
+echo "==== DONE ===="
+
+
+%files
+%defattr(-,root,root)
+/usr/lib64/libigdrcl.so
+
+%config(noreplace)
+/etc/OpenCL/vendors/intel.icd
+
+# %doc
+
+
+# %changelog
