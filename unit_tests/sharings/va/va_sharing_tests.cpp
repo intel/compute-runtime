@@ -168,6 +168,8 @@ TEST_F(VaSharingTests, givenMockVaWhenVaSurfaceIsCreatedWithNotAlignedWidthAndHe
     vaSurface->getSurfaceOffsets(surfaceOffsets);
     EXPECT_EQ(alignedHeight, surfaceOffsets.yOffsetForUVplane);
     EXPECT_EQ(alignedOffset, surfaceOffsets.offset);
+    EXPECT_EQ(0u, surfaceOffsets.yOffset);
+    EXPECT_EQ(0u, surfaceOffsets.xOffset);
 
     delete vaSurface;
 }
