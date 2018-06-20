@@ -134,7 +134,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     void SetUp() override {
         MemoryManagementFixture::SetUp();
         pPlatform = platform();
-        pPlatform->initialize(numPlatformDevices, platformDevices);
+        pPlatform->initialize();
         pDevice = pPlatform->getDevice(0);
         cl_device_id device = (cl_device_id)pDevice;
         ContextFixture::SetUp(1, &device);

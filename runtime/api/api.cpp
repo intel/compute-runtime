@@ -74,10 +74,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             break;
         }
 
-        // if the platforms are non-nullptr, we need to fill in the platform IDs
         while (platforms != nullptr) {
             auto pPlatform = platform();
-            bool ret = pPlatform->initialize(numPlatformDevices, platformDevices);
+            bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
             if (!ret) {
                 retVal = CL_INVALID_VALUE;
@@ -158,9 +157,8 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                 break;
             }
         } else {
-            /* If platform is nullptr, we choose our default platform. */
             pPlatform = ::platform();
-            bool ret = pPlatform->initialize(numPlatformDevices, platformDevices);
+            bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
             ((void)(ret));
         }

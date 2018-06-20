@@ -34,7 +34,7 @@ extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX
 bool getDevicesResult = true;
 
 bool overrideCommandStreamReceiverCreation = false;
-bool overrideDeviceWithNullHardwareInfo = true;
+bool overrideDeviceWithDefaultHardwareInfo = true;
 
 CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
@@ -53,11 +53,12 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
 }
 
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
-    if (overrideDeviceWithNullHardwareInfo) {
-        *hwInfo = nullptr;
-        numDevicesReturned = 0;
+    if (overrideDeviceWithDefaultHardwareInfo) {
+        *hwInfo = const_cast<HardwareInfo *>(*platformDevices);
+        numDevicesReturned = numPlatformDevices;
         return getDevicesResult;
     }
+
     return getDevicesImpl(hwInfo, numDevicesReturned);
 }
 } // namespace OCLRT

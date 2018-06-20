@@ -106,11 +106,9 @@ const std::string &Platform::peekCompilerExtensions() const {
     return compilerExtensions;
 }
 
-bool Platform::initialize(size_t numDevices,
-                          const HardwareInfo **devices) {
+bool Platform::initialize() {
     HardwareInfo *hwInfo = nullptr;
     size_t numDevicesReturned = 0;
-    const HardwareInfo **hwInfoConst = nullptr;
 
     TakeOwnershipWrapper<Platform> platformOwnership(*this);
 
@@ -124,15 +122,12 @@ bool Platform::initialize(size_t numDevices,
         return false;
     }
 
-    hwInfoConst = (hwInfo != nullptr) ? const_cast<const HardwareInfo **>(&hwInfo) : devices;
-    numDevicesReturned = (hwInfo != nullptr) ? numDevicesReturned : numDevices;
-
     DEBUG_BREAK_IF(this->platformInfo);
     this->platformInfo = new PlatformInfo;
 
     this->devices.resize(numDevicesReturned);
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<OCLRT::Device>(hwInfoConst[deviceOrdinal]);
+        auto pDevice = Device::create<OCLRT::Device>(&hwInfo[deviceOrdinal]);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;

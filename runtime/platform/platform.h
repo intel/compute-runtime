@@ -54,8 +54,7 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     const std::string &peekCompilerExtensions() const;
 
-    bool initialize(size_t numDevices,
-                    const HardwareInfo **devices);
+    bool initialize();
     bool isInitialized();
     void shutdown();
 

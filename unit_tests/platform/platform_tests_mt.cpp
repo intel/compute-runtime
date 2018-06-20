@@ -34,7 +34,7 @@ struct PlatformTestMt : public ::testing::Test {
     void TearDown() override {}
 
     static void initThreadFunc(Platform *pP) {
-        pP->initialize(numPlatformDevices, platformDevices);
+        pP->initialize();
     }
 
     static void shutdownThreadFunc(Platform *pP) {
@@ -46,7 +46,7 @@ struct PlatformTestMt : public ::testing::Test {
 };
 
 static void callinitPlatform(Platform *plt, bool *ret) {
-    *ret = plt->initialize(numPlatformDevices, platformDevices);
+    *ret = plt->initialize();
 }
 
 TEST_F(PlatformTestMt, initialize) {
@@ -83,7 +83,7 @@ TEST_F(PlatformTestMt, mtSafeTest) {
     size_t devNum = pPlatform->getNumDevices();
     EXPECT_EQ(0u, devNum);
 
-    bool ret = pPlatform->initialize(numPlatformDevices, platformDevices);
+    bool ret = pPlatform->initialize();
     std::thread t1(PlatformTestMt::initThreadFunc, pPlatform);
     std::thread t2(PlatformTestMt::shutdownThreadFunc, pPlatform);
     EXPECT_TRUE(ret);

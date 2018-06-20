@@ -51,7 +51,7 @@ TEST_F(PlatformTest, getDevices) {
     Device *device = pPlatform->getDevice(0);
     EXPECT_EQ(nullptr, device);
 
-    bool ret = pPlatform->initialize(numPlatformDevices, platformDevices);
+    bool ret = pPlatform->initialize();
     EXPECT_TRUE(ret);
 
     EXPECT_TRUE(pPlatform->isInitialized());
@@ -80,7 +80,7 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     std::string compilerExtensions = pPlatform->peekCompilerExtensions();
     EXPECT_EQ(std::string(""), compilerExtensions);
 
-    pPlatform->initialize(numPlatformDevices, platformDevices);
+    pPlatform->initialize();
     compilerExtensions = pPlatform->peekCompilerExtensions();
 
     EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string(" -cl-ext=-all,+cl")));
@@ -95,7 +95,7 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
 TEST_F(PlatformTest, destructorCallsShutdownAndReleasesAllResources) {
     Platform *platform = new Platform;
     ASSERT_NE(nullptr, platform);
-    platform->initialize(numPlatformDevices, platformDevices);
+    platform->initialize();
     delete platform;
 }
 
@@ -147,7 +147,7 @@ class PlatformFailingTest : public PlatformTest {
 
 TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenInitializationFails) {
     Platform *platform = new Platform;
-    bool ret = platform->initialize(numPlatformDevices, platformDevices);
+    bool ret = platform->initialize();
     EXPECT_FALSE(ret);
     EXPECT_FALSE(platform->isInitialized());
     delete platform;

@@ -21,6 +21,7 @@
  */
 
 #include "unit_tests/fixtures/platform_fixture.h"
+#include "unit_tests/libult/create_command_stream.h"
 #include "runtime/device/device.h"
 #include "runtime/platform/platform.h"
 #include "gtest/gtest.h"
@@ -28,9 +29,7 @@
 namespace OCLRT {
 
 PlatformFixture::PlatformFixture()
-    : pPlatform(nullptr), num_devices(0), devices(nullptr)
-
-{
+    : pPlatform(nullptr), num_devices(0), devices(nullptr) {
 }
 
 void PlatformFixture::SetUp(size_t numDevices, const HardwareInfo **pDevices) {
@@ -38,7 +37,7 @@ void PlatformFixture::SetUp(size_t numDevices, const HardwareInfo **pDevices) {
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 
     // setup platform / context
-    bool isInitialized = pPlatform->initialize(numDevices, pDevices);
+    bool isInitialized = pPlatform->initialize();
     ASSERT_EQ(true, isInitialized);
 
     num_devices = static_cast<cl_uint>(pPlatform->getNumDevices());

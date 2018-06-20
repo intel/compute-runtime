@@ -32,11 +32,11 @@ using namespace OCLRT;
 
 struct GetDevicesTest : ::testing::TestWithParam<std::tuple<CommandStreamReceiverType, const char *>> {
     void SetUp() override {
-        overrideDeviceWithNullHardwareInfo = false;
+        overrideDeviceWithDefaultHardwareInfo = false;
         gtSystemInfo = *platformDevices[0]->pSysInfo;
     }
     void TearDown() override {
-        overrideDeviceWithNullHardwareInfo = true;
+        overrideDeviceWithDefaultHardwareInfo = true;
         memcpy(const_cast<GT_SYSTEM_INFO *>(platformDevices[0]->pSysInfo), &gtSystemInfo, sizeof(GT_SYSTEM_INFO));
     }
     GT_SYSTEM_INFO gtSystemInfo;

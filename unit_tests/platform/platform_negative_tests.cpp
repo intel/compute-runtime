@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -55,6 +55,6 @@ TEST_F(PlatformNegativeTest, GivenPlatformWhenGetDevicesFailedThenFalseIsReturne
 
     VariableBackup<decltype(getDevicesResult)> bkp(&getDevicesResult, false);
 
-    auto ret = pPlatform->initialize(numPlatformDevices, platformDevices);
+    auto ret = pPlatform->initialize();
     EXPECT_FALSE(ret);
 }
