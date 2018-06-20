@@ -157,3 +157,26 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     EXPECT_EQ(hwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
     DeviceFactory::releaseDevices();
 }
+
+TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {
+    DebugManagerStateRestore stateRestore;
+    auto requiredDeviceCount = 2u;
+    DebugManager.flags.CreateMultipleDevices.set(requiredDeviceCount);
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    ASSERT_NE(nullptr, hwInfo);
+
+    for (auto deviceIndex = 0u; deviceIndex < requiredDeviceCount; deviceIndex++) {
+        EXPECT_NE(nullptr, hwInfo[deviceIndex].pPlatform);
+        EXPECT_NE(nullptr, hwInfo[deviceIndex].pSkuTable);
+        EXPECT_NE(nullptr, hwInfo[deviceIndex].pSysInfo);
+        EXPECT_NE(nullptr, hwInfo[deviceIndex].pWaTable);
+    }
+
+    EXPECT_EQ(hwInfo[0].pPlatform->eDisplayCoreFamily, hwInfo[1].pPlatform->eDisplayCoreFamily);
+
+    ASSERT_TRUE(success);
+    EXPECT_EQ(requiredDeviceCount, numDevices);
+    DeviceFactory::releaseDevices();
+}

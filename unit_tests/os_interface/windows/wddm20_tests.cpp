@@ -118,7 +118,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     const HardwareInfo hwInfo = *platformDevices[0];
     OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 
-    bool success = Wddm::enumAdapters(0, outHwInfo);
+    bool success = Wddm::enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
     const HardwareInfo *hwinfo = *platformDevices;
@@ -139,7 +139,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     auto hwInfo = *platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
 
-    bool success = Wddm::enumAdapters(0, outHwInfo);
+    bool success = Wddm::enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
     const HardwareInfo *hwinfo = *platformDevices;
@@ -180,19 +180,12 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
             fSetAdpaterInfo(&platform, hwInfo.pSysInfo);
             delete ptr;
         });
-    bool ret = Wddm::enumAdapters(0, outHwInfo);
+    bool ret = Wddm::enumAdapters(outHwInfo);
     EXPECT_FALSE(ret);
     EXPECT_EQ(nullptr, outHwInfo.pPlatform);
     EXPECT_EQ(nullptr, outHwInfo.pSkuTable);
     EXPECT_EQ(nullptr, outHwInfo.pSysInfo);
     EXPECT_EQ(nullptr, outHwInfo.pWaTable);
-}
-
-TEST(Wddm20EnumAdaptersTest, devIdExpectFalse) {
-    HardwareInfo tempHwInfos;
-
-    bool success = Wddm::enumAdapters(1, tempHwInfos);
-    EXPECT_FALSE(success);
 }
 
 HWTEST_F(Wddm20Tests, context) {

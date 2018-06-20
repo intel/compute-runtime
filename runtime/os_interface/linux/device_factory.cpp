@@ -41,28 +41,29 @@ HardwareInfo *DeviceFactory::hwInfos = nullptr;
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     std::vector<HardwareInfo> tHwInfos;
     unsigned int devNum = 0;
-    Drm *drm = nullptr;
+    size_t requiredDeviceCount = 1;
+
+    if (DebugManager.flags.CreateMultipleDevices.get()) {
+        requiredDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
+    }
+
+    Drm *drm = Drm::create(devNum);
+    if (!drm) {
+        return false;
+    }
     std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+    osInterface.get()->get()->setDrm(drm);
+    const HardwareInfo *pCurrDevice = platformDevices[devNum];
 
-    while ((drm = Drm::create(devNum)) != nullptr) {
-        const HardwareInfo *pCurrDevice = platformDevices[devNum];
-
+    while (devNum < requiredDeviceCount) {
         HardwareInfo tmpHwInfo;
-
-        osInterface.get()->get()->setDrm(drm);
-
         HwInfoConfig *hwConfig = HwInfoConfig::get(pCurrDevice->pPlatform->eProductFamily);
         if (hwConfig->configureHwInfo(pCurrDevice, &tmpHwInfo, osInterface.get())) {
             return false;
         }
         tHwInfos.push_back(tmpHwInfo);
-
         devNum++;
-        break;
     }
-
-    if (devNum < 1)
-        return false;
 
     HardwareInfo *ptr = new HardwareInfo[devNum];
     for (size_t i = 0; i < tHwInfos.size(); i++)

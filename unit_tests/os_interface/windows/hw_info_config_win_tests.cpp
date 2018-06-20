@@ -43,7 +43,7 @@ void HwInfoConfigTestWindows::SetUp() {
     HwInfoConfigTest::SetUp();
 
     osInterface.reset(new OSInterface());
-    Wddm::enumAdapters(0, outHwInfo);
+    Wddm::enumAdapters(outHwInfo);
 
     testHwInfo = outHwInfo;
 }

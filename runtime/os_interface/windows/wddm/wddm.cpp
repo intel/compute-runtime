@@ -92,11 +92,7 @@ Wddm::~Wddm() {
     closeAdapter();
 }
 
-bool Wddm::enumAdapters(unsigned int devNum, HardwareInfo &outHardwareInfo) {
-    if (devNum > 0) {
-        return false;
-    }
-
+bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
     std::unique_ptr<Wddm> wddm(createWddm(Wddm::pickWddmInterfaceVersion(outHardwareInfo)));
     UNRECOVERABLE_IF(!wddm.get());
 

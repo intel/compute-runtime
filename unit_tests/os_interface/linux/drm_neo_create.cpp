@@ -80,9 +80,6 @@ Drm *Drm::create(int32_t deviceOrdinal) {
 }
 
 void Drm::closeDevice(int32_t deviceOrdinal) {
-    // We silently skip deviceOrdinal
-    EXPECT_EQ(deviceOrdinal, 0);
-
     drmMockStack[drmMockStack.size() - 1]->fd = -1;
 }
 } // namespace OCLRT

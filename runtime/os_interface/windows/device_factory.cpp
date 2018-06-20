@@ -23,6 +23,7 @@
 #ifdef _WIN32
 
 #include "runtime/device/device.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/hw_info_config.h"
 #include "runtime/os_interface/windows/os_interface.h"
@@ -36,29 +37,32 @@ size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
 bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
-    HardwareInfo *tempHwInfos = new HardwareInfo[1];
-    constexpr unsigned int devNum = 0;
+    auto totalDeviceCount = 1u;
+    if (DebugManager.flags.CreateMultipleDevices.get()) {
+        totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
+    }
+    std::unique_ptr<HardwareInfo[]> tempHwInfos(new HardwareInfo[totalDeviceCount]);
+    std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
+
     numDevices = 0;
 
-    if (Wddm::enumAdapters(devNum, tempHwInfos[devNum])) {
-        std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-
-        HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos->pPlatform->eProductFamily);
-        if (hwConfig->configureHwInfo(tempHwInfos, tempHwInfos, osInterface.get())) {
+    while (numDevices < totalDeviceCount) {
+        if (!Wddm::enumAdapters(tempHwInfos[numDevices])) {
             return false;
         }
 
-        numDevices = 1;
-        *pHWInfos = tempHwInfos;
-        DeviceFactory::numDevices = 1;
-        DeviceFactory::hwInfos = tempHwInfos;
-
-        return true;
-
-    } else {
-        delete[] tempHwInfos;
-        return false;
+        HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos[numDevices].pPlatform->eProductFamily);
+        if (hwConfig->configureHwInfo(&tempHwInfos[numDevices], &tempHwInfos[numDevices], osInterface.get())) {
+            return false;
+        }
+        numDevices++;
     }
+
+    *pHWInfos = tempHwInfos.get();
+    DeviceFactory::numDevices = numDevices;
+    DeviceFactory::hwInfos = tempHwInfos.get();
+    tempHwInfos.release();
+    return true;
 }
 
 void DeviceFactory::releaseDevices() {

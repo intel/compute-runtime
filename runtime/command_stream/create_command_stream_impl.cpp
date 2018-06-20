@@ -97,8 +97,6 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
     }
     result = DeviceFactory::getDevices(hwInfo, numDevicesReturned);
     DEBUG_BREAK_IF(result && (hwInfo == nullptr));
-    // For now only one device should be present
-    DEBUG_BREAK_IF(result && (numDevicesReturned != 1));
     return result;
 }
 
