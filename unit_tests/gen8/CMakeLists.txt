@@ -23,7 +23,6 @@ if(TESTS_GEN8)
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_gen8.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen8.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_gen8.cpp

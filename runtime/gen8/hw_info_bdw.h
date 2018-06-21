@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,18 @@
  */
 
 #pragma once
-#ifdef SUPPORT_BDW
-#include "hw_info_bdw.h"
-#endif
+#include "hw_info_gen8.h"
+
+namespace OCLRT {
+
+struct BDW;
+
+template <>
+struct HwMapper<IGFX_BROADWELL> {
+    enum { gfxFamily = IGFX_GEN8_CORE };
+
+    static const char *abbreviation;
+    typedef GfxFamilyMapper<static_cast<GFXCORE_FAMILY>(gfxFamily)>::GfxFamily GfxFamily;
+    typedef BDW GfxProduct;
+};
+} // namespace OCLRT

@@ -28,25 +28,6 @@ using namespace OCLRT;
 
 typedef Test<DeviceFixture> Gen8DeviceCaps;
 
-GEN8TEST_F(Gen8DeviceCaps, givenGen8DeviceWhenAskedForClVersionThenReport21) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_STREQ("OpenCL 2.1 NEO ", caps.clVersion);
-    EXPECT_STREQ("OpenCL C 2.0 ", caps.clCVersion);
-}
-
-GEN8TEST_F(Gen8DeviceCaps, skuSpecificCaps) {
-    const auto &caps = pDevice->getDeviceInfo();
-    std::string extensionString = caps.deviceExtensions;
-
-    EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
-    EXPECT_NE(0u, caps.doubleFpConfig);
-}
-
-GEN8TEST_F(Gen8DeviceCaps, allSkusSupportCorrectlyRoundedDivideSqrt) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_NE(0u, caps.singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-}
-
 GEN8TEST_F(Gen8DeviceCaps, defaultPreemptionMode) {
     EXPECT_TRUE(PreemptionMode::Disabled == pDevice->getHardwareInfo().capabilityTable.defaultPreemptionMode);
 }
@@ -74,49 +55,4 @@ GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {
     EXPECT_EQ(2048u, caps.image3DMaxWidth);
     EXPECT_EQ(2048u, caps.image3DMaxDepth);
     EXPECT_EQ(2048u, caps.image3DMaxHeight);
-}
-
-BDWTEST_F(Gen8DeviceCaps, BdwProfilingTimerResolution) {
-    const auto &caps = pDevice->getDeviceInfo();
-    EXPECT_EQ(80u, caps.outProfilingTimerResolution);
-}
-
-BDWTEST_F(Gen8DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {
-    const auto &hwInfo = pDevice->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
-
-    uint32_t expectedValue = hwInfo.pSysInfo->MaxSubSlicesSupported * hwInfo.pSysInfo->MaxEuPerSubSlice *
-                             hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount;
-
-    EXPECT_EQ(expectedValue, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
-    EXPECT_EQ(expectedValue, pDevice->getDeviceInfo().computeUnitsUsedForScratch);
-}
-
-typedef Test<DeviceFixture> BdwUsDeviceIdTest;
-
-BDWTEST_F(BdwUsDeviceIdTest, isSimulationCap) {
-    unsigned short bdwSimulationIds[6] = {
-        IBDW_GT0_DESK_DEVICE_F0_ID,
-        IBDW_GT1_DESK_DEVICE_F0_ID,
-        IBDW_GT2_DESK_DEVICE_F0_ID,
-        IBDW_GT3_DESK_DEVICE_F0_ID,
-        IBDW_GT4_DESK_DEVICE_F0_ID,
-        0, // default, non-simulation
-    };
-    OCLRT::MockDevice *mockDevice = nullptr;
-
-    for (auto id : bdwSimulationIds) {
-        mockDevice = createWithUsDeviceId(id);
-        ASSERT_NE(mockDevice, nullptr);
-
-        if (id == 0)
-            EXPECT_FALSE(mockDevice->isSimulation());
-        else
-            EXPECT_TRUE(mockDevice->isSimulation());
-        delete mockDevice;
-    }
-}
-
-BDWTEST_F(BdwUsDeviceIdTest, GivenBDWWhenCheckftr64KBpagesThenFalse) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }

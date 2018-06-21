@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,8 +26,8 @@
 #include "test.h"
 
 using namespace OCLRT;
-struct Gen8DeviceTest : public DeviceFixture,
-                        public ::testing::Test {
+struct BdwDeviceTest : public DeviceFixture,
+                       public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
     }
@@ -37,12 +37,12 @@ struct Gen8DeviceTest : public DeviceFixture,
     }
 };
 
-BDWTEST_F(Gen8DeviceTest, givenGen8DeviceWhenAskedForClVersionThenReport21) {
+BDWTEST_F(BdwDeviceTest, givenBdwDeviceWhenAskedForClVersionThenReport21) {
     auto version = pDevice->getSupportedClVersion();
     EXPECT_EQ(21u, version);
 }
 
-BDWTEST_F(Gen8DeviceTest, givenSourceLevelDebuggerAvailableWhenDeviceIsCreatedThenSourceLevelDebuggerIsDisabled) {
+BDWTEST_F(BdwDeviceTest, givenSourceLevelDebuggerAvailableWhenDeviceIsCreatedThenSourceLevelDebuggerIsDisabled) {
     auto device = std::unique_ptr<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(Device::create<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(nullptr));
     const auto &caps = device->getDeviceInfo();
     EXPECT_NE(nullptr, device->getSourceLevelDebugger());

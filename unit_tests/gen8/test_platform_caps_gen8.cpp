@@ -36,7 +36,7 @@ struct Gen8PlatformCaps : public PlatformFixture, public ::testing::Test {
     }
 };
 
-GEN8TEST_F(Gen8PlatformCaps, allSkusSupportFP64) {
+BDWTEST_F(Gen8PlatformCaps, allBdwSkusSupportFP64) {
     const auto &caps = pPlatform->getPlatformInfo();
 
     EXPECT_NE(std::string::npos, caps.extensions.find(std::string("cl_khr_fp64")));
