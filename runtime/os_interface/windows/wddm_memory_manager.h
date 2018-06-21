@@ -64,6 +64,8 @@ class WddmMemoryManager : public MemoryManager {
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
+    void obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
+
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
 
     static const D3DGPU_VIRTUAL_ADDRESS minimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);

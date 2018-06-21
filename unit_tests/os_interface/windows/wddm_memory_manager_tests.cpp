@@ -1574,6 +1574,73 @@ HWTEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedThenGraphicsAddressIsPopulatedFromProperFragment) {
+    SetUpMm<FamilyType>();
+    memoryManager->setForce32bitAllocations(true);
+    OsHandleStorage handleStorage = {};
+    D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
+    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
+    auto size = MemoryConstants::pageSize * 2;
+
+    handleStorage.fragmentStorageData[0].cpuPtr = ptr;
+    handleStorage.fragmentStorageData[0].fragmentSize = size;
+    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[0].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[0].freeTheFragment = true;
+    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new MockGmm();
+    handleStorage.fragmentCount = 1;
+
+    FragmentStorage fragment = {};
+    fragment.driverAllocation = true;
+    fragment.fragmentCpuPointer = ptr;
+    fragment.fragmentSize = size;
+    fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
+    fragment.osInternalStorage->gpuPtr = gpuAdress;
+    memoryManager->hostPtrManager.storeFragment(fragment);
+
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+    EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(gpuAdress, allocation->getGpuAddress());
+    EXPECT_EQ(0ULL, allocation->allocationOffset);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+HWTEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedNotAllignedToPageThenGraphicsAddressIsPopulatedFromProperFragmentAndOffsetisAssigned) {
+    SetUpMm<FamilyType>();
+    memoryManager->setForce32bitAllocations(true);
+    OsHandleStorage handleStorage = {};
+    D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
+    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize);
+    auto size = MemoryConstants::pageSize * 2;
+
+    handleStorage.fragmentStorageData[0].cpuPtr = ptr;
+    handleStorage.fragmentStorageData[0].fragmentSize = size;
+    handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
+    handleStorage.fragmentStorageData[0].residency = new ResidencyData();
+    handleStorage.fragmentStorageData[0].freeTheFragment = true;
+    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new MockGmm();
+    handleStorage.fragmentCount = 1;
+
+    FragmentStorage fragment = {};
+    fragment.driverAllocation = true;
+    fragment.fragmentCpuPointer = ptr;
+    fragment.fragmentSize = size;
+    fragment.osInternalStorage = handleStorage.fragmentStorageData[0].osHandleStorage;
+    fragment.osInternalStorage->gpuPtr = gpuAdress;
+    memoryManager->hostPtrManager.storeFragment(fragment);
+
+    auto offset = 80;
+    auto allocationPtr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(ptr) + offset);
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, allocationPtr);
+
+    EXPECT_EQ(allocationPtr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(gpuAdress + offset, allocation->getGpuAddress()); // getGpuAddress returns gpuAddress + allocationOffset
+    EXPECT_EQ(offset, allocation->allocationOffset);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAllocationsResidentWhenMakeResidentFails) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
