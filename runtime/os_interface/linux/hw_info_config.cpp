@@ -135,6 +135,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(maxGpuFreq);
+    drm->obtainDataPortCoherencyPatchState();
 
     GTTYPE gtType = drm->getGtType();
     if (gtType == GTTYPE_UNDEFINED) {

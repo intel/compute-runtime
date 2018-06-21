@@ -78,11 +78,18 @@ class Drm {
     GTTYPE getGtType() const { return this->eGtType; }
     MOCKABLE_VIRTUAL int getErrno();
 
+    void obtainDataPortCoherencyPatchState();
+    void setContextDataPortCoherent(bool coherent);
+    bool peekDataPortCoherencyPatchActive() const { return dataPortCoherencyPatchActive; }
+    bool peekIsContextDataPortCoherent() const { return dataPortCoherentContext; }
+
   protected:
     int fd;
     int deviceId;
     int revisionId;
     GTTYPE eGtType;
+    bool dataPortCoherencyPatchActive = false;
+    bool dataPortCoherentContext = true;
     Drm(int fd) : lowPriorityContextId(0), fd(fd), deviceId(0), revisionId(0), eGtType(GTTYPE_UNDEFINED) {}
     virtual ~Drm();
 

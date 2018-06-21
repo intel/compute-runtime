@@ -156,6 +156,10 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     execbuf.batch_len = alignUp(used, 8);
     execbuf.flags = flags;
 
+    if (drm->peekDataPortCoherencyPatchActive() && requiresCoherency != drm->peekIsContextDataPortCoherent()) {
+        drm->setContextDataPortCoherent(requiresCoherency);
+    }
+
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
     }
