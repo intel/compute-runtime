@@ -44,7 +44,9 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     void setDeferredDeleter(DeferredDeleter *deleter) {
         this->deferredDeleter.reset(deleter);
     }
-
+    void setForce32bitAllocations(bool newValue) {
+        this->force32bitAllocations = newValue;
+    }
     bool validateAllocationMock(WddmAllocation *graphicsAllocation) {
         return this->validateAllocation(graphicsAllocation);
     }

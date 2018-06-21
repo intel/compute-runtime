@@ -1573,6 +1573,39 @@ HWTEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAlloca
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+HWTEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedThenGraphicsAddressIsPopulatedFromProperFragment) {
+    SetUpMm<FamilyType>();
+    memoryManager->setForce32bitAllocations(true);
+    OsHandleStorage handleStorage;
+    D3DGPU_VIRTUAL_ADDRESS lowestAdress = MemoryConstants::pageSize * 1;
+    D3DGPU_VIRTUAL_ADDRESS higherAdress = MemoryConstants::pageSize * 2;
+
+    auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize * 1);
+    auto ptr2 = reinterpret_cast<void *>(wddm->virtualAllocAddress + MemoryConstants::pageSize * 2);
+    auto size = MemoryConstants::pageSize;
+    OsHandle osHandle1;
+    OsHandle osHandle2;
+    handleStorage.fragmentStorageData[0].cpuPtr = ptr;
+    handleStorage.fragmentStorageData[0].fragmentSize = size;
+    handleStorage.fragmentStorageData[0].osHandleStorage = &osHandle1;
+    handleStorage.fragmentStorageData[0].osHandleStorage->gpuPtr = higherAdress;
+
+    handleStorage.fragmentStorageData[1].cpuPtr = ptr2;
+    handleStorage.fragmentStorageData[1].fragmentSize = size * 2;
+    handleStorage.fragmentStorageData[1].osHandleStorage = &osHandle2;
+    handleStorage.fragmentStorageData[1].osHandleStorage->gpuPtr = lowestAdress;
+    handleStorage.fragmentCount = 2;
+
+    auto allocation = memoryManager->createGraphicsAllocation(handleStorage, size, ptr);
+
+    EXPECT_EQ(ptr, allocation->getUnderlyingBuffer());
+    EXPECT_EQ(size, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(lowestAdress, allocation->getGpuAddress());
+
+    allocation->fragmentsStorage.fragmentCount = 0;
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 HWTEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAllocationsResidentWhenMakeResidentFails) {
     SetUpMm<FamilyType>();
     WddmAllocation allocation1, allocation2, allocation3, allocation4;
