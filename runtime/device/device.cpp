@@ -83,6 +83,7 @@ Device::Device(const HardwareInfo &hwInfo,
       osTime(nullptr), slmWindowStartAddress(nullptr) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
+    name.reserve(100);
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
     engineType = DebugManager.flags.NodeOrdinal.get() == -1
                      ? hwInfo.capabilityTable.defaultEngineType

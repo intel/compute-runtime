@@ -84,6 +84,7 @@ TEST(Device_GetCaps, validate) {
 
     std::string strDriverName = caps.name;
     std::string strFamilyName = familyName[device->getRenderCoreFamily()];
+
     EXPECT_NE(std::string::npos, strDriverName.find(strFamilyName));
 
     EXPECT_NE(nullptr, caps.name);
@@ -720,6 +721,7 @@ TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenRet
     auto device = Device::create<OCLRT::MockDevice>(platformDevices[0]);
 
     device->setDriverInfo(nullptr);
+    device->name.clear();
     device->initializeCaps();
 
     const auto &caps = device->getDeviceInfo();

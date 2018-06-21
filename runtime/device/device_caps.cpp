@@ -40,7 +40,6 @@
 namespace OCLRT {
 extern const char *familyName[];
 
-static std::string name(128, '\0');
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
@@ -99,17 +98,15 @@ void Device::initializeCaps() {
     if (is32bit) {
         addressing32bitAllowed = false;
     }
-    std::string tempName = "Intel(R) ";
-    tempName += familyName[hwInfo.pPlatform->eRenderCoreFamily];
-    tempName += " HD Graphics NEO";
-
-    DEBUG_BREAK_IF(tempName.size() > name.size());
-    name = tempName;
 
     driverVersion = TOSTR(NEO_DRIVER_VERSION);
 
+    name += "Intel(R) ";
+    name += familyName[hwInfo.pPlatform->eRenderCoreFamily];
+    name += " HD Graphics NEO";
+
     if (driverInfo) {
-        name.assign(driverInfo.get()->getDeviceName(tempName).c_str());
+        name.assign(driverInfo.get()->getDeviceName(name).c_str());
         driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
     }
 
