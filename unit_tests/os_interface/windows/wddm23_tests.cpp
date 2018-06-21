@@ -22,6 +22,7 @@
 
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm23.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_wddm23.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "test.h"
@@ -32,6 +33,7 @@ struct Wddm23Tests : public ::testing::Test, GdiDllFixture {
     void SetUp() override {
         GdiDllFixture::SetUp();
         wddm.reset(static_cast<WddmMock23 *>(Wddm::createWddm(WddmInterfaceVersion::Wddm23)));
+        wddm->registryReader.reset(new RegistryReaderMock());
     }
 
     void TearDown() override {
