@@ -138,7 +138,9 @@ if(${GENERATE_EXECUTABLE})
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
     ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
   )
-  add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})
+  if(TARGET GMMUMD_LIB_NAME)
+    add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})
+  endif()
 
   if(GTPIN_HEADERS_DIR)
     macro(macro_for_each_gen)
