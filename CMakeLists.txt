@@ -582,6 +582,8 @@ endif(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 include(package.cmake)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
-configure_file(igc.opencl.h.in ${IGDRCL_BUILD_DIR}/igc.opencl.h)
+if(NOT IGDRCL__IGC_FOUND)
+    configure_file(igc.opencl.h.in ${IGDRCL_BUILD_DIR}/igc.opencl.h)
+endif()
 configure_file(driver_version.h.in ${IGDRCL_BUILD_DIR}/driver_version.h) # Put Driver version into define
 configure_file(lib_names.h.in ${IGDRCL_BUILD_DIR}/lib_names.h)
