@@ -109,7 +109,7 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneByteGGTT) {
 
     uint8_t byte = 0xbf;
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
-    AubGTTData data = {true, true, true};
+    AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, &byte, sizeof(byte), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte));
@@ -153,7 +153,7 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesGGTT) {
 
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     uint64_t physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
-    AubGTTData data = {true, true, true};
+    AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, bytes, sizeof(bytes), physAddress, data);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes));

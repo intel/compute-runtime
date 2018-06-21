@@ -627,8 +627,7 @@ uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsA
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
     data.present = true;
-    data.writable = true;
-    data.userSupervisor = true;
+    data.localMemory = false;
 }
 
 } // namespace OCLRT

@@ -25,6 +25,5 @@
 
 struct AubGTTData {
     bool present;
-    bool writable;
-    bool userSupervisor;
+    bool localMemory;
 };

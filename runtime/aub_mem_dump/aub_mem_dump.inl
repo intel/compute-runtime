@@ -141,12 +141,11 @@ void AubDump<Traits>::reserveAddressGGTTAndWriteMmeory(typename Traits::Stream &
 }
 
 template <typename Traits>
-void AubDump<Traits>::setGttEntry(IAPageTableEntry &entry, uint64_t address, AubGTTData data) {
+void AubDump<Traits>::setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTData data) {
     entry.uiData = 0;
     entry.pageConfig.PhysicalAddress = address / 4096;
     entry.pageConfig.Present = data.present;
-    entry.pageConfig.Writable = data.writable;
-    entry.pageConfig.UserSupervisor = data.userSupervisor;
+    entry.pageConfig.LocalMemory = data.localMemory;
 }
 
 template <typename Traits>

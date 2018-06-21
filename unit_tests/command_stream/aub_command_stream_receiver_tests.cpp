@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
@@ -1541,6 +1542,28 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCre
     const HardwareInfo &hwInfoIn = *platformDevices[0];
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, true));
     EXPECT_EQ(9u, aubCsr->aubDeviceId);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryShouldBeDisabled) {
+    const HardwareInfo &hwInfoIn = *platformDevices[0];
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, true));
+    AubGTTData data = {};
+    aubCsr->getGTTData(nullptr, data);
+    EXPECT_TRUE(data.present);
+    EXPECT_FALSE(data.localMemory);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCalledThenGttEntrysBitFieldsShouldBePopulated) {
+    typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
+
+    AubMemDump::MiGttEntry entry = {};
+    uint64_t address = 0x0123456789;
+    AubGTTData data = {true, false};
+    AUB::setGttEntry(entry, address, data);
+
+    EXPECT_EQ(entry.pageConfig.PhysicalAddress, address / 4096);
+    EXPECT_TRUE(entry.pageConfig.Present);
+    EXPECT_FALSE(entry.pageConfig.LocalMemory);
 }
 
 #if defined(__clang__)

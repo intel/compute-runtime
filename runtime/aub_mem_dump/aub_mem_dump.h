@@ -79,7 +79,18 @@ union IAPageTableEntry {
     uint64_t uiData;
 };
 
-typedef IAPageTableEntry MiGttEntry;
+union MiGttEntry {
+    struct
+    {
+        uint64_t Present : 1;          //[0]
+        uint64_t LocalMemory : 1;      //[1]
+        uint64_t FunctionNumber : 10;  //[11:2]
+        uint64_t PhysicalAddress : 35; //[46:12]
+        uint64_t Ignored : 17;         //[63:47]
+    } pageConfig;
+    uint32_t dwordData[2];
+    uint64_t uiData;
+};
 
 // Use the latest DeviceValues enumerations available
 typedef CmdServicesMemTraceVersion::DeviceValues DeviceValues;
@@ -282,7 +293,7 @@ struct AubDump : public TypeSelector<AubPageTableHelper32<TraitsIn>, AubPageTabl
     static uint64_t reserveAddressGGTT(Stream &stream, uint32_t addr, size_t size, uint64_t physStart, AubGTTData data);
     static uint64_t reserveAddressGGTT(Stream &stream, const void *memory, size_t size, uint64_t physStart, AubGTTData data);
     static void reserveAddressGGTTAndWriteMmeory(Stream &stream, uintptr_t gfxAddress, const void *memory, uint64_t physAddress, size_t size, size_t offset, uint64_t additionalBits);
-    static void setGttEntry(IAPageTableEntry &entry, uint64_t address, AubGTTData data);
+    static void setGttEntry(MiGttEntry &entry, uint64_t address, AubGTTData data);
 
   private:
     static uint64_t reserveAddress(Stream &stream, uint32_t addr, size_t size, unsigned int addressSpace /* = AddressSpaceValues::TraceGttEntry*/, uint64_t physStart, AubGTTData data);

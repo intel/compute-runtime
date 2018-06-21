@@ -63,7 +63,7 @@ void setupAUB(const OCLRT::Device *pDevice, OCLRT::EngineType engineType) {
     auto pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
 
     uint32_t ggttGlobalHardwareStatusPage = (uint32_t)((uintptr_t)pGlobalHWStatusPage);
-    AubGTTData data = {true, true, true};
+    AubGTTData data = {true, false};
     AUB::reserveAddressGGTT(aubFile, ggttGlobalHardwareStatusPage, sizeHWSP, physAddress, data);
     physAddress += sizeHWSP;
 
