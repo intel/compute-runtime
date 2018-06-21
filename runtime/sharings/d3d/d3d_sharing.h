@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,11 +26,11 @@
 
 enum GMM_RESOURCE_FORMAT_ENUM;
 namespace OCLRT {
+enum class OCLPlane;
 class Context;
 class Gmm;
 struct SurfaceFormatInfo;
 struct ImageInfo;
-enum OCLPlane;
 
 template <typename D3D>
 class D3DSharing : public SharingHandler {

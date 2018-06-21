@@ -834,7 +834,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
     OsAgnosticMemoryManager memoryManager;
 
-    auto gmm = Gmm::create(nullptr, 123, false);
+    auto gmm = GmmHelper::create(nullptr, 123, false);
     auto allocation = memoryManager.allocateGraphicsMemory(123);
     allocation->gmm = gmm;
 
@@ -1215,7 +1215,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueried
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
-    Gmm *gmm = Gmm::create(nullptr, 65536, false);
+    Gmm *gmm = GmmHelper::create(nullptr, 65536, false);
     EXPECT_NE(nullptr, gmm);
     delete gmm;
 }

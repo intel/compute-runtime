@@ -25,9 +25,9 @@
 
 struct ErrorCodeHelper;
 namespace OCLRT {
+enum class OCLPlane;
 class Image;
 class Context;
-enum OCLPlane;
 
 class D3DSurface : public D3DSharing<D3DTypesHelper::D3D9> {
     typedef typename D3DTypesHelper::D3D9::D3DTexture2dDesc D3D9SurfaceDesc;

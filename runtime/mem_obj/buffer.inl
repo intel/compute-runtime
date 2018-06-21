@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -73,9 +73,9 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
 
     if ((isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize)) ||
         ((getFlags() & CL_MEM_READ_ONLY)) != 0) {
-        surfaceState->setMemoryObjectControlState(Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
-        surfaceState->setMemoryObjectControlState(Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
     surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);

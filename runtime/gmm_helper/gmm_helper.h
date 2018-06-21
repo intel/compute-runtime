@@ -28,76 +28,46 @@
 #include "runtime/api/cl_types.h"
 
 namespace OCLRT {
+enum class OCLPlane;
 struct HardwareInfo;
 struct FeatureTable;
 struct WorkaroundTable;
 struct ImageInfo;
 class GraphicsAllocation;
-class GmmResourceInfo;
+class Gmm;
 
-enum OCLPlane {
-    NO_PLANE = 0,
-    PLANE_Y,
-    PLANE_U,
-    PLANE_V,
-    PLANE_UV
-};
-
-constexpr uint32_t cacheDisabledIndex = 0;
-constexpr uint32_t cacheEnabledIndex = 4;
-
-class Gmm {
+class GmmHelper {
   public:
-    static const uint32_t maxPossiblePitch = 2147483648;
+    GmmHelper() = delete;
+    static constexpr uint32_t cacheDisabledIndex = 0;
+    static constexpr uint32_t cacheEnabledIndex = 4;
+    static constexpr uint32_t maxPossiblePitch = 2147483648;
 
-    virtual ~Gmm() = default;
-
-    void create();
+    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
     static Gmm *create(const void *alignedPtr, size_t alignedSize, bool uncacheable);
     static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
 
-    static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
     static void loadLib();
+    static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
     static void destroyContext();
-
-    static uint32_t getMOCS(uint32_t type);
-
-    void queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
-
-    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
-
-    static void queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc);
-
-    static bool allowTiling(const cl_image_desc &imageDesc);
 
     static uint64_t canonize(uint64_t address);
     static uint64_t decanonize(uint64_t address);
 
+    static uint32_t getMOCS(uint32_t type);
+    static void queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc);
     static GMM_CUBE_FACE_ENUM getCubeFaceIndex(uint32_t target);
+    static bool allowTiling(const cl_image_desc &imageDesc);
     static uint32_t getRenderTileMode(uint32_t tileWalk);
+    static uint32_t getRenderAlignment(uint32_t alignment);
     static uint32_t getRenderMultisamplesCount(uint32_t numSamples);
     static GMM_YUV_PLANE convertPlane(OCLPlane oclPlane);
-
-    uint32_t getRenderHAlignment();
-    uint32_t getRenderVAlignment();
-    static uint32_t getRenderAlignment(uint32_t alignment);
-    void applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
-    bool unifiedAuxTranslationCapable() const;
-
-    uint32_t queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType);
-
-    void updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex);
-    uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, OCLPlane plane);
-
-    GMM_RESCREATE_PARAMS resourceParams = {};
-    std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     static decltype(&GmmInitGlobalContext) initGlobalContextFunc;
     static decltype(&GmmDestroyGlobalContext) destroyGlobalContextFunc;
     static decltype(&GmmCreateClientContext) createClientContextFunc;
     static decltype(&GmmDeleteClientContext) deleteClientContextFunc;
 
-    bool isRenderCompressed = false;
     static bool useSimplifiedMocsTable;
     static GMM_CLIENT_CONTEXT *gmmClientContext;
     static bool isLoaded;

@@ -33,7 +33,7 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 BOOLEAN BDWL3Coherency,
                                                 GMM_GFX_SIZE_T SizeOverride,
                                                 GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
-    return Gmm::gmmClientContext->ConfigureDeviceAddressSpace(
+    return GmmHelper::gmmClientContext->ConfigureDeviceAddressSpace(
                {hAdapter},
                {hDevice},
                {pfnEscape},
@@ -46,7 +46,7 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
 }
 
 uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
-    return static_cast<uintptr_t>(Gmm::gmmClientContext->GetInternalGpuVaRangeLimit());
+    return static_cast<uintptr_t>(GmmHelper::gmmClientContext->GetInternalGpuVaRangeLimit());
 }
 
 }; // namespace OCLRT

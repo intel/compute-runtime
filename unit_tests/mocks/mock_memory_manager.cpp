@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -21,7 +21,7 @@
 */
 
 #include "runtime/memory_manager/deferred_deleter.h"
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include <cstring>

@@ -34,6 +34,7 @@
 #include "drm/i915_drm.h"
 #include "drm/drm.h"
 
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 
@@ -209,7 +210,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t 
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    if (!Gmm::allowTiling(*imgInfo.imgDesc)) {
+    if (!GmmHelper::allowTiling(*imgInfo.imgDesc)) {
         auto alloc = allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
         if (alloc) {
             alloc->gmm = gmm;

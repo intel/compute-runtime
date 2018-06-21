@@ -41,27 +41,27 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
     if (csr) {
         switch (csr) {
         case CSR_AUB:
-            Gmm::initContext(pHwInfo->pPlatform,
-                             pHwInfo->pSkuTable,
-                             pHwInfo->pWaTable,
-                             pHwInfo->pSysInfo);
+            GmmHelper::initContext(pHwInfo->pPlatform,
+                                   pHwInfo->pSkuTable,
+                                   pHwInfo->pWaTable,
+                                   pHwInfo->pSysInfo);
             commandStreamReceiver = AUBCommandStreamReceiver::create(*pHwInfo, "aubfile", true);
             break;
         case CSR_TBX:
-            Gmm::initContext(pHwInfo->pPlatform,
-                             pHwInfo->pSkuTable,
-                             pHwInfo->pWaTable,
-                             pHwInfo->pSysInfo);
+            GmmHelper::initContext(pHwInfo->pPlatform,
+                                   pHwInfo->pSkuTable,
+                                   pHwInfo->pWaTable,
+                                   pHwInfo->pSysInfo);
             commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, false);
             break;
         case CSR_HW_WITH_AUB:
             commandStreamReceiver = funcCreate(*pHwInfo, true);
             break;
         case CSR_TBX_WITH_AUB:
-            Gmm::initContext(pHwInfo->pPlatform,
-                             pHwInfo->pSkuTable,
-                             pHwInfo->pWaTable,
-                             pHwInfo->pSysInfo);
+            GmmHelper::initContext(pHwInfo->pPlatform,
+                                   pHwInfo->pSkuTable,
+                                   pHwInfo->pWaTable,
+                                   pHwInfo->pSysInfo);
             commandStreamReceiver = TbxCommandStreamReceiver::create(*pHwInfo, true);
             break;
         default:

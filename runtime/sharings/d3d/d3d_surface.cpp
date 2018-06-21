@@ -27,6 +27,7 @@
 #include "runtime/helpers/get_info.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "mmsystem.h"
 
 using namespace OCLRT;
@@ -81,7 +82,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
         return nullptr;
     }
 
-    imgInfo.plane = Gmm::convertPlane(oclPlane);
+    imgInfo.plane = GmmHelper::convertPlane(oclPlane);
     imgInfo.surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imgFormat);
 
     bool isSharedResource = false;
@@ -101,7 +102,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
             imgDesc.image_width /= 2;
             imgDesc.image_height /= 2;
         }
-        Gmm *gmm = Gmm::createGmmAndQueryImgParams(imgInfo, context->getDevice(0)->getHardwareInfo());
+        Gmm *gmm = GmmHelper::createGmmAndQueryImgParams(imgInfo, context->getDevice(0)->getHardwareInfo());
         imgDesc.image_row_pitch = imgInfo.rowPitch;
         imgDesc.image_slice_pitch = imgInfo.slicePitch;
 

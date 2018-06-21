@@ -36,6 +36,7 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "igfxfmid.h"
@@ -190,7 +191,7 @@ Image *Image::create(Context *context,
 
         auto hostPtrRowPitch = imageDesc->image_row_pitch ? imageDesc->image_row_pitch : imageWidth * surfaceFormat->ImageElementSizeInBytes;
         auto hostPtrSlicePitch = imageDesc->image_slice_pitch ? imageDesc->image_slice_pitch : hostPtrRowPitch * imageHeight;
-        auto isTilingAllowed = context->isSharedContext ? false : Gmm::allowTiling(*imageDesc);
+        auto isTilingAllowed = context->isSharedContext ? false : GmmHelper::allowTiling(*imageDesc);
         imgInfo.preferRenderCompression = isTilingAllowed;
 
         bool zeroCopy = false;
@@ -205,7 +206,7 @@ Image *Image::create(Context *context,
             hostPtr = parentBuffer->getHostPtr();
             hostPtrToSet = const_cast<void *>(hostPtr);
             parentBuffer->incRefInternal();
-            Gmm::queryImgFromBufferParams(imgInfo, memory);
+            GmmHelper::queryImgFromBufferParams(imgInfo, memory);
 
             UNRECOVERABLE_IF(imgInfo.offset != 0);
             imgInfo.offset = parentBuffer->getOffset();
@@ -213,7 +214,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                std::unique_ptr<Gmm> gmm(Gmm::createGmmAndQueryImgParams(queryGmmImgInfo, hwInfo));
+                std::unique_ptr<Gmm> gmm(GmmHelper::createGmmAndQueryImgParams(queryGmmImgInfo, hwInfo));
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -399,7 +400,7 @@ Image *Image::createSharedImage(Context *context, SharingHandler *sharingHandler
                                 GraphicsAllocation *graphicsAllocation, GraphicsAllocation *mcsAllocation,
                                 cl_mem_flags flags, ImageInfo &imgInfo, uint32_t cubeFaceIndex, uint32_t baseMipLevel, uint32_t mipCount) {
     auto tileWalk = graphicsAllocation->gmm->gmmResourceInfo->getTileType();
-    auto tileMode = Gmm::getRenderTileMode(tileWalk);
+    auto tileMode = GmmHelper::getRenderTileMode(tileWalk);
     bool isTiledImage = tileMode ? true : false;
 
     auto sharedImage = createImageHw(context, flags, graphicsAllocation->getUnderlyingBufferSize(),

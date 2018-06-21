@@ -497,7 +497,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfx
 template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
-    auto gpuAddress = Gmm::decanonize(gfxAllocation.getGpuAddress());
+    auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
     auto size = gfxAllocation.getUnderlyingBufferSize();
     auto allocType = gfxAllocation.getAllocationType();
 

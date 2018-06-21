@@ -201,6 +201,14 @@ enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
     NUM_GFX3DSTATE_SURFACEFORMATS
 };
 
+enum class OCLPlane {
+    NO_PLANE = 0,
+    PLANE_Y,
+    PLANE_U,
+    PLANE_V,
+    PLANE_UV
+};
+
 struct SurfaceFormatInfo {
     cl_image_format OCLImageFormat;
     GMM_RESOURCE_FORMAT GMMSurfaceFormat;

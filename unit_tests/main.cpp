@@ -142,15 +142,15 @@ LONG WINAPI UltExceptionFilter(
 
 void initializeTestHelpers() {
     const HardwareInfo *hwinfo = *platformDevices;
-    auto initialized = Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
-                                        hwinfo->pWaTable, hwinfo->pSysInfo);
+    auto initialized = GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable,
+                                              hwinfo->pWaTable, hwinfo->pSysInfo);
     ASSERT_TRUE(initialized);
     GlobalMockSipProgram::initSipProgram();
 }
 
 void cleanTestHelpers() {
     GlobalMockSipProgram::shutDownSipProgram();
-    Gmm::destroyContext();
+    GmmHelper::destroyContext();
 }
 
 std::string getHardwarePrefix() {

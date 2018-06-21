@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
@@ -75,7 +76,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, true);
 
-    Gmm *gmm = Gmm::createGmmAndQueryImgParams(imgInfo, hwInfo);
+    Gmm *gmm = GmmHelper::createGmmAndQueryImgParams(imgInfo, hwInfo);
     DEBUG_BREAK_IF(alloc->gmm != nullptr);
     alloc->gmm = gmm;
 

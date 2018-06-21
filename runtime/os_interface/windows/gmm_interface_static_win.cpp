@@ -24,16 +24,16 @@
 
 namespace OCLRT {
 
-decltype(Gmm::initGlobalContextFunc) Gmm::initGlobalContextFunc = nullptr;
-decltype(Gmm::destroyGlobalContextFunc) Gmm::destroyGlobalContextFunc = nullptr;
-decltype(Gmm::createClientContextFunc) Gmm::createClientContextFunc = nullptr;
-decltype(Gmm::deleteClientContextFunc) Gmm::deleteClientContextFunc = nullptr;
+decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = nullptr;
+decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
+decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
+decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
-void Gmm::loadLib() {
-    Gmm::initGlobalContextFunc = GmmInitGlobalContext;
-    Gmm::destroyGlobalContextFunc = GmmDestroyGlobalContext;
-    Gmm::createClientContextFunc = GmmCreateClientContext;
-    Gmm::deleteClientContextFunc = GmmDeleteClientContext;
+void GmmHelper::loadLib() {
+    GmmHelper::initGlobalContextFunc = GmmInitGlobalContext;
+    GmmHelper::destroyGlobalContextFunc = GmmDestroyGlobalContext;
+    GmmHelper::createClientContextFunc = GmmCreateClientContext;
+    GmmHelper::deleteClientContextFunc = GmmDeleteClientContext;
     isLoaded = true;
 }
 } // namespace OCLRT

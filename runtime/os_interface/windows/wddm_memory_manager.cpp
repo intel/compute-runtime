@@ -24,6 +24,7 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/surface_formats.h"
@@ -60,7 +61,7 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    if (!Gmm::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
+    if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
         delete gmm;
         return allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
     }
@@ -80,7 +81,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
     auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr);
 
-    gmm = Gmm::create(nullptr, sizeAligned, false);
+    gmm = GmmHelper::create(nullptr, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation)) {
@@ -114,7 +115,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
     auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, sizeAligned, nullptr);
     wddmAllocation->cpuPtrAllocated = true;
 
-    gmm = Gmm::create(pSysMem, sizeAligned, uncacheable);
+    gmm = GmmHelper::create(pSysMem, sizeAligned, uncacheable);
 
     wddmAllocation->gmm = gmm;
 
@@ -149,7 +150,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
         auto allocation = new WddmAllocation(ptr, size, ptrAligned, sizeAligned, reserve);
         allocation->allocationOffset = offset;
 
-        Gmm *gmm = Gmm::create(ptrAligned, sizeAligned, false);
+        Gmm *gmm = GmmHelper::create(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
         if (createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
             return allocation;
@@ -188,7 +189,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
 
-    gmm = Gmm::create(ptrAligned, sizeAligned, false);
+    gmm = GmmHelper::create(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
     if (!createWddmAllocation(wddmAllocation, allocationOrigin)) {
@@ -200,7 +201,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
 
     wddmAllocation->is32BitAllocation = true;
     auto baseAddress = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit->getBase() : this->wddm->getGfxPartition().Heap32[1].Base;
-    wddmAllocation->gpuBaseAddress = Gmm::canonize(baseAddress);
+    wddmAllocation->gpuBaseAddress = GmmHelper::canonize(baseAddress);
 
     return wddmAllocation;
 }
@@ -231,7 +232,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     } else if (requireSpecificBitness && this->force32bitAllocations) {
         is32BitAllocation = true;
         allocation->is32BitAllocation = true;
-        allocation->gpuBaseAddress = Gmm::canonize(allocator32Bit->getBase());
+        allocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
     }
     status = wddm->mapGpuVirtualAddress(allocation, ptr, size, is32BitAllocation, false, false);
     DEBUG_BREAK_IF(!status);
@@ -363,7 +364,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
 
-            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = Gmm::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
+            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = GmmHelper::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
             allocatedFragmentIndexes[allocatedFragmentsCounter] = i;
             allocatedFragmentsCounter++;
         }

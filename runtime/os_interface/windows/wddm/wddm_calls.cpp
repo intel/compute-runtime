@@ -42,13 +42,13 @@ Wddm::VirtualAllocFcn getVirtualAlloc() {
 }
 
 bool Wddm::initGmmContext() {
-    return Gmm::initContext(gfxPlatform.get(),
-                            featureTable.get(),
-                            waTable.get(),
-                            gtSystemInfo.get());
+    return GmmHelper::initContext(gfxPlatform.get(),
+                                  featureTable.get(),
+                                  waTable.get(),
+                                  gtSystemInfo.get());
 }
 
 void Wddm::destroyGmmContext() {
-    Gmm::destroyContext();
+    GmmHelper::destroyContext();
 }
 } // namespace OCLRT

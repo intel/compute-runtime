@@ -25,11 +25,11 @@
 
 namespace OCLRT {
 void GmmPageTableMngr::customDeleter(GMM_PAGETABLE_MGR *gmmPageTableManager) {
-    Gmm::gmmClientContext->DestroyPageTblMgrObject(gmmPageTableManager);
+    GmmHelper::gmmClientContext->DestroyPageTblMgrObject(gmmPageTableManager);
 }
 
 GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    auto pageTableMngrPtr = Gmm::gmmClientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
+    auto pageTableMngrPtr = GmmHelper::gmmClientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
     this->pageTableManager = UniquePtrType(pageTableMngrPtr, GmmPageTableMngr::customDeleter);
 }
 

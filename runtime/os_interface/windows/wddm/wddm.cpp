@@ -24,6 +24,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/kmdaf_listener.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
@@ -395,7 +396,7 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     }
 
     status = gdi->mapGpuVirtualAddress(&MapGPUVA);
-    gpuPtr = Gmm::canonize(MapGPUVA.VirtualAddress);
+    gpuPtr = GmmHelper::canonize(MapGPUVA.VirtualAddress);
 
     if (status == STATUS_PENDING) {
         interlockedMax(currentPagingFenceValue, MapGPUVA.PagingFenceValue);
@@ -420,7 +421,7 @@ bool Wddm::freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_FREEGPUVIRTUALADDRESS FreeGPUVA = {0};
     FreeGPUVA.hAdapter = adapter;
-    FreeGPUVA.BaseAddress = Gmm::decanonize(gpuPtr);
+    FreeGPUVA.BaseAddress = GmmHelper::decanonize(gpuPtr);
     FreeGPUVA.Size = size;
 
     status = gdi->freeGpuVirtualAddress(&FreeGPUVA);
@@ -632,7 +633,7 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     alloc->handle = allocationInfo[0].hAllocation;
     alloc->resourceHandle = OpenResource.hResource;
 
-    alloc->gmm = Gmm::create((PGMM_RESOURCE_INFO)(allocationInfo[0].pPrivateDriverData));
+    alloc->gmm = GmmHelper::create((PGMM_RESOURCE_INFO)(allocationInfo[0].pPrivateDriverData));
 
     return true;
 }
@@ -668,7 +669,7 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     alloc->handle = allocationInfo2[0].hAllocation;
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
 
-    alloc->gmm = Gmm::create((PGMM_RESOURCE_INFO)(allocationInfo2[0].pPrivateDriverData));
+    alloc->gmm = GmmHelper::create((PGMM_RESOURCE_INFO)(allocationInfo2[0].pPrivateDriverData));
 
     return true;
 }

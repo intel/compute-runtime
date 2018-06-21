@@ -21,6 +21,7 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/ptr_math.h"
@@ -250,7 +251,7 @@ HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFu
 }
 
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
-    auto imageMocs = Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
+    auto imageMocs = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     cl_mem memObj = srcImage;
 
@@ -416,7 +417,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithoutUnifiedAuxC
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
-    mcsAlloc->gmm = Gmm::create(nullptr, 1, false);
+    mcsAlloc->gmm = GmmHelper::create(nullptr, 1, false);
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -513,7 +514,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationAndRenderCompressionWhenSetArgOnMult
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
-    mcsAlloc->gmm = Gmm::create(nullptr, 1, false);
+    mcsAlloc->gmm = GmmHelper::create(nullptr, 1, false);
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -570,7 +571,7 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     McsSurfaceInfo msi = {10, 20, 3};
     auto mcsAlloc = context->getMemoryManager()->allocateGraphicsMemory(4096);
-    mcsAlloc->gmm = Gmm::create(nullptr, 1, false);
+    mcsAlloc->gmm = GmmHelper::create(nullptr, 1, false);
     cl_image_desc imgDesc = Image2dDefaults::imageDesc;
     imgDesc.num_samples = 8;
 
@@ -793,7 +794,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
 };
 
 HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
-    auto imageMocs = Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
+    auto imageMocs = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     cl_mem memObj = srcImage;
 

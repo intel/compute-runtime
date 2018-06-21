@@ -75,8 +75,8 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
     DeviceFactory::numDevices = devNum;
     DeviceFactory::hwInfos = ptr;
 
-    return Gmm::initContext(hwInfos->pPlatform, hwInfos->pSkuTable,
-                            hwInfos->pWaTable, hwInfos->pSysInfo);
+    return GmmHelper::initContext(hwInfos->pPlatform, hwInfos->pSkuTable,
+                                  hwInfos->pWaTable, hwInfos->pSysInfo);
 }
 
 void DeviceFactory::releaseDevices() {

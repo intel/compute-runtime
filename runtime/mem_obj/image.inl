@@ -24,6 +24,7 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 
@@ -148,11 +149,11 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
         }
     } else {
         auto tileWalk = gmm->gmmResourceInfo->getTileType();
-        tileMode = static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(Gmm::getRenderTileMode(tileWalk));
+        tileMode = static_cast<typename RENDER_SURFACE_STATE::TILE_MODE>(GmmHelper::getRenderTileMode(tileWalk));
     }
     surfaceState->setTileMode(tileMode);
 
-    surfaceState->setMemoryObjectControlState(Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
+    surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
     surfaceState->setXOffset(this->surfaceOffsets.xOffset);
     surfaceState->setYOffset(this->surfaceOffsets.yOffset);
@@ -240,7 +241,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
 
     setSurfaceMemoryObjectControlStateIndexToMocsTable(
         reinterpret_cast<void *>(surfaceState),
-        Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
+        GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE));
 
     if (IsNV12Image(&this->getImageFormat())) {
         surfaceState->setInterleaveChroma(true);

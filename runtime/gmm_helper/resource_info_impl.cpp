@@ -25,16 +25,16 @@
 
 namespace OCLRT {
 void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {
-    Gmm::gmmClientContext->DestroyResInfoObject(gmmResourceInfo);
+    GmmHelper::gmmClientContext->DestroyResInfoObject(gmmResourceInfo);
 }
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {
-    auto resourceInfoPtr = Gmm::gmmClientContext->CreateResInfoObject(resourceCreateParams);
+    auto resourceInfoPtr = GmmHelper::gmmClientContext->CreateResInfoObject(resourceCreateParams);
     this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
 }
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
-    auto resourceInfoPtr = Gmm::gmmClientContext->CopyResInfoObject(inputGmmResourceInfo);
+    auto resourceInfoPtr = GmmHelper::gmmClientContext->CopyResInfoObject(inputGmmResourceInfo);
     this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
 }
 

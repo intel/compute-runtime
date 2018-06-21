@@ -20,20 +20,39 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#pragma once
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/api/cl_types.h"
 
 namespace OCLRT {
+enum class OCLPlane;
+struct HardwareInfo;
+struct ImageInfo;
+class GmmResourceInfo;
 
-decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = nullptr;
-decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
-decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
-decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
+class Gmm {
+  public:
+    virtual ~Gmm() = default;
 
-void GmmHelper::loadLib() {
-    GmmHelper::initGlobalContextFunc = GmmInitGlobalContext;
-    GmmHelper::destroyGlobalContextFunc = GmmDestroyGlobalContext;
-    GmmHelper::createClientContextFunc = GmmCreateClientContext;
-    GmmHelper::deleteClientContextFunc = GmmDeleteClientContext;
-    isLoaded = true;
-}
+    void create();
+    void queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+
+    uint32_t getRenderHAlignment();
+    uint32_t getRenderVAlignment();
+
+    void applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+    bool unifiedAuxTranslationCapable() const;
+
+    uint32_t queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType);
+    void updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex);
+    uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, OCLPlane plane);
+
+    GMM_RESCREATE_PARAMS resourceParams = {};
+    std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
+
+    bool isRenderCompressed = false;
+};
 } // namespace OCLRT

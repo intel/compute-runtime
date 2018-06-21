@@ -22,6 +22,7 @@
 
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/get_info.h"
@@ -57,7 +58,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
         } else {
             oclPlane = OCLPlane::PLANE_UV;
         }
-        imgInfo.plane = Gmm::convertPlane(oclPlane);
+        imgInfo.plane = GmmHelper::convertPlane(oclPlane);
         arrayIndex = subresource / 2u;
     } else if (subresource >= textureDesc.MipLevels * textureDesc.ArraySize) {
         err.set(CL_INVALID_VALUE);

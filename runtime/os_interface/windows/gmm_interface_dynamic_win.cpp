@@ -34,13 +34,13 @@ GMM_STATUS(GMM_STDCALL *myPfnCreateSingletonContext)
 GMM_STATUS GMM_STDCALL myGmmInitGlobalContext(const PLATFORM Platform, const SKU_FEATURE_TABLE *pSkuTable, const WA_TABLE *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo, GMM_CLIENT ClientType) {
     return myPfnCreateSingletonContext(Platform, pSkuTable, pWaTable, pGtSysInfo);
 }
-decltype(Gmm::initGlobalContextFunc) Gmm::initGlobalContextFunc = &myGmmInitGlobalContext;
-decltype(Gmm::destroyGlobalContextFunc) Gmm::destroyGlobalContextFunc = nullptr;
-decltype(Gmm::createClientContextFunc) Gmm::createClientContextFunc = nullptr;
-decltype(Gmm::deleteClientContextFunc) Gmm::deleteClientContextFunc = nullptr;
+decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = &myGmmInitGlobalContext;
+decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
+decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
+decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
 std::unique_ptr<OsLibrary> gmmLib;
-void Gmm::loadLib() {
+void GmmHelper::loadLib() {
     gmmLib.reset(OsLibrary::load(Os::gmmDllName));
 
     UNRECOVERABLE_IF(!gmmLib);
@@ -50,10 +50,10 @@ void Gmm::loadLib() {
         auto status = openGmmFunc(&entries);
         if (status == GMM_SUCCESS) {
             myPfnCreateSingletonContext = entries.pfnCreateSingletonContext;
-            Gmm::destroyGlobalContextFunc = entries.pfnDestroySingletonContext;
-            Gmm::createClientContextFunc = entries.pfnCreateClientContext;
-            Gmm::deleteClientContextFunc = entries.pfnDeleteClientContext;
-            isLoaded = myPfnCreateSingletonContext && Gmm::destroyGlobalContextFunc && Gmm::createClientContextFunc && Gmm::deleteClientContextFunc;
+            GmmHelper::destroyGlobalContextFunc = entries.pfnDestroySingletonContext;
+            GmmHelper::createClientContextFunc = entries.pfnCreateClientContext;
+            GmmHelper::deleteClientContextFunc = entries.pfnDeleteClientContext;
+            isLoaded = myPfnCreateSingletonContext && GmmHelper::destroyGlobalContextFunc && GmmHelper::createClientContextFunc && GmmHelper::deleteClientContextFunc;
         }
     }
     UNRECOVERABLE_IF(!isLoaded);

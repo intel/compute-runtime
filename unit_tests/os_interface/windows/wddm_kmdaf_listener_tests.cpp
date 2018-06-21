@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "unit_tests/os_interface/windows/mock_kmdaf_listener.h"
@@ -93,7 +95,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafList
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDafListenerNotifyMapGpuVAIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.handle = ALLOCATION_HANDLE;
-    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.handle, allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), allocation.gpuPtr, false, false, false);
@@ -102,7 +104,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmD
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hDevice);
     EXPECT_EQ(allocation.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAllocation);
-    EXPECT_EQ(Gmm::decanonize(allocation.gpuPtr), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
+    EXPECT_EQ(GmmHelper::decanonize(allocation.gpuPtr), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.pfnEscape);
 }
 
@@ -148,7 +150,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotif
 
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
-    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->createAllocation(&allocation);
@@ -162,7 +164,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafLi
 
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
-    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->createAllocation64k(&allocation);
@@ -177,7 +179,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDaf
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationsAndMapGpuVaIsCalledThenKmDafListenerNotifyWriteTargetAndMapGpuVAIsFedWithCorrectParams) {
     OsHandleStorage storage;
     OsHandle osHandle = {0};
-    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
     storage.fragmentStorageData[0].osHandleStorage = &osHandle;
     storage.fragmentStorageData[0].fragmentSize = 100;
     storage.fragmentStorageData[0].osHandleStorage->gmm = gmm.get();
@@ -194,7 +196,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationsAndMapGpuVaIsCalle
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAdapter);
     EXPECT_EQ(wddmWithKmDafMock->getDevice(), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hDevice);
     EXPECT_EQ(osHandle.handle, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.hAllocation);
-    EXPECT_EQ(Gmm::decanonize(osHandle.gpuPtr), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
+    EXPECT_EQ(GmmHelper::decanonize(osHandle.gpuPtr), wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.GpuVirtualAddress);
     EXPECT_EQ(wddmWithKmDafMock->getGdi()->escape, wddmWithKmDafMock->getKmDafListenerMock().notifyMapGpuVAParametrization.pfnEscape);
 }
 

@@ -22,6 +22,8 @@
 
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
@@ -105,7 +107,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerWhenUpdateAuxTableCalledThenReturnF
     wddm->resetPageTableManager(nullptr);
     EXPECT_EQ(nullptr, wddm->getPageTableManager());
 
-    auto gmm = std::unique_ptr<Gmm>(Gmm::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
@@ -301,8 +303,8 @@ HWTEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAd
     bool ret = wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.getAlignedSize(), false, false, true);
     EXPECT_TRUE(ret);
 
-    auto cannonizedHeapBase = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
-    auto cannonizedHeapEnd = Gmm::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
+    auto cannonizedHeapBase = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base);
+    auto cannonizedHeapEnd = GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Limit);
 
     EXPECT_GE(allocation.gpuPtr, cannonizedHeapBase);
     EXPECT_LE(allocation.gpuPtr, cannonizedHeapEnd);
@@ -386,7 +388,7 @@ HWTEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     EXPECT_TRUE(ret);
 
     EXPECT_NE(0u, allocation.gpuPtr);
-    EXPECT_EQ(allocation.gpuPtr, Gmm::canonize(allocation.gpuPtr));
+    EXPECT_EQ(allocation.gpuPtr, GmmHelper::canonize(allocation.gpuPtr));
 
     delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
@@ -466,7 +468,7 @@ TEST_F(Wddm20Tests, GetCpuGpuTime) {
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenGraphicsAllocationWithSharedPropertiesIsCreated) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
@@ -504,7 +506,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenMapGpuVaWithCpuPtrDepensOnBitness) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(Gmm::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 

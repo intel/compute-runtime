@@ -31,7 +31,6 @@
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/utilities/debug_settings_reader.h"
 #include "runtime/gmm_helper/gmm_lib.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "gmm_memory.h"
 #include <memory>

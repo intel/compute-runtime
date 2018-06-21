@@ -22,7 +22,7 @@
 
 #include "runtime/helpers/mipmap.h"
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/mem_obj/image.h"
 

@@ -67,7 +67,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
     //set cache settings
-    pCmd->setStatelessDataPortAccessMemoryObjectControlState(Gmm::getMOCS(statelessMocsIndex));
-    pCmd->setInstructionMemoryObjectControlState(Gmm::getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+    pCmd->setStatelessDataPortAccessMemoryObjectControlState(GmmHelper::getMOCS(statelessMocsIndex));
+    pCmd->setInstructionMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 }
 } // namespace OCLRT

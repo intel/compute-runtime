@@ -27,6 +27,8 @@
 #include <set>
 
 namespace OCLRT {
+class GraphicsAllocation;
+
 namespace WddmMockHelpers {
 struct CallResult {
     uint32_t called = 0;

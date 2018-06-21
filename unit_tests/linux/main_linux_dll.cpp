@@ -200,7 +200,7 @@ TEST_F(DrmTests, failOnSoftPin) {
 }
 
 TEST_F(DrmTests, failOnParamBoost) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     failOnParamBoost = -1;
 
     auto ptr = DrmWrap::createDrm(0);
@@ -210,76 +210,76 @@ TEST_F(DrmTests, failOnParamBoost) {
 
 #ifdef SUPPORT_BDW
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBdwDeviceIsCreatedThenSimplifiedMocsSelectionIsFalse) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = IBDW_GT3_WRK_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_FALSE(Gmm::useSimplifiedMocsTable);
+    EXPECT_FALSE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 
 #ifdef SUPPORT_SKL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenSklDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = ISKL_GT2_DT_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    EXPECT_TRUE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 #ifdef SUPPORT_KBL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenKblDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = IKBL_GT1_ULT_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    EXPECT_TRUE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 #ifdef SUPPORT_BXT
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenBxtDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = IBXT_X_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    EXPECT_TRUE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 #ifdef SUPPORT_GLK
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenGlkDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = IGLK_GT2_ULT_18EU_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    EXPECT_TRUE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 #ifdef SUPPORT_CFL
 TEST_F(DrmTests, givenKernelNotSupportingTurboPatchWhenCflDeviceIsCreatedThenSimplifiedMocsSelectionIsTrue) {
-    VariableBackup<bool> useSimplifiedMocsTableBckp(&Gmm::useSimplifiedMocsTable);
+    VariableBackup<bool> useSimplifiedMocsTableBckp(&GmmHelper::useSimplifiedMocsTable);
     useSimplifiedMocsTableBckp = false;
     deviceId = ICFL_GT1_S61_DT_DEVICE_F0_ID;
     failOnParamBoost = -1;
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_TRUE(Gmm::useSimplifiedMocsTable);
+    EXPECT_TRUE(GmmHelper::useSimplifiedMocsTable);
 }
 #endif
 
 TEST_F(DrmTests, givenKernelSupportingTurboPatchWhenDeviceIsCreatedThenSimplifiedMocsSelectionIsFalse) {
     auto ptr = DrmWrap::createDrm(0);
     EXPECT_NE(ptr, nullptr);
-    EXPECT_FALSE(Gmm::useSimplifiedMocsTable);
+    EXPECT_FALSE(GmmHelper::useSimplifiedMocsTable);
 }
 
 #if defined(I915_PARAM_HAS_PREEMPTION)

@@ -26,7 +26,6 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/hw_info.h"
