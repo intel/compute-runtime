@@ -20,7 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gmm_client_context.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
 #include "runtime/helpers/hw_info.h"
@@ -602,13 +601,11 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
 TEST(GmmTest, whenContextIsInitializedMultipleTimesThenDontOverride) {
     const HardwareInfo *hwinfo = *platformDevices;
     EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
-    auto currentClientContext = Gmm::gmmClientContext.get();
-    auto currentClientContextHandle = Gmm::gmmClientContext->getHandle();
+    auto currentClientContext = Gmm::gmmClientContext;
 
     EXPECT_TRUE(Gmm::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
 
-    EXPECT_EQ(currentClientContext, Gmm::gmmClientContext.get());
-    EXPECT_EQ(currentClientContextHandle, Gmm::gmmClientContext->getHandle());
+    EXPECT_EQ(currentClientContext, Gmm::gmmClientContext);
 }
 
 TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {

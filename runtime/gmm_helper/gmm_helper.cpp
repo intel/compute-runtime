@@ -20,7 +20,6 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "gmm_client_context.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/get_info.h"
@@ -55,14 +54,15 @@ bool Gmm::initContext(const PLATFORM *pPlatform,
         }
         bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
         UNRECOVERABLE_IF(!success);
-        Gmm::gmmClientContext = Gmm::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
+        Gmm::gmmClientContext = createClientContextFunc(GMM_CLIENT::GMM_OCL_VISTA);
     }
     return Gmm::gmmClientContext != nullptr;
 }
 
 void Gmm::destroyContext() {
     if (Gmm::gmmClientContext) {
-        Gmm::gmmClientContext.reset(nullptr);
+        deleteClientContextFunc(Gmm::gmmClientContext);
+        Gmm::gmmClientContext = nullptr;
         destroyGlobalContextFunc();
     }
 }
@@ -76,7 +76,7 @@ uint32_t Gmm::getMOCS(uint32_t type) {
         }
     }
 
-    MEMORY_OBJECT_CONTROL_STATE mocs = Gmm::gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
+    MEMORY_OBJECT_CONTROL_STATE mocs = Gmm::gmmClientContext->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
 }
@@ -392,11 +392,8 @@ bool Gmm::unifiedAuxTranslationCapable() const {
     return gmmFlags->Gpu.CCS && gmmFlags->Gpu.UnifiedAuxSurface && gmmFlags->Info.RenderCompressed;
 }
 
-Gmm::~Gmm() {}
-
-std::unique_ptr<GmmClientContext> (*Gmm::createGmmContextWrapperFunc)(GMM_CLIENT) = GmmClientContextBase::create<GmmClientContext>;
 bool Gmm::useSimplifiedMocsTable = false;
-std::unique_ptr<GmmClientContext> Gmm::gmmClientContext = nullptr;
+GMM_CLIENT_CONTEXT *Gmm::gmmClientContext = nullptr;
 bool Gmm::isLoaded = false;
 
 } // namespace OCLRT

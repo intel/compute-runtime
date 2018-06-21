@@ -20,9 +20,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/surface_formats.h"
+#include "mock_gmm.h"
 
-void OCLRT::Gmm::applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
-}
+void initPlatform(GMM_PLATFORM_INFO *platform) {}

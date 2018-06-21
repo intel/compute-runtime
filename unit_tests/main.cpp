@@ -32,7 +32,6 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "lib_names.h"
-#include "mock_gmm_client_context.h"
 #include "gmock/gmock.h"
 #include <algorithm>
 #include <mutex>
@@ -421,8 +420,6 @@ int main(int argc, char **argv) {
     SetUnhandledExceptionFilter(&UltExceptionFilter);
     if (!useMockGmm) {
         Os::gmmDllName = GMM_LIBRARY_NAME;
-    } else {
-        Gmm::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }
 #endif
     initializeTestHelpers();

@@ -501,7 +501,6 @@ include_directories(${IGDRCL_BUILD_DIR})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/sku_info/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gen_common/reg_configs${BRANCH_DIR_SUFFIX})
 include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/${BRANCH_DIR_SUFFIX})
-include_directories(${IGDRCL_SOURCE_DIR}/runtime/gmm_helper/client_context${BRANCH_DIR_SUFFIX})
 
 set(HW_SRC_INCLUDE_PATH ${IGDRCL_SOURCE_DIR}/runtime/gen_common)
 
