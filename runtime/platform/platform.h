@@ -33,6 +33,7 @@ namespace OCLRT {
 class CompilerInterface;
 class Device;
 class AsyncEventsHandler;
+class ExecutionEnvironment;
 struct HardwareInfo;
 
 template <>
@@ -65,6 +66,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     const PlatformInfo &getPlatformInfo() const;
     AsyncEventsHandler *getAsyncEventsHandler();
     std::unique_ptr<AsyncEventsHandler> setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler> handler);
+    ExecutionEnvironment *peekExecutionEnvironment() { return executionEnvironment; }
 
   protected:
     enum {
@@ -79,6 +81,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     DeviceVector devices;
     std::string compilerExtensions;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
+    ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
 Platform *platform();

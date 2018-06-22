@@ -25,6 +25,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "CL/cl_ext.h"
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"
@@ -46,10 +47,13 @@ Platform *platform() { return &platformImpl; }
 Platform::Platform() {
     devices.reserve(64);
     setAsyncEventsHandler(std::unique_ptr<AsyncEventsHandler>(new AsyncEventsHandler()));
+    executionEnvironment = new ExecutionEnvironment;
+    executionEnvironment->incRefInternal();
 }
 
 Platform::~Platform() {
     shutdown();
+    executionEnvironment->decRefInternal();
 }
 
 cl_int Platform::getInfo(cl_platform_info paramName,
