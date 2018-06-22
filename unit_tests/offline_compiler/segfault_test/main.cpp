@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,34 +20,40 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/safety_caller.h"
-#include "runtime/os_interface/os_library.h"
+#include "segfault_helper.h"
 
-#include <CL/cl.h>
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 
-using namespace OCLRT;
+#include <string>
 
-int main(int numArgs, const char *argv[]) {
-    int retVal = CL_SUCCESS;
-    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, argv, retVal);
+using namespace std;
 
-    if (retVal == CL_SUCCESS) {
-        retVal = buildWithSafetyGuard(pCompiler);
+extern void generateSegfaultWithSafetyGuard(SegfaultHelper *segfaultHelper);
 
-        std::string buildLog = pCompiler->getBuildLog();
-        if (buildLog.empty() == false) {
-            printf("%s\n", buildLog.c_str());
-        }
+int main(int argc, char **argv) {
+    int retVal = 0;
+    ::testing::InitGoogleTest(&argc, argv);
 
-        if (retVal == CL_SUCCESS) {
-            if (!pCompiler->isQuiet())
-                printf("Build succeeded.\n");
-        } else {
-            printf("Build failed with error code: %d\n", retVal);
-        }
-    }
+    retVal = RUN_ALL_TESTS();
 
-    delete pCompiler;
     return retVal;
+}
+
+void captureAndCheckStdOut() {
+    string callstack = ::testing::internal::GetCapturedStdout();
+
+    EXPECT_THAT(callstack, ::testing::HasSubstr(string("Callstack")));
+    EXPECT_THAT(callstack, ::testing::HasSubstr(string("cloc_segfault_test")));
+    EXPECT_THAT(callstack, ::testing::HasSubstr(string("generateSegfaultWithSafetyGuard")));
+}
+
+TEST(SegFault, givenCallWithSafetyGuardWhenSegfaultHappensThenCallstackIsPrintedToStdOut) {
+#if !defined(SKIP_SEGFAULT_TEST)
+    ::testing::internal::CaptureStdout();
+    SegfaultHelper segfault;
+    segfault.segfaultHandlerCallback = captureAndCheckStdOut;
+
+    generateSegfaultWithSafetyGuard(&segfault);
+#endif
 }

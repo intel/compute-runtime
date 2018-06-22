@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,34 +20,36 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/safety_caller.h"
-#include "runtime/os_interface/os_library.h"
+#pragma once
+#include "offline_compiler/utilities/windows/seh_exception.h"
+#include "runtime/helpers/abort.h"
 
-#include <CL/cl.h>
+#include <setjmp.h>
 
-using namespace OCLRT;
+static jmp_buf jmpbuf;
 
-int main(int numArgs, const char *argv[]) {
-    int retVal = CL_SUCCESS;
-    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, argv, retVal);
+class SafetyGuardWindows {
+  public:
+    template <typename T, typename Object, typename Method>
+    T call(Object *object, Method method, T retValueOnCrash) {
+        int jump = 0;
+        jump = setjmp(jmpbuf);
 
-    if (retVal == CL_SUCCESS) {
-        retVal = buildWithSafetyGuard(pCompiler);
-
-        std::string buildLog = pCompiler->getBuildLog();
-        if (buildLog.empty() == false) {
-            printf("%s\n", buildLog.c_str());
+        if (jump == 0) {
+            __try {
+                return (object->*method)();
+            } __except (SehException::filter(GetExceptionCode(), GetExceptionInformation())) {
+                if (onExcept) {
+                    onExcept();
+                } else {
+                    OCLRT::abortExecution();
+                }
+                longjmp(jmpbuf, 1);
+            }
         }
-
-        if (retVal == CL_SUCCESS) {
-            if (!pCompiler->isQuiet())
-                printf("Build succeeded.\n");
-        } else {
-            printf("Build failed with error code: %d\n", retVal);
-        }
+        return retValueOnCrash;
     }
 
-    delete pCompiler;
-    return retVal;
-}
+    typedef void (*callbackFunction)();
+    callbackFunction onExcept = nullptr;
+};

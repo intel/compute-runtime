@@ -126,4 +126,6 @@ else()
     WORKING_DIRECTORY ${TargetDir}
   )
 endif()
+
+add_subdirectories()
 create_project_source_tree(cloc_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests ${IGDRCL_SOURCE_DIR})

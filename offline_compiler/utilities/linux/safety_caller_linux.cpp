@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,34 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "offline_compiler/offline_compiler.h"
-#include "offline_compiler/utilities/safety_caller.h"
 #include "runtime/os_interface/os_library.h"
-
-#include <CL/cl.h>
+#include "offline_compiler/offline_compiler.h"
+#include "offline_compiler/utilities/linux/safety_guard_linux.h"
 
 using namespace OCLRT;
 
-int main(int numArgs, const char *argv[]) {
-    int retVal = CL_SUCCESS;
-    OfflineCompiler *pCompiler = OfflineCompiler::create(numArgs, argv, retVal);
+int buildWithSafetyGuard(OfflineCompiler *compiler) {
+    SafetyGuardLinux safetyGuard;
+    int retVal = 0;
 
-    if (retVal == CL_SUCCESS) {
-        retVal = buildWithSafetyGuard(pCompiler);
-
-        std::string buildLog = pCompiler->getBuildLog();
-        if (buildLog.empty() == false) {
-            printf("%s\n", buildLog.c_str());
-        }
-
-        if (retVal == CL_SUCCESS) {
-            if (!pCompiler->isQuiet())
-                printf("Build succeeded.\n");
-        } else {
-            printf("Build failed with error code: %d\n", retVal);
-        }
-    }
-
-    delete pCompiler;
-    return retVal;
+    return safetyGuard.call<int, OfflineCompiler, decltype(&OfflineCompiler::build)>(compiler, &OfflineCompiler::build, retVal);
 }
