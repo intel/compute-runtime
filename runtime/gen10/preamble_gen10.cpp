@@ -66,24 +66,9 @@ size_t PreambleHelper<CNLFamily>::getThreadArbitrationCommandsSize() {
 
 template <>
 size_t PreambleHelper<CNLFamily>::getAdditionalCommandsSize(const Device &device) {
-    typedef typename CNLFamily::MI_LOAD_REGISTER_REG MI_LOAD_REGISTER_REG;
-    typedef typename CNLFamily::PIPE_CONTROL PIPE_CONTROL;
-    typedef typename CNLFamily::MI_MATH MI_MATH;
-    typedef typename CNLFamily::MI_MATH_ALU_INST_INLINE MI_MATH_ALU_INST_INLINE;
-
-    size_t size = PreemptionHelper::getRequiredPreambleSize<CNLFamily>(device) + sizeof(MI_LOAD_REGISTER_IMM);
+    size_t size = PreemptionHelper::getRequiredPreambleSize<CNLFamily>(device);
     size += getKernelDebuggingCommandsSize(device.isSourceLevelDebuggerActive());
     return size;
-}
-
-template <>
-void PreambleHelper<CNLFamily>::programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo) {
-    typedef typename CNLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
-
-    auto pCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(pCommandStream->getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
-    *pCmd = MI_LOAD_REGISTER_IMM::sInit();
-    pCmd->setRegisterOffset(FfSliceCsChknReg2::address);
-    pCmd->setDataDword(FfSliceCsChknReg2::regVal);
 }
 
 template <>

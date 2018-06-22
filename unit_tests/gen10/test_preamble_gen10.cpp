@@ -152,7 +152,7 @@ TEST(L3CNTLREGConfig, checkValidValues) {
 }
 
 typedef PreambleFixture PreemptionWatermarkGen10;
-GEN10TEST_F(PreemptionWatermarkGen10, givenPreambleWhenPreambleWorkAroundsIsProgrammedThenPreemptionWatermarkIsDisabled) {
+GEN10TEST_F(PreemptionWatermarkGen10, givenPreambleThenPreambleWorkAroundsIsNotProgrammed) {
     typedef CNLFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     typedef CNLFamily::PIPE_CONTROL PIPE_CONTROL;
     PreambleHelper<FamilyType>::programGenSpecificPreambleWorkArounds(&linearStream, **platformDevices);
@@ -160,11 +160,9 @@ GEN10TEST_F(PreemptionWatermarkGen10, givenPreambleWhenPreambleWorkAroundsIsProg
     parseCommands<FamilyType>(linearStream);
 
     auto cmd = findMmioCmd<FamilyType>(cmdList.begin(), cmdList.end(), FfSliceCsChknReg2::address);
-    ASSERT_NE(nullptr, cmd);
+    ASSERT_EQ(nullptr, cmd);
 
-    EXPECT_EQ(FfSliceCsChknReg2::regVal, cmd->getDataDword());
-
-    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(MockDevice(*platformDevices[0])) + sizeof(MI_LOAD_REGISTER_IMM);
+    size_t expectedSize = PreemptionHelper::getRequiredPreambleSize<FamilyType>(MockDevice(*platformDevices[0]));
     EXPECT_EQ(expectedSize, PreambleHelper<FamilyType>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
 }
 
@@ -191,7 +189,7 @@ GEN10TEST_F(ThreadArbitrationGen10, givenPreambleWhenItIsProgrammedThenThreadArb
 
     EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[ThreadArbitrationPolicy::RoundRobin], cmd->getDataDword());
 
-    EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM), PreambleHelper<CNLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
+    EXPECT_EQ(0u, PreambleHelper<CNLFamily>::getAdditionalCommandsSize(MockDevice(*platformDevices[0])));
     EXPECT_EQ(sizeof(MI_LOAD_REGISTER_IMM) + sizeof(PIPE_CONTROL), PreambleHelper<CNLFamily>::getThreadArbitrationCommandsSize());
 }
 
