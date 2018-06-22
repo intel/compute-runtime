@@ -76,6 +76,8 @@ struct RuntimeCapabilityTable {
     bool isCore;
     bool sourceLevelDebuggerSupported;
     uint32_t aubDeviceId;
+
+    uint32_t extraQuantityThreadsPerEU;
 };
 
 struct HardwareCapabilities {

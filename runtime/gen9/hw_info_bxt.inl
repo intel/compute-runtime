@@ -74,7 +74,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     false,                          // isCore
     true,                           // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Bxt};
+    CmdServicesMemTraceVersion::DeviceValues::Bxt,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo BXT_1x2x6::hwInfo = {
     &BXT::platform,

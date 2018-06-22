@@ -69,7 +69,8 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     MemoryConstants::pageSize,         //requiredPreemptionSurfaceSize
     false,                             // isCore
     true,                              // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Glk};
+    CmdServicesMemTraceVersion::DeviceValues::Glk,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo GLK_1x3x6::hwInfo = {
     &GLK::platform,

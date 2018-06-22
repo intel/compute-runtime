@@ -69,7 +69,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     true,                           // isCore
     true,                           // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Kbl};
+    CmdServicesMemTraceVersion::DeviceValues::Kbl,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo KBL_1x2x6::hwInfo = {
     &KBL::platform,

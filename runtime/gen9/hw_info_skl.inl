@@ -77,7 +77,8 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     true,                           // isCore
     true,                           // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Skl};
+    CmdServicesMemTraceVersion::DeviceValues::Skl,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo SKL_1x2x6::hwInfo = {
     &SKL::platform,

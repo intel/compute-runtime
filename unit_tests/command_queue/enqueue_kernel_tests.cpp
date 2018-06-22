@@ -516,28 +516,8 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, PipelineSelect) {
 }
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, MediaVFEState) {
-    typedef typename FamilyType::PARSE PARSE;
-    typedef typename PARSE::MEDIA_VFE_STATE MEDIA_VFE_STATE;
     enqueueKernel<FamilyType>();
-
-    // All state should be programmed before walker
-    auto itorCmd = find<MEDIA_VFE_STATE *>(itorPipelineSelect, itorWalker);
-    ASSERT_NE(itorWalker, itorCmd);
-
-    auto *cmd = (MEDIA_VFE_STATE *)*itorCmd;
-
-    // Verify we have a valid length
-    EXPECT_EQ(pDevice->getHardwareInfo().pSysInfo->ThreadCount, cmd->getMaximumNumberOfThreads());
-    EXPECT_EQ(1u, cmd->getNumberOfUrbEntries());
-    uint32_t expectedVal = PreambleHelper<FamilyType>::getUrbEntryAllocationSize();
-    EXPECT_EQ(expectedVal, cmd->getUrbEntryAllocationSize());
-
-    EXPECT_EQ(0u, cmd->getScratchSpaceBasePointer());
-    EXPECT_EQ(0u, cmd->getPerThreadScratchSpace());
-    EXPECT_EQ(0u, cmd->getStackSize());
-
-    // Generically validate this command
-    PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorCmd);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
@@ -586,8 +566,12 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto *cmd = (MEDIA_VFE_STATE *)*itorCmd;
     auto *sba = (STATE_BASE_ADDRESS *)*itorCmdForStateBase;
 
+    const HardwareInfo &hwInfo = **platformDevices;
+    uint32_t threadPerEU = (hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t maxNumberOfThreads = hwInfo.pSysInfo->EUCount * threadPerEU;
+
     // Verify we have a valid length
-    EXPECT_EQ(pDevice->getHardwareInfo().pSysInfo->ThreadCount, cmd->getMaximumNumberOfThreads());
+    EXPECT_EQ(maxNumberOfThreads, cmd->getMaximumNumberOfThreads());
     EXPECT_NE(0u, cmd->getNumberOfUrbEntries());
     EXPECT_NE(0u, cmd->getUrbEntryAllocationSize());
     EXPECT_EQ(bitValue, cmd->getPerThreadScratchSpace());
@@ -635,7 +619,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
     auto *cmd2 = (MEDIA_VFE_STATE *)*itorCmd;
 
     // Verify we have a valid length
-    EXPECT_EQ(pDevice->getHardwareInfo().pSysInfo->ThreadCount, cmd2->getMaximumNumberOfThreads());
+    EXPECT_EQ(maxNumberOfThreads, cmd2->getMaximumNumberOfThreads());
     EXPECT_NE(0u, cmd2->getNumberOfUrbEntries());
     EXPECT_NE(0u, cmd2->getUrbEntryAllocationSize());
     EXPECT_EQ(bitValue, cmd2->getPerThreadScratchSpace());

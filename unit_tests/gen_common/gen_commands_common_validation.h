@@ -98,4 +98,25 @@ void validateL3Programming(GenCmdList &cmdList, GenCmdList::iterator &itorWalker
         ASSERT_EQ(itorWalker, itorCmd);
     }
 }
+
+template <typename FamilyType>
+void validateMediaVFEState(const HardwareInfo *hwInfo, void *cmdMediaVfeState, GenCmdList &cmdList, GenCmdList::iterator itorMediaVfeState) {
+    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
+
+    auto *cmd = (MEDIA_VFE_STATE *)cmdMediaVfeState;
+    ASSERT_NE(nullptr, cmd);
+
+    uint32_t threadPerEU = (hwInfo->pSysInfo->ThreadCount / hwInfo->pSysInfo->EUCount) + hwInfo->capabilityTable.extraQuantityThreadsPerEU;
+
+    uint32_t expected = hwInfo->pSysInfo->EUCount * threadPerEU;
+    EXPECT_EQ(expected, cmd->getMaximumNumberOfThreads());
+    EXPECT_NE(0u, cmd->getNumberOfUrbEntries());
+    EXPECT_NE(0u, cmd->getUrbEntryAllocationSize());
+    EXPECT_EQ(0u, cmd->getScratchSpaceBasePointer());
+    EXPECT_EQ(0u, cmd->getPerThreadScratchSpace());
+    EXPECT_EQ(0u, cmd->getStackSize());
+
+    // Generically validate this command
+    FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
+}
 } // namespace OCLRT

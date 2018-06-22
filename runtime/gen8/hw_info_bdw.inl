@@ -77,7 +77,8 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     MemoryConstants::pageSize,               //requiredPreemptionSurfaceSize
     true,                                    // isCore
     false,                                   // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Bdw};
+    CmdServicesMemTraceVersion::DeviceValues::Bdw,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo BDW_1x2x6::hwInfo = {
     &BDW::platform,

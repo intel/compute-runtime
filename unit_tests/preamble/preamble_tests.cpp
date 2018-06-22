@@ -171,6 +171,15 @@ HWTEST_F(PreambleTest, givenKernelDebuggingActiveAndMidThreadPreemptionWhenGetAd
     EXPECT_EQ(sizeExpected, diff);
 }
 
+HWTEST_F(PreambleTest, givenDefaultPreambleWhenGetThreadsMaxNumberIsCalledThenMaximumNumberOfThreadsIsReturned) {
+    const HardwareInfo &hwInfo = **platformDevices;
+    uint32_t threadsPerEU = (hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    uint32_t value = PreambleHelper<FamilyType>::getMaxThreadsForVfe(hwInfo);
+
+    uint32_t expected = hwInfo.pSysInfo->EUCount * threadsPerEU;
+    EXPECT_EQ(expected, value);
+}
+
 TEST(DefaultPreambleHelperTest, givenDefaultPreambleHelperWhenGetAdditionalCommandsSizeThenZeroIsReturned) {
     auto size = PreambleHelper<GENX>::getAdditionalCommandsSize(MockDevice(**platformDevices));
     EXPECT_EQ(0u, size);

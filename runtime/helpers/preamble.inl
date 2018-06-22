@@ -64,7 +64,7 @@ void PreambleHelper<GfxFamily>::programVFEState(LinearStream *pCommandStream, co
 
     auto pMediaVfeState = (MEDIA_VFE_STATE *)pCommandStream->getSpace(sizeof(MEDIA_VFE_STATE));
     *pMediaVfeState = MEDIA_VFE_STATE::sInit();
-    pMediaVfeState->setMaximumNumberOfThreads(hwInfo.pSysInfo->ThreadCount);
+    pMediaVfeState->setMaximumNumberOfThreads(PreambleHelper<GfxFamily>::getMaxThreadsForVfe(hwInfo));
     pMediaVfeState->setNumberOfUrbEntries(1);
     pMediaVfeState->setUrbEntryAllocationSize(PreambleHelper<GfxFamily>::getUrbEntryAllocationSize());
     pMediaVfeState->setPerThreadScratchSpace(Kernel::getScratchSizeValueToProgramMediaVfeState(scratchSize));
@@ -125,6 +125,12 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
         return 2 * sizeof(MI_LOAD_REGISTER_IMM);
     }
     return 0;
+}
+
+template <typename GfxFamily>
+uint32_t PreambleHelper<GfxFamily>::getMaxThreadsForVfe(const HardwareInfo &hwInfo) {
+    uint32_t threadsPerEU = (hwInfo.pSysInfo->ThreadCount / hwInfo.pSysInfo->EUCount) + hwInfo.capabilityTable.extraQuantityThreadsPerEU;
+    return hwInfo.pSysInfo->EUCount * threadsPerEU;
 }
 
 } // namespace OCLRT

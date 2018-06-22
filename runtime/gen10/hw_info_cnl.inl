@@ -76,7 +76,8 @@ const RuntimeCapabilityTable CNL::capabilityTable{
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     true,
     true, // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Cnl};
+    CmdServicesMemTraceVersion::DeviceValues::Cnl,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo CNL_2x5x8::hwInfo = {
     &CNL::platform,

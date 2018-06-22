@@ -194,19 +194,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, pipelineSelect) {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, mediaVFEState) {
-    typedef typename FamilyType::MEDIA_VFE_STATE MEDIA_VFE_STATE;
-
     enqueueCopyImageToBuffer<FamilyType>();
-
-    auto *cmd = (MEDIA_VFE_STATE *)cmdMediaVfeState;
-
-    // Verify we have a valid length
-    EXPECT_EQ(pDevice->getHardwareInfo().pSysInfo->ThreadCount, cmd->getMaximumNumberOfThreads());
-    EXPECT_NE(0u, cmd->getNumberOfUrbEntries());
-    EXPECT_NE(0u, cmd->getUrbEntryAllocationSize());
-
-    // Generically validate this command
-    FamilyType::PARSE::template validateCommand<MEDIA_VFE_STATE *>(cmdList.begin(), itorMediaVfeState);
+    validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
 typedef EnqueueCopyImageToBufferMipMapTest MipMapCopyImageToBufferTest;

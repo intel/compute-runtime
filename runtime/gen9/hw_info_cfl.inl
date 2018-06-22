@@ -69,7 +69,8 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
     true,                           // isCore
     true,                           // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Cfl};
+    CmdServicesMemTraceVersion::DeviceValues::Cfl,
+    0}; // extraQuantityThreadsPerEU
 
 const HardwareInfo CFL_1x2x6::hwInfo = {
     &CFL::platform,
