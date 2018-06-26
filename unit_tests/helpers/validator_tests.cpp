@@ -175,7 +175,8 @@ TEST(Platform, givenNullPlatformThenReturnInvalidPlatform) {
 }
 
 TEST(Platform, givenPlatformThenReturnSUCCESS) {
-    cl_platform_id clPlatformId = platform();
+    Platform platform;
+    cl_platform_id clPlatformId = &platform;
     EXPECT_EQ(CL_SUCCESS, validateObjects(clPlatformId));
 }
 
