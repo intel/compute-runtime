@@ -148,7 +148,7 @@ TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenIn
     delete platform;
 }
 
-TEST_F(PlatformTest, getAsCompilerEnabledExtensionsString) {
+TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatchingSubstringsAndMandatoryTrailingSpace) {
     const HardwareInfo *hwInfo;
     hwInfo = platformDevices[0];
     std::string extensionsList = getExtensionsList(*hwInfo);
@@ -165,9 +165,11 @@ TEST_F(PlatformTest, getAsCompilerEnabledExtensionsString) {
     if (hwInfo->capabilityTable.ftrSupportsFP64) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_fp64")));
     }
+
+    EXPECT_THAT(compilerExtensions, ::testing::EndsWith(std::string(" ")));
 }
 
-TEST_F(PlatformTest, getAsCompilerEnabledExtensionsStringTestNotFP64) {
+TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFillMatchingSubstringAndFillMandatoryTrailingSpace) {
     HardwareInfo TesthwInfo = *platformDevices[0];
     TesthwInfo.capabilityTable.ftrSupportsFP64 = false;
     TesthwInfo.capabilityTable.clVersionSupport = 10;
@@ -180,6 +182,8 @@ TEST_F(PlatformTest, getAsCompilerEnabledExtensionsStringTestNotFP64) {
 
     EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_fp64"))));
     EXPECT_THAT(compilerExtensions, ::testing::Not(::testing::HasSubstr(std::string("cl_khr_subgroups"))));
+
+    EXPECT_THAT(compilerExtensions, ::testing::EndsWith(std::string(" ")));
 }
 
 TEST_F(PlatformTest, testRemoveLastSpace) {

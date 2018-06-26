@@ -83,7 +83,7 @@ std::string convertEnabledExtensionsToCompilerInternalOptions(const char *enable
     while ((pos = extensionsList.find(" ", pos)) != std::string::npos) {
         extensionsList.replace(pos, 1, ",+");
     }
-    extensionsList = " -cl-ext=-all,+" + extensionsList;
+    extensionsList = " -cl-ext=-all,+" + extensionsList + " ";
     return extensionsList;
 }
 
