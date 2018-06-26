@@ -34,14 +34,9 @@
 using namespace OCLRT;
 
 struct PlatformTest : public ::testing::Test {
-    PlatformTest() {}
-
-    void SetUp() override { pPlatform = platform(); }
-
-    void TearDown() override {}
-
+    void SetUp() override { pPlatform.reset(new Platform()); }
     cl_int retVal = CL_SUCCESS;
-    Platform *pPlatform = nullptr;
+    std::unique_ptr<Platform> pPlatform;
 };
 
 TEST_F(PlatformTest, getDevices) {
