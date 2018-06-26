@@ -138,7 +138,6 @@ cl_int Program::processElfBinary(
 
     if (retVal == CL_SUCCESS) {
         isProgramBinaryResolved = true;
-        buildStatus = CL_BUILD_SUCCESS;
 
         // Create an empty build log since program is effectively built
         updateBuildLog(pDevice, "", 1);

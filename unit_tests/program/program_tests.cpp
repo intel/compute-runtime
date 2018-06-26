@@ -373,7 +373,7 @@ TEST_P(ProgramFromBinaryTest, GetBuildInfo_Status) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(param_value_size, param_value_size_ret);
-    EXPECT_EQ(CL_BUILD_SUCCESS, buildStatus);
+    EXPECT_EQ(CL_BUILD_NONE, buildStatus);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@ typedef api_tests clGetProgramBuildInfoTests;
 
 namespace ULT {
 
-TEST_F(clGetProgramBuildInfoTests, success) {
+TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
     void *pSource = nullptr;
     size_t sourceSize = 0;
@@ -107,6 +107,47 @@ TEST_F(clGetProgramBuildInfoTests, success) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     deleteDataReadFromFile(pSource);
+    CompilerInterface::shutdown();
+}
+
+TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_INVALID_VALUE;
+    void *pBinary = nullptr;
+    size_t binarySize = 0;
+    std::string testFile;
+    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
+
+    ASSERT_EQ(true, fileExists(testFile));
+
+    binarySize = loadDataFromFile(
+        testFile.c_str(),
+        pBinary);
+
+    ASSERT_NE(0u, binarySize);
+    ASSERT_NE(nullptr, pBinary);
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        num_devices,
+        devices,
+        &binarySize,
+        (const unsigned char **)&pBinary,
+        &binaryStatus,
+        &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, pProgram);
+    EXPECT_EQ(CL_SUCCESS, binaryStatus);
+
+    cl_build_status buildStatus;
+    retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_BUILD_NONE, buildStatus);
+
+    deleteDataReadFromFile(pBinary);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
     CompilerInterface::shutdown();
 }
 } // namespace ULT
