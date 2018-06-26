@@ -46,7 +46,7 @@ class ProgramWithBlockKernelsTest : public ContextFixture,
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         device = pPlatform->getDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();

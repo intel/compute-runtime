@@ -32,7 +32,7 @@ PlatformFixture::PlatformFixture()
     : pPlatform(nullptr), num_devices(0), devices(nullptr) {
 }
 
-void PlatformFixture::SetUp(size_t numDevices, const HardwareInfo **pDevices) {
+void PlatformFixture::SetUp() {
     pPlatform = platform();
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 

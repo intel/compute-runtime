@@ -39,7 +39,7 @@ struct ContextGetInfoTest : public PlatformFixture,
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         ContextFixture::SetUp(num_devices, devices);
     }
 

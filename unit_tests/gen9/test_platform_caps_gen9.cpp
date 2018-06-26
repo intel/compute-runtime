@@ -29,7 +29,7 @@ using namespace OCLRT;
 
 struct Gen9PlatformCaps : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
     }
 
     void TearDown() override {

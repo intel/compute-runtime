@@ -400,7 +400,7 @@ struct ValidHostPtr
 
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         BaseClass::SetUp();
 
         auto pDevice = pPlatform->getDevice(0);

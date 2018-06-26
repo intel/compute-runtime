@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -1248,7 +1248,7 @@ class ReflectionSurfaceHelperFixture : public PlatformFixture, public ::testing:
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
     }
 
     void TearDown() override {
@@ -1264,7 +1264,7 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
 
         samplerStateArray.BorderColorOffset = 0x3;
         samplerStateArray.Count = 1;

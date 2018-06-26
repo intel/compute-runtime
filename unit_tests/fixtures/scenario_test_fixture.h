@@ -41,7 +41,7 @@ class ScenarioTest : public ::testing::Test,
 
   protected:
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
 
         auto pDevice = pPlatform->getDevice(0);
         ASSERT_NE(nullptr, pDevice);

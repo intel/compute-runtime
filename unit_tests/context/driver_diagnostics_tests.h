@@ -51,7 +51,7 @@ struct DriverDiagnosticsTest : public PlatformFixture,
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
 

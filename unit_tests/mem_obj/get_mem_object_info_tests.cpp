@@ -38,7 +38,7 @@ class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public 
 
   public:
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         DeviceFixture::SetUp();
         BufferDefaults::context = new MockContext;
     }

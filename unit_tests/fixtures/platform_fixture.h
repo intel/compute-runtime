@@ -33,7 +33,7 @@ class PlatformFixture {
     PlatformFixture();
 
   protected:
-    void SetUp(size_t numDevices, const HardwareInfo **pDevices);
+    void SetUp();
     void TearDown();
 
     Platform *pPlatform;

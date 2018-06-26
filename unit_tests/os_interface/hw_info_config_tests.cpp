@@ -29,7 +29,7 @@ using namespace OCLRT;
 using namespace std;
 
 void HwInfoConfigTest::SetUp() {
-    PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+    PlatformFixture::SetUp();
 
     const HardwareInfo &hwInfo = pPlatform->getDevice(0)->getHardwareInfo();
     pInHwInfo = const_cast<HardwareInfo *>(&hwInfo);

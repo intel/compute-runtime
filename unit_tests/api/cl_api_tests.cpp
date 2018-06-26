@@ -36,7 +36,7 @@ api_fixture::api_fixture()
 }
 
 void api_fixture::SetUp() {
-    PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+    PlatformFixture::SetUp();
 
     ASSERT_EQ(retVal, CL_SUCCESS);
     auto pDevice = pPlatform->getDevice(0);

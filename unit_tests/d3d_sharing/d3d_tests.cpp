@@ -108,7 +108,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
 
     void SetUp() override {
         dbgRestore = new DebugManagerStateRestore();
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         context = new MockContext(pPlatform->getDevice(0));
         context->forcePreferD3dSharedResources(true);
 

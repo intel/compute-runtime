@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@ class ProgramFromSourceTest : public ContextFixture,
         std::tie(SourceFileName, BinaryFileName, KernelName) = GetParam();
         kbHelper = new KernelBinaryHelper(BinaryFileName);
 
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         cl_device_id device = pPlatform->getDevice(0);
         ContextFixture::SetUp(1, &device);
         ProgramFixture::SetUp();

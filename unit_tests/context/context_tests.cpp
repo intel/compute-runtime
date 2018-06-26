@@ -62,7 +62,7 @@ struct ContextTest : public PlatformFixture,
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
 
         cl_platform_id platform = pPlatform;
         properties = new cl_context_properties[3];

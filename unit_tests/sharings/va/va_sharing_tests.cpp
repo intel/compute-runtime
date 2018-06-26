@@ -37,7 +37,7 @@ using namespace OCLRT;
 class VaSharingTests : public ::testing::Test, public PlatformFixture {
   public:
     void SetUp() override {
-        PlatformFixture::SetUp(numPlatformDevices, platformDevices);
+        PlatformFixture::SetUp();
         vaSharing = new MockVaSharing;
         context.setSharingFunctions(&vaSharing->m_sharingFunctions);
         vaSharing->updateAcquiredHandle(sharingHandle);
