@@ -19,6 +19,8 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(UNIX)
+  include(GNUInstallDirs)
+
   set(package_input_dir ${IGDRCL_BINARY_DIR}/packageinput)
   set(package_output_dir ${IGDRCL_BINARY_DIR}/packages)
 
@@ -50,14 +52,14 @@ if(UNIX)
   install(FILES
     ${IGDRCL_BINARY_DIR}/bin/libigdrcl.so
     ${IGC_TARGET_FILES}
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT igdrcl
   )
 
   set(OCL_ICD_RUNTIME_NAME libigdrcl.so)
   install(
-    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"${CMAKE_INSTALL_PREFIX}/lib\n\" )"
-    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_PREFIX}/lib/${OCL_ICD_RUNTIME_NAME}\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/libintelopencl.conf \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}\n\" )"
+    CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${OCL_ICD_RUNTIME_NAME}\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
     COMPONENT igdrcl
@@ -79,7 +81,7 @@ if(UNIX)
   endif()
 
   set(CPACK_SET_DESTDIR TRUE)
-  set(CPACK_PACKAGE_RELOCATABLE FALSE)
+  set(CPACK_PACKAGE_RELOCATABLE TRUE)
   set(CPACK_PACKAGE_NAME "intel-opencl")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Intel OpenCL GPU driver")
   set(CPACK_PACKAGE_VENDOR "Intel")
