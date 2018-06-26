@@ -27,11 +27,7 @@
 using namespace OCLRT;
 
 struct PlatformTestMt : public ::testing::Test {
-    PlatformTestMt() {}
-
-    void SetUp() override { pPlatform = platform(); }
-
-    void TearDown() override {}
+    void SetUp() override { pPlatform.reset(new Platform); }
 
     static void initThreadFunc(Platform *pP) {
         pP->initialize();
@@ -42,7 +38,7 @@ struct PlatformTestMt : public ::testing::Test {
     }
 
     cl_int retVal = CL_SUCCESS;
-    Platform *pPlatform = nullptr;
+    std::unique_ptr<Platform> pPlatform;
 };
 
 static void callinitPlatform(Platform *plt, bool *ret) {
@@ -53,7 +49,7 @@ TEST_F(PlatformTestMt, initialize) {
     std::thread threads[10];
     bool ret[10];
     for (int i = 0; i < 10; ++i) {
-        threads[i] = std::thread(callinitPlatform, pPlatform, &ret[i]);
+        threads[i] = std::thread(callinitPlatform, pPlatform.get(), &ret[i]);
     }
 
     for (auto &th : threads)
@@ -67,7 +63,7 @@ TEST_F(PlatformTestMt, initialize) {
     pPlatform->shutdown();
 
     for (int i = 0; i < 10; ++i) {
-        threads[i] = std::thread(callinitPlatform, pPlatform, &ret[i]);
+        threads[i] = std::thread(callinitPlatform, pPlatform.get(), &ret[i]);
     }
 
     for (auto &th : threads)
@@ -84,15 +80,15 @@ TEST_F(PlatformTestMt, mtSafeTest) {
     EXPECT_EQ(0u, devNum);
 
     bool ret = pPlatform->initialize();
-    std::thread t1(PlatformTestMt::initThreadFunc, pPlatform);
-    std::thread t2(PlatformTestMt::shutdownThreadFunc, pPlatform);
+    std::thread t1(PlatformTestMt::initThreadFunc, pPlatform.get());
+    std::thread t2(PlatformTestMt::shutdownThreadFunc, pPlatform.get());
     EXPECT_TRUE(ret);
 
     t1.join();
     t2.join();
 
-    std::thread t3(PlatformTestMt::initThreadFunc, pPlatform);
-    std::thread t4(PlatformTestMt::initThreadFunc, pPlatform);
+    std::thread t3(PlatformTestMt::initThreadFunc, pPlatform.get());
+    std::thread t4(PlatformTestMt::initThreadFunc, pPlatform.get());
 
     t3.join();
     t4.join();
