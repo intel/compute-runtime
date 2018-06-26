@@ -65,6 +65,7 @@ class BuiltInTests
     }
 
     void SetUp() override {
+        constructPlatform();
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -76,6 +77,7 @@ class BuiltInTests
         BuiltInFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {

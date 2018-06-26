@@ -21,6 +21,7 @@
  */
 
 #include "gtest/gtest.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -30,6 +31,7 @@ using namespace OCLRT;
 class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
+        constructPlatform();
         device.reset(MockDevice::create<MockDevice>(nullptr));
         context.reset(new MockContext(device.get()));
         program.reset(Program::create("FillBufferBytes", context.get(), *device.get(), true, &retVal));
@@ -41,6 +43,7 @@ class PatchedKernelTest : public ::testing::Test {
     }
     void TearDown() override {
         context.reset();
+        platformImpl.reset(nullptr);
     }
 
     std::unique_ptr<MockContext> context;

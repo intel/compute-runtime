@@ -23,6 +23,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "test.h"
@@ -46,10 +47,8 @@ struct AUBCreateImage
 
     using AUBCommandStreamFixture::SetUp;
 
-    AUBCreateImage() {
-    }
-
     void SetUp() override {
+        constructPlatform();
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
 
@@ -73,6 +72,7 @@ struct AUBCreateImage
         //delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     //MockContext *context;

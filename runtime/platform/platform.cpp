@@ -39,10 +39,20 @@
 
 namespace OCLRT {
 
-Platform platformImpl;
+std::unique_ptr<Platform> platformImpl;
+
 bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned);
 
-Platform *platform() { return &platformImpl; }
+Platform *platform() { return platformImpl.get(); }
+
+Platform *constructPlatform() {
+    static std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    if (!platformImpl) {
+        platformImpl.reset(new Platform());
+    }
+    return platformImpl.get();
+}
 
 Platform::Platform() {
     devices.reserve(64);

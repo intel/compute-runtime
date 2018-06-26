@@ -52,10 +52,8 @@ struct AUBMapImage
 
     using AUBCommandStreamFixture::SetUp;
 
-    AUBMapImage() {
-    }
-
     void SetUp() override {
+        constructPlatform();
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
         context = new MockContext(pDevice);
@@ -66,6 +64,7 @@ struct AUBMapImage
         delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     MockContext *context;

@@ -75,7 +75,7 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         }
 
         while (platforms != nullptr) {
-            auto pPlatform = platform();
+            auto pPlatform = constructPlatform();
             bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
             if (!ret) {
@@ -157,7 +157,7 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                 break;
             }
         } else {
-            pPlatform = ::platform();
+            pPlatform = constructPlatform();
             bool ret = pPlatform->initialize();
             DEBUG_BREAK_IF(ret != true);
             ((void)(ret));

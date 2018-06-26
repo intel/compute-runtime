@@ -133,6 +133,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
+        constructPlatform();
         pPlatform = platform();
         pPlatform->initialize();
         pDevice = pPlatform->getDevice(0);
@@ -157,7 +158,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
     void TearDown() override {
         ContextFixture::TearDown();
-        pPlatform->shutdown();
+        platformImpl.reset(nullptr);
         MemoryManagementFixture::TearDown();
         OCLRT::isGTPinInitialized = false;
     }

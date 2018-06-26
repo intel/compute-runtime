@@ -84,5 +84,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
+extern std::unique_ptr<Platform> platformImpl;
 Platform *platform();
+Platform *constructPlatform();
 } // namespace OCLRT

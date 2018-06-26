@@ -26,6 +26,7 @@
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "runtime/memory_manager/surface.h"
@@ -45,6 +46,7 @@ struct EnqueueSvmTest : public DeviceFixture,
     }
 
     void SetUp() override {
+        constructPlatform();
         DeviceFixture::SetUp();
         CommandQueueFixture::SetUp(pDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256);
@@ -54,6 +56,7 @@ struct EnqueueSvmTest : public DeviceFixture,
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     cl_int retVal = CL_SUCCESS;

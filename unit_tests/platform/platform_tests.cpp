@@ -195,3 +195,24 @@ TEST_F(PlatformTest, testRemoveLastSpace) {
     removeLastSpace(xSpaceString);
     EXPECT_EQ(std::string("x"), xSpaceString);
 }
+TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledTwiceThenTheSamePlatformIsReturned) {
+    ASSERT_EQ(nullptr, platformImpl);
+    auto platform = constructPlatform();
+    EXPECT_EQ(platform, platformImpl.get());
+    auto platform2 = constructPlatform();
+    EXPECT_EQ(platform2, platform);
+    EXPECT_NE(platform, nullptr);
+    platformImpl.reset(nullptr);
+}
+
+TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetThenNewPlatformIsConstructed) {
+    ASSERT_EQ(nullptr, platformImpl);
+    auto platform = constructPlatform();
+    std::unique_ptr<Platform> temporaryOwnership(std::move(platformImpl));
+    EXPECT_EQ(nullptr, platformImpl.get());
+    auto platform2 = constructPlatform();
+    EXPECT_NE(platform2, platform);
+    EXPECT_NE(platform, nullptr);
+    EXPECT_NE(platform2, nullptr);
+    platformImpl.reset(nullptr);
+}

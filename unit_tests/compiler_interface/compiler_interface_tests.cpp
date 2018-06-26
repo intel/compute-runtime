@@ -52,11 +52,8 @@ const char *gCBadDompilerDllName = "libbad_compiler.so";
 class CompilerInterfaceTest : public DeviceFixture,
                               public ::testing::Test {
   public:
-    CompilerInterfaceTest() {
-        //
-    }
-
     void SetUp() override {
+        constructPlatform();
         DeviceFixture::SetUp();
 
         retVal = CL_SUCCESS;
@@ -102,6 +99,7 @@ class CompilerInterfaceTest : public DeviceFixture,
         pCompilerInterface.reset();
 
         DeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     std::unique_ptr<MockCompilerInterface> pCompilerInterface = nullptr;

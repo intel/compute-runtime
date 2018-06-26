@@ -55,6 +55,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
     }
 
     void SetUp() override {
+        constructPlatform();
         dbgRestore.reset(new DebugManagerStateRestore());
         DebugManager.flags.EnableAsyncEventsHandler.set(false);
         handler.reset(new MockHandler());
@@ -68,6 +69,7 @@ class AsyncEventsHandlerTests : public ::testing::Test {
         event1->release();
         event2->release();
         event3->release();
+        platformImpl.reset(nullptr);
     }
 
     std::unique_ptr<DebugManagerStateRestore> dbgRestore;

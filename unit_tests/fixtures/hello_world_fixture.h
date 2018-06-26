@@ -73,6 +73,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
 
   public:
     virtual void SetUp() {
+        constructPlatform();
         DeviceFixture::SetUp();
         ASSERT_NE(nullptr, pDevice);
         CommandQueueFixture::SetUp(pDevice, 0);
@@ -106,6 +107,7 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         CommandQueueFixture::TearDown();
         delete BufferDefaults::context;
         DeviceFixture::TearDown();
+        platformImpl.reset(nullptr);
     }
 
     void *pSrcMemory;

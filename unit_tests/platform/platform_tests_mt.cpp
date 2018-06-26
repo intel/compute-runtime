@@ -95,7 +95,6 @@ TEST_F(PlatformTestMt, mtSafeTest) {
 
     devNum = pPlatform->getNumDevices();
     EXPECT_EQ(numPlatformDevices, devNum);
-
     pPlatform->shutdown();
     devNum = pPlatform->getNumDevices();
     EXPECT_EQ(0u, devNum);
