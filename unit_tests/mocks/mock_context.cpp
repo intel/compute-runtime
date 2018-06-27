@@ -43,6 +43,7 @@ MockContext::MockContext(Device *device, bool noSpecialQueue) {
         assert(retVal == CL_SUCCESS);
         overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }
+    device->incRefInternal();
 }
 
 MockContext::MockContext(
@@ -70,13 +71,13 @@ MockContext::~MockContext() {
 }
 
 MockContext::MockContext() {
-    device = std::unique_ptr<Device>(DeviceHelper<>::create());
-    devices.push_back(device.get());
+    device = DeviceHelper<>::create();
+    devices.push_back(device);
     memoryManager = device->getMemoryManager();
     svmAllocsManager = new SVMAllocsManager(memoryManager);
     cl_int retVal;
     if (!specialQueue) {
-        auto commandQueue = CommandQueue::create(this, device.get(), nullptr, retVal);
+        auto commandQueue = CommandQueue::create(this, device, nullptr, retVal);
         assert(retVal == CL_SUCCESS);
         overrideSpecialQueueAndDecrementRefCount(commandQueue);
     }

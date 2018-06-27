@@ -58,9 +58,6 @@ struct ContextTest : public PlatformFixture,
 
     using PlatformFixture::SetUp;
 
-    ContextTest() {
-    }
-
     void SetUp() override {
         PlatformFixture::SetUp();
 
@@ -213,6 +210,30 @@ TEST_F(ContextTest, givenDefaultDeviceCmdQueueWithContextWhenBeingCreatedNextDel
 
     delete cmdQ;
     EXPECT_EQ(1, context.getRefInternalCount());
+}
+
+TEST_F(ContextTest, givenContextWhenItIsCreatedFromDeviceThenItAddsRefCountToThisDevice) {
+    auto device = castToObject<Device>(devices[0]);
+    EXPECT_EQ(2, device->getRefInternalCount());
+    cl_device_id deviceID = devices[0];
+    std::unique_ptr<Context> context(Context::create<Context>(0, DeviceVector(&deviceID, 1), nullptr, nullptr, retVal));
+    EXPECT_EQ(3, device->getRefInternalCount());
+    context.reset(nullptr);
+    EXPECT_EQ(2, device->getRefInternalCount());
+}
+
+TEST_F(ContextTest, givenContextWhenItIsCreatedFromMultipleDevicesThenItAddsRefCountToThoseDevices) {
+    auto device = castToObject<Device>(devices[0]);
+    EXPECT_EQ(2, device->getRefInternalCount());
+
+    DeviceVector devicesVector;
+    devicesVector.push_back(device);
+    devicesVector.push_back(device);
+
+    std::unique_ptr<Context> context(Context::create<Context>(0, devicesVector, nullptr, nullptr, retVal));
+    EXPECT_EQ(4, device->getRefInternalCount());
+    context.reset(nullptr);
+    EXPECT_EQ(2, device->getRefInternalCount());
 }
 
 TEST_F(ContextTest, givenSpecialCmdQueueWithContextWhenBeingCreatedNextAutoDeletedThenContextRefCountShouldNeitherBeIncrementedNorNextDecremented) {

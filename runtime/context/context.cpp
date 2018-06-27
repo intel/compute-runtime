@@ -74,6 +74,9 @@ Context::~Context() {
         memoryManager->getDeferredDeleter()->removeClient();
     }
     gtpinNotifyContextDestroy((cl_context)this);
+    for (auto &device : devices) {
+        device->decRefInternal();
+    }
 }
 
 DeviceQueue *Context::getDefaultDeviceQueue() {
@@ -99,7 +102,7 @@ void Context::overrideSpecialQueueAndDecrementRefCount(CommandQueue *commandQueu
 };
 
 bool Context::createImpl(const cl_context_properties *properties,
-                         const DeviceVector &devices,
+                         const DeviceVector &inputDevices,
                          void(CL_CALLBACK *funcNotify)(const char *, const void *, size_t, void *),
                          void *data, cl_int &errcodeRet) {
 
@@ -160,7 +163,6 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     this->numProperties = numProperties;
     this->properties = propertiesNew;
-    this->devices = devices;
     this->setInteropUserSyncEnabled(interopUserSync);
 
     if (!sharingBuilder->finalizeProperties(*this, errcodeRet)) {
@@ -168,6 +170,7 @@ bool Context::createImpl(const cl_context_properties *properties,
     }
 
     this->driverDiagnostics = driverDiagnostics.release();
+    this->devices = inputDevices;
 
     // We currently assume each device uses the same MemoryManager
     if (devices.size() > 0) {
@@ -176,6 +179,10 @@ bool Context::createImpl(const cl_context_properties *properties,
         if (memoryManager->isAsyncDeleterEnabled()) {
             memoryManager->getDeferredDeleter()->addClient();
         }
+    }
+
+    for (auto &device : devices) {
+        device->incRefInternal();
     }
 
     auto commandQueue = CommandQueue::create(this, devices[0], nullptr, errcodeRet);
