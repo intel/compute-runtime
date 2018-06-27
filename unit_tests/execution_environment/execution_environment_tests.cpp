@@ -21,6 +21,7 @@
 */
 
 #include "test.h"
+#include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/platform/platform.h"
 
@@ -45,4 +46,27 @@ TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhen
     platform.reset();
     EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
     executionEnvironment->decRefInternal();
+}
+
+TEST(ExecutionEnvironment, givenPlatformWhenItIsInitializedAndCreatesDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
+    std::unique_ptr<Platform> platform(new Platform);
+    auto executionEnvironment = platform->peekExecutionEnvironment();
+
+    platform->initialize();
+    EXPECT_LT(0u, platform->getNumDevices());
+    EXPECT_EQ(static_cast<int32_t>(1u + platform->getNumDevices()), executionEnvironment->getRefInternalCount());
+}
+
+TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
+    std::unique_ptr<Platform> platform(new Platform);
+    auto executionEnvironment = platform->peekExecutionEnvironment();
+    platform->initialize();
+    auto device = platform->getDevice(0);
+    EXPECT_EQ(1, device->getRefInternalCount());
+    device->incRefInternal();
+    platform.reset(nullptr);
+    EXPECT_EQ(1, device->getRefInternalCount());
+    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
+
+    device->decRefInternal();
 }

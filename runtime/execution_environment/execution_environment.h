@@ -19,10 +19,12 @@
 * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 * OTHER DEALINGS IN THE SOFTWARE.
 */
-
+#pragma once
 #include "runtime/utilities/reference_tracked_object.h"
 
 namespace OCLRT {
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
+  public:
+    ~ExecutionEnvironment() override;
 };
 } // namespace OCLRT

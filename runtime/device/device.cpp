@@ -30,6 +30,7 @@
 #include "runtime/device/device.h"
 #include "runtime/device/device_vector.h"
 #include "runtime/device/driver_info.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
@@ -126,6 +127,9 @@ Device::~Device() {
     tagAllocation = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
+    if (executionEnvironment) {
+        executionEnvironment->decRefInternal();
+    }
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo,
@@ -292,5 +296,9 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 
 bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
+}
+void Device::connectToExecutionEnvironment(ExecutionEnvironment *executionEnvironment) {
+    executionEnvironment->incRefInternal();
+    this->executionEnvironment = executionEnvironment;
 }
 } // namespace OCLRT

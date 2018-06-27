@@ -38,6 +38,7 @@ class OSTime;
 class DriverInfo;
 struct HardwareInfo;
 class SourceLevelDebugger;
+class ExecutionEnvironment;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -138,6 +139,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool getEnabled64kbPages();
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return sourceLevelDebugger.get(); }
+    void connectToExecutionEnvironment(ExecutionEnvironment *executionEnvironment);
 
   protected:
     Device() = delete;
@@ -174,6 +176,7 @@ class Device : public BaseObject<_cl_device_id> {
     PreemptionMode preemptionMode;
     EngineType engineType;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
+    ExecutionEnvironment *executionEnvironment = nullptr;
 };
 
 template <cl_device_info Param>

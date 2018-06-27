@@ -19,3 +19,10 @@
 * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 * OTHER DEALINGS IN THE SOFTWARE.
 */
+
+#include "runtime/execution_environment/execution_environment.h"
+#include "runtime/os_interface/device_factory.h"
+
+OCLRT::ExecutionEnvironment::~ExecutionEnvironment() {
+    DeviceFactory::releaseDevices();
+}

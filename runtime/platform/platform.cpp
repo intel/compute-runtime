@@ -161,6 +161,7 @@ bool Platform::initialize() {
             }
 
             compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pDevice->getDeviceInfo().deviceExtensions);
+            pDevice->connectToExecutionEnvironment(this->executionEnvironment);
         } else {
             return false;
         }
@@ -191,7 +192,9 @@ void Platform::shutdown() {
     }
 
     for (auto dev : this->devices) {
-        delete dev;
+        if (dev) {
+            dev->decRefInternal();
+        }
     }
     devices.clear();
     state = StateNone;
@@ -199,7 +202,6 @@ void Platform::shutdown() {
     delete platformInfo;
     platformInfo = nullptr;
 
-    DeviceFactory::releaseDevices();
     std::string().swap(compilerExtensions);
 
     gtpinNotifyPlatformShutdown();
