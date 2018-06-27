@@ -37,8 +37,10 @@ pushd ${WRK_DIR}/igc
 wget https://github.com/intel/compute-runtime/releases/download/${VER}/intel-opencl_${VER}_amd64.deb
 ar -x intel-opencl_${VER}_amd64.deb
 tar -xJf data.tar.xz
-rm opt/intel/opencl/libigdrcl.so
-ln -s opt/intel/opencl lib
+find . -name libigdrcl.so -exec rm {} \;
+LIB_PATH=`find . -name libigc.so`
+echo "libraries found in ${LIB_PATH}"
+ln -sv `dirname ${LIB_PATH}` lib
 
 git clone https://github.com/intel/intel-graphics-compiler igc
 pushd igc; git checkout ${IGC_REV}; popd
