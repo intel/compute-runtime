@@ -98,9 +98,6 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
 }
 
 Program::~Program() {
-    if (context && !isBuiltIn) {
-        context->decRefInternal();
-    }
     delete[] genBinary;
     genBinary = nullptr;
 
@@ -128,6 +125,9 @@ Program::~Program() {
     if (globalSurface) {
         pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
         globalSurface = nullptr;
+    }
+    if (context && !isBuiltIn) {
+        context->decRefInternal();
     }
 }
 

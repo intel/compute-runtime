@@ -2941,3 +2941,19 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
     pProgram.SetDevice(nullptr);
     EXPECT_EQ(nullptr, pProgram.getDevicePtr());
 }
+
+TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
+    constructPlatform();
+    platformImpl->initialize();
+    auto device = platformImpl->getDevice(0);
+    MockContext *context = new MockContext(device, false);
+    MockProgram *pProgram = new MockProgram(context, false);
+    auto globalAllocation = device->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
+    pProgram->setGlobalSurface(globalAllocation);
+
+    platformImpl.reset(nullptr);
+    EXPECT_EQ(1, device->getRefInternalCount());
+    EXPECT_EQ(1, pProgram->getRefInternalCount());
+    context->decRefInternal();
+    pProgram->decRefInternal();
+}
