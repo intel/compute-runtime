@@ -34,8 +34,6 @@ bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo) {
         D3DKMT_ESCAPE escapeCommand = {0};
 
         GTDIGetGpuCpuTimestampsIn in = {GTDI_FNC_GET_GPU_CPU_TIMESTAMPS};
-        GTDIGetGpuCpuTimestampsOut out = {GTDI_RET_FAILED, 0};
-        uint32_t inSize = sizeof(GTDIGetGpuCpuTimestampsIn);
         uint32_t outSize = sizeof(GTDIGetGpuCpuTimestampsOut);
 
         escapeInfo.m_Header.EscapeCode = GFX_ESCAPE_IGPA_INSTRUMENTATION_CONTROL;
@@ -92,7 +90,7 @@ std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
     return std::unique_ptr<OSTime>(new OSTimeWin(osInterface));
 }
 
-OSTimeWin::OSTimeWin(OSInterface *osInterface) : wddm(nullptr) {
+OSTimeWin::OSTimeWin(OSInterface *osInterface) {
     this->osInterface = osInterface;
     if (osInterface) {
         wddm = osInterface->get()->getWddm();

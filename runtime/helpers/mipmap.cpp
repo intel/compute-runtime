@@ -27,6 +27,7 @@
 #include "runtime/mem_obj/image.h"
 
 #include <cstdint>
+#include <limits>
 
 namespace OCLRT {
 
@@ -44,7 +45,7 @@ uint32_t getMipLevelOriginIdx(cl_mem_object_type imageType) {
         return 0;
     default:
         DEBUG_BREAK_IF(true);
-        return -1;
+        return std::numeric_limits<uint32_t>::max();
     }
 }
 

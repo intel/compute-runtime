@@ -645,8 +645,6 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
 
         acquireResidencyLock();
 
-        size_t size = trimCandidateList.size();
-
         WddmAllocation *wddmAllocation = nullptr;
         while ((wddmAllocation = getTrimCandidateHead()) != nullptr) {
 
@@ -657,7 +655,6 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
 
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation: handle =", wddmAllocation->handle, "lastFence =", (wddmAllocation)->getResidencyData().lastFence);
 
-                size_t fragmentsSizeToEvict = 0;
                 uint32_t fragmentsToEvict = 0;
 
                 if (wddmAllocation->fragmentsStorage.fragmentCount == 0) {

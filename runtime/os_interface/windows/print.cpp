@@ -30,7 +30,6 @@
 #include <fcntl.h>
 
 void printToSTDOUT(const char *str) {
-    int bytesRead = 0;
     int fd = 0;
     HANDLE stdoutDuplicate = 0;
     FILE *pFile = nullptr;

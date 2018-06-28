@@ -39,9 +39,9 @@ class OSTimeWin : public OSTime {
     uint64_t getCpuRawTimestamp() override;
 
   protected:
-    Wddm *wddm;
+    Wddm *wddm = nullptr;
     LARGE_INTEGER frequency;
-    OSTimeWin() {}
+    OSTimeWin() = default;
     decltype(&QueryPerformanceCounter) QueryPerfomanceCounterFnc = QueryPerformanceCounter;
 };
 

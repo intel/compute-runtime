@@ -47,7 +47,6 @@ class Timer::TimerImpl {
     }
 
     long long int get() {
-        long long int nanosecondTime = 0;
         auto timeDelta = (double)(m_endTime.QuadPart - m_startTime.QuadPart);
         timeDelta /= (double)mFrequency.QuadPart;
         timeDelta *= 1000000000.0;
