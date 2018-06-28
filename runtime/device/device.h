@@ -53,11 +53,10 @@ class Device : public BaseObject<_cl_device_id> {
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
     template <typename T>
-    static T *create(const HardwareInfo *pHwInfo,
-                     bool isRootDevice = true) {
+    static T *create(const HardwareInfo *pHwInfo) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
         T *device = new T(*pHwInfo);
-        if (false == createDeviceImpl(pHwInfo, isRootDevice, *device)) {
+        if (false == createDeviceImpl(pHwInfo, true, *device)) {
             delete device;
             return nullptr;
         }

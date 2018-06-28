@@ -59,7 +59,7 @@ class PrintFormatterTest : public testing::Test {
         data = new MockGraphicsAllocation(underlyingBuffer, PrintFormatter::maxPrintfOutputLength);
 
         kernelInfo = KernelInfo::create();
-        device = Device::create<OCLRT::Device>(nullptr, false);
+        device = Device::create<OCLRT::Device>(nullptr);
         kernel = new MockKernel(&program, *kernelInfo, *device);
 
         printFormatter = new PrintFormatter(*kernel, *data);

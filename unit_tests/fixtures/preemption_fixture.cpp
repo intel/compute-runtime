@@ -50,7 +50,7 @@ void DevicePreemptionTests::SetUp() {
     }
     const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     kernelInfo.reset(KernelInfo::create());
-    device.reset(MockDevice::create<OCLRT::MockDevice>(nullptr, false));
+    device.reset(MockDevice::create<OCLRT::MockDevice>(nullptr));
     context.reset(new MockContext(device.get()));
     cmdQ.reset(new MockCommandQueue(context.get(), device.get(), properties));
     executionEnvironment.reset(new SPatchExecutionEnvironment);
