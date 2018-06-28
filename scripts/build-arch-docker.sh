@@ -21,5 +21,5 @@
 
 git fetch -t
 git clone ../compute-runtime neo
-docker build -f scripts/docker/Dockerfile-arch-gcc-5 -t neo-arch-gcc-5:ci .
+docker build -f scripts/docker/Dockerfile-arch-gcc-8 -t neo-arch-gcc-8:ci .
 
