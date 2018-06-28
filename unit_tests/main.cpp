@@ -25,6 +25,7 @@
 #include "runtime/helpers/options.h"
 #include "unit_tests/custom_event_listener.h"
 #include "helpers/test_files.h"
+#include "unit_tests/ult_config_listener.h"
 #include "unit_tests/memory_leak_listener.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -366,6 +367,7 @@ int main(int argc, char **argv) {
     }
 
     listeners.Append(new MemoryLeakListener);
+    listeners.Append(new UltConfigListener);
 
     gEnvironment = reinterpret_cast<TestEnvironment *>(::testing::AddGlobalTestEnvironment(new TestEnvironment));
 

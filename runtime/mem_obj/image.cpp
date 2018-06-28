@@ -126,7 +126,6 @@ Image *Image::create(Context *context,
     UNRECOVERABLE_IF(surfaceFormat == nullptr);
     Image *image = nullptr;
     GraphicsAllocation *memory = nullptr;
-    const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
     MemoryManager *memoryManager = context->getMemoryManager();
     Buffer *parentBuffer = castToObject<Buffer>(imageDesc->mem_object);
     Image *parentImage = castToObject<Image>(imageDesc->mem_object);
@@ -214,7 +213,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                std::unique_ptr<Gmm> gmm(GmmHelper::createGmmAndQueryImgParams(queryGmmImgInfo, hwInfo));
+                std::unique_ptr<Gmm> gmm(GmmHelper::createGmmAndQueryImgParams(queryGmmImgInfo));
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -222,11 +221,11 @@ Image *Image::create(Context *context,
             }
         } else if (parentImage != nullptr) {
             memory = parentImage->getGraphicsAllocation();
-            memory->gmm->queryImageParams(imgInfo, hwInfo);
+            memory->gmm->queryImageParams(imgInfo);
             isTilingAllowed = parentImage->allowTiling();
         } else {
             gmm = new Gmm();
-            gmm->queryImageParams(imgInfo, hwInfo);
+            gmm->queryImageParams(imgInfo);
 
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             if (flags & CL_MEM_USE_HOST_PTR) {
@@ -651,7 +650,6 @@ cl_int Image::getImageParams(Context *context,
                              size_t *imageRowPitch,
                              size_t *imageSlicePitch) {
     cl_int retVal = CL_SUCCESS;
-    const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
 
     ImageInfo imgInfo = {0};
     cl_image_desc imageDescriptor = *imageDesc;
@@ -660,7 +658,7 @@ cl_int Image::getImageParams(Context *context,
 
     Gmm *gmm = nullptr;
     gmm = new Gmm();
-    gmm->queryImageParams(imgInfo, hwInfo);
+    gmm->queryImageParams(imgInfo);
     delete gmm;
 
     *imageRowPitch = imgInfo.rowPitch;

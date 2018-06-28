@@ -43,7 +43,7 @@ class GmmHelper {
     static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint32_t maxPossiblePitch = 2147483648;
 
-    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo);
     static Gmm *create(const void *alignedPtr, size_t alignedSize, bool uncacheable);
     static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
 
@@ -70,6 +70,7 @@ class GmmHelper {
 
     static bool useSimplifiedMocsTable;
     static GMM_CLIENT_CONTEXT *gmmClientContext;
+    static const HardwareInfo *hwInfo;
     static bool isLoaded;
 };
 } // namespace OCLRT

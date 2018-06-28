@@ -26,7 +26,6 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/helpers/get_info.h"
-#include "runtime/helpers/hw_info.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 
@@ -36,7 +35,6 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
                                         cl_uint plane, cl_int *errcodeRet) {
     ErrorCodeHelper errorCode(errcodeRet, CL_SUCCESS);
 
-    const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
     auto memoryManager = context->getMemoryManager();
     unsigned int sharedHandle = 0;
     VAImage vaImage = {};
@@ -76,7 +74,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, true);
 
-    Gmm *gmm = GmmHelper::createGmmAndQueryImgParams(imgInfo, hwInfo);
+    Gmm *gmm = GmmHelper::createGmmAndQueryImgParams(imgInfo);
     DEBUG_BREAK_IF(alloc->gmm != nullptr);
     alloc->gmm = gmm;
 

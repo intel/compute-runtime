@@ -393,7 +393,7 @@ HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Darray) {
     EXPECT_EQ(image1Darray->getImageDesc().image_array_size, surfaceState->getRenderTargetViewExtent());
     EXPECT_EQ(image1Darray->getImageDesc().image_row_pitch, surfaceState->getSurfacePitch());
     EXPECT_EQ(0u, surfaceState->getSurfaceQpitch() % 4);
-    EXPECT_EQ(image1Darray->getGraphicsAllocation()->gmm->queryQPitch(::renderCoreFamily, GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQpitch());
+    EXPECT_EQ(image1Darray->getGraphicsAllocation()->gmm->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_1D), surfaceState->getSurfaceQpitch());
 
     EXPECT_EQ(image1Darray->getSurfaceFormatInfo().GenxSurfaceFormat, (GFX3DSTATE_SURFACEFORMAT)surfaceState->getSurfaceFormat());
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_1D, surfaceState->getSurfaceType());

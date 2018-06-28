@@ -20,9 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/surface_formats.h"
+#pragma once
+#include "gtest/gtest.h"
 
-void OCLRT::Gmm::applyAuxFlags(ImageInfo &imgInfo) {
-}
+namespace OCLRT {
+class UltConfigListener : public ::testing::EmptyTestEventListener {
+  private:
+    void OnTestStart(const ::testing::TestInfo &) override;
+};
+} // namespace OCLRT

@@ -38,7 +38,7 @@ void Gmm::create() {
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }
 
-void Gmm::queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
+void Gmm::queryImageParams(ImageInfo &imgInfo) {
     uint32_t imageWidth = static_cast<uint32_t>(imgInfo.imgDesc->image_width);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
@@ -90,7 +90,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
         this->resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
-    applyAuxFlags(imgInfo, hwInfo);
+    applyAuxFlags(imgInfo);
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
 
@@ -143,12 +143,12 @@ void Gmm::queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
         imgInfo.yOffsetForUVPlane = reqOffsetInfo.Lock.Offset / reqOffsetInfo.Lock.Pitch;
     }
 
-    imgInfo.qPitch = queryQPitch(hwInfo.pPlatform->eRenderCoreFamily, this->resourceParams.Type);
+    imgInfo.qPitch = queryQPitch(this->resourceParams.Type);
     return;
 }
 
-uint32_t Gmm::queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType) {
-    if (gfxFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
+uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {
+    if (GmmHelper::hwInfo->pPlatform->eRenderCoreFamily == IGFX_GEN8_CORE && resType == GMM_RESOURCE_TYPE::RESOURCE_3D) {
         return 0;
     }
     return gmmResourceInfo->getQPitch();

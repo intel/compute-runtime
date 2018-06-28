@@ -620,6 +620,13 @@ TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {
     EXPECT_TRUE(GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
 }
 
+TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
+    HardwareInfo localHwInfo = **platformDevices;
+
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo));
+    EXPECT_EQ(&localHwInfo, GmmHelper::hwInfo);
+}
+
 TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     struct MyMockResourecInfo : public GmmResourceInfo {
         using GmmResourceInfo::resourceInfo;

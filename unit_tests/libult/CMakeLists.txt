@@ -100,6 +100,8 @@ set(IGDRCL_SRCS_LIB_ULT_ENV
   ${IGDRCL_SOURCE_DIR}/unit_tests/helpers/kernel_binary_helper.h
   ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.cpp
   ${IGDRCL_SOURCE_DIR}/unit_tests/indirect_heap/indirect_heap_fixture.h
+  ${IGDRCL_SOURCE_DIR}/unit_tests/ult_config_listener.cpp
+  ${IGDRCL_SOURCE_DIR}/unit_tests/ult_config_listener.h
 )
 add_library (igdrcl_libult_env OBJECT
   ${IGDRCL_SRCS_LIB_ULT_ENV}

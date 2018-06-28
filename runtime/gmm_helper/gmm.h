@@ -38,15 +38,15 @@ class Gmm {
     virtual ~Gmm() = default;
 
     void create();
-    void queryImageParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+    void queryImageParams(ImageInfo &imgInfo);
 
     uint32_t getRenderHAlignment();
     uint32_t getRenderVAlignment();
 
-    void applyAuxFlags(ImageInfo &imgInfo, const HardwareInfo &hwInfo);
+    void applyAuxFlags(ImageInfo &imgInfo);
     bool unifiedAuxTranslationCapable() const;
 
-    uint32_t queryQPitch(GFXCORE_FAMILY gfxFamily, GMM_RESOURCE_TYPE resType);
+    uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
     void updateImgInfo(ImageInfo &imgInfo, cl_image_desc &imgDesc, cl_uint arrayIndex);
     uint8_t resourceCopyBlt(void *sys, void *gpu, uint32_t pitch, uint32_t height, unsigned char upload, OCLPlane plane);
 

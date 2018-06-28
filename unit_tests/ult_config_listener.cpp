@@ -20,9 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/surface_formats.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/options.h"
+#include "unit_tests/ult_config_listener.h"
 
-void OCLRT::Gmm::applyAuxFlags(ImageInfo &imgInfo) {
+void OCLRT::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
+    // Set default HardwareInfo for all ULTs that dont want to create Device and test initialization path
+    GmmHelper::hwInfo = platformDevices[0];
 }

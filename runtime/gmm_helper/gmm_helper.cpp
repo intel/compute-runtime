@@ -107,9 +107,9 @@ Gmm *GmmHelper::create(GMM_RESOURCE_INFO *inputGmm) {
     return gmm;
 }
 
-Gmm *GmmHelper::createGmmAndQueryImgParams(ImageInfo &imgInfo, const HardwareInfo &hwInfo) {
+Gmm *GmmHelper::createGmmAndQueryImgParams(ImageInfo &imgInfo) {
     Gmm *gmm = new Gmm();
-    gmm->queryImageParams(imgInfo, hwInfo);
+    gmm->queryImageParams(imgInfo);
     return gmm;
 }
 
@@ -202,6 +202,7 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
 
 bool GmmHelper::useSimplifiedMocsTable = false;
 GMM_CLIENT_CONTEXT *GmmHelper::gmmClientContext = nullptr;
+const HardwareInfo *GmmHelper::hwInfo = nullptr;
 bool GmmHelper::isLoaded = false;
 
 } // namespace OCLRT
