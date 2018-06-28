@@ -196,3 +196,38 @@ GEN10TEST_F(ThreadArbitrationGen10, givenPreambleWhenItIsProgrammedThenThreadArb
 GEN10TEST_F(ThreadArbitrationGen10, defaultArbitrationPolicy) {
     EXPECT_EQ(ThreadArbitrationPolicy::RoundRobinAfterDependency, PreambleHelper<CNLFamily>::getDefaultThreadArbitrationPolicy());
 }
+
+using PreambleTestGen10 = ::testing::Test;
+
+GEN10TEST_F(PreambleTestGen10, givenProgrammingPreambleWhenPreemptionIsTakenIntoAccountThenCSRBaseAddressIsEqualCSRGpuAddress) {
+    using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+
+    mockDevice->setPreemptionMode(PreemptionMode::MidThread);
+    auto cmdSizePreemptionMidThread = PreemptionHelper::getRequiredPreambleSize<FamilyType>(*mockDevice);
+    std::array<char, 8192> preambleBuffer{};
+    LinearStream preambleStream(&preambleBuffer, preambleBuffer.size());
+    StackVec<char, 4096> preemptionBuffer;
+    preemptionBuffer.resize(cmdSizePreemptionMidThread);
+    LinearStream preemptionStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
+
+    uintptr_t csrGpuAddr = 256 * MemoryConstants::kiloByte;
+    MockGraphicsAllocation csrSurface(reinterpret_cast<void *>(csrGpuAddr), 1024);
+
+    PreambleHelper<FamilyType>::programPreamble(&preambleStream, *mockDevice, 0U,
+                                                ThreadArbitrationPolicy::RoundRobin, &csrSurface);
+
+    PreemptionHelper::programPreamble<FamilyType>(preemptionStream, *mockDevice, &csrSurface);
+
+    HardwareParse hwParserFullPreamble;
+    hwParserFullPreamble.parseCommands<FamilyType>(preambleStream, 0);
+    auto cmd = hwParserFullPreamble.getCommand<GPGPU_CSR_BASE_ADDRESS>();
+    EXPECT_NE(nullptr, cmd);
+    EXPECT_EQ(static_cast<uint64_t>(csrGpuAddr), cmd->getGpgpuCsrBaseAddress());
+
+    HardwareParse hwParserOnlyPreemption;
+    hwParserOnlyPreemption.parseCommands<FamilyType>(preemptionStream, 0);
+    cmd = hwParserOnlyPreemption.getCommand<GPGPU_CSR_BASE_ADDRESS>();
+    EXPECT_NE(nullptr, cmd);
+    EXPECT_EQ(static_cast<uint64_t>(csrGpuAddr), cmd->getGpgpuCsrBaseAddress());
+}
