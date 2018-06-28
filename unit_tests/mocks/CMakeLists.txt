@@ -21,6 +21,7 @@
 set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_32bitAllocator.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_async_event_handler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_subcapture_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_block_kernel_manager.h

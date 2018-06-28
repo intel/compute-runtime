@@ -62,13 +62,6 @@ TEST_F(PlatformTest, getDevices) {
 
     auto allDevices = pPlatform->getDevices();
     EXPECT_NE(nullptr, allDevices);
-
-    pPlatform->shutdown();
-    devNum = pPlatform->getNumDevices();
-    EXPECT_EQ(0u, devNum);
-
-    allDevices = pPlatform->getDevices();
-    EXPECT_EQ(nullptr, allDevices);
 }
 
 TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
@@ -82,16 +75,6 @@ TEST_F(PlatformTest, PlatformgetAsCompilerEnabledExtensionsString) {
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.1") != std::string::npos) {
         EXPECT_THAT(compilerExtensions, ::testing::HasSubstr(std::string("cl_khr_subgroups")));
     }
-
-    pPlatform->shutdown();
-    compilerExtensions.shrink_to_fit();
-}
-
-TEST_F(PlatformTest, destructorCallsShutdownAndReleasesAllResources) {
-    Platform *platform = new Platform;
-    ASSERT_NE(nullptr, platform);
-    platform->initialize();
-    delete platform;
 }
 
 TEST_F(PlatformTest, hasAsyncEventsHandler) {
@@ -107,10 +90,8 @@ TEST(PlatformTestSimple, shutdownClosesAsyncEventHandlerThread) {
     EXPECT_EQ(mockAsyncHandler, platform->getAsyncEventsHandler());
 
     mockAsyncHandler->openThread();
-
-    platform->shutdown();
-    EXPECT_EQ(nullptr, mockAsyncHandler->thread);
     delete platform;
+    EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
 }
 
 namespace OCLRT {
@@ -219,4 +200,10 @@ TEST(PlatformConstructionTest, givenPlatformConstructorWhenItIsCalledAfterResetT
     EXPECT_NE(platform, nullptr);
     EXPECT_NE(platform2, nullptr);
     platformImpl.reset(nullptr);
+}
+
+TEST(PlatformConstructionTest, givenPlatformThatIsNotInitializedWhenGetDevicesIsCalledThenNullptrIsReturned) {
+    Platform platform;
+    auto devices = platform.getDevices();
+    EXPECT_EQ(nullptr, devices);
 }

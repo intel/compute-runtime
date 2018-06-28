@@ -33,10 +33,6 @@ struct PlatformTestMt : public ::testing::Test {
         pP->initialize();
     }
 
-    static void shutdownThreadFunc(Platform *pP) {
-        pP->shutdown();
-    }
-
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<Platform> pPlatform;
 };
@@ -60,7 +56,7 @@ TEST_F(PlatformTestMt, initialize) {
 
     EXPECT_TRUE(pPlatform->isInitialized());
 
-    pPlatform->shutdown();
+    pPlatform.reset(new Platform());
 
     for (int i = 0; i < 10; ++i) {
         threads[i] = std::thread(callinitPlatform, pPlatform.get(), &ret[i]);
@@ -72,30 +68,18 @@ TEST_F(PlatformTestMt, initialize) {
     for (int i = 0; i < 10; ++i)
         EXPECT_TRUE(ret[i]);
 
-    pPlatform->shutdown();
 }
 
 TEST_F(PlatformTestMt, mtSafeTest) {
     size_t devNum = pPlatform->getNumDevices();
     EXPECT_EQ(0u, devNum);
 
-    bool ret = pPlatform->initialize();
     std::thread t1(PlatformTestMt::initThreadFunc, pPlatform.get());
-    std::thread t2(PlatformTestMt::shutdownThreadFunc, pPlatform.get());
-    EXPECT_TRUE(ret);
+    std::thread t2(PlatformTestMt::initThreadFunc, pPlatform.get());
 
     t1.join();
     t2.join();
 
-    std::thread t3(PlatformTestMt::initThreadFunc, pPlatform.get());
-    std::thread t4(PlatformTestMt::initThreadFunc, pPlatform.get());
-
-    t3.join();
-    t4.join();
-
     devNum = pPlatform->getNumDevices();
     EXPECT_EQ(numPlatformDevices, devNum);
-    pPlatform->shutdown();
-    devNum = pPlatform->getNumDevices();
-    EXPECT_EQ(0u, devNum);
 }

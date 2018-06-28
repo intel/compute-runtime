@@ -48,6 +48,9 @@ class Platform : public BaseObject<_cl_platform_id> {
     Platform();
     ~Platform() override;
 
+    Platform(const Platform &) = delete;
+    Platform &operator=(Platform const &) = delete;
+
     cl_int getInfo(cl_platform_info paramName,
                    size_t paramValueSize,
                    void *paramValue,
@@ -57,7 +60,6 @@ class Platform : public BaseObject<_cl_platform_id> {
 
     bool initialize();
     bool isInitialized();
-    void shutdown();
 
     size_t getNumDevices() const;
     Device **getDevices();

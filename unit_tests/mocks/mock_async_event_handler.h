@@ -30,6 +30,9 @@
 #include <iterator>
 
 using namespace OCLRT;
+namespace MockAsyncEventHandlerGlobals {
+extern bool destructorCalled;
+}
 
 class MockHandler : public AsyncEventsHandler {
   public:
@@ -43,11 +46,13 @@ class MockHandler : public AsyncEventsHandler {
         if (!allowThreadCreating) {
             asyncProcess(this); // process once for cleanup
         }
+        MockAsyncEventHandlerGlobals::destructorCalled = true;
     }
 
     MockHandler(bool allowAsync = false) : AsyncEventsHandler() {
         allowThreadCreating = allowAsync;
         transferCounter.store(0);
+        MockAsyncEventHandlerGlobals::destructorCalled = false;
     }
 
     Event *process() {
@@ -70,7 +75,6 @@ class MockHandler : public AsyncEventsHandler {
 
     bool peekIsListEmpty() { return list.size() == 0; }
     bool peekIsRegisterListEmpty() { return registerList.size() == 0; }
-
     std::atomic<int> transferCounter;
     bool openThreadCalled = false;
     bool allowThreadCreating = false;
