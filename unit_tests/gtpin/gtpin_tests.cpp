@@ -44,6 +44,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/program/program_tests.h"
 #include "test.h"
 #include "gtest/gtest.h"
 #include <deque>
@@ -75,6 +76,7 @@ void OnContextCreate(context_handle_t context, platform_info_t *platformInfo, ig
     currContext = context;
     kernelResources.clear();
     ContextCreateCallbackCount++;
+    *igcInit = reinterpret_cast<igc_init_t *>(0x1234);
 }
 
 void OnContextDestroy(context_handle_t context) {
@@ -214,7 +216,9 @@ TEST_F(GTPinTests, givenInvalidArgumentsThenGTPinInitFails) {
 }
 
 TEST_F(GTPinTests, givenIncompleteArgumentsThenGTPinInitFails) {
-    uint32_t ver = 0;
+    interface_version_t ver;
+    ver.common = 0;
+    ver.specific = 0;
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, &ver);
     EXPECT_EQ(GTPIN_DI_ERROR_INVALID_ARGUMENT, retFromGtPin);
@@ -241,19 +245,24 @@ TEST_F(GTPinTests, givenIncompleteArgumentsThenGTPinInitFails) {
 }
 
 TEST_F(GTPinTests, givenInvalidArgumentsWhenVersionArgumentIsProvidedThenGTPinInitReturnsDriverVersion) {
-    uint32_t ver = 0;
+    interface_version_t ver;
+    ver.common = 0;
+    ver.specific = 0;
 
     retFromGtPin = GTPin_Init(nullptr, nullptr, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver);
+    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver.specific);
+    EXPECT_EQ(gtpin::GTPIN_COMMON_INTERFACE_VERSION, ver.common);
 
     retFromGtPin = GTPin_Init(&gtpinCallbacks, nullptr, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver);
+    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver.specific);
+    EXPECT_EQ(gtpin::GTPIN_COMMON_INTERFACE_VERSION, ver.common);
 
     retFromGtPin = GTPin_Init(nullptr, &driverServices, &ver);
     EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver);
+    EXPECT_EQ(gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION, ver.specific);
+    EXPECT_EQ(gtpin::GTPIN_COMMON_INTERFACE_VERSION, ver.common);
 }
 
 TEST_F(GTPinTests, givenValidAndCompleteArgumentsThenGTPinInitSucceeds) {
@@ -2280,5 +2289,74 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     kernelResources.clear();
+}
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnContextCreateIsCalledThenGtpinInitIsSet) {
+    gtpinCallbacks.onContextCreate = OnContextCreate;
+    gtpinCallbacks.onContextDestroy = OnContextDestroy;
+    gtpinCallbacks.onKernelCreate = OnKernelCreate;
+    gtpinCallbacks.onKernelSubmit = OnKernelSubmit;
+    gtpinCallbacks.onCommandBufferCreate = OnCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = OnCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+    auto context = std::make_unique<MockContext>();
+    gtpinNotifyContextCreate(context.get());
+    EXPECT_NE(gtpinGetIgcInit(), nullptr);
+}
+
+TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGtpinInfoIsSet) {
+    cl_int retVal = CL_INVALID_BINARY;
+    char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
+    size_t binSize = 10;
+
+    std::unique_ptr<Program> pProgram(Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal));
+    EXPECT_NE(nullptr, pProgram.get());
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
+
+    cl_device_id deviceId = pContext->getDevice(0);
+    Device *pDevice = castToObject<Device>(deviceId);
+    char *pBin = &genBin[0];
+    retVal = CL_INVALID_BINARY;
+    binSize = 0;
+
+    // Prepare simple program binary containing patch token PATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KERNEL_ARGUMENT
+    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)pBin;
+    pBHdr->Magic = iOpenCL::MAGIC_CL;
+    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
+    pBHdr->Device = pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily;
+    pBHdr->GPUPointerSizeInBytes = 8;
+    pBHdr->NumberOfKernels = 1;
+    pBHdr->SteppingId = 0;
+    pBHdr->PatchListSize = 0;
+    pBin += sizeof(SProgramBinaryHeader);
+    binSize += sizeof(SProgramBinaryHeader);
+
+    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBin;
+    pKHdr->CheckSum = 0;
+    pKHdr->ShaderHashCode = 0;
+    pKHdr->KernelNameSize = 8;
+    pKHdr->PatchListSize = 8;
+    pKHdr->KernelHeapSize = 0;
+    pKHdr->GeneralStateHeapSize = 0;
+    pKHdr->DynamicStateHeapSize = 0;
+    pKHdr->SurfaceStateHeapSize = 0;
+    pKHdr->KernelUnpaddedSize = 0;
+    pBin += sizeof(SKernelBinaryHeaderCommon);
+    binSize += sizeof(SKernelBinaryHeaderCommon);
+
+    strcpy(pBin, "TstCopy");
+    pBin += pKHdr->KernelNameSize;
+    binSize += pKHdr->KernelNameSize;
+
+    iOpenCL::SPatchItemHeader *pPatch = (iOpenCL::SPatchItemHeader *)pBin;
+    pPatch->Token = iOpenCL::PATCH_TOKEN_GTPIN_INFO;
+    pPatch->Size = sizeof(iOpenCL::SPatchItemHeader);
+    binSize += sizeof(iOpenCL::SPatchItemHeader);
+
+    // Decode prepared program binary
+    pProgram->storeGenBinary(&genBin[0], binSize);
+    retVal = pProgram->processGenBinary();
+    EXPECT_NE(gtpinGetIgcInfo(), nullptr);
+    ASSERT_EQ(CL_SUCCESS, retVal);
 }
 } // namespace ULT

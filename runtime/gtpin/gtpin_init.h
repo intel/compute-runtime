@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, uint32_t *pDriverVersion);
+gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, gtpin::interface_version_t *pDriverVersion);
 
 #ifdef __cplusplus
 }

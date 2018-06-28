@@ -573,6 +573,13 @@ struct TranslationCtxMock {
 
         return CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL>(ret);
     }
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> Translate(CIF::Builtins::BufferSimple *src,
+                                                                 CIF::Builtins::BufferSimple *options,
+                                                                 CIF::Builtins::BufferSimple *internalOptions,
+                                                                 CIF::Builtins::BufferSimple *tracingOptions,
+                                                                 uint32_t tracingOptionsCount, void *gtpinInit) {
+        return this->Translate(src, options, internalOptions, tracingOptions, tracingOptionsCount);
+    }
 };
 
 TEST(TranslateTest, whenArgsAreValidAndTranslatorReturnsValidOutputThenValidOutputIsReturned) {
@@ -598,6 +605,15 @@ TEST(TranslateTest, whenTranslatorReturnsNullptrThenNullptrIsReturned) {
     EXPECT_EQ(nullptr, ret);
 }
 
+TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsNullptrThenNullptrIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    mockTranslationCtx.returnNullptr = true;
+    auto mockCifBuffer = std::make_unique<MockCIFBuffer>();
+
+    auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
+    EXPECT_EQ(nullptr, ret);
+}
+
 TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
     TranslationCtxMock mockTranslationCtx;
     auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
@@ -606,6 +622,18 @@ TEST(TranslateTest, whenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
         mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
         mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
         auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get());
+        EXPECT_EQ(nullptr, ret);
+    }
+}
+
+TEST(TranslateTest, givenNullPtrAsGtPinInputWhenTranslatorReturnsInvalidOutputThenNullptrIsReturned) {
+    TranslationCtxMock mockTranslationCtx;
+    auto mockCifBuffer = CIF::RAII::UPtr_t<MockCIFBuffer>(new MockCIFBuffer());
+    for (uint32_t i = 1; i <= (1 << 3) - 1; ++i) {
+        mockTranslationCtx.returnNullptrDebugData = (i & 1) != 0;
+        mockTranslationCtx.returnNullptrLog = (i & (1 << 1)) != 0;
+        mockTranslationCtx.returnNullptrOutput = (i & (1 << 2)) != 0;
+        auto ret = OCLRT::translate(&mockTranslationCtx, mockCifBuffer.get(), mockCifBuffer.get(), mockCifBuffer.get(), nullptr);
         EXPECT_EQ(nullptr, ret);
     }
 }

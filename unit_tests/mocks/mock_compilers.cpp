@@ -469,6 +469,19 @@ IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
     return out;
 }
 
+IGC::OclTranslationOutputBase *MockIgcOclTranslationCtx::TranslateImpl(
+    CIF::Version_t outVersion,
+    CIF::Builtins::BufferSimple *src,
+    CIF::Builtins::BufferSimple *options,
+    CIF::Builtins::BufferSimple *internalOptions,
+    CIF::Builtins::BufferSimple *tracingOptions,
+    uint32_t tracingOptionsCount,
+    void *gtpinInput) {
+    auto out = new MockOclTranslationOutput();
+    translate(true, src, options, internalOptions, out);
+    return out;
+}
+
 MockOclTranslationOutput::MockOclTranslationOutput() {
     this->log = new MockCIFBuffer();
     this->output = new MockCIFBuffer();

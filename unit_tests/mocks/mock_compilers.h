@@ -139,6 +139,15 @@ struct MockIgcOclTranslationCtx : MockCIF<IGC::IgcOclTranslationCtxTagOCL> {
         CIF::Builtins::BufferSimple *internalOptions,
         CIF::Builtins::BufferSimple *tracingOptions,
         uint32_t tracingOptionsCount) override;
+
+    IGC::OclTranslationOutputBase *TranslateImpl(
+        CIF::Version_t outVersion,
+        CIF::Builtins::BufferSimple *src,
+        CIF::Builtins::BufferSimple *options,
+        CIF::Builtins::BufferSimple *internalOptions,
+        CIF::Builtins::BufferSimple *tracingOptions,
+        uint32_t tracingOptionsCount,
+        void *gtpinInput) override;
 };
 
 struct MockOclTranslationOutput : MockCIF<IGC::OclTranslationOutputTagOCL> {

@@ -26,6 +26,7 @@
 #include "runtime/platform/platform.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/helpers/validators.h"
+#include "runtime/gtpin/gtpin_notify.h"
 #include "program.h"
 #include <cstring>
 
@@ -118,6 +119,7 @@ cl_int Program::build(
             inputArgs.InternalOptionsSize = (uint32_t)internalOptions.length();
             inputArgs.pTracingOptions = nullptr;
             inputArgs.TracingOptionsCount = 0;
+            inputArgs.GTPinInput = gtpinGetIgcInit();
             DBG_LOG(LogApiCalls,
                     "Build Options", inputArgs.pOptions,
                     "\nBuild Internal Options", inputArgs.pInternalOptions);

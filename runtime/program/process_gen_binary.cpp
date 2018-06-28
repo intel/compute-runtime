@@ -31,6 +31,7 @@
 #include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/gtpin/gtpin_notify.h"
 
 #include <algorithm>
 
@@ -778,7 +779,13 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                     "\n  .Offset", pPatchToken->Offset,
                     "\n  .PerThreadSystemThreadSurfaceSize", pPatchToken->PerThreadSystemThreadSurfaceSize);
         } break;
-
+        case PATCH_TOKEN_GTPIN_INFO: {
+            setIgcInfo(ptrOffset(pCurPatchListPtr, sizeof(SPatchItemHeader)));
+            DBG_LOG(LogPatchTokens,
+                    "\n.PATCH_TOKEN_GTPIN_INFO", pPatch->Token,
+                    "\n  .Size", pPatch->Size);
+            break;
+        }
         default:
             printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, " Program::parsePatchList. Unknown Patch Token: %d\n", pPatch->Token);
             if (false == isSafeToSkipUnhandledToken(pPatch->Token)) {
