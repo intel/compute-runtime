@@ -89,7 +89,6 @@ TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedT
 
 TEST_F(DeviceTest, retainAndRelease) {
     ASSERT_NE(nullptr, pDevice);
-    ASSERT_EQ(true, pDevice->isRootDevice());
 
     pDevice->retain();
     pDevice->retain();
@@ -128,8 +127,8 @@ TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUs
 }
 
 struct SmallMockDevice : public Device {
-    SmallMockDevice(const HardwareInfo &hwInfo, bool isRootDevice = true)
-        : Device(hwInfo, isRootDevice) {}
+    SmallMockDevice(const HardwareInfo &hwInfo)
+        : Device(hwInfo) {}
     GraphicsAllocation *peekTagAllocation() { return this->tagAllocation; }
 };
 

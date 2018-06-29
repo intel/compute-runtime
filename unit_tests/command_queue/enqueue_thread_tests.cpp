@@ -449,8 +449,7 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
     class MyMockDevice : public MockDevice {
 
       public:
-        MyMockDevice() : MockDevice(*platformDevices[0], false) {
-        }
+        MyMockDevice() : MockDevice(*platformDevices[0]) {}
 
         void setTagAllocation(GraphicsAllocation *tagAllocation) {
             this->tagAllocation = tagAllocation;

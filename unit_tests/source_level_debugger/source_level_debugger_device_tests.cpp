@@ -44,7 +44,7 @@ class MockDeviceWithActiveDebugger : public MockDevice {
             return false;
         }
     };
-    MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {
+    MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo) : MockDevice(hwInfo) {
         sourceLevelDebuggerCreated = new T(new MockOsLibrary);
         sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }

@@ -48,7 +48,7 @@ class MockDevice : public Device {
     void *peekSlmWindowStartAddress() const {
         return this->slmWindowStartAddress;
     }
-    MockDevice(const HardwareInfo &hwInfo, bool isRootDevice = true);
+    MockDevice(const HardwareInfo &hwInfo);
 
     DeviceInfo *getDeviceInfoToModify() {
         return &this->deviceInfo;
@@ -105,7 +105,7 @@ class MockDevice : public Device {
         if (memManager) {
             device->setMemoryManager(memManager);
         }
-        if (false == createDeviceImpl(pHwInfo, true, *device)) {
+        if (false == createDeviceImpl(pHwInfo, *device)) {
             delete device;
             return nullptr;
         }
@@ -197,29 +197,29 @@ class FailMemoryManager : public MockMemoryManager {
 
 class FailDevice : public Device {
   public:
-    FailDevice(const HardwareInfo &hwInfo, bool isRootDevice = true)
-        : Device(hwInfo, isRootDevice) {
+    FailDevice(const HardwareInfo &hwInfo)
+        : Device(hwInfo) {
         memoryManager = new FailMemoryManager;
     }
 };
 
 class FailDeviceAfterOne : public Device {
   public:
-    FailDeviceAfterOne(const HardwareInfo &hwInfo, bool isRootDevice = true)
-        : Device(hwInfo, isRootDevice) {
+    FailDeviceAfterOne(const HardwareInfo &hwInfo)
+        : Device(hwInfo) {
         memoryManager = new FailMemoryManager(1);
     }
 };
 
 class MockAlignedMallocManagerDevice : public MockDevice {
   public:
-    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, bool isRootDevice = true);
+    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo);
 };
 
 template <typename T = SourceLevelDebugger>
 class MockDeviceWithSourceLevelDebugger : public MockDevice {
   public:
-    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo, bool isRootDevice = true) : MockDevice(hwInfo, isRootDevice) {
+    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo) : MockDevice(hwInfo) {
         T *sourceLevelDebuggerCreated = new T(nullptr);
         sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }

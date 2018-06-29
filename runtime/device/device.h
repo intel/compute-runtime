@@ -56,7 +56,7 @@ class Device : public BaseObject<_cl_device_id> {
     static T *create(const HardwareInfo *pHwInfo) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
         T *device = new T(*pHwInfo);
-        if (false == createDeviceImpl(pHwInfo, true, *device)) {
+        if (false == createDeviceImpl(pHwInfo, *device)) {
             delete device;
             return nullptr;
         }
@@ -116,7 +116,6 @@ class Device : public BaseObject<_cl_device_id> {
     /* We hide the retain and release function of BaseObject. */
     void retain() override;
     unique_ptr_if_unused<Device> release() override;
-    bool isRootDevice() const { return isRoot; }
     OSTime *getOSTime() const { return osTime.get(); };
     double getProfilingTimerResolution();
     void increaseProgramCount() { programCount++; }
@@ -142,11 +141,9 @@ class Device : public BaseObject<_cl_device_id> {
 
   protected:
     Device() = delete;
-    Device(const HardwareInfo &hwInfo,
-           bool isRootDevice = true);
+    Device(const HardwareInfo &hwInfo);
 
-    static bool createDeviceImpl(const HardwareInfo *pHwInfo,
-                                 bool isRootDevice, Device &outDevice);
+    static bool createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice);
     static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
     MOCKABLE_VIRTUAL void initializeCaps();
     void setupFp64Flags();
@@ -157,7 +154,6 @@ class Device : public BaseObject<_cl_device_id> {
     const HardwareInfo &hwInfo;
     DeviceInfo deviceInfo;
 
-    const bool isRoot;
     CommandStreamReceiver *commandStreamReceiver;
 
     volatile uint32_t *tagAddress;

@@ -30,8 +30,8 @@
 
 using namespace OCLRT;
 
-MockDevice::MockDevice(const HardwareInfo &hwInfo, bool isRootDevice)
-    : Device(hwInfo, isRootDevice) {
+MockDevice::MockDevice(const HardwareInfo &hwInfo)
+    : Device(hwInfo) {
     memoryManager = new OsAgnosticMemoryManager;
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
@@ -83,7 +83,7 @@ OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MockMemoryManager() 
     this->fail = fail;
 }
 
-MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, bool isRootDevice) : MockDevice(hwInfo, isRootDevice) {
+MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo) : MockDevice(hwInfo) {
     //delete regular OsAgnosticMemoryManager
     delete memoryManager;
     //and create specific

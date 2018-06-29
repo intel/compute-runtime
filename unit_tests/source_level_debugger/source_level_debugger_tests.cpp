@@ -410,7 +410,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
         unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
-        MockDevice::createDeviceImpl(platformDevices[0], true, *device.get());
+        MockDevice::createDeviceImpl(platformDevices[0], *device.get());
         EXPECT_TRUE(interceptor.newDeviceCalled);
         uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface() != nullptr ? device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
         EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);

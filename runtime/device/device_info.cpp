@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -204,8 +204,7 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
         break;
     case CL_DEVICE_REFERENCE_COUNT: {
         cl_int ref = this->getReference();
-        DEBUG_BREAK_IF(ref <= 0);
-        DEBUG_BREAK_IF(this->isRootDevice() && ref != 1);
+        DEBUG_BREAK_IF(ref != 1);
         param = static_cast<cl_uint>(ref);
         src = &param;
         retSize = srcSize = sizeof(param);
