@@ -460,6 +460,7 @@ TEST_P(DataParameterTest, DataParameterTests) {
 
     buildAndDecode();
 
+    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
     EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
     EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
 }
@@ -469,7 +470,8 @@ INSTANTIATE_TEST_CASE_P(DataParameterTests,
                         DataParameterTest,
                         testing::Range(2u, static_cast<uint32_t>(NUM_DATA_PARAMETER_TOKENS)));
 
-TEST_P(DataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
+class KernelDataParameterTest : public KernelDataTest {};
+TEST_F(KernelDataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
     SPatchDataParameterBuffer dataParameterToken;
     dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
     dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
@@ -486,8 +488,29 @@ TEST_P(DataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
 
     buildAndDecode();
 
+    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
     EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
     EXPECT_EQ_VAL(DATA_PARAMETER_BUFFER_OFFSET, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+}
+
+TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParameterIsIgnored) {
+    SPatchDataParameterBuffer dataParameterToken;
+    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
+    dataParameterToken.Type = NUM_DATA_PARAMETER_TOKENS + 1;
+    dataParameterToken.ArgumentNumber = 1;
+    dataParameterToken.DataSize = sizeof(uint32_t);
+    dataParameterToken.LocationIndex = 0x0;
+    dataParameterToken.LocationIndex2 = 0x0;
+    dataParameterToken.Offset = 0;
+    dataParameterToken.SourceOffset = 8;
+
+    pPatchList = &dataParameterToken;
+    patchListSize = dataParameterToken.Size;
+
+    buildAndDecode();
+
+    EXPECT_EQ_VAL(0u, pKernelInfo->patchInfo.dataParameterBuffers.size());
 }
 
 TEST_F(KernelDataTest, DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES) {

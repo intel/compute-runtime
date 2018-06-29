@@ -448,6 +448,8 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                 break;
 
             default:
+                kernelInfo.patchInfo.dataParameterBuffers.pop_back();
+
                 DBG_LOG(LogPatchTokens, "\n  .Type", "Unhandled", pDataParameterBuffer->Type);
                 DEBUG_BREAK_IF(true);
             }
