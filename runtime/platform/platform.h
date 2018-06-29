@@ -79,7 +79,7 @@ class Platform : public BaseObject<_cl_platform_id> {
     cl_uint state = StateNone;
     void fillGlobalDispatchTable();
 
-    PlatformInfo *platformInfo = nullptr;
+    std::unique_ptr<PlatformInfo> platformInfo;
     DeviceVector devices;
     std::string compilerExtensions;
     std::unique_ptr<AsyncEventsHandler> asyncEventsHandler;
