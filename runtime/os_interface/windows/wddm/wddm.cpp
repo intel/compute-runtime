@@ -633,7 +633,8 @@ bool Wddm::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     alloc->handle = allocationInfo[0].hAllocation;
     alloc->resourceHandle = OpenResource.hResource;
 
-    alloc->gmm = GmmHelper::create((PGMM_RESOURCE_INFO)(allocationInfo[0].pPrivateDriverData));
+    auto resourceInfo = const_cast<void *>(allocationInfo[0].pPrivateDriverData);
+    alloc->gmm = new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo));
 
     return true;
 }
@@ -669,7 +670,8 @@ bool Wddm::openNTHandle(HANDLE handle, WddmAllocation *alloc) {
     alloc->handle = allocationInfo2[0].hAllocation;
     alloc->resourceHandle = openResourceFromNtHandle.hResource;
 
-    alloc->gmm = GmmHelper::create((PGMM_RESOURCE_INFO)(allocationInfo2[0].pPrivateDriverData));
+    auto resourceInfo = const_cast<void *>(allocationInfo2[0].pPrivateDriverData);
+    alloc->gmm = new Gmm(static_cast<GMM_RESOURCE_INFO *>(resourceInfo));
 
     return true;
 }

@@ -47,28 +47,9 @@ namespace GmmHelperFunctions {
 Gmm *getGmm(void *ptr, size_t size) {
     size_t alignedSize = alignSizeWholePage(ptr, size);
     void *alignedPtr = alignUp(ptr, 4096);
-    Gmm *gmm = new Gmm;
 
-    gmm->resourceParams.Type = RESOURCE_BUFFER;
-    gmm->resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    gmm->resourceParams.BaseWidth = (uint32_t)alignedSize;
-    gmm->resourceParams.BaseHeight = 1;
-    gmm->resourceParams.Depth = 1;
-    gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-
-    gmm->resourceParams.pExistingSysMem = reinterpret_cast<GMM_VOIDPTR64>(alignedPtr);
-    gmm->resourceParams.ExistingSysMemSize = alignedSize;
-    gmm->resourceParams.BaseAlignment = 0;
-
-    gmm->resourceParams.Flags.Info.ExistingSysMem = 1;
-    gmm->resourceParams.Flags.Info.Linear = 1;
-    gmm->resourceParams.Flags.Info.Cacheable = 1;
-    gmm->resourceParams.Flags.Gpu.Texture = 1;
-
-    gmm->create();
-
+    Gmm *gmm = new Gmm(alignedPtr, alignedSize, false);
     EXPECT_NE(gmm->gmmResourceInfo.get(), nullptr);
-
     return gmm;
 }
 } // namespace GmmHelperFunctions
@@ -107,7 +88,7 @@ TEST_F(Wddm20Tests, givenNullPageTableManagerWhenUpdateAuxTableCalledThenReturnF
     wddm->resetPageTableManager(nullptr);
     EXPECT_EQ(nullptr, wddm->getPageTableManager());
 
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
@@ -468,7 +449,7 @@ TEST_F(Wddm20Tests, GetCpuGpuTime) {
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenGraphicsAllocationWithSharedPropertiesIsCreated) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
@@ -506,7 +487,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
 
 HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenMapGpuVaWithCpuPtrDepensOnBitness) {
     void *pSysMem = (void *)0x1000;
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 

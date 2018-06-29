@@ -36,14 +36,18 @@ class GmmResourceInfo;
 class Gmm {
   public:
     virtual ~Gmm() = default;
+    Gmm() = delete;
+    Gmm(ImageInfo &inputOutputImgInfo);
+    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
+    Gmm(GMM_RESOURCE_INFO *inputGmm);
 
-    void create();
-    void queryImageParams(ImageInfo &imgInfo);
+    void queryImageParams(ImageInfo &inputOutputImgInfo);
 
     uint32_t getRenderHAlignment();
     uint32_t getRenderVAlignment();
 
-    void applyAuxFlags(ImageInfo &imgInfo);
+    void applyAuxFlagsForImage(ImageInfo &imgInfo);
+    void applyAuxFlagsForBuffer(bool preferRenderCompression);
     bool unifiedAuxTranslationCapable() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);

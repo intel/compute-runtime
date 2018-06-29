@@ -73,46 +73,6 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
-Gmm *GmmHelper::create(const void *alignedPtr, size_t alignedSize, bool uncacheable) {
-    auto gmm = new Gmm();
-
-    gmm->resourceParams.Type = RESOURCE_BUFFER;
-    gmm->resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
-    gmm->resourceParams.BaseWidth = (uint32_t)alignedSize;
-    gmm->resourceParams.BaseHeight = 1;
-    gmm->resourceParams.Depth = 1;
-    if (!uncacheable) {
-        gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-    } else {
-        gmm->resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
-    }
-    gmm->resourceParams.Flags.Info.Linear = 1;
-    gmm->resourceParams.Flags.Info.Cacheable = 1;
-    gmm->resourceParams.Flags.Gpu.Texture = 1;
-
-    if (alignedPtr != nullptr) {
-        gmm->resourceParams.Flags.Info.ExistingSysMem = 1;
-        gmm->resourceParams.pExistingSysMem = reinterpret_cast<GMM_VOIDPTR64>(alignedPtr);
-        gmm->resourceParams.ExistingSysMemSize = alignedSize;
-    }
-
-    gmm->create();
-
-    return gmm;
-}
-
-Gmm *GmmHelper::create(GMM_RESOURCE_INFO *inputGmm) {
-    auto gmm = new Gmm();
-    gmm->gmmResourceInfo.reset(GmmResourceInfo::create(inputGmm));
-    return gmm;
-}
-
-Gmm *GmmHelper::createGmmAndQueryImgParams(ImageInfo &imgInfo) {
-    Gmm *gmm = new Gmm();
-    gmm->queryImageParams(imgInfo);
-    return gmm;
-}
-
 void GmmHelper::queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc) {
     // 1D or 2D from buffer
     if (imgInfo.imgDesc->image_row_pitch > 0) {

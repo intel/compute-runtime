@@ -24,5 +24,7 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/surface_formats.h"
 
-void OCLRT::Gmm::applyAuxFlags(ImageInfo &imgInfo) {
-}
+using namespace OCLRT;
+
+void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
+void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}

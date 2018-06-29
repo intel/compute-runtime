@@ -36,7 +36,7 @@ static SurfaceFormatInfo mockSurfaceFormat;
 class MockGmm : public Gmm {
   public:
     static std::unique_ptr<Gmm> queryImgParams(ImageInfo &imgInfo) {
-        return std::unique_ptr<Gmm>(GmmHelper::createGmmAndQueryImgParams(imgInfo));
+        return std::unique_ptr<Gmm>(new Gmm(imgInfo));
     }
 
     static ImageInfo initImgInfo(cl_image_desc &imgDesc, int baseMipLevel, const SurfaceFormatInfo *surfaceFormat) {

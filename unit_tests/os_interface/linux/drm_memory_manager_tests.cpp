@@ -1858,7 +1858,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocation
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto gmm = GmmHelper::create(nullptr, 123, false);
+    auto gmm = new Gmm(nullptr, 123, false);
     auto allocation = memoryManager->allocateGraphicsMemory(123, 123);
     allocation->gmm = gmm;
 

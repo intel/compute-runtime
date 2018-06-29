@@ -30,15 +30,46 @@
 #include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
-void Gmm::create() {
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) {
+    resourceParams.Type = RESOURCE_BUFFER;
+    resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
+    resourceParams.BaseWidth = static_cast<uint32_t>(alignedSize);
+    resourceParams.BaseHeight = 1;
+    resourceParams.Depth = 1;
+    if (!uncacheable) {
+        resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
+    } else {
+        resourceParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER_CSR_UC;
+    }
+    resourceParams.Flags.Info.Linear = 1;
+    resourceParams.Flags.Info.Cacheable = 1;
+    resourceParams.Flags.Gpu.Texture = 1;
+
+    if (alignedPtr) {
+        resourceParams.Flags.Info.ExistingSysMem = 1;
+        resourceParams.pExistingSysMem = reinterpret_cast<GMM_VOIDPTR64>(alignedPtr);
+        resourceParams.ExistingSysMemSize = alignedSize;
+    }
+
     if (resourceParams.BaseWidth >= GmmHelper::maxPossiblePitch) {
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
+    applyAuxFlagsForBuffer(false);
+
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }
 
+Gmm::Gmm(GMM_RESOURCE_INFO *inputGmm) {
+    gmmResourceInfo.reset(GmmResourceInfo::create(inputGmm));
+}
+
+Gmm::Gmm(ImageInfo &inputOutputImgInfo) {
+    queryImageParams(inputOutputImgInfo);
+}
+
 void Gmm::queryImageParams(ImageInfo &imgInfo) {
+    this->resourceParams = {};
     uint32_t imageWidth = static_cast<uint32_t>(imgInfo.imgDesc->image_width);
     uint32_t imageHeight = 1;
     uint32_t imageDepth = 1;
@@ -90,7 +121,7 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
         this->resourceParams.Flags.Info.AllowVirtualPadding = true;
     }
 
-    applyAuxFlags(imgInfo);
+    applyAuxFlagsForImage(imgInfo);
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
 
@@ -144,7 +175,6 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
     }
 
     imgInfo.qPitch = queryQPitch(this->resourceParams.Type);
-    return;
 }
 
 uint32_t Gmm::queryQPitch(GMM_RESOURCE_TYPE resType) {

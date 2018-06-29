@@ -43,10 +43,6 @@ class GmmHelper {
     static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint32_t maxPossiblePitch = 2147483648;
 
-    static Gmm *createGmmAndQueryImgParams(ImageInfo &imgInfo);
-    static Gmm *create(const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    static Gmm *create(GMM_RESOURCE_INFO *inputGmm);
-
     static void loadLib();
     static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
     static void destroyContext();

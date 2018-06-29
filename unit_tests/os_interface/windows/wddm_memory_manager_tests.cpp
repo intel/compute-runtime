@@ -152,7 +152,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false, false);
@@ -169,7 +169,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCa
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1));
@@ -203,7 +203,7 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllo
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
@@ -226,7 +226,7 @@ HWTEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32B
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     memoryManager->setForce32BitAllocations(true);
@@ -249,7 +249,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHan
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto gpuAllocation = (WddmAllocation *)memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false, false);
@@ -271,7 +271,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShar
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, size, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, size, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     auto *gpuAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false, false);
@@ -286,7 +286,7 @@ HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandle
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, size, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, size, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
 
     wddm->failOpenSharedHandle = true;
@@ -615,7 +615,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
 
     storage.fragmentStorageData[0].osHandleStorage->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[0].freeTheFragment = true;
-    storage.fragmentStorageData[0].osHandleStorage->gmm = GmmHelper::create(pSysMem, 4096u, false);
+    storage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(pSysMem, 4096u, false);
 
     storage.fragmentStorageData[1].osHandleStorage = new OsHandle;
     storage.fragmentStorageData[1].osHandleStorage->handle = ALLOCATION_HANDLE;
@@ -626,7 +626,7 @@ HWTEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocation
     storage.fragmentStorageData[2].osHandleStorage = new OsHandle;
     storage.fragmentStorageData[2].osHandleStorage->handle = ALLOCATION_HANDLE;
     storage.fragmentStorageData[2].freeTheFragment = true;
-    storage.fragmentStorageData[2].osHandleStorage->gmm = GmmHelper::create(pSysMem, 4096u, false);
+    storage.fragmentStorageData[2].osHandleStorage->gmm = new Gmm(pSysMem, 4096u, false);
     storage.fragmentStorageData[2].residency = new ResidencyData;
 
     memoryManager->cleanOsHandles(storage);
@@ -676,7 +676,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGp
     SetUpMm<FamilyType>();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(ptr, size, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
 
     memoryManager->setDeferredDeleter(nullptr);
     setMapGpuVaFailConfigFcn(0, 1);
@@ -691,7 +691,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstM
     SetUpMm<FamilyType>();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(ptr, size, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
 
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
     memoryManager->setDeferredDeleter(deleter);
@@ -709,7 +709,7 @@ HWTEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstA
     SetUpMm<FamilyType>();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(ptr, size, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
 
     MockDeferredDeleter *deleter = new MockDeferredDeleter;
     memoryManager->setDeferredDeleter(deleter);
@@ -1587,7 +1587,7 @@ HWTEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAlloca
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
     handleStorage.fragmentStorageData[0].residency = new ResidencyData();
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new MockGmm();
+    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(ptr, size, false);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -1619,7 +1619,7 @@ HWTEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAlloca
     handleStorage.fragmentStorageData[0].osHandleStorage = new OsHandle();
     handleStorage.fragmentStorageData[0].residency = new ResidencyData();
     handleStorage.fragmentStorageData[0].freeTheFragment = true;
-    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new MockGmm();
+    handleStorage.fragmentStorageData[0].osHandleStorage->gmm = new Gmm(ptr, size, false);
     handleStorage.fragmentCount = 1;
 
     FragmentStorage fragment = {};
@@ -2021,7 +2021,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledTh
 }
 
 HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVaThenMapAuxVa) {
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(reinterpret_cast<void *>(123), 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = true;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
@@ -2089,7 +2089,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleas
 }
 
 HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMappedGpuVaThenDontMapAuxVa) {
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(reinterpret_cast<void *>(123), 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
@@ -2105,7 +2105,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMapped
 }
 
 HWTEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenReturnFalse) {
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(reinterpret_cast<void *>(123), 4096u, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(reinterpret_cast<void *>(123), 4096u, false));
     gmm->isRenderCompressed = false;
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     WddmMock wddm;
@@ -2124,7 +2124,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUn
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
 
-    auto myGmm = GmmHelper::create(reinterpret_cast<void *>(123), 4096u, false);
+    auto myGmm = new Gmm(reinterpret_cast<void *>(123), 4096u, false);
     myGmm->isRenderCompressed = false;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 

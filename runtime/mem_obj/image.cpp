@@ -213,7 +213,7 @@ Image *Image::create(Context *context,
             if (memoryManager->peekVirtualPaddingSupport() && (imageDesc->image_type == CL_MEM_OBJECT_IMAGE2D)) {
                 // Retrieve sizes from GMM and apply virtual padding if buffer storage is not big enough
                 auto queryGmmImgInfo(imgInfo);
-                std::unique_ptr<Gmm> gmm(GmmHelper::createGmmAndQueryImgParams(queryGmmImgInfo));
+                std::unique_ptr<Gmm> gmm(new Gmm(queryGmmImgInfo));
                 auto gmmAllocationSize = gmm->gmmResourceInfo->getSizeAllocation();
                 if (gmmAllocationSize > memory->getUnderlyingBufferSize()) {
                     memory = memoryManager->createGraphicsAllocationWithPadding(memory, gmmAllocationSize);
@@ -224,8 +224,7 @@ Image *Image::create(Context *context,
             memory->gmm->queryImageParams(imgInfo);
             isTilingAllowed = parentImage->allowTiling();
         } else {
-            gmm = new Gmm();
-            gmm->queryImageParams(imgInfo);
+            gmm = new Gmm(imgInfo);
 
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             if (flags & CL_MEM_USE_HOST_PTR) {
@@ -656,10 +655,7 @@ cl_int Image::getImageParams(Context *context,
     imgInfo.imgDesc = &imageDescriptor;
     imgInfo.surfaceFormat = surfaceFormat;
 
-    Gmm *gmm = nullptr;
-    gmm = new Gmm();
-    gmm->queryImageParams(imgInfo);
-    delete gmm;
+    std::unique_ptr<Gmm> gmm(new Gmm(imgInfo)); // query imgInfo
 
     *imageRowPitch = imgInfo.rowPitch;
     *imageSlicePitch = imgInfo.slicePitch;

@@ -111,15 +111,16 @@ struct MockMipMapGmmResourceInfo : GmmResourceInfo {
 };
 
 struct MockImage : MockImageBase {
-    MockGmm mockGmm;
+    std::unique_ptr<Gmm> mockGmm;
 
     MockImage() : MockImageBase() {
-        graphicsAllocation->gmm = &mockGmm;
-        mockGmm.gmmResourceInfo.reset(new MockMipMapGmmResourceInfo());
+        mockGmm.reset(new Gmm(nullptr, 0, false));
+        graphicsAllocation->gmm = mockGmm.get();
+        mockGmm->gmmResourceInfo.reset(new MockMipMapGmmResourceInfo());
     }
 
     MockMipMapGmmResourceInfo *getResourceInfo() {
-        return static_cast<MockMipMapGmmResourceInfo *>(mockGmm.gmmResourceInfo.get());
+        return static_cast<MockMipMapGmmResourceInfo *>(mockGmm->gmmResourceInfo.get());
     }
 };
 

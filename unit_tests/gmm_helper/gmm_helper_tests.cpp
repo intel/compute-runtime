@@ -40,7 +40,7 @@ class GmmTests : public ::testing::Test {
 TEST_F(GmmTests, resourceCreation) {
     std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -55,7 +55,7 @@ TEST_F(GmmTests, resourceCreationUncacheable) {
     std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096, true));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, true));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -71,7 +71,7 @@ TEST_F(GmmTests, resourceCleanupOnDelete) {
     std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    std::unique_ptr<Gmm> gmm(GmmHelper::create(pSysMem, 4096, false));
+    std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
 
     ASSERT_TRUE(gmm->gmmResourceInfo.get() != nullptr);
 
@@ -84,7 +84,7 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMM
     MemoryManager *mm = new OsAgnosticMemoryManager;
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
-    auto gmmRes = GmmHelper::create(pSysMem, maxSize, false);
+    auto gmmRes = new Gmm(pSysMem, maxSize, false);
 
     ASSERT_TRUE(gmmRes->gmmResourceInfo.get() != nullptr);
 
@@ -97,8 +97,8 @@ TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMM
 TEST_F(GmmTests, givenGmmCreatedFromExistingGmmThenHelperDoesNotReleaseParentGmm) {
     auto size = 4096u;
     void *incomingPtr = (void *)0x1000;
-    auto gmmRes = GmmHelper::create(incomingPtr, size, false);
-    auto gmmRes2 = GmmHelper::create(gmmRes->gmmResourceInfo->peekHandle());
+    auto gmmRes = new Gmm(incomingPtr, size, false);
+    auto gmmRes2 = new Gmm(gmmRes->gmmResourceInfo->peekHandle());
 
     //copy is being made
     EXPECT_NE(gmmRes2->gmmResourceInfo->peekHandle(), gmmRes->gmmResourceInfo->peekHandle());
@@ -570,7 +570,7 @@ TEST_F(GmmTests, copyResourceBlt) {
 }
 
 TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenReturnTrue) {
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->setUnifiedAuxTranslationCapable();
@@ -582,7 +582,7 @@ TEST(GmmTest, givenAllValidFlagsWhenAskedForUnifiedAuxTranslationCapabilityThenR
 }
 
 TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThenReturnFalse) {
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     auto mockResource = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
 
     mockResource->mockResourceCreateParams.Flags.Gpu.CCS = 0;

@@ -102,7 +102,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
             imgDesc.image_width /= 2;
             imgDesc.image_height /= 2;
         }
-        Gmm *gmm = GmmHelper::createGmmAndQueryImgParams(imgInfo);
+        Gmm *gmm = new Gmm(imgInfo);
         imgDesc.image_row_pitch = imgInfo.rowPitch;
         imgDesc.image_slice_pitch = imgInfo.slicePitch;
 

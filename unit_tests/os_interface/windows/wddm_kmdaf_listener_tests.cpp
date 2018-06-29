@@ -95,7 +95,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenUnlockResourceIsCalledThenKmDafList
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenMapGpuVirtualAddressIsCalledThenKmDafListenerNotifyMapGpuVAIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
     allocation.handle = ALLOCATION_HANDLE;
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->mapGpuVirtualAddressImpl(allocation.gmm, allocation.handle, allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize(), allocation.gpuPtr, false, false, false);
@@ -150,7 +150,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotif
 
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->createAllocation(&allocation);
@@ -164,7 +164,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationIsCalledThenKmDafLi
 
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDafListenerNotifyWriteTargetIsFedWithCorrectParams) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     allocation.gmm = gmm.get();
 
     wddmWithKmDafMock->createAllocation64k(&allocation);
@@ -179,7 +179,7 @@ HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocation64IsCalledThenKmDaf
 HWTEST_F(WddmKmDafListenerTest, givenWddmWhenCreateAllocationsAndMapGpuVaIsCalledThenKmDafListenerNotifyWriteTargetAndMapGpuVAIsFedWithCorrectParams) {
     OsHandleStorage storage;
     OsHandle osHandle = {0};
-    auto gmm = std::unique_ptr<Gmm>(GmmHelper::create(nullptr, 1, false));
+    auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     storage.fragmentStorageData[0].osHandleStorage = &osHandle;
     storage.fragmentStorageData[0].fragmentSize = 100;
     storage.fragmentStorageData[0].osHandleStorage->gmm = gmm.get();

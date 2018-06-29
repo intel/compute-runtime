@@ -81,7 +81,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
     auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr);
 
-    gmm = GmmHelper::create(nullptr, sizeAligned, false);
+    gmm = new Gmm(nullptr, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation)) {
@@ -115,7 +115,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
     auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, sizeAligned, nullptr);
     wddmAllocation->cpuPtrAllocated = true;
 
-    gmm = GmmHelper::create(pSysMem, sizeAligned, uncacheable);
+    gmm = new Gmm(pSysMem, sizeAligned, uncacheable);
 
     wddmAllocation->gmm = gmm;
 
@@ -150,7 +150,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
         auto allocation = new WddmAllocation(ptr, size, ptrAligned, sizeAligned, reserve);
         allocation->allocationOffset = offset;
 
-        Gmm *gmm = GmmHelper::create(ptrAligned, sizeAligned, false);
+        Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
         allocation->gmm = gmm;
         if (createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
             return allocation;
@@ -189,7 +189,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
 
-    gmm = GmmHelper::create(ptrAligned, sizeAligned, false);
+    gmm = new Gmm(ptrAligned, sizeAligned, false);
     wddmAllocation->gmm = gmm;
 
     if (!createWddmAllocation(wddmAllocation, allocationOrigin)) {
@@ -364,7 +364,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
             handleStorage.fragmentStorageData[i].osHandleStorage = new OsHandle();
             handleStorage.fragmentStorageData[i].residency = new ResidencyData();
 
-            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = GmmHelper::create(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
+            handleStorage.fragmentStorageData[i].osHandleStorage->gmm = new Gmm(handleStorage.fragmentStorageData[i].cpuPtr, handleStorage.fragmentStorageData[i].fragmentSize, false);
             allocatedFragmentIndexes[allocatedFragmentsCounter] = i;
             allocatedFragmentsCounter++;
         }
