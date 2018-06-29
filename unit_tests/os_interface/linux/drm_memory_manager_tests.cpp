@@ -1533,7 +1533,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenCreateIsCalledT
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
     size_t size = 4096u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
@@ -1559,7 +1559,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndOsHandleWhenAllocationFails
     osHandle handle = 1u;
 
     InjectedFunction method = [this, &handle](size_t failureIndex) {
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false, false);
         if (nonfailingAllocation == failureIndex) {
             EXPECT_NE(nullptr, graphicsAllocation);
             memoryManager->freeGraphicsMemory(graphicsAllocation);
@@ -1631,7 +1631,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleAndBi
     memoryManager->setForce32BitAllocations(true);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true, false);
     auto drmAllocation = (DrmAllocation *)graphicsAllocation;
     EXPECT_TRUE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
@@ -1649,7 +1649,7 @@ TEST_F(DrmMemoryManagerTest, given32BitAddressingWhenBufferFromSharedHandleIsCre
     memoryManager->setForce32BitAllocations(true);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false, false);
     auto drmAllocation = (DrmAllocation *)graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
@@ -1667,7 +1667,7 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     memoryManager->setForce32BitAllocations(false);
     osHandle handle = 1u;
     this->mock->outputHandle = 2u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, true, false);
     auto drmAllocation = (DrmAllocation *)graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation->is32BitAllocation);
     EXPECT_EQ(1, lseekCalledCount);
@@ -1909,7 +1909,7 @@ TEST_F(DrmMemoryManagerTest, givenSharedAllocationWithSmallerThenRealSizeWhenCre
     mock->ioctl_expected.gemClose = 1;
     osHandle sharedHandle = 1u;
 
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, false);
 
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(realSize, graphicsAllocation->getUnderlyingBufferSize());

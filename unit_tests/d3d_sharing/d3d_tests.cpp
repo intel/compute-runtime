@@ -78,7 +78,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
             return alloc;
         }
         GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)handle), false);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle((osHandle)((UINT_PTR)handle), false, false);
             alloc->gmm = forceGmm;
             gmmOwnershipPassed = true;
             return alloc;

@@ -63,7 +63,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         }
         GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imginfo, Gmm *gmm) override {
             delete gmm;
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false, false);
             alloc->gmm = forceGmm;
             gmmOwnershipPassed = true;
             return alloc;

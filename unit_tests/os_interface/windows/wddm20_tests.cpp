@@ -475,7 +475,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
     wddm->init<FamilyType>();
     WddmMemoryManager mm(false, wddm.release());
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
@@ -514,7 +514,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
     mockWddm->init<FamilyType>();
     WddmMemoryManager mm(false, mockWddm);
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
