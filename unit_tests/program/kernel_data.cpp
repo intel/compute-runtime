@@ -460,7 +460,6 @@ TEST_P(DataParameterTest, DataParameterTests) {
 
     buildAndDecode();
 
-    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
     EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
     EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
 }
