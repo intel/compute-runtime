@@ -28,7 +28,7 @@ namespace OCLRT {
 class DebugEnvReaderTests : public ::testing::Test {
   public:
     void SetUp() override {
-        evr = SettingsReader::createOsReader();
+        evr = SettingsReader::createOsReader(false);
         EXPECT_NE(nullptr, evr);
     }
     void TearDown() override {

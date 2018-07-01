@@ -20,9 +20,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using namespace OCLRT;
-
+#pragma once
 #include "runtime/command_stream/aub_subcapture.h"
+
+using namespace OCLRT;
 
 class AubSubCaptureManagerMock : public AubSubCaptureManager {
   public:
@@ -41,8 +42,11 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
     void setKernelCurrentIndex(uint32_t index) {
         kernelCurrentIdx = index;
     }
-    uint32_t getKernelCurrentIndex() {
+    uint32_t getKernelCurrentIndex() const {
         return kernelCurrentIdx;
+    }
+    SettingsReader *getSettingsReader() const {
+        return settingsReader.get();
     }
     void setSubCaptureToggleActive(bool on) {
         isToggledOn = on;

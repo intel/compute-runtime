@@ -39,6 +39,7 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_win_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_fixture.h

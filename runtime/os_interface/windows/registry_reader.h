@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,6 +26,7 @@
 
 #include <string>
 #include <stdint.h>
+#include <Windows.h>
 
 namespace OCLRT {
 class RegistryReader : public SettingsReader {
@@ -33,12 +34,15 @@ class RegistryReader : public SettingsReader {
     int32_t getSetting(const char *settingName, int32_t defaultValue) override;
     bool getSetting(const char *settingName, bool defaultValue) override;
     std::string getSetting(const char *settingName, const std::string &value) override;
-    RegistryReader() {}
+    RegistryReader(bool userScope) {
+        igdrclHkeyType = userScope ? HKEY_CURRENT_USER : HKEY_LOCAL_MACHINE;
+    }
     RegistryReader(std::string regKey) {
         igdrclRegKey = regKey;
     }
 
-  private:
+  protected:
+    HKEY igdrclHkeyType = HKEY_LOCAL_MACHINE;
     std::string igdrclRegKey = "Software\\Intel\\IGFX\\OCL";
 };
 } // namespace OCLRT

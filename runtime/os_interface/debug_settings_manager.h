@@ -222,8 +222,6 @@ class DebugSettingsManager {
         logFileName = filename;
     }
 
-    bool readSetting(const char *settingName, bool defaultValue);
-
   protected:
     SettingsReader *readerImpl = nullptr;
     std::mutex mtx;

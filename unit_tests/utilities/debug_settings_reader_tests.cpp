@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -53,7 +53,7 @@ TEST(SettingsReader, CreateFileReader) {
 }
 
 TEST(SettingsReader, CreateOsReader) {
-    SettingsReader *reader = SettingsReader::createOsReader();
+    SettingsReader *reader = SettingsReader::createOsReader(false);
     EXPECT_NE(nullptr, reader);
     delete reader;
 }

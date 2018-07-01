@@ -227,14 +227,6 @@ void DebugSettingsManager<DebugLevel>::dumpKernelArgs(const MultiDispatchInfo *m
     }
 }
 
-template <DebugFunctionalityLevel DebugLevel>
-bool DebugSettingsManager<DebugLevel>::readSetting(const char *settingName, bool defaultValue) {
-    if (readerImpl) {
-        readerImpl->getSetting(settingName, defaultValue);
-    }
-    return defaultValue;
-}
-
 template class DebugSettingsManager<DebugFunctionalityLevel::None>;
 template class DebugSettingsManager<DebugFunctionalityLevel::Full>;
 template class DebugSettingsManager<DebugFunctionalityLevel::RegKeys>;

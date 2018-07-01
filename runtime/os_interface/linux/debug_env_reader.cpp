@@ -24,7 +24,7 @@
 
 namespace OCLRT {
 
-SettingsReader *SettingsReader::createOsReader() {
+SettingsReader *SettingsReader::createOsReader(bool userScope) {
     return new EnvironmentVariableReader;
 }
 

@@ -35,9 +35,9 @@ class SettingsReader {
         if (readerImpl != nullptr)
             return readerImpl;
 
-        return createOsReader();
+        return createOsReader(false);
     }
-    static SettingsReader *createOsReader();
+    static SettingsReader *createOsReader(bool userScope);
     static SettingsReader *createFileReader();
     virtual int32_t getSetting(const char *settingName, int32_t defaultValue) = 0;
     virtual bool getSetting(const char *settingName, bool defaultValue) = 0;

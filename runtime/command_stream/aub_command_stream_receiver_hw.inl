@@ -242,7 +242,6 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             }
             return 0;
         }
-        subCaptureManager->deactivateSubCapture();
     }
 
     // Write our batch buffer
@@ -416,6 +415,11 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         pollForCompletion(engineType);
         *this->tagAddress = this->peekLatestSentTaskCount();
     }
+
+    if (subCaptureManager->isSubCaptureMode()) {
+        subCaptureManager->deactivateSubCapture();
+    }
+
     return 0;
 }
 

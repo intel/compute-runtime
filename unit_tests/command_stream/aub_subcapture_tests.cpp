@@ -68,6 +68,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenItIsCreatedThenItIsInitializ
     EXPECT_FALSE(aubSubCaptureManager.isSubCaptureActive());
     EXPECT_FALSE(aubSubCaptureManager.wasSubCaptureActive());
     EXPECT_EQ(0u, aubSubCaptureManager.getKernelCurrentIndex());
+    EXPECT_NE(nullptr, aubSubCaptureManager.getSettingsReader());
 }
 
 TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenActivateSubCaptureIsCalledWithEmptyDispatchInfoThenSubCaptureIsInactive) {

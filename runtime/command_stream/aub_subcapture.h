@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #pragma once
+#include <memory>
 #include <string>
 
 namespace OCLRT {
@@ -51,7 +52,8 @@ class AubSubCaptureManager {
     void activateSubCapture(const MultiDispatchInfo &dispatchInfo);
     void deactivateSubCapture();
 
-    virtual ~AubSubCaptureManager() = default;
+    AubSubCaptureManager();
+    virtual ~AubSubCaptureManager();
 
   protected:
     MOCKABLE_VIRTUAL bool isSubCaptureToggleActive() const;
@@ -62,5 +64,6 @@ class AubSubCaptureManager {
     bool subCaptureIsActive = false;
     bool subCaptureWasActive = false;
     uint32_t kernelCurrentIdx = 0;
+    std::unique_ptr<SettingsReader> settingsReader;
 };
 } // namespace OCLRT

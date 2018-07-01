@@ -27,8 +27,9 @@
 #include "runtime/os_interface/windows/registry_reader.h"
 
 namespace OCLRT {
-SettingsReader *SettingsReader::createOsReader() {
-    return new RegistryReader;
+
+SettingsReader *SettingsReader::createOsReader(bool userScope) {
+    return new RegistryReader(userScope);
 }
 
 bool RegistryReader::getSetting(const char *settingName, bool defaultValue) {
@@ -40,7 +41,7 @@ int32_t RegistryReader::getSetting(const char *settingName, int32_t defaultValue
     DWORD value = defaultValue;
     DWORD success = ERROR_SUCCESS;
 
-    success = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+    success = RegOpenKeyExA(igdrclHkeyType,
                             igdrclRegKey.c_str(),
                             0,
                             KEY_READ,
@@ -69,7 +70,7 @@ std::string RegistryReader::getSetting(const char *settingName, const std::strin
     bool retFlag = false;
     std::string keyValue = value;
 
-    success = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
+    success = RegOpenKeyExA(igdrclHkeyType,
                             igdrclRegKey.c_str(),
                             0,
                             KEY_READ,

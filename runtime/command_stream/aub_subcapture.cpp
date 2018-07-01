@@ -27,6 +27,12 @@
 
 namespace OCLRT {
 
+AubSubCaptureManager::AubSubCaptureManager() {
+    settingsReader.reset(SettingsReader::createOsReader(true));
+}
+
+AubSubCaptureManager::~AubSubCaptureManager() = default;
+
 void AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchInfo) {
     if (dispatchInfo.empty()) {
         return;
@@ -62,7 +68,7 @@ bool AubSubCaptureManager::isKernelIndexInSubCaptureRange(uint32_t kernelIdx) co
 }
 
 bool AubSubCaptureManager::isSubCaptureToggleActive() const {
-    return DebugManager.readSetting("AUBDumpToggleCaptureOnOff", false);
+    return settingsReader->getSetting("AUBDumpToggleCaptureOnOff", false);
 }
 
 bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo, uint32_t kernelIdx) const {
