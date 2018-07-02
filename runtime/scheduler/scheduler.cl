@@ -1844,7 +1844,6 @@ int PatchDSH( __global IGIL_CommandQueue* pQueue,
                             __global uint* pDst = (__global uint *) &pDsh[PatchOffset];
                             pDst[ 0 ] = pGlobalPtrs[ 0 ];
                             pDst[ 1 ] = pGlobalPtrs[ 1 ];
-                            pGlobalPtrs++;
                         }
                         else
                         {
@@ -1854,7 +1853,7 @@ int PatchDSH( __global IGIL_CommandQueue* pQueue,
                     }
                     CurrentIndex++;
                 }
-                pGlobalPtrs++;
+                pGlobalPtrs += 2;
                 pGlobalIndexes++;
             }
         }
@@ -2280,7 +2279,6 @@ void PatchDSHParallelWithDynamicDSH20( uint slbOffsetBase,
                                     __global uint* pDst = (__global uint *) &pDsh[PatchOffset];
                                     pDst[0] = pGlobalPtrs[0];
                                     pDst[1] = pGlobalPtrs[1];
-                                    pGlobalPtrs++;
                                 }
                                 else
                                 {
@@ -2290,7 +2288,7 @@ void PatchDSHParallelWithDynamicDSH20( uint slbOffsetBase,
                             }
                             CurrentIndex++;
                         }
-                        pGlobalPtrs++;
+                        pGlobalPtrs += 2;
                         pGlobalIndexes++;
                     }
                 }
