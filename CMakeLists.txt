@@ -409,10 +409,6 @@ option(HAVE_TBX_SERVER "Compile TBX server from TbxAccess library" OFF)
 option(USE_CL_CACHE "Use OpenCL program binary cache" ON)
 set(CL_CACHE_LOCATION "cl_cache" CACHE STRING "OpenCL program binary cache location")
 
-if(NOT NEO_DRIVER_VERSION)
-  set(NEO_DRIVER_VERSION 1.0)
-endif()
-
 # Put profiling enable flag into define
 if(OCL_RUNTIME_PROFILING)
 	add_definitions(-DOCL_RUNTIME_PROFILING=${OCL_RUNTIME_PROFILING})
