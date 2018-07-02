@@ -460,8 +460,10 @@ TEST_P(DataParameterTest, DataParameterTests) {
 
     buildAndDecode();
 
-    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
-    EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    if (pKernelInfo->patchInfo.dataParameterBuffers.size() > 0) {
+        EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
+        EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    }
 }
 
 // note that we start at '2' because we test kernel arg tokens elsewhere
