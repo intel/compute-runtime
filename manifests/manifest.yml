@@ -11,7 +11,7 @@ components:
     clean_on_sync: true
     dest_dir: igc
     repository: https://github.com/intel/intelgraphicscompiler
-    revision: dca01ed360be2cdcaad1ce422e84edd0cbdb6a92
+    revision: a56f313c2f50da77a086ee009bc68e277fe3c1e9
     type: git
   infra:
     branch: infra
