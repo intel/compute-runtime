@@ -786,7 +786,7 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
 
 struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
     void setCompressionEnabled(bool enabled) {
-        RuntimeCapabilityTable capabilityTable = {platformDevices[0]->capabilityTable};
+        RuntimeCapabilityTable capabilityTable = platformDevices[0]->capabilityTable;
         capabilityTable.ftrCompression = enabled;
         hwInfo = {*platformDevices[0]};
         hwInfo.capabilityTable = capabilityTable;

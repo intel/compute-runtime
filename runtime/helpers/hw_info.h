@@ -86,7 +86,7 @@ struct HardwareCapabilities {
 struct HardwareInfo {
     HardwareInfo() = default;
     HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
-                 const GT_SYSTEM_INFO *sysInfo, RuntimeCapabilityTable capabilityTable);
+                 const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable);
 
     const PLATFORM *pPlatform = nullptr;
     const FeatureTable *pSkuTable = nullptr;

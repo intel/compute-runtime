@@ -25,7 +25,7 @@
 
 namespace OCLRT {
 HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTable, const WorkaroundTable *waTable,
-                           const GT_SYSTEM_INFO *sysInfo, RuntimeCapabilityTable capabilityTable)
+                           const GT_SYSTEM_INFO *sysInfo, const RuntimeCapabilityTable &capabilityTable)
     : pPlatform(platform), pSkuTable(skuTable), pWaTable(waTable), pSysInfo(sysInfo), capabilityTable(capabilityTable) {
 }
 
