@@ -21,5 +21,6 @@
 
 git fetch -t
 git clone ../compute-runtime neo
+docker info
 docker build -f scripts/docker/Dockerfile-fedora-28-copr-gcc-8 -t neo-fedora-28-copr-gcc-8:ci .
 
