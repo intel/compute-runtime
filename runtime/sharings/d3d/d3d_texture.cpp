@@ -52,7 +52,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
     D3DTexture2dDesc textureDesc = {};
     sharingFcns->getTexture2dDesc(&textureDesc, d3dTexture);
 
-    if (textureDesc.Format == DXGI_FORMAT_NV12) {
+    if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         if ((subresource % 2) == 0) {
             oclPlane = OCLPlane::PLANE_Y;
         } else {
@@ -90,7 +90,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
-    if (textureDesc.Format == DXGI_FORMAT_NV12) {
+    if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         imgInfo.surfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, oclPlane, flags);
     } else {
         imgInfo.surfaceFormat = findSurfaceFormatInfo(alloc->gmm->gmmResourceInfo->getResourceFormat(), flags);
@@ -166,7 +166,11 @@ const SurfaceFormatInfo *D3DTexture<D3D>::findYuvSurfaceFormatInfo(DXGI_FORMAT d
     } else {
         imgFormat.image_channel_order = CL_RG;
     }
-    imgFormat.image_channel_data_type = CL_UNORM_INT8;
+    if ((dxgiFormat == DXGI_FORMAT_P010) || (dxgiFormat == DXGI_FORMAT_P016)) {
+        imgFormat.image_channel_data_type = CL_UNORM_INT16;
+    } else {
+        imgFormat.image_channel_data_type = CL_UNORM_INT8;
+    }
 
     return Image::getSurfaceFormatFromTable(flags, &imgFormat);
 }
