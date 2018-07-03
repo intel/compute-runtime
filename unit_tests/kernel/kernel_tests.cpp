@@ -506,7 +506,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     pKernel->makeResident(*csr.get());
     EXPECT_EQ(1u, csr->residency.size());
 
-    csr->makeSurfacePackNonResident(nullptr);
+    csr->makeSurfacePackNonResident(nullptr, false);
     pKernel->updateWithCompletionStamp(*csr.get(), nullptr);
     EXPECT_EQ(0u, csr->residency.size());
 

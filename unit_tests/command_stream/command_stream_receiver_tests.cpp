@@ -309,3 +309,14 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllo
     csr.setTagAllocation(&allocation);
     EXPECT_EQ(&allocation, csr.getTagAllocation());
 }
+
+TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {
+    MockCommandStreamReceiver csr;
+    uint32_t tag = 0;
+    GraphicsAllocation allocation(&tag, sizeof(tag));
+    csr.latestFlushedTaskCount = 3;
+    csr.setTagAllocation(&allocation);
+    csr.waitBeforeMakingNonResidentWhenRequired(true);
+
+    EXPECT_EQ(0u, tag);
+}

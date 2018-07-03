@@ -52,7 +52,9 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::~TbxCommandStreamReceiverHw() {
-    stream.close();
+    if (streamInitialized) {
+        stream.close();
+    }
 
     for (auto &engineInfo : engineInfoTable) {
         alignedFree(engineInfo.pLRCA);
@@ -180,7 +182,8 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     csr->stream.open(nullptr);
 
     // Add the file header.
-    csr->stream.init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+    bool streamInitialized = csr->stream.init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+    csr->streamInitialized = streamInitialized;
 
     return csr;
 }
@@ -384,6 +387,18 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfx
         };
 
         ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, walker);
+    }
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::waitBeforeMakingNonResidentWhenRequired(bool blocking) {
+    if (blocking) {
+        auto allocation = this->getTagAllocation();
+        UNRECOVERABLE_IF(allocation == nullptr);
+
+        while (*this->getTagAddress() < this->latestFlushedTaskCount) {
+            this->makeCoherent(*allocation);
+        }
     }
 }
 

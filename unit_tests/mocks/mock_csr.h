@@ -217,6 +217,7 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
+    using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::tagAddress;
     std::vector<char> instructionHeapReserveredData;

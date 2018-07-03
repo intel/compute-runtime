@@ -49,6 +49,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer *allocationsForResidency) override;
+    void waitBeforeMakingNonResidentWhenRequired(bool blocking) override;
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version
@@ -89,6 +90,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     TbxCommandStreamReceiver::TbxStream stream;
     uint32_t aubDeviceId;
+    bool streamInitialized = false;
 
     TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type ppgtt;
     PDPE ggtt;

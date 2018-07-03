@@ -54,7 +54,22 @@ struct TbxFixture : public TbxCommandStreamFixture,
     }
 };
 
+template <typename GfxFamily>
+class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
+  public:
+    using CommandStreamReceiver::latestFlushedTaskCount;
+    MockTbxCsr(const HardwareInfo &hwInfoIn, void *ptr) : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, ptr) {}
+
+    void makeCoherent(GraphicsAllocation &gfxAllocation) override {
+        auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
+        *tagAddress = this->latestFlushedTaskCount;
+        makeCoherentCalled = true;
+    }
+    bool makeCoherentCalled = false;
+};
+
 typedef Test<TbxFixture> TbxCommandStreamTests;
+typedef Test<DeviceFixture> TbxCommandSteamSimpleTest;
 
 TEST_F(TbxCommandStreamTests, DISABLED_testFactory) {
 }
@@ -304,4 +319,38 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
     const HardwareInfo &hwInfoIn = *platformDevices[0];
     std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, false)));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
+    uint32_t tag = 0;
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag);
+    GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
+    tbxCsr.setTagAllocation(&graphicsAllocation);
+
+    EXPECT_FALSE(tbxCsr.makeCoherentCalled);
+
+    *tbxCsr.getTagAddress() = 3;
+    tbxCsr.latestFlushedTaskCount = 6;
+
+    tbxCsr.waitBeforeMakingNonResidentWhenRequired(true);
+
+    EXPECT_TRUE(tbxCsr.makeCoherentCalled);
+    EXPECT_EQ(6u, tag);
+}
+
+HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagFalseThenFunctionReturns) {
+    uint32_t tag = 0;
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag);
+    GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
+    tbxCsr.setTagAllocation(&graphicsAllocation);
+
+    EXPECT_FALSE(tbxCsr.makeCoherentCalled);
+
+    *tbxCsr.getTagAddress() = 3;
+    tbxCsr.latestFlushedTaskCount = 6;
+
+    tbxCsr.waitBeforeMakingNonResidentWhenRequired(false);
+
+    EXPECT_FALSE(tbxCsr.makeCoherentCalled);
+    EXPECT_EQ(3u, *tbxCsr.getTagAddress());
 }

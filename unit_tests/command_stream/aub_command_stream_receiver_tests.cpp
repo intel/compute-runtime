@@ -406,7 +406,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
 
-    aubCsr->makeSurfacePackNonResident(nullptr);
+    aubCsr->makeSurfacePackNonResident(nullptr, false);
 
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
 
@@ -466,7 +466,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
 
-    aubCsr->makeSurfacePackNonResident(&allocationsForResidency);
+    aubCsr->makeSurfacePackNonResident(&allocationsForResidency, false);
 
     EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
@@ -541,7 +541,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
 
-    aubCsr->makeSurfacePackNonResident(&allocationsForResidency);
+    aubCsr->makeSurfacePackNonResident(&allocationsForResidency, false);
 
     EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
