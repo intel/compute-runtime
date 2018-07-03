@@ -477,7 +477,7 @@ TEST(SubmissionsAggregator, dontAllocateFlushStamp) {
 
 struct SubmissionsAggregatorTests : public ::testing::Test {
     void SetUp() override {
-        device.reset(Device::create<MockDevice>(platformDevices[0]));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         context.reset(new MockContext(device.get()));
     }
 

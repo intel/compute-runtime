@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
@@ -102,6 +103,7 @@ class MockDevice : public Device {
                                       MemoryManager *memManager) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
         T *device = new T(*pHwInfo);
+        device->connectToExecutionEnvironment(new ExecutionEnvironment);
         if (memManager) {
             device->setMemoryManager(memManager);
         }
@@ -110,6 +112,10 @@ class MockDevice : public Device {
             return nullptr;
         }
         return device;
+    }
+    template <typename T>
+    static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
+        return Device::create<T>(pHwInfo, new ExecutionEnvironment);
     }
 
     void allocatePreemptionAllocationIfNotPresent() {

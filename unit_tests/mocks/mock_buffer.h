@@ -37,11 +37,13 @@ class MockBufferStorage {
     }
     char data[128];
     MockGraphicsAllocation mockGfxAllocation;
+    std::unique_ptr<Device> device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 };
 
 class MockBuffer : public MockBufferStorage, public Buffer {
   public:
     using Buffer::magic;
+    using MockBufferStorage::device;
 
     MockBuffer(GraphicsAllocation &alloc)
         : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, alloc.getUnderlyingBufferSize(), alloc.getUnderlyingBuffer(), alloc.getUnderlyingBuffer(), &alloc, true, false, false),
@@ -59,12 +61,12 @@ class MockBuffer : public MockBufferStorage, public Buffer {
     void setArgStateful(void *memory) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), (externalAlloc != nullptr) ? externalAlloc : &mockGfxAllocation);
     }
-    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
     GraphicsAllocation *externalAlloc = nullptr;
 };
 
 class AlignedBuffer : public MockBufferStorage, public Buffer {
   public:
+    using MockBufferStorage::device;
     AlignedBuffer() : MockBufferStorage(false), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), &mockGfxAllocation, true, false, false) {
     }
     AlignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 64), alignUp(&data, 64), gfxAllocation, true, false, false) {
@@ -72,11 +74,11 @@ class AlignedBuffer : public MockBufferStorage, public Buffer {
     void setArgStateful(void *memory) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
-    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
 };
 
 class UnalignedBuffer : public MockBufferStorage, public Buffer {
   public:
+    using MockBufferStorage::device;
     UnalignedBuffer() : MockBufferStorage(true), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), &mockGfxAllocation, false, false, false) {
     }
     UnalignedBuffer(GraphicsAllocation *gfxAllocation) : MockBufferStorage(true), Buffer(nullptr, CL_MEM_USE_HOST_PTR, sizeof(data) / 2, alignUp(&data, 4), alignUp(&data, 4), gfxAllocation, false, false, false) {
@@ -84,5 +86,4 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
     void setArgStateful(void *memory) override {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
-    std::unique_ptr<Device> device = std::unique_ptr<Device>(OCLRT::Device::create<OCLRT::MockDevice>(nullptr));
 };

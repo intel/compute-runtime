@@ -37,7 +37,7 @@ extern std::string getDebugSipKernelNameWithBitnessAndProductSuffix(std::string 
 typedef ::testing::Test gen9SipTests;
 
 GEN9TEST_F(gen9SipTests, DISABLED_givenDebugCsrSipKernelWithLocalMemoryWhenAskedForDebugSurfaceBtiAndSizeThenBtiIsZeroAndSizeGreaterThanZero) {
-    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     MockCompilerDebugVars igcDebugVars;
 

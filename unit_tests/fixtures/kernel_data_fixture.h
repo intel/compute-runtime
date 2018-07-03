@@ -63,7 +63,7 @@ class KernelDataTest : public testing::Test {
   protected:
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
-        pDevice = Device::create<MockDevice>(nullptr);
+        pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     }
 
     void TearDown() override {

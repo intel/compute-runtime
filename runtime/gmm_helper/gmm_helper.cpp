@@ -30,9 +30,10 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/sku_info/operations/sku_info_transfer.h"
+#include "runtime/os_interface/os_library.h"
 
 namespace OCLRT {
-bool GmmHelper::initContext(const PLATFORM *pPlatform,
+void GmmHelper::initContext(const PLATFORM *pPlatform,
                             const FeatureTable *pSkuTable,
                             const WorkaroundTable *pWaTable,
                             const GT_SYSTEM_INFO *pGtSysInfo) {
@@ -41,14 +42,12 @@ bool GmmHelper::initContext(const PLATFORM *pPlatform,
         _WA_TABLE gmmWaTable = {};
         SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
         SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
-        if (!isLoaded) {
-            loadLib();
-        }
+        loadLib();
         bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
         UNRECOVERABLE_IF(!success);
         GmmHelper::gmmClientContext = GmmHelper::createClientContextFunc(GMM_CLIENT::GMM_OCL_VISTA);
     }
-    return GmmHelper::gmmClientContext != nullptr;
+    UNRECOVERABLE_IF(!GmmHelper::gmmClientContext);
 }
 
 void GmmHelper::destroyContext() {
@@ -56,6 +55,10 @@ void GmmHelper::destroyContext() {
         deleteClientContextFunc(GmmHelper::gmmClientContext);
         GmmHelper::gmmClientContext = nullptr;
         destroyGlobalContextFunc();
+        if (gmmLib) {
+            delete gmmLib;
+            gmmLib = nullptr;
+        }
     }
 }
 
@@ -67,7 +70,6 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
             return cacheEnabledIndex;
         }
     }
-
     MEMORY_OBJECT_CONTROL_STATE mocs = GmmHelper::gmmClientContext->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
@@ -159,10 +161,17 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
 
     return GMM_NO_PLANE;
 }
-
+GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) {
+    GmmHelper::hwInfo = pHwInfo;
+    initContext(pHwInfo->pPlatform, pHwInfo->pSkuTable, pHwInfo->pWaTable, pHwInfo->pSysInfo);
+}
+GmmHelper::~GmmHelper() {
+    if (isLoaded) {
+        destroyContext();
+    }
+}
 bool GmmHelper::useSimplifiedMocsTable = false;
 GMM_CLIENT_CONTEXT *GmmHelper::gmmClientContext = nullptr;
 const HardwareInfo *GmmHelper::hwInfo = nullptr;
-bool GmmHelper::isLoaded = false;
-
+OsLibrary *GmmHelper::gmmLib = nullptr;
 } // namespace OCLRT

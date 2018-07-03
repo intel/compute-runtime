@@ -35,7 +35,7 @@ using namespace OCLRT;
 
 struct KmdNotifyTests : public ::testing::Test {
     void SetUp() override {
-        device.reset(Device::create<MockDevice>(&localHwInfo));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
         cmdQ.reset(new CommandQueue(&context, device.get(), nullptr));
         *device->getTagAddress() = taskCountToWait;
         device->getCommandStreamReceiver().waitForFlushStamp(flushStampToWait);

@@ -765,7 +765,7 @@ TEST(SharedBuffersTest, whenBuffersIsCreatedWithSharingHandlerThenItIsSharedBuff
 class BufferTests : public ::testing::Test {
   protected:
     void SetUp() override {
-        device.reset(Device::create<MockDevice>(*platformDevices));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     }
     void TearDown() override {
     }

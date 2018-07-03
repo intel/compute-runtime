@@ -32,7 +32,7 @@ class PatchedKernelTest : public ::testing::Test {
   public:
     void SetUp() override {
         constructPlatform();
-        device.reset(MockDevice::create<MockDevice>(nullptr));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
         context.reset(new MockContext(device.get()));
         program.reset(Program::create("FillBufferBytes", context.get(), *device.get(), true, &retVal));
         EXPECT_EQ(CL_SUCCESS, retVal);

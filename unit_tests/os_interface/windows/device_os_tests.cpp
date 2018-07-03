@@ -32,7 +32,7 @@ using namespace ::testing;
 namespace OCLRT {
 TEST(DeviceOsTest, osSpecificExtensions) {
     auto hwInfo = *platformDevices;
-    auto pDevice = Device::create<OCLRT::Device>(hwInfo);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
 
     std::string extensionString(pDevice->getDeviceInfo().deviceExtensions);
 
@@ -48,7 +48,7 @@ TEST(DeviceOsTest, osSpecificExtensions) {
 }
 
 TEST(DeviceOsTest, supportedSimultaneousInterops) {
-    auto pDevice = std::unique_ptr<Device>(Device::create<OCLRT::Device>(*platformDevices));
+    auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(*platformDevices));
 
     std::vector<unsigned int> expected = {CL_GL_CONTEXT_KHR,
                                           CL_WGL_HDC_KHR,
@@ -67,7 +67,7 @@ TEST(DeviceOsTest, supportedSimultaneousInterops) {
 
 TEST(DeviceOsTest, DeviceCreationFail) {
     auto hwInfo = *platformDevices;
-    auto pDevice = Device::create<OCLRT::FailDevice>(hwInfo);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDevice>(hwInfo);
 
     EXPECT_THAT(pDevice, nullptr);
 }
@@ -75,7 +75,7 @@ TEST(DeviceOsTest, DeviceCreationFail) {
 TEST(DeviceOsTest, DeviceCreationFailMidThreadPreemption) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread));
-    auto pDevice = Device::create<OCLRT::FailDeviceAfterOne>(nullptr);
+    auto pDevice = MockDevice::createWithNewExecutionEnvironment<FailDeviceAfterOne>(nullptr);
 
     EXPECT_THAT(pDevice, nullptr);
 }

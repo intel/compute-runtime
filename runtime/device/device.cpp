@@ -134,6 +134,7 @@ Device::~Device() {
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
+    outDevice.executionEnvironment->initGmm(pHwInfo);
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo);
     if (!commandStreamReceiver) {
         return false;

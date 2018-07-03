@@ -85,8 +85,6 @@ Wddm::Wddm() : initialized(false),
 
 Wddm::~Wddm() {
     resetPageTableManager(nullptr);
-    if (initialized)
-        destroyGmmContext();
     destroyContext(context);
     destroyPagingQueue();
     destroyDevice();

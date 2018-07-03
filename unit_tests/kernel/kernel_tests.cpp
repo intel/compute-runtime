@@ -2194,7 +2194,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith32bitPointerSizeThenReport32bit) {
 
     MockContext context;
     MockProgram program(&context, false);
-    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
 
     EXPECT_TRUE(kernel->is32Bit());
@@ -2206,7 +2206,7 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 
     MockContext context;
     MockProgram program(&context, false);
-    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, info, *device.get()));
 
     EXPECT_FALSE(kernel->is32Bit());

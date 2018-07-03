@@ -61,7 +61,7 @@ TEST(Sip, WhenRequestingCsrSipKernelThenProperCompilerInternalOptionsAreReturned
 }
 
 TEST(Sip, When32BitAddressesAreNotBeingForcedThenSipLlHasSameBitnessAsHostApplication) {
-    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     mockDevice->setForce32BitAddressing(false);
     const char *src = getSipLlSrc(*mockDevice);
@@ -77,7 +77,7 @@ TEST(Sip, When32BitAddressesAreNotBeingForcedThenSipLlHasSameBitnessAsHostApplic
 }
 
 TEST(Sip, When32BitAddressesAreBeingForcedThenSipLlHas32BitAddresses) {
-    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     mockDevice->setForce32BitAddressing(true);
     const char *src = getSipLlSrc(*mockDevice);
@@ -88,7 +88,7 @@ TEST(Sip, When32BitAddressesAreBeingForcedThenSipLlHas32BitAddresses) {
 }
 
 TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
-    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     const char *src = getSipLlSrc(*mockDevice);
     ASSERT_NE(nullptr, src);
@@ -138,7 +138,7 @@ TEST(DebugSip, WhenRequestingDbgCsrWithLocalMemorySipKernelThenProperCompilerInt
 }
 
 TEST(DebugSip, DISABLED_givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKernelIsReturned) {
-    auto mockDevice = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     EXPECT_NE(nullptr, mockDevice);
     MockCompilerDebugVars igcDebugVars;
 

@@ -655,7 +655,7 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
     MockProgram program;
     MockContext context;
-    std::unique_ptr<MockDevice> device(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
@@ -706,7 +706,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
     MockProgram program;
     MockContext context;
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0]));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;

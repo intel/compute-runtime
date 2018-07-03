@@ -236,7 +236,7 @@ TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpda
 
 TEST(CommandQueue, givenCmdQueueBlockedByAbortedVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
     auto context = new MockContext;
-    std::unique_ptr<MockDevice> mockDevice(Device::create<MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto cmdQ = new CommandQueue(context, mockDevice.get(), 0);
 
     auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
@@ -272,7 +272,7 @@ struct CommandQueueCommandStreamTest : public CommandQueueMemoryDevice,
 
 HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserEventWhenIsQueueBlockedIsCalledThenTaskLevelAlignsToCsr) {
     MockContext context;
-    std::unique_ptr<MockDevice> mockDevice(Device::create<MockDevice>(nullptr));
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     CommandQueue cmdQ(&context, mockDevice.get(), 0);
     auto &commandStreamReceiver = mockDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -679,7 +679,7 @@ INSTANTIATE_TEST_CASE_P(
 
 using CommandQueueTests = ::testing::Test;
 HWTEST_F(CommandQueueTests, givenMultipleCommandQueuesWhenMarkerIsEmittedThenGraphicsAllocationIsReused) {
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(*platformDevices));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
     MockContext context(device.get());
     std::unique_ptr<CommandQueue> commandQ(new CommandQueue(&context, device.get(), 0));
     *device->getTagAddress() = 0;
@@ -710,7 +710,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        device.reset(Device::create<MockDevice>(*platformDevices));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
     }
 

@@ -211,8 +211,6 @@ class Wddm {
     void getDeviceState();
     void handleCompletion();
     unsigned int readEnablePreemptionRegKey();
-    bool initGmmContext();
-    void destroyGmmContext();
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
     virtual const bool hwQueuesSupported() const { return false; }
 

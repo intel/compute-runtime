@@ -23,8 +23,15 @@
 #include "runtime/utilities/reference_tracked_object.h"
 
 namespace OCLRT {
+class GmmHelper;
+struct HardwareInfo;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   public:
+    ExecutionEnvironment();
     ~ExecutionEnvironment() override;
+    void initGmm(const HardwareInfo *hwInfo);
+
+  protected:
+    std::unique_ptr<GmmHelper> gmmHelper;
 };
 } // namespace OCLRT

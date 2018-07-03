@@ -822,6 +822,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());

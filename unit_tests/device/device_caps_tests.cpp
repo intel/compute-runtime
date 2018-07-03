@@ -704,7 +704,7 @@ const std::string DriverInfoMock::testDeviceName = "testDeviceName";
 const std::string DriverInfoMock::testVersion = "testVersion";
 
 TEST(Device_GetCaps, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
-    auto device = Device::create<OCLRT::MockDevice>(platformDevices[0]);
+    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]);
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
     device->setDriverInfo(driverInfoMock);
@@ -718,7 +718,7 @@ TEST(Device_GetCaps, givenSystemWithDriverInfoWhenGettingNameAndVersionThenRetur
 }
 
 TEST(Device_GetCaps, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {
-    auto device = Device::create<OCLRT::MockDevice>(platformDevices[0]);
+    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]);
 
     device->setDriverInfo(nullptr);
     device->name.clear();
@@ -777,7 +777,7 @@ TEST(Device_GetCaps, GivenFlagEnabled64kbPagesWhenSetThenReturnCorrectValue) {
 }
 
 TEST(Device_GetCaps, givenDeviceWithNullSourceLevelDebuggerWhenCapsAreInitializedThenSourceLevelDebuggerActiveIsSetToFalse) {
-    std::unique_ptr<Device> device(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
 
     const auto &caps = device->getDeviceInfo();
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
@@ -790,7 +790,7 @@ TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNot
 
     hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
 
-    std::unique_ptr<MockDeviceWithSourceLevelDebugger<>> device(Device::create<MockDeviceWithSourceLevelDebugger<>>(&hwInfo));
+    std::unique_ptr<MockDeviceWithSourceLevelDebugger<>> device(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithSourceLevelDebugger<>>(&hwInfo));
 
     const auto &caps = device->getDeviceInfo();
     EXPECT_NE(nullptr, device->getSourceLevelDebugger());

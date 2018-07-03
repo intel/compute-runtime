@@ -53,9 +53,10 @@ class Device : public BaseObject<_cl_device_id> {
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
     template <typename T>
-    static T *create(const HardwareInfo *pHwInfo) {
+    static T *create(const HardwareInfo *pHwInfo, ExecutionEnvironment *execEnv) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
         T *device = new T(*pHwInfo);
+        device->connectToExecutionEnvironment(execEnv);
         if (false == createDeviceImpl(pHwInfo, *device)) {
             delete device;
             return nullptr;

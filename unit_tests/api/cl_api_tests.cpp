@@ -66,7 +66,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     retVal = CL_SUCCESS;
     retSize = 0;
 
-    device = Device::create<MockAlignedMallocManagerDevice>(*platformDevices);
+    device = MockDevice::createWithNewExecutionEnvironment<MockAlignedMallocManagerDevice>(*platformDevices);
     Device *devPtr = reinterpret_cast<Device *>(device);
     cl_device_id clDevice = devPtr;
 

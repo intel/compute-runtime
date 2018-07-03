@@ -409,8 +409,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         DebuggerLibrary::setDebuggerActive(true);
         DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-        unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
-        MockDevice::createDeviceImpl(platformDevices[0], *device.get());
+        unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         EXPECT_TRUE(interceptor.newDeviceCalled);
         uint32_t deviceHandleExpected = device->getCommandStreamReceiver().getOSInterface() != nullptr ? device->getCommandStreamReceiver().getOSInterface()->getDeviceHandle() : 0;
         EXPECT_EQ(reinterpret_cast<GfxDeviceHandle>(static_cast<uint64_t>(deviceHandleExpected)), interceptor.newDeviceArgIn.dh);
@@ -429,7 +428,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
         overrideCommandStreamReceiverCreation = true;
 
         // Device::create must be used to create correct OS memory manager
-        unique_ptr<Device> device(Device::create<Device>(platformDevices[0]));
+        unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<Device>(platformDevices[0]));
         ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
 
         EXPECT_TRUE(interceptor.newDeviceCalled);

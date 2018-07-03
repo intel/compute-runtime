@@ -24,13 +24,15 @@
 #include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace OCLRT {
-void GmmPageTableMngr::customDeleter(GMM_PAGETABLE_MGR *gmmPageTableManager) {
-    GmmHelper::gmmClientContext->DestroyPageTblMgrObject(gmmPageTableManager);
+GmmPageTableMngr::~GmmPageTableMngr() {
+    if (clientContext) {
+        clientContext->DestroyPageTblMgrObject(pageTableManager);
+    }
 }
 
 GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    auto pageTableMngrPtr = GmmHelper::gmmClientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
-    this->pageTableManager = UniquePtrType(pageTableMngrPtr, GmmPageTableMngr::customDeleter);
+    this->clientContext = GmmHelper::gmmClientContext;
+    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
 }
 
 } // namespace OCLRT

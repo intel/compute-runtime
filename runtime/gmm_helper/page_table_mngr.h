@@ -28,7 +28,7 @@
 namespace OCLRT {
 class GmmPageTableMngr {
   public:
-    MOCKABLE_VIRTUAL ~GmmPageTableMngr() = default;
+    MOCKABLE_VIRTUAL ~GmmPageTableMngr();
 
     static GmmPageTableMngr *create(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
 
@@ -45,13 +45,10 @@ class GmmPageTableMngr {
     }
 
   protected:
-    static void customDeleter(GMM_PAGETABLE_MGR *gmmPageTableManager);
-    using UniquePtrType = std::unique_ptr<GMM_PAGETABLE_MGR, std::function<void(GMM_PAGETABLE_MGR *)>>;
-
     GmmPageTableMngr() = default;
 
     GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb);
-
-    UniquePtrType pageTableManager;
+    GMM_CLIENT_CONTEXT *clientContext = nullptr;
+    GMM_PAGETABLE_MGR *pageTableManager = nullptr;
 };
 } // namespace OCLRT

@@ -22,6 +22,7 @@
 
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/hw_info.h"
@@ -531,8 +532,9 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
     const HardwareInfo hwInfo = *platformDevices[0];
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(&hwInfo);
     BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable->ftrL3IACoherency ? 1 : 0;
-
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(adapterHandle,
                                                      deviceHandle,
                                                      wddm->gdi->escape.mFunc,
@@ -551,6 +553,8 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
 
 HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
     wddm->adapter = static_cast<D3DKMT_HANDLE>(0);
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0),
                                                      ::testing::_,
                                                      ::testing::_,
@@ -569,6 +573,8 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
 
 HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoDevice) {
     wddm->device = static_cast<D3DKMT_HANDLE>(0);
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_,
                                                      static_cast<D3DKMT_HANDLE>(0),
                                                      ::testing::_,
@@ -587,6 +593,8 @@ HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoDevice) {
 
 HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoEscFunc) {
     wddm->gdi->escape = static_cast<PFND3DKMT_ESCAPE>(nullptr);
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_,
                                                      ::testing::_,
                                                      static_cast<PFND3DKMT_ESCAPE>(nullptr),

@@ -69,7 +69,7 @@ Wddm *DriverInfoDeviceTest::wddmMock = nullptr;
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateDriverInfo) {
     overrideCommandStreamReceiverCreation = true;
-    auto device = Device::create<OCLRT::MockDevice>(hwInfo);
+    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_TRUE(device->hasDriverInfo());
     delete device;
@@ -77,7 +77,7 @@ TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWhenCorrectOSInterfaceThenCreateD
 
 TEST_F(DriverInfoDeviceTest, GivenDeviceCreatedWithoutCorrectOSInterfaceThenDontCreateDriverInfo) {
     overrideCommandStreamReceiverCreation = false;
-    auto device = Device::create<OCLRT::MockDevice>(hwInfo);
+    auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo);
 
     EXPECT_FALSE(device->hasDriverInfo());
     delete device;

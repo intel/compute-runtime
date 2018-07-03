@@ -318,7 +318,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     {
         MockBuiltins tmpBuiltins;
         tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, getSipProgramWithCustomBinary()}));
@@ -346,7 +346,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
     StackVec<char, 4096> buffer(requiredSize);
     LinearStream cmdStream(buffer.begin(), buffer.size());
 
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t minCsrSize = mockDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
     uint64_t minCsrAlignment = 2 * 256 * MemoryConstants::kiloByte;
@@ -360,7 +360,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturnsSizeOfMiLoadRegisterIm
 HWTEST_P(PreemptionHwTest, programCmdStreamAddsProperMiLoadRegisterImmCommandToTheStream) {
     PreemptionMode mode = GetParam();
     PreemptionMode differentPreemptionMode = static_cast<PreemptionMode>(0);
-    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(nullptr));
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     if (false == GetPreemptionTestHwDetails<FamilyType>().supportsPreemptionProgramming()) {
         LinearStream cmdStream(nullptr, 0U);
@@ -409,7 +409,7 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceNoWa) {
     tmpWaTable.waCSRUncachable = false;
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = &tmpWaTable;
 
-    std::unique_ptr<MockDevice> mockDevice(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     ASSERT_NE(nullptr, mockDevice.get());
 
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();
@@ -429,7 +429,7 @@ HWTEST_F(MidThreadPreemptionTests, createCsrSurfaceWa) {
     tmpWaTable.waCSRUncachable = true;
     const_cast<HardwareInfo *>(platformDevices[0])->pWaTable = &tmpWaTable;
 
-    std::unique_ptr<MockDevice> mockDevice(Device::create<OCLRT::MockDevice>(platformDevices[0]));
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     ASSERT_NE(nullptr, mockDevice.get());
 
     auto &csr = mockDevice->getUltCommandStreamReceiver<FamilyType>();

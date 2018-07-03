@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -80,7 +80,7 @@ TEST_F(clGetDeviceAndHostTimerTest, OsCallPass) {
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new MockOSTime());
 
     retVal = clGetDeviceAndHostTimer(
@@ -100,7 +100,7 @@ TEST_F(clGetDeviceAndHostTimerTest, OsCallFail) {
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new FailOSTime());
 
     retVal = clGetDeviceAndHostTimer(
@@ -149,7 +149,7 @@ TEST_F(clGetHostTimerTest, OsCallPass) {
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new MockOSTime());
 
     retVal = clGetHostTimer(
@@ -166,7 +166,7 @@ TEST_F(clGetHostTimerTest, OsCallFail) {
     cl_ulong host_timestamp = 0;
     cl_ulong zero_timestamp = 0;
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new FailOSTime());
 
     retVal = clGetHostTimer(

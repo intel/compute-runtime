@@ -40,15 +40,4 @@ Wddm::VirtualFreeFcn getVirtualFree() {
 Wddm::VirtualAllocFcn getVirtualAlloc() {
     return VirtualAlloc;
 }
-
-bool Wddm::initGmmContext() {
-    return GmmHelper::initContext(gfxPlatform.get(),
-                                  featureTable.get(),
-                                  waTable.get(),
-                                  gtSystemInfo.get());
-}
-
-void Wddm::destroyGmmContext() {
-    GmmHelper::destroyContext();
-}
 } // namespace OCLRT

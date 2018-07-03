@@ -23,6 +23,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/string.h"
 #include "runtime/program/print_formatter.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -59,7 +60,7 @@ class PrintFormatterTest : public testing::Test {
         data = new MockGraphicsAllocation(underlyingBuffer, PrintFormatter::maxPrintfOutputLength);
 
         kernelInfo = KernelInfo::create();
-        device = Device::create<OCLRT::Device>(nullptr);
+        device = MockDevice::createWithNewExecutionEnvironment<Device>(nullptr);
         kernel = new MockKernel(&program, *kernelInfo, *device);
 
         printFormatter = new PrintFormatter(*kernel, *data);

@@ -76,7 +76,7 @@ class WddmCommandStreamFixture {
         memManager = mockWddmMM;
         csr->setMemoryManager(memManager);
 
-        device = MockDevice::create<MockDevice>(platformDevices[0]);
+        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]);
         ASSERT_NE(nullptr, device);
         memManager->device = device;
 

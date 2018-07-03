@@ -31,7 +31,7 @@ class ImageHostPtrTransferTests : public testing::Test {
 
   public:
     void SetUp() override {
-        device.reset(Device::create<MockDevice>(*platformDevices));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         context.reset(new MockContext(device.get()));
     }
 

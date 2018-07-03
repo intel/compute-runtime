@@ -148,7 +148,7 @@ bool Platform::initialize() {
 
     this->devices.resize(numDevicesReturned);
     for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<OCLRT::Device>(&hwInfo[deviceOrdinal]);
+        auto pDevice = Device::create<OCLRT::Device>(&hwInfo[deviceOrdinal], executionEnvironment);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;
@@ -168,7 +168,6 @@ bool Platform::initialize() {
             }
 
             compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(pDevice->getDeviceInfo().deviceExtensions);
-            pDevice->connectToExecutionEnvironment(this->executionEnvironment);
         } else {
             return false;
         }

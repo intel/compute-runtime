@@ -955,7 +955,7 @@ class ImageCompressionTests : public ::testing::Test {
 
     void SetUp() override {
         myMemoryManager = new MyMemoryManager();
-        mockDevice.reset(Device::create<MockDevice>(*platformDevices));
+        mockDevice.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
         mockDevice->injectMemoryManager(myMemoryManager);
         mockContext.reset(new MockContext(mockDevice.get()));
     }

@@ -33,7 +33,7 @@
 typedef ::testing::Test CommandStreamReceiverWithActiveDebuggerTest;
 
 HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebuggerAndDisabledPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->setSourceLevelDebuggerActive(true);
     device->allocatePreemptionAllocationIfNotPresent();
     auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);

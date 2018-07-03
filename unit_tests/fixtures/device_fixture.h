@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -35,7 +35,7 @@ struct DeviceDefaults {
 template <typename DeviceTraits = DeviceDefaults>
 struct DeviceHelper {
     static OCLRT::MockDevice *create(const OCLRT::HardwareInfo *hardwareInfo = nullptr) {
-        OCLRT::MockDevice *device = OCLRT::Device::create<OCLRT::MockDevice>(hardwareInfo);
+        OCLRT::MockDevice *device = OCLRT::MockDevice::createWithNewExecutionEnvironment<OCLRT::MockDevice>(hardwareInfo);
         assert(device != nullptr);
         return device;
     }

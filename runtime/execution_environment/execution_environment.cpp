@@ -21,8 +21,15 @@
 */
 
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/device_factory.h"
 
-OCLRT::ExecutionEnvironment::~ExecutionEnvironment() {
+namespace OCLRT {
+ExecutionEnvironment::ExecutionEnvironment() = default;
+ExecutionEnvironment::~ExecutionEnvironment() {
     DeviceFactory::releaseDevices();
 }
+void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
+    gmmHelper.reset(new GmmHelper(hwInfo));
+}
+} // namespace OCLRT

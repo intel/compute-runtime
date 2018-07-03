@@ -35,17 +35,16 @@ struct WorkaroundTable;
 struct ImageInfo;
 class GraphicsAllocation;
 class Gmm;
+class OsLibrary;
 
 class GmmHelper {
   public:
     GmmHelper() = delete;
+    GmmHelper(const HardwareInfo *hwInfo);
+    ~GmmHelper();
     static constexpr uint32_t cacheDisabledIndex = 0;
     static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint32_t maxPossiblePitch = 2147483648;
-
-    static void loadLib();
-    static bool initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
-    static void destroyContext();
 
     static uint64_t canonize(uint64_t address);
     static uint64_t decanonize(uint64_t address);
@@ -67,6 +66,13 @@ class GmmHelper {
     static bool useSimplifiedMocsTable;
     static GMM_CLIENT_CONTEXT *gmmClientContext;
     static const HardwareInfo *hwInfo;
-    static bool isLoaded;
+    static OsLibrary *gmmLib;
+
+  protected:
+    void loadLib();
+    void initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
+    void destroyContext();
+
+    bool isLoaded = false;
 };
 } // namespace OCLRT

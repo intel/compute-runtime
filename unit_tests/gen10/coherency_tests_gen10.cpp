@@ -45,7 +45,7 @@ struct Gen10CoherencyRequirements : public ::testing::Test {
 
     void SetUp() override {
         csr = new myCsr();
-        device.reset(Device::create<MockDevice>(platformDevices[0]));
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         device->resetCommandStreamReceiver(csr);
     }
 

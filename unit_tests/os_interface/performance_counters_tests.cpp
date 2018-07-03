@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,7 @@
 #include "runtime/os_interface/os_time.h"
 #include "runtime/os_interface/os_interface.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -46,7 +47,7 @@ struct PerformanceCountersDeviceTest : public PerformanceCountersDeviceFixture,
 
 TEST_F(PerformanceCountersDeviceTest, createDeviceWithPerformanceCounters) {
     hwInfoToModify->capabilityTable.instrumentationEnabled = true;
-    auto device = Device::create<OCLRT::Device>(hwInfoToModify);
+    auto device = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfoToModify);
     EXPECT_NE(nullptr, device->getPerformanceCounters());
     EXPECT_EQ(1, PerfCounterFlags::initalizeCalled);
     delete device;
@@ -54,7 +55,7 @@ TEST_F(PerformanceCountersDeviceTest, createDeviceWithPerformanceCounters) {
 
 TEST_F(PerformanceCountersDeviceTest, createDeviceWithoutPerformanceCounters) {
     hwInfoToModify->capabilityTable.instrumentationEnabled = false;
-    auto device = Device::create<OCLRT::Device>(hwInfoToModify);
+    auto device = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfoToModify);
     EXPECT_EQ(nullptr, device->getPerformanceCounters());
     EXPECT_EQ(0, PerfCounterFlags::initalizeCalled);
     delete device;

@@ -52,9 +52,6 @@ bool Wddm::init() {
         if (!createPagingQueue()) {
             return false;
         }
-        if (!initGmmContext()) {
-            return false;
-        }
         if (!configureDeviceAddressSpace<GfxFamily>()) {
             return false;
         }

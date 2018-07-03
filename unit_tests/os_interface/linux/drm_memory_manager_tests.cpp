@@ -1120,7 +1120,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.Force32bitAddressing.set(true);
-    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     memoryManager->device = pDevice.get();
     memoryManager->setForce32BitAllocations(true);
 
@@ -1150,7 +1150,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
 
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.Force32bitAddressing.set(true);
-    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     pDevice->increaseProgramCount();
     memoryManager->device = pDevice.get();
     memoryManager->setForce32BitAllocations(true);
@@ -1166,7 +1166,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     DebugManagerStateRestore dbgStateRestore;
     DebugManager.flags.Force32bitAddressing.set(true);
     memoryManager->setForce32BitAllocations(true);
-    std::unique_ptr<Device> pDevice(Device::create<OCLRT::MockDevice>(nullptr));
+    std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     memoryManager->device = pDevice.get();
 
     auto allocator = memoryManager->getDrmInternal32BitAllocator();
@@ -1195,6 +1195,8 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
     auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
     queryGmm.release();
@@ -1738,6 +1740,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
     auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
     queryGmm.release();

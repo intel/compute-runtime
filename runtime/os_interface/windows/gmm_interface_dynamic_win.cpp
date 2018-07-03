@@ -39,9 +39,8 @@ decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFun
 decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
 decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
-std::unique_ptr<OsLibrary> gmmLib;
 void GmmHelper::loadLib() {
-    gmmLib.reset(OsLibrary::load(Os::gmmDllName));
+    gmmLib = OsLibrary::load(Os::gmmDllName);
 
     UNRECOVERABLE_IF(!gmmLib);
     if (gmmLib->isLoaded()) {

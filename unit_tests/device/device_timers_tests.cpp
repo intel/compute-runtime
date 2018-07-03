@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,7 @@ TEST(MockOSTime, DeviceHostIncreaseCheck) {
     cl_ulong deviceTimestamp[2] = {0, 0};
     cl_ulong hostTimestamp[2] = {0, 0};
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new MockOSTime());
 
     mDev->getDeviceAndHostTimer(
@@ -97,7 +97,7 @@ TEST(MockOSTime, DeviceHostDeltaCheck) {
 TEST(MockOSTime, HostIncreaseCheck) {
     cl_ulong hostTimestamp[2] = {0, 0};
 
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(new MockOSTime());
 
     mDev->getHostTimer(
@@ -114,7 +114,7 @@ TEST(MockOSTime, HostIncreaseCheck) {
 }
 
 TEST(MockOSTime, NegativeTest) {
-    auto mDev = Device::create<MockDevice>(nullptr);
+    auto mDev = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     mDev->setOSTime(nullptr);
 
     double zeroRes;

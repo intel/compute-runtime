@@ -35,6 +35,10 @@ using namespace ::testing;
 
 namespace OCLRT {
 class GmmTests : public ::testing::Test {
+    void SetUp() override {
+        execEnv.initGmm(*platformDevices);
+    }
+    ExecutionEnvironment execEnv;
 };
 
 TEST_F(GmmTests, resourceCreation) {
@@ -599,31 +603,31 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
 
+class MockGmmHelper : public GmmHelper {
+  public:
+    using GmmHelper::destroyContext;
+    using GmmHelper::initContext;
+    MockGmmHelper(const HardwareInfo *hwInfo) : GmmHelper(hwInfo) {}
+};
+
 TEST(GmmTest, whenContextIsInitializedMultipleTimesThenDontOverride) {
     const HardwareInfo *hwinfo = *platformDevices;
-    EXPECT_TRUE(GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+    auto gmmHelper = MockGmmHelper(hwinfo);
     auto currentClientContext = GmmHelper::gmmClientContext;
-
-    EXPECT_TRUE(GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
-
+    gmmHelper.initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo);
     EXPECT_EQ(currentClientContext, GmmHelper::gmmClientContext);
 }
 
 TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {
     const HardwareInfo *hwinfo = *platformDevices;
-    EXPECT_TRUE(GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
-
-    GmmHelper::destroyContext();
-    EXPECT_EQ(nullptr, GmmHelper::gmmClientContext);
-    GmmHelper::destroyContext();
-
-    EXPECT_TRUE(GmmHelper::initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo));
+    auto gmmHelper = MockGmmHelper(hwinfo);
+    gmmHelper.destroyContext();
 }
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
     HardwareInfo localHwInfo = **platformDevices;
 
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
     EXPECT_EQ(&localHwInfo, GmmHelper::hwInfo);
 }
 
@@ -645,7 +649,8 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     gmmParams.Flags.Info.Cacheable = 1;
     gmmParams.Flags.Gpu.Texture = 1;
     gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-
+    ExecutionEnvironment execEnv;
+    execEnv.initGmm(*platformDevices);
     MyMockResourecInfo myMockResourceInfo1(&gmmParams);
     EXPECT_NE(nullptr, myMockResourceInfo1.resourceInfo.get());
 
