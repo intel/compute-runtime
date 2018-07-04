@@ -22,7 +22,6 @@
 
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/graphics_allocation.h"

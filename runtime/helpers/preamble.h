@@ -23,7 +23,6 @@
 #pragma once
 #include "igfxfmid.h"
 #include "stdint.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/helpers/pipeline_select_helper.h"
 #include <cstddef>
 

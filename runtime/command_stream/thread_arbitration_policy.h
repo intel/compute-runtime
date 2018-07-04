@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -22,9 +22,12 @@
 #pragma once
 #include <stdint.h>
 namespace OCLRT {
-namespace ThreadArbitrationPolicy {
-const uint32_t AgeBased = 0x0u;
-const uint32_t RoundRobin = 0x1u;
-const uint32_t NotPresent = 0xffffffffu;
-} // namespace ThreadArbitrationPolicy
+struct ThreadArbitrationPolicy {
+    enum {
+        AgeBased = 0x0u,
+        RoundRobin = 0x1u,
+        RoundRobinAfterDependency = 0x2u,
+        NotPresent = 0xffffffffu
+    };
+};
 } // namespace OCLRT

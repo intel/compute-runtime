@@ -22,7 +22,6 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"

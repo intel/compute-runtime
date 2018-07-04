@@ -34,9 +34,6 @@
 #include <cstdint>
 
 namespace OCLRT {
-namespace ThreadArbitrationPolicy {
-const uint32_t RoundRobinAfterDependency = 2;
-}
 namespace RowChickenReg4 {
 const uint32_t address = 0xE48C;
 const uint32_t regDataForArbitrationPolicy[3] = {
