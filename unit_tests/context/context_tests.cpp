@@ -299,6 +299,12 @@ TEST_F(ContextTest, givenContextWhenSharingTableEmptyThenReturnsNullptr) {
     EXPECT_EQ(sharingF, nullptr);
 }
 
+TEST_F(ContextTest, givenNullptrWhenRegisteringSharingToContextThenAbortExecution) {
+    MockContext context;
+    context.clearSharingFunctions();
+    EXPECT_THROW(context.registerSharing<MockSharingFunctions>(nullptr), std::exception);
+}
+
 TEST_F(ContextTest, givenContextWhenSharingTableIsNotEmptyThenReturnsSharingFunctionPointer) {
     MockContext context;
     MockSharingFunctions *sharingFunctions = new MockSharingFunctions;

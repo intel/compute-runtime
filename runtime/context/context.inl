@@ -26,6 +26,7 @@ namespace OCLRT {
 
 template <typename Sharing>
 void Context::registerSharing(Sharing *sharing) {
+    UNRECOVERABLE_IF(!sharing);
     this->sharingFunctions[Sharing::sharingId].reset(sharing);
 }
 
