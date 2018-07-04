@@ -115,3 +115,14 @@ TEST(sharingHandler, givenSharingHandlerWhenValidateUpdateDataIsCalledWithNonNul
     UpdateData updateData;
     sharingHandler.validateUpdateData(&updateData);
 }
+
+TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {
+    SharingHandler sharingHandler;
+    MockContext context;
+    MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, graphicsAllocation, true, false, false);
+
+    auto result = sharingHandler.acquire(&memObj);
+    EXPECT_NE(CL_SUCCESS, result);
+}

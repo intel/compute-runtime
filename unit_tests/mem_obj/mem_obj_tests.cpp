@@ -32,6 +32,38 @@
 
 using namespace OCLRT;
 
+struct MySharingHandler : public SharingHandler {
+    MySharingHandler(MemObj *memObj) : memObj(memObj) {
+        auto alloc = getAllocation();
+        if (alloc) {
+            alloc->incReuseCount();
+        }
+    }
+    MySharingHandler(GraphicsAllocation *allocation) : allocation(allocation) {
+        auto alloc = getAllocation();
+        if (alloc) {
+            alloc->incReuseCount();
+        }
+    }
+
+    void releaseReusedGraphicsAllocation() override {
+        auto alloc = getAllocation();
+        if (alloc) {
+            alloc->decReuseCount();
+        }
+    }
+
+    GraphicsAllocation *getAllocation() {
+        if (memObj) {
+            return memObj->getGraphicsAllocation();
+        }
+        return allocation;
+    }
+
+    MemObj *memObj = nullptr;
+    GraphicsAllocation *allocation = nullptr;
+};
+
 TEST(MemObj, useCount) {
     char buffer[64];
     MockContext context;
@@ -333,17 +365,6 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
 }
 
 TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThenFreeAllocationOnce) {
-    // Each SharingHandler should have own implementation of reuseCount management
-    struct MySharingHandler : public SharingHandler {
-        MySharingHandler(GraphicsAllocation *allocation) : allocation(allocation) {
-            allocation->incReuseCount();
-        }
-        void releaseReusedGraphicsAllocation() override {
-            allocation->decReuseCount();
-        }
-
-        GraphicsAllocation *allocation = nullptr;
-    };
 
     MockMemoryManager memoryManager;
     MockContext context;
@@ -378,4 +399,90 @@ TEST(MemObj, givenMemObjectWhenContextIsNotNullThenContextOutlivesMemobjects) {
         EXPECT_EQ(2, context.getRefInternalCount());
     }
     EXPECT_EQ(1, context.getRefInternalCount());
+}
+
+TEST(MemObj, givenSharedMemObjectWithNullGfxAllocationWhenSettingGfxAllocationThenSucceed) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+    MockGraphicsAllocation *gfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, nullptr, true, false, false);
+    memObj.setSharingHandler(new MySharingHandler(&memObj));
+
+    memObj.resetGraphicsAllocation(gfxAllocation);
+    gfxAllocation->incReuseCount();
+
+    ASSERT_EQ(1u, gfxAllocation->peekReuseCount());
+    EXPECT_EQ(gfxAllocation, memObj.getGraphicsAllocation());
+}
+
+TEST(MemObj, givenSharedMemObjectAndNullGfxAllocationProvidedWhenSettingGfxAllocationThenSucceed) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+    MockGraphicsAllocation *graphicsAllocation = new MockGraphicsAllocation(nullptr, 0);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, graphicsAllocation, true, false, false);
+    memObj.setSharingHandler(new MySharingHandler(&memObj));
+
+    graphicsAllocation->decReuseCount();
+    memObj.resetGraphicsAllocation(nullptr);
+
+    EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
+}
+
+TEST(MemObj, givenSharedMemObjectAndZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsDestroyed) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+    MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+    MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+    memObj.setSharingHandler(new MySharingHandler(&memObj));
+
+    oldGfxAllocation->decReuseCount();
+    memObj.resetGraphicsAllocation(newGfxAllocation);
+    newGfxAllocation->incReuseCount();
+
+    ASSERT_EQ(1u, newGfxAllocation->peekReuseCount());
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
+}
+
+TEST(MemObj, givenSharedMemObjectAndNonZeroReuseCountWhenChangingGfxAllocationThenOldAllocationIsNotDestroyed) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+    MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+    MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+    memObj.setSharingHandler(new MySharingHandler(&memObj));
+
+    memObj.resetGraphicsAllocation(newGfxAllocation);
+    newGfxAllocation->incReuseCount();
+
+    ASSERT_EQ(1u, newGfxAllocation->peekReuseCount());
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
+    memoryManager.checkGpuUsageAndDestroyGraphicsAllocations(oldGfxAllocation);
+}
+
+TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIsDestroyed) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+    context.setMemoryManager(&memoryManager);
+    MockGraphicsAllocation *oldGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+    MockGraphicsAllocation *newGfxAllocation = new MockGraphicsAllocation(nullptr, 0);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_USE_HOST_PTR,
+                  1, nullptr, nullptr, oldGfxAllocation, true, false, false);
+
+    memObj.resetGraphicsAllocation(newGfxAllocation);
+
+    EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
 }

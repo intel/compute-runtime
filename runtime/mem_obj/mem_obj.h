@@ -94,6 +94,7 @@ class MemObj : public BaseObject<_cl_mem> {
     virtual void transferDataFromHostPtr(MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset) { UNRECOVERABLE_IF(true); };
 
     GraphicsAllocation *getGraphicsAllocation();
+    void resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation);
     GraphicsAllocation *getMcsAllocation() { return mcsAllocation; }
     void setMcsAllocation(GraphicsAllocation *alloc) { mcsAllocation = alloc; }
 
@@ -115,7 +116,7 @@ class MemObj : public BaseObject<_cl_mem> {
     void setSharingHandler(SharingHandler *sharingHandler) { this->sharingHandler.reset(sharingHandler); }
     void setParentSharingHandler(std::shared_ptr<SharingHandler> &handler) { sharingHandler = handler; }
     unsigned int acquireCount = 0;
-    const Context *getContext() const { return context; }
+    Context *getContext() const { return context; }
 
     void waitForCsrCompletion();
     void destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy);

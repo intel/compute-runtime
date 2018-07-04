@@ -61,6 +61,7 @@ class SharingHandler {
     virtual int synchronizeHandler(UpdateData *updateData);
     virtual int validateUpdateData(UpdateData *updateData);
     virtual void synchronizeObject(UpdateData *updateData) { updateData->synchronizationStatus = SYNCHRONIZE_ERROR; }
+    virtual void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData);
     virtual void releaseResource(MemObj *memObject){};
     unsigned int acquireCount = 0u;
 };

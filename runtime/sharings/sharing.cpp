@@ -26,6 +26,7 @@
 #include <memory>
 
 namespace OCLRT {
+
 int SharingHandler::acquire(MemObj *memObj) {
     if (acquireCount == 0) {
         UpdateData updateData;
@@ -33,11 +34,15 @@ int SharingHandler::acquire(MemObj *memObj) {
         updateData.sharedHandle = currentSharedHandle;
         updateData.memObject = memObj;
         int result = synchronizeHandler(&updateData);
+        resolveGraphicsAllocationChange(currentSharedHandle, &updateData);
         if (result != CL_SUCCESS) {
             return result;
         }
-        DEBUG_BREAK_IF(updateData.synchronizationStatus != SynchronizeStatus::ACQUIRE_SUCCESFUL);
-        DEBUG_BREAK_IF(currentSharedHandle != updateData.sharedHandle);
+        if (updateData.synchronizationStatus != SynchronizeStatus::ACQUIRE_SUCCESFUL) {
+            return CL_OUT_OF_RESOURCES;
+        }
+
+        DEBUG_BREAK_IF(memObj->getGraphicsAllocation()->peekSharedHandle() != updateData.sharedHandle);
     }
     acquireCount++;
     return CL_SUCCESS;
@@ -54,6 +59,9 @@ int SharingHandler::synchronizeHandler(UpdateData *updateData) {
 int SharingHandler::validateUpdateData(UpdateData *updateData) {
     UNRECOVERABLE_IF(updateData == nullptr);
     return CL_SUCCESS;
+}
+
+void SharingHandler::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
 }
 
 void SharingHandler::release(MemObj *memObject) {

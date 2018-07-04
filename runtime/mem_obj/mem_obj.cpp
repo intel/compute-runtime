@@ -246,6 +246,16 @@ GraphicsAllocation *MemObj::getGraphicsAllocation() {
     return graphicsAllocation;
 }
 
+void MemObj::resetGraphicsAllocation(GraphicsAllocation *newGraphicsAllocation) {
+    TakeOwnershipWrapper<MemObj> lock(*this);
+
+    if (graphicsAllocation != nullptr && (peekSharingHandler() == nullptr || graphicsAllocation->peekReuseCount() == 0)) {
+        memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(graphicsAllocation);
+    }
+
+    graphicsAllocation = newGraphicsAllocation;
+}
+
 bool MemObj::readMemObjFlagsInvalid() {
     if (this->getFlags() & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)) {
         return true;
