@@ -30,6 +30,9 @@
 #ifdef SUPPORT_GEN10
 #include "runtime/gen10/reg_configs.h"
 #endif
+
+#include <cstdint>
+
 namespace OCLRT {
 namespace ThreadArbitrationPolicy {
 const uint32_t RoundRobinAfterDependency = 2;
