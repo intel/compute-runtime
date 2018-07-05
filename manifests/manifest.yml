@@ -17,7 +17,7 @@ components:
     branch: infra
     clean_on_sync: true
     dest_dir: infra
-    revision: 662c9dc58a1fee5f2ae0f4200c8dc6db1d2f1488
+    revision: a228519d4601f11ceef1f3cce1f013277be14388
     type: git
   internal:
     branch: master
