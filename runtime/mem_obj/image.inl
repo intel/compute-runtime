@@ -199,7 +199,7 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
-    surfaceState->setAuxiliarySurfaceMode((AUXILIARY_SURFACE_MODE)5);
+    surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
     surfaceState->setAuxiliarySurfacePitch(std::max(gmm->gmmResourceInfo->getRenderAuxPitchTiles(), 1u));
     surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
     surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
