@@ -84,6 +84,10 @@ void AubFileStream::write(const char *data, size_t size) {
     fileHandle.write(data, size);
 }
 
+void AubFileStream::flush() {
+    fileHandle.flush();
+}
+
 bool AubFileStream::init(uint32_t stepping, uint32_t device) {
     CmdServicesMemTraceVersion header;
     memset(&header, 0, sizeof(header));

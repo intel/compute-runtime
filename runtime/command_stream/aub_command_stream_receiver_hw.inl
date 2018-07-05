@@ -420,6 +420,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         subCaptureManager->deactivateSubCapture();
     }
 
+    stream->flush();
     return 0;
 }
 

@@ -80,6 +80,13 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
 };
 
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
+    void flush() override {
+        flushCalled = true;
+    }
+    bool flushCalled = false;
+};
+
+struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     MOCK_METHOD1(addComment, bool(const char *message));
 };
 
@@ -1170,8 +1177,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
@@ -1193,6 +1200,31 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    mockAubFileStream.swap(aubCsr->stream);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+    EXPECT_TRUE(mockAubFileStreamPtr->flushCalled);
+
+    mockAubFileStream.swap(aubCsr->stream);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
@@ -1204,8 +1236,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirst
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
@@ -1228,8 +1260,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecon
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
@@ -1252,8 +1284,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
@@ -1331,8 +1363,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
@@ -1392,8 +1424,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
+    GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
     mockAubFileStream.swap(aubCsr->stream);
 
