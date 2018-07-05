@@ -1243,65 +1243,30 @@ TYPED_TEST_P(D3DTests, fillTexture3dDesc) {
 }
 
 TYPED_TEST_P(D3DTests, givenPlaneWhenFindYuvSurfaceCalledThenReturnValidImgFormat) {
-    auto surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::NO_PLANE, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
+    const SurfaceFormatInfo *surfaceFormat;
+    DXGI_FORMAT testFormat[] = {DXGI_FORMAT::DXGI_FORMAT_NV12, DXGI_FORMAT::DXGI_FORMAT_P010, DXGI_FORMAT::DXGI_FORMAT_P016};
+    int channelDataType[] = {CL_UNORM_INT8, CL_UNORM_INT16, CL_UNORM_INT16};
+    for (int n = 0; n < 3; n++) {
+        surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(testFormat[n], OCLPlane::NO_PLANE, CL_MEM_READ_WRITE);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == channelDataType[n]);
 
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_U, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
+        surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(testFormat[n], OCLPlane::PLANE_U, CL_MEM_READ_WRITE);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == channelDataType[n]);
 
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
+        surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(testFormat[n], OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == channelDataType[n]);
 
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_V, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
+        surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(testFormat[n], OCLPlane::PLANE_V, CL_MEM_READ_WRITE);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == channelDataType[n]);
 
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_NV12, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_R);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT8);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::NO_PLANE, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_U, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_V, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P010, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_R);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::NO_PLANE, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_U, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_UV, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_V, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_RG);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
-
-    surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(DXGI_FORMAT_P016, OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_R);
-    EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == CL_UNORM_INT16);
+        surfaceFormat = D3DTexture<TypeParam>::findYuvSurfaceFormatInfo(testFormat[n], OCLPlane::PLANE_Y, CL_MEM_READ_WRITE);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_order == CL_R);
+        EXPECT_TRUE(surfaceFormat->OCLImageFormat.image_channel_data_type == channelDataType[n]);
+    }
 }
 
 TYPED_TEST_P(D3DTests, inForced32BitAddressingBufferCreatedHas32BitAllocation) {
