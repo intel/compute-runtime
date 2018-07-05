@@ -22,7 +22,9 @@
 
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
@@ -30,6 +32,7 @@
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/helpers/options.h"
@@ -987,6 +990,51 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferWithOffsetWhenSetArgStatefulIsCalledT
     delete buffer;
     alignedFree(ptr);
     DebugManager.flags.Force32bitAddressing.set(false);
+}
+
+HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceStateIsProgrammedThenSetAuxParams) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    RENDER_SURFACE_STATE surfaceState = {};
+    MockContext context;
+    auto retVal = CL_SUCCESS;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto gmm = new Gmm(nullptr, 1, false);
+    buffer->getGraphicsAllocation()->gmm = gmm;
+    gmm->isRenderCompressed = true;
+
+    auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
+    uint64_t controlOffset = 0x10000;
+    EXPECT_CALL(*resourceInfo, getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS)).Times(1).WillOnce(::testing::Return(controlOffset));
+
+    buffer->setArgStateful(&surfaceState);
+
+    auto baseAddress = surfaceState.getSurfaceBaseAddress();
+    EXPECT_NE(0u, baseAddress);
+
+    EXPECT_EQ(baseAddress + controlOffset, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState.getAuxiliarySurfaceMode());
+}
+
+HWTEST_F(BufferSetSurfaceTests, givenNonRenderCompressedGmmResourceWhenSurfaceStateIsProgrammedThenDontSetAuxParams) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    RENDER_SURFACE_STATE surfaceState = {};
+    MockContext context;
+    auto retVal = CL_SUCCESS;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto gmm = new Gmm(nullptr, 1, false);
+    buffer->getGraphicsAllocation()->gmm = gmm;
+    gmm->isRenderCompressed = false;
+
+    buffer->setArgStateful(&surfaceState);
+
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState.getAuxiliarySurfaceMode());
 }
 
 struct BufferUnmapTest : public DeviceFixture, public ::testing::Test {

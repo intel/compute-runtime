@@ -24,7 +24,9 @@
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 
 namespace OCLRT {
 
@@ -39,9 +41,10 @@ union SURFACE_STATE_BUFFER_LENGTH {
 
 template <typename GfxFamily>
 void BufferHw<GfxFamily>::setArgStateful(void *memory) {
-
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
+    using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     auto surfaceSize = alignUp(getSize(), 4);
 
@@ -80,5 +83,16 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
 
     surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
     surfaceState->setSurfaceBaseAddress(bufferAddress);
+
+    Gmm *gmm = graphicsAllocation ? graphicsAllocation->gmm : nullptr;
+
+    if (gmm && gmm->isRenderCompressed) {
+        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+        surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
+                                                     gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
+    } else {
+        surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
+        surfaceState->setAuxiliarySurfaceBaseAddress(0);
+    }
 }
 } // namespace OCLRT
