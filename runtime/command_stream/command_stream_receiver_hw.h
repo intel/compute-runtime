@@ -55,7 +55,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     int getRequiredPipeControlSize() const;
 
     static void addBatchBufferEnd(LinearStream &commandStream, void **patchLocation);
-    void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress);
+    void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
     static void alignToCacheLine(LinearStream &commandStream);
 
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags);

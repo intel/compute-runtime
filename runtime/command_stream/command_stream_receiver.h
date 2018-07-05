@@ -37,11 +37,12 @@
 namespace OCLRT {
 class Device;
 class EventBuilder;
-class LinearStream;
+class ExperimentalCommandBuffer;
+class GraphicsAllocation;
 class IndirectHeap;
+class LinearStream;
 class MemoryManager;
 class OSInterface;
-class GraphicsAllocation;
 
 enum class DispatchMode {
     DeviceDefault = 0,          //default for given device
@@ -139,6 +140,7 @@ class CommandStreamReceiver {
     void releaseIndirectHeap(IndirectHeap::Type heapType);
 
     virtual enum CommandStreamReceiverType getType() = 0;
+    void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
   protected:
     void setDisableL3Cache(bool val) {
@@ -190,6 +192,7 @@ class CommandStreamReceiver {
     SamplerCacheFlushState samplerCacheFlushRequired = SamplerCacheFlushState::samplerCacheFlushNotRequired;
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
+    std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);

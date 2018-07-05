@@ -1522,7 +1522,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatc
 
     MI_BATCH_BUFFER_START bbStart;
 
-    aubCsr->addBatchBufferStart(&bbStart, 0xA000u);
+    aubCsr->addBatchBufferStart(&bbStart, 0xA000u, false);
     std::map<uint64_t, uint64_t> &batchBufferStartAddressSequence = aubCsr->getFlatBatchBufferHelper().getBatchBufferStartAddressSequence();
 
     ASSERT_EQ(1u, batchBufferStartAddressSequence.size());

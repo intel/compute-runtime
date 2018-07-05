@@ -25,6 +25,7 @@
 #include "runtime/built_ins/sip.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
@@ -197,6 +198,11 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         commandStreamReceiver->setPreemptionCsrAllocation(pDevice->preemptionAllocation);
         auto sipType = SipKernel::getSipKernelType(pHwInfo->pPlatform->eRenderCoreFamily, pDevice->isSourceLevelDebuggerActive());
         initSipKernel(sipType, *pDevice);
+    }
+
+    if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
+        commandStreamReceiver->setExperimentalCmdBuffer(
+            std::unique_ptr<ExperimentalCommandBuffer>(new ExperimentalCommandBuffer(commandStreamReceiver)));
     }
 
     return true;

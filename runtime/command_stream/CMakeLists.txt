@@ -36,6 +36,9 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_impl.h
   ${CMAKE_CURRENT_SOURCE_DIR}/csr_definitions.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_command_stream.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream.h
   ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp

@@ -22,6 +22,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -203,6 +204,7 @@ void CommandStreamReceiver::cleanupResources() {
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);
     }
+    experimentalCmdBuffer.reset(nullptr);
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
@@ -336,6 +338,10 @@ void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
         heap->replaceBuffer(nullptr, 0);
         heap->replaceGraphicsAllocation(nullptr);
     }
+}
+
+void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer) {
+    experimentalCmdBuffer = std::move(cmdBuffer);
 }
 
 } // namespace OCLRT

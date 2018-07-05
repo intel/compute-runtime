@@ -44,6 +44,7 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_device.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp

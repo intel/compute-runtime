@@ -32,6 +32,7 @@ set(IGDRCL_SRCS_tests_command_stream
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_with_aub_dump_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/create_command_stream_receiver_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_devices_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/experimental_command_buffer_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator_tests.cpp

@@ -43,14 +43,15 @@ set(RUNTIME_SRCS_GENX_H_BASE
 set(RUNTIME_SRCS_GENX_CPP_BASE
   aub_command_stream_receiver
   aub_mem_dump
+  buffer
   command_queue
-  device_queue
   command_stream_receiver_hw
+  device_queue
+  experimental_command_buffer
   flat_batch_buffer_helper_hw
   gpgpu_walker
   hw_helper
   hw_info
-  buffer
   image
   kernel_commands
   preamble

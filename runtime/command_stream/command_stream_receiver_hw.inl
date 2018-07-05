@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/device/device.h"
 #include "runtime/gtpin/gtpin_notify.h"
@@ -62,10 +63,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferEnd(LinearStream &
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress) {
+inline void CommandStreamReceiverHw<GfxFamily>::addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary) {
     *commandBufferMemory = GfxFamily::cmdInitBatchBufferStart;
     commandBufferMemory->setBatchBufferStartAddressGraphicsaddress472(startAddress);
     commandBufferMemory->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
+    if (secondary) {
+        commandBufferMemory->setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
+    }
     if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
         flatBatchBufferHelper->registerBatchBufferStartAddress(reinterpret_cast<uint64_t>(commandBufferMemory), startAddress);
     }
@@ -328,6 +332,12 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             }
         }
     }
+
+    if (experimentalCmdBuffer.get() != nullptr) {
+        size_t startingOffset = experimentalCmdBuffer->programExperimentalCommandBuffer<GfxFamily>();
+        experimentalCmdBuffer->injectBufferStart<GfxFamily>(commandStreamCSR, startingOffset);
+    }
+
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
         addPipeControl(commandStreamCSR, false);
@@ -358,6 +368,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*BuiltIns::getInstance().getSipKernel(sipType, *device).getSipAllocation());
     }
 
+    if (experimentalCmdBuffer.get() != nullptr) {
+        experimentalCmdBuffer->makeResidentAllocations();
+    }
+
     // If the CSR has work in its CS, flush it before the task
     bool submitTask = commandStreamStartTask != commandStreamTask.getUsed();
     bool submitCSR = commandStreamStartCSR != commandStreamCSR.getUsed();
@@ -377,7 +391,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             chainedBatchBuffer = commandStreamTask.getGraphicsAllocation();
             // Add MI_BATCH_BUFFER_START to chain from CSR -> Task
             auto pBBS = reinterpret_cast<MI_BATCH_BUFFER_START *>(commandStreamCSR.getSpace(sizeof(MI_BATCH_BUFFER_START)));
-            addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask));
+            addBatchBufferStart(pBBS, ptrOffset(commandStreamTask.getGraphicsAllocation()->getGpuAddress(), commandStreamStartTask), false);
             if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                 flatBatchBufferHelper->registerCommandChunk(commandStreamTask.getGraphicsAllocation()->getGpuAddress(),
                                                             reinterpret_cast<uint64_t>(commandStreamTask.getCpuBase()),
@@ -510,7 +524,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
                 auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer();
                 auto offsetedCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
-                addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer);
+                addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer, false);
                 if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
                     flatBatchBufferHelper->registerCommandChunk(nextCommandBuffer->batchBuffer, sizeof(MI_BATCH_BUFFER_START));
                 }
@@ -609,6 +623,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
+    }
+    if (experimentalCmdBuffer.get() != nullptr) {
+        size += experimentalCmdBuffer->getRequiredInjectionSize<GfxFamily>();
     }
     return size;
 }

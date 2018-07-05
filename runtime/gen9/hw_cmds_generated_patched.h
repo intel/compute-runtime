@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -381,4 +381,112 @@ typedef struct tagMI_MATH_ALU_INST_INLINE {
         uint32_t Value;
     } DW0;
 } MI_MATH_ALU_INST_INLINE;
+typedef struct tagMI_SEMAPHORE_WAIT {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t DwordLength : BITFIELD_RANGE(0, 7);
+            uint32_t Reserved_8 : BITFIELD_RANGE(8, 11);
+            uint32_t CompareOperation : BITFIELD_RANGE(12, 14);
+            uint32_t WaitMode : BITFIELD_RANGE(15, 15);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 21);
+            uint32_t MemoryType : BITFIELD_RANGE(22, 22);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            uint32_t SemaphoreDataDword;
+            uint64_t Reserved_64 : BITFIELD_RANGE(0, 1);
+            uint64_t SemaphoreAddress_Graphicsaddress : BITFIELD_RANGE(2, 47);
+            uint64_t SemaphoreAddress_Reserved : BITFIELD_RANGE(48, 63);
+        } Common;
+        uint32_t RawData[4];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x2,
+    } DWORD_LENGTH;
+    typedef enum tagCOMPARE_OPERATION {
+        COMPARE_OPERATION_SAD_GREATER_THAN_SDD = 0x0,
+        COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD = 0x1,
+        COMPARE_OPERATION_SAD_LESS_THAN_SDD = 0x2,
+        COMPARE_OPERATION_SAD_LESS_THAN_OR_EQUAL_SDD = 0x3,
+        COMPARE_OPERATION_SAD_EQUAL_SDD = 0x4,
+        COMPARE_OPERATION_SAD_NOT_EQUAL_SDD = 0x5,
+    } COMPARE_OPERATION;
+    typedef enum tagWAIT_MODE {
+        WAIT_MODE_SIGNAL_MODE = 0x0,
+        WAIT_MODE_POLLING_MODE = 0x1,
+    } WAIT_MODE;
+    typedef enum tagMEMORY_TYPE {
+        MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS = 0x0,
+        MEMORY_TYPE_GLOBAL_GRAPHICS_ADDRESS = 0x1,
+    } MEMORY_TYPE;
+    typedef enum tagMI_COMMAND_OPCODE {
+        MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT = 0x1c,
+    } MI_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_MI_COMMAND = 0x0,
+    } COMMAND_TYPE;
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.CompareOperation = COMPARE_OPERATION_SAD_GREATER_THAN_SDD;
+        TheStructure.Common.WaitMode = WAIT_MODE_SIGNAL_MODE;
+        TheStructure.Common.MemoryType = MEMORY_TYPE_PER_PROCESS_GRAPHICS_ADDRESS;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_SEMAPHORE_WAIT;
+        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+    }
+    static tagMI_SEMAPHORE_WAIT sInit(void) {
+        MI_SEMAPHORE_WAIT state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        DEBUG_BREAK_IF(index >= 4);
+        return TheStructure.RawData[index];
+    }
+    inline void setCompareOperation(const COMPARE_OPERATION value) {
+        TheStructure.Common.CompareOperation = value;
+    }
+    inline COMPARE_OPERATION getCompareOperation(void) const {
+        return static_cast<COMPARE_OPERATION>(TheStructure.Common.CompareOperation);
+    }
+    inline void setWaitMode(const WAIT_MODE value) {
+        TheStructure.Common.WaitMode = value;
+    }
+    inline WAIT_MODE getWaitMode(void) const {
+        return static_cast<WAIT_MODE>(TheStructure.Common.WaitMode);
+    }
+    inline void setMemoryType(const MEMORY_TYPE value) {
+        TheStructure.Common.MemoryType = value;
+    }
+    inline MEMORY_TYPE getMemoryType(void) const {
+        return static_cast<MEMORY_TYPE>(TheStructure.Common.MemoryType);
+    }
+    inline void setSemaphoreDataDword(const uint32_t value) {
+        TheStructure.Common.SemaphoreDataDword = value;
+    }
+    inline uint32_t getSemaphoreDataDword(void) const {
+        return (TheStructure.Common.SemaphoreDataDword);
+    }
+    typedef enum tagSEMAPHOREADDRESS_GRAPHICSADDRESS {
+        SEMAPHOREADDRESS_GRAPHICSADDRESS_BIT_SHIFT = 0x2,
+        SEMAPHOREADDRESS_GRAPHICSADDRESS_ALIGN_SIZE = 0x4,
+    } SEMAPHOREADDRESS_GRAPHICSADDRESS;
+    inline void setSemaphoreGraphicsAddress(const uint64_t value) {
+        TheStructure.Common.SemaphoreAddress_Graphicsaddress = value >> SEMAPHOREADDRESS_GRAPHICSADDRESS_BIT_SHIFT;
+    }
+    inline uint64_t getSemaphoreGraphicsAddress(void) const {
+        return (TheStructure.Common.SemaphoreAddress_Graphicsaddress << SEMAPHOREADDRESS_GRAPHICSADDRESS_BIT_SHIFT);
+    }
+    typedef enum tagSEMAPHOREADDRESS_RESERVED {
+        SEMAPHOREADDRESS_RESERVED_BIT_SHIFT = 0x2,
+        SEMAPHOREADDRESS_RESERVED_ALIGN_SIZE = 0x4,
+    } SEMAPHOREADDRESS_RESERVED;
+    inline void setSemaphoreAddressReserved(const uint64_t value) {
+        TheStructure.Common.SemaphoreAddress_Reserved = value >> SEMAPHOREADDRESS_RESERVED_BIT_SHIFT;
+    }
+    inline uint64_t getSemaphoreAddressReserved(void) const {
+        return (TheStructure.Common.SemaphoreAddress_Reserved << SEMAPHOREADDRESS_RESERVED_BIT_SHIFT);
+    }
+} MI_SEMAPHORE_WAIT;
+STATIC_ASSERT(16 == sizeof(MI_SEMAPHORE_WAIT));
+
 #pragma pack()
