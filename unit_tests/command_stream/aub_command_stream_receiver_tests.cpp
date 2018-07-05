@@ -590,10 +590,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_BUFFER);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_IMAGE);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
@@ -612,10 +612,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_BUFFER);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_IMAGE);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
 
     const DispatchInfo dispatchInfo;
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
@@ -642,10 +642,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_BUFFER | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_IMAGE | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
 
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;

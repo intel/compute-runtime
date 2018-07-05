@@ -481,10 +481,10 @@ TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
 
     auto &allocation = *image->getGraphicsAllocation();
     auto type = allocation.getAllocationType();
-    auto isTypeImage = !!(type & GraphicsAllocation::ALLOCATION_TYPE_IMAGE);
+    auto isTypeImage = !!(type & GraphicsAllocation::AllocationType::IMAGE);
     EXPECT_TRUE(isTypeImage);
 
-    auto isTypeWritable = !!(type & GraphicsAllocation::ALLOCATION_TYPE_WRITABLE);
+    auto isTypeWritable = !!(type & GraphicsAllocation::AllocationType::WRITABLE);
     auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
     EXPECT_EQ(isImageWritable, isTypeWritable);
 

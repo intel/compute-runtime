@@ -149,8 +149,8 @@ Buffer *Buffer::create(Context *context,
             }
 
             auto allocationType = (flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))
-                                      ? GraphicsAllocation::ALLOCATION_TYPE_BUFFER
-                                      : GraphicsAllocation::ALLOCATION_TYPE_BUFFER | GraphicsAllocation::ALLOCATION_TYPE_WRITABLE;
+                                      ? GraphicsAllocation::AllocationType::BUFFER
+                                      : GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::WRITABLE;
             memory->setAllocationType(allocationType);
 
             DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());

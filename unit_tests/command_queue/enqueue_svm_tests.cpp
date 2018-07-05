@@ -463,7 +463,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
     GraphicsAllocation *patternAllocation = mmgr->allocationsForReuse.peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
-    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN, patternAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
 }
 
 TEST_F(EnqueueSvmTest, enqueueTaskWithKernelExecInfo_success) {

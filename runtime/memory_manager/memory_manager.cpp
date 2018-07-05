@@ -178,12 +178,12 @@ void MemoryManager::freeSystemMemory(void *ptr) {
     ::alignedFree(ptr);
 }
 
-void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationType) {
+void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
     std::lock_guard<decltype(mtx)> lock(mtx);
 
     uint32_t taskCount = gfxAllocation->taskCount;
 
-    if (allocationType == REUSABLE_ALLOCATION) {
+    if (allocationUsage == REUSABLE_ALLOCATION) {
         if (csr) {
             taskCount = csr->peekTaskCount();
         } else {
@@ -191,20 +191,20 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
         }
     }
 
-    storeAllocation(std::move(gfxAllocation), allocationType, taskCount);
+    storeAllocation(std::move(gfxAllocation), allocationUsage, taskCount);
 }
 
-void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationType, uint32_t taskCount) {
+void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
     std::lock_guard<decltype(mtx)> lock(mtx);
 
     if (DebugManager.flags.DisableResourceRecycling.get()) {
-        if (allocationType == REUSABLE_ALLOCATION) {
+        if (allocationUsage == REUSABLE_ALLOCATION) {
             freeGraphicsMemory(gfxAllocation.release());
             return;
         }
     }
 
-    auto &allocationsList = (allocationType == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse;
+    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse;
     gfxAllocation->taskCount = taskCount;
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
@@ -236,9 +236,9 @@ void MemoryManager::applyCommonCleanup() {
     cleanAllocationList(-1, REUSABLE_ALLOCATION);
 }
 
-bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationType) {
+bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    freeAllocationsList(waitTaskCount, (allocationType == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse);
+    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse);
     return false;
 }
 

@@ -41,11 +41,11 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
 
 class GMockMemoryManager : public MockMemoryManager {
   public:
-    MOCK_METHOD2(cleanAllocationList, bool(uint32_t waitTaskCount, uint32_t allocationType));
+    MOCK_METHOD2(cleanAllocationList, bool(uint32_t waitTaskCount, uint32_t allocationUsage));
     // cleanAllocationList call defined in MemoryManager.
 
     MOCK_METHOD1(populateOsHandles, MemoryManager::AllocationStatus(OsHandleStorage &handleStorage));
-    bool MemoryManagerCleanAllocationList(uint32_t waitTaskCount, uint32_t allocationType) { return MemoryManager::cleanAllocationList(waitTaskCount, allocationType); }
+    bool MemoryManagerCleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) { return MemoryManager::cleanAllocationList(waitTaskCount, allocationUsage); }
     MemoryManager::AllocationStatus MemoryManagerPopulateOsHandles(OsHandleStorage &handleStorage) { return OsAgnosticMemoryManager::populateOsHandles(handleStorage); }
 };
 

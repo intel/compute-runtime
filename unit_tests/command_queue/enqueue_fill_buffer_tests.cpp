@@ -528,5 +528,5 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
     GraphicsAllocation *patternAllocation = mmgr->graphicsAllocations.peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
-    EXPECT_EQ(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN, patternAllocation->getAllocationType());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());
 }

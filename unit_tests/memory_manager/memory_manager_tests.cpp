@@ -1438,12 +1438,12 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     GMockMemoryManager *memMngr = gmockMemoryManager;
 
-    auto cleanAllocations = [memMngr](uint32_t waitTaskCount, uint32_t allocationType) -> bool {
-        return memMngr->MemoryManagerCleanAllocationList(waitTaskCount, allocationType);
+    auto cleanAllocations = [memMngr](uint32_t waitTaskCount, uint32_t allocationUsage) -> bool {
+        return memMngr->MemoryManagerCleanAllocationList(waitTaskCount, allocationUsage);
     };
 
-    auto cleanAllocationsWithTaskCount = [taskCountReady, memMngr](uint32_t waitTaskCount, uint32_t allocationType) -> bool {
-        return memMngr->MemoryManagerCleanAllocationList(taskCountReady, allocationType);
+    auto cleanAllocationsWithTaskCount = [taskCountReady, memMngr](uint32_t waitTaskCount, uint32_t allocationUsage) -> bool {
+        return memMngr->MemoryManagerCleanAllocationList(taskCountReady, allocationUsage);
     };
 
     EXPECT_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(cleanAllocations)).WillOnce(::testing::Invoke(cleanAllocationsWithTaskCount));
@@ -1494,8 +1494,8 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     GMockMemoryManager *memMngr = gmockMemoryManager;
 
-    auto cleanAllocations = [memMngr](uint32_t waitTaskCount, uint32_t allocationType) -> bool {
-        return memMngr->MemoryManagerCleanAllocationList(waitTaskCount, allocationType);
+    auto cleanAllocations = [memMngr](uint32_t waitTaskCount, uint32_t allocationUsage) -> bool {
+        return memMngr->MemoryManagerCleanAllocationList(waitTaskCount, allocationUsage);
     };
 
     EXPECT_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).Times(2).WillRepeatedly(::testing::Invoke(cleanAllocations));

@@ -234,7 +234,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
         }
 
-        allocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+        allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
         // Deallocate the old block, if not null
         auto oldAllocation = commandStream->getGraphicsAllocation();

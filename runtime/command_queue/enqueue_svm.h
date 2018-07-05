@@ -247,7 +247,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
         patternAllocation = memoryManager->allocateGraphicsMemory(patternSize, MemoryConstants::preferredAlignment);
     }
 
-    patternAllocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_FILL_PATTERN);
+    patternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
 
     if (patternSize == 1) {
         int patternInt = (uint32_t)((*(uint8_t *)pattern << 24) | (*(uint8_t *)pattern << 16) | (*(uint8_t *)pattern << 8) | *(uint8_t *)pattern);

@@ -250,7 +250,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
 
 DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
     auto allocatorToUse = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
-    auto allocationType = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
+    auto allocatorType = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
 
     if (ptr) {
         uintptr_t inputPtr = (uintptr_t)ptr;
@@ -274,7 +274,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
         bo->address = reinterpret_cast<void *>(gpuVirtualAddress);
         uintptr_t offset = (uintptr_t)bo->address;
         bo->softPin((uint64_t)offset);
-        bo->setAllocationType(allocationType);
+        bo->setAllocationType(allocatorType);
         auto drmAllocation = new DrmAllocation(bo, (void *)ptr, (uint64_t)ptrOffset(gpuVirtualAddress, inputPointerOffset), allocationSize);
         drmAllocation->is32BitAllocation = true;
         drmAllocation->gpuBaseAddress = allocatorToUse->getBase();
@@ -305,7 +305,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
     bo->isAllocated = true;
     bo->setUnmapSize(allocationSize);
 
-    bo->setAllocationType(allocationType);
+    bo->setAllocationType(allocatorType);
 
     auto drmAllocation = new DrmAllocation(bo, reinterpret_cast<void *>(res), alignedAllocationSize);
     drmAllocation->is32BitAllocation = true;

@@ -166,7 +166,7 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
             allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
         }
 
-        allocation->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+        allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
         //pass current allocation to reusable list
         if (commandStream.getCpuBase()) {
@@ -309,7 +309,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
         finalHeapSize = std::max(heapMemory->getUnderlyingBufferSize(), finalHeapSize);
     }
 
-    heapMemory->setAllocationType(GraphicsAllocation::ALLOCATION_TYPE_LINEAR_STREAM);
+    heapMemory->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
     if (IndirectHeap::SURFACE_STATE == heapType) {
         DEBUG_BREAK_IF(minRequiredSize > maxSshSize);

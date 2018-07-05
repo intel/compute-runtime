@@ -363,10 +363,10 @@ TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
 
     auto &allocation = *buffer->getGraphicsAllocation();
     auto type = allocation.getAllocationType();
-    auto isTypeBuffer = !!(type & GraphicsAllocation::ALLOCATION_TYPE_BUFFER);
+    auto isTypeBuffer = !!(type & GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_TRUE(isTypeBuffer);
 
-    auto isTypeWritable = !!(type & GraphicsAllocation::ALLOCATION_TYPE_WRITABLE);
+    auto isTypeWritable = !!(type & GraphicsAllocation::AllocationType::WRITABLE);
     auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
     EXPECT_EQ(isBufferWritable, isTypeWritable);
 

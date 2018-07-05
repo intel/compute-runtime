@@ -41,7 +41,7 @@ void *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchB
 
     if (dispatchMode == DispatchMode::ImmediateDispatch) {
         if (batchBuffer.chainedBatchBuffer) {
-            batchBuffer.chainedBatchBuffer->setAllocationType(batchBuffer.chainedBatchBuffer->getAllocationType() | GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE);
+            batchBuffer.chainedBatchBuffer->setAllocationType(batchBuffer.chainedBatchBuffer->getAllocationType() | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
 
             auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);

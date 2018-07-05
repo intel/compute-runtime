@@ -55,14 +55,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
   public:
     enum AllocationType {
-        ALLOCATION_TYPE_UNKNOWN = 0,
-        ALLOCATION_TYPE_BUFFER,
-        ALLOCATION_TYPE_IMAGE,
-        ALLOCATION_TYPE_TAG_BUFFER,
-        ALLOCATION_TYPE_LINEAR_STREAM,
-        ALLOCATION_TYPE_FILL_PATTERN,
-        ALLOCATION_TYPE_NON_AUB_WRITABLE = 0x40000000,
-        ALLOCATION_TYPE_WRITABLE = 0x80000000
+        UNKNOWN = 0,
+        BUFFER,
+        IMAGE,
+        TAG_BUFFER,
+        LINEAR_STREAM,
+        FILL_PATTERN,
+        NON_AUB_WRITABLE = 0x40000000,
+        WRITABLE = 0x80000000
     };
 
     virtual ~GraphicsAllocation() = default;
@@ -73,21 +73,21 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                                                         gpuAddress(castToUint64(cpuPtrIn)),
                                                         sharedHandle(Sharing::nonSharedResource),
 
-                                                        allocationType(ALLOCATION_TYPE_UNKNOWN) {}
+                                                        allocationType(AllocationType::UNKNOWN) {}
 
     GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn) : size(sizeIn),
                                                                                                    cpuPtr(cpuPtrIn),
                                                                                                    gpuAddress(gpuAddress),
                                                                                                    sharedHandle(Sharing::nonSharedResource),
                                                                                                    gpuBaseAddress(baseAddress),
-                                                                                                   allocationType(ALLOCATION_TYPE_UNKNOWN) {}
+                                                                                                   allocationType(AllocationType::UNKNOWN) {}
 
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
                                                                                  cpuPtr(cpuPtrIn),
                                                                                  gpuAddress(castToUint64(cpuPtrIn)),
                                                                                  sharedHandle(sharedHandleIn),
 
-                                                                                 allocationType(ALLOCATION_TYPE_UNKNOWN) {}
+                                                                                 allocationType(AllocationType::UNKNOWN) {}
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -114,9 +114,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setAllocationType(uint32_t allocationType) { this->allocationType = allocationType; }
     uint32_t getAllocationType() const { return allocationType; }
 
-    void setTypeAubNonWritable() { this->allocationType |= GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE; }
-    void clearTypeAubNonWritable() { this->allocationType &= ~GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE; }
-    bool isTypeAubNonWritable() const { return !!(this->allocationType & GraphicsAllocation::ALLOCATION_TYPE_NON_AUB_WRITABLE); }
+    void setTypeAubNonWritable() { this->allocationType |= GraphicsAllocation::AllocationType::NON_AUB_WRITABLE; }
+    void clearTypeAubNonWritable() { this->allocationType &= ~GraphicsAllocation::AllocationType::NON_AUB_WRITABLE; }
+    bool isTypeAubNonWritable() const { return !!(this->allocationType & GraphicsAllocation::AllocationType::NON_AUB_WRITABLE); }
 
     uint32_t taskCount = ObjectNotUsed;
     OsHandleStorage fragmentsStorage;
