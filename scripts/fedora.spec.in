@@ -12,7 +12,14 @@ URL: https://github.com/intel/compute-runtime
 Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}/neo.tar.gz
 Source1: https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}/gmmlib.tar.gz
 
+%if 0%{?el7}
+BuildRequires: centos-release-scl epel-release
+BuildRequires: devtoolset-4-gcc-c++ cmake3
+BuildRequires: gcc-c++ ninja-build make procps python2 libva-devel
+%else
 BuildRequires: cmake clang gcc-c++ ninja-build make procps python2 sed libva-devel
+%endif
+
 BuildRequires: intel-igc-opencl-devel >= __IGC_VERSION_REQUIRED__
 Requires: intel-igc-opencl >= __IGC_VERSION_REQUIRED__
 
@@ -32,8 +39,15 @@ tar xzf $RPM_SOURCE_DIR/gmmlib.tar.gz -C gmmlib --strip-components=1
 
 mkdir build
 cd build
+
+%if 0%{?el7}
+scl enable devtoolset-4 "cmake3 ../neo -DCMAKE_BUILD_TYPE=Release -DNEO_DRIVER_VERSION=%{version}"
+scl enable devtoolset-4 "make -j`nproc` igdrcl_dll"
+%else
 cmake ../neo -DCMAKE_BUILD_TYPE=Release -DNEO_DRIVER_VERSION=%{version}
 make -j`nproc` igdrcl_dll
+%endif
+
 echo "==== DONE ===="
 
 
