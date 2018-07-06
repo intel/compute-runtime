@@ -81,16 +81,17 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
         surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
-    surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
     surfaceState->setSurfaceBaseAddress(bufferAddress);
 
     Gmm *gmm = graphicsAllocation ? graphicsAllocation->gmm : nullptr;
 
     if (gmm && gmm->isRenderCompressed) {
+        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
         surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
                                                      gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
     } else {
+        surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
         surfaceState->setAuxiliarySurfaceBaseAddress(0);
     }
