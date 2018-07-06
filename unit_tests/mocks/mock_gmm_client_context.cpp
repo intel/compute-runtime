@@ -20,20 +20,9 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "gmm_client_context.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
+#include "mock_gmm_client_context.h"
 
 namespace OCLRT {
-GmmPageTableMngr::~GmmPageTableMngr() {
-    if (clientContext) {
-        clientContext->DestroyPageTblMgrObject(pageTableManager);
-    }
+MockGmmClientContext::MockGmmClientContext(GMM_CLIENT clientType) : MockGmmClientContextBase(clientType) {
 }
-
-GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = GmmHelper::gmmClientContext->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
-}
-
 } // namespace OCLRT

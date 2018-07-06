@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "gmm_client_context.h"
 #include "gtest/gtest.h"
 #include "igfxfmid.h"
 #include "runtime/helpers/hw_info.h"
@@ -614,8 +615,11 @@ TEST(GmmTest, whenContextIsInitializedMultipleTimesThenDontOverride) {
     const HardwareInfo *hwinfo = *platformDevices;
     auto gmmHelper = MockGmmHelper(hwinfo);
     auto currentClientContext = GmmHelper::gmmClientContext;
+    auto currentClientContextHandle = GmmHelper::gmmClientContext->getHandle();
     gmmHelper.initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo);
+
     EXPECT_EQ(currentClientContext, GmmHelper::gmmClientContext);
+    EXPECT_EQ(currentClientContextHandle, GmmHelper::gmmClientContext->getHandle());
 }
 
 TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {

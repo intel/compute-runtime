@@ -32,7 +32,8 @@
 #include "unit_tests/mocks/mock_sip.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "lib_names.h"
+#include "External/Common/GmmLibDllName.h"
+#include "mock_gmm_client_context.h"
 #include "gmock/gmock.h"
 #include <algorithm>
 #include <mutex>
@@ -59,7 +60,8 @@ std::thread::id tempThreadID;
 } // namespace OCLRT
 namespace Os {
 extern const char *gmmDllName;
-}
+extern const char *gmmEntryName;
+} // namespace Os
 
 using namespace OCLRT;
 TestEnvironment *gEnvironment;
@@ -416,7 +418,10 @@ int main(int argc, char **argv) {
 #else
     SetUnhandledExceptionFilter(&UltExceptionFilter);
     if (!useMockGmm) {
-        Os::gmmDllName = GMM_LIBRARY_NAME;
+        Os::gmmDllName = GMM_UMD_DLL;
+        Os::gmmEntryName = GMM_ENTRY_NAME;
+    } else {
+        GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }
     std::unique_ptr<OsLibrary> gmmLib(OsLibrary::load(Os::gmmDllName));
 #endif

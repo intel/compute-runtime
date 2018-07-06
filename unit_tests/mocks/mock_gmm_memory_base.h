@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017 - 2018, Intel Corporation
+* Copyright (c) 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -27,11 +27,11 @@
 
 namespace OCLRT {
 
-class MockGmmMemory : public GmmMemory {
+class MockGmmMemoryBase : public GmmMemory {
   public:
-    ~MockGmmMemory() = default;
+    ~MockGmmMemoryBase() = default;
 
-    MockGmmMemory() = default;
+    MockGmmMemoryBase() = default;
 
     bool configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                      GMM_ESCAPE_HANDLE hDevice,
@@ -50,11 +50,11 @@ class MockGmmMemory : public GmmMemory {
     }
 };
 
-class GmockGmmMemory : public GmmMemory {
+class GmockGmmMemoryBase : public GmmMemory {
   public:
-    ~GmockGmmMemory() = default;
+    ~GmockGmmMemoryBase() = default;
 
-    GmockGmmMemory() = default;
+    GmockGmmMemoryBase() = default;
 
     MOCK_METHOD9(configureDeviceAddressSpace,
                  bool(GMM_ESCAPE_HANDLE hAdapter,

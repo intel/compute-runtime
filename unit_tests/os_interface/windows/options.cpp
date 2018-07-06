@@ -33,6 +33,7 @@ const char *frontEndDllName = "mock_igdfcl.dll";
 const char *igcDllName = "mock_igc.dll";
 const char *gdiDllName = "gdi32_mock.dll";
 const char *gmmDllName = "mock_gmm.dll";
+const char *gmmEntryName = "openMockGmm";
 const char *testDllName = "test_dynamic_lib.dll";
 } // namespace Os
 

@@ -46,10 +46,14 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_event.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_experimental_command_buffer.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_client_context_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
   ${CMAKE_CURRENT_SOURCE_DIR}${IGDRCL__INSTRUMENTATION_DIR_SUFFIX}/mock_instrumentation.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_client_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
@@ -65,13 +69,14 @@ set(IGDRCL_SRCS_tests_mocks
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_submissions_aggregator.h
 )
 
-if (WIN32)
+if(WIN32)
   file(GLOB IGDRCL_SRC_tests_mock_wddm "${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm2[0-9]\.*")
-  list (APPEND IGDRCL_SRCS_tests_mocks
+  list(APPEND IGDRCL_SRCS_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_d3d_objects.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_ostime_win.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mock_gmm_memory.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_memory_base.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${IGDRCL_SRC_tests_mock_wddm}
@@ -81,6 +86,12 @@ endif()
 add_subdirectories()
 
 add_library(igdrcl_mocks STATIC ${IGDRCL_SRCS_tests_mocks})
+
+if(WIN32)
+  target_include_directories(igdrcl_mocks PUBLIC
+    ${IGDRCL_SOURCE_DIR}/unit_tests/mocks/gmm_memory${BRANCH_DIR_SUFFIX}
+  )
+endif()
 
 # add_dependencies(igdrcl_mocks gmock-gtest)
 

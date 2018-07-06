@@ -20,21 +20,22 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "gmm_client_context.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
 void GmmResourceInfo::customDeleter(GMM_RESOURCE_INFO *gmmResourceInfo) {
-    GmmHelper::gmmClientContext->DestroyResInfoObject(gmmResourceInfo);
+    GmmHelper::gmmClientContext->destroyResInfoObject(gmmResourceInfo);
 }
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESCREATE_PARAMS *resourceCreateParams) {
-    auto resourceInfoPtr = GmmHelper::gmmClientContext->CreateResInfoObject(resourceCreateParams);
+    auto resourceInfoPtr = GmmHelper::gmmClientContext->createResInfoObject(resourceCreateParams);
     this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
 }
 
 GmmResourceInfo::GmmResourceInfo(GMM_RESOURCE_INFO *inputGmmResourceInfo) {
-    auto resourceInfoPtr = GmmHelper::gmmClientContext->CopyResInfoObject(inputGmmResourceInfo);
+    auto resourceInfoPtr = GmmHelper::gmmClientContext->copyResInfoObject(inputGmmResourceInfo);
     this->resourceInfo = UniquePtrType(resourceInfoPtr, GmmResourceInfo::customDeleter);
 }
 

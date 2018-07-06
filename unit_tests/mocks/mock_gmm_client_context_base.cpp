@@ -20,20 +20,25 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "gmm_client_context.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
+#include "unit_tests/mocks/mock_gmm_client_context.h"
 
 namespace OCLRT {
-GmmPageTableMngr::~GmmPageTableMngr() {
-    if (clientContext) {
-        clientContext->DestroyPageTblMgrObject(pageTableManager);
-    }
+MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType) : GmmClientContext(clientType) {
 }
 
-GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = GmmHelper::gmmClientContext->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
+MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
+    return {};
 }
 
+GMM_RESOURCE_INFO *MockGmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
+    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[1]);
+}
+
+GMM_RESOURCE_INFO *MockGmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) {
+    return reinterpret_cast<GMM_RESOURCE_INFO *>(new char[1]);
+}
+
+void MockGmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
+    delete[] reinterpret_cast<char *>(pResInfo);
+}
 } // namespace OCLRT

@@ -20,20 +20,18 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#pragma once
 #include "gmm_client_context.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
 
 namespace OCLRT {
-GmmPageTableMngr::~GmmPageTableMngr() {
-    if (clientContext) {
-        clientContext->DestroyPageTblMgrObject(pageTableManager);
-    }
-}
+class MockGmmClientContextBase : public GmmClientContext {
+  public:
+    MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) override;
+    GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) override;
+    GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) override;
+    void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
 
-GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = GmmHelper::gmmClientContext->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
-}
-
+  protected:
+    MockGmmClientContextBase(GMM_CLIENT clientType);
+};
 } // namespace OCLRT

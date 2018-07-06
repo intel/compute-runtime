@@ -32,7 +32,6 @@
 #include "runtime/device/device_vector.h"
 #include "runtime/device/driver_info.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
@@ -85,7 +84,6 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
-    GmmHelper::hwInfo = &hwInfo;
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
     engineType = DebugManager.flags.NodeOrdinal.get() == -1
                      ? hwInfo.capabilityTable.defaultEngineType

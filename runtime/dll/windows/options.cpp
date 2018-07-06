@@ -19,12 +19,15 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+
 #include "lib_names.h"
+#include "External/Common/GmmLibDllName.h"
 
 namespace Os {
 
 const char *frontEndDllName = FCL_LIBRARY_NAME;
 const char *igcDllName = IGC_LIBRARY_NAME;
 const char *gdiDllName = "gdi32.dll";
-const char *gmmDllName = GMM_LIBRARY_NAME;
+const char *gmmDllName = GMM_UMD_DLL;
+const char *gmmEntryName = GMM_ENTRY_NAME;
 } // namespace Os

@@ -42,7 +42,8 @@ class GmmMemoryBase {
     MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
 
   protected:
-    GmmMemoryBase();
-    GMM_CLIENT_CONTEXT *clientContext;
+    GmmMemoryBase() = default;
+    void ensureClientContext();
+    GMM_CLIENT_CONTEXT *clientContext = nullptr;
 };
 } // namespace OCLRT

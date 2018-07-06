@@ -26,6 +26,7 @@
 #include "CL/cl_ext.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/get_info.h"

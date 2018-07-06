@@ -26,6 +26,7 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/driver_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_dll_fixture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_win_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_gdi_interface.h

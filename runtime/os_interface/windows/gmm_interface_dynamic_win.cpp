@@ -26,7 +26,8 @@
 
 namespace Os {
 extern const char *gmmDllName;
-}
+extern const char *gmmEntryName;
+} // namespace Os
 
 namespace OCLRT {
 GMM_STATUS(GMM_STDCALL *myPfnCreateSingletonContext)
@@ -44,7 +45,7 @@ void GmmHelper::loadLib() {
 
     UNRECOVERABLE_IF(!gmmLib);
     if (gmmLib->isLoaded()) {
-        auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(GMM_ENTRY_NAME));
+        auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(Os::gmmEntryName));
         GmmExportEntries entries;
         auto status = openGmmFunc(&entries);
         if (status == GMM_SUCCESS) {

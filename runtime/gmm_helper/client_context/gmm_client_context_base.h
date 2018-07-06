@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017 - 2018, Intel Corporation
+* Copyright (c) 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,29 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "mock_gmm_memory.h"
-#include "runtime/os_interface/windows/windows_defs.h"
-
-using namespace ::testing;
+#pragma once
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/gmm_lib.h"
+#include <memory>
 
 namespace OCLRT {
-GmmMemory *GmmMemory::create() {
-    return new MockGmmMemory();
-}
+class GmmClientContext;
+class GmmClientContextBase {
+  public:
+    virtual ~GmmClientContextBase();
+
+    MOCKABLE_VIRTUAL MEMORY_OBJECT_CONTROL_STATE cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage);
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams);
+    MOCKABLE_VIRTUAL GMM_RESOURCE_INFO *copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes);
+    MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
+    GMM_CLIENT_CONTEXT *getHandle() const;
+    template <typename T>
+    static GmmClientContext *create(GMM_CLIENT clientType) {
+        return new T(clientType);
+    }
+
+  protected:
+    GMM_CLIENT_CONTEXT *clientContext;
+    GmmClientContextBase(GMM_CLIENT clientType);
+};
 } // namespace OCLRT

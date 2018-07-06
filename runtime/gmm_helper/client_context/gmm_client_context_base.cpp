@@ -20,20 +20,33 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "gmm_client_context.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/gmm_helper/client_context/gmm_client_context_base.h"
 
 namespace OCLRT {
-GmmPageTableMngr::~GmmPageTableMngr() {
-    if (clientContext) {
-        clientContext->DestroyPageTblMgrObject(pageTableManager);
-    }
+GmmClientContextBase::GmmClientContextBase(GMM_CLIENT clientType) {
+    clientContext = GmmHelper::createClientContextFunc(clientType);
+}
+GmmClientContextBase::~GmmClientContextBase() {
+    GmmHelper::deleteClientContextFunc(clientContext);
+};
+
+MEMORY_OBJECT_CONTROL_STATE GmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
+    return clientContext->CachePolicyGetMemoryObject(pResInfo, usage);
 }
 
-GmmPageTableMngr::GmmPageTableMngr(GMM_DEVICE_CALLBACKS_INT *deviceCb, unsigned int translationTableFlags, GMM_TRANSLATIONTABLE_CALLBACKS *translationTableCb) {
-    clientContext = GmmHelper::gmmClientContext->getHandle();
-    pageTableManager = clientContext->CreatePageTblMgrObject(deviceCb, translationTableCb, translationTableFlags);
+GMM_RESOURCE_INFO *GmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {
+    return clientContext->CreateResInfoObject(pCreateParams);
 }
 
+GMM_RESOURCE_INFO *GmmClientContextBase::copyResInfoObject(GMM_RESOURCE_INFO *pSrcRes) {
+    return clientContext->CopyResInfoObject(pSrcRes);
+}
+
+void GmmClientContextBase::destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) {
+    return clientContext->DestroyResInfoObject(pResInfo);
+}
+
+GMM_CLIENT_CONTEXT *GmmClientContextBase::getHandle() const {
+    return clientContext;
+}
 } // namespace OCLRT

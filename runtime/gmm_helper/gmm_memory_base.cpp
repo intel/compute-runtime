@@ -20,12 +20,15 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "gmm_client_context.h"
 #include "runtime/gmm_helper/gmm_memory_base.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
-GmmMemoryBase::GmmMemoryBase() {
-    clientContext = GmmHelper::gmmClientContext;
+void GmmMemoryBase::ensureClientContext() {
+    if (!clientContext) {
+        clientContext = GmmHelper::gmmClientContext->getHandle();
+    }
 }
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,
@@ -36,6 +39,7 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 BOOLEAN BDWL3Coherency,
                                                 GMM_GFX_SIZE_T SizeOverride,
                                                 GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
+    ensureClientContext();
     return clientContext->ConfigureDeviceAddressSpace(
                {hAdapter},
                {hDevice},
@@ -49,7 +53,7 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
 }
 
 uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
+    ensureClientContext();
     return static_cast<uintptr_t>(clientContext->GetInternalGpuVaRangeLimit());
 }
-
 }; // namespace OCLRT

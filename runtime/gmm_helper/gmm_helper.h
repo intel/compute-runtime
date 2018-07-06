@@ -36,6 +36,7 @@ struct ImageInfo;
 class GraphicsAllocation;
 class Gmm;
 class OsLibrary;
+class GmmClientContext;
 
 class GmmHelper {
   public:
@@ -62,11 +63,12 @@ class GmmHelper {
     static decltype(&GmmDestroyGlobalContext) destroyGlobalContextFunc;
     static decltype(&GmmCreateClientContext) createClientContextFunc;
     static decltype(&GmmDeleteClientContext) deleteClientContextFunc;
+    static GmmClientContext *(*createGmmContextWrapperFunc)(GMM_CLIENT);
 
     static bool useSimplifiedMocsTable;
-    static GMM_CLIENT_CONTEXT *gmmClientContext;
     static const HardwareInfo *hwInfo;
     static OsLibrary *gmmLib;
+    static GmmClientContext *gmmClientContext;
 
   protected:
     void loadLib();

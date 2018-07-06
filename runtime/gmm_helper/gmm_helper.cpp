@@ -20,6 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "gmm_client_context.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -45,16 +46,15 @@ void GmmHelper::initContext(const PLATFORM *pPlatform,
         loadLib();
         bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
         UNRECOVERABLE_IF(!success);
-        GmmHelper::gmmClientContext = GmmHelper::createClientContextFunc(GMM_CLIENT::GMM_OCL_VISTA);
+        GmmHelper::gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
     }
     UNRECOVERABLE_IF(!GmmHelper::gmmClientContext);
 }
 
 void GmmHelper::destroyContext() {
     if (GmmHelper::gmmClientContext) {
-        deleteClientContextFunc(GmmHelper::gmmClientContext);
+        delete GmmHelper::gmmClientContext;
         GmmHelper::gmmClientContext = nullptr;
-        destroyGlobalContextFunc();
         if (gmmLib) {
             delete gmmLib;
             gmmLib = nullptr;
@@ -70,7 +70,7 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
             return cacheEnabledIndex;
         }
     }
-    MEMORY_OBJECT_CONTROL_STATE mocs = GmmHelper::gmmClientContext->CachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
+    MEMORY_OBJECT_CONTROL_STATE mocs = GmmHelper::gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
 }
@@ -171,7 +171,9 @@ GmmHelper::~GmmHelper() {
     }
 }
 bool GmmHelper::useSimplifiedMocsTable = false;
-GMM_CLIENT_CONTEXT *GmmHelper::gmmClientContext = nullptr;
+GmmClientContext *GmmHelper::gmmClientContext = nullptr;
+GmmClientContext *(*GmmHelper::createGmmContextWrapperFunc)(GMM_CLIENT) = GmmClientContextBase::create<GmmClientContext>;
+
 const HardwareInfo *GmmHelper::hwInfo = nullptr;
 OsLibrary *GmmHelper::gmmLib = nullptr;
 } // namespace OCLRT
