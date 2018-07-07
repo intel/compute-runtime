@@ -51,13 +51,6 @@ gmmlib_revision = manifest['components']['gmmlib']['revision']
 c = repo.commit(neo_revision)
 cd = datetime.datetime.fromtimestamp(c.committed_date)
 
-with open("CMakeLists.txt", "r") as f:
-    for line in f.readlines():
-        m = re.match("^(pkg_check_modules)(\s*\(\s*)(\S+)\s+(\S+[^>\s])(>?=)([^=\s]\S+)(\s*\)\s*)$", line.strip())
-        if not m is None:
-            if m.groups()[3] == 'igc-opencl':
-                igc_revision = m.groups()[5]
-
 pkg_version = "%s.%s.%s" %(str(cd.isocalendar()[0])[-2:], cd.isocalendar()[1], sys.argv[3])
 
 with open(sys.argv[2], 'r') as f:
@@ -76,10 +69,6 @@ with open(sys.argv[2], 'r') as f:
 
         if not re.match(".*__NEO_PACKAGE_RELEASE__.*", line.strip()) is None:
             print "%s" % (line.rstrip().replace("__NEO_PACKAGE_RELEASE__", "%s" % sys.argv[4]))
-            continue
-
-        if not re.match(".*__IGC_VERSION_REQUIRED__$", line.strip()) is None:
-            print "%s" % (line.rstrip().replace("__IGC_VERSION_REQUIRED__", "%s" % igc_revision))
             continue
 
         print line.rstrip()

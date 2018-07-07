@@ -1,5 +1,6 @@
 %global neo_commit_id __NEO_COMMIT_ID__
 %global gmmlib_commit_id __GMMLIB_COMMIT_ID__
+%global igc_version_required 18.26.612
 
 Name: intel-opencl
 Version: __NEO_PACKAGE_VERSION__
@@ -20,8 +21,8 @@ BuildRequires: gcc-c++ ninja-build make procps python2 libva-devel
 BuildRequires: cmake clang gcc-c++ ninja-build make procps python2 sed libva-devel
 %endif
 
-BuildRequires: intel-igc-opencl-devel >= __IGC_VERSION_REQUIRED__
-Requires: intel-igc-opencl >= __IGC_VERSION_REQUIRED__
+BuildRequires: intel-igc-opencl-devel >= %{igc_version_required}
+Requires: intel-igc-opencl >= %{igc_version_required}
 
 %description
 
