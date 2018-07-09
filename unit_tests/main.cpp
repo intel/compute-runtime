@@ -418,7 +418,9 @@ int main(int argc, char **argv) {
     if (!useMockGmm) {
         Os::gmmDllName = GMM_LIBRARY_NAME;
     }
+    std::unique_ptr<OsLibrary> gmmLib(OsLibrary::load(Os::gmmDllName));
 #endif
+
     initializeTestHelpers();
 
     retVal = RUN_ALL_TESTS();
