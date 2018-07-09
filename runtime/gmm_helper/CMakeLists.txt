@@ -33,7 +33,7 @@ set(RUNTIME_SRCS_GMM_HELPER_BASE
 set(RUNTIME_SRCS_GMM_HELPER_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table_mngr_impl.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/gmm_memory.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/gmm_memory.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory_base.cpp
 )
