@@ -47,7 +47,6 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     if (fakeBigAllocations && size > bigAllocation) {
         memoryAllocation = new MemoryAllocation(true, (void *)dummyAddress, static_cast<uint64_t>(dummyAddress), size, counter);
         counter++;
-        memoryAllocation->dummyAllocation = true;
         memoryAllocation->uncacheable = uncacheable;
         return memoryAllocation;
     }

@@ -33,7 +33,6 @@ class MemoryAllocation : public GraphicsAllocation {
   public:
     unsigned long long id;
     size_t sizeToFree = 0;
-    bool dummyAllocation = false;
     bool uncacheable = false;
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
