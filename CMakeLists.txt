@@ -73,8 +73,8 @@ if(NOT IGDRCL_BINARY_DIR)
 	set(IGDRCL_BINARY_DIR ${CMAKE_BINARY_DIR})
 endif()
 
-# we use c++11
-set(CMAKE_CXX_STANDARD 11)
+# we use c++14
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # we force using response files

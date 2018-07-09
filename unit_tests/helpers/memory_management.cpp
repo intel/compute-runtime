@@ -37,12 +37,6 @@
 #include <Windows.h>
 #endif
 
-#if defined(_MSC_VER)
-#define NOEXCEPT
-#else
-#define NOEXCEPT noexcept
-#endif
-
 namespace MemoryManagement {
 size_t failingAllocation = -1;
 std::atomic<size_t> numAllocations(0);
@@ -270,7 +264,7 @@ void *operator new(size_t size) {
     return p;
 }
 
-void *operator new(size_t size, const std::nothrow_t &) NOEXCEPT {
+void *operator new(size_t size, const std::nothrow_t &) noexcept {
     void *p = allocate<AllocationEvent::EVENT_NEW_NOTHROW, AllocationEvent::EVENT_NEW_NOTHROW_FAIL>(size, std::nothrow);
     initMemory(p, size);
     return p;
@@ -282,16 +276,23 @@ void *operator new[](size_t size) {
     return p;
 }
 
-void *operator new[](size_t size, const std::nothrow_t &t) NOEXCEPT {
+void *operator new[](size_t size, const std::nothrow_t &t) noexcept {
     void *p = allocate<AllocationEvent::EVENT_NEW_ARRAY_NOTHROW, AllocationEvent::EVENT_NEW_ARRAY_NOTHROW_FAIL>(size, std::nothrow);
     initMemory(p, size);
     return p;
 }
 
-void operator delete(void *p) throw() {
+void operator delete(void *p) noexcept {
     deallocate<AllocationEvent::EVENT_DELETE>(p);
 }
 
-void operator delete[](void *p) throw() {
+void operator delete[](void *p) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(p);
+}
+void operator delete(void *p, size_t size) noexcept {
+    deallocate<AllocationEvent::EVENT_DELETE>(p);
+}
+
+void operator delete[](void *p, size_t size) noexcept {
     deallocate<AllocationEvent::EVENT_DELETE_ARRAY>(p);
 }
