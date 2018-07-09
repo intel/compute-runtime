@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,13 +20,31 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 #include "test.h"
 
 using namespace OCLRT;
 
 typedef EnqueueReadBufferTypeTest ReadWriteBufferCpuCopyTest;
+
+HWTEST_F(ReadWriteBufferCpuCopyTest, givenRenderCompressedGmmWhenAskingForCpuOperationThenDisallow) {
+    cl_int retVal;
+    std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    auto gmm = new Gmm(nullptr, 1, false);
+    gmm->isRenderCompressed = false;
+    buffer->getGraphicsAllocation()->gmm = gmm;
+
+    auto alignedPtr = alignedMalloc(2, MemoryConstants::cacheLineSize);
+    auto unalignedPtr = ptrOffset(alignedPtr, 1);
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, unalignedPtr, 1));
+
+    gmm->isRenderCompressed = true;
+    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, unalignedPtr, 1));
+
+    alignedFree(alignedPtr);
+}
 
 HWTEST_F(ReadWriteBufferCpuCopyTest, simpleRead) {
     cl_int retVal;

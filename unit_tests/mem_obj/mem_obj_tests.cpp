@@ -22,6 +22,7 @@
 
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/properties_helper.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
@@ -297,10 +298,34 @@ TEST(MemObj, givenTiledObjectWhenAskedForCpuMappingThenReturnFalse) {
     EXPECT_FALSE(memObj.mappingOnCpuAllowed());
 }
 
+TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    auto allocation = memoryManager.allocateGraphicsMemory(1, 1);
+    allocation->gmm = new Gmm(nullptr, 1, false);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
+                  1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);
+
+    allocation->gmm->isRenderCompressed = false;
+    EXPECT_TRUE(memObj.mappingOnCpuAllowed());
+    allocation->gmm->isRenderCompressed = true;
+    EXPECT_FALSE(memObj.mappingOnCpuAllowed());
+}
+
 TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
-    char mem[64];
-    MemObj memObj(nullptr, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
-                  MemoryConstants::pageSize, mem, nullptr, nullptr, true, false, false);
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    auto allocation = memoryManager.allocateGraphicsMemory(64, 1);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
+                  64, allocation->getUnderlyingBuffer(), nullptr, allocation, true, false, false);
 
     EXPECT_FALSE(memObj.allowTiling());
     EXPECT_FALSE(memObj.peekSharingHandler());

@@ -30,6 +30,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/validators.h"
 #include "runtime/helpers/string.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
@@ -346,7 +347,8 @@ size_t Buffer::calculateHostPtrSize(const size_t *origin, const size_t *region, 
 bool Buffer::isReadWriteOnCpuAllowed(cl_bool blocking, cl_uint numEventsInWaitList, void *ptr, size_t size) {
     return (blocking == CL_TRUE && numEventsInWaitList == 0 && !forceDisallowCPUCopy) && graphicsAllocation->peekSharedHandle() == 0 &&
            (isMemObjZeroCopy() || (reinterpret_cast<uintptr_t>(ptr) & (MemoryConstants::cacheLineSize - 1)) != 0) &&
-           (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu));
+           (!context->getDevice(0)->getDeviceInfo().platformLP || (size <= maxBufferSizeForReadWriteOnCpu)) &&
+           !(graphicsAllocation->gmm && graphicsAllocation->gmm->isRenderCompressed);
 }
 
 Buffer *Buffer::createBufferHw(Context *context,
