@@ -27,6 +27,8 @@ using namespace OCLRT;
 
 class AubSubCaptureManagerMock : public AubSubCaptureManager {
   public:
+    using AubSubCaptureManager::AubSubCaptureManager;
+
     void setSubCaptureIsActive(bool on) {
         subCaptureIsActive = on;
     }
@@ -37,13 +39,22 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
         subCaptureWasActive = on;
     }
     bool wasSubCaptureActive() const {
-        return subCaptureIsActive;
+        return subCaptureWasActive;
     }
     void setKernelCurrentIndex(uint32_t index) {
         kernelCurrentIdx = index;
     }
     uint32_t getKernelCurrentIndex() const {
         return kernelCurrentIdx;
+    }
+    bool getUseExternalFileName() const {
+        return useExternalFileName;
+    }
+    const std::string &getInitialFileName() const {
+        return initialFileName;
+    }
+    const std::string &getCurrentFileName() const {
+        return currentFileName;
     }
     SettingsReader *getSettingsReader() const {
         return settingsReader.get();
@@ -54,7 +65,17 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
     bool isSubCaptureToggleActive() const override {
         return isToggledOn;
     }
+    void setExternalFileName(const std::string &fileName) {
+        externalFileName = fileName;
+    }
+    std::string getExternalFileName() const override {
+        return externalFileName;
+    }
+
+    using AubSubCaptureManager::generateFilterFileName;
+    using AubSubCaptureManager::generateToggleFileName;
 
   protected:
     bool isToggledOn = false;
+    std::string externalFileName = "";
 };

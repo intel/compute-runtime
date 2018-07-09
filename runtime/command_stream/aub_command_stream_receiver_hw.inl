@@ -35,10 +35,10 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone)
+AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone)
     : BaseClass(hwInfoIn),
       stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
-      subCaptureManager(std::unique_ptr<AubSubCaptureManager>(new AubSubCaptureManager())),
+      subCaptureManager(std::unique_ptr<AubSubCaptureManager>(new AubSubCaptureManager(fileName))),
       standalone(standalone) {
     this->dispatchMode = DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
@@ -52,16 +52,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
             this->subCaptureManager->subCaptureFilter.dumpKernelName = DebugManager.flags.AUBDumpFilterKernelName.get();
         }
     }
-    for (auto &engineInfo : engineInfoTable) {
-        engineInfo.pLRCA = nullptr;
-        engineInfo.ggttLRCA = 0u;
-        engineInfo.pGlobalHWStatusPage = nullptr;
-        engineInfo.ggttHWSP = 0u;
-        engineInfo.pRingBuffer = nullptr;
-        engineInfo.ggttRingBuffer = 0u;
-        engineInfo.sizeRingBuffer = 0;
-        engineInfo.tailRingBuffer = 0;
-    }
     auto debugDeviceId = DebugManager.flags.OverrideAubDeviceId.get();
     this->aubDeviceId = debugDeviceId == -1
                             ? hwInfoIn.capabilityTable.aubDeviceId
@@ -70,21 +60,8 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
-    stream->close();
-
-    for (auto &engineInfo : engineInfoTable) {
-        alignedFree(engineInfo.pLRCA);
-        gttRemap.unmap(engineInfo.pLRCA);
-        engineInfo.pLRCA = nullptr;
-
-        alignedFree(engineInfo.pGlobalHWStatusPage);
-        gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
-        engineInfo.pGlobalHWStatusPage = nullptr;
-
-        alignedFree(engineInfo.pRingBuffer);
-        gttRemap.unmap(engineInfo.pRingBuffer);
-        engineInfo.pRingBuffer = nullptr;
-    }
+    closeFile();
+    freeEngineInfoTable();
 }
 
 template <typename GfxFamily>
@@ -107,6 +84,37 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType
     for (auto &mmioPair : *mmioList) {
         stream->writeMMIO(mmioPair.first, mmioPair.second);
     }
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName) {
+    stream.reset(new AUBCommandStreamReceiver::AubFileStream());
+
+    // Open our file
+    stream->open(fileName.c_str());
+
+    if (!stream->isOpen()) {
+        // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
+        // try adding <familycodename>_aub
+        DEBUG_BREAK_IF(true);
+    }
+    // Add the file header
+    stream->init(AubMemDump::SteppingValues::A, aubDeviceId);
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::closeFile() {
+    stream->close();
+}
+
+template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::isFileOpen() {
+    return stream->isOpen();
+}
+
+template <typename GfxFamily>
+const std::string &AUBCommandStreamReceiverHw<GfxFamily>::getFileName() {
+    return stream->getFileName();
 }
 
 template <typename GfxFamily>
@@ -207,19 +215,29 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone) {
-    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, standalone);
+void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfoTable() {
+    for (auto &engineInfo : engineInfoTable) {
+        alignedFree(engineInfo.pLRCA);
+        gttRemap.unmap(engineInfo.pLRCA);
+        engineInfo.pLRCA = nullptr;
 
-    // Open our file
-    csr->stream->open(fileName.c_str());
+        alignedFree(engineInfo.pGlobalHWStatusPage);
+        gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
+        engineInfo.pGlobalHWStatusPage = nullptr;
 
-    if (!csr->stream->fileHandle.is_open()) {
-        // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
-        // try adding <familycodename>_aub
-        DEBUG_BREAK_IF(true);
+        alignedFree(engineInfo.pRingBuffer);
+        gttRemap.unmap(engineInfo.pRingBuffer);
+        engineInfo.pRingBuffer = nullptr;
     }
-    // Add the file header.
-    csr->stream->init(AubMemDump::SteppingValues::A, csr->aubDeviceId);
+}
+
+template <typename GfxFamily>
+CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone) {
+    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone);
+
+    if (!csr->subCaptureManager->isSubCaptureMode()) {
+        csr->initFile(fileName);
+    }
 
     return csr;
 }
@@ -227,14 +245,6 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 template <typename GfxFamily>
 FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer,
                                                         EngineType engineType, ResidencyContainer *allocationsForResidency) {
-    uint32_t mmioBase = getCsTraits(engineType).mmioBase;
-    auto &engineInfo = engineInfoTable[engineType];
-
-    if (!engineInfo.pLRCA) {
-        initializeEngine(engineType);
-        DEBUG_BREAK_IF(!engineInfo.pLRCA);
-    }
-
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
@@ -242,6 +252,14 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             }
             return 0;
         }
+    }
+
+    uint32_t mmioBase = getCsTraits(engineType).mmioBase;
+    auto &engineInfo = engineInfoTable[engineType];
+
+    if (!engineInfo.pLRCA) {
+        initializeEngine(engineType);
+        DEBUG_BREAK_IF(!engineInfo.pLRCA);
     }
 
     // Write our batch buffer
@@ -417,7 +435,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     if (subCaptureManager->isSubCaptureMode()) {
-        subCaptureManager->deactivateSubCapture();
+        subCaptureManager->disableSubCapture();
     }
 
     stream->flush();
@@ -540,23 +558,25 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
-
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
-            for (auto &gfxAllocation : residencyAllocations) {
-                gfxAllocation->clearTypeAubNonWritable();
-            }
             return;
         }
     }
 
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
+
     for (auto &gfxAllocation : residencyAllocations) {
+        if (dumpAubNonWritable) {
+            gfxAllocation->clearTypeAubNonWritable();
+        }
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || gfxAllocation->isTypeAubNonWritable()));
         }
         gfxAllocation->residencyTaskCount = this->taskCount + 1;
     }
+
+    dumpAubNonWritable = false;
 }
 
 template <typename GfxFamily>
@@ -569,7 +589,20 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
-    subCaptureManager->activateSubCapture(dispatchInfo);
+    bool active = subCaptureManager->activateSubCapture(dispatchInfo);
+    if (active) {
+        std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(dispatchInfo);
+        if (isFileOpen()) {
+            if (subCaptureFile != getFileName()) {
+                closeFile();
+                freeEngineInfoTable();
+            }
+        }
+        if (!isFileOpen()) {
+            initFile(subCaptureFile);
+            dumpAubNonWritable = true;
+        }
+    }
     if (this->standalone) {
         if (DebugManager.flags.ForceCsrFlushing.get()) {
             this->flushBatchedSubmissions();

@@ -33,6 +33,8 @@
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_mdi.h"
 
 #include <memory>
 
@@ -51,7 +53,8 @@ typedef Test<DeviceFixture> AubCommandStreamReceiverTests;
 
 template <typename GfxFamily>
 struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
-    MockAubCsr(const HardwareInfo &hwInfoIn, bool standalone) : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, standalone){};
+    MockAubCsr(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone)
+        : AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone){};
 
     DispatchMode peekDispatchMode() const {
         return this->dispatchMode;
@@ -68,15 +71,40 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void flushBatchedSubmissions() override {
         flushBatchedSubmissionsCalled = true;
     }
-
     void initProgrammingFlags() override {
         initProgrammingFlagsCalled = true;
     }
-
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
 
+    void initFile(const std::string &fileName) override {
+        fileIsOpen = true;
+        openFileName = fileName;
+    }
+    void closeFile() override {
+        fileIsOpen = false;
+        openFileName = "";
+    }
+    bool isFileOpen() override {
+        return fileIsOpen;
+    }
+    const std::string &getFileName() override {
+        return openFileName;
+    }
+    bool fileIsOpen = false;
+    std::string openFileName = "";
+
     MOCK_METHOD0(addPatchInfoComments, bool(void));
+};
+
+template <typename GfxFamily>
+struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<GfxFamily> {
+    using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
+    using AUBCommandStreamReceiverHw<GfxFamily>::dumpAubNonWritable;
+
+    bool writeMemory(GraphicsAllocation &gfxAllocation) override {
+        return true;
+    }
 };
 
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
@@ -133,28 +161,38 @@ TEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenTypeIsChe
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDefaultSettingsThenItHasBatchedDispatchModeEnabled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(0);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     EXPECT_EQ(DispatchMode::BatchedDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrWhenItIsCreatedWithDebugSettingsThenItHasProperDispatchModeEnabled) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     EXPECT_EQ(DispatchMode::ImmediateDispatch, aubCsr->peekDispatchMode());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCreatedThenMemoryManagerIsNotNull) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, "", true));
     std::unique_ptr<MemoryManager> memoryManager(aubCsr->createMemoryManager(false));
     EXPECT_NE(nullptr, memoryManager.get());
     aubCsr->setMemoryManager(nullptr);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenItIsCreatedThenFileIsNotCreated) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
+    HardwareInfo hwInfo = *platformDevices[0];
+    std::string fileName = "file_name.aub";
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(AUBCommandStreamReceiver::create(hwInfo, fileName, true)));
+    EXPECT_NE(nullptr, aubCsr);
+    EXPECT_FALSE(aubCsr->isFileOpen());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrInSubCaptureModeWhenItIsCreatedWithoutDebugFilterSettingsThenItInitializesSubCaptureFiltersWithDefaults) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     EXPECT_EQ(0u, aubCsr->subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
     EXPECT_EQ(static_cast<uint32_t>(-1), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
     EXPECT_STREQ("", aubCsr->subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
@@ -166,15 +204,36 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrInSubCaptureModeWhenItIsCreat
     DebugManager.flags.AUBDumpFilterKernelStartIdx.set(10);
     DebugManager.flags.AUBDumpFilterKernelEndIdx.set(100);
     DebugManager.flags.AUBDumpFilterKernelName.set("kernel_name");
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
     EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
     EXPECT_STREQ(DebugManager.flags.AUBDumpFilterKernelName.get().c_str(), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, "", true));
+    std::string invalidFileName = "";
+
+    aubCsr->initFile(invalidFileName);
+    EXPECT_FALSE(aubCsr->isFileOpen());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileIsOpenedAndFileNameIsStored) {
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, "", true));
+    std::string fileName = "file_name.aub";
+
+    aubCsr->initFile(fileName);
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+
+    aubCsr->closeFile();
+    EXPECT_FALSE(aubCsr->isFileOpen());
+    EXPECT_TRUE(aubCsr->getFileName().empty());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -203,9 +262,63 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfoTable) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+    EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pLRCA);
+    EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pGlobalHWStatusPage);
+    EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pRingBuffer);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfoTable) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+
+    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
+    aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    aubSubCaptureManagerMock->disableSubCapture();
+    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
+    ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
+
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
+    ASSERT_NE(nullptr, commandBuffer);
+    LinearStream cs(commandBuffer);
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
+    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pLRCA);
+    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pGlobalHWStatusPage);
+    EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pRingBuffer);
+
+    memoryManager->freeGraphicsMemory(commandBuffer);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
@@ -235,7 +348,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldNotUpdateHwTagWithLatestSentTaskCount) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -264,7 +377,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldUpdateHwTagWithLatestSentTaskCount) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -293,12 +406,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldUpdateHwTagWithLatestSentTaskCount) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    aubSubCaptureManagerMock->deactivateSubCapture();
+    aubSubCaptureManagerMock->disableSubCapture();
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
@@ -328,12 +441,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneAndSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldNotUpdateHwTagWithLatestSentTaskCount) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    aubSubCaptureManagerMock->deactivateSubCapture();
+    aubSubCaptureManagerMock->disableSubCapture();
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
@@ -364,11 +477,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledAndSubCaptureIsEnabledThenItShouldDeactivateSubCapture) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     const DispatchInfo dispatchInfo;
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     aubSubCaptureManagerMock->activateSubCapture(dispatchInfo);
@@ -392,7 +505,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnCommandBufferAllocation) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
@@ -422,7 +535,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnCommandBufferAllocation) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -444,7 +557,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnResidencyAllocations) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
@@ -484,7 +597,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnResidencyAllocations) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
@@ -511,11 +624,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenFlushIsCalledAndSubCaptureIsEnabledThenItShouldCallMakeResidentOnCommandBufferAndResidencyAllocations) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     const DispatchInfo dispatchInfo;
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
     aubSubCaptureManagerMock->activateSubCapture(dispatchInfo);
@@ -559,7 +672,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationIsCreatedThenItDoesntHaveTypeNonAubWritable) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -571,7 +684,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnDefaultAllocationThenAllocationTypeShouldNotBeMadeNonAubWritable) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -586,7 +699,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnBufferAndImageAllocationsThenAllocationsTypesShouldBeMadeNonAubWritable) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -605,40 +718,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModWhenProcessResidencyIsCalledWhileSubcaptureIsEnabledThenAllocationsTypesShouldBeMadeNonAubWritable) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModWhenProcessResidencyIsCalledWithDumpAubNonWritableFlagThenAllocationsTypesShouldBeMadeAubWritable) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
-
-    auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
-
-    const DispatchInfo dispatchInfo;
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
-    aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubSubCaptureManagerMock->activateSubCapture(dispatchInfo);
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
-    ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
-
-    ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(&allocationsForResidency);
-
-    EXPECT_TRUE(gfxBufferAllocation->isTypeAubNonWritable());
-    EXPECT_TRUE(gfxImageAllocation->isTypeAubNonWritable());
-
-    memoryManager->freeGraphicsMemory(gfxBufferAllocation);
-    memoryManager->freeGraphicsMemory(gfxImageAllocation);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenProcessResidencyIsCalledWhileSubcaptureIsDisabledThenAllocationsTypesShouldBeKeptAubWritable) {
-    DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -647,11 +730,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
 
-    auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock();
-    aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
-    aubSubCaptureManagerMock->deactivateSubCapture();
-    aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
-    ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
+    aubCsr->dumpAubNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
@@ -663,9 +742,33 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledWithoutDumpAubWritableFlagThenAllocationsTypesShouldBeKeptNonAubWritable) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+
+    auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+
+    aubCsr->dumpAubNonWritable = false;
+
+    ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
+    aubCsr->processResidency(&allocationsForResidency);
+
+    EXPECT_TRUE(gfxBufferAllocation->isTypeAubNonWritable());
+    EXPECT_TRUE(gfxImageAllocation->isTypeAubNonWritable());
+
+    memoryManager->freeGraphicsMemory(gfxBufferAllocation);
+    memoryManager->freeGraphicsMemory(gfxImageAllocation);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsntNonAubWritableThenWriteMemoryIsAllowed) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -677,7 +780,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationTypeIsNonAubWritableThenWriteMemoryIsNotAllowed) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -689,17 +792,159 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphicsAllocationSizeIsZeroThenWriteMemoryIsNotAllowed) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     GraphicsAllocation gfxAllocation((void *)0x1234, 0);
 
     EXPECT_FALSE(aubCsr->writeMemory(gfxAllocation));
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenFileIsOpened) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    ASSERT_FALSE(aubCsr->isFileOpen());
+
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_TRUE(aubCsr->isFileOpen());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureRemainsActivedThenTheSameFileShouldBeKeptOpened) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    std::string fileName = aubCsr->subCaptureManager->getSubCaptureFileName(multiDispatchInfo);
+    aubCsr->initFile(fileName);
+    ASSERT_TRUE(aubCsr->isFileOpen());
+
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedWithNewFileNameThenNewFileShouldBeReOpened) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
+    std::string newFileName = "new_file_name.aub";
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    subCaptureManagerMock->setExternalFileName(newFileName);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    std::string fileName = "file_name.aub";
+    aubCsr->initFile(fileName);
+    ASSERT_TRUE(aubCsr->isFileOpen());
+    ASSERT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STRNE(fileName.c_str(), aubCsr->getFileName().c_str());
+    EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedForNewFileThenOldEngineInfoTableShouldBeFreed) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
+    std::string newFileName = "new_file_name.aub";
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    subCaptureManagerMock->setExternalFileName(newFileName);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    std::string fileName = "file_name.aub";
+    aubCsr->initFile(fileName);
+    ASSERT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+    ASSERT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
+
+    for (auto &engineInfo : aubCsr->engineInfoTable) {
+        EXPECT_EQ(nullptr, engineInfo.pLRCA);
+        EXPECT_EQ(nullptr, engineInfo.pGlobalHWStatusPage);
+        EXPECT_EQ(nullptr, engineInfo.pRingBuffer);
+    }
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenForceDumpingAllocationsAubNonWritable) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", false));
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_TRUE(aubCsr->dumpAubNonWritable);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureRemainsActivatedThenDontForceDumpingAllocationsAubNonWritable) {
+    DebugManagerStateRestore stateRestore;
+    std::unique_ptr<MockAubCsrToTestDumpAubNonWritable<FamilyType>> aubCsr(new MockAubCsrToTestDumpAubNonWritable<FamilyType>(*platformDevices[0], "", false));
+
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
+    subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    subCaptureManagerMock->setSubCaptureIsActive(false);
+    subCaptureManagerMock->setSubCaptureToggleActive(true);
+    aubCsr->subCaptureManager.reset(subCaptureManagerMock);
+
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+
+    aubCsr->initFile(aubCsr->subCaptureManager->getSubCaptureFileName(multiDispatchInfo));
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
+
+    EXPECT_FALSE(aubCsr->dumpAubNonWritable);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenSubCaptureModeRemainsDeactivatedThenSubCaptureIsDisabled) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
@@ -713,32 +958,36 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenSubCaptureIsToggledOnThenSubCaptureGetsEnabled) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
-    const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenSubCaptureRemainsDeactivatedThenNeitherProgrammingFlagsAreInitializedNorCsrIsFlushed) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
-    const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
@@ -746,16 +995,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenSubCaptureRemainsActivatedThenNeitherProgrammingFlagsAreInitializedNorCsrIsFlushed) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(true);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
-    const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
@@ -763,16 +1014,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenSubCaptureGetsActivatedThenProgrammingFlagsAreInitialized) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(false);
     subCaptureManagerMock->setSubCaptureToggleActive(true);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
-    const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_FALSE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_TRUE(aubCsr->initProgrammingFlagsCalled);
@@ -780,25 +1033,26 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneAndSubCaptureModeWhenSubCaptureGetsDeactivatedThenCsrIsFlushed) {
     DebugManagerStateRestore stateRestore;
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
 
-    auto subCaptureManagerMock = new AubSubCaptureManagerMock();
+    auto subCaptureManagerMock = new AubSubCaptureManagerMock("");
     subCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     subCaptureManagerMock->setSubCaptureIsActive(true);
     subCaptureManagerMock->setSubCaptureToggleActive(false);
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
-    const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MockKernelWithInternals kernelInternals(*pDevice);
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_TRUE(aubCsr->flushBatchedSubmissionsCalled);
     EXPECT_FALSE(aubCsr->initProgrammingFlagsCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferFlatteningInImmediateDispatchModeThenNewCombinedBatchBufferIsCreated) {
-
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(memoryManager.get());
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
@@ -826,7 +1080,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferInImmediateDispatchModeAndNoChainedBatchBufferThenCombinedBatchBufferIsNotCreated) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(memoryManager.get());
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
@@ -848,7 +1102,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedBatchBufferAndNotImmediateOrBatchedDispatchModeThenCombinedBatchBufferIsNotCreated) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(memoryManager.get());
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
@@ -878,7 +1132,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegiste
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBufferAllocation = memoryManager->allocateGraphicsMemory(4096);
@@ -903,7 +1157,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegiste
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRemovePatchInfoDataIsCalledThenElementIsRemovedFromPatchInfoList) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     PatchInfoData patchInfoData(0xA000, 0x0, PatchInfoAllocationType::KernelArg, 0xB000, 0x0, PatchInfoAllocationType::Default);
@@ -922,7 +1176,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddGucS
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     std::unique_ptr<char> batchBuffer(new char[1024]);
@@ -941,7 +1195,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     CommandChunk chunk1;
@@ -1011,7 +1265,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefaultDebugConfigThenExpectFlattenBatchBufferIsNotCalled) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
@@ -1039,7 +1293,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
@@ -1074,7 +1328,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
@@ -1101,7 +1355,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
@@ -1128,7 +1382,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1148,7 +1402,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1168,7 +1422,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1202,7 +1456,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1227,7 +1481,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1251,7 +1505,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirst
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1275,7 +1529,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecon
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1354,7 +1608,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1415,7 +1669,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1476,7 +1730,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     size_t indirectPatchCommandsSize = 0u;
@@ -1490,7 +1744,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndi
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForNonEmptyPatchInfoListThenIndirectPatchCommandBufferIsCreated) {
     typedef typename FamilyType::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     PatchInfoData patchInfo1(0xA000, 0u, PatchInfoAllocationType::KernelArg, 0x6000, 0x100, PatchInfoAllocationType::IndirectObjectHeap);
@@ -1517,7 +1771,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatc
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
     std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     MI_BATCH_BUFFER_START bbStart;
@@ -1534,7 +1788,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatc
 HWTEST_F(AubCommandStreamReceiverTests, givenFlatBatchBufferHelperWhenSettingSroreQwordOnSDICommandThenAppropriateBitIsSet) {
     typedef typename FamilyType::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
 
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
 
     MI_STORE_DATA_IMM cmd;
     cmd.init();
@@ -1583,7 +1837,7 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {
     std::unique_ptr<OsAgnosticMemoryManagerForImagesWithNoHostPtr> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(new OsAgnosticMemoryManagerForImagesWithNoHostPtr);
     aubCsr->setMemoryManager(memoryManager.get());
 
@@ -1613,7 +1867,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
 
 HWTEST_F(AubCommandStreamReceiverTests, givenNoDbgDeviceIdFlagWhenAubCsrIsCreatedThenUseDefaultDeviceId) {
     const HardwareInfo &hwInfoIn = *platformDevices[0];
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true));
     EXPECT_EQ(hwInfoIn.capabilityTable.aubDeviceId, aubCsr->aubDeviceId);
 }
 
@@ -1621,13 +1875,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCre
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
     const HardwareInfo &hwInfoIn = *platformDevices[0];
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true));
     EXPECT_EQ(9u, aubCsr->aubDeviceId);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryShouldBeDisabled) {
     const HardwareInfo &hwInfoIn = *platformDevices[0];
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, true));
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true));
     AubGTTData data = {};
     aubCsr->getGTTData(nullptr, data);
     EXPECT_TRUE(data.present);

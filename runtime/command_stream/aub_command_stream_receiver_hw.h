@@ -45,7 +45,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     void processResidency(ResidencyContainer *allocationsForResidency) override;
 
-    bool writeMemory(GraphicsAllocation &gfxAllocation);
+    MOCKABLE_VIRTUAL bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
@@ -59,13 +59,19 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone);
 
-    AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, bool standalone);
+    AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone);
     ~AUBCommandStreamReceiverHw() override;
 
     AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;
     AUBCommandStreamReceiverHw &operator=(const AUBCommandStreamReceiverHw &) = delete;
 
+    MOCKABLE_VIRTUAL void initFile(const std::string &fileName);
+    MOCKABLE_VIRTUAL void closeFile();
+    MOCKABLE_VIRTUAL bool isFileOpen();
+    MOCKABLE_VIRTUAL const std::string &getFileName();
+
     void initializeEngine(EngineType engineType);
+    void freeEngineInfoTable();
 
     MemoryManager *createMemoryManager(bool enable64kbPages) override {
         this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages);
@@ -84,7 +90,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
         uint32_t ggttRingBuffer;
         size_t sizeRingBuffer;
         uint32_t tailRingBuffer;
-    } engineInfoTable[EngineType::NUM_ENGINES];
+    } engineInfoTable[EngineType::NUM_ENGINES] = {};
 
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> stream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
@@ -105,5 +111,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;
     }
+
+  protected:
+    bool dumpAubNonWritable = false;
 };
 } // namespace OCLRT

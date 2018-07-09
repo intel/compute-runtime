@@ -27,15 +27,16 @@
 
 namespace OCLRT {
 
-AubSubCaptureManager::AubSubCaptureManager() {
+AubSubCaptureManager::AubSubCaptureManager(const std::string &fileName)
+    : initialFileName(fileName) {
     settingsReader.reset(SettingsReader::createOsReader(true));
 }
 
 AubSubCaptureManager::~AubSubCaptureManager() = default;
 
-void AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchInfo) {
+bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchInfo) {
     if (dispatchInfo.empty()) {
-        return;
+        return false;
     }
 
     subCaptureWasActive = subCaptureIsActive;
@@ -47,19 +48,41 @@ void AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchI
         break;
     case SubCaptureMode::Filter:
         subCaptureIsActive = isSubCaptureFilterActive(dispatchInfo, kernelCurrentIdx);
-        kernelCurrentIdx++;
         break;
     default:
         DEBUG_BREAK_IF(false);
         break;
     }
 
+    kernelCurrentIdx++;
     setDebugManagerFlags();
+
+    return subCaptureIsActive;
 }
 
-void AubSubCaptureManager::deactivateSubCapture() {
-    subCaptureWasActive = false;
-    subCaptureIsActive = false;
+const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispatchInfo &dispatchInfo) {
+    if (useExternalFileName) {
+        currentFileName = getExternalFileName();
+    }
+    switch (subCaptureMode) {
+    case SubCaptureMode::Filter:
+        if (currentFileName.empty()) {
+            currentFileName = generateFilterFileName();
+            useExternalFileName = false;
+        }
+        break;
+    case SubCaptureMode::Toggle:
+        if (currentFileName.empty()) {
+            currentFileName = generateToggleFileName(dispatchInfo);
+            useExternalFileName = false;
+        }
+        break;
+    default:
+        DEBUG_BREAK_IF(false);
+        break;
+    }
+
+    return currentFileName;
 }
 
 bool AubSubCaptureManager::isKernelIndexInSubCaptureRange(uint32_t kernelIdx) const {
@@ -69,6 +92,33 @@ bool AubSubCaptureManager::isKernelIndexInSubCaptureRange(uint32_t kernelIdx) co
 
 bool AubSubCaptureManager::isSubCaptureToggleActive() const {
     return settingsReader->getSetting("AUBDumpToggleCaptureOnOff", false);
+}
+
+std::string AubSubCaptureManager::getExternalFileName() const {
+    return settingsReader->getSetting("AUBDumpToggleFileName", std::string(""));
+}
+
+std::string AubSubCaptureManager::generateFilterFileName() const {
+    std::string baseFileName = initialFileName.substr(0, initialFileName.length() - strlen(".aub"));
+    std::string filterFileName = baseFileName + "_filter";
+    filterFileName += "_from_" + std::to_string(subCaptureFilter.dumpKernelStartIdx);
+    filterFileName += "_to_" + std::to_string(subCaptureFilter.dumpKernelEndIdx);
+    if (!subCaptureFilter.dumpKernelName.empty()) {
+        filterFileName += "_" + subCaptureFilter.dumpKernelName;
+    }
+    filterFileName += ".aub";
+    return filterFileName;
+}
+
+std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const {
+    std::string baseFileName = initialFileName.substr(0, initialFileName.length() - strlen(".aub"));
+    std::string toggleFileName = baseFileName + "_toggle";
+    toggleFileName += "_from_" + std::to_string(kernelCurrentIdx - 1);
+    if (!dispatchInfo.empty()) {
+        toggleFileName += "_" + dispatchInfo.begin()->getKernel()->getKernelInfo().name;
+    }
+    toggleFileName += ".aub";
+    return toggleFileName;
 }
 
 bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo, uint32_t kernelIdx) const {

@@ -74,10 +74,12 @@ extern const size_t g_dwordCountMax;
 
 void AubFileStream::open(const char *filePath) {
     fileHandle.open(filePath, std::ofstream::binary);
+    fileName.assign(filePath);
 }
 
 void AubFileStream::close() {
     fileHandle.close();
+    fileName.clear();
 }
 
 void AubFileStream::write(const char *data, size_t size) {

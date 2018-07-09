@@ -39,6 +39,16 @@ std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseN
 
 typedef Test<DeviceFixture> AubMemDumpTests;
 
+HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileNameIsReportedCorrectly) {
+    AUBCommandStreamReceiver::AubFileStream aubFile;
+    std::string fileName = "file_name.aub";
+    aubFile.open(fileName.c_str());
+    EXPECT_STREQ(fileName.c_str(), aubFile.getFileName().c_str());
+
+    aubFile.close();
+    EXPECT_STREQ("", aubFile.getFileName().c_str());
+}
+
 HWTEST_F(AubMemDumpTests, testHeader) {
     typedef typename AUBFamilyMapper<FamilyType>::AUB AUB;
     std::string filePath(folderAUB);

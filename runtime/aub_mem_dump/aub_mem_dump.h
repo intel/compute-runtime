@@ -142,12 +142,15 @@ struct AubFileStream : public AubStream {
     void writeGTT(uint32_t offset, uint64_t entry) override;
     void writeMMIO(uint32_t offset, uint32_t value) override;
     void registerPoll(uint32_t registerOffset, uint32_t mask, uint32_t value, bool pollNotEqual, uint32_t timeoutAction) override;
+    bool isOpen() const { return fileHandle.is_open(); }
+    const std::string &getFileName() const { return fileName; }
     MOCKABLE_VIRTUAL void write(const char *data, size_t size);
     MOCKABLE_VIRTUAL void flush();
     MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size);
     MOCKABLE_VIRTUAL bool addComment(const char *message);
 
     std::ofstream fileHandle;
+    std::string fileName;
 };
 
 template <int addressingBits>
