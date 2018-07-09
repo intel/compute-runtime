@@ -123,8 +123,12 @@ Buffer *Buffer::create(Context *context,
                     allocateMemory = false;
                 }
             }
+
+            if (!memory) {
+                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
+            }
+
             if (allocateMemory) {
-                memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
                 if (memory) {
                     memoryManager->addAllocationToHostPtrManager(memory);
                 }
@@ -132,15 +136,11 @@ Buffer *Buffer::create(Context *context,
                     context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
                 }
             } else {
-                if (!memory) {
-                    //Host ptr was not created with clSVMAlloc - create graphic allocation
-                    memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, hostPtr, true);
-                }
                 if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
-                    memory = memoryManager->createGraphicsAllocationWithRequiredBitness(size, nullptr, true);
                     zeroCopy = false;
                     copyMemoryFromHostPtr = true;
                     allocateMemory = true;
+                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
                 }
             }
 

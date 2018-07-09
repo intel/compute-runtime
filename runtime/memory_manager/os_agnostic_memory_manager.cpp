@@ -67,15 +67,15 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t s
     return allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
     if (ptr) {
-        auto allocationSize = alignSizeWholePage(reinterpret_cast<void *>(ptr), size);
+        auto allocationSize = alignSizeWholePage(ptr, size);
         auto gpuVirtualAddress = allocator32Bit->allocate(allocationSize);
         if (!gpuVirtualAddress) {
             return nullptr;
         }
         uint64_t offset = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(ptr) & MemoryConstants::pageMask);
-        MemoryAllocation *memAlloc = new MemoryAllocation(false, reinterpret_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size, counter);
+        MemoryAllocation *memAlloc = new MemoryAllocation(false, const_cast<void *>(ptr), GmmHelper::canonize(gpuVirtualAddress + offset), size, counter);
         memAlloc->is32BitAllocation = true;
         memAlloc->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
         memAlloc->sizeToFree = allocationSize;
@@ -205,7 +205,7 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     }
 }
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    auto alloc = allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
+    auto alloc = allocateGraphicsMemory(imgInfo.size);
     if (alloc) {
         alloc->gmm = gmm;
     }

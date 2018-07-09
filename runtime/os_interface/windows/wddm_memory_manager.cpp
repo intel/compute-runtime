@@ -63,7 +63,7 @@ void APIENTRY WddmMemoryManager::trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *t
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
         delete gmm;
-        return allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
+        return allocateGraphicsMemory(imgInfo.size);
     }
     auto allocation = new WddmAllocation(nullptr, imgInfo.size, nullptr);
     allocation->gmm = gmm;
@@ -162,7 +162,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
     return MemoryManager::allocateGraphicsMemory(size, ptr);
 }
 
-GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
+GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
     Gmm *gmm = nullptr;
     const void *ptrAligned = nullptr;
     size_t sizeAligned = size;

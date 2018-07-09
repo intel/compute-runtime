@@ -426,7 +426,7 @@ TEST_F(DrmMemoryManagerTest, AllocateThenFree) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto alloc = memoryManager->allocateGraphicsMemory(1024, 1024);
+    auto alloc = reinterpret_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, alloc);
     EXPECT_NE(nullptr, alloc->getBO());
 
@@ -438,7 +438,7 @@ TEST_F(DrmMemoryManagerTest, AllocateNewFail) {
     mock->ioctl_expected.total = -1; //don't care
 
     InjectedFunction method = [this](size_t failureIndex) {
-        auto ptr = memoryManager->allocateGraphicsMemory(1024, 1024);
+        auto ptr = memoryManager->allocateGraphicsMemory(1024);
 
         if (nonfailingAllocation != failureIndex) {
             EXPECT_EQ(nullptr, ptr);
@@ -455,7 +455,7 @@ TEST_F(DrmMemoryManagerTest, Allocate0Bytes) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(static_cast<size_t>(0), static_cast<size_t>(0));
+    auto ptr = memoryManager->allocateGraphicsMemory(static_cast<size_t>(0));
     ASSERT_NE(nullptr, ptr);
     EXPECT_NE(nullptr, ptr->getUnderlyingBuffer());
 
@@ -467,7 +467,7 @@ TEST_F(DrmMemoryManagerTest, Allocate3Bytes) {
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(3, 3);
+    auto ptr = memoryManager->allocateGraphicsMemory(3);
     ASSERT_NE(nullptr, ptr);
     EXPECT_NE(nullptr, ptr->getUnderlyingBuffer());
 
@@ -478,7 +478,7 @@ TEST_F(DrmMemoryManagerTest, AllocateUserptrFail) {
     mock->ioctl_expected.gemUserptr = 1;
     mock->ioctl_res = -1;
 
-    auto ptr = memoryManager->allocateGraphicsMemory(3, 3);
+    auto ptr = memoryManager->allocateGraphicsMemory(3);
     EXPECT_EQ(nullptr, ptr);
 }
 
@@ -1138,7 +1138,10 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
 
     //ask for 4GB
     auto allocationSize = 4096u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
+    bool force32Bit = memoryManager->peekForce32BitAllocations();
+    EXPECT_TRUE(force32Bit);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_NE(nullptr, graphicsAllocation);
     EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddressess);
 
@@ -1157,7 +1160,8 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
 
     //ask for 4GB - 1
     size_t allocationSize = (4 * 1023 * 1024 * (size_t)1024u - 1) + 4 * 1024 * (size_t)1024u;
-    auto graphicsAllocation = memoryManager->createGraphicsAllocationWithRequiredBitness(allocationSize, nullptr);
+
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(nullptr, graphicsAllocation);
     EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
 }
@@ -1690,7 +1694,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledThenRetu
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1, 1);
+    auto allocation = memoryManager->allocateGraphicsMemory(1);
     ASSERT_NE(nullptr, allocation);
 
     auto ptr = memoryManager->lockResource(allocation);
@@ -1706,7 +1710,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     mock->ioctl_expected.gemWait = 1;
     mock->ioctl_expected.gemClose = 1;
 
-    auto allocation = memoryManager->allocateGraphicsMemory(1, 1);
+    auto allocation = memoryManager->allocateGraphicsMemory(1);
     ASSERT_NE(nullptr, allocation);
     EXPECT_NE(nullptr, allocation->getUnderlyingBuffer());
 
@@ -1863,7 +1867,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerAndUnifiedAuxCapableAllocation
     mock->ioctl_expected.gemClose = 1;
 
     auto gmm = new Gmm(nullptr, 123, false);
-    auto allocation = memoryManager->allocateGraphicsMemory(123, 123);
+    auto allocation = memoryManager->allocateGraphicsMemory(123);
     allocation->gmm = gmm;
 
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
@@ -1936,7 +1940,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenItIsR
     mock->ioctl_expected.gemClose = 3;
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize, MemoryConstants::pageSize);
+    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize);
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());
@@ -2051,7 +2055,7 @@ TEST_F(DrmMemoryManagerTest, givenMemoryManagerSupportingVirutalPaddingWhenAlloc
 
     //first let's create normal buffer
     auto bufferSize = MemoryConstants::pageSize;
-    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize, MemoryConstants::pageSize);
+    auto buffer = memoryManager->allocateGraphicsMemory(bufferSize);
 
     //buffer should have size 16
     EXPECT_EQ(bufferSize, buffer->getUnderlyingBufferSize());

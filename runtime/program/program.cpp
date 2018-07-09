@@ -392,8 +392,7 @@ void Program::allocateBlockPrivateSurfaces() {
 
             if (privateSize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
                 privateSize *= getDevice(0).getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
-
-                auto *privateSurface = getDevice(0).getMemoryManager()->createGraphicsAllocationWithRequiredBitness(privateSize, nullptr);
+                auto *privateSurface = getDevice(0).getMemoryManager()->allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, static_cast<size_t>(privateSize), GraphicsAllocation::AllocationType::PRIVATE_SURFACE);
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }
         }

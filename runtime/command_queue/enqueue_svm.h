@@ -244,7 +244,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
     deviceOwnership.unlock();
 
     if (!patternAllocation) {
-        patternAllocation = memoryManager->allocateGraphicsMemory(patternSize, MemoryConstants::preferredAlignment);
+        patternAllocation = memoryManager->allocateGraphicsMemory(patternSize);
     }
 
     patternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);

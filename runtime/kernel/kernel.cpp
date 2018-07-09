@@ -265,8 +265,7 @@ cl_int Kernel::initialize() {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;
             }
-
-            privateSurface = device.getMemoryManager()->createGraphicsAllocationWithRequiredBitness(static_cast<size_t>(privateSurfaceSize), nullptr);
+            privateSurface = device.getMemoryManager()->allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, static_cast<size_t>(privateSurfaceSize), GraphicsAllocation::AllocationType::PRIVATE_SURFACE);
             if (privateSurface == nullptr) {
                 retVal = CL_OUT_OF_RESOURCES;
                 break;

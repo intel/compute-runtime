@@ -211,7 +211,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -238,7 +238,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -267,7 +267,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -302,7 +302,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -337,7 +337,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -375,7 +375,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
-    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -398,7 +398,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -425,7 +425,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -453,7 +453,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, gfxAllocation);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -488,7 +488,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     memoryManager.reset(aubCsr->createMemoryManager(false));
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -528,7 +528,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, gfxAllocation);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -807,7 +807,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto otherAllocation = memoryManager->allocateGraphicsMemory(128u, 64u, false, false);
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -831,7 +831,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto flatBatchBufferHelper = new FlatBatchBufferHelperHw<FamilyType>(memoryManager.get());
     aubCsr->overwriteFlatBatchBufferHelper(flatBatchBufferHelper);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -857,7 +857,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     auto otherAllocation = memoryManager->allocateGraphicsMemory(128u, 64u, false, false);
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -881,7 +881,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegiste
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBufferAllocation = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBufferAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBufferAllocation);
     LinearStream cs(commandBufferAllocation);
 
@@ -984,7 +984,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     ASSERT_EQ(3u, aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1019,7 +1019,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1047,7 +1047,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1082,7 +1082,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1109,7 +1109,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     aubCsr->setTagAllocation(pDevice->getTagAllocation());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     ResidencyContainer allocationsForResidency;
@@ -1131,7 +1131,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1151,7 +1151,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1171,7 +1171,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1205,7 +1205,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], false));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1230,7 +1230,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirst
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1254,7 +1254,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecon
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1278,7 +1278,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1357,7 +1357,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -1418,7 +1418,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
     std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 

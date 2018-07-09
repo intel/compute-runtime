@@ -231,7 +231,7 @@ LinearStream &CommandQueue::getCS(size_t minRequiredSize) {
         GraphicsAllocation *allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
 
         if (!allocation) {
-            allocation = memoryManager->allocateGraphicsMemory(requiredSize, MemoryConstants::pageSize);
+            allocation = memoryManager->allocateGraphicsMemory(requiredSize);
         }
 
         allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);

@@ -151,8 +151,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 
     outDevice.memoryManager->csr = commandStreamReceiver;
 
-    auto pTagAllocation = outDevice.memoryManager->allocateGraphicsMemory(
-        sizeof(uint32_t), sizeof(uint32_t));
+    auto pTagAllocation = outDevice.memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     if (!pTagAllocation) {
         return false;
     }

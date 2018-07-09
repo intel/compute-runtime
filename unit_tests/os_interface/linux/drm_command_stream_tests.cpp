@@ -536,7 +536,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhe
 
     device->resetCommandStreamReceiver(mockCsr);
 
-    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
+    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024);
     IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
@@ -564,7 +564,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
     device->resetCommandStreamReceiver(mockCsr);
 
-    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
+    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024);
     IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
@@ -592,7 +592,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
     device->resetCommandStreamReceiver(mockCsr);
 
-    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
+    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024);
     IndirectHeap stream(graphicAlloc);
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
@@ -620,7 +620,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
 
     device->resetCommandStreamReceiver(mockCsr);
 
-    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
+    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024);
     IndirectHeap stream(graphicAlloc);
 
     mockCsr->overrideMediaVFEStateDirty(false);
@@ -641,7 +641,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaul
 
     device->resetCommandStreamReceiver(mockCsr);
 
-    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024, 1024);
+    auto graphicAlloc = mockCsr->getMemoryManager()->allocateGraphicsMemory(1024);
     IndirectHeap stream(graphicAlloc);
 
     mockCsr->overrideMediaVFEStateDirty(false);
@@ -790,7 +790,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenDefaultDrmCSRWhenItIsCreatedThenGemC
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWhenItIsFlushedWithGemCloseWorkerInDefaultModeThenWorkerDecreasesTheRefCount) {
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = mm->allocateGraphicsMemory(static_cast<size_t>(1024));
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -823,11 +823,11 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
     execStorage.resize(0);
 
     for (auto id = 0; id < 10; id++) {
-        auto graphicsAllocation = mm->allocateGraphicsMemory(1, 4096);
+        auto graphicsAllocation = mm->allocateGraphicsMemory(1);
         csr->makeResident(*graphicsAllocation);
         graphicsAllocations.push_back(graphicsAllocation);
     }
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = mm->allocateGraphicsMemory(1024);
 
     LinearStream cs(commandBuffer);
 
@@ -847,7 +847,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenTaskThatRequiresLargeResourceCountWh
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeResidentIsCalledThenRefCountsAreNotUpdated) {
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto dummyAllocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
 
     auto bo = dummyAllocation->getBO();
     EXPECT_EQ(1u, bo->getRefCount());
@@ -864,8 +864,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
-    auto allocation = mm->allocateGraphicsMemory(1024, 4096);
-    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation2 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
 
     auto bo1 = allocation->getBO();
     auto bo2 = allocation2->getBO();
@@ -892,8 +892,8 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsFlushedWithGemCloseWorkerInactiveModeThenCsIsNotNulled) {
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto dummyAllocation = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -934,7 +934,7 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
         DrmCommandStreamEnhancedFixture::SetUp();
         if (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) {
             tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemory(1024, 4096));
+            GlobalMockSipProgram::sipProgram->resetAllocation(device->getMemoryManager()->allocateGraphicsMemory(1024));
         }
         tagAllocation = static_cast<DrmAllocation *>(device->getTagAllocation());
         preemptionAllocation = static_cast<DrmAllocation *>(device->getPreemptionAllocation());
@@ -949,8 +949,8 @@ class DrmCommandStreamBatchingTests : public Test<DrmCommandStreamEnhancedFixtur
 };
 
 TEST_F(DrmCommandStreamBatchingTests, givenCSRWhenFlushIsCalledThenProperFlagsArePassed) {
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = mm->allocateGraphicsMemory(1024);
+    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     LinearStream cs(commandBuffer);
@@ -979,8 +979,8 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = mm->allocateGraphicsMemory(1024);
+    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, commandBuffer);
     ASSERT_EQ(0u, reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) & 0xFFF);
     IndirectHeap cs(commandBuffer);
@@ -1039,8 +1039,8 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     tCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    auto dummyAllocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto commandBuffer = mm->allocateGraphicsMemory(1024);
+    auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     IndirectHeap cs(commandBuffer);
     std::unique_ptr<Device> device(DeviceHelper<>::create(nullptr));
 
@@ -1468,8 +1468,8 @@ TEST_F(DrmCommandStreamLeaksTest, Flush) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
-    auto allocation1 = mm->allocateGraphicsMemory(1024, 4096);
-    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation1 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
+    auto allocation2 = reinterpret_cast<DrmAllocation *>(mm->allocateGraphicsMemory(1024));
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
 
@@ -1515,9 +1515,9 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     BatchBuffer batchBuffer2{cs.getGraphicsAllocation(), 8, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer2, EngineType::ENGINE_RCS, nullptr);
 
-    auto allocation = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, allocation);
-    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation2 = mm->allocateGraphicsMemory(1024);
     ASSERT_NE(nullptr, allocation2);
 
     csr->makeResident(*allocation);
@@ -1525,10 +1525,10 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
 
     mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
 
-    commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
-    cs.replaceGraphicsAllocation(commandBuffer);
+    auto commandBuffer2 = mm->allocateGraphicsMemory(1024);
+    ASSERT_NE(nullptr, commandBuffer2);
+    cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
+    cs.replaceGraphicsAllocation(commandBuffer2);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -1537,11 +1537,11 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
-    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer), REUSABLE_ALLOCATION);
-    commandBuffer = mm->allocateGraphicsMemory(1024, 4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    cs.replaceBuffer(commandBuffer->getUnderlyingBuffer(), commandBuffer->getUnderlyingBufferSize());
-    cs.replaceGraphicsAllocation(commandBuffer);
+    mm->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandBuffer2), REUSABLE_ALLOCATION);
+    commandBuffer2 = mm->allocateGraphicsMemory(1024);
+    ASSERT_NE(nullptr, commandBuffer2);
+    cs.replaceBuffer(commandBuffer2->getUnderlyingBuffer(), commandBuffer2->getUnderlyingBufferSize());
+    cs.replaceGraphicsAllocation(commandBuffer2);
     csr->addBatchBufferEnd(cs, nullptr);
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer4{cs.getGraphicsAllocation(), 24, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -1596,7 +1596,7 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
     ASSERT_NE(0u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0xFFF);
     ASSERT_EQ(4u, (reinterpret_cast<uintptr_t>(commandBuffer->getUnderlyingBuffer()) + 4) & 0x7F);
 
-    auto allocation = mm->allocateGraphicsMemory(1024, 128);
+    auto allocation = mm->allocateGraphicsMemory(1024);
 
     csr->makeResident(*allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1608,8 +1608,8 @@ TEST_F(DrmCommandStreamLeaksTest, CheckDrmFree) {
 }
 
 TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInMemoryManager) {
-    auto allocation1 = mm->allocateGraphicsMemory(1024, 4096);
-    auto allocation2 = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation1 = mm->allocateGraphicsMemory(1024);
+    auto allocation2 = mm->allocateGraphicsMemory(1024);
 
     ASSERT_NE(nullptr, allocation1);
     ASSERT_NE(nullptr, allocation2);
@@ -1627,7 +1627,7 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInMemoryM
 }
 
 TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIsCalledOnlyOnceThenSurfaceIsMadeNonResident) {
-    auto allocation1 = mm->allocateGraphicsMemory(1024, 4096);
+    auto allocation1 = mm->allocateGraphicsMemory(1024);
 
     ASSERT_NE(nullptr, allocation1);
 
@@ -1646,7 +1646,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
 }
 
 TEST_F(DrmCommandStreamLeaksTest, makeNonResidentOnMemObjectCallsDrmCSMakeNonResidentWithGraphicsAllocation) {
-    auto allocation1 = mm->allocateGraphicsMemory(0x1000, 0x1000);
+    auto allocation1 = mm->allocateGraphicsMemory(0x1000);
     ASSERT_NE(nullptr, allocation1);
 
     tCsr->makeResident(*allocation1);

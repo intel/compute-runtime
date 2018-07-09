@@ -175,7 +175,7 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     context.setMemoryManager(&memoryManager);
     memoryManager.setDevice(context.getDevice(0));
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 2;
     *memoryManager.device->getTagAddress() = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
@@ -194,7 +194,7 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     context.setMemoryManager(&memoryManager);
     memoryManager.setDevice(context.getDevice(0));
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 1;
     *memoryManager.device->getTagAddress() = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
@@ -213,7 +213,7 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     context.setMemoryManager(&memoryManager);
     memoryManager.setDevice(context.getDevice(0));
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = ObjectNotUsed;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -230,7 +230,7 @@ TEST(MemObj, givenMemoryManagerWithoutDeviceWhenMemObjDestroysAllocationAsyncThe
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
@@ -336,7 +336,7 @@ TEST(MemObj, givenRenderCompressedGmmWhenAskingForMappingOnCpuThenDisallow) {
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(1, 1);
+    auto allocation = memoryManager.allocateGraphicsMemory(1);
     allocation->gmm = new Gmm(nullptr, 1, false);
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
@@ -354,7 +354,7 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
 
     context.setMemoryManager(&memoryManager);
 
-    auto allocation = memoryManager.allocateGraphicsMemory(64, 1);
+    auto allocation = memoryManager.allocateGraphicsMemory(64);
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   64, allocation->getUnderlyingBuffer(), nullptr, allocation, true, false, false);

@@ -844,8 +844,7 @@ cl_int Program::parseProgramScopePatchList() {
 
             surfaceSize = patch.InlineDataSize;
             headerSize = sizeof(SPatchAllocateConstantMemorySurfaceProgramBinaryInfo);
-
-            constantSurface = pDevice->getMemoryManager()->createGraphicsAllocationWithRequiredBitness(surfaceSize, nullptr);
+            constantSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, surfaceSize, GraphicsAllocation::AllocationType::CONSTANT_SURFACE);
 
             memcpy_s(constantSurface->getUnderlyingBuffer(), surfaceSize, (cl_char *)pPatch + headerSize, surfaceSize);
             pCurPatchListPtr = ptrOffset(pCurPatchListPtr, surfaceSize);
@@ -867,7 +866,8 @@ cl_int Program::parseProgramScopePatchList() {
             surfaceSize = patch.InlineDataSize;
             globalVarTotalSize += (size_t)surfaceSize;
             headerSize = sizeof(SPatchAllocateGlobalMemorySurfaceProgramBinaryInfo);
-            globalSurface = pDevice->getMemoryManager()->createGraphicsAllocationWithRequiredBitness(surfaceSize, nullptr);
+            globalSurface = pDevice->getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, surfaceSize, GraphicsAllocation::AllocationType::GLOBAL_SURFACE);
+
             memcpy_s(globalSurface->getUnderlyingBuffer(), surfaceSize, (cl_char *)pPatch + headerSize, surfaceSize);
             pCurPatchListPtr = ptrOffset(pCurPatchListPtr, surfaceSize);
             DBG_LOG(LogPatchTokens,

@@ -137,7 +137,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 }
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenFlushIsCalledThenBaseCsrFlushStampIsReturned) {
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, 4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 

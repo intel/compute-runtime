@@ -184,7 +184,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
@@ -201,7 +201,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentHas
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
@@ -222,7 +222,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_TRUE(tbxCsr->writeMemory(*graphicsAllocation));
@@ -242,7 +242,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
@@ -261,7 +261,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
     ASSERT_NE(nullptr, memoryManager);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
     EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
@@ -283,7 +283,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096, MemoryConstants::pageSize);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
 
     LinearStream cs(commandBuffer);

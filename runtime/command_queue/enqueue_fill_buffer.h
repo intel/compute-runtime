@@ -46,7 +46,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto memoryManager = getDevice().getMemoryManager();
     DEBUG_BREAK_IF(nullptr == memoryManager);
 
-    auto patternAllocation = memoryManager->allocateGraphicsMemory(alignUp(patternSize, MemoryConstants::cacheLineSize), MemoryConstants::preferredAlignment);
+    auto patternAllocation = memoryManager->allocateGraphicsMemory(alignUp(patternSize, MemoryConstants::cacheLineSize));
     patternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
 
     if (patternSize == 1) {

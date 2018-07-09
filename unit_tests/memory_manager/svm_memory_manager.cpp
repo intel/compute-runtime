@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -120,7 +120,7 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
         using OsAgnosticMemoryManager::allocateGraphicsMemory;
 
       public:
-        GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment) override {
+        GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
             return nullptr;
         }
     };

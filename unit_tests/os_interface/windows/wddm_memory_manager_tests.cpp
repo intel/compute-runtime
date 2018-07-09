@@ -137,7 +137,7 @@ HWTEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
 
 HWTEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenResourceHandleIsZero) {
     SetUpMm<FamilyType>();
-    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000, MemoryConstants::pageSize);
+    auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000);
 
     auto wddmAllocation = static_cast<WddmAllocation *>(gpuAllocation);
 
@@ -1898,46 +1898,34 @@ HWTEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalle
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }
 
-HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhencreateGraphicsAllocationWithRequiredBitnessThenAllocated64kbAdress) {
+HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemoryForBufferWithoutHostPtrThen64kbAdressIsAllocated) {
     DebugManagerStateRestore dbgRestore;
     WddmMock *wddm = new WddmMock;
     EXPECT_TRUE(wddm->init<FamilyType>());
     DebugManager.flags.Enable64kbpages.set(true);
     WddmMemoryManager memoryManager64k(true, wddm);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
-    GraphicsAllocation *galloc = memoryManager64k.createGraphicsAllocationWithRequiredBitness(64 * 1024, nullptr, false);
+
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(MemoryConstants::pageSize64k), GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_EQ(1, wddm->createAllocationResult.called);
     EXPECT_NE(nullptr, galloc);
     EXPECT_EQ(true, galloc->isLocked());
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
-    EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % 65536U);
+    EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % MemoryConstants::pageSize64k);
+    EXPECT_EQ(0u, (uintptr_t)galloc->getGpuAddress() % MemoryConstants::pageSize64k);
     memoryManager64k.freeGraphicsMemory(galloc);
 }
 
-HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenSetLockThenLockIsSet) {
-    DebugManagerStateRestore dbgRestore;
-    WddmMock *wddm = new WddmMock;
-    EXPECT_TRUE(wddm->init<FamilyType>());
-    DebugManager.flags.Enable64kbpages.set(true);
-    WddmMemoryManager memoryManager64k(true, wddm);
-    EXPECT_EQ(0, wddm->createAllocationResult.called);
-    GraphicsAllocation *galloc = memoryManager64k.createGraphicsAllocationWithRequiredBitness(64 * 1024, nullptr, false);
-    galloc->setLocked(false);
-    EXPECT_FALSE(galloc->isLocked());
-    galloc->setLocked(true);
-    EXPECT_TRUE(galloc->isLocked());
-    memoryManager64k.freeGraphicsMemory(galloc);
-}
-
-HWTEST_F(OsAgnosticMemoryManagerUsingWddmTest, GivenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThen64KBThenGraphicsAllocationsHas64KBAlignedUnderlyingsize) {
+HWTEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocationIsCreatedWithSizeSmallerThan64kbThenGraphicsAllocationsHas64kbAlignedUnderlyingSize) {
     DebugManagerStateRestore dbgRestore;
     WddmMock *wddm = new WddmMock;
     EXPECT_TRUE(wddm->init<FamilyType>());
     DebugManager.flags.Enable64kbpages.set(true);
     WddmMemoryManager memoryManager(true, wddm);
-    auto graphicsAllocation = memoryManager.createGraphicsAllocationWithRequiredBitness(1, nullptr);
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false);
+
     EXPECT_NE(nullptr, graphicsAllocation);
-    EXPECT_EQ(64 * MemoryConstants::kiloByte, graphicsAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
     EXPECT_EQ(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), graphicsAllocation->getUnderlyingBuffer());
@@ -2055,7 +2043,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleasein
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u, 4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
     wddmAlloc->gpuPtr = gpuVa;
     wddmAlloc->gmm->isRenderCompressed = true;
 
@@ -2080,7 +2068,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleas
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u, 4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
     wddmAlloc->gmm->isRenderCompressed = false;
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
@@ -2128,7 +2116,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUn
     myGmm->isRenderCompressed = false;
     myGmm->gmmResourceInfo->getResourceFlags()->Info.RenderCompressed = 1;
 
-    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u, 4096u));
+    auto wddmAlloc = static_cast<WddmAllocation *>(memoryManager.allocateGraphicsMemory(4096u));
     delete wddmAlloc->gmm;
     wddmAlloc->gmm = myGmm;
 

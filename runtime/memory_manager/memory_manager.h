@@ -60,6 +60,27 @@ enum AllocationOrigin {
     INTERNAL_ALLOCATION
 };
 
+struct AllocationData {
+    union {
+        struct {
+            uint32_t mustBeZeroCopy : 1;
+            uint32_t allocateMemory : 1;
+            uint32_t allow64kbPages : 1;
+            uint32_t allow32Bit : 1;
+            uint32_t useSystemMemory : 1;
+            uint32_t forcePin : 1;
+            uint32_t uncacheable : 1;
+            uint32_t reserved : 25;
+        } flags;
+        uint32_t allFlags = 0;
+    };
+    static_assert(sizeof(AllocationData::flags) == sizeof(AllocationData::allFlags), "");
+
+    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
+    const void *hostPtr = nullptr;
+    size_t size = 0;
+};
+
 struct AlignedMallocRestrictions {
     uintptr_t minAddress;
 };
@@ -93,12 +114,8 @@ class MemoryManager {
     virtual void addAllocationToHostPtrManager(GraphicsAllocation *memory) = 0;
     virtual void removeAllocationFromHostPtrManager(GraphicsAllocation *memory) = 0;
 
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size) {
-        return allocateGraphicsMemory(size, static_cast<size_t>(0u));
-    }
-
-    virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment) {
-        return allocateGraphicsMemory(size, alignment, false, false);
+    GraphicsAllocation *allocateGraphicsMemory(size_t size) {
+        return allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
     }
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) = 0;
@@ -110,9 +127,11 @@ class MemoryManager {
     }
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
-    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) = 0;
+    virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
+
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
@@ -177,25 +196,6 @@ class MemoryManager {
     bool peekForce32BitAllocations() { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue);
 
-    GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr) {
-        return createGraphicsAllocationWithRequiredBitness(size, ptr, false);
-    }
-
-    MOCKABLE_VIRTUAL GraphicsAllocation *createGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
-        if (force32bitAllocations && is64bit) {
-            return allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
-        } else {
-            if (ptr) {
-                return allocateGraphicsMemory(size, ptr, forcePin);
-            }
-            if (enable64kbpages) {
-                return allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, forcePin);
-            } else {
-                return allocateGraphicsMemory(size, MemoryConstants::pageSize, forcePin, false);
-            }
-        }
-    }
-
     std::unique_ptr<Allocator32bit> allocator32Bit;
 
     bool peekVirtualPaddingSupport() { return virtualPaddingAvailable; }
@@ -235,6 +235,9 @@ class MemoryManager {
     }
 
   protected:
+    static bool getAllocationData(AllocationData &allocationData, bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+
+    GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     std::recursive_mutex mtx;
     std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
     std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;

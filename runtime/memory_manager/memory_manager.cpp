@@ -116,7 +116,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, boo
     if (enable64kbpages) {
         graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false);
     } else {
-        graphicsAllocation = allocateGraphicsMemory(size, MemoryConstants::pageSize);
+        graphicsAllocation = allocateGraphicsMemory(size);
     }
     if (graphicsAllocation) {
         graphicsAllocation->setCoherent(coherent);
@@ -165,7 +165,7 @@ void MemoryManager::cleanGraphicsMemoryCreatedFromHostPtr(GraphicsAllocation *gr
 
 GraphicsAllocation *MemoryManager::createGraphicsAllocationWithPadding(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
     if (!paddingAllocation) {
-        paddingAllocation = allocateGraphicsMemory(paddingBufferSize, MemoryConstants::pageSize);
+        paddingAllocation = allocateGraphicsMemory(paddingBufferSize);
     }
     return createPaddedAllocation(inputGraphicsAllocation, sizeWithPadding);
 }
@@ -365,6 +365,69 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
         }
     }
     return status;
+}
+
+bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+    UNRECOVERABLE_IF(hostPtr == nullptr && !allocateMemory);
+
+    bool allow64KbPages = false;
+    bool allow32Bit = false;
+
+    switch (type) {
+    case GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
+    case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
+    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+        allow64KbPages = true;
+        allow32Bit = true;
+        break;
+    default:
+        break;
+    }
+
+    allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
+    allocationData.flags.allocateMemory = allocateMemory;
+    allocationData.flags.allow32Bit = allow32Bit;
+    allocationData.flags.allow64kbPages = allow64KbPages;
+    allocationData.flags.forcePin = forcePin;
+    allocationData.flags.uncacheable = uncacheable;
+
+    if (allocationData.flags.mustBeZeroCopy) {
+        allocationData.flags.useSystemMemory = true;
+    }
+
+    allocationData.hostPtr = hostPtr;
+    allocationData.size = size;
+    allocationData.type = type;
+
+    if (allocationData.flags.allocateMemory) {
+        allocationData.hostPtr = nullptr;
+    }
+    return true;
+}
+
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+    AllocationData allocationData;
+    getAllocationData(allocationData, mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
+    UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
+
+    return allocateGraphicsMemory(allocationData);
+}
+
+GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {
+    if (force32bitAllocations && allocationData.flags.allow32Bit && is64bit) {
+        return allocate32BitGraphicsMemory(allocationData.size, allocationData.hostPtr, AllocationOrigin::EXTERNAL_ALLOCATION);
+    }
+    if (allocationData.hostPtr) {
+        return allocateGraphicsMemory(allocationData.size, allocationData.hostPtr, allocationData.flags.forcePin);
+    }
+    if (enable64kbpages && allocationData.flags.allow64kbPages) {
+        return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin);
+    }
+    return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);
 }
 
 } // namespace OCLRT

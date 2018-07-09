@@ -105,7 +105,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, GPGPUWalker) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, addsIndirectData) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
@@ -140,7 +140,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, addsIndirectData) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -166,7 +166,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferRightLeftover) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -192,7 +192,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferMiddle) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
 
@@ -295,7 +295,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, MediaVFEState) {
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentZeroShouldMatchDestAddress) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();
 
@@ -330,7 +330,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentZeroShouldMatchDe
 // This could happen if KernelInfo.kernelArgInfo was accessible given a Kernel.  Just need an offset
 // into CrossThreadData.
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, DISABLED_argumentOneShouldMatchOffset) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();
 
@@ -362,7 +362,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, DISABLED_argumentOneShoul
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
-    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize, MemoryConstants::preferredAlignment);
+    auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();
 

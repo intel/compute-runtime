@@ -48,7 +48,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         device = static_cast<MockDevice *>(context->getDevice(0));
         device->injectMemoryManager(memoryManager);
         context->setMemoryManager(memoryManager);
-        allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize);
+        allocation = memoryManager->allocateGraphicsMemory(size);
         memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
                             CL_MEM_READ_WRITE,
                             size,
@@ -195,7 +195,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     if (!hasAllocatedMappedPtr) {
         delete memObj;
-        allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize);
+        allocation = memoryManager->allocateGraphicsMemory(size);
         MemObjOffsetArray origin = {{0, 0, 0}};
         MemObjSizeArray region = {{1, 1, 1}};
         cl_map_flags mapFlags = CL_MAP_READ;

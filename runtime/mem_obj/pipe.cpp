@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -62,7 +62,8 @@ Pipe *Pipe::create(Context *context,
     DEBUG_BREAK_IF(!memoryManager);
 
     while (true) {
-        GraphicsAllocation *memory = memoryManager->createGraphicsAllocationWithRequiredBitness(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace, nullptr);
+        auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
+        GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, size, GraphicsAllocation::AllocationType::PIPE);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             break;

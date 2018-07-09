@@ -108,9 +108,9 @@ INSTANTIATE_TEST_CASE_P(
 
 class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
-    MOCK_METHOD3(createGraphicsAllocationWithRequiredBitness, GraphicsAllocation *(size_t size, void *ptr, bool forcePin));
-    GraphicsAllocation *baseCreateGraphicsAllocationWithRequiredBitness(size_t size, void *ptr, bool forcePin) {
-        return MockMemoryManager::createGraphicsAllocationWithRequiredBitness(size, ptr, forcePin);
+    MOCK_METHOD7(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
+    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
     }
 };
 
@@ -126,12 +126,10 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    // First fail in createGraphicsAllocation simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
-        .WillOnce(::testing::Return(nullptr));
-
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
-        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseCreateGraphicsAllocationWithRequiredBitness));
+    // First fail simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Return(nullptr))
+        .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseallocateGraphicsMemoryInPreferredPool));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
@@ -158,12 +156,10 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    // First fail in createGraphicsAllocation simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
-        .WillOnce(::testing::Return(nullptr));
-
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
-        .WillOnce(::testing::Return(nullptr));
+    // First fail simulates error for read only memory allocation
+    // Second fail returns nullptr
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .WillRepeatedly(::testing::Return(nullptr));
 
     cl_int retVal;
     cl_mem_flags flags = CL_MEM_HOST_READ_ONLY | CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR;
@@ -186,8 +182,8 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    // First fail in createGraphicsAllocation simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(MemoryConstants::pageSize, (void *)memory, true))
+    // First fail simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -206,8 +202,8 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    // First fail in createGraphicsAllocation simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, createGraphicsAllocationWithRequiredBitness(::testing::_, nullptr, ::testing::_))
+    // First fail simulates error for read only memory allocation
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;

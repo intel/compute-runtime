@@ -238,7 +238,7 @@ HWTEST_F(CommandStreamReceiverTest, givenCommandStreamReceiverWhenCheckedForInit
 TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerResidencyList) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
 
-    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(0x1000, 0x34000);
+    GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(0x1000);
 
     ASSERT_NE(nullptr, graphicsAllocation);
 

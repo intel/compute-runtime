@@ -211,7 +211,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t 
 
 GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
     if (!GmmHelper::allowTiling(*imgInfo.imgDesc)) {
-        auto alloc = allocateGraphicsMemory(imgInfo.size, MemoryConstants::preferredAlignment);
+        auto alloc = MemoryManager::allocateGraphicsMemory(imgInfo.size);
         if (alloc) {
             alloc->gmm = gmm;
         }
@@ -248,7 +248,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) {
+DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) {
     auto allocatorToUse = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? allocator32Bit.get() : internal32bitAllocator.get();
     auto allocatorType = allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION ? BIT32_ALLOCATOR_EXTERNAL : BIT32_ALLOCATOR_INTERNAL;
 
@@ -289,7 +289,7 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, void *
         if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION && device && device->getProgramCount() == 0) {
             this->force32bitAllocations = false;
             device->setForce32BitAddressing(false);
-            return (DrmAllocation *)createGraphicsAllocationWithRequiredBitness(size, ptr);
+            return (DrmAllocation *)allocateGraphicsMemoryInPreferredPool(false, ptr == nullptr, false, false, ptr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
         }
 
         return nullptr;

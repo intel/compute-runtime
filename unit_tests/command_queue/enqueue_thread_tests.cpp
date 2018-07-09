@@ -496,7 +496,7 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
     ASSERT_NE(nullptr, memoryManager);
     pMyDevice->setMemoryManager(memoryManager);
 
-    auto pTagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t));
+    auto pTagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     *(uint32_t *)(pTagAllocation->getUnderlyingBuffer()) = initialHardwareTag;
     ASSERT_NE(nullptr, pTagAllocation);
     pMyDevice->setTagAllocation(pTagAllocation);

@@ -239,7 +239,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             scratchAllocation->taskCount = this->taskCount;
             getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
         }
-        scratchAllocation = getMemoryManager()->createGraphicsAllocationWithRequiredBitness(requiredScratchSizeInBytes, nullptr);
+        scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
         overrideMediaVFEStateDirty(true);
         if (is64bit && !force32BitAllocations) {
             stateBaseAddressDirty = true;

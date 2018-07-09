@@ -34,6 +34,7 @@ class Drm;
 
 class DrmMemoryManager : public MemoryManager {
   public:
+    using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
     DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory);
@@ -43,9 +44,6 @@ class DrmMemoryManager : public MemoryManager {
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;
-    DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment) override {
-        return allocateGraphicsMemory(size, alignment, false, false);
-    }
     DrmAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     DrmAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override;
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {
@@ -53,7 +51,7 @@ class DrmMemoryManager : public MemoryManager {
     }
     DrmAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) override;
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
-    DrmAllocation *allocate32BitGraphicsMemory(size_t size, void *ptr, AllocationOrigin allocationOrigin) override;
+    DrmAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override;
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }

@@ -340,7 +340,7 @@ TEST_F(CommandQueueCommandStreamTest, MemoryManagerWithReusableAllocationsWhenAs
 
     auto memoryManager = pDevice->getMemoryManager();
     size_t requiredSize = alignUp(100, MemoryConstants::pageSize) + CSRequirements::csOverfetchSize;
-    auto allocation = memoryManager->allocateGraphicsMemory(requiredSize, 4096);
+    auto allocation = memoryManager->allocateGraphicsMemory(requiredSize);
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
     EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
