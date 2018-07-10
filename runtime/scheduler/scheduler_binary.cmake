@@ -55,7 +55,7 @@ function(compile_kernel target gen_type platform_type kernel)
     endif()
   endif()
   add_custom_command(
-    OUTPUT ${OUTPUTPATH} ${SCHEDULER_CPP}
+    OUTPUT ${OUTPUTPATH}
     COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
     WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${kernel} cloc copy_compiler_files
@@ -74,6 +74,7 @@ macro(macro_for_each_gen)
       if(COMPILE_BUILT_INS AND PLATFORM_2_0_LOWER)
         compile_kernel(scheduler_${family_name_with_type} ${GEN_TYPE} ${PLATFORM_TYPE} ${SCHEDULER_KERNEL})
         add_dependencies(scheduler scheduler_${family_name_with_type})
+        list(APPEND SCHEDULER_TARGETS scheduler_${family_name_with_type})
         list(APPEND GENERATED_SCHEDULER_CPPS ${SCHEDULER_CPP})
       endif()
     endif()
@@ -88,6 +89,9 @@ add_library(${SCHEDULER_BINARY_LIB_NAME} OBJECT CMakeLists.txt)
 if(COMPILE_BUILT_INS)
   target_sources(${SCHEDULER_BINARY_LIB_NAME} PUBLIC ${GENERATED_SCHEDULER_CPPS})
   set_source_files_properties(${GENERATED_SCHEDULER_CPPS} PROPERTIES GENERATED TRUE)
+  foreach(SCHEDULER_TARGET ${SCHEDULER_TARGETS})
+    add_dependencies(${SCHEDULER_BINARY_LIB_NAME} ${SCHEDULER_TARGET})
+  endforeach()
 endif(COMPILE_BUILT_INS)
 
 set_target_properties(${SCHEDULER_BINARY_LIB_NAME} PROPERTIES LINKER_LANGUAGE CXX)
