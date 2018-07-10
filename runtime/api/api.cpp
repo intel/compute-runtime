@@ -3507,23 +3507,38 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
 
     auto minimumCreateDeviceQueueFlags = static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE |
                                                                                   CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
+    auto tokenValue = properties ? *properties : 0;
+    auto propertiesAddress = properties;
 
+    while (tokenValue != 0) {
+        if (tokenValue != CL_QUEUE_PROPERTIES &&
+            tokenValue != CL_QUEUE_SIZE &&
+            tokenValue != CL_QUEUE_PRIORITY_KHR &&
+            tokenValue != CL_QUEUE_THROTTLE_KHR) {
+            err.set(CL_INVALID_VALUE);
+            return commandQueue;
+        }
+        propertiesAddress += 2;
+        tokenValue = *propertiesAddress;
+    }
+
+    auto commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     uint32_t maxOnDeviceQueueSize = pDevice->getDeviceInfo().queueOnDeviceMaxSize;
     uint32_t maxOnDeviceQueues = pDevice->getDeviceInfo().maxOnDeviceQueues;
 
-    if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
-        if (!(getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))) {
+    if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
+        if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))) {
             err.set(CL_INVALID_VALUE);
             return commandQueue;
         }
     }
 
-    if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
-        if (!(getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE))) {
+    if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE_DEFAULT)) {
+        if (!(commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE))) {
             err.set(CL_INVALID_VALUE);
             return commandQueue;
         }
-    } else if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
+    } else if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if ((maxOnDeviceQueues == 0) || ((maxOnDeviceQueues == 1) && pContext->getDefaultDeviceQueue())) {
             err.set(CL_OUT_OF_RESOURCES);
             return commandQueue;
@@ -3535,22 +3550,21 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         return commandQueue;
     }
 
-    if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
+    if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR)) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
             return commandQueue;
         }
     }
 
-    if (getCmdQueueProperties<cl_command_queue_properties>(properties) & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
+    if (commandQueueProperties & static_cast<cl_command_queue_properties>(CL_QUEUE_ON_DEVICE)) {
         if (getCmdQueueProperties<cl_queue_throttle_khr>(properties, CL_QUEUE_THROTTLE_KHR)) {
             err.set(CL_INVALID_QUEUE_PROPERTIES);
             return commandQueue;
         }
     }
 
-    auto maskedFlags = getCmdQueueProperties<cl_command_queue_properties>(properties) &
-                       minimumCreateDeviceQueueFlags;
+    auto maskedFlags = commandQueueProperties & minimumCreateDeviceQueueFlags;
 
     if (maskedFlags == minimumCreateDeviceQueueFlags) {
         commandQueue = DeviceQueue::create(

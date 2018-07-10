@@ -332,6 +332,30 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithMedPriority
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidPropertiesWhenQueueIsCreatedThenReturnError) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties properties = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    auto commandQueue = clCreateCommandQueueWithProperties(pContext, devices[0], &properties, &retVal);
+    EXPECT_EQ(nullptr, commandQueue);
+    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidPropertiesOnSubsequentTokenWhenQueueIsCreatedThenReturnError) {
+    cl_int retVal = CL_SUCCESS;
+    cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_DEVICE_PARTITION_EQUALLY, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    auto commandQueue = clCreateCommandQueueWithProperties(pContext, devices[0], properties, &retVal);
+    EXPECT_EQ(nullptr, commandQueue);
+    EXPECT_EQ(retVal, CL_INVALID_VALUE);
+}
+
+TEST_F(clCreateCommandQueueWithPropertiesApi, givenNullPropertiesWhenQueueIsCreatedThenReturnSuccess) {
+    cl_int retVal = CL_SUCCESS;
+    auto commandQueue = clCreateCommandQueueWithProperties(pContext, devices[0], nullptr, &retVal);
+    EXPECT_NE(nullptr, commandQueue);
+    EXPECT_EQ(retVal, CL_SUCCESS);
+    clReleaseCommandQueue(commandQueue);
+}
+
 TEST_F(clCreateCommandQueueWithPropertiesApi, returnSuccessOnQueueWithPriority) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
