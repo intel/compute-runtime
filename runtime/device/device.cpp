@@ -78,10 +78,10 @@ bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
 
-Device::Device(const HardwareInfo &hwInfo)
+Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
     : memoryManager(nullptr), enabledClVersion(false), hwInfo(hwInfo), commandStreamReceiver(nullptr),
       tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
-      osTime(nullptr), slmWindowStartAddress(nullptr) {
+      osTime(nullptr), slmWindowStartAddress(nullptr), executionEnvironment(executionEnvironment) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
@@ -96,6 +96,7 @@ Device::Device(const HardwareInfo &hwInfo)
         bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
+    this->executionEnvironment->incRefInternal();
 }
 
 Device::~Device() {
@@ -128,9 +129,7 @@ Device::~Device() {
     tagAllocation = nullptr;
     delete memoryManager;
     memoryManager = nullptr;
-    if (executionEnvironment) {
-        executionEnvironment->decRefInternal();
-    }
+    executionEnvironment->decRefInternal();
 }
 
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
@@ -284,9 +283,5 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 
 bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
-}
-void Device::connectToExecutionEnvironment(ExecutionEnvironment *executionEnvironment) {
-    executionEnvironment->incRefInternal();
-    this->executionEnvironment = executionEnvironment;
 }
 } // namespace OCLRT

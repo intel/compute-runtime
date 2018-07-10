@@ -127,8 +127,8 @@ TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUs
 }
 
 struct SmallMockDevice : public Device {
-    SmallMockDevice(const HardwareInfo &hwInfo)
-        : Device(hwInfo) {}
+    SmallMockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
+        : Device(hwInfo, executionEnvironment) {}
     GraphicsAllocation *peekTagAllocation() { return this->tagAllocation; }
 };
 

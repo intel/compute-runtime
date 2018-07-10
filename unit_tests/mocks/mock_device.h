@@ -50,6 +50,7 @@ class MockDevice : public Device {
         return this->slmWindowStartAddress;
     }
     MockDevice(const HardwareInfo &hwInfo);
+    MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
 
     DeviceInfo *getDeviceInfoToModify() {
         return &this->deviceInfo;
@@ -102,8 +103,7 @@ class MockDevice : public Device {
     static T *createWithMemoryManager(const HardwareInfo *pHwInfo,
                                       MemoryManager *memManager) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo);
-        device->connectToExecutionEnvironment(new ExecutionEnvironment);
+        T *device = new T(*pHwInfo, new ExecutionEnvironment);
         if (memManager) {
             device->setMemoryManager(memManager);
         }
@@ -203,29 +203,29 @@ class FailMemoryManager : public MockMemoryManager {
 
 class FailDevice : public Device {
   public:
-    FailDevice(const HardwareInfo &hwInfo)
-        : Device(hwInfo) {
+    FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
+        : Device(hwInfo, executionEnvironment) {
         memoryManager = new FailMemoryManager;
     }
 };
 
 class FailDeviceAfterOne : public Device {
   public:
-    FailDeviceAfterOne(const HardwareInfo &hwInfo)
-        : Device(hwInfo) {
+    FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
+        : Device(hwInfo, executionEnvironment) {
         memoryManager = new FailMemoryManager(1);
     }
 };
 
 class MockAlignedMallocManagerDevice : public MockDevice {
   public:
-    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo);
+    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
 };
 
 template <typename T = SourceLevelDebugger>
 class MockDeviceWithSourceLevelDebugger : public MockDevice {
   public:
-    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo) : MockDevice(hwInfo) {
+    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
         T *sourceLevelDebuggerCreated = new T(nullptr);
         sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }

@@ -55,8 +55,7 @@ class Device : public BaseObject<_cl_device_id> {
     template <typename T>
     static T *create(const HardwareInfo *pHwInfo, ExecutionEnvironment *execEnv) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo);
-        device->connectToExecutionEnvironment(execEnv);
+        T *device = new T(*pHwInfo, execEnv);
         if (false == createDeviceImpl(pHwInfo, *device)) {
             delete device;
             return nullptr;
@@ -138,11 +137,10 @@ class Device : public BaseObject<_cl_device_id> {
     bool getEnabled64kbPages();
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return sourceLevelDebugger.get(); }
-    void connectToExecutionEnvironment(ExecutionEnvironment *executionEnvironment);
 
   protected:
     Device() = delete;
-    Device(const HardwareInfo &hwInfo);
+    Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
 
     static bool createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice);
     static const HardwareInfo *getDeviceInitHwInfo(const HardwareInfo *pHwInfoIn);
