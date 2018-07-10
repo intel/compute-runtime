@@ -41,6 +41,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     //With statefull messages we have an allocation cap of 4GB
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
     caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
+    caps->isStatelesToStatefullWithOffsetSupported = true;
 }
 
 template <typename Family>
@@ -56,4 +57,5 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     }
     return SipKernelType::DbgCsr;
 }
+
 } // namespace OCLRT

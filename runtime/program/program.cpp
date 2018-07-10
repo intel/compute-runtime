@@ -25,6 +25,7 @@
 #include "runtime/context/context.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/string.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 
@@ -88,10 +89,17 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";
         }
         kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
-    }
 
-    if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get()) {
-        internalOptions += "-cl-intel-has-buffer-offset-arg ";
+        HardwareCapabilities hwCaps = {0};
+        HwHelper::get(pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily).setupHardwareCapabilities(&hwCaps);
+        auto enableStatelessToStatefullWithOffset = hwCaps.isStatelesToStatefullWithOffsetSupported;
+        if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
+            enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+        }
+
+        if (enableStatelessToStatefullWithOffset) {
+            internalOptions += "-cl-intel-has-buffer-offset-arg ";
+        }
     }
 
     internalOptions += "-fpreserve-vec3-type ";

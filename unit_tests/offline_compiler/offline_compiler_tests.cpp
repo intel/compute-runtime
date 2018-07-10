@@ -27,6 +27,7 @@
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "gmock/gmock.h"
 
 #include <algorithm>
@@ -362,22 +363,16 @@ TEST(OfflineCompilerTest, parseCmdLine) {
     delete mockOfflineCompiler;
 }
 
-TEST(OfflineCompilerTest, parseDebugSettings) {
-    MockOfflineCompiler *mockOfflineCompiler = new MockOfflineCompiler();
-    ASSERT_NE(nullptr, mockOfflineCompiler);
+TEST(OfflineCompilerTest, givenStatelessToStatefullOptimizationEnabledWhenDebugSettingsAreParsedThenOptimizationStringIsPresent) {
+    DebugManagerStateRestore stateRestore;
+    MockOfflineCompiler mockOfflineCompiler;
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
 
-    bool isBufferOffsetOpt = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get();
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(true);
+    mockOfflineCompiler.parseDebugSettings();
 
-    mockOfflineCompiler->parseDebugSettings();
-
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(isBufferOffsetOpt);
-
-    std::string internalOptions = mockOfflineCompiler->getInternalOptions();
+    std::string internalOptions = mockOfflineCompiler.getInternalOptions();
     size_t found = internalOptions.find("-cl-intel-has-buffer-offset-arg");
     EXPECT_NE(std::string::npos, found);
-
-    delete mockOfflineCompiler;
 }
 
 TEST(OfflineCompilerTest, getStringWithinDelimiters) {

@@ -26,6 +26,7 @@
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hash.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
@@ -1866,15 +1867,26 @@ TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsWhenForcing32B
 
 TEST_F(ProgramTests, BuiltinProgramCreateSetsProperInternalOptionsEnablingStatelessToStatefulBufferOffsetOptimization) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(true);
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(1);
+    cl_int errorCode = CL_SUCCESS;
+    const char programSource[] = "program";
+    const char *programPointer = programSource;
+    const char **programSources = reinterpret_cast<const char **>(&programPointer);
+    size_t length = sizeof(programSource);
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
+
     EXPECT_THAT(pProgram->getInternalOptions(), testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg ")));
 }
 
 TEST_F(ProgramTests, givenStatelessToStatefullOptimizationOffWHenProgramIsCreatedThenOptimizationStringIsNotPresent) {
     DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(false);
-    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>("", pContext, *pDevice, true, nullptr));
+    DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
+    cl_int errorCode = CL_SUCCESS;
+    const char programSource[] = "program";
+    const char *programPointer = programSource;
+    const char **programSources = reinterpret_cast<const char **>(&programPointer);
+    size_t length = sizeof(programSource);
+    std::unique_ptr<MockProgram> pProgram(Program::create<MockProgram>(pContext, 1u, programSources, &length, errorCode));
     EXPECT_THAT(pProgram->getInternalOptions(), Not(testing::HasSubstr(std::string("-cl-intel-has-buffer-offset-arg "))));
 }
 
@@ -2659,11 +2671,18 @@ TEST_F(Program32BitTests, givenDeviceWhenProgramIsCreatedThenProgramCountInDevic
     EXPECT_EQ(1u, device->getProgramCount());
 }
 
-TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizationIsDisabled) {
-    MockProgram prog;
+TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizationIsMatchingThePlatformEnablingStatus) {
+    MockProgram prog(pContext, false);
     auto &internalOpts = prog.getInternalOptions();
     auto it = internalOpts.find("-cl-intel-has-buffer-offset-arg ");
-    EXPECT_NE(std::string::npos, it);
+
+    HardwareCapabilities hwCaps = {0};
+    HwHelper::get(prog.getDevice(0).getHardwareInfo().pPlatform->eRenderCoreFamily).setupHardwareCapabilities(&hwCaps);
+    if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
+        EXPECT_NE(std::string::npos, it);
+    } else {
+        EXPECT_EQ(std::string::npos, it);
+    }
 }
 
 template <int32_t ErrCodeToReturn, bool spirv = true>

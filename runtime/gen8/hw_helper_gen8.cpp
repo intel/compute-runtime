@@ -42,6 +42,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     caps->image3DMaxHeight = 2048;
     caps->image3DMaxWidth = 2048;
     caps->maxMemAllocSize = 2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte;
+    caps->isStatelesToStatefullWithOffsetSupported = false;
 }
 
 template class HwHelperHw<Family>;
