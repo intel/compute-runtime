@@ -86,14 +86,12 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
     Gmm *gmm = graphicsAllocation ? graphicsAllocation->gmm : nullptr;
 
     if (gmm && gmm->isRenderCompressed) {
+        // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
         surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-        surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
-                                                     gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
     } else {
         surfaceState->setCoherencyType(RENDER_SURFACE_STATE::COHERENCY_TYPE_IA_COHERENT);
         surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE);
-        surfaceState->setAuxiliarySurfaceBaseAddress(0);
     }
 }
 } // namespace OCLRT

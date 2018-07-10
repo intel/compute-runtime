@@ -586,16 +586,9 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
     image->setMcsAllocation(mcsAlloc);
     cl_mem memObj = image.get();
 
-    uint32_t expectedRenderAuxPitchTiles = 30;
-    uint32_t expectedAuxQPitch = 60;
-    uint64_t expectedAuxSurfaceOffset = 0x10000;
-
     auto mockMcsGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(mcsAlloc->gmm->gmmResourceInfo.get());
     mockMcsGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_TRUE(mcsAlloc->gmm->unifiedAuxTranslationCapable());
-    EXPECT_CALL(*mockMcsGmmResInfo, getRenderAuxPitchTiles()).Times(1).WillOnce(Return(expectedRenderAuxPitchTiles));
-    EXPECT_CALL(*mockMcsGmmResInfo, getAuxQPitch()).Times(1).WillOnce(Return(expectedAuxQPitch));
-    EXPECT_CALL(*mockMcsGmmResInfo, getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS)).Times(1).WillOnce(Return(expectedAuxSurfaceOffset));
 
     retVal = clSetKernelArg(pKernel, 0, sizeof(memObj), &memObj);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -604,9 +597,9 @@ HWTEST_F(ImageSetArgTest, givenMcsAllocationWhenSetArgIsCalledWithUnifiedAuxCapa
                                                                                  pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     EXPECT_TRUE(surfaceState->getAuxiliarySurfaceMode() == AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    EXPECT_EQ(expectedRenderAuxPitchTiles, surfaceState->getAuxiliarySurfacePitch());
-    EXPECT_EQ(expectedAuxQPitch, surfaceState->getAuxiliarySurfaceQpitch());
-    EXPECT_EQ(surfaceState->getSurfaceBaseAddress() + expectedAuxSurfaceOffset, surfaceState->getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(1u, surfaceState->getAuxiliarySurfacePitch());
+    EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(0u, surfaceState->getAuxiliarySurfaceBaseAddress());
 }
 
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage1Dbuffer) {
@@ -722,24 +715,14 @@ HWTEST_F(ImageSetArgTest, givenRenderCompressedResourceWhenSettingImgArgThenSetC
 
     auto surfaceState = RENDER_SURFACE_STATE::sInit();
 
-    auto gmm = srcImage->getGraphicsAllocation()->gmm;
-    auto mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
-    gmm->isRenderCompressed = true;
-
-    uint32_t expectedRenderAuxPitchTiles = 30;
-    uint32_t expectedAuxQPitch = 60;
-    uint64_t expectedAuxSurfaceOffset = 0x10000;
-
-    EXPECT_CALL(*mockGmmResInfo, getRenderAuxPitchTiles()).Times(1).WillRepeatedly(Return(expectedRenderAuxPitchTiles));
-    EXPECT_CALL(*mockGmmResInfo, getAuxQPitch()).Times(1).WillRepeatedly(Return(expectedAuxQPitch));
-    EXPECT_CALL(*mockGmmResInfo, getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS)).Times(1).WillRepeatedly(Return(expectedAuxSurfaceOffset));
+    srcImage->getGraphicsAllocation()->gmm->isRenderCompressed = true;
 
     srcImage->setImageArg(&surfaceState, false, 0);
 
     EXPECT_TRUE(surfaceState.getAuxiliarySurfaceMode() == AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    EXPECT_EQ(expectedRenderAuxPitchTiles, surfaceState.getAuxiliarySurfacePitch());
-    EXPECT_EQ(expectedAuxQPitch, surfaceState.getAuxiliarySurfaceQpitch());
-    EXPECT_EQ(surfaceState.getSurfaceBaseAddress() + expectedAuxSurfaceOffset, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(1u, surfaceState.getAuxiliarySurfacePitch());
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceQpitch());
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
 }
 
 HWTEST_F(ImageSetArgTest, givenNonRenderCompressedResourceWhenSettingImgArgThenDontSetAuxParams) {

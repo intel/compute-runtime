@@ -199,11 +199,8 @@ void ImageHw<GfxFamily>::setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfa
 
 template <typename GfxFamily>
 void ImageHw<GfxFamily>::setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm) {
+    // Its expected to not program pitch/qpitch/baseAddress for Aux surface in CCS scenarios
     surfaceState->setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
-    surfaceState->setAuxiliarySurfacePitch(std::max(gmm->gmmResourceInfo->getRenderAuxPitchTiles(), 1u));
-    surfaceState->setAuxiliarySurfaceQpitch(gmm->gmmResourceInfo->getAuxQPitch());
-    surfaceState->setAuxiliarySurfaceBaseAddress(surfaceState->getSurfaceBaseAddress() +
-                                                 gmm->gmmResourceInfo->getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS));
 }
 
 template <typename GfxFamily>

@@ -1005,16 +1005,9 @@ HWTEST_F(BufferSetSurfaceTests, givenRenderCompressedGmmResourceWhenSurfaceState
     buffer->getGraphicsAllocation()->gmm = gmm;
     gmm->isRenderCompressed = true;
 
-    auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
-    uint64_t controlOffset = 0x10000;
-    EXPECT_CALL(*resourceInfo, getUnifiedAuxSurfaceOffset(GMM_UNIFIED_AUX_TYPE::GMM_AUX_CCS)).Times(1).WillOnce(::testing::Return(controlOffset));
-
     buffer->setArgStateful(&surfaceState);
 
-    auto baseAddress = surfaceState.getSurfaceBaseAddress();
-    EXPECT_NE(0u, baseAddress);
-
-    EXPECT_EQ(baseAddress + controlOffset, surfaceState.getAuxiliarySurfaceBaseAddress());
+    EXPECT_EQ(0u, surfaceState.getAuxiliarySurfaceBaseAddress());
     EXPECT_TRUE(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState.getAuxiliarySurfaceMode());
     EXPECT_TRUE(RENDER_SURFACE_STATE::COHERENCY_TYPE_GPU_COHERENT == surfaceState.getCoherencyType());
 }
