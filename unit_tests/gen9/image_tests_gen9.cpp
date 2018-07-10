@@ -74,3 +74,18 @@ GEN9TEST_F(gen9ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLev
     EXPECT_EQ(image->getHostPtrRowPitch(), rowPitch);
     EXPECT_EQ(image->getHostPtrSlicePitch(), slicePitch);
 }
+
+GEN9TEST_F(gen9ImageTests, givenImageForGen9WhenClearColorParametersAreSetThenSurfaceStateIsNotModified) {
+    typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
+    MockContext context;
+    auto image = std::unique_ptr<Image>(ImageHelper<Image1dDefaults>::create(&context));
+    auto surfaceStateBefore = RENDER_SURFACE_STATE::sInit();
+    auto surfaceStateAfter = RENDER_SURFACE_STATE::sInit();
+    auto imageHw = static_cast<ImageHw<FamilyType> *>(image.get());
+
+    EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
+
+    imageHw->setClearColorParams(&surfaceStateAfter, imageHw->getGraphicsAllocation()->gmm);
+
+    EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
+}

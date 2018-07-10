@@ -279,6 +279,7 @@ class ImageHw : public Image {
     void setImageArg(void *memory, bool setAsMediaBlockImage, uint32_t mipLevel) override;
     void setAuxParamsForMultisamples(RENDER_SURFACE_STATE *surfaceState);
     void setAuxParamsForCCS(RENDER_SURFACE_STATE *surfaceState, Gmm *gmm);
+    MOCKABLE_VIRTUAL void setClearColorParams(RENDER_SURFACE_STATE *surfaceState, const Gmm *gmm);
     void setMediaImageArg(void *memory) override;
     void setMediaSurfaceRotation(void *memory) override;
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override;
