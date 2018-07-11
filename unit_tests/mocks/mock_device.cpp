@@ -36,14 +36,13 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
 
 OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
     : Device(hwInfo, executionEnvironment) {
-    memoryManager = new OsAgnosticMemoryManager;
+    this->executionEnvironment->memoryManager.reset(new OsAgnosticMemoryManager);
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
 }
 
 void MockDevice::setMemoryManager(MemoryManager *memoryManager) {
-    delete this->memoryManager;
-    this->memoryManager = memoryManager;
+    executionEnvironment->memoryManager.reset(memoryManager);
 }
 
 void MockDevice::setOSTime(OSTime *osTime) {
@@ -67,10 +66,10 @@ void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceiver.reset(newCsr);
-    executionEnvironment->commandStreamReceiver->setMemoryManager(memoryManager);
+    executionEnvironment->commandStreamReceiver->setMemoryManager(executionEnvironment->memoryManager.get());
     executionEnvironment->commandStreamReceiver->setTagAllocation(tagAllocation);
     executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
-    memoryManager->csr = executionEnvironment->commandStreamReceiver.get();
+    executionEnvironment->memoryManager->csr = executionEnvironment->commandStreamReceiver.get();
 }
 
 OCLRT::FailMemoryManager::FailMemoryManager() : MockMemoryManager() {
@@ -85,8 +84,5 @@ OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MockMemoryManager() 
 }
 
 MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
-    //delete regular OsAgnosticMemoryManager
-    delete memoryManager;
-    //and create specific
-    memoryManager = new MockAllocSysMemAgnosticMemoryManager();
+    executionEnvironment->memoryManager.reset(new MockAllocSysMemAgnosticMemoryManager());
 }

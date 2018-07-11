@@ -46,9 +46,6 @@ struct OpenCLObjectMapper<_cl_device_id> {
 };
 
 class Device : public BaseObject<_cl_device_id> {
-  protected:
-    MemoryManager *memoryManager;
-
   public:
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
@@ -180,7 +177,7 @@ inline void Device::getCap(const void *&src,
 }
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *(executionEnvironment->commandStreamReceiver.get());
+    return *executionEnvironment->commandStreamReceiver;
 }
 
 inline CommandStreamReceiver *Device::peekCommandStreamReceiver() {
@@ -192,6 +189,6 @@ inline volatile uint32_t *Device::getTagAddress() const {
 }
 
 inline MemoryManager *Device::getMemoryManager() const {
-    return memoryManager;
+    return executionEnvironment->memoryManager.get();
 }
 } // namespace OCLRT

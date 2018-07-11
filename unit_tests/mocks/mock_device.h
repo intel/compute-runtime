@@ -124,7 +124,7 @@ class MockDevice : public Device {
                 size_t requiredSize = hwInfo.capabilityTable.requiredPreemptionSurfaceSize;
                 size_t alignment = 256 * MemoryConstants::kiloByte;
                 bool uncacheable = getWaTable()->waCSRUncachable;
-                this->preemptionAllocation = memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
+                this->preemptionAllocation = executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
                 executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
             }
         }
@@ -204,7 +204,7 @@ class FailDevice : public Device {
   public:
     FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
         : Device(hwInfo, executionEnvironment) {
-        memoryManager = new FailMemoryManager;
+        this->executionEnvironment->memoryManager.reset(new FailMemoryManager);
     }
 };
 
@@ -212,7 +212,7 @@ class FailDeviceAfterOne : public Device {
   public:
     FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
         : Device(hwInfo, executionEnvironment) {
-        memoryManager = new FailMemoryManager(1);
+        this->executionEnvironment->memoryManager.reset(new FailMemoryManager(1));
     }
 };
 

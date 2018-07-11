@@ -79,8 +79,7 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : memoryManager(nullptr), enabledClVersion(false), hwInfo(hwInfo),
-      tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
+    : enabledClVersion(false), hwInfo(hwInfo), tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
       osTime(nullptr), slmWindowStartAddress(nullptr), executionEnvironment(executionEnvironment) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
@@ -102,7 +101,7 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
 Device::~Device() {
     BuiltIns::shutDown();
     CompilerInterface::shutdown();
-    DEBUG_BREAK_IF(nullptr == memoryManager);
+    DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
@@ -115,19 +114,18 @@ Device::~Device() {
         sourceLevelDebugger->notifyDeviceDestruction();
     }
 
-    if (memoryManager) {
+    if (executionEnvironment->memoryManager) {
         if (preemptionAllocation) {
-            memoryManager->freeGraphicsMemory(preemptionAllocation);
+            executionEnvironment->memoryManager->freeGraphicsMemory(preemptionAllocation);
             preemptionAllocation = nullptr;
         }
-        memoryManager->waitForDeletions();
+        executionEnvironment->memoryManager->waitForDeletions();
 
-        memoryManager->freeGraphicsMemory(tagAllocation);
+        executionEnvironment->memoryManager->freeGraphicsMemory(tagAllocation);
         alignedFree(this->slmWindowStartAddress);
     }
     tagAllocation = nullptr;
-    delete memoryManager;
-    memoryManager = nullptr;
+    executionEnvironment->memoryManager.reset(nullptr);
     executionEnvironment->decRefInternal();
 }
 
@@ -140,17 +138,17 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 
     outDevice.executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
 
-    if (!outDevice.memoryManager) {
-        outDevice.memoryManager = commandStreamReceiver->createMemoryManager(outDevice.deviceInfo.enabled64kbPages);
+    if (!outDevice.executionEnvironment->memoryManager) {
+        outDevice.executionEnvironment->memoryManager.reset(commandStreamReceiver->createMemoryManager(outDevice.deviceInfo.enabled64kbPages));
     } else {
-        commandStreamReceiver->setMemoryManager(outDevice.memoryManager);
+        commandStreamReceiver->setMemoryManager(outDevice.executionEnvironment->memoryManager.get());
     }
 
-    DEBUG_BREAK_IF(nullptr == outDevice.memoryManager);
+    DEBUG_BREAK_IF(nullptr == outDevice.executionEnvironment->memoryManager);
 
-    outDevice.memoryManager->csr = commandStreamReceiver;
+    outDevice.executionEnvironment->memoryManager->csr = commandStreamReceiver;
 
-    auto pTagAllocation = outDevice.memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    auto pTagAllocation = outDevice.executionEnvironment->memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     if (!pTagAllocation) {
         return false;
     }
@@ -166,7 +164,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         pDevice->osTime = OSTime::create(commandStreamReceiver->getOSInterface());
     }
     pDevice->driverInfo.reset(DriverInfo::create(commandStreamReceiver->getOSInterface()));
-    pDevice->memoryManager = outDevice.memoryManager;
     pDevice->tagAddress = pTagMemory;
 
     pDevice->initializeCaps();
@@ -188,14 +185,14 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         pDevice->sourceLevelDebugger->notifyNewDevice(deviceHandle);
     }
 
-    outDevice.memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
-    outDevice.memoryManager->device = pDevice;
+    outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
+    outDevice.executionEnvironment->memoryManager->device = pDevice;
 
     if (pDevice->preemptionMode == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
         size_t requiredSize = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;
         size_t alignment = 256 * MemoryConstants::kiloByte;
         bool uncacheable = pDevice->getWaTable()->waCSRUncachable;
-        pDevice->preemptionAllocation = outDevice.memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
+        pDevice->preemptionAllocation = outDevice.executionEnvironment->memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
         if (!pDevice->preemptionAllocation) {
             return false;
         }
@@ -230,7 +227,7 @@ void *Device::getSLMWindowStartAddress() {
 
 void Device::prepareSLMWindow() {
     if (this->slmWindowStartAddress == nullptr) {
-        this->slmWindowStartAddress = memoryManager->allocateSystemMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
+        this->slmWindowStartAddress = executionEnvironment->memoryManager->allocateSystemMemory(MemoryConstants::slmWindowSize, MemoryConstants::slmWindowAlignment);
     }
 }
 

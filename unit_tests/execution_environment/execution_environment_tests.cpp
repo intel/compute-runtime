@@ -77,3 +77,10 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesCommandStrea
     platform.initialize();
     EXPECT_NE(nullptr, executionEnvironment->commandStreamReceiver);
 }
+
+TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
+    Platform platform;
+    auto executionEnvironment = platform.peekExecutionEnvironment();
+    platform.initialize();
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+}

@@ -22,6 +22,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/os_interface/device_factory.h"
 
