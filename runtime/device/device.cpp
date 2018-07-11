@@ -139,7 +139,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     outDevice.executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
 
     if (!outDevice.executionEnvironment->memoryManager) {
-        outDevice.executionEnvironment->memoryManager.reset(commandStreamReceiver->createMemoryManager(outDevice.deviceInfo.enabled64kbPages));
+        outDevice.executionEnvironment->memoryManager.reset(commandStreamReceiver->createMemoryManager(outDevice.getEnabled64kbPages()));
     } else {
         commandStreamReceiver->setMemoryManager(outDevice.executionEnvironment->memoryManager.get());
     }

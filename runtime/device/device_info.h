@@ -149,7 +149,6 @@ struct DeviceInfo {
     bool                         cpuCopyAllowed;
     bool                         packedYuvExtension;
     cl_uint                      internalDriverVersion;
-    bool                         enabled64kbPages;
     bool                         sourceLevelDebuggerActive;
 };
 // clang-format on

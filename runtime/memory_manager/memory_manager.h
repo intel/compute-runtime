@@ -193,6 +193,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
 
+    bool peek64kbPagesEnabled() const { return enable64kbpages; }
     bool peekForce32BitAllocations() { return force32bitAllocations; }
     void setForce32BitAllocations(bool newValue);
 

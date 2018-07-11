@@ -113,7 +113,7 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
     GraphicsAllocation *graphicsAllocation = nullptr;
-    if (enable64kbpages) {
+    if (peek64kbPagesEnabled()) {
         graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false);
     } else {
         graphicsAllocation = allocateGraphicsMemory(size);
@@ -424,7 +424,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (allocationData.hostPtr) {
         return allocateGraphicsMemory(allocationData.size, allocationData.hostPtr, allocationData.flags.forcePin);
     }
-    if (enable64kbpages && allocationData.flags.allow64kbPages) {
+    if (peek64kbPagesEnabled() && allocationData.flags.allow64kbPages) {
         return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin);
     }
     return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);

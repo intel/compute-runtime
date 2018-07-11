@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/memory_manager/svm_memory_manager.h"
 #include "cl_api_tests.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -193,8 +194,10 @@ TEST_F(clSetKernelArgSVMPointer_, SetKernelArgSVMPointerWithOffset_invalidArgVal
     const DeviceInfo &devInfo = pDevice->getDeviceInfo();
     if (devInfo.svmCapabilities != 0) {
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
-        size_t offset = alignUp(512, MemoryConstants::pageSize) + 1;
-        EXPECT_NE(nullptr, ptrSvm);
+        auto svmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        EXPECT_NE(nullptr, svmAlloc);
+
+        size_t offset = svmAlloc->getUnderlyingBufferSize() + 1;
 
         auto retVal = clSetKernelArgSVMPointer(
             pMockKernel,            // cl_kernel kernel

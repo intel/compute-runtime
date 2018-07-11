@@ -351,7 +351,6 @@ void Device::initializeCaps() {
     deviceInfo.platformHostTimerResolution = getPlatformHostTimerResolution();
 
     deviceInfo.internalDriverVersion = CL_DEVICE_DRIVER_VERSION_INTEL_NEO1;
-    deviceInfo.enabled64kbPages = getEnabled64kbPages();
 
     deviceInfo.preferredGlobalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;

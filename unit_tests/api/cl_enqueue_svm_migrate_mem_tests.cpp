@@ -24,6 +24,7 @@
 #include "unit_tests/mocks/mock_context.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/device/device.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
 
 using namespace OCLRT;
 
@@ -108,8 +109,12 @@ TEST_F(clEnqueueSVMMigrateMemTests, invalidValue_NonZeroSizeIsNotContainedWithin
         void *ptrSvm = clSVMAlloc(pContext, CL_MEM_READ_WRITE, 256, 4);
         ASSERT_NE(nullptr, ptrSvm);
 
+        auto svmAlloc = pContext->getSVMAllocsManager()->getSVMAlloc(ptrSvm);
+        EXPECT_NE(nullptr, svmAlloc);
+        size_t allocSize = svmAlloc->getUnderlyingBufferSize();
+
         const void *svmPtrs[] = {ptrSvm};
-        const size_t sizes[] = {256 + 1};
+        const size_t sizes[] = {allocSize + 1};
         auto retVal = clEnqueueSVMMigrateMem(
             pCommandQueue, // cl_command_queue command_queue
             1,             // cl_uint num_svm_pointers

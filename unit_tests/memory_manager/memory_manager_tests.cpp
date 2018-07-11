@@ -25,8 +25,10 @@
 #include "runtime/event/event.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/utilities/tag_allocator.h"
+#include "runtime/os_interface/os_interface.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
+#include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/utilities/containers_tests_helpers.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
 #include "unit_tests/fixtures/memory_manager_fixture.h"
@@ -861,6 +863,26 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocat
     uintptr_t address = reinterpret_cast<uintptr_t>(svmAllocation->getUnderlyingBuffer());
     EXPECT_EQ(0u, (address & MemoryConstants::pageMask));
     memoryManager.freeGraphicsMemory(svmAllocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenDeviceWith64kbPagesEnabledWhenCreatingMemoryManagerThenAllowFor64kbAllocations) {
+    VariableBackup<bool> os64kbPagesEnabled(&OSInterface::osEnabled64kbPages, true);
+
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftr64KBpages = true;
+
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<Device>(&localHwInfo));
+    EXPECT_TRUE(device->getEnabled64kbPages());
+    EXPECT_TRUE(device->getMemoryManager()->peek64kbPagesEnabled());
+}
+
+TEST(OsAgnosticMemoryManager, givenDeviceWith64kbPagesDisbledWhenCreatingMemoryManagerThenDisallowFor64kbAllocations) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftr64KBpages = false;
+
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<Device>(&localHwInfo));
+    EXPECT_FALSE(device->getEnabled64kbPages());
+    EXPECT_FALSE(device->getMemoryManager()->peek64kbPagesEnabled());
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThen64KBGraphicsAllocationIsReturned) {
