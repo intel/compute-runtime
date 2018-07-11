@@ -192,3 +192,20 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     EXPECT_FALSE(device->isSimulation());
 }
+
+TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
+    FeatureTable skuTable = *platformDevices[0]->pSkuTable;
+    skuTable.ftrSimulationMode = true;
+
+    HardwareInfo hwInfo = {platformDevices[0]->pPlatform, &skuTable, platformDevices[0]->pWaTable,
+                           platformDevices[0]->pSysInfo, platformDevices[0]->capabilityTable};
+
+    int32_t defaultHwCsr = CommandStreamReceiverType::CSR_HW;
+    EXPECT_EQ(defaultHwCsr, DebugManager.flags.SetCommandStreamReceiver.get());
+
+    bool simulationFromDeviceId = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
+    EXPECT_FALSE(simulationFromDeviceId);
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
+    EXPECT_TRUE(device->isSimulation());
+}

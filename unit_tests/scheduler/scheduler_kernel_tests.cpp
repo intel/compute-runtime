@@ -79,9 +79,9 @@ class MockSchedulerKernel : public SchedulerKernel {
 
 TEST(SchedulerKernelTest, getLws) {
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     size_t lws = kernel.getLws();
     EXPECT_EQ((size_t)24u, lws);
@@ -89,12 +89,9 @@ TEST(SchedulerKernelTest, getLws) {
 
 TEST(SchedulerKernelTest, getGws) {
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
-    device.setOSTime(new MockOSTime());
-    device.initializeCaps();
-
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     const size_t hwThreads = 3;
     const size_t simdSize = 8;
@@ -108,12 +105,9 @@ TEST(SchedulerKernelTest, getGws) {
 
 TEST(SchedulerKernelTest, setGws) {
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
-    device.setOSTime(new MockOSTime());
-    device.initializeCaps();
-
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     kernel.setGws(24);
 
@@ -124,7 +118,7 @@ TEST(SchedulerKernelTest, setGws) {
 
 TEST(SchedulerKernelTest, getCurbeSize) {
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
     uint32_t crossTrheadDataSize = 32;
     uint32_t dshSize = 48;
@@ -138,14 +132,14 @@ TEST(SchedulerKernelTest, getCurbeSize) {
     info.patchInfo.dataParameterStream = &dataParameterStream;
     info.heapInfo.pKernelHeader = &kernelHeader;
 
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     uint32_t expectedCurbeSize = alignUp(crossTrheadDataSize, 64) + alignUp(dshSize, 64) + alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
 }
 
 TEST(SchedulerKernelTest, setArgsForSchedulerKernel) {
-    unique_ptr<MockDevice> device = unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     MockProgram program;
     program.setDevice(device.get());
 
@@ -172,7 +166,7 @@ TEST(SchedulerKernelTest, setArgsForSchedulerKernel) {
 }
 
 TEST(SchedulerKernelTest, setArgsForSchedulerKernelWithNullDebugQueue) {
-    unique_ptr<MockDevice> device = unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     MockProgram program;
     program.setDevice(device.get());
 
@@ -202,7 +196,7 @@ TEST(SchedulerKernelTest, createKernelReflectionForForcedSchedulerDispatch) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(true);
-    unique_ptr<MockDevice> device = unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     MockProgram program;
     program.setDevice(device.get());
 
@@ -217,7 +211,7 @@ TEST(SchedulerKernelTest, createKernelReflectionSecondTimeForForcedSchedulerDisp
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(true);
-    unique_ptr<MockDevice> device = unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     MockProgram program;
     program.setDevice(device.get());
 
@@ -236,7 +230,7 @@ TEST(SchedulerKernelTest, createKernelReflectionForSchedulerDoesNothing) {
     DebugManagerStateRestore dbgRestorer;
 
     DebugManager.flags.ForceDispatchScheduler.set(false);
-    unique_ptr<MockDevice> device = unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     MockProgram program;
     program.setDevice(device.get());
 
@@ -249,13 +243,13 @@ TEST(SchedulerKernelTest, createKernelReflectionForSchedulerDoesNothing) {
 
 TEST(SchedulerKernelTest, getCurbeSizeWithNullKernelInfo) {
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
 
     info.patchInfo.dataParameterStream = nullptr;
     info.heapInfo.pKernelHeader = nullptr;
 
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
     uint32_t expectedCurbeSize = alignUp(SCHEDULER_DYNAMIC_PAYLOAD_SIZE, 64);
     EXPECT_GE((size_t)expectedCurbeSize, kernel.getCurbeSize());
@@ -266,10 +260,43 @@ TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableWhenSchedulerKer
     DebugManager.flags.SchedulerGWS.set(48);
 
     MockProgram program;
-    MockDevice device(*platformDevices[0]);
+    auto device = unique_ptr<MockDevice>(DeviceHelper<>::create());
     KernelInfo info;
-    MockSchedulerKernel kernel(&program, info, device);
+    MockSchedulerKernel kernel(&program, info, *device);
 
+    size_t gws = kernel.getGws();
+    EXPECT_EQ(static_cast<size_t>(48u), gws);
+}
+
+TEST(SchedulerKernelTest, givenSimulationModeWhenSchedulerKernelIsCreatedThenGwsIsSetToOneWorkgroup) {
+    MockProgram program;
+    FeatureTable skuTable = *platformDevices[0]->pSkuTable;
+    skuTable.ftrSimulationMode = true;
+    HardwareInfo hwInfo = {platformDevices[0]->pPlatform, &skuTable, platformDevices[0]->pWaTable,
+                           platformDevices[0]->pSysInfo, platformDevices[0]->capabilityTable};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
+
+    KernelInfo info;
+    MockSchedulerKernel kernel(&program, info, *device);
+    size_t gws = kernel.getGws();
+    EXPECT_EQ(static_cast<size_t>(24u), gws);
+}
+
+TEST(SchedulerKernelTest, givenForcedSchedulerGwsByDebugVariableAndSimulationModeWhenSchedulerKernelIsCreatedThenGwsIsSetToForcedValue) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.SchedulerGWS.set(48);
+
+    MockProgram program;
+    FeatureTable skuTable = *platformDevices[0]->pSkuTable;
+    skuTable.ftrSimulationMode = true;
+    HardwareInfo hwInfo = {platformDevices[0]->pPlatform, &skuTable, platformDevices[0]->pWaTable,
+                           platformDevices[0]->pSysInfo, platformDevices[0]->capabilityTable};
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(&hwInfo));
+
+    KernelInfo info;
+    MockSchedulerKernel kernel(&program, info, *device);
     size_t gws = kernel.getGws();
     EXPECT_EQ(static_cast<size_t>(48u), gws);
 }

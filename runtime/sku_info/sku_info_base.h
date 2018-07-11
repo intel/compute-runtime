@@ -97,6 +97,7 @@ struct FeatureTableBase {
     bool ftrWddmHwQueues = false;
 
     bool ftrKmdDaf = false;
+    bool ftrSimulationMode = false;
 };
 
 struct WorkaroundTableBase {

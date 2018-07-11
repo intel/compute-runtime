@@ -62,8 +62,11 @@ void SchedulerKernel::computeGws() {
     wkgsPerSubSlice = std::min(wkgsPerSubSlice, helper.getMaxBarrierRegisterPerSlice());
     gws = wkgsPerSubSlice * hwInfo.pSysInfo->SubSliceCount * PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
 
+    if (device.isSimulation()) {
+        gws = PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20;
+    }
     if (DebugManager.flags.SchedulerGWS.get() != 0) {
-        DEBUG_BREAK_IF(DebugManager.flags.SchedulerGWS.get() % 24 != 0);
+        DEBUG_BREAK_IF(DebugManager.flags.SchedulerGWS.get() % (PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20) != 0);
         gws = DebugManager.flags.SchedulerGWS.get();
     }
 }

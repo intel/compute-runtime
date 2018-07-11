@@ -262,9 +262,12 @@ unique_ptr_if_unused<Device> Device::release() {
     return unique_ptr_if_unused<Device>(this, false);
 }
 
-bool Device::isSimulation() {
+bool Device::isSimulation() const {
     bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
     if (executionEnvironment->commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+        simulation = true;
+    }
+    if (hwInfo.pSkuTable->ftrSimulationMode) {
         simulation = true;
     }
     return simulation;

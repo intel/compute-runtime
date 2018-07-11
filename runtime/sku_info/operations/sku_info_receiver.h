@@ -106,6 +106,7 @@ class SkuInfoReceiver {
         RECEIVE_FTR(Wddm2_1_64kbPages);
 
         RECEIVE_FTR(KmdDaf);
+        RECEIVE_FTR(SimulationMode);
 #undef RECEIVE_FTR
     }
 

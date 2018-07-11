@@ -129,6 +129,7 @@ struct SkuInfoBaseReference {
         refFtrTable.ftrWddm2_1_64kbPages = true;
 
         refFtrTable.ftrKmdDaf = true;
+        refFtrTable.ftrSimulationMode = true;
     }
 
     static void fillReferenceWaToReceive(WorkaroundTable &refWaTable) {

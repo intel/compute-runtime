@@ -123,7 +123,7 @@ class Device : public BaseObject<_cl_device_id> {
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
     double getPlatformHostTimerResolution() const;
-    bool isSimulation();
+    bool isSimulation() const;
     void checkPriorityHints();
     GFXCORE_FAMILY getRenderCoreFamily() const;
     PerformanceCounters *getPerformanceCounters() { return performanceCounters.get(); }
