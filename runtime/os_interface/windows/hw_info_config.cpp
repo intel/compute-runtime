@@ -66,7 +66,7 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
     // Product specific config
     int ret = configureHardwareCustom(outHwInfo, osIface);
     if (ret != 0) {
-        memset(outHwInfo, 0, sizeof(HardwareInfo));
+        outHwInfo = {};
     }
     return ret;
 }
