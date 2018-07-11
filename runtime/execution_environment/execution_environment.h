@@ -24,12 +24,14 @@
 
 namespace OCLRT {
 class GmmHelper;
+class CommandStreamReceiver;
 struct HardwareInfo;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   public:
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
     void initGmm(const HardwareInfo *hwInfo);
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
 
   protected:
     std::unique_ptr<GmmHelper> gmmHelper;

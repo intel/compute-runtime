@@ -79,7 +79,7 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : memoryManager(nullptr), enabledClVersion(false), hwInfo(hwInfo), commandStreamReceiver(nullptr),
+    : memoryManager(nullptr), enabledClVersion(false), hwInfo(hwInfo),
       tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
       osTime(nullptr), slmWindowStartAddress(nullptr), executionEnvironment(executionEnvironment) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
@@ -106,10 +106,9 @@ Device::~Device() {
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
-    if (commandStreamReceiver) {
-        commandStreamReceiver->flushBatchedSubmissions();
-        delete commandStreamReceiver;
-        commandStreamReceiver = nullptr;
+    if (executionEnvironment->commandStreamReceiver) {
+        executionEnvironment->commandStreamReceiver->flushBatchedSubmissions();
+        executionEnvironment->commandStreamReceiver.reset(nullptr);
     }
 
     if (deviceInfo.sourceLevelDebuggerActive && sourceLevelDebugger) {
@@ -139,7 +138,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         return false;
     }
 
-    outDevice.commandStreamReceiver = commandStreamReceiver;
+    outDevice.executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
 
     if (!outDevice.memoryManager) {
         outDevice.memoryManager = commandStreamReceiver->createMemoryManager(outDevice.deviceInfo.enabled64kbPages);
@@ -265,7 +264,7 @@ unique_ptr_if_unused<Device> Device::release() {
 
 bool Device::isSimulation() {
     bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
-    if (commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+    if (executionEnvironment->commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
         simulation = true;
     }
     return simulation;

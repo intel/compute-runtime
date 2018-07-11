@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/api/cl_types.h"
 #include "runtime/device/device_info_map.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/engine_node.h"
@@ -38,7 +39,6 @@ class OSTime;
 class DriverInfo;
 struct HardwareInfo;
 class SourceLevelDebugger;
-class ExecutionEnvironment;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -153,8 +153,6 @@ class Device : public BaseObject<_cl_device_id> {
     const HardwareInfo &hwInfo;
     DeviceInfo deviceInfo;
 
-    CommandStreamReceiver *commandStreamReceiver;
-
     volatile uint32_t *tagAddress;
     GraphicsAllocation *tagAllocation;
     GraphicsAllocation *preemptionAllocation;
@@ -182,11 +180,11 @@ inline void Device::getCap(const void *&src,
 }
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *commandStreamReceiver;
+    return *(executionEnvironment->commandStreamReceiver.get());
 }
 
 inline CommandStreamReceiver *Device::peekCommandStreamReceiver() {
-    return commandStreamReceiver;
+    return executionEnvironment->commandStreamReceiver.get();
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {

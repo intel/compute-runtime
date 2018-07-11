@@ -59,21 +59,18 @@ bool MockDevice::hasDriverInfo() {
 };
 
 void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
-    memoryManager->setCommandStreamReceiver(commandStreamReceiver);
-    commandStreamReceiver->setMemoryManager(memoryManager);
+    memoryManager->setCommandStreamReceiver(executionEnvironment->commandStreamReceiver.get());
+    executionEnvironment->commandStreamReceiver->setMemoryManager(memoryManager);
     setMemoryManager(memoryManager);
     memoryManager->setDevice(this);
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
-    if (commandStreamReceiver) {
-        delete commandStreamReceiver;
-    }
-    commandStreamReceiver = newCsr;
-    commandStreamReceiver->setMemoryManager(memoryManager);
-    commandStreamReceiver->setTagAllocation(tagAllocation);
-    commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
-    memoryManager->csr = commandStreamReceiver;
+    executionEnvironment->commandStreamReceiver.reset(newCsr);
+    executionEnvironment->commandStreamReceiver->setMemoryManager(memoryManager);
+    executionEnvironment->commandStreamReceiver->setTagAllocation(tagAllocation);
+    executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+    memoryManager->csr = executionEnvironment->commandStreamReceiver.get();
 }
 
 OCLRT::FailMemoryManager::FailMemoryManager() : MockMemoryManager() {

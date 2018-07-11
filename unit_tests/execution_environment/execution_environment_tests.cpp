@@ -70,3 +70,10 @@ TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroye
 
     device->decRefInternal();
 }
+
+TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesCommandStreamReceiverInExecutionEnvironment) {
+    Platform platform;
+    auto executionEnvironment = platform.peekExecutionEnvironment();
+    platform.initialize();
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceiver);
+}

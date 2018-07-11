@@ -36,8 +36,8 @@ class MockMemoryManager;
 
 class MockDevice : public Device {
   public:
-    using Device::commandStreamReceiver;
     using Device::createDeviceImpl;
+    using Device::executionEnvironment;
     using Device::initializeCaps;
     using Device::sourceLevelDebugger;
 
@@ -125,8 +125,7 @@ class MockDevice : public Device {
                 size_t alignment = 256 * MemoryConstants::kiloByte;
                 bool uncacheable = getWaTable()->waCSRUncachable;
                 this->preemptionAllocation = memoryManager->allocateGraphicsMemory(requiredSize, alignment, false, uncacheable);
-
-                commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
+                executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
             }
         }
     }
