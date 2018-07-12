@@ -2027,7 +2027,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpu
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(1).WillOnce(Invoke([&](const GMM_DDI_UPDATEAUXTABLE *arg) {givenDdiUpdateAuxTable = *arg; return GMM_SUCCESS; }));
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
     ASSERT_TRUE(result);
     EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
 
@@ -2088,7 +2088,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenMapped
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
     ASSERT_TRUE(result);
 }
 
@@ -2099,7 +2099,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenFailingAllocationWhenMappedGpuVaThenRet
     WddmMock wddm;
     EXPECT_TRUE(wddm.init<FamilyType>());
 
-    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, 3, gpuVa, false, false, false);
+    auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), 0, nullptr, gpuVa, false, false, false);
     ASSERT_FALSE(result);
 }
 
@@ -2122,7 +2122,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUn
 
     EXPECT_CALL(*mockMngr, updateAuxTable(_)).Times(0);
 
-    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, 3, gpuVa, false, false, false);
+    auto result = wddm->mapGpuVirtualAddressImpl(myGmm, ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
     EXPECT_TRUE(result);
     memoryManager.freeGraphicsMemory(wddmAlloc);
 }

@@ -344,25 +344,26 @@ bool Wddm::makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFur
     return success;
 }
 
-bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, uint64_t size, bool allocation32bit, bool use64kbPages, bool useHeap1) {
+bool Wddm::mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1) {
     void *mapPtr = allocation->getReservedAddress() != nullptr ? allocation->getReservedAddress() : cpuPtr;
-    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, size, allocation->gpuPtr, allocation32bit, use64kbPages, useHeap1);
+    return mapGpuVirtualAddressImpl(allocation->gmm, allocation->handle, mapPtr, allocation->gpuPtr, allocation32bit, use64kbPages, useHeap1);
 }
 
 bool Wddm::mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages) {
     return mapGpuVirtualAddressImpl(allocationStorageData->osHandleStorage->gmm,
                                     allocationStorageData->osHandleStorage->handle,
                                     const_cast<void *>(allocationStorageData->cpuPtr),
-                                    allocationStorageData->fragmentSize,
                                     allocationStorageData->osHandleStorage->gpuPtr,
                                     allocation32bit, use64kbPages, false);
 }
 
-bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, uint64_t size, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1) {
+bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DDDI_MAPGPUVIRTUALADDRESS MapGPUVA = {0};
     D3DDDIGPUVIRTUALADDRESS_PROTECTION_TYPE protectionType = {{{0}}};
     protectionType.Write = TRUE;
+
+    uint64_t size = static_cast<uint64_t>(gmm->gmmResourceInfo->getSizeAllocation());
 
     MapGPUVA.hPagingQueue = pagingQueue;
     MapGPUVA.hAllocation = handle;

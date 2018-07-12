@@ -95,7 +95,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
 
     wddmAllocation->setAlignedCpuPtr(cpuPtr);
     // 64kb map is not needed
-    auto status = wddm->mapGpuVirtualAddress(wddmAllocation, cpuPtr, sizeAligned, false, false, false);
+    auto status = wddm->mapGpuVirtualAddress(wddmAllocation, cpuPtr, false, false, false);
     DEBUG_BREAK_IF(!status);
     wddmAllocation->setCpuPtrAndGpuAddress(cpuPtr, (uint64_t)wddmAllocation->gpuPtr);
 
@@ -234,7 +234,7 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
         allocation->is32BitAllocation = true;
         allocation->gpuBaseAddress = GmmHelper::canonize(allocator32Bit->getBase());
     }
-    status = wddm->mapGpuVirtualAddress(allocation, ptr, size, is32BitAllocation, false, false);
+    status = wddm->mapGpuVirtualAddress(allocation, ptr, is32BitAllocation, false, false);
     DEBUG_BREAK_IF(!status);
     allocation->setGpuAddress(allocation->gpuPtr);
 
@@ -812,10 +812,10 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, Allocat
         wddmSuccess = wddm->createAllocation(allocation);
     }
     if (wddmSuccess == STATUS_SUCCESS) {
-        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->getAlignedSize(), allocation->is32BitAllocation, false, useHeap1);
+        bool mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->is32BitAllocation, false, useHeap1);
         if (!mapSuccess && deferredDeleter) {
             deferredDeleter->drain(true);
-            mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->getAlignedSize(), allocation->is32BitAllocation, false, useHeap1);
+            mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->is32BitAllocation, false, useHeap1);
         }
         if (!mapSuccess) {
             wddm->destroyAllocations(&allocation->handle, 1, 0, allocation->resourceHandle);
