@@ -46,7 +46,7 @@ class MockDeviceWithActiveDebugger : public MockDevice {
     };
     MockDeviceWithActiveDebugger(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
         sourceLevelDebuggerCreated = new T(new MockOsLibrary);
-        sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
+        executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }
 
     void initializeCaps() override {

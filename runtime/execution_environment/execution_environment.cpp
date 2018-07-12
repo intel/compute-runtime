@@ -22,6 +22,8 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
+#include "runtime/built_ins/sip.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
@@ -59,4 +61,13 @@ void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages) {
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 
+void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {
+    if (hwInfo.capabilityTable.sourceLevelDebuggerSupported) {
+        sourceLevelDebugger.reset(SourceLevelDebugger::create());
+    }
+    if (sourceLevelDebugger) {
+        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
+        sourceLevelDebugger->initialize(localMemorySipAvailable);
+    }
+}
 } // namespace OCLRT

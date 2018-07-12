@@ -28,6 +28,7 @@
 #include "unit_tests/libult/source_level_debugger_library.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
+#include "runtime/platform/platform.h"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -51,6 +52,20 @@ class DebuggerLibraryRestorer {
     bool restoreActiveState = false;
     bool restoreAvailableState = false;
 };
+
+TEST(SourceLevelDebugger, givenPlatformWhenItIsCreatedThenSourceLevelDebuggerIsCreatedInExecutionEnvironment) {
+    DebuggerLibraryRestorer restorer;
+
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+
+        Platform platform;
+        platform.initialize();
+
+        EXPECT_NE(nullptr, platform.peekExecutionEnvironment()->sourceLevelDebugger);
+    }
+}
 
 TEST(SourceLevelDebugger, givenNoKernelDebuggerLibraryWhenSourceLevelDebuggerIsCreatedThenLibraryIsNotLoaded) {
     DebuggerLibraryRestorer restorer;
@@ -391,13 +406,15 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenInitializeIsCal
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceIsConstructedThenDebuggerIsInitialized) {
     DebuggerLibraryRestorer restorer;
 
-    DebuggerLibraryInterceptor interceptor;
-    DebuggerLibrary::setLibraryAvailable(true);
-    DebuggerLibrary::setDebuggerActive(true);
-    DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibraryInterceptor interceptor;
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-    unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
-    EXPECT_TRUE(interceptor.initCalled);
+        unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+        EXPECT_TRUE(interceptor.initCalled);
+    }
 }
 
 TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreatedThenDebuggerIsNotified) {
@@ -447,7 +464,45 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
 
     unique_ptr<MockDevice> device(DeviceHelper<>::create());
 
-    EXPECT_EQ(nullptr, device->sourceLevelDebugger.get());
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
     EXPECT_FALSE(interceptor.initCalled);
     EXPECT_FALSE(interceptor.newDeviceCalled);
+}
+
+TEST(SourceLevelDebugger, givenTwoDevicesWhenSecondIsCreatedThenNotCreatingNewSourceLevelDebugger) {
+    DebuggerLibraryRestorer restorer;
+
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibraryInterceptor interceptor;
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+        DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
+
+        std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+        executionEnvironment->incRefInternal();
+
+        std::unique_ptr<Device> device1(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get()));
+        EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+        EXPECT_TRUE(interceptor.initCalled);
+
+        interceptor.initCalled = false;
+        std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get()));
+        EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+        EXPECT_FALSE(interceptor.initCalled);
+    }
+}
+
+TEST(SourceLevelDebugger, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameSourceLevelDebugger) {
+    DebuggerLibraryRestorer restorer;
+
+    if (platformDevices[0]->capabilityTable.sourceLevelDebuggerSupported) {
+        DebuggerLibrary::setLibraryAvailable(true);
+        DebuggerLibrary::setDebuggerActive(true);
+
+        auto executionEnvironment = new ExecutionEnvironment;
+        std::unique_ptr<Device> device1(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+        auto sourceLevelDebugger = device1->getSourceLevelDebugger();
+        std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+        EXPECT_EQ(sourceLevelDebugger, device2->getSourceLevelDebugger());
+    }
 }

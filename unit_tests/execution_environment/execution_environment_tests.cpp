@@ -28,6 +28,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "runtime/source_level_debugger/source_level_debugger.h"
 
 using namespace OCLRT;
 
@@ -111,29 +112,37 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 }
 
 auto destructorId = 0u;
-static_assert(sizeof(ExecutionEnvironment) == (is64bit ? 48 : 28), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == (is64bit ? 56 : 32), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     destructorId = 0u;
     struct GmmHelperMock : public GmmHelper {
         using GmmHelper::GmmHelper;
         ~GmmHelperMock() override {
-            EXPECT_EQ(destructorId, 2u);
+            EXPECT_EQ(destructorId, 3u);
             destructorId++;
         }
     };
     struct MemoryMangerMock : public OsAgnosticMemoryManager {
         ~MemoryMangerMock() override {
-            EXPECT_EQ(destructorId, 1u);
+            EXPECT_EQ(destructorId, 2u);
             destructorId++;
         }
     };
 
     struct CommandStreamReceiverMock : public MockCommandStreamReceiver {
         ~CommandStreamReceiverMock() override {
-            EXPECT_EQ(destructorId, 0u);
+            EXPECT_EQ(destructorId, 1u);
             destructorId++;
         };
+    };
+
+    struct SourceLevelDebuggerMock : public SourceLevelDebugger {
+        SourceLevelDebuggerMock() : SourceLevelDebugger(nullptr){};
+        ~SourceLevelDebuggerMock() override {
+            EXPECT_EQ(destructorId, 0u);
+            destructorId++;
+        }
     };
 
     struct MockExecutionEnvironment : ExecutionEnvironment {
@@ -144,9 +153,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->gmmHelper.reset(new GmmHelperMock(platformDevices[0]));
     executionEnvironment->memoryManager.reset(new MemoryMangerMock);
     executionEnvironment->commandStreamReceiver.reset(new CommandStreamReceiverMock);
+    executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebuggerMock);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(3u, destructorId);
+    EXPECT_EQ(4u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

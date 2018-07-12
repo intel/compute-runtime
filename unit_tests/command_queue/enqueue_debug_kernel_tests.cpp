@@ -47,7 +47,7 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
         constructPlatform();
         ProgramSimpleFixture::SetUp();
         device = pDevice;
-        pDevice->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
 
         if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
             std::string filename;

@@ -41,10 +41,3 @@ BDWTEST_F(BdwDeviceTest, givenBdwDeviceWhenAskedForClVersionThenReport21) {
     auto version = pDevice->getSupportedClVersion();
     EXPECT_EQ(21u, version);
 }
-
-BDWTEST_F(BdwDeviceTest, givenSourceLevelDebuggerAvailableWhenDeviceIsCreatedThenSourceLevelDebuggerIsDisabled) {
-    auto device = std::unique_ptr<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithSourceLevelDebugger<MockActiveSourceLevelDebugger>>(nullptr));
-    const auto &caps = device->getDeviceInfo();
-    EXPECT_NE(nullptr, device->getSourceLevelDebugger());
-    EXPECT_FALSE(caps.sourceLevelDebuggerActive);
-}

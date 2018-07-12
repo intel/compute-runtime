@@ -27,6 +27,7 @@ namespace OCLRT {
 class GmmHelper;
 class CommandStreamReceiver;
 class MemoryManager;
+class SourceLevelDebugger;
 struct HardwareInfo;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
@@ -41,7 +42,9 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo);
     void initializeMemoryManager(bool enable64KBpages);
+    void initSourceLevelDebugger(const HardwareInfo &hwInfo);
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
+    std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
 };
 } // namespace OCLRT

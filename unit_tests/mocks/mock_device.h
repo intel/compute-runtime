@@ -41,7 +41,6 @@ class MockDevice : public Device {
     using Device::createDeviceImpl;
     using Device::executionEnvironment;
     using Device::initializeCaps;
-    using Device::sourceLevelDebugger;
 
     void setOSTime(OSTime *osTime);
     void setDriverInfo(DriverInfo *driverInfo);
@@ -230,7 +229,7 @@ class MockDeviceWithSourceLevelDebugger : public MockDevice {
   public:
     MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
         T *sourceLevelDebuggerCreated = new T(nullptr);
-        sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
+        executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
     }
 };
 

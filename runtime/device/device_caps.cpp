@@ -356,13 +356,9 @@ void Device::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    if (hwInfo.capabilityTable.sourceLevelDebuggerSupported) {
-        deviceInfo.sourceLevelDebuggerActive = (sourceLevelDebugger) ? sourceLevelDebugger->isDebuggerActive() : false;
-        if (deviceInfo.sourceLevelDebuggerActive) {
-            this->preemptionMode = PreemptionMode::Disabled;
-        }
-    } else {
-        deviceInfo.sourceLevelDebuggerActive = false;
+    deviceInfo.sourceLevelDebuggerActive = (executionEnvironment->sourceLevelDebugger) ? executionEnvironment->sourceLevelDebugger->isDebuggerActive() : false;
+    if (deviceInfo.sourceLevelDebuggerActive) {
+        this->preemptionMode = PreemptionMode::Disabled;
     }
 }
 } // namespace OCLRT

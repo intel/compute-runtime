@@ -88,11 +88,8 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
     engineType = DebugManager.flags.NodeOrdinal.get() == -1
                      ? hwInfo.capabilityTable.defaultEngineType
                      : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
-
-    sourceLevelDebugger.reset(SourceLevelDebugger::create());
-    if (sourceLevelDebugger) {
-        bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
-        sourceLevelDebugger->initialize(localMemorySipAvailable);
+    if (!getSourceLevelDebugger()) {
+        this->executionEnvironment->initSourceLevelDebugger(hwInfo);
     }
     this->executionEnvironment->incRefInternal();
 }
@@ -109,8 +106,8 @@ Device::~Device() {
         executionEnvironment->commandStreamReceiver->flushBatchedSubmissions();
     }
 
-    if (deviceInfo.sourceLevelDebuggerActive && sourceLevelDebugger) {
-        sourceLevelDebugger->notifyDeviceDestruction();
+    if (deviceInfo.sourceLevelDebuggerActive && executionEnvironment->sourceLevelDebugger) {
+        executionEnvironment->sourceLevelDebugger->notifyDeviceDestruction();
     }
 
     if (executionEnvironment->memoryManager) {
@@ -166,7 +163,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     }
 
     if (pDevice->deviceInfo.sourceLevelDebuggerActive) {
-        pDevice->sourceLevelDebugger->notifyNewDevice(deviceHandle);
+        pDevice->executionEnvironment->sourceLevelDebugger->notifyNewDevice(deviceHandle);
     }
 
     outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);

@@ -129,7 +129,7 @@ class Device : public BaseObject<_cl_device_id> {
     std::string name;
     bool getEnabled64kbPages();
     bool isSourceLevelDebuggerActive() const;
-    SourceLevelDebugger *getSourceLevelDebugger() { return sourceLevelDebugger.get(); }
+    SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
 
   protected:
     Device() = delete;
@@ -168,7 +168,6 @@ class Device : public BaseObject<_cl_device_id> {
 
     PreemptionMode preemptionMode;
     EngineType engineType;
-    std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
     ExecutionEnvironment *executionEnvironment = nullptr;
 };
 

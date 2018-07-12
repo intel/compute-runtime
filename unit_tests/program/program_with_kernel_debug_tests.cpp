@@ -116,7 +116,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
@@ -131,7 +131,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     if (pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
@@ -171,7 +171,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->isOptDisabled = true;
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -184,7 +184,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
 
         MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
         sourceLevelDebugger->sourceCodeFilename = "debugFileName";
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -204,7 +204,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
         EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->build(1, &device, nullptr, nullptr, nullptr, false);
         EXPECT_EQ(CL_SUCCESS, retVal);
@@ -223,7 +223,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
         EXPECT_CALL(*sourceLevelDebugger, notifyKernelDebugData(::testing::_)).Times(1);
 
         sourceLevelDebugger->setActive(true);
-        pDevice->sourceLevelDebugger.reset(sourceLevelDebugger);
+        pDevice->executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebugger);
 
         cl_int retVal = pProgram->compile(1, &device, nullptr,
                                           0, nullptr, nullptr,
