@@ -254,8 +254,8 @@ TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMus
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHostPtrForBufferThenExistingMemoryIsUsedForAllocation) {
     OsAgnosticMemoryManager memoryManager(true);
     AllocationData allocData;
-    char memory[10];
-    MockOsAgnosticMemoryManager::getAllocationData(allocData, true, false, false, false, &memory, 10, GraphicsAllocation::AllocationType::BUFFER);
+    char memory[1];
+    MockOsAgnosticMemoryManager::getAllocationData(allocData, true, false, false, false, &memory, 1, GraphicsAllocation::AllocationType::BUFFER);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
