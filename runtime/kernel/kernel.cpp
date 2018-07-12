@@ -1282,7 +1282,13 @@ cl_int Kernel::setArgImmediate(uint32_t argIndex,
             DEBUG_BREAK_IF(!(ptrOffset(pDst, kernelArgPatchInfo.size) <= crossThreadDataEnd));
             ((void)(crossThreadDataEnd));
 
-            memcpy_s(pDst, kernelArgPatchInfo.size, pSrc, kernelArgPatchInfo.size);
+            if (kernelArgPatchInfo.sourceOffset >= argSize) {
+                return CL_INVALID_ARG_SIZE;
+            }
+
+            size_t maxBytesToCopy = argSize - kernelArgPatchInfo.sourceOffset;
+            size_t bytesToCopy = std::min(static_cast<size_t>(kernelArgPatchInfo.size), maxBytesToCopy);
+            memcpy_s(pDst, kernelArgPatchInfo.size, pSrc, bytesToCopy);
         }
         retVal = CL_SUCCESS;
     }

@@ -51,15 +51,18 @@ class KernelArgImmediateTest : public Test<DeviceFixture> {
         pKernelInfo->kernelArgInfo.resize(4);
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
+        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
         pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
+        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset = 0x38;
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset = 0x28;
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].crossthreadOffset = 0x20;
         pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].crossthreadOffset = 0x30;
         pKernelInfo->kernelArgInfo[1].kernelArgPatchInfoVector[0].crossthreadOffset = 0x40;
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset = 0x50;
+        pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(T);
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(T);
         pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[0].size = sizeof(T);
         pKernelInfo->kernelArgInfo[2].kernelArgPatchInfoVector[0].size = sizeof(T);
@@ -201,4 +204,128 @@ TYPED_TEST(KernelArgImmediateTest, setSingleKernelArgMultipleStructElements) {
     auto pCrossthreadB = (TypeParam *)(this->pKernel->getCrossThreadData() +
                                        this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset);
     EXPECT_EQ(immediateStruct.b, *pCrossthreadB);
+}
+
+TYPED_TEST(KernelArgImmediateTest, givenTooLargePatchSizeWhenSettingArgThenDontReadMemoryBeyondLimit) {
+    TypeParam memory[2];
+    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+
+    const auto destinationMemoryAddress = this->pKernel->getCrossThreadData() +
+                                          this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
+
+    const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+
+    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam) + 1;
+    auto retVal = this->pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
+
+    const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+    EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
+    EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, givenNotTooLargePatchSizeWhenSettingArgThenDontReadMemoryBeyondLimit) {
+    TypeParam memory[2];
+    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+
+    const auto destinationMemoryAddress = this->pKernel->getCrossThreadData() +
+                                          this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    const auto memoryBeyondLimitAddress = destinationMemoryAddress + sizeof(TypeParam);
+
+    const auto memoryBeyondLimitBefore = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+
+    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam);
+    auto retVal = this->pKernel->setArg(0, sizeof(TypeParam), &memory[0]);
+
+    const auto memoryBeyondLimitAfter = *reinterpret_cast<TypeParam *>(memoryBeyondLimitAddress);
+    EXPECT_EQ(memoryBeyondLimitBefore, memoryBeyondLimitAfter);
+    EXPECT_EQ(memory[0], *reinterpret_cast<TypeParam *>(destinationMemoryAddress));
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndFirstPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
+    if (sizeof(TypeParam) == 1)
+        return; // multiple patch chars don't make sense
+
+    TypeParam memory[2];
+    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+
+    const auto destinationMemoryAddress1 = this->pKernel->getCrossThreadData() +
+                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
+    const auto destinationMemoryAddress2 = this->pKernel->getCrossThreadData() +
+                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
+    const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam);
+    const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
+
+    const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam));
+    const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
+
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam);
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam) / 2;
+    auto retVal = this->pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
+
+    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam)));
+    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
+
+    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam)));
+    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, givenMulitplePatchesAndSecondPatchSizeTooLargeWhenSettingArgThenDontReadMemoryBeyondLimit) {
+    if (sizeof(TypeParam) == 1)
+        return; // multiple patch chars don't make sense
+
+    TypeParam memory[2];
+    std::memset(&memory[0], 0xaa, sizeof(TypeParam));
+    std::memset(&memory[1], 0xbb, sizeof(TypeParam));
+
+    const auto destinationMemoryAddress1 = this->pKernel->getCrossThreadData() +
+                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].crossthreadOffset;
+    const auto destinationMemoryAddress2 = this->pKernel->getCrossThreadData() +
+                                           this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].crossthreadOffset;
+    const auto memoryBeyondLimitAddress1 = destinationMemoryAddress1 + sizeof(TypeParam) / 2;
+    const auto memoryBeyondLimitAddress2 = destinationMemoryAddress2 + sizeof(TypeParam) / 2;
+
+    const std::vector<unsigned char> memoryBeyondLimitBefore1(memoryBeyondLimitAddress1, memoryBeyondLimitAddress1 + sizeof(TypeParam) / 2);
+    const std::vector<unsigned char> memoryBeyondLimitBefore2(memoryBeyondLimitAddress2, memoryBeyondLimitAddress2 + sizeof(TypeParam) / 2);
+
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].sourceOffset = 0;
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].sourceOffset = sizeof(TypeParam) / 2;
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[2].size = sizeof(TypeParam) / 2;
+    this->pKernelInfo->kernelArgInfo[3].kernelArgPatchInfoVector[1].size = sizeof(TypeParam);
+    auto retVal = this->pKernel->setArg(3, sizeof(TypeParam), &memory[0]);
+
+    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore1.data(), memoryBeyondLimitAddress1, sizeof(TypeParam) / 2));
+    EXPECT_EQ(0, std::memcmp(memoryBeyondLimitBefore2.data(), memoryBeyondLimitAddress2, sizeof(TypeParam) / 2));
+
+    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress1, sizeof(TypeParam) / 2));
+    EXPECT_EQ(0, std::memcmp(&memory[0], destinationMemoryAddress2, sizeof(TypeParam) / 2));
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TYPED_TEST(KernelArgImmediateTest, givenSourceOffsetBeyondArgumentWhenSettingArgThenDontCopyAnythingAndReturnInvalidArgSize) {
+    TypeParam argument;
+    std::memset(&argument, 0xaa, sizeof(TypeParam));
+
+    const auto crossthreadDataAddress = this->pKernel->getCrossThreadData() +
+                                        this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset;
+    const std::vector<unsigned char> crossthreadDataBefore(crossthreadDataAddress, crossthreadDataAddress + sizeof(TypeParam));
+
+    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].sourceOffset = sizeof(TypeParam);
+    this->pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].size = sizeof(TypeParam);
+    auto retVal = this->pKernel->setArg(0, sizeof(TypeParam), &argument);
+
+    EXPECT_EQ(0, std::memcmp(crossthreadDataBefore.data(), crossthreadDataAddress, sizeof(TypeParam)));
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, retVal);
 }
