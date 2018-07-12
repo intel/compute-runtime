@@ -32,6 +32,8 @@ using namespace OCLRT;
 
 MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new ExecutionEnvironment) {
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo);
+    executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
 }
 
 OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)

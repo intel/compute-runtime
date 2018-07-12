@@ -34,6 +34,8 @@ class OSTime;
 class MemoryManager;
 class MockMemoryManager;
 
+extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
+
 class MockDevice : public Device {
   public:
     using Device::createDeviceImpl;
