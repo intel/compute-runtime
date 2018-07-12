@@ -29,6 +29,7 @@
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() {
+    memoryManager.reset(nullptr);
     DeviceFactory::releaseDevices();
 }
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {

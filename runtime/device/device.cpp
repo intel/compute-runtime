@@ -124,8 +124,6 @@ Device::~Device() {
         executionEnvironment->memoryManager->freeGraphicsMemory(tagAllocation);
         alignedFree(this->slmWindowStartAddress);
     }
-    tagAllocation = nullptr;
-    executionEnvironment->memoryManager.reset(nullptr);
     executionEnvironment->decRefInternal();
 }
 
