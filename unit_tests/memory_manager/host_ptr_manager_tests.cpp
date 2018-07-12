@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -33,9 +33,9 @@ TEST(HostPtrManager, AlignedPointerAndAlignedSizeAskedForAllocationCountReturnsO
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
 
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, NONE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     EXPECT_EQ(reqs.totalRequiredSize, size);
 
@@ -53,9 +53,9 @@ TEST(HostPtrManager, AlignedPointerAndNotAlignedSizeAskedForAllocationCountRetur
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, TRAILING);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::TRAILING);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
     EXPECT_EQ(reqs.totalRequiredSize, alignUp(size, MemoryConstants::pageSize));
 
     EXPECT_EQ(ptr, reqs.AllocationFragments[0].allocationPtr);
@@ -76,9 +76,9 @@ TEST(HostPtrManager, NotAlignedPointerAndNotAlignedSizeAskedForAllocationCountRe
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(3u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, LEADING);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, TRAILING);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::TRAILING);
 
     auto leadingPtr = (void *)0x1000;
     auto middlePtr = (void *)0x2000;
@@ -103,9 +103,9 @@ TEST(HostPtrManager, NotAlignedPointerAndNotAlignedSizeWithinOnePageAskedForAllo
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, LEADING);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, NONE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     auto leadingPtr = (void *)0x1000;
 
@@ -128,9 +128,9 @@ TEST(HostPtrManager, NotAlignedPointerAndNotAlignedSizeWithinTwoPagesAskedForAll
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, LEADING);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, TRAILING);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::TRAILING);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     auto leadingPtr = (void *)0x1000;
     auto trailingPtr = (void *)0x2000;
@@ -154,9 +154,9 @@ TEST(HostPtrManager, AlignedPointerAndAlignedSizeOfOnePageAskedForAllocationCoun
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, NONE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     auto middlePtr = (void *)0x1000;
 
@@ -179,9 +179,9 @@ TEST(HostPtrManager, NotAlignedPointerAndSizeThatFitsToPageAskedForAllocationCou
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(2u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, LEADING);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::LEADING);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     auto leadingPtr = (void *)0x1000;
     auto middlePtr = (void *)0x2000;
@@ -205,9 +205,9 @@ TEST(HostPtrManager, AlignedPointerAndPageSizeAskedForAllocationCountRetrunsMidd
     AllocationRequirements reqs = HostPtrManager::getAllocationRequirements(ptr, size);
     EXPECT_EQ(1u, reqs.requiredFragmentsCount);
 
-    EXPECT_EQ(reqs.AllocationFragments[0].allocationType, MIDDLE);
-    EXPECT_EQ(reqs.AllocationFragments[1].allocationType, NONE);
-    EXPECT_EQ(reqs.AllocationFragments[2].allocationType, NONE);
+    EXPECT_EQ(reqs.AllocationFragments[0].fragmentPosition, FragmentPosition::MIDDLE);
+    EXPECT_EQ(reqs.AllocationFragments[1].fragmentPosition, FragmentPosition::NONE);
+    EXPECT_EQ(reqs.AllocationFragments[2].fragmentPosition, FragmentPosition::NONE);
 
     auto middlePtr = (void *)0x1000;
 

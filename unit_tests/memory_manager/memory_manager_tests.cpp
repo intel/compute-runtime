@@ -1197,7 +1197,7 @@ TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryM
 
     requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.AllocationFragments[0].allocationType = AllocationType::NONE;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
     RequirementsStatus status = memoryManager.checkAllocationsForOverlapping(&requirements, &checkedFragments);
 
@@ -1348,11 +1348,11 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithoutBiggerOver
 
     requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize;
-    requirements.AllocationFragments[0].allocationType = AllocationType::LEADING;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::LEADING;
 
     requirements.AllocationFragments[1].allocationPtr = alignUp(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[1].allocationSize = MemoryConstants::pageSize;
-    requirements.AllocationFragments[1].allocationType = AllocationType::TRAILING;
+    requirements.AllocationFragments[1].fragmentPosition = FragmentPosition::TRAILING;
 
     RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
 
@@ -1402,7 +1402,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.AllocationFragments[0].allocationType = AllocationType::NONE;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
     RequirementsStatus status = memoryManager->checkAllocationsForOverlapping(&requirements, &checkedFragments);
 
@@ -1446,7 +1446,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.AllocationFragments[0].allocationType = AllocationType::NONE;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
     GMockMemoryManager *memMngr = gmockMemoryManager;
 
@@ -1502,7 +1502,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
     requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.AllocationFragments[0].allocationType = AllocationType::NONE;
+    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
 
     GMockMemoryManager *memMngr = gmockMemoryManager;
 

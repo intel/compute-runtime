@@ -70,7 +70,7 @@ AllocationRequirements OCLRT::HostPtrManager::getAllocationRequirements(const vo
     if (alignedStartAddress != inputPtr) {
         leadingNeeded = true;
         requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignedStartAddress;
-        requiredAllocations.AllocationFragments[allocationCount].allocationType = LEADING;
+        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::LEADING;
         requiredAllocations.AllocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }
@@ -86,14 +86,14 @@ AllocationRequirements OCLRT::HostPtrManager::getAllocationRequirements(const vo
     auto middleSize = wholeAllocationSize - (trailingNeeded + leadingNeeded) * MemoryConstants::pageSize;
     if (middleSize) {
         requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignUp(inputPtr, MemoryConstants::pageSize);
-        requiredAllocations.AllocationFragments[allocationCount].allocationType = MIDDLE;
+        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::MIDDLE;
         requiredAllocations.AllocationFragments[allocationCount].allocationSize = middleSize;
         allocationCount++;
     }
 
     if (trailingNeeded) {
         requiredAllocations.AllocationFragments[allocationCount].allocationPtr = alignedEndAddress;
-        requiredAllocations.AllocationFragments[allocationCount].allocationType = TRAILING;
+        requiredAllocations.AllocationFragments[allocationCount].fragmentPosition = FragmentPosition::TRAILING;
         requiredAllocations.AllocationFragments[allocationCount].allocationSize = MemoryConstants::pageSize;
         allocationCount++;
     }

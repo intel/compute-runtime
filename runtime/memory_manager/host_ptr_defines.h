@@ -31,7 +31,7 @@ typedef OsHandle OsGraphicsHandle;
 
 const int max_fragments_count = 3;
 
-enum AllocationType {
+enum class FragmentPosition {
     NONE = 0,
     LEADING,
     MIDDLE,
@@ -59,7 +59,7 @@ struct ResidencyData {
 };
 
 struct PartialAllocation {
-    int allocationType = NONE;
+    FragmentPosition fragmentPosition = FragmentPosition::NONE;
     const void *allocationPtr = nullptr;
     size_t allocationSize = 0u;
 };
