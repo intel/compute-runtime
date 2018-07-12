@@ -48,15 +48,16 @@ struct DeviceFactoryTest : public ::testing::Test {
 };
 
 TEST_F(DeviceFactoryTest, GetDevices_Expect_True_If_Returned) {
+    DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
 
     EXPECT_TRUE((numDevices > 0) ? success : !success);
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Null) {
+    DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
@@ -69,10 +70,10 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Null) {
         EXPECT_NE(hwInfo->pSysInfo, nullptr);
         EXPECT_NE(hwInfo->pWaTable, nullptr);
     }
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
+    DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     const HardwareInfo *refHwinfo = *platformDevices;
     size_t numDevices = 0;
@@ -86,10 +87,10 @@ TEST_F(DeviceFactoryTest, GetDevices_Check_HwInfo_Platform) {
 
         EXPECT_EQ(refHwinfo->pPlatform->eDisplayCoreFamily, hwInfo->pPlatform->eDisplayCoreFamily);
     }
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
+    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
 
     HardwareInfo *hwInfoReference = nullptr;
@@ -128,11 +129,10 @@ TEST_F(DeviceFactoryTest, overrideKmdNotifySettings) {
               hwInfoOverriden->capabilityTable.kmdNotifyProperties.enableQuickKmdSleepForSporadicWaits);
     EXPECT_EQ(refDelayQuickKmdSleepForSporadicWaitsMicroseconds + 12,
               hwInfoOverriden->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
-
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
+    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore dbgRestorer;
     int32_t debugEngineType = 2;
     DebugManager.flags.NodeOrdinal.set(debugEngineType);
@@ -144,21 +144,20 @@ TEST_F(DeviceFactoryTest, getEngineTypeDebugOverride) {
     ASSERT_NE(nullptr, hwInfoOverriden);
     int32_t actualEngineType = static_cast<int32_t>(hwInfoOverriden->capabilityTable.defaultEngineType);
     EXPECT_EQ(debugEngineType, actualEngineType);
-
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSurfaceSizeIsSettedProperly) {
+    DeviceFactoryCleaner cleaner;
     HardwareInfo *hwInfo = nullptr;
     size_t numDevices = 0;
     bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
     ASSERT_TRUE(success);
 
     EXPECT_EQ(hwInfo->pSysInfo->CsrSizeInMb * MemoryConstants::megaByte, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
-    DeviceFactory::releaseDevices();
 }
 
 TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCalledThenNumberOfReturnedDevicesIsEqualToDebugVariable) {
+    DeviceFactoryCleaner cleaner;
     DebugManagerStateRestore stateRestore;
     auto requiredDeviceCount = 2u;
     DebugManager.flags.CreateMultipleDevices.set(requiredDeviceCount);
@@ -178,5 +177,4 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCal
 
     ASSERT_TRUE(success);
     EXPECT_EQ(requiredDeviceCount, numDevices);
-    DeviceFactory::releaseDevices();
 }

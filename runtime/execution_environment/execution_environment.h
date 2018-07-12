@@ -20,6 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 #pragma once
+#include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
 
 namespace OCLRT {
@@ -28,6 +29,9 @@ class CommandStreamReceiver;
 class MemoryManager;
 struct HardwareInfo;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
+  private:
+    DeviceFactoryCleaner cleaner;
+
   public:
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;

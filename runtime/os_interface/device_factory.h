@@ -36,4 +36,10 @@ class DeviceFactory {
     static size_t numDevices;
     static HardwareInfo *hwInfos;
 };
+
+class DeviceFactoryCleaner {
+  public:
+    ~DeviceFactoryCleaner() { DeviceFactory::releaseDevices(); }
+};
+
 } // namespace OCLRT
