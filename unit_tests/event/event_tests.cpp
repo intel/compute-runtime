@@ -21,26 +21,26 @@
  */
 
 #include "event_fixture.h"
-#include "runtime/event/perf_counter.h"
-#include "unit_tests/os_interface/mock_performance_counters.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/surface.h"
-#include "runtime/os_interface/os_interface.h"
+#include "runtime/event/perf_counter.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/task_information.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "runtime/memory_manager/surface.h"
+#include "runtime/os_interface/os_interface.h"
+#include "test.h"
+#include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_event.h"
-#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/os_interface/mock_performance_counters.h"
 #include <memory>
 #include <type_traits>
-#include "test.h"
 
 TEST(Event, NonCopyable) {
     EXPECT_FALSE(std::is_move_constructible<Event>::value);
@@ -937,6 +937,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     EXPECT_EQ(1, buffer.dataTransferedStamp);
     EXPECT_EQ(nullptr, commandUnMap->getCommandStream());
 
+    pDevice->getCommandStreamReceiver().setTagAllocation(nullptr);
     delete pCmdQ;
 }
 

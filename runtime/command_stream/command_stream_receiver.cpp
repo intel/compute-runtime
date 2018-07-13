@@ -20,18 +20,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
-#include "runtime/gtpin/gtpin_notify.h"
-#include "runtime/helpers/array_count.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/helpers/cache_policy.h"
-#include "runtime/os_interface/os_interface.h"
 #include "runtime/event/event.h"
 #include "runtime/event/event_builder.h"
+#include "runtime/gtpin/gtpin_notify.h"
+#include "runtime/helpers/array_count.h"
+#include "runtime/helpers/cache_policy.h"
+#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_interface.h"
 
 namespace OCLRT {
 // Global table of CommandStreamReceiver factories for HW and tests
@@ -203,6 +203,12 @@ void CommandStreamReceiver::cleanupResources() {
         memoryManager->freeGraphicsMemory(commandStream.getGraphicsAllocation());
         commandStream.replaceGraphicsAllocation(nullptr);
         commandStream.replaceBuffer(nullptr, 0);
+    }
+
+    if (tagAllocation) {
+        memoryManager->freeGraphicsMemory(tagAllocation);
+        tagAllocation = nullptr;
+        tagAddress = nullptr;
     }
     experimentalCmdBuffer.reset(nullptr);
 }

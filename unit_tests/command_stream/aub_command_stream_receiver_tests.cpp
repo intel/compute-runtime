@@ -31,8 +31,8 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
-#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 
@@ -267,7 +267,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -291,7 +291,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
@@ -321,7 +321,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -359,7 +359,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
     EXPECT_EQ(initialHardwareTag, *aubCsr->getTagAddress());
 
@@ -388,7 +388,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
     EXPECT_EQ(initialHardwareTag, *aubCsr->getTagAddress());
 
@@ -423,7 +423,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
     EXPECT_EQ(initialHardwareTag, *aubCsr->getTagAddress());
 
@@ -458,7 +458,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStanda
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {};
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
     EXPECT_EQ(initialHardwareTag, *aubCsr->getTagAddress());
 
@@ -508,7 +508,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -560,7 +560,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -635,7 +635,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
@@ -1270,7 +1270,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1298,7 +1298,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1333,7 +1333,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1360,7 +1360,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
     ASSERT_NE(nullptr, aubCsr->getTagAllocation());
 
     GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
@@ -1392,7 +1392,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency;
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(1);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
@@ -1412,7 +1412,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency;
-    aubCsr->setTagAllocation(pDevice->getTagAllocation());
+    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);

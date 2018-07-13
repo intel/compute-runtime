@@ -21,10 +21,10 @@
  */
 
 #pragma once
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -97,6 +97,11 @@ class MockDevice : public Device {
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
 
     GraphicsAllocation *getTagAllocation() { return tagAllocation; }
+    GraphicsAllocation *disconnectCurrentTagAllocationAndReturnIt() {
+        auto currentTagAllocation = tagAllocation;
+        this->getCommandStreamReceiver().setTagAllocation(nullptr);
+        return currentTagAllocation;
+    }
 
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;

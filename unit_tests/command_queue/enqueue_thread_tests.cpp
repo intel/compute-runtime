@@ -27,10 +27,10 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_context.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_context.h"
 
 using namespace OCLRT;
 
@@ -488,28 +488,10 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
     auto pMyDevice = new MyMockDevice();
     ASSERT_NE(nullptr, pMyDevice);
 
-    auto pCommandStreamReceiver = new CommandStreamReceiverMock<FamilyType>(pMyDevice);
-    ASSERT_NE(nullptr, pCommandStreamReceiver);
-
-    auto memoryManager = pCommandStreamReceiver->createMemoryManager(false);
-    memoryManager->device = pMyDevice;
-    ASSERT_NE(nullptr, memoryManager);
-    pMyDevice->setMemoryManager(memoryManager);
-
-    auto pTagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
-    *(uint32_t *)(pTagAllocation->getUnderlyingBuffer()) = initialHardwareTag;
-    ASSERT_NE(nullptr, pTagAllocation);
-    pMyDevice->setTagAllocation(pTagAllocation);
-
-    pMyDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
-
     auto pMyCmdQ = new MockCommandQueue(pMyDevice);
     ASSERT_NE(nullptr, pMyCmdQ);
 
     EXPECT_TRUE(pMyCmdQ->isQueueBlocked());
-
-    auto csr = (CommandStreamReceiverMock<FamilyType> *)&pMyDevice->getCommandStreamReceiver();
-    csr->expectedToFreeCount = 0u;
 
     pMyCmdQ->flushWaitList(0, nullptr, 0);
 

@@ -22,11 +22,11 @@
 
 #include "unit_tests/mocks/mock_device.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/device/driver_info.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/os_time.h"
-#include "runtime/device/driver_info.h"
-#include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/mocks/mock_ostime.h"
 
 using namespace OCLRT;
 
@@ -67,6 +67,7 @@ void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
+    auto tagAllocation = this->disconnectCurrentTagAllocationAndReturnIt();
     executionEnvironment->commandStreamReceiver.reset(newCsr);
     executionEnvironment->commandStreamReceiver->setMemoryManager(executionEnvironment->memoryManager.get());
     executionEnvironment->commandStreamReceiver->setTagAllocation(tagAllocation);

@@ -122,7 +122,6 @@ Device::~Device() {
         }
         executionEnvironment->memoryManager->waitForDeletions();
 
-        executionEnvironment->memoryManager->freeGraphicsMemory(tagAllocation);
         alignedFree(this->slmWindowStartAddress);
     }
     executionEnvironment->decRefInternal();

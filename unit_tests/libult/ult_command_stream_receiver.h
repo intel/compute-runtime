@@ -145,7 +145,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
 
 template <typename GfxFamily>
 UltCommandStreamReceiver<GfxFamily>::~UltCommandStreamReceiver() {
-    this->setTagAllocation(nullptr);
     if (tempPreemptionLocation) {
         this->setPreemptionCsrAllocation(nullptr);
         delete tempPreemptionLocation;

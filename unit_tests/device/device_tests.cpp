@@ -20,17 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/device/device.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/libult/create_command_stream.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
-#include "unit_tests/libult/create_command_stream.h"
-#include "test.h"
 #include <memory>
-#include "runtime/device/device.h"
 
 using namespace OCLRT;
 

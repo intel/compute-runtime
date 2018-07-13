@@ -20,34 +20,34 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
-#include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/command_stream/device_command_stream.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/built_ins_helper.h"
 #include "runtime/gen_common/hw_cmds.h"
+#include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
 #include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/mocks/mock_builtins.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_wddm23.h"
+#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
-#include "unit_tests/os_interface/windows/mock_gdi_interface.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 
 #include "test.h"
 
@@ -100,7 +100,6 @@ class WddmCommandStreamWithMockGdiFixture {
     WddmMock *wddm = nullptr;
     MockGdi *gdi = nullptr;
     DebugManagerStateRestore stateRestore;
-    GraphicsAllocation *tagAllocation;
     GraphicsAllocation *preemptionAllocation = nullptr;
 
     virtual void SetUp() {
@@ -118,20 +117,15 @@ class WddmCommandStreamWithMockGdiFixture {
         device = MockDevice::createWithMemoryManager<MockDevice>(platformDevices[0], memManager);
         ASSERT_NE(nullptr, device);
         memManager->device = device;
-        tagAllocation = memManager->allocateGraphicsMemory(1024);
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
             preemptionAllocation = memManager->allocateGraphicsMemory(1024);
         }
-        auto tagBuffer = (uint32_t *)tagAllocation->getUnderlyingBuffer();
-        tagBuffer[0] = initialHardwareTag;
     }
 
     virtual void TearDown() {
-        memManager->freeGraphicsMemory(tagAllocation);
         if (preemptionAllocation) {
             memManager->freeGraphicsMemory(preemptionAllocation);
         }
-        delete csr->getTagAddress();
         delete csr;
         wddm = nullptr;
         delete device;
@@ -676,7 +670,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
         tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
         GlobalMockSipProgram::sipProgram->resetAllocation(memManager->allocateGraphicsMemory(1024));
     }
-    std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm));
+    auto mockCsr = new MockWddmCsr<FamilyType>(*platformDevices[0], this->wddm);
     mockCsr->setMemoryManager(memManager);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
@@ -687,8 +681,9 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto dshAlloc = memManager->allocateGraphicsMemory(1024);
     auto iohAlloc = memManager->allocateGraphicsMemory(1024);
     auto sshAlloc = memManager->allocateGraphicsMemory(1024);
+    this->device->resetCommandStreamReceiver(mockCsr);
 
-    mockCsr->setTagAllocation(tagAllocation);
+    auto tagAllocation = mockCsr->getTagAllocation();
     mockCsr->setPreemptionCsrAllocation(preemptionAllocation);
 
     LinearStream cs(commandBuffer);
@@ -855,59 +850,64 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDon
 
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTranslationTableOnce) {
     createMockWddm();
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
-    mockWddmCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm.get());
+    mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
-    mockWddmCsr.setMemoryManager(memManager);
-    mockWddmCsr.setTagAllocation(tagAllocation);
-    mockWddmCsr.setPreemptionCsrAllocation(preemptionAllocation);
-    auto &csrCS = mockWddmCsr.getCS();
+    mockWddmCsr->setMemoryManager(memManager);
+
+    this->device->resetCommandStreamReceiver(mockWddmCsr);
+
+    mockWddmCsr->setPreemptionCsrAllocation(preemptionAllocation);
+    auto &csrCS = mockWddmCsr->getCS();
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
     IndirectHeap cs(graphicsAllocation);
 
-    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
+    EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
 
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
         .Times(1)
         .WillOnce(Return(GMM_SUCCESS));
-    EXPECT_CALL(*mockMngr, initContextTRTableRegister(&mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+    EXPECT_CALL(*mockMngr, initContextTRTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
         .Times(1)
         .WillOnce(Return(GMM_SUCCESS));
 
     DispatchFlags dispatchFlags;
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_TRUE(mockWddmCsr.pageTableManagerInitialized);
+    EXPECT_TRUE(mockWddmCsr->pageTableManagerInitialized);
 
     // flush again to check if PT manager was initialized once
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
+    mockWddmCsr->flushBatchedSubmissions();
     memManager->freeGraphicsMemory(graphicsAllocation);
 }
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontInitTranslationTable) {
     setCompressionEnabled(false);
     createMockWddm();
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
-    mockWddmCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm.get());
+    mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 
-    mockWddmCsr.setMemoryManager(memManager);
-    mockWddmCsr.setTagAllocation(tagAllocation);
-    mockWddmCsr.setPreemptionCsrAllocation(preemptionAllocation);
+    mockWddmCsr->setMemoryManager(memManager);
+    mockWddmCsr->setPreemptionCsrAllocation(preemptionAllocation);
+
+    this->device->resetCommandStreamReceiver(mockWddmCsr);
 
     auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
     IndirectHeap cs(graphicsAllocation);
 
-    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
+    EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
 
     DispatchFlags dispatchFlags;
-    mockWddmCsr.flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_FALSE(mockWddmCsr.pageTableManagerInitialized);
+    EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
 
+    mockWddmCsr->flushBatchedSubmissions();
     memManager->freeGraphicsMemory(graphicsAllocation);
 }

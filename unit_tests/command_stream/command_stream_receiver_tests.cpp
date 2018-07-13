@@ -20,20 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/helpers/cache_policy.h"
 #include "runtime/mem_obj/buffer.h"
-#include "unit_tests/mocks/mock_buffer.h"
-#include "unit_tests/mocks/mock_context.h"
+#include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/memory_manager/memory_manager.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_program.h"
-#include "test.h"
-#include "runtime/helpers/cache_policy.h"
 
 #include "gmock/gmock.h"
 
@@ -307,6 +307,26 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllo
     GraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);
     csr.setTagAllocation(&allocation);
     EXPECT_EQ(&allocation, csr.getTagAllocation());
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroyedThenItDestroysTagAllocation) {
+    struct MockGraphicsAllocation : public GraphicsAllocation {
+        using GraphicsAllocation::GraphicsAllocation;
+        ~MockGraphicsAllocation() override { *destructorCalled = true; }
+        bool *destructorCalled = nullptr;
+    };
+
+    bool destructorCalled = false;
+
+    auto mockGraphicsAllocation = new MockGraphicsAllocation(nullptr, 1u);
+    mockGraphicsAllocation->destructorCalled = &destructorCalled;
+    std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    csr->setMemoryManager(memoryManager.get());
+    csr->setTagAllocation(mockGraphicsAllocation);
+    EXPECT_FALSE(destructorCalled);
+    csr.reset(nullptr);
+    EXPECT_TRUE(destructorCalled);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {
