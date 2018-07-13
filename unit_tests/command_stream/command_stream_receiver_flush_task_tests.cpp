@@ -770,6 +770,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce) {
     CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*platformDevices[0]);
     commandStreamReceiver.setMemoryManager(pDevice->getMemoryManager());
+    commandStreamReceiver.setTagAllocation(pDevice->getTagAllocation());
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
     flushTask(commandStreamReceiver);
@@ -779,8 +780,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce)
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsChainsWithBatchBufferStart) {
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename FamilyType::MI_NOOP MI_NOOP;
-    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*platformDevices[0]);
-    commandStreamReceiver.setMemoryManager(pDevice->getMemoryManager());
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     // Reserve space for 16 NOOPs
     commandStream.getSpace(16 * sizeof(MI_NOOP));
 
@@ -1039,8 +1039,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommandStreamParam) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
-    UltCommandStreamReceiver<FamilyType> commandStreamReceiver(*platformDevices[0]);
-    commandStreamReceiver.setMemoryManager(pDevice->getMemoryManager());
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto &commandStreamTask = commandQueue.getCS();
     auto deviceEngineType = pDevice->getEngineType();

@@ -904,6 +904,7 @@ HWTEST_F(InternalsEventTest, GivenBufferWithoutZeroCopyOnCommandMapOrUnmapFlushe
     MockNonZeroCopyBuff buffer(executionStamp);
     MockCsr<FamilyType> csr(executionStamp);
     csr.setMemoryManager(pDevice->getMemoryManager());
+    csr.setTagAllocation(pDevice->getTagAllocation());
 
     MemObjSizeArray size = {{4, 1, 1}};
     MemObjOffsetArray offset = {{0, 0, 0}};

@@ -65,9 +65,6 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     UltCommandStreamReceiver(const HardwareInfo &hwInfoIn) : BaseClass(hwInfoIn) {
-        tempTagLocation = new GraphicsAllocation(nullptr, 0);
-        this->tagAllocation = tempTagLocation;
-        this->tagAddress = reinterpret_cast<uint32_t *>(tempTagLocation->getUnderlyingBuffer());
         this->storeMakeResidentAllocations = false;
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
             tempPreemptionLocation = new GraphicsAllocation(nullptr, 0);
@@ -143,14 +140,12 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::tagAllocation;
     using BaseClass::CommandStreamReceiver::waitForTaskCountAndCleanAllocationList;
 
-    GraphicsAllocation *tempTagLocation;
     GraphicsAllocation *tempPreemptionLocation = nullptr;
 };
 
 template <typename GfxFamily>
 UltCommandStreamReceiver<GfxFamily>::~UltCommandStreamReceiver() {
     this->setTagAllocation(nullptr);
-    delete tempTagLocation;
     if (tempPreemptionLocation) {
         this->setPreemptionCsrAllocation(nullptr);
         delete tempPreemptionLocation;
