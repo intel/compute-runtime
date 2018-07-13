@@ -41,7 +41,7 @@ class GmmHelper {
   public:
     GmmHelper() = delete;
     GmmHelper(const HardwareInfo *hwInfo);
-    ~GmmHelper();
+    MOCKABLE_VIRTUAL ~GmmHelper();
     static constexpr uint32_t cacheDisabledIndex = 0;
     static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint32_t maxPossiblePitch = 2147483648;

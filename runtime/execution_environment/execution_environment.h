@@ -32,14 +32,14 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
   private:
     DeviceFactoryCleaner cleaner;
 
+  protected:
+    std::unique_ptr<GmmHelper> gmmHelper;
+
   public:
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
     void initGmm(const HardwareInfo *hwInfo);
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
     std::unique_ptr<MemoryManager> memoryManager;
-
-  protected:
-    std::unique_ptr<GmmHelper> gmmHelper;
 };
 } // namespace OCLRT
