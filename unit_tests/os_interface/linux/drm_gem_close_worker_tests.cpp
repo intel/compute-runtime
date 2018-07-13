@@ -100,7 +100,7 @@ class DrmGemCloseWorkerFixture {
     };
     class DrmAllocationWrapper : public DrmAllocation {
       public:
-        DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0) {
+        DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0, MemoryPool::MemoryNull) {
         }
     };
 };

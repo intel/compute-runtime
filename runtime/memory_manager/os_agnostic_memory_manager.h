@@ -26,7 +26,6 @@
 #include <map>
 
 namespace OCLRT {
-
 constexpr size_t bigAllocation = 1 * MB;
 constexpr uintptr_t dummyAddress = 0xFFFFF000u;
 class MemoryAllocation : public GraphicsAllocation {
@@ -37,9 +36,14 @@ class MemoryAllocation : public GraphicsAllocation {
 
     void setSharedHandle(osHandle handle) { this->sharedHandle = handle; }
 
-    MemoryAllocation(bool cpuPtrAllocated, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
-                                                                                                              id(count) {
+    MemoryAllocation(bool cpuPtrAllocated, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
+                                                                                                                                     id(count) {
         this->cpuPtrAllocated = cpuPtrAllocated;
+        this->memoryPool = pool;
+    }
+
+    void overrideMemoryPool(MemoryPool::Type pool) {
+        memoryPool = pool;
     }
 };
 

@@ -21,6 +21,7 @@
 */
 
 #include "runtime/helpers/aligned_memory.h"
+#include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "unit_tests/mocks/mock_wddm20.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
@@ -240,4 +241,32 @@ bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
 
 GmmMemory *WddmMock::getGmmMemory() const {
     return gmmMemory.get();
+}
+
+bool WddmMock::initializeWithoutConfiguringAddressSpace() {
+    if (gdi != nullptr && gdi->isInitialized() && !initialized) {
+        if (!openAdapter()) {
+            return false;
+        }
+        if (!queryAdapterInfo()) {
+            return false;
+        }
+        if (!createDevice()) {
+            return false;
+        }
+        if (!createPagingQueue()) {
+            return false;
+        }
+        if (!createContext()) {
+            return false;
+        }
+        if (hwQueuesSupported() && !createHwQueue()) {
+            return false;
+        }
+        if (!createMonitoredFence()) {
+            return false;
+        }
+        initialized = true;
+    }
+    return initialized;
 }

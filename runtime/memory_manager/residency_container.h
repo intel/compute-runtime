@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "indirect_heap.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#pragma once
+#include <vector>
 
 namespace OCLRT {
-
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
-}
-
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
-}
-
-IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
-}
+class GraphicsAllocation;
+using ResidencyContainer = std::vector<GraphicsAllocation *>;
 
 } // namespace OCLRT

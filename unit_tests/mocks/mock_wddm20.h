@@ -105,6 +105,8 @@ class WddmMock : public Wddm20 {
         }
     }
 
+    bool initializeWithoutConfiguringAddressSpace();
+
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult makeNonResidentResult;
     WddmMockHelpers::CallResult mapGpuVirtualAddressResult;

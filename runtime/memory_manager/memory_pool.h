@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,18 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "indirect_heap.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#pragma once
 
-namespace OCLRT {
+#include "runtime/helpers/extendable_enum.h"
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
-}
-
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
-}
-
-IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
-}
-
-} // namespace OCLRT
+namespace MemoryPool {
+struct Type : ExtendableEnum {
+    constexpr Type(uint32_t val) : ExtendableEnum(val) {}
+};
+constexpr Type MemoryNull{0};
+constexpr Type System4KBPages{1};
+constexpr Type System64KBPages{2};
+constexpr Type System4KBPagesWith32BitGpuAddressing{3};
+constexpr Type System64KBPagesWith32BitGpuAddressing{4};
+constexpr Type SystemCpuInaccessible{5};
+} // namespace MemoryPool

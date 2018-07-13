@@ -45,7 +45,7 @@ class WddmAllocation : public GraphicsAllocation {
     D3DKMT_HANDLE resourceHandle = 0u; // used by shared resources
 
     D3DGPU_VIRTUAL_ADDRESS gpuPtr; // set by mapGpuVA
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr)
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, void *alignedCpuPtr, size_t alignedSize, void *reservedAddr, MemoryPool::Type pool)
         : GraphicsAllocation(cpuPtrIn, sizeIn),
           handle(0),
           gpuPtr(0),
@@ -53,22 +53,21 @@ class WddmAllocation : public GraphicsAllocation {
           alignedSize(alignedSize) {
         trimListPosition = trimListUnusedPosition;
         reservedAddressSpace = reservedAddr;
+        this->memoryPool = pool;
     }
 
-    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle) : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
-                                                                           handle(0),
-                                                                           gpuPtr(0),
-                                                                           alignedCpuPtr(nullptr),
-                                                                           alignedSize(sizeIn) {
+    WddmAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool) : GraphicsAllocation(cpuPtrIn, sizeIn, sharedHandle),
+                                                                                                  handle(0),
+                                                                                                  gpuPtr(0),
+                                                                                                  alignedCpuPtr(nullptr),
+                                                                                                  alignedSize(sizeIn) {
         trimListPosition = trimListUnusedPosition;
         reservedAddressSpace = nullptr;
+        this->memoryPool = pool;
     }
 
-    WddmAllocation(void *alignedCpuPtr, size_t sizeIn, void *reservedAddress)
-        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn, reservedAddress) {
-    }
-
-    WddmAllocation() : WddmAllocation(nullptr, 0, nullptr, 0, nullptr) {
+    WddmAllocation(void *alignedCpuPtr, size_t sizeIn, void *reservedAddress, MemoryPool::Type pool)
+        : WddmAllocation(alignedCpuPtr, sizeIn, alignedCpuPtr, sizeIn, reservedAddress, pool) {
     }
 
     void *getAlignedCpuPtr() const {

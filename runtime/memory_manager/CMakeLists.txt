@@ -33,10 +33,12 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_agnostic_memory_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/page_table.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/residency_container.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.h

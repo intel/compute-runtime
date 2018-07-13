@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "indirect_heap.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#pragma once
 
-namespace OCLRT {
+#include <cstdint>
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
-}
+struct ExtendableEnum {
+    constexpr operator uint32_t() const {
+        return value;
+    }
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
-}
-
-IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
-}
-
-} // namespace OCLRT
+  protected:
+    constexpr ExtendableEnum(uint32_t val) : value(val) {}
+    uint32_t value;
+};

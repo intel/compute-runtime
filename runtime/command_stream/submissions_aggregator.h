@@ -20,15 +20,16 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 #pragma once
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/memory_manager/residency_container.h"
 #include <vector>
 namespace OCLRT {
 class Event;
 class FlushStampTracker;
+class GraphicsAllocation;
 
 struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,

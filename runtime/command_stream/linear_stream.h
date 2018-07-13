@@ -23,12 +23,12 @@
 #pragma once
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include <cstddef>
 #include <cstdint>
 #include <atomic>
 
 namespace OCLRT {
+class GraphicsAllocation;
 
 class LinearStream {
   public:

@@ -31,6 +31,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info_builder_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/file_io_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/flush_stamp_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info_tests.cpp

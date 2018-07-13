@@ -187,7 +187,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
-    DrmAllocation gfxAllocation(nullptr, cpuPtr, size);
+    DrmAllocation gfxAllocation(nullptr, cpuPtr, size, MemoryPool::MemoryNull);
     memoryManager->addAllocationToHostPtrManager(&gfxAllocation);
     auto fragment = memoryManager->hostPtrManager.getFragment(gfxAllocation.getUnderlyingBuffer());
     EXPECT_NE(fragment, nullptr);
@@ -2402,6 +2402,84 @@ TEST(DrmMemoryManager, givenEnabledHostMemoryValidationAndForcePinWhenMemoryMana
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), true, true));
     ASSERT_NE(nullptr, memoryManager.get());
     ASSERT_NE(nullptr, memoryManager->getPinBB());
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    auto size = 4096u;
+
+    auto allocation = memoryManager->allocateGraphicsMemory(size);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+
+    allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = 4096u;
+    auto allocation = memoryManager->allocateGraphicsMemory(size, ptr, false);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    memoryManager->setForce32BitAllocations(true);
+
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+
+    auto allocation = memoryManager->allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    auto size = MemoryConstants::pageSize;
+
+    auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
+    EXPECT_NE(nullptr, svmAllocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(svmAllocation);
+}
+
+TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledThenMemoryPoolIsSystemCpuInaccessible) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    auto osHandle = 1u;
+    auto allocation = memoryManager->createGraphicsAllocationFromSharedHandle(osHandle, false, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    auto size = 4096u;
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
+    std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
+    auto size = MemoryConstants::pageSize;
+
+    auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
+    EXPECT_NE(nullptr, svmAllocation);
+    EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
+    memoryManager->freeGraphicsMemory(svmAllocation);
 }
 
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDisabledForcePinAndEnabledValidateHostMemoryWhenPinBBAllocationFailsThenUnrecoverableIsCalled) {

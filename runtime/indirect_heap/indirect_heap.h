@@ -25,6 +25,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
@@ -66,6 +67,15 @@ inline void IndirectHeap::align(size_t alignment) {
     auto address = alignUp(ptrOffset(buffer, sizeUsed), alignment);
     sizeUsed = ptrDiff(address, buffer);
 }
+
+inline uint32_t IndirectHeap::getHeapSizeInPages() const {
+    if (this->canBeUtilizedAs4GbHeap) {
+        return MemoryConstants::sizeOf4GBinPageEntities;
+    } else {
+        return (static_cast<uint32_t>(getMaxAvailableSpace()) + MemoryConstants::pageMask) / MemoryConstants::pageSize;
+    }
+}
+
 inline uint64_t IndirectHeap::getHeapGpuStartOffset() const {
     if (this->canBeUtilizedAs4GbHeap) {
         return this->graphicsAllocation->getGpuAddressToPatch();
@@ -73,18 +83,12 @@ inline uint64_t IndirectHeap::getHeapGpuStartOffset() const {
         return 0llu;
     }
 }
+
 inline uint64_t IndirectHeap::getHeapGpuBase() const {
     if (this->canBeUtilizedAs4GbHeap) {
         return this->graphicsAllocation->gpuBaseAddress;
     } else {
         return this->graphicsAllocation->getGpuAddress();
-    }
-}
-inline uint32_t IndirectHeap::getHeapSizeInPages() const {
-    if (this->canBeUtilizedAs4GbHeap) {
-        return MemoryConstants::sizeOf4GBinPageEntities;
-    } else {
-        return (static_cast<uint32_t>(getMaxAvailableSpace()) + MemoryConstants::pageMask) / MemoryConstants::pageSize;
     }
 }
 } // namespace OCLRT

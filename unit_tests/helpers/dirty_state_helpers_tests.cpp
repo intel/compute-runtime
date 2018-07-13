@@ -23,6 +23,7 @@
 #include "runtime/helpers/dirty_state_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "gtest/gtest.h"
 #include <memory>
 

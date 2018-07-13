@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -76,6 +76,24 @@ class MockGdi : public Gdi {
         return 0;
     }
 
+    static NTSTATUS __stdcall queryResourceInfoMock(IN OUT D3DKMT_QUERYRESOURCEINFO *arg) {
+        getQueryResourceInfoArgIn() = *arg;
+        arg->NumAllocations = getQueryResourceInfoArgOut().NumAllocations;
+        arg->ResourcePrivateDriverDataSize = getQueryResourceInfoArgOut().ResourcePrivateDriverDataSize;
+        arg->TotalPrivateDriverDataSize = getQueryResourceInfoArgOut().TotalPrivateDriverDataSize;
+        return 0;
+    }
+
+    static NTSTATUS __stdcall openResourceMock(IN OUT D3DKMT_OPENRESOURCE *arg) {
+        getOpenResourceArgIn() = *arg;
+        if (arg->NumAllocations > 0) {
+            arg->pOpenAllocationInfo[0].hAllocation = getOpenResourceArgOut().pOpenAllocationInfo->hAllocation;
+            arg->pOpenAllocationInfo[0].PrivateDriverDataSize = getOpenResourceArgOut().pOpenAllocationInfo->PrivateDriverDataSize;
+            arg->pOpenAllocationInfo[0].pPrivateDriverData = getOpenResourceArgOut().pOpenAllocationInfo->pPrivateDriverData;
+        }
+        return 0;
+    }
+
     bool getAllProcAddresses() override {
         makeResident = reinterpret_cast<PFND3DKMT_MAKERESIDENT>(makeResidentMock);
         if (nonZeroNumBytesToTrim) {
@@ -86,6 +104,8 @@ class MockGdi : public Gdi {
         registerTrimNotification = reinterpret_cast<PFND3DKMT_REGISTERTRIMNOTIFICATION>(registerTimNotificationMock);
         destroyAllocation2 = reinterpret_cast<PFND3DKMT_DESTROYALLOCATION2>(destroyAllocation2Mock);
         waitForSynchronizationObjectFromCpu = reinterpret_cast<PFND3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU>(waitFromCpuMock);
+        queryResourceInfo = reinterpret_cast<PFND3DKMT_QUERYRESOURCEINFO>(queryResourceInfoMock);
+        openResource = reinterpret_cast<PFND3DKMT_OPENRESOURCE>(openResourceMock);
         return true;
     }
 
@@ -117,6 +137,26 @@ class MockGdi : public Gdi {
     static D3DKMT_CREATESYNCHRONIZATIONOBJECT2 getCreateSynchronizationObject2Arg() {
         static D3DKMT_CREATESYNCHRONIZATIONOBJECT2 createSynchronizationObject2;
         return createSynchronizationObject2;
+    }
+
+    static D3DKMT_QUERYRESOURCEINFO &getQueryResourceInfoArgIn() {
+        static D3DKMT_QUERYRESOURCEINFO queryResourceInfo;
+        return queryResourceInfo;
+    }
+
+    static D3DKMT_QUERYRESOURCEINFO &getQueryResourceInfoArgOut() {
+        static D3DKMT_QUERYRESOURCEINFO queryResourceInfo;
+        return queryResourceInfo;
+    }
+
+    static D3DKMT_OPENRESOURCE &getOpenResourceArgIn() {
+        static D3DKMT_OPENRESOURCE openResource;
+        return openResource;
+    }
+
+    static D3DKMT_OPENRESOURCE &getOpenResourceArgOut() {
+        static D3DKMT_OPENRESOURCE openResource;
+        return openResource;
     }
 };
 

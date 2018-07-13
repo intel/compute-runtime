@@ -21,6 +21,7 @@
 */
 #include "submissions_aggregator.h"
 #include "runtime/helpers/flush_stamp.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 void OCLRT::SubmissionAggregator::recordCommandBuffer(CommandBuffer *commandBuffer) {
     this->cmdBuffers.pushTailOne(*commandBuffer);

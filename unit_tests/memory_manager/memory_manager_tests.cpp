@@ -849,6 +849,97 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
+    OsAgnosticMemoryManager memoryManager(false);
+    auto size = 4096u;
+
+    auto allocation = memoryManager.allocateGraphicsMemory(size);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    memoryManager.freeGraphicsMemory(allocation);
+
+    allocation = memoryManager.allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
+    OsAgnosticMemoryManager memoryManager(true);
+    auto size = 4096u;
+
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryFailsThenNullptrIsReturned) {
+    class MockOsAgnosticManagerWithFailingAllocate : public OsAgnosticMemoryManager {
+      public:
+        MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages) : OsAgnosticMemoryManager(enable64kbPages) {}
+
+        GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
+            return nullptr;
+        }
+    };
+    MockOsAgnosticManagerWithFailingAllocate memoryManager(true);
+    auto size = 4096u;
+
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    EXPECT_EQ(nullptr, allocation);
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
+    OsAgnosticMemoryManager memoryManager(false);
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+
+    auto allocation = memoryManager.allocateGraphicsMemory(size, ptr, false);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
+    OsAgnosticMemoryManager memoryManager(false);
+    void *ptr = reinterpret_cast<void *>(0x1001);
+    auto size = MemoryConstants::pageSize;
+
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithoutPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
+    OsAgnosticMemoryManager memoryManager(false);
+    void *ptr = nullptr;
+    auto size = MemoryConstants::pageSize;
+
+    auto allocation = memoryManager.allocate32BitGraphicsMemory(size, ptr, AllocationOrigin::EXTERNAL_ALLOCATION);
+
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
+    OsAgnosticMemoryManager memoryManager(true);
+    auto size = 4096u;
+
+    auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, false);
+    EXPECT_NE(nullptr, svmAllocation);
+    EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
+    memoryManager.freeGraphicsMemory(svmAllocation);
+}
+
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
     OsAgnosticMemoryManager memoryManager(false);
     auto size = 4096u;
@@ -857,6 +948,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocat
     auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_TRUE(svmAllocation->isCoherent());
+    EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
 
     EXPECT_EQ(size, svmAllocation->getUnderlyingBufferSize());
 
@@ -893,6 +985,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, isCoherent);
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_TRUE(svmAllocation->isCoherent());
+    EXPECT_EQ(MemoryPool::System64KBPages, svmAllocation->getMemoryPool());
 
     EXPECT_EQ(MemoryConstants::pageSize64k, svmAllocation->getUnderlyingBufferSize());
 
@@ -910,6 +1003,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
     EXPECT_FALSE(sharedAllocation->isCoherent());
     EXPECT_NE(nullptr, sharedAllocation->getUnderlyingBuffer());
     EXPECT_EQ(size, sharedAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(MemoryPool::SystemCpuInaccessible, sharedAllocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(sharedAllocation);
 }

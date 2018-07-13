@@ -28,6 +28,8 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
+#include "runtime/memory_manager/memory_pool.h"
+#include "runtime/memory_manager/residency_container.h"
 #include "runtime/utilities/idlist.h"
 
 namespace OCLRT {
@@ -52,8 +54,18 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool locked = false;
     uint32_t reuseCount = 0; // GraphicsAllocation can be reused by shared resources
     bool evictable = true;
+    MemoryPool::Type memoryPool = MemoryPool::MemoryNull;
 
   public:
+    uint32_t taskCount = ObjectNotUsed;
+    OsHandleStorage fragmentsStorage;
+    bool is32BitAllocation = false;
+    uint64_t gpuBaseAddress = 0;
+    Gmm *gmm = nullptr;
+    uint64_t allocationOffset = 0u;
+    int residencyTaskCount = ObjectNotResident;
+    bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
+
     enum AllocationType {
         UNKNOWN = 0,
         BUFFER,
@@ -132,16 +144,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void clearTypeAubNonWritable() { this->allocationType &= ~GraphicsAllocation::AllocationType::NON_AUB_WRITABLE; }
     bool isTypeAubNonWritable() const { return !!(this->allocationType & GraphicsAllocation::AllocationType::NON_AUB_WRITABLE); }
 
-    uint32_t taskCount = ObjectNotUsed;
-    OsHandleStorage fragmentsStorage;
     bool isL3Capable();
-    bool is32BitAllocation = false;
-    uint64_t gpuBaseAddress = 0;
-    Gmm *gmm = nullptr;
-    uint64_t allocationOffset = 0u;
-
-    int residencyTaskCount = ObjectNotResident;
-
     void setEvictable(bool evictable) { this->evictable = evictable; }
     bool peekEvictable() const { return evictable; }
 
@@ -152,7 +155,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void incReuseCount() { reuseCount++; }
     void decReuseCount() { reuseCount--; }
     uint32_t peekReuseCount() const { return reuseCount; }
-    bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
+    MemoryPool::Type getMemoryPool() {
+        return memoryPool;
+    }
 
   protected:
     //this variable can only be modified from SubmissionAggregator
@@ -162,7 +167,4 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
   private:
     uint32_t allocationType;
 };
-
-using ResidencyContainer = std::vector<GraphicsAllocation *>;
-
 } // namespace OCLRT

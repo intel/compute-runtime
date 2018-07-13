@@ -65,7 +65,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
         delete gmm;
         return allocateGraphicsMemory(imgInfo.size);
     }
-    auto allocation = new WddmAllocation(nullptr, imgInfo.size, nullptr);
+    auto allocation = new WddmAllocation(nullptr, imgInfo.size, nullptr, MemoryPool::SystemCpuInaccessible);
     allocation->gmm = gmm;
 
     if (!WddmMemoryManager::createWddmAllocation(allocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
@@ -79,7 +79,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, s
     size_t sizeAligned = alignUp(size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
-    auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr);
+    auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages);
 
     gmm = new Gmm(nullptr, sizeAligned, false);
     wddmAllocation->gmm = gmm;
@@ -112,7 +112,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
         return nullptr;
     }
 
-    auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, sizeAligned, nullptr);
+    auto wddmAllocation = new WddmAllocation(pSysMem, sizeAligned, pSysMem, sizeAligned, nullptr, MemoryPool::System4KBPages);
     wddmAllocation->cpuPtrAllocated = true;
 
     gmm = new Gmm(pSysMem, sizeAligned, uncacheable);
@@ -125,7 +125,6 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
         freeSystemMemory(pSysMem);
         return nullptr;
     }
-
     return wddmAllocation;
 }
 
@@ -147,7 +146,7 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const
             return nullptr;
         }
 
-        auto allocation = new WddmAllocation(ptr, size, ptrAligned, sizeAligned, reserve);
+        auto allocation = new WddmAllocation(ptr, size, ptrAligned, sizeAligned, reserve, MemoryPool::System4KBPages);
         allocation->allocationOffset = offset;
 
         Gmm *gmm = new Gmm(ptrAligned, sizeAligned, false);
@@ -184,7 +183,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
         cpuPtrAllocated = true;
     }
 
-    auto wddmAllocation = new WddmAllocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), sizeAligned, nullptr);
+    auto wddmAllocation = new WddmAllocation(const_cast<void *>(ptrAligned), sizeAligned, const_cast<void *>(ptrAligned), sizeAligned, nullptr, MemoryPool::System4KBPagesWith32BitGpuAddressing);
     wddmAllocation->cpuPtrAllocated = cpuPtrAllocated;
     wddmAllocation->is32BitAllocation = true;
     wddmAllocation->allocationOffset = offset;
@@ -207,7 +206,7 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemory(size_t size, 
 }
 
 GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle) {
-    auto allocation = new WddmAllocation(nullptr, 0, handle);
+    auto allocation = new WddmAllocation(nullptr, 0, handle, MemoryPool::SystemCpuInaccessible);
     bool is32BitAllocation = false;
 
     bool status = ntHandle ? wddm->openNTHandle((HANDLE)((UINT_PTR)handle), allocation)
@@ -237,7 +236,6 @@ GraphicsAllocation *WddmMemoryManager::createAllocationFromHandle(osHandle handl
     status = wddm->mapGpuVirtualAddress(allocation, ptr, is32BitAllocation, false, false);
     DEBUG_BREAK_IF(!status);
     allocation->setGpuAddress(allocation->gpuPtr);
-
     return allocation;
 }
 
@@ -430,7 +428,7 @@ void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation,
 }
 
 GraphicsAllocation *WddmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) {
-    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, const_cast<void *>(hostPtr), hostPtrSize, nullptr);
+    auto allocation = new WddmAllocation(const_cast<void *>(hostPtr), hostPtrSize, const_cast<void *>(hostPtr), hostPtrSize, nullptr, MemoryPool::System4KBPages);
     allocation->fragmentsStorage = handleStorage;
     obtainGpuAddresFromFragments(allocation, handleStorage);
     return allocation;

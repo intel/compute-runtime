@@ -189,7 +189,7 @@ HWTEST_F(Wddm20Tests, allocation) {
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -216,7 +216,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedS
     size_t underlyingPages = underlyingSize / MemoryConstants::pageSize;
     size_t alignedPages = alignedSize / MemoryConstants::pageSize;
 
-    WddmAllocation allocation(ptr, 0x2100, ptr, 0x3000, nullptr);
+    WddmAllocation allocation(ptr, 0x2100, ptr, 0x3000, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize());
 
     allocation.gmm = gmm;
@@ -241,7 +241,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGm
     wddm->init<FamilyType>();
 
     void *fakePtr = reinterpret_cast<void *>(0x123);
-    WddmAllocation allocation(fakePtr, 100, fakePtr, 200, nullptr);
+    WddmAllocation allocation(fakePtr, 100, fakePtr, 200, nullptr, MemoryPool::MemoryNull);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize()));
 
     allocation.gmm = gmm.get();
@@ -267,7 +267,7 @@ HWTEST_F(Wddm20Tests, createAllocation32bit) {
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
 
-    WddmAllocation allocation(alignedPtr, alignedSize, nullptr);
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -296,7 +296,7 @@ HWTEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAd
     wddm->init<FamilyType>();
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
-    WddmAllocation allocation(alignedPtr, alignedSize, nullptr);
+    WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull);
 
     allocation.handle = ALLOCATION_HANDLE;
     allocation.gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -350,7 +350,7 @@ HWTEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -378,7 +378,7 @@ HWTEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
     ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
 
-    WddmAllocation allocation(nullptr, 100, nullptr);
+    WddmAllocation allocation(nullptr, 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -400,7 +400,7 @@ HWTEST_F(Wddm20Tests, makeResidentNonResident) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
     allocation.gmm = gmm;
@@ -701,7 +701,7 @@ HWTEST_F(Wddm20Tests, makeResidentMultipleHandles) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -726,7 +726,7 @@ HWTEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
     ASSERT_TRUE(wddm->isInitialized());
 
     OsAgnosticMemoryManager mm(false);
-    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr);
+    WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
 
     D3DKMT_HANDLE handles[2] = {0};
@@ -770,7 +770,7 @@ HWTEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
 HWTEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCallsWaitFromCpu) {
     wddm->init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 20;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -805,7 +805,7 @@ HWTEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValue
 HWTEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoesNotCallWaitFromCpu) {
     wddm->init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -840,7 +840,7 @@ HWTEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValue
 HWTEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
     wddm->init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -865,7 +865,7 @@ HWTEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCal
 HWTEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     wddm->init<FamilyType>();
 
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr);
+    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 

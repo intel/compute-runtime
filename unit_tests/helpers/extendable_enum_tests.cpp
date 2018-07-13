@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,18 +20,33 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "indirect_heap.h"
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/helpers/extendable_enum.h"
+#include "gtest/gtest.h"
 
-namespace OCLRT {
+namespace ExtendableEnumTest {
+struct Type : ExtendableEnum {
+  public:
+    constexpr Type(uint32_t val) : ExtendableEnum(val) {}
+};
+constexpr Type testEnum0{0};
+constexpr Type testEnum1{1};
+} // namespace ExtendableEnumTest
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
+TEST(ExtendableEnumTest, givenExtendableEnumWhenValuesAreCheckedThenCorrectValuesAreCorrect) {
+    EXPECT_EQ(0u, ExtendableEnumTest::testEnum0);
+    EXPECT_EQ(1u, ExtendableEnumTest::testEnum1);
 }
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
+TEST(ExtendableEnumTest, givenExtendableEnumVariableWhenValueIsAssignedThenCorrectValueIsStored) {
+    ExtendableEnumTest::Type enumVal0 = ExtendableEnumTest::testEnum0;
+
+    EXPECT_EQ(ExtendableEnumTest::testEnum0, enumVal0);
 }
 
-IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
+namespace ExtendableEnumTest {
+constexpr Type testEnum2{2};
 }
 
-} // namespace OCLRT
+TEST(ExtendableEnumTest, givenExtendableEnumWhenNewValuesAreAddedThenCorrectValuesAreAssigned) {
+    EXPECT_EQ(2u, ExtendableEnumTest::testEnum2);
+}

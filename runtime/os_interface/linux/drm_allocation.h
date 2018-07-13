@@ -32,11 +32,14 @@ struct OsHandle {
 
 class DrmAllocation : public GraphicsAllocation {
   public:
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn) : GraphicsAllocation(ptrIn, sizeIn), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, MemoryPool::Type pool) : GraphicsAllocation(ptrIn, sizeIn), bo(bo) {
+        this->memoryPool = pool;
     }
-    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, size_t sizeIn, osHandle sharedHandle, MemoryPool::Type pool) : GraphicsAllocation(ptrIn, sizeIn, sharedHandle), bo(bo) {
+        this->memoryPool = pool;
     }
-    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn) : GraphicsAllocation(ptrIn, gpuAddress, 0, sizeIn), bo(bo) {
+    DrmAllocation(BufferObject *bo, void *ptrIn, uint64_t gpuAddress, size_t sizeIn, MemoryPool::Type pool) : GraphicsAllocation(ptrIn, gpuAddress, 0, sizeIn), bo(bo) {
+        this->memoryPool = pool;
     }
 
     BufferObject *getBO() const {

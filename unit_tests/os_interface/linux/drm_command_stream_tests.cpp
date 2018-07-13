@@ -123,7 +123,7 @@ TEST_F(DrmCommandStreamTest, makeResident) {
         .Times(0);
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
-    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024, MemoryPool::MemoryNull);
     csr->makeResident(graphicsAllocation);
 }
 
@@ -137,7 +137,7 @@ TEST_F(DrmCommandStreamTest, makeResidentTwiceTheSame) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024, MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation);
@@ -153,7 +153,7 @@ TEST_F(DrmCommandStreamTest, makeResidentSizeZero) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    DrmAllocation graphicsAllocation(nullptr, nullptr, 0);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 0, MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
 }
@@ -168,8 +168,8 @@ TEST_F(DrmCommandStreamTest, makeResidentResized) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(0);
 
-    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024);
-    DrmAllocation graphicsAllocation2(nullptr, nullptr, 8192);
+    DrmAllocation graphicsAllocation(nullptr, nullptr, 1024, MemoryPool::MemoryNull);
+    DrmAllocation graphicsAllocation2(nullptr, nullptr, 8192, MemoryPool::MemoryNull);
 
     csr->makeResident(graphicsAllocation);
     csr->makeResident(graphicsAllocation2);
@@ -275,7 +275,7 @@ TEST_F(DrmCommandStreamTest, FlushInvalidAddress) {
     //allocate command buffer manually
     char *commandBuffer = new (std::nothrow) char[1024];
     ASSERT_NE(nullptr, commandBuffer);
-    DrmAllocation commandBufferAllocation(nullptr, commandBuffer, 1024);
+    DrmAllocation commandBufferAllocation(nullptr, commandBuffer, 1024, MemoryPool::MemoryNull);
     LinearStream cs(&commandBufferAllocation);
 
     csr->addBatchBufferEnd(cs, nullptr);
@@ -417,8 +417,8 @@ TEST_F(DrmCommandStreamTest, FlushCheckFlags) {
         .Times(1)
         .WillRepeatedly(::testing::Return(0));
 
-    DrmAllocation allocation(nullptr, (void *)0x7FFFFFFF, 1024);
-    DrmAllocation allocation2(nullptr, (void *)0x307FFFFFFF, 1024);
+    DrmAllocation allocation(nullptr, (void *)0x7FFFFFFF, 1024, MemoryPool::MemoryNull);
+    DrmAllocation allocation2(nullptr, (void *)0x307FFFFFFF, 1024, MemoryPool::MemoryNull);
     csr->makeResident(allocation);
     csr->makeResident(allocation2);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -451,7 +451,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFree) {
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(2);
 
-    DrmAllocation allocation(nullptr, nullptr, 1024);
+    DrmAllocation allocation(nullptr, nullptr, 1024, MemoryPool::MemoryNull);
 
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -492,7 +492,7 @@ TEST_F(DrmCommandStreamTest, CheckDrmFreeCloseFailed) {
         .WillOnce(::testing::Return(-1));
     EXPECT_CALL(*mock, ioctl(DRM_IOCTL_I915_GEM_WAIT, ::testing::_))
         .Times(2);
-    DrmAllocation allocation(nullptr, nullptr, 1024);
+    DrmAllocation allocation(nullptr, nullptr, 1024, MemoryPool::MemoryNull);
 
     csr->makeResident(allocation);
     csr->addBatchBufferEnd(cs, nullptr);
@@ -1107,7 +1107,7 @@ typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamLeaksTest;
 
 TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize());
+    auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize(), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
@@ -1129,8 +1129,8 @@ TEST_F(DrmCommandStreamLeaksTest, makeResident) {
 TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
     BufferObject *buffer1 = this->createBO(4096);
     BufferObject *buffer2 = this->createBO(4096);
-    auto allocation1 = new DrmAllocation(buffer1, nullptr, buffer1->peekSize());
-    auto allocation2 = new DrmAllocation(buffer2, nullptr, buffer2->peekSize());
+    auto allocation1 = new DrmAllocation(buffer1, nullptr, buffer1->peekSize(), MemoryPool::MemoryNull);
+    auto allocation2 = new DrmAllocation(buffer2, nullptr, buffer2->peekSize(), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, allocation1->getUnderlyingBuffer());
     EXPECT_EQ(nullptr, allocation2->getUnderlyingBuffer());
 
@@ -1157,7 +1157,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
 
 TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     auto buffer = this->createBO(1024);
-    auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize());
+    auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize(), MemoryPool::MemoryNull);
 
     csr->makeResident(*allocation);
     csr->processResidency(nullptr);
@@ -1442,7 +1442,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDiffere
 
 TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     std::unique_ptr<BufferObject> buffer(this->createBO(0));
-    DrmAllocation allocation(buffer.get(), nullptr, buffer->peekSize());
+    DrmAllocation allocation(buffer.get(), nullptr, buffer->peekSize(), MemoryPool::MemoryNull);
     EXPECT_EQ(nullptr, allocation.getUnderlyingBuffer());
     EXPECT_EQ(buffer->peekSize(), allocation.getUnderlyingBufferSize());
 
@@ -1667,7 +1667,7 @@ class DrmMockBuffer : public Buffer {
   public:
     static DrmMockBuffer *create() {
         char *data = static_cast<char *>(::alignedMalloc(128, 64));
-        DrmAllocation *alloc = new (std::nothrow) DrmAllocation(nullptr, &data, sizeof(data));
+        DrmAllocation *alloc = new (std::nothrow) DrmAllocation(nullptr, &data, sizeof(data), MemoryPool::MemoryNull);
         return new DrmMockBuffer(data, 128, alloc);
     }
 

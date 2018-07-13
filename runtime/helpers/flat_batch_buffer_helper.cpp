@@ -21,6 +21,7 @@
 */
 
 #include "runtime/helpers/flat_batch_buffer_helper.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
 

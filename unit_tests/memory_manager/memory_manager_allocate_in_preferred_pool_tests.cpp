@@ -156,8 +156,10 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     ASSERT_NE(nullptr, allocation);
     if (is64bit) {
         EXPECT_TRUE(allocation->is32BitAllocation);
+        EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
     } else {
         EXPECT_FALSE(allocation->is32BitAllocation);
+        EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
     }
 
     memoryManager.freeGraphicsMemory(allocation);
@@ -202,6 +204,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAnd
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()) & MemoryConstants::page64kMask);
     EXPECT_EQ(0u, allocation->getGpuAddress() & MemoryConstants::page64kMask);
     EXPECT_EQ(0u, allocation->getUnderlyingBufferSize() & MemoryConstants::page64kMask);
+    EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -229,6 +232,7 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAn
     ASSERT_NE(nullptr, allocation);
     EXPECT_FALSE(memoryManager.allocation64kbPageCreated);
     EXPECT_TRUE(memoryManager.allocationCreated);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
@@ -260,6 +264,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
 
     memoryManager.freeGraphicsMemory(allocation);
 }
