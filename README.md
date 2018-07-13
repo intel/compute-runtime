@@ -17,21 +17,21 @@ You may obtain a copy of the License at: https://opensource.org/licenses/MIT
 
 ## Dependencies
 
-* GmmLib - https://github.com/intel/gmmlib  
-* Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler  
+* GmmLib - https://github.com/intel/gmmlib
+* Intel Graphics Compiler - https://github.com/intel/intel-graphics-compiler
 
 ## Optional dependencies
 
 Below packages are needed to enable [cl_intel_va_api_media_sharing](https://www.khronos.org/registry/OpenCL/extensions/intel/cl_intel_va_api_media_sharing.txt) extension
 
-* libdrm - https://anongit.freedesktop.org/git/mesa/drm.git  
-* libva - https://github.com/intel/libva.git  
+* libdrm - https://anongit.freedesktop.org/git/mesa/drm.git
+* libva - https://github.com/intel/libva.git
 
 ## Supported Platforms
 
-* Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1  
-* Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1  
-* Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2  
+* Intel Core Processors with Gen8 graphics devices (formerly Broadwell) - OpenCL 2.1
+* Intel Core Processors with Gen9 graphics devices (formerly Skylake, Kaby Lake, Coffee Lake) - OpenCL 2.1
+* Intel Atom Processors with Gen9 graphics devices (formerly Apollo Lake, Gemini Lake) - OpenCL 1.2
 
 ## Linking applications
 
@@ -40,7 +40,7 @@ Directly linking to the runtime library (igdrcl) is not supported.
 
 ## How to provide feedback
 
-By default, please submit an issue using native github.com interface: https://github.com/intel/compute-runtime/issues.  
+By default, please submit an issue using native github.com interface: https://github.com/intel/compute-runtime/issues.
 
 ## How to contribute
 
@@ -51,6 +51,7 @@ A maintainer will contact you if there are questions or concerns.
 * Building and installation:
   * [Ubuntu 16.04](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
   * [Centos 7](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md)
+* Interoperability with Intel Tools: [TOOLS.md](https://github.com/intel/compute-runtime/blob/master/documentation/TOOLS.md)
 * Contribution guidelines: [CONTRIB.md](https://github.com/intel/compute-runtime/blob/master/documentation/CONTRIB.md)
 * Known issues and limitations: [LIMITATIONS.md](https://github.com/intel/compute-runtime/blob/master/documentation/LIMITATIONS.md)
 * Frequently asked questions: [FAQ.md](https://github.com/intel/compute-runtime/blob/master/documentation/FAQ.md)

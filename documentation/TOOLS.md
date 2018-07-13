@@ -39,10 +39,10 @@ This should return 2 lines. Otherwise follow sepdk installation in VTune documen
 ## Running VTune
 
 ```
-/opt/intel/vtune_amplifier_2018/bin64/amplxe-gui'
+/opt/intel/vtune_amplifier_2018/bin64/amplxe-gui
 ```
 
-Note: If you built Metrics Discovery with libstdc++ > 3.4.20, please use the following workaround: 
+Note: If you built Metrics Discovery with libstdc++ > 3.4.20, please use the following workaround:
 
 ```
 sudo sh -c 'LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libstdc++.so.6 /opt/intel/vtune_amplifier_2018/bin64/amplxe-gui'
