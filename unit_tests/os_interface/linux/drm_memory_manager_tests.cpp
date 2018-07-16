@@ -1199,8 +1199,8 @@ TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImag
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
-    ExecutionEnvironment execEnv;
-    execEnv.initGmm(*platformDevices);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
     auto imageGraphicsAllocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
     queryGmm.release();
@@ -1744,8 +1744,8 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenLockUnlockIsCalledOnAlloca
     imgInfo.size = 4096u;
     imgInfo.rowPitch = 512u;
 
-    ExecutionEnvironment execEnv;
-    execEnv.initGmm(*platformDevices);
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
     auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
     queryGmm.release();

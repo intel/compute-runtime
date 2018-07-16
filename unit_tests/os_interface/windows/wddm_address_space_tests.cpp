@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm20.h"
 #include "test.h"
 
@@ -67,7 +68,7 @@ class WddmMockReserveAddress : public WddmMock {
     uint32_t returnNullIter = 0;
 };
 
-using WddmReserveAddressTest = ::testing::Test;
+using WddmReserveAddressTest = Test<GmmEnvironmentFixture>;
 
 HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());

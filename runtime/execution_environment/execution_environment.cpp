@@ -32,7 +32,9 @@ ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
 
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
-    gmmHelper.reset(new GmmHelper(hwInfo));
+    if (!gmmHelper) {
+        gmmHelper.reset(new GmmHelper(hwInfo));
+    }
 }
 bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo) {
     if (this->commandStreamReceiver) {

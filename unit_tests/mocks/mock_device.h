@@ -108,17 +108,6 @@ class MockDevice : public Device {
     }
 
     template <typename T>
-    static T *createWithMemoryManager(const HardwareInfo *pHwInfo,
-                                      MemoryManager *memManager) {
-        pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo, new ExecutionEnvironment);
-        if (memManager) {
-            device->setMemoryManager(memManager);
-        }
-        return createDeviceInternals(pHwInfo, device);
-    }
-
-    template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
         auto executionEnvironment = new ExecutionEnvironment;
         pHwInfo = getDeviceInitHwInfo(pHwInfo);

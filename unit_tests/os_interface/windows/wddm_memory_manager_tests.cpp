@@ -36,6 +36,7 @@ using namespace OCLRT;
 using namespace ::testing;
 
 void WddmMemoryManagerFixture::SetUp() {
+    GmmEnvironmentFixture::SetUp();
     GdiDllFixture::SetUp();
     wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
     ASSERT_NE(nullptr, wddm);

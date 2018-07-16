@@ -670,7 +670,8 @@ class DrmCommandStreamEnhancedFixture
     DebugManagerStateRestore *dbgState;
 
     void SetUp() {
-
+        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->initGmm(*platformDevices);
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
@@ -681,7 +682,8 @@ class DrmCommandStreamEnhancedFixture
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
         ASSERT_NE(nullptr, mm);
-        device = MockDevice::createWithMemoryManager<MockDevice>(platformDevices[0], mm);
+        executionEnvironment->memoryManager.reset(mm);
+        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
         ASSERT_NE(nullptr, device);
         mm->device = device;
     }

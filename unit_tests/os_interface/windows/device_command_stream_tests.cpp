@@ -35,6 +35,7 @@
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
+#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
@@ -56,29 +57,29 @@ using namespace ::testing;
 
 class WddmCommandStreamFixture {
   public:
-    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    MemoryManager *memManager = nullptr;
-    MockDevice *device = nullptr;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MemoryManager> memManager;
+    std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr;
     MockWddmMemoryManager *mockWddmMM = nullptr;
     WddmMock *wddm = nullptr;
     DebugManagerStateRestore stateRestore;
 
     virtual void SetUp() {
+        device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        ASSERT_NE(nullptr, device);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
         ASSERT_NE(wddm, nullptr);
 
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
-        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], wddm);
+        csr.reset(new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], wddm));
         ASSERT_NE(nullptr, csr);
 
         mockWddmMM = new MockWddmMemoryManager(wddm);
-        memManager = mockWddmMM;
-        csr->setMemoryManager(memManager);
+        memManager.reset(mockWddmMM);
+        csr->setMemoryManager(memManager.get());
 
-        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]);
-        ASSERT_NE(nullptr, device);
-        memManager->device = device;
+        memManager->device = device.get();
 
         ASSERT_NE(nullptr, memManager);
     }
@@ -86,9 +87,6 @@ class WddmCommandStreamFixture {
     virtual void TearDown() {
         mockWddmMM = nullptr;
         delete csr->getTagAddress();
-        delete csr;
-        delete memManager;
-        delete device;
     }
 };
 
@@ -103,6 +101,8 @@ class WddmCommandStreamWithMockGdiFixture {
     GraphicsAllocation *preemptionAllocation = nullptr;
 
     virtual void SetUp() {
+        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment->initGmm(*platformDevices);
         wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
@@ -113,10 +113,9 @@ class WddmCommandStreamWithMockGdiFixture {
 
         memManager = csr->createMemoryManager(false);
         ASSERT_NE(nullptr, memManager);
-
-        device = MockDevice::createWithMemoryManager<MockDevice>(platformDevices[0], memManager);
+        executionEnvironment->memoryManager.reset(memManager);
+        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
         ASSERT_NE(nullptr, device);
-        memManager->device = device;
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
             preemptionAllocation = memManager->allocateGraphicsMemory(1024);
         }
@@ -132,18 +131,19 @@ class WddmCommandStreamWithMockGdiFixture {
     }
 };
 
-typedef ::Test<WddmCommandStreamFixture> WddmCommandStreamTest;
-typedef ::Test<WddmCommandStreamWithMockGdiFixture> WddmCommandStreamMockGdiTest;
-typedef ::Test<WddmCommandStreamFixture> WddmDefaultTest;
+using WddmCommandStreamTest = ::Test<WddmCommandStreamFixture>;
+using WddmCommandStreamMockGdiTest = ::Test<WddmCommandStreamWithMockGdiFixture>;
+using WddmDefaultTest = ::Test<WddmCommandStreamFixture>;
+using DeviceCommandStreamTest = ::Test<GmmEnvironmentFixture>;
 
-TEST(DeviceCommandStreamTest, CreateWddmCSR) {
+TEST_F(DeviceCommandStreamTest, CreateWddmCSR) {
     std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(DEFAULT_TEST_PLATFORM::hwInfo, false)));
     EXPECT_NE(nullptr, csr);
     std::unique_ptr<Wddm> wddm(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(csr.get())->peekWddm());
     EXPECT_NE(nullptr, wddm);
 }
 
-TEST(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
+TEST_F(DeviceCommandStreamTest, CreateWddmCSRWithAubDump) {
     std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr(static_cast<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>::create(DEFAULT_TEST_PLATFORM::hwInfo, true)));
     EXPECT_NE(nullptr, csr);
     std::unique_ptr<Wddm> wddm(static_cast<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *>(csr.get())->peekWddm());
@@ -434,7 +434,7 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
 }
 
 TEST_F(WddmCommandStreamTest, makeResident) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager);
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
 
     GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -450,7 +450,7 @@ TEST_F(WddmCommandStreamTest, makeResident) {
 }
 
 TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager);
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
 
     GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
@@ -466,7 +466,7 @@ TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations
 }
 
 TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidateList) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager);
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
 
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemory(4096);
     GraphicsAllocation *allocation2 = memManager->allocateGraphicsMemory(4096);
@@ -487,7 +487,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 }
 
 TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager);
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
 
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, allocation);
@@ -506,7 +506,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
 TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
     GraphicsAllocation *gfxAllocation = memManager->allocateGraphicsMemory(256);
     Buffer *buffer = new AlignedBuffer(gfxAllocation);
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager);
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
 
     csr->makeResident(*buffer->getGraphicsAllocation());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);

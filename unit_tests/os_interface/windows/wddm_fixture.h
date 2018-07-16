@@ -23,6 +23,7 @@
 #pragma once
 
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm20.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
@@ -30,46 +31,54 @@
 #include "test.h"
 
 namespace OCLRT {
-struct WddmFixture {
-    virtual void SetUp() {
+struct WddmFixture : public GmmEnvironmentFixture {
+    void SetUp() override {
+        GmmEnvironmentFixture::SetUp();
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
     }
 
-    virtual void TearDown(){};
+    void TearDown() override {
+        GmmEnvironmentFixture::TearDown();
+    };
 
     std::unique_ptr<WddmMock> wddm;
     MockGdi *gdi = nullptr;
 };
 
-struct WddmFixtureWithMockGdiDll : public GdiDllFixture {
+struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFixture {
     void SetUp() override {
+        GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
     }
 
     void TearDown() override {
         GdiDllFixture::TearDown();
+        GmmEnvironmentFixture::TearDown();
     }
 
     std::unique_ptr<WddmMock> wddm;
 };
 
-struct WddmInstrumentationGmmFixture {
-    virtual void SetUp() {
+struct WddmInstrumentationGmmFixture : public GmmEnvironmentFixture {
+    void SetUp() override {
+        GmmEnvironmentFixture::SetUp();
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>();
         wddm->gmmMemory.reset(gmmMem);
     }
-    virtual void TearDown() {}
+    void TearDown() override {
+        GmmEnvironmentFixture::TearDown();
+    }
 
     std::unique_ptr<WddmMock> wddm;
     GmockGmmMemory *gmmMem = nullptr;
 };
 
-typedef Test<WddmFixture> WddmTest;
-typedef Test<WddmFixtureWithMockGdiDll> WddmTestWithMockGdiDll;
-typedef Test<WddmInstrumentationGmmFixture> WddmInstrumentationTest;
-typedef ::testing::Test WddmTestSingle;
+using WddmTest = Test<WddmFixture>;
+using WddmTestWithMockGdiDll = Test<WddmFixtureWithMockGdiDll>;
+using WddmInstrumentationTest = Test<WddmInstrumentationGmmFixture>;
+using WddmTestSingle = ::testing::Test;
 } // namespace OCLRT

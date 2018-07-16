@@ -77,7 +77,6 @@ Wddm::Wddm() : initialized(false),
     maximumApplicationAddress = 0;
     node = GPUNODE_3D;
     preemptionMode = PreemptionMode::Disabled;
-    gmmMemory = std::unique_ptr<GmmMemory>(GmmMemory::create());
     minAddress = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     gdi = std::unique_ptr<Gdi>(new Gdi());
