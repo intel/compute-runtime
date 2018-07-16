@@ -451,10 +451,6 @@ HWTEST_F(EnqueueThreading, flushWaitList_ReleaseOwnershipWhenQueueIsBlocked) {
       public:
         MyMockDevice() : MockDevice(*platformDevices[0]) {}
 
-        void setTagAllocation(GraphicsAllocation *tagAllocation) {
-            this->tagAllocation = tagAllocation;
-        }
-
         bool takeOwnership(bool waitUntilGet) const override {
             ++takeOwnershipCount;
             Device::takeOwnership(true);

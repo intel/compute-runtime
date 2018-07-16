@@ -126,19 +126,6 @@ TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUs
     EXPECT_EQ(expectedEngine, actualEngineType);
 }
 
-struct SmallMockDevice : public Device {
-    SmallMockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-        : Device(hwInfo, executionEnvironment) {}
-    GraphicsAllocation *peekTagAllocation() { return this->tagAllocation; }
-};
-
-TEST(DeviceCreation, givenDeviceWithUsedTagAllocationWhenItIsDestroyedThenThereAreNoCrashesAndLeaks) {
-    overrideCommandStreamReceiverCreation = 1;
-    std::unique_ptr<SmallMockDevice> device(MockDevice::createWithNewExecutionEnvironment<SmallMockDevice>(platformDevices[0]));
-    auto tagAllocation = device->peekTagAllocation();
-    tagAllocation->taskCount = 1;
-}
-
 TEST(DeviceCleanup, givenDeviceWhenItIsDestroyedThenFlushBatchedSubmissionsIsCalled) {
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockCommandStreamReceiver *csr = new MockCommandStreamReceiver;

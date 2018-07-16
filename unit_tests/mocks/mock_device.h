@@ -96,9 +96,9 @@ class MockDevice : public Device {
 
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
 
-    GraphicsAllocation *getTagAllocation() { return tagAllocation; }
+    GraphicsAllocation *getTagAllocation() { return this->getCommandStreamReceiver().getTagAllocation(); }
     GraphicsAllocation *disconnectCurrentTagAllocationAndReturnIt() {
-        auto currentTagAllocation = tagAllocation;
+        auto currentTagAllocation = getTagAllocation();
         this->getCommandStreamReceiver().setTagAllocation(nullptr);
         return currentTagAllocation;
     }

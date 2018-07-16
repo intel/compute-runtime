@@ -151,7 +151,6 @@ class Device : public BaseObject<_cl_device_id> {
     DeviceInfo deviceInfo;
 
     volatile uint32_t *tagAddress;
-    GraphicsAllocation *tagAllocation;
     GraphicsAllocation *preemptionAllocation;
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;

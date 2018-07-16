@@ -80,7 +80,7 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : enabledClVersion(false), hwInfo(hwInfo), tagAddress(nullptr), tagAllocation(nullptr), preemptionAllocation(nullptr),
+    : enabledClVersion(false), hwInfo(hwInfo), tagAddress(nullptr), preemptionAllocation(nullptr),
       osTime(nullptr), slmWindowStartAddress(nullptr), executionEnvironment(executionEnvironment) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
@@ -165,7 +165,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     pDevice->tagAddress = pTagMemory;
 
     pDevice->initializeCaps();
-    pDevice->tagAllocation = pTagAllocation;
 
     if (pDevice->osTime->getOSInterface()) {
         if (pHwInfo->capabilityTable.instrumentationEnabled) {
