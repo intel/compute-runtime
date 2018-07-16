@@ -20,19 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/os_interface/windows/wddm_memory_manager.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/device/device.h"
-#include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/ptr_math.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
-#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/memory_manager/deferrable_deletion.h"
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
-#include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm_allocation.h"
 #include <algorithm>
 
 namespace OCLRT {
@@ -295,7 +295,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     releaseResidencyLock();
 
-    UNRECOVERABLE_IF(gfxAllocation->taskCount != ObjectNotUsed && this->device && this->device->peekCommandStreamReceiver() && gfxAllocation->taskCount > *this->device->getCommandStreamReceiver().getTagAddress());
+    UNRECOVERABLE_IF(gfxAllocation->taskCount != ObjectNotUsed && this->csr && this->csr->getTagAddress() && gfxAllocation->taskCount > *this->csr->getTagAddress());
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {
