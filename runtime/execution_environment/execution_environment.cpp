@@ -20,16 +20,36 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
 
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
+extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
+
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
     gmmHelper.reset(new GmmHelper(hwInfo));
 }
+bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo) {
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo);
+    if (!commandStreamReceiver) {
+        return false;
+    }
+    this->commandStreamReceiver.reset(commandStreamReceiver);
+    return true;
+}
+void ExecutionEnvironment::initializeMemoryManager(MemoryManager *externalMemoryManager, bool enable64KBpages) {
+    if (!externalMemoryManager) {
+        memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages));
+        commandStreamReceiver->setMemoryManager(memoryManager.get());
+    } else {
+        commandStreamReceiver->setMemoryManager(externalMemoryManager);
+    }
+    DEBUG_BREAK_IF(!this->memoryManager);
+}
+
 } // namespace OCLRT

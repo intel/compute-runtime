@@ -329,6 +329,17 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     EXPECT_TRUE(destructorCalled);
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
+    csr->setMemoryManager(memoryManager.get());
+    EXPECT_EQ(nullptr, csr->getTagAllocation());
+    EXPECT_TRUE(csr->getTagAddress() == nullptr);
+    csr->initializeTagAllocation();
+    EXPECT_NE(nullptr, csr->getTagAllocation());
+    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {
     MockCommandStreamReceiver csr;
     uint32_t tag = 0;

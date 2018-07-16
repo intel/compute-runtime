@@ -21,16 +21,16 @@
  */
 
 #pragma once
+#include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/linear_stream.h"
-#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/command_stream/submissions_aggregator.h"
-#include "runtime/helpers/completion_stamp.h"
-#include "runtime/helpers/aligned_memory.h"
+#include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/helpers/address_patch.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/completion_stamp.h"
+#include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
-#include "runtime/helpers/flat_batch_buffer_helper.h"
-#include "runtime/command_stream/csr_definitions.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -141,6 +141,8 @@ class CommandStreamReceiver {
 
     virtual enum CommandStreamReceiverType getType() = 0;
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
+
+    bool initializeTagAllocation();
 
   protected:
     void setDisableL3Cache(bool val) {

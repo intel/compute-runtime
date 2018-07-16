@@ -348,4 +348,14 @@ void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<Experimenta
     experimentalCmdBuffer = std::move(cmdBuffer);
 }
 
+bool CommandStreamReceiver::initializeTagAllocation() {
+    auto tagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
+    if (!tagAllocation) {
+        return false;
+    }
+
+    this->setTagAllocation(tagAllocation);
+    return true;
+}
+
 } // namespace OCLRT

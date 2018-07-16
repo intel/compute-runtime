@@ -20,13 +20,13 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "test.h"
 #include "runtime/device/device.h"
-#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/platform/platform.h"
+#include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
 
 using namespace OCLRT;
@@ -95,6 +95,27 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
     std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get()));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamReceiverIsCalledThenItIsInitalized) {
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceiver);
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
+    executionEnvironment->initializeMemoryManager(nullptr, false);
+    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerWithExternalMemoryManagerIsCalledThenItIsSetToExternal) {
+    std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
+    executionEnvironment->initializeMemoryManager(memoryManager.get(), false);
+    EXPECT_EQ(memoryManager.get(), executionEnvironment->commandStreamReceiver->getMemoryManager());
 }
 
 auto destructorId = 0u;
