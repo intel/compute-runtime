@@ -39,7 +39,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
     void initGmm(const HardwareInfo *hwInfo);
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
     std::unique_ptr<MemoryManager> memoryManager;
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
 };
 } // namespace OCLRT

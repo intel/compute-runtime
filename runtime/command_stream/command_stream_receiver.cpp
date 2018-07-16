@@ -182,7 +182,6 @@ LinearStream &CommandStreamReceiver::getCS(size_t minRequiredSize) {
 }
 
 void CommandStreamReceiver::cleanupResources() {
-    auto memoryManager = this->getMemoryManager();
     if (!memoryManager)
         return;
 
@@ -210,7 +209,6 @@ void CommandStreamReceiver::cleanupResources() {
         tagAllocation = nullptr;
         tagAddress = nullptr;
     }
-    experimentalCmdBuffer.reset(nullptr);
 }
 
 bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {

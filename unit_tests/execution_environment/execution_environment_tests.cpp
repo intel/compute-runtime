@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/options.h"
 #include "runtime/platform/platform.h"
+#include "unit_tests/mocks/mock_csr.h"
 
 using namespace OCLRT;
 
@@ -104,16 +105,24 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct GmmHelperMock : public GmmHelper {
         using GmmHelper::GmmHelper;
         ~GmmHelperMock() override {
-            EXPECT_EQ(destructorId, 1u);
+            EXPECT_EQ(destructorId, 2u);
             destructorId++;
         }
     };
     struct MemoryMangerMock : public OsAgnosticMemoryManager {
         ~MemoryMangerMock() override {
-            EXPECT_EQ(destructorId, 0u);
+            EXPECT_EQ(destructorId, 1u);
             destructorId++;
         }
     };
+
+    struct CommandStreamReceiverMock : public MockCommandStreamReceiver {
+        ~CommandStreamReceiverMock() override {
+            EXPECT_EQ(destructorId, 0u);
+            destructorId++;
+        };
+    };
+
     struct MockExecutionEnvironment : ExecutionEnvironment {
         using ExecutionEnvironment::gmmHelper;
     };
@@ -121,7 +130,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment(new MockExecutionEnvironment);
     executionEnvironment->gmmHelper.reset(new GmmHelperMock(platformDevices[0]));
     executionEnvironment->memoryManager.reset(new MemoryMangerMock);
+    executionEnvironment->commandStreamReceiver.reset(new CommandStreamReceiverMock);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(2u, destructorId);
+    EXPECT_EQ(3u, destructorId);
 }

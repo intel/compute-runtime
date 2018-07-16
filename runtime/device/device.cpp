@@ -106,9 +106,9 @@ Device::~Device() {
     if (performanceCounters) {
         performanceCounters->shutdown();
     }
+
     if (executionEnvironment->commandStreamReceiver) {
         executionEnvironment->commandStreamReceiver->flushBatchedSubmissions();
-        executionEnvironment->commandStreamReceiver.reset(nullptr);
     }
 
     if (deviceInfo.sourceLevelDebuggerActive && sourceLevelDebugger) {
