@@ -29,10 +29,10 @@
 using namespace OCLRT;
 
 class HwHelperTest : public testing::Test {
+  protected:
     void SetUp() override;
     void TearDown() override;
 
-  protected:
     PLATFORM testPlatform;
     FeatureTable testFtrTable;
     WorkaroundTable testWaTable;

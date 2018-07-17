@@ -31,6 +31,7 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
                                   public ::testing::Test {
     typedef RunKernelFixture<AUBRunKernelFixtureFactory> ParentClass;
 
+  protected:
     void SetUp() override {
         ParentClass::SetUp();
     }

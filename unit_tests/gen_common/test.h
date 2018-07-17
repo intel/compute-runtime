@@ -159,6 +159,14 @@ extern GFXCORE_FAMILY renderCoreFamily;
     HWCMDTEST_TEST_(cmdset_gen_base, test_fixture, test_name, test_fixture, \
                     ::testing::internal::GetTypeId<test_fixture>())
 
+#define CALL_IF_MATCH(match_core, match_product, expr)                           \
+    auto matchCore = match_core;                                                 \
+    auto matchProduct = match_product;                                           \
+    if ((::renderCoreFamily == matchCore) &&                                     \
+        (IGFX_MAX_PRODUCT == matchProduct || ::productFamily == matchProduct)) { \
+        expr;                                                                    \
+    }
+
 #define FAMILYTEST_TEST_(test_case_name, test_name, parent_class, parent_id, match_core, match_product) \
     class GTEST_TEST_CLASS_NAME_(test_case_name, test_name) : public parent_class {                     \
       public:                                                                                           \
@@ -170,12 +178,14 @@ extern GFXCORE_FAMILY renderCoreFamily;
         void testBodyHw();                                                                              \
                                                                                                         \
         void TestBody() override {                                                                      \
-            auto matchCore = match_core;                                                                \
-            auto matchProduct = match_product;                                                          \
-            if ((::renderCoreFamily == matchCore) &&                                                    \
-                (IGFX_MAX_PRODUCT == matchProduct || ::productFamily == matchProduct)) {                \
-                testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>();                   \
-            }                                                                                           \
+            CALL_IF_MATCH(match_core, match_product,                                                    \
+                          testBodyHw<typename OCLRT::GfxFamilyMapper<match_core>::GfxFamily>())         \
+        }                                                                                               \
+        void SetUp() override {                                                                         \
+            CALL_IF_MATCH(match_core, match_product, parent_class::SetUp())                             \
+        }                                                                                               \
+        void TearDown() override {                                                                      \
+            CALL_IF_MATCH(match_core, match_product, parent_class::TearDown())                          \
         }                                                                                               \
         static ::testing::TestInfo *const test_info_ GTEST_ATTRIBUTE_UNUSED_;                           \
         GTEST_DISALLOW_COPY_AND_ASSIGN_(                                                                \
