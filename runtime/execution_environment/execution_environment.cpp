@@ -35,6 +35,9 @@ void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
     gmmHelper.reset(new GmmHelper(hwInfo));
 }
 bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo) {
+    if (this->commandStreamReceiver) {
+        return true;
+    }
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo);
     if (!commandStreamReceiver) {
         return false;
@@ -43,6 +46,10 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     return true;
 }
 void ExecutionEnvironment::initializeMemoryManager(MemoryManager *externalMemoryManager, bool enable64KBpages) {
+    if (this->memoryManager) {
+        commandStreamReceiver->setMemoryManager(this->memoryManager.get());
+        return;
+    }
     if (!externalMemoryManager) {
         memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages));
         commandStreamReceiver->setMemoryManager(memoryManager.get());

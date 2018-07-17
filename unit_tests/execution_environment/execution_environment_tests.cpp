@@ -156,3 +156,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment.reset(nullptr);
     EXPECT_EQ(3u, destructorId);
 }
+
+TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {
+    auto executionEnvironment = new ExecutionEnvironment;
+    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+    auto &commandStreamReceiver = device->getCommandStreamReceiver();
+    auto memoryManager = device->getMemoryManager();
+
+    std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+    EXPECT_EQ(&commandStreamReceiver, &device->getCommandStreamReceiver());
+    EXPECT_EQ(memoryManager, device2->getMemoryManager());
+}
