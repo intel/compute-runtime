@@ -37,7 +37,6 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     EventBuilder eventBuilder;
     bool eventCompleted = false;
     bool mapOperation = transferProperties.cmdType == CL_COMMAND_MAP_BUFFER || transferProperties.cmdType == CL_COMMAND_MAP_IMAGE;
-    auto image = castToObject<Image>(transferProperties.memObj);
     ErrorCodeHelper err(&retVal, CL_SUCCESS);
 
     if (mapOperation) {
@@ -125,8 +124,8 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             }
             break;
         case CL_COMMAND_MAP_IMAGE:
-            if (!image->isMemObjZeroCopy()) {
-                image->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
+            if (!transferProperties.memObj->isMemObjZeroCopy()) {
+                transferProperties.memObj->transferDataToHostPtr(transferProperties.size, transferProperties.offset);
                 eventCompleted = true;
             }
             break;
