@@ -34,6 +34,8 @@ const char *frontEndDllName = "libmock_igdfcl.so";
 const char *igcDllName = "libmock_igc.so";
 const char *libvaDllName = nullptr;
 const char *testDllName = "libtest_dynamic_lib.so";
+const char *gmmDllName = "libmock_gmm.so";
+const char *gmmEntryName = "openMockGmm";
 #endif
 const char *sysFsPciPath = "./test_files";
 } // namespace Os

@@ -100,7 +100,7 @@ target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC DEFAULT_PLATFORM=${DEFA
 
 link_directories(${GMM_LIB_PATHS})
 
-if(UNIX OR USE_STATIC_GMM)
+if(USE_STATIC_GMM)
   target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
 else()
   target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC GMM_LIB_DLL)
