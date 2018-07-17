@@ -436,7 +436,7 @@ void Program::updateNonUniformFlag() {
     } else {
         std::stringstream ss{options.c_str() + pos + clOptNameClVer.size()};
         uint32_t majorV, minorV;
-        char dot;
+        char dot = 0u;
         ss >> majorV;
         ss >> dot;
         ss >> minorV;
