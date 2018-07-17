@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -39,4 +39,20 @@ TEST_F(clGetSupportedImageFormatsTests, returnsNumReadWriteFormats) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_GT(numImageFormats, 0u);
+}
+
+TEST_F(clGetSupportedImageFormatsTests, givenInvalidContextWhenFunctionIsCalledThenErrorIsReturned) {
+    auto device = pContext->getDevice(0u);
+    auto dummyContext = reinterpret_cast<cl_context>(device);
+
+    cl_uint numImageFormats = 0;
+    retVal = clGetSupportedImageFormats(
+        dummyContext,
+        CL_MEM_READ_WRITE,
+        CL_MEM_OBJECT_IMAGE2D,
+        0,
+        nullptr,
+        &numImageFormats);
+
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 }

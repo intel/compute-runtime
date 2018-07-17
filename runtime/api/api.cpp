@@ -857,9 +857,12 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
     auto pContext = castToObject<Context>(context);
     auto pPlatform = platform();
     auto pDevice = pPlatform->getDevice(0);
-
-    retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
-                                                imageFormats, numImageFormats);
+    if (pContext) {
+        retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
+                                                    imageFormats, numImageFormats);
+    } else {
+        retVal = CL_INVALID_CONTEXT;
+    }
     return retVal;
 }
 
