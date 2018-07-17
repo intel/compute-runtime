@@ -435,7 +435,7 @@ void Program::updateNonUniformFlag() {
         programOptionVersion = 12u; //Default is 1.2
     } else {
         std::stringstream ss{options.c_str() + pos + clOptNameClVer.size()};
-        uint32_t majorV, minorV;
+        uint32_t majorV = 0u, minorV = 0u;
         char dot = 0u;
         ss >> majorV;
         ss >> dot;
