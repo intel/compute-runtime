@@ -215,9 +215,13 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
 
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
-        if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
-            cmdQ->finish(true);
-            break;
+        if (memObject) {
+            if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
+                cmdQ->finish(true);
+                break;
+            }
+        } else {
+            return CL_INVALID_MEM_OBJECT;
         }
     }
 

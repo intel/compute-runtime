@@ -760,6 +760,12 @@ TEST_F(D3D9Tests, acquireReleaseOnNonSharedResourceSurfaceAndNonLockable) {
     EXPECT_TRUE(memcmp(&requestedResCopyBlt, &expectedResCopyBlt, sizeof(GMM_RES_COPY_BLT)) == 0);
 }
 
+TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseListWhenCallIsMadeThenFailureIsReturned) {
+    auto fakeObject = reinterpret_cast<cl_mem>(cmdQ);
+    auto retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &fakeObject, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
 TEST_F(D3D9Tests, givenResourcesCreatedFromDifferentDevicesWhenAcquireReleaseCalledThenUpdateDevice) {
     EXPECT_CALL(*mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(mockSharingFcns->mockTexture2dDesc));
 
