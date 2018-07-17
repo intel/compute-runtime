@@ -1223,7 +1223,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     Context *pContext = nullptr;
-    cl_program program = nullptr;
+    Program *program = nullptr;
 
     retVal = validateObject(context);
     if (CL_SUCCESS == retVal) {
@@ -1231,10 +1231,9 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
     }
     if (pContext != nullptr) {
         program = new Program(pContext, false);
-        Program *pProgram = castToObject<Program>(program);
-        retVal = pProgram->link(numDevices, deviceList, options,
-                                numInputPrograms, inputPrograms,
-                                funcNotify, userData);
+        retVal = program->link(numDevices, deviceList, options,
+                               numInputPrograms, inputPrograms,
+                               funcNotify, userData);
     }
 
     err.set(retVal);
