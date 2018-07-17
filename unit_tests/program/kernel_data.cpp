@@ -23,8 +23,8 @@
 #include "runtime/helpers/string.h"
 #include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
-#include "unit_tests/helpers/gtest_helpers.h"
 #include "unit_tests/fixtures/kernel_data_fixture.h"
+#include "unit_tests/helpers/gtest_helpers.h"
 
 TEST_F(KernelDataTest, KernelInfo_Name) {
     kernelName = "myTestKernel";
@@ -463,6 +463,13 @@ TEST_P(DataParameterTest, DataParameterTests) {
     if (pKernelInfo->patchInfo.dataParameterBuffers.size() > 0) {
         EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
         EXPECT_EQ_VAL(GetParam(), pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+        if (pKernelInfo->kernelArgInfo.size() == dataParameterToken.ArgumentNumber + 1) {
+            if (GetParam() == DATA_PARAMETER_BUFFER_STATEFUL) {
+                EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
+            } else {
+                EXPECT_FALSE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
+            }
+        } // no else - some params are skipped
     }
 }
 
@@ -492,6 +499,24 @@ TEST_F(KernelDataParameterTest, DataParameterTestsDataPatameterBufferOffset) {
     ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
     EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
     EXPECT_EQ_VAL(DATA_PARAMETER_BUFFER_OFFSET, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+}
+
+TEST_F(KernelDataParameterTest, givenDataParameterBufferStatefulWhenDecodingThenSetArgAsPureStateful) {
+    SPatchDataParameterBuffer dataParameterToken = {};
+    dataParameterToken.Token = PATCH_TOKEN_DATA_PARAMETER_BUFFER;
+    dataParameterToken.Size = sizeof(SPatchDataParameterBuffer);
+    dataParameterToken.Type = DATA_PARAMETER_BUFFER_STATEFUL;
+    dataParameterToken.ArgumentNumber = 1;
+
+    pPatchList = &dataParameterToken;
+    patchListSize = dataParameterToken.Size;
+
+    buildAndDecode();
+
+    ASSERT_EQ(1u, pKernelInfo->patchInfo.dataParameterBuffers.size());
+    EXPECT_EQ_CONST(PATCH_TOKEN_DATA_PARAMETER_BUFFER, pKernelInfo->patchInfo.dataParameterBuffers[0]->Token);
+    EXPECT_EQ_VAL(DATA_PARAMETER_BUFFER_STATEFUL, pKernelInfo->patchInfo.dataParameterBuffers[0]->Type);
+    EXPECT_TRUE(pKernelInfo->kernelArgInfo[dataParameterToken.ArgumentNumber].pureStatefulBufferAccess);
 }
 
 TEST_F(KernelDataParameterTest, givenUnknownDataParameterWhenDecodedThenParameterIsIgnored) {

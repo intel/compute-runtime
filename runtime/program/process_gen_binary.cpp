@@ -20,17 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "patch_list.h"
+#include "patch_shared.h"
+#include "program.h"
+#include "program_debug_data.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "patch_list.h"
-#include "patch_shared.h"
-#include "program_debug_data.h"
-#include "program.h"
 #include "runtime/kernel/kernel.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 #include <algorithm>
 
@@ -435,6 +435,11 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                 kernelInfo.resizeKernelArgInfoAndRegisterParameter(argNum);
                 kernelInfo.kernelArgInfo[argNum].offsetNumMipLevels = pDataParameterBuffer->Offset;
                 DEBUG_BREAK_IF(pDataParameterBuffer->DataSize != sizeof(uint32_t));
+                break;
+            case DATA_PARAMETER_BUFFER_STATEFUL:
+                DBG_LOG(LogPatchTokens, "\n  .Type", "BUFFER_STATEFUL");
+                kernelInfo.resizeKernelArgInfoAndRegisterParameter(argNum);
+                kernelInfo.kernelArgInfo[argNum].pureStatefulBufferAccess = true;
                 break;
             case DATA_PARAMETER_IMAGE_SRGB_CHANNEL_ORDER:
             case DATA_PARAMETER_STAGE_IN_GRID_ORIGIN:
