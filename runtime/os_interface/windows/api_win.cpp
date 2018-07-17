@@ -123,7 +123,12 @@ cl_mem CL_API_CALL clCreateFromDX9MediaSurfaceINTEL(cl_context context, cl_mem_f
     cl_dx9_surface_info_khr surfaceInfo = {resource, sharedHandle};
     auto ctx = castToObject<Context>(context);
 
-    return D3DSurface::create(ctx, &surfaceInfo, flags, 0, plane, errcodeRet);
+    if (ctx) {
+        return D3DSurface::create(ctx, &surfaceInfo, flags, 0, plane, errcodeRet);
+    } else {
+        err.set(CL_INVALID_CONTEXT);
+        return nullptr;
+    }
 }
 
 cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue, cl_uint numObjects, const cl_mem *memObjects,

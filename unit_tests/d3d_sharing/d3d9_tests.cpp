@@ -821,6 +821,15 @@ TEST_F(D3D9Tests, givenInvalidFlagsWhenSurfaceIsCreatedThenReturnError) {
     EXPECT_EQ(nullptr, img);
 }
 
+TEST_F(D3D9Tests, givenInvalidContextWhenImageIsCreatedThenErrorIsReturned) {
+    auto invalidContext = reinterpret_cast<cl_context>(this->cmdQ);
+    auto retVal = CL_SUCCESS;
+
+    auto img = clCreateFromDX9MediaSurfaceINTEL(invalidContext, CL_MEM_READ_WRITE, surfaceInfo.resource, surfaceInfo.shared_handle, 0, &retVal);
+    EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
+    EXPECT_EQ(nullptr, img);
+}
+
 TEST_F(D3D9Tests, givenTheSameResourceAndPlaneWhenSurfaceIsCreatedThenReturnError) {
     mockSharingFcns->mockTexture2dDesc.Format = (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2');
     surfaceInfo.shared_handle = (HANDLE)1;
