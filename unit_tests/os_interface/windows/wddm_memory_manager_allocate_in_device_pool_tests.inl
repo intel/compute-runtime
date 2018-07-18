@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "indirect_heap.h"
+#include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
+#include "gtest/gtest.h"
+using namespace OCLRT;
+using namespace ::testing;
 
-namespace OCLRT {
+TEST_F(WddmMemoryManagerSimpleTest, givenUseSystemMemorySetToTrueWhenAllocateInDevicePoolIsCalledThenNullptrIsReturned) {
+    memoryManager.reset(new MockWddmMemoryManager(false, wddm));
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.useSystemMemory = true;
+    allocData.flags.allocateMemory = true;
 
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation) : BaseClass(gfxAllocation) {
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
-
-IndirectHeap::IndirectHeap(GraphicsAllocation *gfxAllocation, bool canBeUtilizedAs4GbHeap) : BaseClass(gfxAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {
-}
-
-IndirectHeap::IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize) {
-}
-
-} // namespace OCLRT

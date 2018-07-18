@@ -411,10 +411,17 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustB
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
     AllocationData allocationData;
+    AllocationStatus status = AllocationStatus::Error;
+
     getAllocationData(allocationData, mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
+    GraphicsAllocation *allocation = nullptr;
 
-    return allocateGraphicsMemory(allocationData);
+    allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
+    if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
+        allocation = allocateGraphicsMemory(allocationData);
+    }
+    return allocation;
 }
 
 GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &allocationData) {

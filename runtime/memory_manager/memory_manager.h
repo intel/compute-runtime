@@ -104,6 +104,7 @@ class MemoryManager {
         Success = 0,
         Error,
         InvalidHostPointer,
+        RetryInNonDevicePool
     };
 
     MemoryManager(bool enable64kbpages);
@@ -138,6 +139,19 @@ class MemoryManager {
     virtual GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) = 0;
 
     virtual GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) = 0;
+
+    virtual GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+        status = AllocationStatus::Error;
+        if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
+            auto allocation = allocateGraphicsMemory(allocationData);
+            if (allocation) {
+                status = AllocationStatus::Success;
+            }
+            return allocation;
+        }
+        status = AllocationStatus::RetryInNonDevicePool;
+        return nullptr;
+    }
 
     virtual bool mapAuxGpuVA(GraphicsAllocation *graphicsAllocation) { return false; };
 

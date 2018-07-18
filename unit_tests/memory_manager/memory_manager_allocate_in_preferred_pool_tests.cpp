@@ -46,8 +46,28 @@ class MockOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
         allocation64kbPageCreated = true;
         return OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin);
     }
+
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
+        if (failInDevicePool) {
+            status = AllocationStatus::RetryInNonDevicePool;
+            return nullptr;
+        }
+        if (failInDevicePoolWithError) {
+            status = AllocationStatus::Error;
+            return nullptr;
+        }
+
+        auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
+        if (allocation) {
+            allocationInDevicePoolCreated = true;
+        }
+        return allocation;
+    }
     bool allocationCreated = false;
     bool allocation64kbPageCreated = false;
+    bool allocationInDevicePoolCreated = false;
+    bool failInDevicePool = false;
+    bool failInDevicePoolWithError = false;
 };
 
 TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyAndAllocateMemoryFlagsAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
@@ -265,6 +285,43 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePoolFailsThenFallbackAllocationIsReturned) {
+    MockOsAgnosticMemoryManager memoryManager(false);
+    AllocationData allocData;
+    MockOsAgnosticMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+
+    memoryManager.failInDevicePool = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(memoryManager.allocationCreated);
+    EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenZeroCopyFlagIsNotSetThenAllocateGraphicsMemoryInPreferredPoolCanAllocateInDevicePool) {
+    MockOsAgnosticMemoryManager memoryManager(false);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(MemoryManagerTest, givenMemoryManagerWhenZeroCopyFlagIsNotSetAndAllocateInDevicePoolFailsWithErrorThenAllocateGraphicsMemoryInPreferredPoolReturnsNullptr) {
+    MockOsAgnosticMemoryManager memoryManager(false);
+
+    memoryManager.failInDevicePoolWithError = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    ASSERT_EQ(nullptr, allocation);
+    EXPECT_FALSE(memoryManager.allocationInDevicePoolCreated);
 
     memoryManager.freeGraphicsMemory(allocation);
 }

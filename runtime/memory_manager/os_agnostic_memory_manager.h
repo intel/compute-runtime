@@ -68,6 +68,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) override;
     GraphicsAllocation *createGraphicsAllocationFromNTHandle(void *handle) override { return nullptr; }
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
+    GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override;
+
     void addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void removeAllocationFromHostPtrManager(GraphicsAllocation *gfxAllocation) override;
     void freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) override;

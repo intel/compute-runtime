@@ -73,6 +73,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_engine_mapper.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_defs.h
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_inc.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/windows_wrapper.h

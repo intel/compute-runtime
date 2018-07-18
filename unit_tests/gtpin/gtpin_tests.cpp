@@ -42,6 +42,7 @@
 #include "unit_tests/helpers/variable_backup.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
 #include "gtest/gtest.h"
@@ -127,6 +128,21 @@ void OnCommandBufferComplete(command_buffer_handle_t cb) {
 
     CommandBufferCompleteCallbackCount++;
 }
+
+class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
+  public:
+    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
+        if (failAllAllocationsInPreferredPool) {
+            failAllAllocationsInPreferredPool = false;
+            return nullptr;
+        }
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
+    }
+    bool failAllAllocationsInPreferredPool = false;
+};
+
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     using ContextFixture::SetUp;
 
@@ -136,7 +152,8 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         constructPlatform();
         pPlatform = platform();
         pPlatform->initialize();
-        pDevice = pPlatform->getDevice(0);
+        memoryManager = new MockMemoryManagerWithFailures();
+        pDevice = MockDevice::createWithMemoryManager<MockDevice>(platformDevices[0], memoryManager);
         cl_device_id device = (cl_device_id)pDevice;
         ContextFixture::SetUp(1, &device);
 
@@ -159,6 +176,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     void TearDown() override {
         ContextFixture::TearDown();
         platformImpl.reset(nullptr);
+        delete pDevice;
         MemoryManagementFixture::TearDown();
         OCLRT::isGTPinInitialized = false;
     }
@@ -169,6 +187,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
     GTPIN_DI_STATUS retFromGtPin = GTPIN_DI_SUCCESS;
     driver_services_t driverServices;
     gtpin::ocl::gtpin_events_t gtpinCallbacks;
+    MockMemoryManagerWithFailures *memoryManager = nullptr;
 };
 
 typedef Test<GTPinFixture> GTPinTests;
@@ -1984,11 +2003,18 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
             // Create kernels from program
             cl_kernel kernels[2] = {0};
             cl_uint numCreatedKernels = 0;
+
+            if (nonfailingAllocation != failureIndex) {
+                memoryManager->failAllAllocationsInPreferredPool = true;
+            }
             retVal = clCreateKernelsInProgram(pProgram, 0, &kernels[0], &numCreatedKernels);
 
             if (nonfailingAllocation != failureIndex) {
-                EXPECT_EQ(nullptr, kernels[0]);
-                EXPECT_EQ(1u, numCreatedKernels);
+                if (retVal != CL_SUCCESS) {
+                    EXPECT_EQ(nullptr, kernels[0]);
+                    EXPECT_EQ(1u, numCreatedKernels);
+                }
+                clReleaseKernel(kernels[0]);
             } else {
                 EXPECT_NE(nullptr, kernels[0]);
                 EXPECT_EQ(1u, numCreatedKernels);

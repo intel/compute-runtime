@@ -46,6 +46,16 @@ void WddmMemoryManagerFixture::SetUp() {
     }
 }
 
+TEST(WddmMemoryManager, NonCopyable) {
+    EXPECT_FALSE(std::is_move_constructible<WddmMemoryManager>::value);
+    EXPECT_FALSE(std::is_copy_constructible<WddmMemoryManager>::value);
+}
+
+TEST(WddmMemoryManager, NonAssignable) {
+    EXPECT_FALSE(std::is_move_assignable<WddmMemoryManager>::value);
+    EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
+}
+
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
     WddmMock *wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
     uint64_t base = 0x56000;
@@ -69,17 +79,6 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabled
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     DebugManager.flags.EnableDeferredDeleter.set(actualDeleterFlag);
 }
-
-class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public ::testing::Test {
-  public:
-    void SetUp() override {
-        MockWddmMemoryManagerFixture::SetUp();
-        wddm->initializeWithoutConfiguringAddressSpace();
-    }
-    void TearDown() override {
-        MockWddmMemoryManagerFixture::TearDown();
-    }
-};
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, wddm));

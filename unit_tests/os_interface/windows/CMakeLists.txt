@@ -47,6 +47,8 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_tests.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_allocate_in_device_pool_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
 )
 if(WIN32)

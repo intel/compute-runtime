@@ -170,7 +170,6 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
     const size_t minAlignment = MemoryConstants::allocationAlignment;
     size_t cAlignment = alignUp(std::max(alignment, minAlignment), minAlignment);
-    DrmAllocation *allocation = nullptr;
     // When size == 0 allocate allocationAlignment
     // It's needed to prevent overlapping pages with user pointers
     size_t cSize = std::max(alignUp(size, minAlignment), minAlignment);
@@ -191,8 +190,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, size_t alig
     if (forcePinEnabled && pinBB != nullptr && forcePin && size >= this->pinThreshold) {
         pinBB->pin(&bo, 1);
     }
-    allocation = new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages);
-    return allocation;
+    return new DrmAllocation(bo, res, cSize, MemoryPool::System4KBPages);
 }
 
 DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) {
@@ -394,7 +392,6 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 }
 
 GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation *inputGraphicsAllocation, size_t sizeWithPadding) {
-    DrmAllocation *drmAllocation = nullptr;
     void *gpuRange = mmapFunction(nullptr, sizeWithPadding, PROT_NONE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_NORESERVE, -1, 0);
 
     auto srcPtr = inputGraphicsAllocation->getUnderlyingBuffer();
@@ -411,8 +408,7 @@ GraphicsAllocation *DrmMemoryManager::createPaddedAllocation(GraphicsAllocation 
     bo->softPin(reinterpret_cast<uint64_t>(gpuRange));
     bo->setUnmapSize(sizeWithPadding);
     bo->setAllocationType(MMAP_ALLOCATOR);
-    drmAllocation = new DrmAllocation(bo, (void *)srcPtr, (uint64_t)ptrOffset(gpuRange, offset), sizeWithPadding, inputGraphicsAllocation->getMemoryPool());
-    return drmAllocation;
+    return new DrmAllocation(bo, (void *)srcPtr, (uint64_t)ptrOffset(gpuRange, offset), sizeWithPadding, inputGraphicsAllocation->getMemoryPool());
 }
 
 void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllocation) {

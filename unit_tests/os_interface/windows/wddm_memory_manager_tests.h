@@ -37,16 +37,6 @@
 using namespace OCLRT;
 using namespace ::testing;
 
-TEST(WddmMemoryManager, NonCopyable) {
-    EXPECT_FALSE(std::is_move_constructible<WddmMemoryManager>::value);
-    EXPECT_FALSE(std::is_copy_constructible<WddmMemoryManager>::value);
-}
-
-TEST(WddmMemoryManager, NonAssignable) {
-    EXPECT_FALSE(std::is_move_assignable<WddmMemoryManager>::value);
-    EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
-}
-
 class WddmMemoryManagerFixture : public GdiDllFixture {
   public:
     void SetUp() override;
@@ -190,6 +180,17 @@ class BufferWithWddmMemory : public ::testing::Test,
     MockContext context;
     cl_mem_flags flags;
     cl_int retVal;
+};
+
+class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public ::testing::Test {
+  public:
+    void SetUp() override {
+        MockWddmMemoryManagerFixture::SetUp();
+        wddm->initializeWithoutConfiguringAddressSpace();
+    }
+    void TearDown() override {
+        MockWddmMemoryManagerFixture::TearDown();
+    }
 };
 
 typedef ::testing::Test MockWddmMemoryManagerTest;
