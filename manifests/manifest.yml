@@ -17,7 +17,7 @@ components:
     branch: infra
     clean_on_sync: true
     dest_dir: infra
-    revision: f4c7436c63f731782d9650611f6f13be8b2cbe84
+    revision: bef01421bd16dbe00b8915371bd004ad40325ba0
     type: git
   internal:
     branch: master
@@ -36,5 +36,5 @@ components:
     dest_dir: wdk
     revision: 782940-1037
     type: git
-converter: M-1037
+converter: M-1046
 version: '1'
