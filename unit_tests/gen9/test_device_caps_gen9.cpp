@@ -56,7 +56,8 @@ GEN9TEST_F(Gen9DeviceCaps, whitelistedRegisters) {
 }
 
 GEN9TEST_F(Gen9DeviceCaps, compression) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
 
 GEN9TEST_F(Gen9DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {

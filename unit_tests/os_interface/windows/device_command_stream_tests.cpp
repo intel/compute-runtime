@@ -780,16 +780,17 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
 }
 
 struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
-    void setCompressionEnabled(bool enabled) {
+    void setCompressionEnabled(bool enableForBuffer, bool enableForImages) {
         RuntimeCapabilityTable capabilityTable = platformDevices[0]->capabilityTable;
-        capabilityTable.ftrCompression = enabled;
+        capabilityTable.ftrRenderCompressedBuffers = enableForBuffer;
+        capabilityTable.ftrRenderCompressedImages = enableForImages;
         hwInfo = {*platformDevices[0]};
         hwInfo.capabilityTable = capabilityTable;
     }
 
     void SetUp() override {
         WddmCommandStreamMockGdiTest::SetUp();
-        setCompressionEnabled(true);
+        setCompressionEnabled(true, true);
     }
 
     void createMockWddm() {
@@ -801,92 +802,100 @@ struct WddmCsrCompressionTests : WddmCommandStreamMockGdiTest {
 };
 
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCreatePagetableMngr) {
-    createMockWddm();
-    EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
-    MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
-    ASSERT_NE(nullptr, myMockWddm->getPageTableManager());
+    bool compressionEnabled[2][2] = {{true, false}, {false, true}};
+    for (size_t i = 0; i < 2; i++) {
+        setCompressionEnabled(compressionEnabled[i][0], compressionEnabled[i][1]);
+        createMockWddm();
+        EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
+        MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
+        ASSERT_NE(nullptr, myMockWddm->getPageTableManager());
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
+        auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
 
-    GMM_DEVICE_CALLBACKS_INT expectedDeviceCb = {};
-    GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
-    unsigned int expectedFlags = (TT_TYPE::TRTT | TT_TYPE::AUXTT);
-    auto myGdi = myMockWddm->getGdi();
-    // clang-format off
-    expectedDeviceCb.Adapter.KmtHandle         = myMockWddm->getAdapter();
-    expectedDeviceCb.hDevice.KmtHandle         = myMockWddm->getDevice();
-    expectedDeviceCb.PagingQueue     = myMockWddm->getPagingQueue();
-    expectedDeviceCb.PagingFence     = myMockWddm->getPagingQueueSyncObject();
+        GMM_DEVICE_CALLBACKS_INT expectedDeviceCb = {};
+        GMM_TRANSLATIONTABLE_CALLBACKS expectedTTCallbacks = {};
+        unsigned int expectedFlags = (TT_TYPE::TRTT | TT_TYPE::AUXTT);
+        auto myGdi = myMockWddm->getGdi();
+        // clang-format off
+        expectedDeviceCb.Adapter.KmtHandle = myMockWddm->getAdapter();
+        expectedDeviceCb.hDevice.KmtHandle = myMockWddm->getDevice();
+        expectedDeviceCb.PagingQueue = myMockWddm->getPagingQueue();
+        expectedDeviceCb.PagingFence = myMockWddm->getPagingQueueSyncObject();
 
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate     = myGdi->createAllocation;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate   = myGdi->destroyAllocation;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA     = myGdi->mapGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident = myGdi->makeResident;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEvict        = myGdi->evict;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = myGdi->reserveGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA  = myGdi->updateGpuVirtualAddress;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu  = myGdi->waitForSynchronizationObjectFromCpu;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock         = myGdi->lock2;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock       = myGdi->unlock2;
-    expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape       = myGdi->escape;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnAllocate = myGdi->createAllocation;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnDeallocate = myGdi->destroyAllocation;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMapGPUVA = myGdi->mapGpuVirtualAddress;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnMakeResident = myGdi->makeResident;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEvict = myGdi->evict;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnReserveGPUVA = myGdi->reserveGpuVirtualAddress;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUpdateGPUVA = myGdi->updateGpuVirtualAddress;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnWaitFromCpu = myGdi->waitForSynchronizationObjectFromCpu;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock = myGdi->lock2;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock = myGdi->unlock2;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape = myGdi->escape;
 
-    expectedTTCallbacks.pfWriteL3Adr = TTCallbacks<FamilyType>::writeL3Address;
-    // clang-format on
+        expectedTTCallbacks.pfWriteL3Adr = TTCallbacks<FamilyType>::writeL3Address;
+        // clang-format on
 
-    EXPECT_TRUE(memcmp(&expectedDeviceCb, &mockMngr->deviceCb, sizeof(GMM_DEVICE_CALLBACKS_INT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.Adapter, &mockMngr->deviceCb.Adapter, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.hDevice, &mockMngr->deviceCb.hDevice, sizeof(GMM_HANDLE_EXT)) == 0);
-    EXPECT_TRUE(memcmp(&expectedDeviceCb.DevCbPtrs.KmtCbPtrs, &mockMngr->deviceCb.DevCbPtrs.KmtCbPtrs, sizeof(GMM_DEVICE_CB_PTRS::KmtCbPtrs)) == 0);
-    EXPECT_TRUE(memcmp(&expectedTTCallbacks, &mockMngr->translationTableCb, sizeof(GMM_TRANSLATIONTABLE_CALLBACKS)) == 0);
-    EXPECT_TRUE(memcmp(&expectedFlags, &mockMngr->translationTableFlags, sizeof(unsigned int)) == 0);
+        EXPECT_TRUE(memcmp(&expectedDeviceCb, &mockMngr->deviceCb, sizeof(GMM_DEVICE_CALLBACKS_INT)) == 0);
+        EXPECT_TRUE(memcmp(&expectedDeviceCb.Adapter, &mockMngr->deviceCb.Adapter, sizeof(GMM_HANDLE_EXT)) == 0);
+        EXPECT_TRUE(memcmp(&expectedDeviceCb.hDevice, &mockMngr->deviceCb.hDevice, sizeof(GMM_HANDLE_EXT)) == 0);
+        EXPECT_TRUE(memcmp(&expectedDeviceCb.DevCbPtrs.KmtCbPtrs, &mockMngr->deviceCb.DevCbPtrs.KmtCbPtrs, sizeof(GMM_DEVICE_CB_PTRS::KmtCbPtrs)) == 0);
+        EXPECT_TRUE(memcmp(&expectedTTCallbacks, &mockMngr->translationTableCb, sizeof(GMM_TRANSLATIONTABLE_CALLBACKS)) == 0);
+        EXPECT_TRUE(memcmp(&expectedFlags, &mockMngr->translationTableFlags, sizeof(unsigned int)) == 0);
+    }
 }
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDontCreatePagetableMngr) {
-    setCompressionEnabled(false);
+    setCompressionEnabled(false, false);
     createMockWddm();
     MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm.get());
     EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 }
 
 HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTranslationTableOnce) {
-    createMockWddm();
-    auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm.get());
-    mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    bool compressionEnabled[2][2] = {{true, false}, {false, true}};
+    for (size_t i = 0; i < 2; i++) {
+        setCompressionEnabled(compressionEnabled[i][0], compressionEnabled[i][1]);
+        createMockWddm();
+        auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm.get());
+        mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
-    mockWddmCsr->setMemoryManager(memManager);
+        auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
+        mockWddmCsr->setMemoryManager(memManager);
 
-    this->device->resetCommandStreamReceiver(mockWddmCsr);
+        this->device->resetCommandStreamReceiver(mockWddmCsr);
 
-    mockWddmCsr->setPreemptionCsrAllocation(preemptionAllocation);
-    auto &csrCS = mockWddmCsr->getCS();
+        mockWddmCsr->setPreemptionCsrAllocation(preemptionAllocation);
+        auto &csrCS = mockWddmCsr->getCS();
 
-    auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
-    IndirectHeap cs(graphicsAllocation);
+        auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
+        IndirectHeap cs(graphicsAllocation);
 
-    EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
+        EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
 
-    EXPECT_CALL(*mockMngr, initContextAuxTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
-        .Times(1)
-        .WillOnce(Return(GMM_SUCCESS));
-    EXPECT_CALL(*mockMngr, initContextTRTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
-        .Times(1)
-        .WillOnce(Return(GMM_SUCCESS));
+        EXPECT_CALL(*mockMngr, initContextAuxTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+            .Times(1)
+            .WillOnce(Return(GMM_SUCCESS));
+        EXPECT_CALL(*mockMngr, initContextTRTableRegister(mockWddmCsr, GMM_ENGINE_TYPE::ENGINE_TYPE_RCS))
+            .Times(1)
+            .WillOnce(Return(GMM_SUCCESS));
 
-    DispatchFlags dispatchFlags;
-    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+        DispatchFlags dispatchFlags;
+        mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
-    EXPECT_TRUE(mockWddmCsr->pageTableManagerInitialized);
+        EXPECT_TRUE(mockWddmCsr->pageTableManagerInitialized);
 
-    // flush again to check if PT manager was initialized once
-    mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+        // flush again to check if PT manager was initialized once
+        mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
 
-    mockWddmCsr->flushBatchedSubmissions();
-    memManager->freeGraphicsMemory(graphicsAllocation);
+        mockWddmCsr->flushBatchedSubmissions();
+        memManager->freeGraphicsMemory(graphicsAllocation);
+    }
 }
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontInitTranslationTable) {
-    setCompressionEnabled(false);
+    setCompressionEnabled(false, false);
     createMockWddm();
     auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm.get());
     mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);

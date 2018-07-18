@@ -24,8 +24,8 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/linux/os_interface.h"
 
-#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 #include "unit_tests/libult/mock_gfx_family.h"
+#include "unit_tests/os_interface/linux/hw_info_config_linux_tests.h"
 
 #include <cstring>
 
@@ -342,10 +342,12 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenPlatformEnabledFtrCompressionWhenInitializingThenForceDisable) {
-    pInHwInfo->capabilityTable.ftrCompression = true;
+    pInHwInfo->capabilityTable.ftrRenderCompressedBuffers = true;
+    pInHwInfo->capabilityTable.ftrRenderCompressedImages = true;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
     EXPECT_EQ(0, ret);
-    EXPECT_FALSE(outHwInfo.capabilityTable.ftrCompression);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(outHwInfo.capabilityTable.ftrRenderCompressedImages);
 }
 
 TEST_F(HwInfoConfigTestLinuxDummy, givenPointerToHwInfoWhenConfigureHwInfoCalledThenRequiedSurfaceSizeIsSettedProperly) {

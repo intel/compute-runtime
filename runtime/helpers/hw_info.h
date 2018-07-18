@@ -21,8 +21,8 @@
  */
 
 #pragma once
-#include "igfxfmid.h"
 #include "gtsysinfo.h"
+#include "igfxfmid.h"
 #include "sku_info.h"
 
 #include "runtime/helpers/engine_node.h"
@@ -56,7 +56,8 @@ struct RuntimeCapabilityTable {
     bool ftrSupportsCoherency;
     bool ftrSupportsVmeAvcTextureSampler;
     bool ftrSupportsVmeAvcPreemption;
-    bool ftrCompression;
+    bool ftrRenderCompressedBuffers;
+    bool ftrRenderCompressedImages;
     PreemptionMode defaultPreemptionMode;
     WhitelistedRegisters whitelistedRegisters;
 

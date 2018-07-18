@@ -21,8 +21,8 @@
  */
 
 #include "runtime/helpers/hw_helper.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
 
 using namespace OCLRT;
 
@@ -62,7 +62,8 @@ GEN10TEST_F(Gen10DeviceCaps, profilingTimerResolution) {
 }
 
 GEN10TEST_F(Gen10DeviceCaps, compression) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
 
 GEN10TEST_F(Gen10DeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchThenReturnValidValue) {

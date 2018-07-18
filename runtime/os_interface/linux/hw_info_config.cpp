@@ -20,16 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_stream/preemption.h"
-#include "runtime/helpers/hw_info.h"
-#include "runtime/helpers/hw_helper.h"
-#include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/hw_info_config.h"
-#include "runtime/os_interface/linux/os_interface.h"
-#include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/utilities/cpu_info.h"
-#include "runtime/memory_manager/memory_constants.h"
+#include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
+#include "runtime/helpers/hw_helper.h"
+#include "runtime/helpers/hw_info.h"
+#include "runtime/memory_manager/memory_constants.h"
+#include "runtime/os_interface/debug_settings_manager.h"
+#include "runtime/os_interface/linux/drm_neo.h"
+#include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/utilities/cpu_info.h"
 
 #include <cstring>
 
@@ -172,7 +172,8 @@ int HwInfoConfig::configureHwInfo(const HardwareInfo *inHwInfo, HardwareInfo *ou
                                                        : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
 
     outHwInfo->capabilityTable.instrumentationEnabled = false;
-    outHwInfo->capabilityTable.ftrCompression = false;
+    outHwInfo->capabilityTable.ftrRenderCompressedBuffers = false;
+    outHwInfo->capabilityTable.ftrRenderCompressedImages = false;
 
     bool preemption = drm->hasPreemption();
     preemption = hwHelper.setupPreemptionRegisters(outHwInfo, preemption);

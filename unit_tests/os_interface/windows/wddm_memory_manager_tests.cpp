@@ -39,7 +39,7 @@ void WddmMemoryManagerFixture::SetUp() {
     GdiDllFixture::SetUp();
     wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
     ASSERT_NE(nullptr, wddm);
-    if (platformDevices[0]->capabilityTable.ftrCompression) {
+    if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
         GMM_DEVICE_CALLBACKS_INT dummyDeviceCallbacks = {};
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));

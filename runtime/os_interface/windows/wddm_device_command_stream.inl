@@ -27,21 +27,21 @@
 #include "hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/preemption.h"
-#include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm_device_command_stream.h"
+#include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/mem_obj/mem_obj.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #pragma warning(pop)
 
 #undef max
 
-#include "runtime/os_interface/windows/wddm_memory_manager.h"
-#include "runtime/os_interface/windows/wddm_engine_mapper.h"
-#include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "runtime/os_interface/windows/os_interface.h"
+#include "runtime/os_interface/windows/wddm_engine_mapper.h"
+#include "runtime/os_interface/windows/wddm_memory_manager.h"
 namespace OCLRT {
 
 // Initialize COMMAND_BUFFER_HEADER         Type PatchList  Streamer Perf Tag
@@ -72,7 +72,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     bool success = this->wddm->init<GfxFamily>();
     DEBUG_BREAK_IF(!success);
 
-    if (hwInfoIn.capabilityTable.ftrCompression) {
+    if (hwInfoIn.capabilityTable.ftrRenderCompressedBuffers || hwInfoIn.capabilityTable.ftrRenderCompressedImages) {
         this->wddm->resetPageTableManager(createPageTableManager());
     }
 }

@@ -21,8 +21,8 @@
  */
 
 #include "runtime/helpers/hw_helper.h"
-#include "unit_tests/fixtures/device_fixture.h"
 #include "test.h"
+#include "unit_tests/fixtures/device_fixture.h"
 
 using namespace OCLRT;
 
@@ -47,7 +47,8 @@ GEN8TEST_F(Gen8DeviceCaps, kmdNotifyMechanism) {
 }
 
 GEN8TEST_F(Gen8DeviceCaps, compression) {
-    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrCompression);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrRenderCompressedImages);
 }
 
 GEN8TEST_F(Gen8DeviceCaps, image3DDimensions) {

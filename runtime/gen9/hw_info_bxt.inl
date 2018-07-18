@@ -20,8 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_info_bxt.h"
 #include "hw_cmds.h"
+#include "hw_info_bxt.h"
 #include "runtime/aub_mem_dump/aub_services.h"
 #include "runtime/helpers/engine_node.h"
 #include "runtime/memory_manager/memory_constants.h"
@@ -61,7 +61,8 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     true,
     true,  // ftrSupportsVmeAvcTextureSampler
     false, // ftrSupportsVmeAvcPreemption
-    false,
+    false, // ftrRenderCompressedBuffers
+    false, // ftrRenderCompressedImages
     PreemptionMode::MidThread,
     {true, false},
     &isSimulationBXT,
