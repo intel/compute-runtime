@@ -202,13 +202,10 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCSR) {
         lock.enter(kernelExecQueueLock);
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
-            if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident) {
+            if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
                 // It's time for kernel to make resident its GT-Pin resource
                 CommandStreamReceiver *pCommandStreamReceiver = reinterpret_cast<CommandStreamReceiver *>(pCSR);
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
-                if (!gtpinBuffer) {
-                    break;
-                }
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
                 GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
                 pCommandStreamReceiver->makeResident(*pGfxAlloc);
@@ -226,13 +223,10 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResVec) {
         lock.enter(kernelExecQueueLock);
         size_t numElems = kernelExecQueue.size();
         for (size_t n = 0; n < numElems; n++) {
-            if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident) {
+            if ((kernelExecQueue[n].pKernel == pKernel) && !kernelExecQueue[n].isResourceResident && kernelExecQueue[n].gtpinResource) {
                 // It's time for kernel to update its residency list with its GT-Pin resource
                 std::vector<Surface *> *pResidencyVector = (std::vector<Surface *> *)pResVec;
                 cl_mem gtpinBuffer = kernelExecQueue[n].gtpinResource;
-                if (!gtpinBuffer) {
-                    break;
-                }
                 auto pBuffer = castToObjectOrAbort<Buffer>(gtpinBuffer);
                 GraphicsAllocation *pGfxAlloc = pBuffer->getGraphicsAllocation();
                 GeneralSurface *pSurface = new GeneralSurface(pGfxAlloc);

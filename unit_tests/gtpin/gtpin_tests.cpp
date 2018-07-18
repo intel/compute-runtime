@@ -1414,7 +1414,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenNullResourceReturnedFromOnKernelSubmitThenResourceNotSetAndNotBecomingResident) {
+TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThenOnlyNonNullSurfacesAreMadeResident) {
     gtpinCallbacks.onContextCreate = OnContextCreate;
     gtpinCallbacks.onContextDestroy = OnContextDestroy;
     gtpinCallbacks.onKernelCreate = OnKernelCreate;
@@ -1476,7 +1476,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenNullResourceReturnedFromOnK
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
 
     gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
-    EXPECT_EQ(nullptr, (resource_handle_t)kernelExecQueue[0].gtpinResource);
+    EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
     CommandStreamReceiver &csr = pCmdQueue->getDevice().getCommandStreamReceiver();
     gtpinNotifyMakeResident(pKernel1, &csr);
@@ -1485,6 +1485,33 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenNullResourceReturnedFromOnK
     std::vector<Surface *> residencyVector;
     gtpinNotifyUpdateResidencyList(pKernel1, &residencyVector);
     EXPECT_EQ(0u, residencyVector.size());
+
+    returnNullResource = false;
+
+    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    EXPECT_NE(nullptr, kernelExecQueue[1].gtpinResource);
+    gtpinNotifyMakeResident(pKernel1, &csr);
+    EXPECT_TRUE(kernelExecQueue[1].isResourceResident);
+    cl_mem gtpinBuffer1 = kernelExecQueue[1].gtpinResource;
+
+    gtpinNotifyKernelSubmit(pKernel1, pCmdQueue);
+    EXPECT_NE(nullptr, kernelExecQueue[2].gtpinResource);
+    gtpinNotifyUpdateResidencyList(pKernel1, &residencyVector);
+    EXPECT_EQ(1u, residencyVector.size());
+    EXPECT_TRUE(kernelExecQueue[2].isResourceResident);
+    EXPECT_FALSE(kernelExecQueue[0].isResourceResident);
+
+    GeneralSurface *pSurf = static_cast<GeneralSurface *>(residencyVector[0]);
+    delete pSurf;
+    residencyVector.clear();
+
+    cl_mem gtpinBuffer2 = kernelExecQueue[2].gtpinResource;
+
+    gtpinUnmapBuffer(reinterpret_cast<context_handle_t>(context), reinterpret_cast<resource_handle_t>(gtpinBuffer1));
+    gtpinFreeBuffer(reinterpret_cast<context_handle_t>(context), reinterpret_cast<resource_handle_t>(gtpinBuffer1));
+
+    gtpinUnmapBuffer(reinterpret_cast<context_handle_t>(context), reinterpret_cast<resource_handle_t>(gtpinBuffer2));
+    gtpinFreeBuffer(reinterpret_cast<context_handle_t>(context), reinterpret_cast<resource_handle_t>(gtpinBuffer2));
 
     retVal = clFinish(cmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
