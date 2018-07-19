@@ -30,6 +30,8 @@ class LinearStream;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelper {
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+
     static void programStateBaseAddress(
         LinearStream &commandStream,
         const IndirectHeap &dsh,
@@ -37,6 +39,14 @@ struct StateBaseAddressHelper {
         const IndirectHeap &ssh,
         uint64_t generalStateBase,
         uint32_t statelessMocsIndex,
+        uint64_t internalHeapBase);
+
+    static void appendStateBaseAddressParameters(
+        STATE_BASE_ADDRESS *stateBaseAddress,
+        const IndirectHeap &dsh,
+        const IndirectHeap &ioh,
+        const IndirectHeap &ssh,
+        uint64_t generalStateBase,
         uint64_t internalHeapBase);
 };
 } // namespace OCLRT

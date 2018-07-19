@@ -23,6 +23,7 @@
 #include "hw_cmds.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/cache_policy.h"
+#include "runtime/helpers/state_base_address.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_constants.h"
 
@@ -36,9 +37,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     uint64_t generalStateBase,
     uint32_t statelessMocsIndex,
     uint64_t internalHeapBase) {
-    typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
-    auto pCmd = (STATE_BASE_ADDRESS *)commandStream.getSpace(sizeof(STATE_BASE_ADDRESS));
+    auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = STATE_BASE_ADDRESS::sInit();
 
     pCmd->setDynamicStateBaseAddressModifyEnable(true);
@@ -69,5 +69,17 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     //set cache settings
     pCmd->setStatelessDataPortAccessMemoryObjectControlState(GmmHelper::getMOCS(statelessMocsIndex));
     pCmd->setInstructionMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+
+    appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase);
+}
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
+    STATE_BASE_ADDRESS *stateBaseAddress,
+    const IndirectHeap &dsh,
+    const IndirectHeap &ioh,
+    const IndirectHeap &ssh,
+    uint64_t generalStateBase,
+    uint64_t internalHeapBase) {
 }
 } // namespace OCLRT
