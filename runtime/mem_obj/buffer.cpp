@@ -360,9 +360,7 @@ Buffer *Buffer::createBufferHw(Context *context,
                                bool zeroCopy,
                                bool isHostPtrSVM,
                                bool isImageRedescribed) {
-    auto pContext = castToObject<Context>(context);
-    DEBUG_BREAK_IF(nullptr == pContext);
-    const auto device = pContext->getDevice(0);
+    const auto device = context->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
     auto funcCreate = bufferFactory[hwInfo.pPlatform->eRenderCoreFamily].createBufferFunction;
