@@ -463,7 +463,7 @@ void *CommandQueue::enqueueMapMemObject(TransferProperties &transferProperties, 
 }
 
 cl_int CommandQueue::enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest) {
-    cl_int retVal;
+    cl_int retVal = CL_SUCCESS;
     if (transferProperties.memObj->mappingOnCpuAllowed()) {
         cpuDataTransferHandler(transferProperties, eventsRequest, retVal);
     } else {
