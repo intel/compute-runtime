@@ -382,7 +382,7 @@ Image *Image::createImageHw(Context *context, cl_mem_flags flags, size_t size, v
                             bool zeroCopy, GraphicsAllocation *graphicsAllocation,
                             bool isObjectRedescribed, bool createTiledImage, uint32_t baseMipLevel, uint32_t mipCount,
                             const SurfaceFormatInfo *surfaceFormatInfo) {
-    const auto device = castToObject<Context>(context)->getDevice(0);
+    const auto device = context->getDevice(0);
     const auto &hwInfo = device->getHardwareInfo();
 
     auto funcCreate = imageFactory[hwInfo.pPlatform->eRenderCoreFamily].createImageFunction;
