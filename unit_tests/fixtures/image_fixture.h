@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/mem_obj/image.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "CL/cl.h"
@@ -111,4 +112,41 @@ struct Image2dArrayHelper : public ImageHelper<Traits> {
 
 template <typename Traits = Image1dArrayDefaults>
 struct Image1dArrayHelper : public ImageHelper<Traits> {
+};
+
+template <typename FamilyType>
+class ImageClearColorFixture {
+  public:
+    using GmmHelper = OCLRT::GmmHelper;
+    using MockContext = OCLRT::MockContext;
+    using HardwareInfo = OCLRT::HardwareInfo;
+    using Image = OCLRT::Image;
+    using ImageHw = OCLRT::ImageHw<FamilyType>;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    using AUXILIARY_SURFACE_MODE = typename FamilyType::RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
+
+    ImageClearColorFixture() : image(nullptr), imageHw(nullptr) {
+        localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    }
+    void SetUp() {
+        GmmHelper::hwInfo = &localHwInfo;
+        surfaceState = RENDER_SURFACE_STATE::sInit();
+        surfaceState.setAuxiliarySurfaceMode(AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E);
+    }
+    void TearDown() {
+    }
+
+    ImageHw *createImageHw() {
+        image.reset(ImageHelper<Image2dDefaults>::create(&context));
+        return static_cast<ImageHw *>(image.get());
+    }
+
+    RENDER_SURFACE_STATE surfaceState;
+    HardwareInfo localHwInfo = *GmmHelper::hwInfo;
+
+  protected:
+    MockContext context;
+
+    std::unique_ptr<Image> image;
+    ImageHw *imageHw;
 };
