@@ -20,25 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/svm_memory_manager.h"
+#include "gmock/gmock.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/options.h"
+#include "runtime/mem_obj/buffer.h"
+#include "runtime/memory_manager/svm_memory_manager.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/gen_common/matchers.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
-#include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_command_queue.h"
-#include "unit_tests/mocks/mock_gmm_resource_info.h"
-#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "runtime/helpers/options.h"
+#include "unit_tests/mocks/mock_command_queue.h"
+#include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/mocks/mock_gmm_resource_info.h"
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
-#include "test.h"
 
 using namespace OCLRT;
 
@@ -357,14 +357,11 @@ TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, buffer);
 
-    auto &allocation = *buffer->getGraphicsAllocation();
-    auto type = allocation.getAllocationType();
-    auto isTypeBuffer = !!(type & GraphicsAllocation::AllocationType::BUFFER);
-    EXPECT_TRUE(isTypeBuffer);
+    auto allocation = buffer->getGraphicsAllocation();
+    EXPECT_TRUE(allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER);
 
-    auto isTypeWritable = !!(type & GraphicsAllocation::AllocationType::WRITABLE);
     auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
-    EXPECT_EQ(isBufferWritable, isTypeWritable);
+    EXPECT_EQ(isBufferWritable, allocation->isMemObjectsAllocationWithWritableFlags());
 
     delete buffer;
 }

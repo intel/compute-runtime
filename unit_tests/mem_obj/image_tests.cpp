@@ -20,22 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/fixtures/image_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
-#include "runtime/mem_obj/image.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/mipmap.h"
-#include "runtime/built_ins/built_ins.h"
+#include "runtime/mem_obj/image.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/gen_common/test.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
-#include "unit_tests/gen_common/test.h"
 
 using namespace OCLRT;
 
@@ -480,14 +480,11 @@ TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
 
-    auto &allocation = *image->getGraphicsAllocation();
-    auto type = allocation.getAllocationType();
-    auto isTypeImage = !!(type & GraphicsAllocation::AllocationType::IMAGE);
-    EXPECT_TRUE(isTypeImage);
+    auto allocation = image->getGraphicsAllocation();
+    EXPECT_TRUE(allocation->getAllocationType() == GraphicsAllocation::AllocationType::IMAGE);
 
-    auto isTypeWritable = !!(type & GraphicsAllocation::AllocationType::WRITABLE);
     auto isImageWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
-    EXPECT_EQ(isImageWritable, isTypeWritable);
+    EXPECT_EQ(isImageWritable, allocation->isMemObjectsAllocationWithWritableFlags());
 
     delete image;
 }

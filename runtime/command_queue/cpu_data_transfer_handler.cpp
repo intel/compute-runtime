@@ -21,8 +21,8 @@
  */
 
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/device/device.h"
 #include "runtime/context/context.h"
+#include "runtime/device/device.h"
 #include "runtime/event/event_builder.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/helpers/mipmap.h"
@@ -138,7 +138,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
             }
             if (!unmapInfo.readOnly) {
                 auto graphicsAllocation = transferProperties.memObj->getGraphicsAllocation();
-                graphicsAllocation->clearTypeAubNonWritable();
+                graphicsAllocation->setAubWritable(true);
             }
             break;
         case CL_COMMAND_READ_BUFFER:

@@ -20,10 +20,10 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/string.h"
+#include "runtime/memory_manager/memory_manager.h"
 
 namespace OCLRT {
 
@@ -41,7 +41,7 @@ void *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchB
 
     if (dispatchMode == DispatchMode::ImmediateDispatch) {
         if (batchBuffer.chainedBatchBuffer) {
-            batchBuffer.chainedBatchBuffer->setAllocationType(batchBuffer.chainedBatchBuffer->getAllocationType() | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+            batchBuffer.chainedBatchBuffer->setAubWritable(false);
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
 
             auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);

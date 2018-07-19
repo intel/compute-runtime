@@ -20,11 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/mem_obj/image.h"
 #include "common/compiler_support.h"
+#include "igfxfmid.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
-#include "runtime/helpers/surface_formats.h"
 #include "runtime/device/device.h"
+#include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/get_info.h"
@@ -32,14 +36,10 @@
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
-#include "runtime/mem_obj/image.h"
+#include "runtime/helpers/surface_formats.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/gmm_helper/gmm.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/gmm_helper/resource_info.h"
-#include "igfxfmid.h"
 #include <map>
 
 namespace OCLRT {
@@ -288,10 +288,8 @@ Image *Image::create(Context *context,
             break;
         }
 
-        auto allocationType = (flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))
-                                  ? GraphicsAllocation::AllocationType::IMAGE
-                                  : GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::WRITABLE;
-        memory->setAllocationType(allocationType);
+        memory->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+        memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
 
         DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", memory->getUnderlyingBufferSize(), "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 

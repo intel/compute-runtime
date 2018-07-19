@@ -22,13 +22,13 @@
 
 #include "hw_cmds.h"
 #include "runtime/command_stream/aub_subcapture.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/helpers/string.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
 
@@ -524,7 +524,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     auto size = gfxAllocation.getUnderlyingBufferSize();
     auto allocType = gfxAllocation.getAllocationType();
 
-    if ((size == 0) || gfxAllocation.isTypeAubNonWritable())
+    if ((size == 0) || !gfxAllocation.isAubWritable())
         return false;
 
     {
@@ -549,10 +549,9 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         gfxAllocation.setLocked(false);
     }
 
-    if (!!(allocType & GraphicsAllocation::AllocationType::BUFFER) ||
-        !!(allocType & GraphicsAllocation::AllocationType::IMAGE))
-        gfxAllocation.setTypeAubNonWritable();
-
+    if (allocType == GraphicsAllocation::AllocationType::BUFFER || allocType == GraphicsAllocation::AllocationType::IMAGE) {
+        gfxAllocation.setAubWritable(false);
+    }
     return true;
 }
 
@@ -568,10 +567,10 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 
     for (auto &gfxAllocation : residencyAllocations) {
         if (dumpAubNonWritable) {
-            gfxAllocation->clearTypeAubNonWritable();
+            gfxAllocation->setAubWritable(true);
         }
         if (!writeMemory(*gfxAllocation)) {
-            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || gfxAllocation->isTypeAubNonWritable()));
+            DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || !gfxAllocation->isAubWritable()));
         }
         gfxAllocation->residencyTaskCount = this->taskCount + 1;
     }

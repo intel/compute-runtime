@@ -677,7 +677,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
-    EXPECT_FALSE(gfxAllocation->isTypeAubNonWritable());
+    EXPECT_TRUE(gfxAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -692,7 +692,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_FALSE(gfxDefaultAllocation->isTypeAubNonWritable());
+    EXPECT_TRUE(gfxDefaultAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxDefaultAllocation);
 }
@@ -711,8 +711,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_TRUE(gfxBufferAllocation->isTypeAubNonWritable());
-    EXPECT_TRUE(gfxImageAllocation->isTypeAubNonWritable());
+    EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
+    EXPECT_FALSE(gfxImageAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -725,18 +725,20 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    gfxBufferAllocation->setAubWritable(false);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    gfxImageAllocation->setAubWritable(false);
 
     aubCsr->dumpAubNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_FALSE(gfxBufferAllocation->isTypeAubNonWritable());
-    EXPECT_FALSE(gfxImageAllocation->isTypeAubNonWritable());
+    EXPECT_TRUE(gfxBufferAllocation->isAubWritable());
+    EXPECT_TRUE(gfxImageAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -749,18 +751,20 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     memoryManager.reset(aubCsr->createMemoryManager(false));
 
     auto gfxBufferAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+    gfxBufferAllocation->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    gfxBufferAllocation->setAubWritable(false);
 
     auto gfxImageAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
-    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE | GraphicsAllocation::AllocationType::NON_AUB_WRITABLE);
+    gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
+    gfxImageAllocation->setAubWritable(false);
 
     aubCsr->dumpAubNonWritable = false;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
     aubCsr->processResidency(&allocationsForResidency);
 
-    EXPECT_TRUE(gfxBufferAllocation->isTypeAubNonWritable());
-    EXPECT_TRUE(gfxImageAllocation->isTypeAubNonWritable());
+    EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
+    EXPECT_FALSE(gfxImageAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxBufferAllocation);
     memoryManager->freeGraphicsMemory(gfxImageAllocation);
@@ -785,7 +789,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
 
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
-    gfxAllocation->setTypeAubNonWritable();
+    gfxAllocation->setAubWritable(false);
     EXPECT_FALSE(aubCsr->writeMemory(*gfxAllocation));
 
     memoryManager->freeGraphicsMemory(gfxAllocation);

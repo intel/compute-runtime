@@ -20,12 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/event/event.h"
-#include "unit_tests/command_queue/command_queue_fixture.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
-#include "test.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/event/event.h"
+#include "test.h"
+#include "unit_tests/command_queue/command_queue_fixture.h"
+#include "unit_tests/fixtures/buffer_fixture.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include <algorithm>
 
 using namespace OCLRT;
@@ -207,7 +207,7 @@ TEST_F(EnqueueUnmapMemObjTest, UnmapMemObjWaitEvent) {
 HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBufferObjectMappedToHostPtrForWritingThenItShouldBeResetToAubWritable) {
     auto buffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     ASSERT_NE(nullptr, buffer);
-    buffer->getGraphicsAllocation()->setTypeAubNonWritable();
+    buffer->getGraphicsAllocation()->setAubWritable(false);
 
     auto mappedForWritingPtr = pCmdQ->enqueueMapBuffer(buffer.get(), CL_TRUE, CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, retVal);
     ASSERT_NE(nullptr, mappedForWritingPtr);
@@ -220,5 +220,5 @@ HWTEST_F(EnqueueUnmapMemObjTest, givenEnqueueUnmapMemObjectWhenNonAubWritableBuf
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isTypeAubNonWritable());
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isAubWritable());
 }

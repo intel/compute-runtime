@@ -66,7 +66,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     int residencyTaskCount = ObjectNotResident;
     bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
 
-    enum AllocationType {
+    enum class AllocationType {
         UNKNOWN = 0,
         BUFFER,
         IMAGE,
@@ -87,8 +87,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         SURFACE_STATE_HEAP,
         DYNAMIC_STATE_HEAP,
         SHARED_RESOURCE,
-        NON_AUB_WRITABLE = 0x40000000,
-        WRITABLE = 0x80000000
     };
 
     virtual ~GraphicsAllocation() = default;
@@ -97,23 +95,18 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn) : size(sizeIn),
                                                         cpuPtr(cpuPtrIn),
                                                         gpuAddress(castToUint64(cpuPtrIn)),
-                                                        sharedHandle(Sharing::nonSharedResource),
-
-                                                        allocationType(AllocationType::UNKNOWN) {}
+                                                        sharedHandle(Sharing::nonSharedResource) {}
 
     GraphicsAllocation(void *cpuPtrIn, uint64_t gpuAddress, uint64_t baseAddress, size_t sizeIn) : size(sizeIn),
                                                                                                    cpuPtr(cpuPtrIn),
                                                                                                    gpuAddress(gpuAddress),
                                                                                                    sharedHandle(Sharing::nonSharedResource),
-                                                                                                   gpuBaseAddress(baseAddress),
-                                                                                                   allocationType(AllocationType::UNKNOWN) {}
+                                                                                                   gpuBaseAddress(baseAddress) {}
 
     GraphicsAllocation(void *cpuPtrIn, size_t sizeIn, osHandle sharedHandleIn) : size(sizeIn),
                                                                                  cpuPtr(cpuPtrIn),
                                                                                  gpuAddress(castToUint64(cpuPtrIn)),
-                                                                                 sharedHandle(sharedHandleIn),
-
-                                                                                 allocationType(AllocationType::UNKNOWN) {}
+                                                                                 sharedHandle(sharedHandleIn) {}
 
     void *getUnderlyingBuffer() const { return cpuPtr; }
     void setCpuPtrAndGpuAddress(void *cpuPtr, uint64_t gpuAddress) {
@@ -137,12 +130,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setSize(size_t size) { this->size = size; }
     osHandle peekSharedHandle() { return sharedHandle; }
 
-    void setAllocationType(uint32_t allocationType) { this->allocationType = allocationType; }
-    uint32_t getAllocationType() const { return allocationType; }
+    void setAllocationType(AllocationType allocationType) { this->allocationType = allocationType; }
+    AllocationType getAllocationType() const { return allocationType; }
 
-    void setTypeAubNonWritable() { this->allocationType |= GraphicsAllocation::AllocationType::NON_AUB_WRITABLE; }
-    void clearTypeAubNonWritable() { this->allocationType &= ~GraphicsAllocation::AllocationType::NON_AUB_WRITABLE; }
-    bool isTypeAubNonWritable() const { return !!(this->allocationType & GraphicsAllocation::AllocationType::NON_AUB_WRITABLE); }
+    void setAubWritable(bool writable) { aubWritable = writable; }
+    bool isAubWritable() const { return aubWritable; }
+    bool isMemObjectsAllocationWithWritableFlags() const { return memObjectsAllocationWithWritableFlags; }
+    void setMemObjectsAllocationWithWritableFlags(bool newValue) { memObjectsAllocationWithWritableFlags = newValue; }
 
     bool isL3Capable();
     void setEvictable(bool evictable) { this->evictable = evictable; }
@@ -163,8 +157,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     //this variable can only be modified from SubmissionAggregator
     friend class SubmissionAggregator;
     uint32_t inspectionId = 0;
-
-  private:
-    uint32_t allocationType;
+    AllocationType allocationType = AllocationType::UNKNOWN;
+    bool aubWritable = true;
+    bool memObjectsAllocationWithWritableFlags = false;
 };
 } // namespace OCLRT

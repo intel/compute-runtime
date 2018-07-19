@@ -20,24 +20,30 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "test.h"
 #include "runtime/event/event.h"
+#include "runtime/helpers/dispatch_info.h"
 #include "runtime/mem_obj/image.h"
-#include "runtime/utilities/tag_allocator.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/program/printf_handler.h"
+#include "runtime/program/program.h"
+#include "runtime/utilities/tag_allocator.h"
+#include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/memory_allocator_fixture.h"
+#include "unit_tests/fixtures/memory_manager_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/helpers/variable_backup.h"
-#include "unit_tests/utilities/containers_tests_helpers.h"
-#include "unit_tests/fixtures/memory_allocator_fixture.h"
-#include "unit_tests/fixtures/memory_manager_fixture.h"
-#include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_deferrable_deletion.h"
+#include "unit_tests/mocks/mock_deferred_deleter.h"
+#include "unit_tests/mocks/mock_device.h"
+#include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
+#include "unit_tests/utilities/containers_tests_helpers.h"
 
+#include "test.h"
 #include <future>
 #include <type_traits>
 
@@ -133,16 +139,6 @@ TEST(GraphicsAllocationTest, GivenGraphicsAllocationWhenLockingThenIsLocked) {
     EXPECT_NE(nullptr, cpuPtr);
     gpuAddr = gfxAllocation.getGpuAddress();
     EXPECT_NE(0ULL, gpuAddr);
-}
-
-TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenChangingTypeAubNonWritableThenItIsSetCorrectly) {
-    GraphicsAllocation gfxAllocation((void *)0x30000, 0x1000);
-
-    gfxAllocation.setTypeAubNonWritable();
-    EXPECT_TRUE(gfxAllocation.isTypeAubNonWritable());
-
-    gfxAllocation.clearTypeAubNonWritable();
-    EXPECT_FALSE(gfxAllocation.isTypeAubNonWritable());
 }
 
 TEST_F(MemoryAllocatorTest, allocateSystem) {
@@ -670,14 +666,6 @@ TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenAskedFor32bitAllocationWithPtr
 
     memoryManager->freeGraphicsMemory(allocation);
 }
-
-#include "runtime/program/program.h"
-#include "runtime/program/printf_handler.h"
-#include "runtime/helpers/dispatch_info.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_device.h"
-#include "unit_tests/mocks/mock_kernel.h"
-#include "unit_tests/mocks/mock_mdi.h"
 
 class MockPrintfHandler : public PrintfHandler {
   public:

@@ -20,17 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/mem_obj/buffer.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
-#include "runtime/mem_obj/buffer.h"
-#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/helpers/validators.h"
 #include "runtime/helpers/string.h"
-#include "runtime/gmm_helper/gmm.h"
+#include "runtime/helpers/validators.h"
+#include "runtime/memory_manager/memory_manager.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 
@@ -149,10 +149,8 @@ Buffer *Buffer::create(Context *context,
                 break;
             }
 
-            auto allocationType = (flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))
-                                      ? GraphicsAllocation::AllocationType::BUFFER
-                                      : GraphicsAllocation::AllocationType::BUFFER | GraphicsAllocation::AllocationType::WRITABLE;
-            memory->setAllocationType(allocationType);
+            memory->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+            memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
 
             DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
 
