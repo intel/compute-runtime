@@ -34,7 +34,7 @@ class MemoryManager;
 class ExperimentalCommandBuffer {
   public:
     virtual ~ExperimentalCommandBuffer();
-    ExperimentalCommandBuffer(CommandStreamReceiver *csr);
+    ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution);
 
     template <typename GfxFamily>
     void injectBufferStart(LinearStream &parentStream, size_t cmdBufferOffset);

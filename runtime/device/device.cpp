@@ -187,7 +187,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
 
     if (DebugManager.flags.EnableExperimentalCommandBuffer.get() > 0) {
         commandStreamReceiver->setExperimentalCmdBuffer(
-            std::unique_ptr<ExperimentalCommandBuffer>(new ExperimentalCommandBuffer(commandStreamReceiver)));
+            std::unique_ptr<ExperimentalCommandBuffer>(new ExperimentalCommandBuffer(commandStreamReceiver, pDevice->getDeviceInfo().profilingTimerResolution)));
     }
 
     return true;

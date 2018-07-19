@@ -35,7 +35,7 @@ class MockExperimentalCommandBuffer : public ExperimentalCommandBuffer {
     using BaseClass::timestamps;
     using BaseClass::timestampsOffset;
 
-    MockExperimentalCommandBuffer(CommandStreamReceiver *csr) : ExperimentalCommandBuffer(csr) {
+    MockExperimentalCommandBuffer(CommandStreamReceiver *csr) : ExperimentalCommandBuffer(csr, 80.0) {
         defaultPrint = false;
     }
 };

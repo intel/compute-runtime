@@ -23,7 +23,6 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/linear_stream.h"
-#include "runtime/device/device.h"
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include <cstring>
@@ -31,16 +30,16 @@
 
 namespace OCLRT {
 
-ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr) : commandStreamReceiver(csr),
-                                                                                   currentStream(nullptr),
-                                                                                   timestampsOffset(0),
-                                                                                   experimentalAllocationOffset(0),
-                                                                                   defaultPrint(true) {
+ExperimentalCommandBuffer::ExperimentalCommandBuffer(CommandStreamReceiver *csr, double profilingTimerResolution) : commandStreamReceiver(csr),
+                                                                                                                    currentStream(nullptr),
+                                                                                                                    timestampsOffset(0),
+                                                                                                                    experimentalAllocationOffset(0),
+                                                                                                                    defaultPrint(true),
+                                                                                                                    timerResolution(profilingTimerResolution) {
     timestamps = csr->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
     memset(timestamps->getUnderlyingBuffer(), 0, timestamps->getUnderlyingBufferSize());
     experimentalAllocation = csr->getMemoryManager()->allocateGraphicsMemory(MemoryConstants::pageSize);
     memset(experimentalAllocation->getUnderlyingBuffer(), 0, experimentalAllocation->getUnderlyingBufferSize());
-    timerResolution = commandStreamReceiver->getMemoryManager()->device->getDeviceInfo().profilingTimerResolution;
 }
 
 ExperimentalCommandBuffer::~ExperimentalCommandBuffer() {

@@ -312,8 +312,8 @@ void MemObj::releaseAllocatedMapPtr() {
 }
 
 void MemObj::waitForCsrCompletion() {
-    if (memoryManager->device && graphicsAllocation) {
-        memoryManager->device->getCommandStreamReceiver().waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->taskCount);
+    if (memoryManager->csr) {
+        memoryManager->csr->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->taskCount);
     }
 }
 
