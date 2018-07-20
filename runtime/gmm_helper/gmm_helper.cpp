@@ -44,7 +44,7 @@ void GmmHelper::initContext(const PLATFORM *pPlatform,
         SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
         SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
         loadLib();
-        bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
+        bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
         UNRECOVERABLE_IF(!success);
         GmmHelper::gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
     }

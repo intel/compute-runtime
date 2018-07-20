@@ -23,14 +23,16 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
-
+GMM_STATUS GMM_STDCALL myPfnCreateSingletonContext(const PLATFORM platform, const SKU_FEATURE_TABLE *pSkuTable, const WA_TABLE *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo) {
+    return GmmInitGlobalContext(platform, pSkuTable, pWaTable, pGtSysInfo, GMM_CLIENT::GMM_OCL_VISTA);
+}
 decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = nullptr;
 decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
 decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
 decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
 void GmmHelper::loadLib() {
-    GmmHelper::initGlobalContextFunc = GmmInitGlobalContext;
+    GmmHelper::initGlobalContextFunc = myPfnCreateSingletonContext;
     GmmHelper::destroyGlobalContextFunc = GmmDestroyGlobalContext;
     GmmHelper::createClientContextFunc = GmmCreateClientContext;
     GmmHelper::deleteClientContextFunc = GmmDeleteClientContext;

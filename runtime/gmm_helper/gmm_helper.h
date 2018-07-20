@@ -59,10 +59,10 @@ class GmmHelper {
     static uint32_t getRenderMultisamplesCount(uint32_t numSamples);
     static GMM_YUV_PLANE convertPlane(OCLPlane oclPlane);
 
-    static decltype(&GmmInitGlobalContext) initGlobalContextFunc;
-    static decltype(&GmmDestroyGlobalContext) destroyGlobalContextFunc;
-    static decltype(&GmmCreateClientContext) createClientContextFunc;
-    static decltype(&GmmDeleteClientContext) deleteClientContextFunc;
+    static decltype(GmmExportEntries::pfnCreateSingletonContext) initGlobalContextFunc;
+    static decltype(GmmExportEntries::pfnDestroySingletonContext) destroyGlobalContextFunc;
+    static decltype(GmmExportEntries::pfnCreateClientContext) createClientContextFunc;
+    static decltype(GmmExportEntries::pfnDeleteClientContext) deleteClientContextFunc;
     static GmmClientContext *(*createGmmContextWrapperFunc)(GMM_CLIENT);
 
     static bool useSimplifiedMocsTable;
