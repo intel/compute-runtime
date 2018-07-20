@@ -118,6 +118,38 @@ struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     MOCK_METHOD1(addComment, bool(const char *message));
 };
 
+struct AubExecutionEnvironment {
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    GraphicsAllocation *commandBuffer = nullptr;
+    template <typename CsrType>
+    CsrType *getCsr() {
+        return static_cast<CsrType *>(executionEnvironment->commandStreamReceiver.get());
+    }
+    ~AubExecutionEnvironment() {
+        if (commandBuffer) {
+            executionEnvironment->memoryManager->freeGraphicsMemory(commandBuffer);
+        }
+    }
+};
+
+template <typename CsrType>
+std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer) {
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    executionEnvironment->commandStreamReceiver.reset(new CsrType(*platformDevices[0], "", true));
+    executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceiver->createMemoryManager(false));
+    executionEnvironment->commandStreamReceiver->setMemoryManager(executionEnvironment->memoryManager.get());
+    if (createTagAllocation) {
+        executionEnvironment->commandStreamReceiver->initializeTagAllocation();
+    }
+
+    std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);
+    if (allocateCommandBuffer) {
+        aubExecutionEnvironment->commandBuffer = executionEnvironment->memoryManager->allocateGraphicsMemory(4096);
+    }
+    aubExecutionEnvironment->executionEnvironment = std::move(executionEnvironment);
+    return aubExecutionEnvironment;
+}
+
 TEST_F(AubCommandStreamReceiverTests, givenStructureWhenMisalignedUint64ThenUseSetterGetterFunctionsToSetGetValue) {
     const uint64_t value = 0x0123456789ABCDEFu;
     AubMemDump::AubCaptureBinaryDumpHD aubCaptureBinaryDumpHD{};
@@ -263,16 +295,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldInitializeEngineInfoTable) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
@@ -282,27 +307,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pLRCA);
     EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pGlobalHWStatusPage);
     EXPECT_NE(nullptr, aubCsr->engineInfoTable[engineType].pRingBuffer);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenFlushIsCalledButSubCaptureIsDisabledThenItShouldntInitializeEngineInfoTable) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->disableSubCapture();
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
@@ -312,21 +328,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pLRCA);
     EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pGlobalHWStatusPage);
     EXPECT_EQ(nullptr, aubCsr->engineInfoTable[engineType].pRingBuffer);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto engineType = OCLRT::ENGINE_RCS;
     auto ringTailAlignment = sizeof(uint64_t);
@@ -342,8 +349,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     cs.getSpace(sizeof(uint64_t));
     aubCsr->flush(batchBuffer, engineType, nullptr);
     EXPECT_EQ(0ull, aubCsr->engineInfoTable[engineType].tailRingBuffer % ringTailAlignment);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNonStandaloneModeWhenFlushIsCalledThenItShouldNotUpdateHwTagWithLatestSentTaskCount) {
@@ -1135,13 +1140,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegisterCommandChunkIsCalledThenNewChunkIsAddedToTheList) {
     typedef typename FamilyType::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBufferAllocation = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBufferAllocation);
-    LinearStream cs(commandBufferAllocation);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1155,14 +1156,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRegiste
 
     ASSERT_EQ(2u, aubCsr->getFlatBatchBufferHelper().getCommandChunkList().size());
     EXPECT_EQ(0x123u, aubCsr->getFlatBatchBufferHelper().getCommandChunkList()[1].endOffset);
-
-    memoryManager->freeGraphicsMemory(commandBufferAllocation);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenRemovePatchInfoDataIsCalledThenElementIsRemovedFromPatchInfoList) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
     PatchInfoData patchInfoData(0xA000, 0x0, PatchInfoAllocationType::KernelArg, 0xB000, 0x0, PatchInfoAllocationType::Default);
     aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData);
@@ -1179,9 +1177,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddGucS
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     std::unique_ptr<char> batchBuffer(new char[1024]);
     aubCsr->addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer.get())), EngineType::ENGINE_RCS);
@@ -1198,9 +1196,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    auto memoryManager = aubExecutionEnvironment->executionEnvironment->memoryManager.get();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     CommandChunk chunk1;
     CommandChunk chunk2;
@@ -1242,10 +1241,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     ASSERT_EQ(3u, aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection().size());
 
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
-
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
     size_t sizeBatchBuffer = 0u;
@@ -1263,23 +1258,15 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
     EXPECT_EQ(0x3, static_cast<char *>(flatBatchBuffer.get())[0]);
     EXPECT_EQ(0x2, static_cast<char *>(flatBatchBuffer.get())[0x40]);
     EXPECT_EQ(0x1, static_cast<char *>(flatBatchBuffer.get())[0x40 + 0x40]);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefaultDebugConfigThenExpectFlattenBatchBufferIsNotCalled) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
@@ -1287,8 +1274,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefault
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(0);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeThenExpectFlattenBatchBufferIsCalled) {
@@ -1296,20 +1281,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
 
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
-
-    auto chainedBatchBuffer = memoryManager->allocateGraphicsMemory(128u, 64u, false, false);
+    auto chainedBatchBuffer = aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemory(128u, 64u, false, false);
     ASSERT_NE(nullptr, chainedBatchBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, chainedBatchBuffer, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -1322,8 +1301,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(ptr.release()));
     aubCsr->flush(batchBuffer, engineType, nullptr);
 
-    memoryManager->freeGraphicsMemory(commandBuffer);
-    memoryManager->freeGraphicsMemory(chainedBatchBuffer);
+    aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(chainedBatchBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndImmediateDispatchModeAndThereIsNoChainedBatchBufferThenExpectFlattenBatchBufferIsCalledAnyway) {
@@ -1331,26 +1309,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(1);
     aubCsr->flush(batchBuffer, engineType, nullptr);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedFlattenBatchBufferAndBatchedDispatchModeThenExpectFlattenBatchBufferIsCalledAnyway) {
@@ -1358,18 +1328,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
     DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::BatchedDispatch));
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
     aubCsr->overwriteFlatBatchBufferHelper(mockHelper);
-
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
-    ASSERT_NE(nullptr, aubCsr->getTagAllocation());
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
     ResidencyContainer allocationsForResidency;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -1377,41 +1341,28 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).Times(1);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoCommentsIsCalled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
 
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency;
-    aubCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(1);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenAddPatchInfoCommentsIsNotCalled) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
@@ -1420,18 +1371,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency);
-
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPatchInfoDataObjectsThenCommentsAreEmpty) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1455,17 +1400,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
     EXPECT_EQ("AllocationsList\n", comments[1]);
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", false));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
     MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
@@ -1480,17 +1420,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     EXPECT_TRUE(mockAubFileStreamPtr->flushCalled);
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1504,17 +1439,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirst
     EXPECT_FALSE(result);
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1528,17 +1458,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecon
     EXPECT_FALSE(result);
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1607,17 +1532,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
     }
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1668,17 +1588,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
     }
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
-
-    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
-    ASSERT_NE(nullptr, commandBuffer);
-    LinearStream cs(commandBuffer);
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 128u, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
@@ -1729,13 +1644,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
     }
 
     mockAubFileStream.swap(aubCsr->stream);
-    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {
-    std::unique_ptr<MemoryManager> memoryManager(nullptr);
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
-    memoryManager.reset(aubCsr->createMemoryManager(false));
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, false);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
 
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
