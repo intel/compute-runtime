@@ -44,10 +44,6 @@ class MockGmmMemoryBase : public GmmMemory {
                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve) override {
         return true;
     }
-
-    uintptr_t getInternalGpuVaRangeLimit() override {
-        return OCLRT::windowsMinAddress;
-    }
 };
 
 class GmockGmmMemoryBase : public GmmMemory {
@@ -66,9 +62,5 @@ class GmockGmmMemoryBase : public GmmMemory {
                       BOOLEAN BDWL3Coherency,
                       GMM_GFX_SIZE_T SizeOverride,
                       GMM_GFX_SIZE_T SlmGfxSpaceReserve));
-
-    uintptr_t getInternalGpuVaRangeLimit() override {
-        return OCLRT::windowsMinAddress;
-    }
 };
 } // namespace OCLRT

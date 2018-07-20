@@ -19,9 +19,9 @@
 # OTHER DEALINGS IN THE SOFTWARE.
 
 if(USE_STATIC_GMM)
-  set(GMM_INTERFACE_FILE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_linux_static.cpp)
+  set(GMM_INTERFACE_FILE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_static_linux.cpp)
 else()
-  set(GMM_INTERFACE_FILE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_linux_dynamic.cpp)
+  set(GMM_INTERFACE_FILE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_dynamic_linux.cpp)
 endif()
 set(RUNTIME_SRCS_OS_INTERFACE_LINUX
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt

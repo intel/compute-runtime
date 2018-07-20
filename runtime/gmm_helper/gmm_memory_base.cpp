@@ -51,9 +51,4 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                SizeOverride,
                SlmGfxSpaceReserve) != 0;
 }
-
-uintptr_t GmmMemoryBase::getInternalGpuVaRangeLimit() {
-    ensureClientContext();
-    return static_cast<uintptr_t>(clientContext->GetInternalGpuVaRangeLimit());
-}
 }; // namespace OCLRT

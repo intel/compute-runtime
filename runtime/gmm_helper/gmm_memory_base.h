@@ -39,8 +39,6 @@ class GmmMemoryBase {
                                                       GMM_GFX_SIZE_T SizeOverride,
                                                       GMM_GFX_SIZE_T SlmGfxSpaceReserve);
 
-    MOCKABLE_VIRTUAL uintptr_t getInternalGpuVaRangeLimit();
-
   protected:
     GmmMemoryBase() = default;
     void ensureClientContext();
