@@ -132,7 +132,7 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         return false;
     }
 
-    executionEnvironment->initializeMemoryManager(outDevice.executionEnvironment->memoryManager.get(), outDevice.getEnabled64kbPages());
+    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages());
 
     CommandStreamReceiver *commandStreamReceiver = executionEnvironment->commandStreamReceiver.get();
     if (!commandStreamReceiver->initializeTagAllocation()) {

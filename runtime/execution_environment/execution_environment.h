@@ -40,7 +40,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ~ExecutionEnvironment() override;
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo);
-    void initializeMemoryManager(MemoryManager *externalMemoryManager, bool enable64KBpages);
+    void initializeMemoryManager(bool enable64KBpages);
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
 };

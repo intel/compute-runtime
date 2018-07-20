@@ -45,17 +45,15 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     this->commandStreamReceiver.reset(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(MemoryManager *externalMemoryManager, bool enable64KBpages) {
+void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages) {
     if (this->memoryManager) {
         commandStreamReceiver->setMemoryManager(this->memoryManager.get());
         return;
     }
-    if (!externalMemoryManager) {
-        memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages));
-        commandStreamReceiver->setMemoryManager(memoryManager.get());
-    } else {
-        commandStreamReceiver->setMemoryManager(externalMemoryManager);
-    }
+
+    memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages));
+    commandStreamReceiver->setMemoryManager(memoryManager.get());
+
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 

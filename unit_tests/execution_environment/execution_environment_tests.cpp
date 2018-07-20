@@ -106,16 +106,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamR
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
-    executionEnvironment->initializeMemoryManager(nullptr, false);
+    executionEnvironment->initializeMemoryManager(false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
-}
-
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerWithExternalMemoryManagerIsCalledThenItIsSetToExternal) {
-    std::unique_ptr<MemoryManager> memoryManager(new OsAgnosticMemoryManager);
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
-    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
-    executionEnvironment->initializeMemoryManager(memoryManager.get(), false);
-    EXPECT_EQ(memoryManager.get(), executionEnvironment->commandStreamReceiver->getMemoryManager());
 }
 
 auto destructorId = 0u;
