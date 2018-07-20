@@ -222,7 +222,7 @@ cl_int CompilerInterface::compile(
             char *pOutput;
             uint32_t OutputSize;
             program.getSource(pOutput, OutputSize);
-            program.storeIrBinary(pOutput, OutputSize, outType == IGC::CodeType::spirV);
+            program.storeIrBinary(pOutput, OutputSize, program.getIsSpirV());
         }
     }
 

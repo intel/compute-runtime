@@ -288,6 +288,26 @@ TEST_F(CompilerInterfaceTest, CompileClToIr) {
     gEnvironment->fclPopDebugVars();
 }
 
+TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenIrFormatIsPreserved) {
+    struct MockProgram : Program {
+        using Program::isSpirV;
+        using Program::pDevice;
+        using Program::programBinaryType;
+    };
+    MockProgram prog;
+    prog.programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
+    prog.pDevice = pContext->getDevice(0);
+    prog.isSpirV = true;
+    retVal = pCompilerInterface->compile(prog, inputArgs);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(prog.isSpirV);
+
+    prog.isSpirV = false;
+    retVal = pCompilerInterface->compile(prog, inputArgs);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_FALSE(prog.isSpirV);
+}
+
 TEST_F(CompilerInterfaceTest, WhenCompileIsInvokedThenFclReceivesListOfExtensionsInInternalOptions) {
     std::string receivedInternalOptions;
 
