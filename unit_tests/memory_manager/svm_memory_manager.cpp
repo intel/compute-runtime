@@ -20,15 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "test.h"
-#include "runtime/event/event.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
+#include "runtime/event/event.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "unit_tests/helpers/memory_management.h"
-#include "unit_tests/utilities/containers_tests_helpers.h"
+#include "test.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"
+#include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
+#include "unit_tests/utilities/containers_tests_helpers.h"
+#include "gtest/gtest.h"
 
 #include <future>
 
@@ -144,4 +144,20 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
 
         EXPECT_EQ(0U, svmM.GetSVMAllocs().getNumAllocs());
     }
+}
+
+TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
+    class MyMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        MyMemoryManager() { enable64kbpages = true; }
+        GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
+            preferRenderCompressedFlag = preferRenderCompressed;
+            return nullptr;
+        }
+        bool preferRenderCompressedFlag = true;
+    };
+
+    MyMemoryManager myMemoryManager;
+    myMemoryManager.allocateGraphicsMemoryForSVM(1, false);
+    EXPECT_FALSE(myMemoryManager.preferRenderCompressedFlag);
 }

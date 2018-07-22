@@ -25,12 +25,14 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
-#include "runtime/helpers/hw_info.h"
 
 namespace OCLRT {
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) {
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false) {}
+
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth = static_cast<uint32_t>(alignedSize);
@@ -55,7 +57,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) {
         resourceParams.Flags.Gpu.NoRestriction = 1;
     }
 
-    applyAuxFlagsForBuffer(false);
+    applyAuxFlagsForBuffer(preferRenderCompressed);
 
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }

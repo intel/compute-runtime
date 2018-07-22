@@ -21,11 +21,11 @@
  */
 
 #pragma once
+#include "runtime/api/cl_types.h"
+#include "runtime/gmm_helper/gmm_lib.h"
 #include <cstdint>
 #include <cstdlib>
 #include <memory>
-#include "runtime/gmm_helper/gmm_lib.h"
-#include "runtime/api/cl_types.h"
 
 namespace OCLRT {
 enum class OCLPlane;
@@ -39,6 +39,7 @@ class Gmm {
     Gmm() = delete;
     Gmm(ImageInfo &inputOutputImgInfo);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
+    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed);
     Gmm(GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);

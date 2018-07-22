@@ -20,11 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/basic_math.h"
-#include "runtime/helpers/aligned_memory.h"
+#include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
-#include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
@@ -63,7 +63,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) {
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
     auto memoryAllocation = allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
     if (memoryAllocation) {
         reinterpret_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);

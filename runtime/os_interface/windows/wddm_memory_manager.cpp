@@ -75,13 +75,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     return allocation;
 }
 
-GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) {
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
     size_t sizeAligned = alignUp(size, MemoryConstants::pageSize64k);
     Gmm *gmm = nullptr;
 
     auto wddmAllocation = new WddmAllocation(nullptr, sizeAligned, nullptr, sizeAligned, nullptr, MemoryPool::System64KBPages);
 
-    gmm = new Gmm(nullptr, sizeAligned, false);
+    gmm = new Gmm(nullptr, sizeAligned, false, preferRenderCompressed);
     wddmAllocation->gmm = gmm;
 
     if (!wddm->createAllocation64k(wddmAllocation)) {

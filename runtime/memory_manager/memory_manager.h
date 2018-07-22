@@ -21,15 +21,15 @@
  */
 
 #pragma once
+#include "runtime/helpers/aligned_memory.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/host_ptr_manager.h"
-#include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/os_interface/32bit_memory.h"
-#include "runtime/helpers/aligned_memory.h"
 
 #include <cstdint>
-#include <vector>
 #include <mutex>
+#include <vector>
 
 namespace OCLRT {
 class Device;
@@ -121,7 +121,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) = 0;
 
-    virtual GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) = 0;
+    virtual GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) {
         return MemoryManager::allocateGraphicsMemory(size, ptr, false);

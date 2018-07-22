@@ -20,19 +20,19 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/memory_manager/memory_manager.h"
+#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/event/event.h"
+#include "runtime/event/hw_timestamps.h"
+#include "runtime/event/perf_counter.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/resource_info.h"
-#include "runtime/memory_manager/deferred_deleter.h"
-#include "runtime/memory_manager/memory_manager.h"
-#include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/options.h"
-#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "runtime/event/hw_timestamps.h"
-#include "runtime/event/perf_counter.h"
 
 #include <algorithm>
 
@@ -114,7 +114,7 @@ void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
 GraphicsAllocation *MemoryManager::allocateGraphicsMemoryForSVM(size_t size, bool coherent) {
     GraphicsAllocation *graphicsAllocation = nullptr;
     if (peek64kbPagesEnabled()) {
-        graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false);
+        graphicsAllocation = allocateGraphicsMemory64kb(size, MemoryConstants::pageSize64k, false, false);
     } else {
         graphicsAllocation = allocateGraphicsMemory(size);
     }
@@ -375,6 +375,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustB
 
     switch (type) {
     case GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
     case GraphicsAllocation::AllocationType::PRIVATE_SURFACE:
@@ -432,7 +433,8 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemory(allocationData.size, allocationData.hostPtr, allocationData.flags.forcePin);
     }
     if (peek64kbPagesEnabled() && allocationData.flags.allow64kbPages) {
-        return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin);
+        bool preferRenderCompressed = (allocationData.type == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+        return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin, preferRenderCompressed);
     }
     return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);
 }

@@ -99,7 +99,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     memoryManager.reset(new MockWddmMemoryManager(false, wddm));
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);
@@ -2020,7 +2020,7 @@ HWTEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocati
     EXPECT_TRUE(wddm->init<FamilyType>());
     DebugManager.flags.Enable64kbpages.set(true);
     WddmMemoryManager memoryManager(true, wddm);
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false);
+    auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false, false);
 
     EXPECT_NE(nullptr, graphicsAllocation);
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
@@ -2041,7 +2041,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenL
     MockWddmMemoryManager memoryManager64k(wddm);
     uint32_t lockCount = wddm->lockResult.called;
     uint32_t mapGpuVirtualAddressResult = wddm->mapGpuVirtualAddressResult.called;
-    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(65536, 65536, true);
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(65536, 65536, true, false);
     EXPECT_EQ(lockCount + 1, wddm->lockResult.called);
     EXPECT_EQ(mapGpuVirtualAddressResult + 1, wddm->mapGpuVirtualAddressResult.called);
     EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);

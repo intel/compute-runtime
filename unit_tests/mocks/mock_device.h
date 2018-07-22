@@ -161,7 +161,7 @@ class FailMemoryManager : public MockMemoryManager {
         allocations.push_back(alloc);
         return alloc;
     };
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr) override {

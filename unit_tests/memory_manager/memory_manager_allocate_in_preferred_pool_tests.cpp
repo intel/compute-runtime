@@ -22,8 +22,8 @@
 
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
-#include "gtest/gtest.h"
 #include "test.h"
+#include "gtest/gtest.h"
 
 using namespace OCLRT;
 class MemoryManagerGetAlloctionDataTest : public testing::TestWithParam<GraphicsAllocation::AllocationType> {
@@ -42,9 +42,10 @@ class MockOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
         allocationCreated = true;
         return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
     }
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
         allocation64kbPageCreated = true;
-        return OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin);
+        preferRenderCompressedFlagPassed = preferRenderCompressed;
+        return OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin, preferRenderCompressed);
     }
 
     GraphicsAllocation *allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) override {
@@ -68,6 +69,7 @@ class MockOsAgnosticMemoryManager : public OsAgnosticMemoryManager {
     bool allocationInDevicePoolCreated = false;
     bool failInDevicePool = false;
     bool failInDevicePoolWithError = false;
+    bool preferRenderCompressedFlagPassed = false;
 };
 
 TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyAndAllocateMemoryFlagsAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
@@ -128,6 +130,22 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
     EXPECT_EQ(allocType, allocData.type);
 }
 
+TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllowedAllocationTypeWhenAllocatingThenPreferRenderCompressionOnlyForSpecificTypes) {
+    auto allocType = GetParam();
+    AllocationData allocData;
+    MockOsAgnosticMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, allocType);
+    bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    EXPECT_TRUE(allocData.flags.allow64kbPages);
+
+    MockOsAgnosticMemoryManager mockMemoryManager(true);
+    auto allocation = mockMemoryManager.allocateGraphicsMemory(allocData);
+
+    EXPECT_TRUE(mockMemoryManager.allocation64kbPageCreated);
+    EXPECT_EQ(mockMemoryManager.preferRenderCompressedFlagPassed, bufferCompressedType);
+
+    mockMemoryManager.freeGraphicsMemory(allocation);
+}
+
 typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest;
 
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAllocationTypesWith32BitAnd64kbPagesDisallowedWhenAllocationDataIsQueriedThenFlagsAreNotSet) {
@@ -142,6 +160,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAlloca
 }
 
 static const GraphicsAllocation::AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {GraphicsAllocation::AllocationType::BUFFER,
+                                                                                                 GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                                                                                  GraphicsAllocation::AllocationType::PIPE,
                                                                                                  GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
                                                                                                  GraphicsAllocation::AllocationType::PRIVATE_SURFACE,

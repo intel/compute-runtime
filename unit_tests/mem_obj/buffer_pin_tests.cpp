@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,16 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
+#include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/mocks/mock_context.h"
-#include "unit_tests/fixtures/platform_fixture.h"
-#include "runtime/helpers/options.h"
 #include "gtest/gtest.h"
-#include "test.h"
 
 using namespace OCLRT;
 
@@ -43,7 +43,7 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
         }
         return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
     };
-    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) override {
+    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
         return nullptr;
     };
     GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin) override {

@@ -732,7 +732,7 @@ TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
 }
 
 TEST_F(DrmMemoryManagerTest, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocation64kThenNullPtr) {
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(65536, 65536, false);
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(65536, 65536, false, false);
     EXPECT_EQ(nullptr, allocation);
 }
 
@@ -2466,7 +2466,7 @@ TEST(DrmMemoryManager, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledT
 TEST(DrmMemoryManager, DISABLED_givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager(new (std::nothrow) TestedDrmMemoryManager(Drm::get(0), false, true));
     auto size = 4096u;
-    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager->freeGraphicsMemory(allocation);

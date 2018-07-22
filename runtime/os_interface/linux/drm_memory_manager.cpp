@@ -204,7 +204,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemory(size_t size, const void 
     return res;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin) {
+DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
     return nullptr;
 }
 

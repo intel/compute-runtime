@@ -68,6 +68,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     enum class AllocationType {
         UNKNOWN = 0,
+        BUFFER_COMPRESSED,
         BUFFER,
         IMAGE,
         TAG_BUFFER,

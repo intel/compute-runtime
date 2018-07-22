@@ -856,7 +856,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     OsAgnosticMemoryManager memoryManager(true);
     auto size = 4096u;
 
-    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
     memoryManager.freeGraphicsMemory(allocation);
@@ -874,7 +874,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
     MockOsAgnosticManagerWithFailingAllocate memoryManager(true);
     auto size = 4096u;
 
-    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false);
+    auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_EQ(nullptr, allocation);
     memoryManager.freeGraphicsMemory(allocation);
 }
