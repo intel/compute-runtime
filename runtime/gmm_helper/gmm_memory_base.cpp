@@ -25,10 +25,8 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 
 namespace OCLRT {
-void GmmMemoryBase::ensureClientContext() {
-    if (!clientContext) {
-        clientContext = GmmHelper::gmmClientContext->getHandle();
-    }
+GmmMemoryBase::GmmMemoryBase() {
+    clientContext = GmmHelper::gmmClientContext->getHandle();
 }
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,
@@ -39,7 +37,6 @@ bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 BOOLEAN BDWL3Coherency,
                                                 GMM_GFX_SIZE_T SizeOverride,
                                                 GMM_GFX_SIZE_T SlmGfxSpaceReserve) {
-    ensureClientContext();
     return clientContext->ConfigureDeviceAddressSpace(
                {hAdapter},
                {hDevice},

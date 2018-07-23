@@ -30,25 +30,11 @@ using namespace OCLRT;
 class PublicGmmMemory : public GmmMemory {
   public:
     using GmmMemory::clientContext;
-    using GmmMemory::ensureClientContext;
 };
 
-TEST(GmmMemoryTest, givenGmmMemoryWithoutSetClientContextWhenEnsureClientContextThenSetClientContext) {
-    PublicGmmMemory gmmMemory;
+TEST(GmmMemoryTest, givenGmmHelperWhenCreateGmmMemoryThenItHasClientContextFromGmmHelper) {
     GmmHelper gmmHelper(*platformDevices);
-    EXPECT_EQ(nullptr, gmmMemory.clientContext);
-    gmmMemory.ensureClientContext();
-    EXPECT_NE(nullptr, gmmMemory.clientContext);
+    ASSERT_NE(nullptr, GmmHelper::gmmClientContext);
+    PublicGmmMemory gmmMemory;
     EXPECT_EQ(gmmMemory.clientContext, GmmHelper::gmmClientContext->getHandle());
-}
-
-TEST(GmmMemoryTest, givenGmmMemoryWithSetClientContextWhenEnsureClientContextThenDontOverrideClientContext) {
-    PublicGmmMemory gmmMemory;
-    GmmHelper gmmHelper(*platformDevices);
-    auto dummyPtr = reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x123);
-    gmmMemory.clientContext = dummyPtr;
-    EXPECT_EQ(dummyPtr, gmmMemory.clientContext);
-    EXPECT_NE(dummyPtr, GmmHelper::gmmClientContext->getHandle());
-    gmmMemory.ensureClientContext();
-    EXPECT_EQ(dummyPtr, gmmMemory.clientContext);
 }

@@ -40,8 +40,7 @@ class GmmMemoryBase {
                                                       GMM_GFX_SIZE_T SlmGfxSpaceReserve);
 
   protected:
-    GmmMemoryBase() = default;
-    void ensureClientContext();
+    GmmMemoryBase();
     GMM_CLIENT_CONTEXT *clientContext = nullptr;
 };
 } // namespace OCLRT
