@@ -33,5 +33,8 @@ class MockGraphicsAllocation : public GraphicsAllocation {
     void resetInspectionId() {
         this->inspectionId = 0;
     }
+    void overrideMemoryPool(MemoryPool::Type pool) {
+        this->memoryPool = pool;
+    }
 };
 } // namespace OCLRT
