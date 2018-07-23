@@ -105,7 +105,6 @@ class MemObj : public BaseObject<_cl_mem> {
     virtual bool allowTiling() const { return false; }
 
     CommandQueue *getAssociatedCommandQueue() { return cmdQueuePtr; }
-    Device *getAssociatedDevice() { return device; }
     bool isImageFromImage() const { return isImageFromImageCreated; }
 
     void *getCpuAddressForMapping();

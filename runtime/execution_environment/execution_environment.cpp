@@ -60,7 +60,6 @@ void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages) {
 
     DEBUG_BREAK_IF(!this->memoryManager);
 }
-
 void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {
     if (hwInfo.capabilityTable.sourceLevelDebuggerSupported) {
         sourceLevelDebugger.reset(SourceLevelDebugger::create());
@@ -69,5 +68,8 @@ void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {
         bool localMemorySipAvailable = (SipKernelType::DbgCsrLocal == SipKernel::getSipKernelType(hwInfo.pPlatform->eRenderCoreFamily, true));
         sourceLevelDebugger->initialize(localMemorySipAvailable);
     }
+}
+GmmHelper *ExecutionEnvironment::getGmmHelper() const {
+    return gmmHelper.get();
 }
 } // namespace OCLRT

@@ -310,7 +310,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,
             newGSHbase,
             requiredL3Index,
-            memoryManager->getInternalHeapBaseAddress());
+            memoryManager->getInternalHeapBaseAddress(),
+            device->getGmmHelper());
 
         latestSentStatelessMocsConfig = requiredL3Index;
 

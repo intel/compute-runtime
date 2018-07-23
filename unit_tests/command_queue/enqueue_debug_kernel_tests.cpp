@@ -22,7 +22,6 @@
 
 #include "runtime/compiler_interface/compiler_options.h"
 #include "runtime/command_queue/command_queue.h"
-#include "runtime/platform/platform.h"
 #include "runtime/program/program.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "unit_tests/fixtures/enqueue_handler_fixture.h"
@@ -44,7 +43,6 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
                                public ::testing::Test {
   public:
     void SetUp() override {
-        constructPlatform();
         ProgramSimpleFixture::SetUp();
         device = pDevice;
         pDevice->executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebugger(nullptr));
@@ -92,7 +90,6 @@ class EnqueueDebugKernelTest : public ProgramSimpleFixture,
             debugKernel->release();
         }
         ProgramSimpleFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
     cl_device_id device;
     Kernel *debugKernel = nullptr;

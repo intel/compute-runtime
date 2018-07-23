@@ -24,12 +24,10 @@
 
 #include "buffer_operations_fixture.h"
 #include "runtime/helpers/options.h"
-#include "runtime/platform/platform.h"
 
 namespace OCLRT {
 struct AsyncGPUoperations : public EnqueueWriteBufferTypeTest {
     void SetUp() override {
-        constructPlatform();
         storeInitHWTag = initialHardwareTag;
         initialHardwareTag = 0;
         EnqueueWriteBufferTypeTest::SetUp();
@@ -38,7 +36,6 @@ struct AsyncGPUoperations : public EnqueueWriteBufferTypeTest {
     void TearDown() override {
         initialHardwareTag = storeInitHWTag;
         EnqueueWriteBufferTypeTest::TearDown();
-        platformImpl.reset(nullptr);
     }
 
   protected:

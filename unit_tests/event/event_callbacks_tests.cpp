@@ -56,7 +56,6 @@ TEST(EventCallbackTest, NestedCallbacksAreCalledForUserEvent) {
 }
 
 TEST(EventCallbackTest, NestedCallbacksAreCalledForEvent) {
-    constructPlatform();
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
     MockCommandQueue queue(&context, device.get(), nullptr);
@@ -69,5 +68,4 @@ TEST(EventCallbackTest, NestedCallbacksAreCalledForEvent) {
     platform()->getAsyncEventsHandler()->closeThread();
 
     EXPECT_EQ(4u, nestLevel);
-    platformImpl.reset(nullptr);
 }

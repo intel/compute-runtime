@@ -21,6 +21,7 @@
 */
 
 #include "gmm_client_context.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -32,34 +33,31 @@
 #include "runtime/helpers/hw_info.h"
 #include "runtime/sku_info/operations/sku_info_transfer.h"
 #include "runtime/os_interface/os_library.h"
+#include "runtime/platform/platform.h"
 
 namespace OCLRT {
+
+GmmClientContext *GmmHelper::getClientContext() {
+    return getInstance()->gmmClientContext.get();
+}
+
+GmmHelper *GmmHelper::getInstance() {
+    return platform()->peekExecutionEnvironment()->getGmmHelper();
+}
+
 void GmmHelper::initContext(const PLATFORM *pPlatform,
                             const FeatureTable *pSkuTable,
                             const WorkaroundTable *pWaTable,
                             const GT_SYSTEM_INFO *pGtSysInfo) {
-    if (!GmmHelper::gmmClientContext) {
-        _SKU_FEATURE_TABLE gmmFtrTable = {};
-        _WA_TABLE gmmWaTable = {};
-        SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
-        SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
-        loadLib();
-        bool success = GMM_SUCCESS == initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
-        UNRECOVERABLE_IF(!success);
-        GmmHelper::gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
-    }
-    UNRECOVERABLE_IF(!GmmHelper::gmmClientContext);
-}
-
-void GmmHelper::destroyContext() {
-    if (GmmHelper::gmmClientContext) {
-        delete GmmHelper::gmmClientContext;
-        GmmHelper::gmmClientContext = nullptr;
-        if (gmmLib) {
-            delete gmmLib;
-            gmmLib = nullptr;
-        }
-    }
+    _SKU_FEATURE_TABLE gmmFtrTable = {};
+    _WA_TABLE gmmWaTable = {};
+    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
+    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
+    loadLib();
+    bool success = GMM_SUCCESS == GmmHelper::initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
+    UNRECOVERABLE_IF(!success);
+    gmmClientContext.reset(GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA));
+    UNRECOVERABLE_IF(!gmmClientContext);
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) {
@@ -70,7 +68,7 @@ uint32_t GmmHelper::getMOCS(uint32_t type) {
             return cacheEnabledIndex;
         }
     }
-    MEMORY_OBJECT_CONTROL_STATE mocs = GmmHelper::gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
+    MEMORY_OBJECT_CONTROL_STATE mocs = gmmClientContext->cachePolicyGetMemoryObject(nullptr, static_cast<GMM_RESOURCE_USAGE_TYPE>(type));
 
     return static_cast<uint32_t>(mocs.DwordValue);
 }
@@ -166,14 +164,10 @@ GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) {
     initContext(pHwInfo->pPlatform, pHwInfo->pSkuTable, pHwInfo->pWaTable, pHwInfo->pSysInfo);
 }
 GmmHelper::~GmmHelper() {
-    if (isLoaded) {
-        destroyContext();
-    }
-}
+    GmmHelper::destroyGlobalContextFunc();
+};
 bool GmmHelper::useSimplifiedMocsTable = false;
-GmmClientContext *GmmHelper::gmmClientContext = nullptr;
 GmmClientContext *(*GmmHelper::createGmmContextWrapperFunc)(GMM_CLIENT) = GmmClientContextBase::create<GmmClientContext>;
 
 const HardwareInfo *GmmHelper::hwInfo = nullptr;
-OsLibrary *GmmHelper::gmmLib = nullptr;
 } // namespace OCLRT

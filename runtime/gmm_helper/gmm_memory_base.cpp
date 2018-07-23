@@ -26,7 +26,7 @@
 
 namespace OCLRT {
 GmmMemoryBase::GmmMemoryBase() {
-    clientContext = GmmHelper::gmmClientContext->getHandle();
+    clientContext = GmmHelper::getClientContext()->getHandle();
 }
 bool GmmMemoryBase::configureDeviceAddressSpace(GMM_ESCAPE_HANDLE hAdapter,
                                                 GMM_ESCAPE_HANDLE hDevice,

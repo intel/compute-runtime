@@ -30,7 +30,6 @@
 #include "runtime/helpers/string.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/os_interface/debug_settings_manager.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/context_fixture.h"
@@ -65,7 +64,6 @@ class BuiltInTests
     }
 
     void SetUp() override {
-        constructPlatform();
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
@@ -77,7 +75,6 @@ class BuiltInTests
         BuiltInFixture::TearDown();
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
 
     void AppendBuiltInStringFromFile(std::string builtInFile, size_t &size) {

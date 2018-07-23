@@ -27,5 +27,6 @@ namespace OCLRT {
 class UltConfigListener : public ::testing::EmptyTestEventListener {
   private:
     void OnTestStart(const ::testing::TestInfo &) override;
+    void OnTestEnd(const ::testing::TestInfo &) override;
 };
 } // namespace OCLRT

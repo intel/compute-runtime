@@ -32,7 +32,6 @@
 #include "runtime/event/perf_counter.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/helpers/kernel_commands.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/command_queue/enqueue_write_image_fixture.h"
@@ -50,7 +49,6 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        constructPlatform();
         CommandEnqueueFixture::SetUp();
 
         srcImage = Image2dHelper<>::create(context);
@@ -64,7 +62,6 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
         delete srcImage;
 
         CommandEnqueueFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
 
     Image *srcImage = nullptr;

@@ -31,6 +31,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "runtime/platform/platform.h"
 
 using namespace ::testing;
 
@@ -604,30 +605,6 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
     EXPECT_FALSE(gmm->unifiedAuxTranslationCapable()); // RenderCompressed == 0
 }
 
-class MockGmmHelper : public GmmHelper {
-  public:
-    using GmmHelper::destroyContext;
-    using GmmHelper::initContext;
-    MockGmmHelper(const HardwareInfo *hwInfo) : GmmHelper(hwInfo) {}
-};
-
-TEST(GmmTest, whenContextIsInitializedMultipleTimesThenDontOverride) {
-    const HardwareInfo *hwinfo = *platformDevices;
-    auto gmmHelper = MockGmmHelper(hwinfo);
-    auto currentClientContext = GmmHelper::gmmClientContext;
-    auto currentClientContextHandle = GmmHelper::gmmClientContext->getHandle();
-    gmmHelper.initContext(hwinfo->pPlatform, hwinfo->pSkuTable, hwinfo->pWaTable, hwinfo->pSysInfo);
-
-    EXPECT_EQ(currentClientContext, GmmHelper::gmmClientContext);
-    EXPECT_EQ(currentClientContextHandle, GmmHelper::gmmClientContext->getHandle());
-}
-
-TEST(GmmTest, whenContextIsDestroyedMultimpleTimesThenDontCrash) {
-    const HardwareInfo *hwinfo = *platformDevices;
-    auto gmmHelper = MockGmmHelper(hwinfo);
-    gmmHelper.destroyContext();
-}
-
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
     HardwareInfo localHwInfo = **platformDevices;
 
@@ -653,8 +630,7 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
     gmmParams.Flags.Info.Cacheable = 1;
     gmmParams.Flags.Gpu.Texture = 1;
     gmmParams.Usage = GMM_RESOURCE_USAGE_OCL_BUFFER;
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initGmm(*platformDevices);
+
     MyMockResourecInfo myMockResourceInfo1(&gmmParams);
     EXPECT_NE(nullptr, myMockResourceInfo1.resourceInfo.get());
 
@@ -666,7 +642,8 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
 
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
     GmmHelper::useSimplifiedMocsTable = true;
-    auto index = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
+    GmmHelper gmmHelper(*platformDevices);
+    auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     auto expectedIndex = GmmHelper::cacheDisabledIndex;
     EXPECT_EQ(expectedIndex, index);
     GmmHelper::useSimplifiedMocsTable = false;
@@ -674,10 +651,16 @@ TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicy
 
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForCachedIndexThen4IsReturned) {
     GmmHelper::useSimplifiedMocsTable = true;
-    auto index = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+    GmmHelper gmmHelper(*platformDevices);
+    auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     auto expectedIndex = GmmHelper::cacheEnabledIndex;
     EXPECT_EQ(expectedIndex, index);
     GmmHelper::useSimplifiedMocsTable = false;
+}
+
+TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {
+    ASSERT_NE(nullptr, GmmHelper::getClientContext());
+    EXPECT_NE(nullptr, GmmHelper::getClientContext()->getHandle());
 }
 
 } // namespace OCLRT

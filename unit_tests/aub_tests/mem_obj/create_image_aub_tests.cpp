@@ -48,7 +48,6 @@ struct AUBCreateImage
     using AUBCommandStreamFixture::SetUp;
 
     void SetUp() override {
-        constructPlatform();
         CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
         CommandStreamFixture::SetUp(pCmdQ);
 
@@ -72,7 +71,6 @@ struct AUBCreateImage
         //delete context;
         CommandStreamFixture::TearDown();
         CommandDeviceFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
 
     //MockContext *context;

@@ -899,7 +899,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrAndSizeIsAlign
         ptr);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
-    EXPECT_EQ(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
 
     alignedFree(ptr);
 }
@@ -921,7 +922,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryPtrIsUnalignedToC
         offsetedPtr);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
-    EXPECT_EQ(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
 
     alignedFree(ptr);
 }
@@ -943,7 +945,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemorySizeIsUnalignedTo
         ptr);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
-    EXPECT_EQ(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED), mocs);
 
     alignedFree(ptr);
 }
@@ -967,7 +970,8 @@ HWTEST_F(BufferSetSurfaceTests, givenBufferSetSurfaceThatMemoryIsUnalignedToCach
         CL_MEM_READ_ONLY);
 
     auto mocs = surfaceState.getMemoryObjectControlState();
-    EXPECT_EQ(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
+    auto gmmHelper = device->getGmmHelper();
+    EXPECT_EQ(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER), mocs);
 
     alignedFree(ptr);
 }

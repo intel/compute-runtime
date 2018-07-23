@@ -53,7 +53,6 @@ class CompilerInterfaceTest : public DeviceFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        constructPlatform();
         DeviceFixture::SetUp();
 
         retVal = CL_SUCCESS;
@@ -99,7 +98,6 @@ class CompilerInterfaceTest : public DeviceFixture,
         pCompilerInterface.reset();
 
         DeviceFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
 
     std::unique_ptr<MockCompilerInterface> pCompilerInterface = nullptr;

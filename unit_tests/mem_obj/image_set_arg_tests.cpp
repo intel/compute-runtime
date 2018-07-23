@@ -251,7 +251,8 @@ HWTEST_F(ImageSetArgTest, givenOffsetedBufferWhenSetKernelArgImageIscalledThenFu
 }
 
 HWTEST_F(ImageSetArgTest, clSetKernelArgImage) {
-    auto imageMocs = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     cl_mem memObj = srcImage;
 
@@ -784,7 +785,8 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
 };
 
 HWTEST_F(ImageMediaBlockSetArgTest, clSetKernelArgImage) {
-    auto imageMocs = GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
+    auto gmmHelper = pDevice->getGmmHelper();
+    auto imageMocs = gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_IMAGE);
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     cl_mem memObj = srcImage;
 

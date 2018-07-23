@@ -56,7 +56,6 @@
 using namespace OCLRT;
 
 void ProgramTests::SetUp() {
-    constructPlatform();
     DeviceFixture::SetUp();
     cl_device_id device = pDevice;
     ContextFixture::SetUp(1, &device);
@@ -64,7 +63,6 @@ void ProgramTests::SetUp() {
 void ProgramTests::TearDown() {
     ContextFixture::TearDown();
     DeviceFixture::TearDown();
-    platformImpl.reset(nullptr);
 }
 
 void CL_CALLBACK notifyFunc(
@@ -2962,7 +2960,6 @@ TEST(SimpleProgramTests, givenDefaultProgramWhenSetDeviceIsCalledThenDeviceIsSet
 }
 
 TEST(ProgramDestructionTests, givenProgramUsingDeviceWhenItIsDestroyedAfterPlatfromCleanupThenItIsCleanedUpProperly) {
-    constructPlatform();
     platformImpl->initialize();
     auto device = platformImpl->getDevice(0);
     MockContext *context = new MockContext(device, false);

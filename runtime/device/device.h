@@ -105,6 +105,7 @@ class Device : public BaseObject<_cl_device_id> {
                 size_t &retSize);
 
     MemoryManager *getMemoryManager() const;
+    GmmHelper *getGmmHelper() const;
 
     /* We hide the retain and release function of BaseObject. */
     void retain() override;
@@ -193,5 +194,8 @@ inline volatile uint32_t *Device::getTagAddress() const {
 
 inline MemoryManager *Device::getMemoryManager() const {
     return executionEnvironment->memoryManager.get();
+}
+inline GmmHelper *Device::getGmmHelper() const {
+    return executionEnvironment->getGmmHelper();
 }
 } // namespace OCLRT

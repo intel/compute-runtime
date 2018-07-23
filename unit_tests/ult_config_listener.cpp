@@ -20,11 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
+#include "runtime/platform/platform.h"
 #include "unit_tests/ult_config_listener.h"
 
 void OCLRT::UltConfigListener::OnTestStart(const ::testing::TestInfo &testInfo) {
-    // Set default HardwareInfo for all ULTs that dont want to create Device and test initialization path
-    GmmHelper::hwInfo = platformDevices[0];
+    // Create platform and initialize gmm that dont want to create Platform and test gmm initialization path
+    constructPlatform()->peekExecutionEnvironment()->initGmm(*platformDevices);
+}
+void OCLRT::UltConfigListener::OnTestEnd(const ::testing::TestInfo &testInfo) {
+    // Clear global platform that it shouldn't be reused between tests
+    platformImpl.reset();
 }

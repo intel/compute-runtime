@@ -150,6 +150,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
 
   public:
     void SetUp() override {
+        platformImpl.reset();
         MemoryManagementFixture::SetUp();
         constructPlatform();
         pPlatform = platform();

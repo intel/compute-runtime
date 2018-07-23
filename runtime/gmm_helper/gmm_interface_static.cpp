@@ -36,6 +36,5 @@ void GmmHelper::loadLib() {
     GmmHelper::destroyGlobalContextFunc = GmmDestroyGlobalContext;
     GmmHelper::createClientContextFunc = GmmCreateClientContext;
     GmmHelper::deleteClientContextFunc = GmmDeleteClientContext;
-    isLoaded = true;
 }
 } // namespace OCLRT

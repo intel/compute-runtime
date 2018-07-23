@@ -21,7 +21,6 @@
  */
 
 #include "runtime/compiler_interface/compiler_options.h"
-#include "runtime/platform/platform.h"
 #include "unit_tests/fixtures/program_fixture.h"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
@@ -53,7 +52,6 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
                                        public ::testing::Test {
   public:
     void SetUp() override {
-        constructPlatform();
         ProgramSimpleFixture::SetUp();
         device = pDevice;
 
@@ -73,7 +71,6 @@ class ProgramWithKernelDebuggingTest : public ProgramSimpleFixture,
     void TearDown() override {
         delete kbHelper;
         ProgramSimpleFixture::TearDown();
-        platformImpl.reset(nullptr);
     }
     cl_device_id device;
     KernelBinaryHelper *kbHelper = nullptr;

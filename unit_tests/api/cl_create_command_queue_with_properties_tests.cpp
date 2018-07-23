@@ -63,6 +63,7 @@ struct clCreateCommandQueueWithPropertiesApi : public api_fixture,
     }
 
     void SetUp() override {
+        platformImpl.reset();
         MemoryManagementFixture::SetUp();
         api_fixture::SetUp();
     }

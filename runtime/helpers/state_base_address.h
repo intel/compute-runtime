@@ -25,6 +25,7 @@
 
 namespace OCLRT {
 
+class GmmHelper;
 class IndirectHeap;
 class LinearStream;
 
@@ -39,7 +40,8 @@ struct StateBaseAddressHelper {
         const IndirectHeap &ssh,
         uint64_t generalStateBase,
         uint32_t statelessMocsIndex,
-        uint64_t internalHeapBase);
+        uint64_t internalHeapBase,
+        GmmHelper *gmmHelper);
 
     static void appendStateBaseAddressParameters(
         STATE_BASE_ADDRESS *stateBaseAddress,

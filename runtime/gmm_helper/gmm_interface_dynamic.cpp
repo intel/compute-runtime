@@ -36,8 +36,8 @@ decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc 
 decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
 void GmmHelper::loadLib() {
-    gmmLib = OsLibrary::load(Os::gmmDllName);
-
+    gmmLib.reset(OsLibrary::load(Os::gmmDllName));
+    bool isLoaded = false;
     UNRECOVERABLE_IF(!gmmLib);
     if (gmmLib->isLoaded()) {
         auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(Os::gmmEntryName));

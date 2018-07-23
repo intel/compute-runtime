@@ -36,7 +36,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     const IndirectHeap &ssh,
     uint64_t generalStateBase,
     uint32_t statelessMocsIndex,
-    uint64_t internalHeapBase) {
+    uint64_t internalHeapBase,
+    GmmHelper *gmmHelper) {
 
     auto pCmd = static_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(sizeof(STATE_BASE_ADDRESS)));
     *pCmd = STATE_BASE_ADDRESS::sInit();
@@ -67,8 +68,8 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setInstructionBufferSize(MemoryConstants::sizeOf4GBinPageEntities);
 
     //set cache settings
-    pCmd->setStatelessDataPortAccessMemoryObjectControlState(GmmHelper::getMOCS(statelessMocsIndex));
-    pCmd->setInstructionMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
+    pCmd->setStatelessDataPortAccessMemoryObjectControlState(gmmHelper->getMOCS(statelessMocsIndex));
+    pCmd->setInstructionMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER));
 
     appendStateBaseAddressParameters(pCmd, dsh, ioh, ssh, generalStateBase, internalHeapBase);
 }

@@ -43,6 +43,9 @@ class GmmHelper {
     GmmHelper() = delete;
     GmmHelper(const HardwareInfo *hwInfo);
     MOCKABLE_VIRTUAL ~GmmHelper();
+
+    uint32_t getMOCS(uint32_t type);
+
     static constexpr uint32_t cacheDisabledIndex = 0;
     static constexpr uint32_t cacheEnabledIndex = 4;
     static constexpr uint32_t maxPossiblePitch = 2147483648;
@@ -50,7 +53,8 @@ class GmmHelper {
     static uint64_t canonize(uint64_t address);
     static uint64_t decanonize(uint64_t address);
 
-    static uint32_t getMOCS(uint32_t type);
+    static GmmClientContext *getClientContext();
+    static GmmHelper *getInstance();
     static void queryImgFromBufferParams(ImageInfo &imgInfo, GraphicsAllocation *gfxAlloc);
     static GMM_CUBE_FACE_ENUM getCubeFaceIndex(uint32_t target);
     static bool allowTiling(const cl_image_desc &imageDesc);
@@ -63,18 +67,17 @@ class GmmHelper {
     static decltype(GmmExportEntries::pfnDestroySingletonContext) destroyGlobalContextFunc;
     static decltype(GmmExportEntries::pfnCreateClientContext) createClientContextFunc;
     static decltype(GmmExportEntries::pfnDeleteClientContext) deleteClientContextFunc;
+
     static GmmClientContext *(*createGmmContextWrapperFunc)(GMM_CLIENT);
 
     static bool useSimplifiedMocsTable;
     static const HardwareInfo *hwInfo;
-    static OsLibrary *gmmLib;
-    static GmmClientContext *gmmClientContext;
 
   protected:
     void loadLib();
     void initContext(const PLATFORM *pPlatform, const FeatureTable *pSkuTable, const WorkaroundTable *pWaTable, const GT_SYSTEM_INFO *pGtSysInfo);
-    void destroyContext();
 
-    bool isLoaded = false;
+    std::unique_ptr<OsLibrary> gmmLib;
+    std::unique_ptr<GmmClientContext> gmmClientContext;
 };
 } // namespace OCLRT

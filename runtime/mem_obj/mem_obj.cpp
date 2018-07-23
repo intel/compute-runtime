@@ -53,6 +53,7 @@ MemObj::MemObj(Context *context,
     if (context) {
         context->incRefInternal();
         memoryManager = context->getMemoryManager();
+        device = context->getDevice(0);
     }
 }
 
@@ -218,7 +219,6 @@ size_t MemObj::getSize() const {
 
 void MemObj::setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ) {
     this->completionStamp = completionStamp;
-    device = pDevice;
     cmdQueuePtr = pCmdQ;
 }
 

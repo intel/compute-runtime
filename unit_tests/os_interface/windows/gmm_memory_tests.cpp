@@ -24,6 +24,8 @@
 #include "runtime/helpers/options.h"
 #include "gmm_memory.h"
 #include "gmm_client_context.h"
+#include "runtime/platform/platform.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
@@ -33,8 +35,7 @@ class PublicGmmMemory : public GmmMemory {
 };
 
 TEST(GmmMemoryTest, givenGmmHelperWhenCreateGmmMemoryThenItHasClientContextFromGmmHelper) {
-    GmmHelper gmmHelper(*platformDevices);
-    ASSERT_NE(nullptr, GmmHelper::gmmClientContext);
+    ASSERT_NE(nullptr, GmmHelper::getClientContext());
     PublicGmmMemory gmmMemory;
-    EXPECT_EQ(gmmMemory.clientContext, GmmHelper::gmmClientContext->getHandle());
+    EXPECT_EQ(gmmMemory.clientContext, GmmHelper::getClientContext()->getHandle());
 }

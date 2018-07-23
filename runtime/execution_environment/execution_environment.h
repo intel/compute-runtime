@@ -39,10 +39,14 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
   public:
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
+
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo);
     void initializeMemoryManager(bool enable64KBpages);
     void initSourceLevelDebugger(const HardwareInfo &hwInfo);
+
+    GmmHelper *getGmmHelper() const;
+
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

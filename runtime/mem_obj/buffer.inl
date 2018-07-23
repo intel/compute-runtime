@@ -21,6 +21,7 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/device/device.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
@@ -45,6 +46,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
+    auto gmmHelper = device->getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     auto surfaceSize = alignUp(getSize(), 4);
 
@@ -73,12 +75,11 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
     surfaceState->setTileMode(RENDER_SURFACE_STATE::TILE_MODE_LINEAR);
     surfaceState->setVerticalLineStride(0);
     surfaceState->setVerticalLineStrideOffset(0);
-
     if ((isAligned<MemoryConstants::cacheLineSize>(bufferAddress) && isAligned<MemoryConstants::cacheLineSize>(bufferSize)) ||
         ((getFlags() & CL_MEM_READ_ONLY)) != 0) {
-        surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
     } else {
-        surfaceState->setMemoryObjectControlState(GmmHelper::getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
+        surfaceState->setMemoryObjectControlState(gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED));
     }
 
     surfaceState->setSurfaceBaseAddress(bufferAddress);
