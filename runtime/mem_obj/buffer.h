@@ -136,6 +136,7 @@ class Buffer : public MemObj {
                             bool &isZeroCopy,
                             bool &allocateMemory,
                             bool &copyMemoryFromHostPtr,
+                            GraphicsAllocation::AllocationType allocationType,
                             MemoryManager *memMngr);
 
     static bool isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags);

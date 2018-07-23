@@ -214,6 +214,81 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     EXPECT_EQ(nullptr, buffer.get());
 }
 
+TEST(Buffer, givenBufferCompressedAllocationAndZeroCopyHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopyAndAllocateStorage) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment()));
+    auto context = std::make_unique<MockContext>(device.get());
+
+    void *cacheAlignedHostPtr = alignedMalloc(MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
+    cl_int retVal = CL_SUCCESS;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
+    EXPECT_EQ(cacheAlignedHostPtr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
+    EXPECT_NE(cacheAlignedHostPtr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
+    EXPECT_FALSE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    alignedFree(cacheAlignedHostPtr);
+}
+
+TEST(Buffer, givenBufferCompressedAllocationAndNoHostPtrWhenCheckingMemoryPropertiesThenForceDisableZeroCopy) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment()));
+    auto context = std::make_unique<MockContext>(device.get());
+
+    cl_int retVal = CL_SUCCESS;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
+    EXPECT_TRUE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
+    EXPECT_FALSE(buffer->isMemObjZeroCopy());
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+}
+
+TEST(Buffer, givenBufferCompressedAllocationWhenSharedContextIsUsedThenForceDisableCompression) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment()));
+    auto context = std::make_unique<MockContext>(device.get());
+    context->isSharedContext = false;
+
+    cl_int retVal = CL_SUCCESS;
+    uint32_t hostPtr = 0;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), 0, sizeof(uint32_t), &hostPtr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    context->isSharedContext = true;
+    buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), &hostPtr, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+}
+
+TEST(Buffer, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment()));
+    auto context = std::make_unique<MockContext>(device.get());
+
+    auto svmAlloc = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), false);
+
+    cl_int retVal = CL_SUCCESS;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmAlloc, retVal));
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+
+    context->getSVMAllocsManager()->freeSVMAlloc(svmAlloc);
+}
+
 class BufferTest : public DeviceFixture,
                    public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
   public:

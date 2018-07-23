@@ -25,6 +25,7 @@
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/ptr_math.h"
@@ -93,11 +94,14 @@ Buffer *Buffer::create(Context *context,
     bool isHostPtrSVM = false;
     bool allocateMemory = false;
     bool copyMemoryFromHostPtr = false;
+    GraphicsAllocation::AllocationType allocationType = GmmHelper::hwInfo->capabilityTable.ftrRenderCompressedBuffers
+                                                            ? GraphicsAllocation::AllocationType::BUFFER_COMPRESSED
+                                                            : GraphicsAllocation::AllocationType::BUFFER;
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
 
-    checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr, memoryManager);
+    checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr, allocationType, memoryManager);
 
     if (hostPtr && context->isProvidingPerformanceHints()) {
         if (zeroCopy) {
@@ -108,6 +112,7 @@ Buffer *Buffer::create(Context *context,
     }
 
     if (context->isSharedContext) {
+        allocationType = GraphicsAllocation::AllocationType::BUFFER;
         zeroCopy = true;
         copyMemoryFromHostPtr = false;
         allocateMemory = false;
@@ -117,6 +122,7 @@ Buffer *Buffer::create(Context *context,
             if (flags & CL_MEM_USE_HOST_PTR) {
                 memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
                 if (memory) {
+                    allocationType = GraphicsAllocation::AllocationType::BUFFER;
                     zeroCopy = true;
                     isHostPtrSVM = true;
                     copyMemoryFromHostPtr = false;
@@ -125,7 +131,7 @@ Buffer *Buffer::create(Context *context,
             }
 
             if (!memory) {
-                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
+                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), allocationType);
             }
 
             if (allocateMemory) {
@@ -140,7 +146,7 @@ Buffer *Buffer::create(Context *context,
                     zeroCopy = false;
                     copyMemoryFromHostPtr = true;
                     allocateMemory = true;
-                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
+                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), allocationType);
                 }
             }
 
@@ -149,7 +155,7 @@ Buffer *Buffer::create(Context *context,
                 break;
             }
 
-            memory->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+            memory->setAllocationType(allocationType);
             memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
 
             DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
@@ -198,6 +204,7 @@ void Buffer::checkMemory(cl_mem_flags flags,
                          bool &isZeroCopy,
                          bool &allocateMemory,
                          bool &copyMemoryFromHostPtr,
+                         GraphicsAllocation::AllocationType allocationType,
                          MemoryManager *memMngr) {
     errcodeRet = CL_SUCCESS;
     isZeroCopy = false;
@@ -219,6 +226,7 @@ void Buffer::checkMemory(cl_mem_flags flags,
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
                 minAddress > reinterpret_cast<uintptr_t>(hostPtr) ||
+                GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocationType ||
                 DebugManager.flags.DisableZeroCopyForUseHostPtr.get() ||
                 DebugManager.flags.DisableZeroCopyForBuffers.get()) {
                 allocateMemory = true;
@@ -233,7 +241,8 @@ void Buffer::checkMemory(cl_mem_flags flags,
     } else {
         allocateMemory = true;
         isZeroCopy = true;
-        if (DebugManager.flags.DisableZeroCopyForBuffers.get()) {
+        if (DebugManager.flags.DisableZeroCopyForBuffers.get() ||
+            GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocationType) {
             isZeroCopy = false;
         }
     }
