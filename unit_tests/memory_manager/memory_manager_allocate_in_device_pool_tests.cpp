@@ -21,3 +21,19 @@
  */
 
 #include "unit_tests/memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
+
+TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationIsReturned) {
+    OsAgnosticMemoryManager memoryManager;
+
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = MemoryConstants::pageSize;
+    allocData.flags.allocateMemory = true;
+
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}

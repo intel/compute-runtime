@@ -327,9 +327,7 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenZeroCopyFlagIsNotSetThenAllocateGr
     MockOsAgnosticMemoryManager memoryManager(false);
 
     auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
-    ASSERT_NE(nullptr, allocation);
-    EXPECT_TRUE(memoryManager.allocationInDevicePoolCreated);
-
+    EXPECT_NE(nullptr, allocation);
     memoryManager.freeGraphicsMemory(allocation);
 }
 
