@@ -18,6 +18,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+if(UNIX AND USE_STATIC_GMM)
+  set(GMM_INTERFACE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_static.cpp)
+else()
+  set(GMM_INTERFACE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/gmm_interface_dynamic.cpp)
+endif()
+
 set(RUNTIME_SRCS_GMM_HELPER_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm.cpp
@@ -26,6 +32,7 @@ set(RUNTIME_SRCS_GMM_HELPER_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/client_context/gmm_client_context_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/client_context${BRANCH_DIR_SUFFIX}/gmm_client_context.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/client_context${BRANCH_DIR_SUFFIX}/gmm_client_context.h
+  ${GMM_INTERFACE_FILE}
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gmm_lib.h
