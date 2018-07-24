@@ -87,3 +87,8 @@ class UnalignedBuffer : public MockBufferStorage, public Buffer {
         Buffer::setSurfaceState(device.get(), memory, getSize(), getCpuAddress(), &mockGfxAllocation);
     }
 };
+
+class MockPublicAccessBuffer : public Buffer {
+  public:
+    using Buffer::getGraphicsAllocationType;
+};

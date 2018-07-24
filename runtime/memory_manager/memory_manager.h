@@ -132,7 +132,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
-    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
@@ -250,7 +250,7 @@ class MemoryManager {
     }
 
   protected:
-    static bool getAllocationData(AllocationData &allocationData, bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+    static bool getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     std::recursive_mutex mtx;

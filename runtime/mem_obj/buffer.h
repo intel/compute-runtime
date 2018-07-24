@@ -134,11 +134,9 @@ class Buffer : public MemObj {
                             void *hostPtr,
                             cl_int &errcodeRet,
                             bool &isZeroCopy,
-                            bool &allocateMemory,
                             bool &copyMemoryFromHostPtr,
-                            GraphicsAllocation::AllocationType allocationType,
                             MemoryManager *memMngr);
-
+    static GraphicsAllocation::AllocationType getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers);
     static bool isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags);
 
     void transferData(void *dst, void *src, size_t copySize, size_t copyOffset);

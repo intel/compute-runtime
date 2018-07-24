@@ -90,34 +90,47 @@ Buffer *Buffer::create(Context *context,
     errcodeRet = CL_SUCCESS;
 
     GraphicsAllocation *memory = nullptr;
-    bool zeroCopy = false;
+    bool zeroCopyAllowed = true;
     bool isHostPtrSVM = false;
-    bool allocateMemory = false;
+
+    bool alignementSatisfied = true;
+    bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
-    GraphicsAllocation::AllocationType allocationType = GmmHelper::hwInfo->capabilityTable.ftrRenderCompressedBuffers
-                                                            ? GraphicsAllocation::AllocationType::BUFFER_COMPRESSED
-                                                            : GraphicsAllocation::AllocationType::BUFFER;
+
+    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(flags, context->isSharedContext, GmmHelper::hwInfo->capabilityTable.ftrRenderCompressedBuffers);
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
 
-    checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr, allocationType, memoryManager);
+    checkMemory(flags, size, hostPtr, errcodeRet, alignementSatisfied, copyMemoryFromHostPtr, memoryManager);
 
     if (errcodeRet != CL_SUCCESS) {
         return nullptr;
     }
 
-    if (hostPtr && context->isProvidingPerformanceHints()) {
-        if (zeroCopy) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
-        } else {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, hostPtr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
+    if (allocationType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+        zeroCopyAllowed = false;
+        allocateMemory = true;
+        if (flags & CL_MEM_USE_HOST_PTR) {
+            copyMemoryFromHostPtr = true;
+        }
+    }
+
+    if (allocationType == GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY) {
+        if (flags & CL_MEM_ALLOC_HOST_PTR) {
+            zeroCopyAllowed = true;
+            allocateMemory = true;
+        } else if (flags & CL_MEM_USE_HOST_PTR) {
+            allocateMemory = false;
+            if (!alignementSatisfied || DebugManager.flags.DisableZeroCopyForUseHostPtr.get()) {
+                zeroCopyAllowed = false;
+                allocateMemory = true;
+            }
         }
     }
 
     if (context->isSharedContext) {
-        allocationType = GraphicsAllocation::AllocationType::BUFFER;
-        zeroCopy = true;
+        zeroCopyAllowed = true;
         copyMemoryFromHostPtr = false;
         allocateMemory = false;
     }
@@ -125,16 +138,28 @@ Buffer *Buffer::create(Context *context,
     if (flags & CL_MEM_USE_HOST_PTR) {
         memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
         if (memory) {
-            allocationType = GraphicsAllocation::AllocationType::BUFFER;
-            zeroCopy = true;
+            allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
             isHostPtrSVM = true;
+            zeroCopyAllowed = true;
             copyMemoryFromHostPtr = false;
             allocateMemory = false;
         }
     }
 
+    if (hostPtr && context->isProvidingPerformanceHints()) {
+        if (zeroCopyAllowed) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
+        } else {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_BAD_INTEL, CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS, hostPtr, size, MemoryConstants::pageSize, MemoryConstants::pageSize);
+        }
+    }
+
+    if (DebugManager.flags.DisableZeroCopyForBuffers.get()) {
+        zeroCopyAllowed = false;
+    }
+
     if (!memory) {
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), allocationType);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocateMemory, hostPtr, static_cast<size_t>(size), allocationType);
     }
 
     if (allocateMemory) {
@@ -146,16 +171,23 @@ Buffer *Buffer::create(Context *context,
         }
     } else {
         if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
-            zeroCopy = false;
+            allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+            zeroCopyAllowed = false;
             copyMemoryFromHostPtr = true;
             allocateMemory = true;
-            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), allocationType);
+            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocateMemory, nullptr, static_cast<size_t>(size), allocationType);
         }
     }
 
     if (!memory) {
         errcodeRet = CL_OUT_OF_HOST_MEMORY;
         return nullptr;
+    }
+
+    if (!MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
+        zeroCopyAllowed = false;
+    } else if (allocationType == GraphicsAllocation::AllocationType::BUFFER) {
+        allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
     }
 
     memory->setAllocationType(allocationType);
@@ -169,7 +201,7 @@ Buffer *Buffer::create(Context *context,
                              memory->getUnderlyingBuffer(),
                              const_cast<void *>(hostPtr),
                              memory,
-                             zeroCopy,
+                             zeroCopyAllowed,
                              isHostPtrSVM,
                              false);
     if (!pBuffer) {
@@ -212,14 +244,11 @@ void Buffer::checkMemory(cl_mem_flags flags,
                          size_t size,
                          void *hostPtr,
                          cl_int &errcodeRet,
-                         bool &isZeroCopy,
-                         bool &allocateMemory,
+                         bool &alignementSatisfied,
                          bool &copyMemoryFromHostPtr,
-                         GraphicsAllocation::AllocationType allocationType,
                          MemoryManager *memMngr) {
     errcodeRet = CL_SUCCESS;
-    isZeroCopy = false;
-    allocateMemory = false;
+    alignementSatisfied = true;
     copyMemoryFromHostPtr = false;
     uintptr_t minAddress = 0;
     auto memRestrictions = memMngr->getAlignedMallocRestrictions();
@@ -236,25 +265,12 @@ void Buffer::checkMemory(cl_mem_flags flags,
             }
             if (alignUp(hostPtr, MemoryConstants::cacheLineSize) != hostPtr ||
                 alignUp(size, MemoryConstants::cacheLineSize) != size ||
-                minAddress > reinterpret_cast<uintptr_t>(hostPtr) ||
-                GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocationType ||
-                DebugManager.flags.DisableZeroCopyForUseHostPtr.get() ||
-                DebugManager.flags.DisableZeroCopyForBuffers.get()) {
-                allocateMemory = true;
-                isZeroCopy = false;
+                minAddress > reinterpret_cast<uintptr_t>(hostPtr)) {
+                alignementSatisfied = false;
                 copyMemoryFromHostPtr = true;
-            } else {
-                isZeroCopy = true;
             }
         } else {
             errcodeRet = CL_INVALID_HOST_PTR;
-        }
-    } else {
-        allocateMemory = true;
-        isZeroCopy = true;
-        if (DebugManager.flags.DisableZeroCopyForBuffers.get() ||
-            GraphicsAllocation::AllocationType::BUFFER_COMPRESSED == allocationType) {
-            isZeroCopy = false;
         }
     }
 
@@ -266,6 +282,20 @@ void Buffer::checkMemory(cl_mem_flags flags,
         }
     }
     return;
+}
+
+GraphicsAllocation::AllocationType Buffer::getGraphicsAllocationType(cl_mem_flags flags, bool sharedContext, bool renderCompressedBuffers) {
+    GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::BUFFER;
+    if (renderCompressedBuffers) {
+        type = GraphicsAllocation::AllocationType::BUFFER_COMPRESSED;
+    } else if ((flags & CL_MEM_USE_HOST_PTR) || (flags & CL_MEM_ALLOC_HOST_PTR)) {
+        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    }
+
+    if (sharedContext) {
+        type = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+    }
+    return type;
 }
 
 bool Buffer::isReadOnlyMemoryPermittedByFlags(cl_mem_flags flags) {

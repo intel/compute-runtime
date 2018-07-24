@@ -24,6 +24,7 @@
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
@@ -35,6 +36,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
 #include "unit_tests/libult/ult_command_stream_receiver.h"
+#include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_gmm_resource_info.h"
@@ -108,9 +110,9 @@ INSTANTIATE_TEST_CASE_P(
 
 class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
-    MOCK_METHOD7(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
-    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
-        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
+    MOCK_METHOD4(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
+    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(allocateMemory, hostPtr, size, type);
     }
 };
 
@@ -127,7 +129,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr))
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseallocateGraphicsMemoryInPreferredPool));
 
@@ -158,7 +160,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
 
     // First fail simulates error for read only memory allocation
     // Second fail returns nullptr
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -183,7 +185,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -203,7 +205,7 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -212,6 +214,126 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
 
     EXPECT_EQ(nullptr, buffer.get());
+}
+
+TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenBufferIsNotZeroCopy) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    auto allocateNonSystemGraphicsAllocation = [memoryManager](bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
+        auto allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize, false, false);
+        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+        return allocation;
+    };
+
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    EXPECT_FALSE(buffer->isMemObjZeroCopy());
+}
+
+TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferOrBufferHostMemory) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation()->getMemoryPool())) {
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+    } else {
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer->getGraphicsAllocation()->getAllocationType());
+    }
+}
+
+TEST(Buffer, givenAlignedHostPtrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    void *hostPtr = reinterpret_cast<void *>(0x3000);
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+}
+
+TEST(Buffer, givenAllocHostPtrFlagPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferHostMemory) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
+    size_t size = MemoryConstants::pageSize;
+    void *hostPtr = alignedMalloc(size, MemoryConstants::pageSize);
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, hostPtr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, buffer->getGraphicsAllocation()->getAllocationType());
+    alignedFree(hostPtr);
+}
+
+TEST(Buffer, givenRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
+    cl_mem_flags flags = 0;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, true);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+}
+
+TEST(Buffer, givenSharedContextWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+    cl_mem_flags flags = 0;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, true, false);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+}
+
+TEST(Buffer, givenSharedContextAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+    cl_mem_flags flags = 0;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, true, true);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+}
+
+TEST(Buffer, givenUseHostPtrFlagWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, false);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+}
+
+TEST(Buffer, givenAllocHostPtrFlagWhenAllocationTypeIsQueriedThenBufferHostMemoryTypeIsReturned) {
+    cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, false);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY, type);
+}
+
+TEST(Buffer, givenUseHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
+    cl_mem_flags flags = CL_MEM_USE_HOST_PTR;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, true);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+}
+
+TEST(Buffer, givenAllocHostPtrFlagAndRenderCompressedBuffersEnabledWhenAllocationTypeIsQueriedThenBufferCompressedTypeIsReturned) {
+    cl_mem_flags flags = CL_MEM_ALLOC_HOST_PTR;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, true);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, type);
+}
+
+TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhenAllocationTypeIsQueriedThenBufferTypeIsReturned) {
+    cl_mem_flags flags = 0;
+    auto type = MockPublicAccessBuffer::getGraphicsAllocationType(flags, false, false);
+    EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
 }
 
 struct RenderCompressedBuffersTests : public ::testing::Test {
@@ -236,13 +358,27 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndZeroCopyH
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
     EXPECT_EQ(cacheAlignedHostPtr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+
+    uint32_t pattern[2] = {0, 0};
+    pattern[0] = 0xdeadbeef;
+    pattern[1] = 0xdeadbeef;
+
+    static_assert(sizeof(pattern) <= MemoryConstants::cacheLineSize, "Incorrect pattern size");
+
+    uint32_t *dest = reinterpret_cast<uint32_t *>(cacheAlignedHostPtr);
+
+    for (size_t i = 0; i < arrayCount(pattern); i++) {
+        dest[i] = pattern[i];
+    }
 
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, MemoryConstants::cacheLineSize, cacheAlignedHostPtr, retVal));
     EXPECT_NE(cacheAlignedHostPtr, buffer->getGraphicsAllocation()->getUnderlyingBuffer());
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
     EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    EXPECT_THAT(buffer->getGraphicsAllocation()->getUnderlyingBuffer(), MemCompare(&pattern[0], sizeof(pattern)));
 
     alignedFree(cacheAlignedHostPtr);
 }
@@ -252,7 +388,11 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationAndNoHostPtr
 
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
     EXPECT_TRUE(buffer->isMemObjZeroCopy());
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    if (MemoryPool::isSystemMemoryPool(buffer->getGraphicsAllocation()->getMemoryPool())) {
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    } else {
+        EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    }
 
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
     buffer.reset(Buffer::create(context.get(), 0, MemoryConstants::cacheLineSize, nullptr, retVal));
@@ -271,7 +411,7 @@ TEST_F(RenderCompressedBuffersTests, givenBufferCompressedAllocationWhenSharedCo
 
     context->isSharedContext = true;
     buffer.reset(Buffer::create(context.get(), 0, sizeof(uint32_t), &hostPtr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 }
 
 TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenForceDisableCompression) {
@@ -280,7 +420,7 @@ TEST_F(RenderCompressedBuffersTests, givenSvmAllocationWhenCreatingBufferThenFor
     auto svmAlloc = context->getSVMAllocsManager()->createSVMAlloc(sizeof(uint32_t), false);
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_USE_HOST_PTR, sizeof(uint32_t), svmAlloc, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     context->getSVMAllocsManager()->freeSVMAlloc(svmAlloc);
 }
@@ -316,7 +456,7 @@ TEST_F(RenderCompressedBuffersCopyHostMemoryTests, givenNonRenderCompressedBuffe
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
 
     buffer.reset(Buffer::create(context.get(), CL_MEM_COPY_HOST_PTR, sizeof(uint32_t), &hostPtr, retVal));
-    EXPECT_EQ(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    EXPECT_NE(buffer->getGraphicsAllocation()->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(0u, mockCmdQ->writeBufferCounter);
@@ -475,7 +615,11 @@ TEST_P(NoHostPtr, withBufferGraphicsAllocationReportsBufferType) {
     ASSERT_NE(nullptr, buffer);
 
     auto allocation = buffer->getGraphicsAllocation();
-    EXPECT_TRUE(allocation->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER);
+    if (MemoryPool::isSystemMemoryPool(allocation->getMemoryPool())) {
+        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
+    } else {
+        EXPECT_EQ(allocation->getAllocationType(), GraphicsAllocation::AllocationType::BUFFER);
+    }
 
     auto isBufferWritable = !(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS));
     EXPECT_EQ(isBufferWritable, allocation->isMemObjectsAllocationWithWritableFlags());

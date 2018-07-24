@@ -33,10 +33,10 @@ class MemoryManagerGetAlloctionDataTest : public testing::TestWithParam<Graphics
     void TearDown() override {}
 };
 
-TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyAndAllocateMemoryFlagsAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
+TEST(MemoryManagerGetAlloctionDataTest, givenHostMemoryAllocationTypeAndAllocateMemoryFlagAndNullptrWhenAllocationDataIsQueriedThenCorrectFlagsAndSizeAreSet) {
     AllocationData allocData;
 
-    MockMemoryManager::getAllocationData(allocData, true, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     EXPECT_TRUE(allocData.flags.mustBeZeroCopy);
     EXPECT_TRUE(allocData.flags.useSystemMemory);
@@ -44,10 +44,10 @@ TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyAndAllocateMemoryFlag
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyFlagFalseWhenAllocationDataIsQueriedThenMustBeZeroCopyAndUseSystemMemoryFlagsAreNotSet) {
+TEST(MemoryManagerGetAlloctionDataTest, givenNonHostMemoryAllocatoinTypeWhenAllocationDataIsQueriedThenMustBeZeroCopyAndUseSystemMemoryFlagsAreNotSet) {
     AllocationData allocData;
 
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     EXPECT_FALSE(allocData.flags.mustBeZeroCopy);
     EXPECT_FALSE(allocData.flags.useSystemMemory);
@@ -58,24 +58,31 @@ TEST(MemoryManagerGetAlloctionDataTest, givenMustBeZeroCopyFlagFalseWhenAllocati
 TEST(MemoryManagerGetAlloctionDataTest, givenAllocateMemoryFlagTrueWhenHostPtrIsNotNullThenAllocationDataHasHostPtrNulled) {
     AllocationData allocData;
     char memory = 0;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, &memory, sizeof(memory), GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, &memory, sizeof(memory), GraphicsAllocation::AllocationType::BUFFER);
 
     EXPECT_EQ(sizeof(memory), allocData.size);
     EXPECT_EQ(nullptr, allocData.hostPtr);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenForcePinFlagTrueWhenAllocationDataIsQueriedThenCorrectFlagIsSet) {
+TEST(MemoryManagerGetAlloctionDataTest, givenBufferTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, true, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     EXPECT_TRUE(allocData.flags.forcePin);
 }
 
-TEST(MemoryManagerGetAlloctionDataTest, givenUncacheableFlagTrueWhenAllocationDataIsQueriedThenCorrectFlagIsSet) {
+TEST(MemoryManagerGetAlloctionDataTest, givenBufferHostMemoryTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
-    EXPECT_TRUE(allocData.flags.uncacheable);
+    EXPECT_TRUE(allocData.flags.forcePin);
+}
+
+TEST(MemoryManagerGetAlloctionDataTest, givenBufferCompressedTypeWhenAllocationDataIsQueriedThenForcePinFlagIsSet) {
+    AllocationData allocData;
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    EXPECT_TRUE(allocData.flags.forcePin);
 }
 
 typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest;
@@ -84,7 +91,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
     AllocationData allocData;
 
     auto allocType = GetParam();
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, allocType);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, allocType);
 
     EXPECT_TRUE(allocData.flags.allow32Bit);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
@@ -94,7 +101,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, givenAllocatio
 TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllowedAllocationTypeWhenAllocatingThenPreferRenderCompressionOnlyForSpecificTypes) {
     auto allocType = GetParam();
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, allocType);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, allocType);
     bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
 
@@ -113,7 +120,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAlloca
     AllocationData allocData;
 
     auto allocType = GetParam();
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, allocType);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, allocType);
 
     EXPECT_FALSE(allocData.flags.allow32Bit);
     EXPECT_FALSE(allocData.flags.allow64kbPages);
@@ -121,6 +128,7 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesNotAllowedTest, givenAlloca
 }
 
 static const GraphicsAllocation::AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {GraphicsAllocation::AllocationType::BUFFER,
+                                                                                                 GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
                                                                                                  GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
                                                                                                  GraphicsAllocation::AllocationType::PIPE,
                                                                                                  GraphicsAllocation::AllocationType::SCRATCH_SURFACE,
@@ -134,7 +142,6 @@ INSTANTIATE_TEST_CASE_P(Allow32BitAnd64kbPagesTypes,
                         ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesAllowed));
 
 static const GraphicsAllocation::AllocationType allocationTypesWith32BitAnd64KbPagesNotAllowed[] = {GraphicsAllocation::AllocationType::COMMAND_BUFFER,
-                                                                                                    GraphicsAllocation::AllocationType::CSR_SURFACE,
                                                                                                     GraphicsAllocation::AllocationType::DYNAMIC_STATE_HEAP,
                                                                                                     GraphicsAllocation::AllocationType::EVENT_TAG_BUFFER,
                                                                                                     GraphicsAllocation::AllocationType::IMAGE,
@@ -150,7 +157,7 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -165,12 +172,12 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemorywihtoutAllow32BitFlagIsAllocatedThenNon32BitAllocationIsReturned) {
+TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32BitFlagIsAllocatedThenNon32BitAllocationIsReturned) {
     OsAgnosticMemoryManager memoryManager;
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
     allocData.flags.allow32Bit = false;
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
@@ -185,7 +192,7 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
     memoryManager.setForce32BitAllocations(false);
 
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -194,10 +201,10 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAndIsAllocatedWithNullptrForBufferThen64kbAllocationIsReturned) {
+TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen64kbAllocationIsReturned) {
     OsAgnosticMemoryManager memoryManager(true);
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, true, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -212,7 +219,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAnd
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbPagesFlagsIsAllocatedThenNon64kbAllocationIsReturned) {
     MockMemoryManager memoryManager(true);
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
     allocData.flags.allow64kbPages = false;
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
@@ -223,10 +230,10 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryWithoutAllow64kbP
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAndIsAllocatedWithNullptrForBufferThenNon64kbAllocationIsReturned) {
+TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThenNon64kbAllocationIsReturned) {
     MockMemoryManager memoryManager(false);
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, true, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -237,12 +244,12 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAn
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMustBeZeroCopyAndIsAllocatedWithNullptrForBufferThen32BitAllocationOver64kbIsChosen) {
+TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen32BitAllocationOver64kbIsChosen) {
     OsAgnosticMemoryManager memoryManager;
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, true, true, false, false, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -259,7 +266,7 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
     OsAgnosticMemoryManager memoryManager(true);
     AllocationData allocData;
     char memory[1];
-    MockMemoryManager::getAllocationData(allocData, true, false, false, false, &memory, 1, GraphicsAllocation::AllocationType::BUFFER);
+    MockMemoryManager::getAllocationData(allocData, false, &memory, 1, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
     auto allocation = memoryManager.allocateGraphicsMemory(allocData);
     ASSERT_NE(nullptr, allocation);
@@ -271,12 +278,10 @@ TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHo
 
 TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePoolFailsThenFallbackAllocationIsReturned) {
     MockMemoryManager memoryManager(false);
-    AllocationData allocData;
-    MockMemoryManager::getAllocationData(allocData, false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
 
     memoryManager.failInDevicePool = true;
 
-    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
     ASSERT_NE(nullptr, allocation);
     EXPECT_TRUE(memoryManager.allocationCreated);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
@@ -284,20 +289,20 @@ TEST(MemoryManagerTest, givenMemoryManagerWhenGraphicsMemoryAllocationInDevicePo
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenMemoryManagerWhenZeroCopyFlagIsNotSetThenAllocateGraphicsMemoryInPreferredPoolCanAllocateInDevicePool) {
+TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedThenAllocateGraphicsMemoryInPreferredPoolCanAllocateInDevicePool) {
     MockMemoryManager memoryManager(false);
 
-    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
     EXPECT_NE(nullptr, allocation);
     memoryManager.freeGraphicsMemory(allocation);
 }
 
-TEST(MemoryManagerTest, givenMemoryManagerWhenZeroCopyFlagIsNotSetAndAllocateInDevicePoolFailsWithErrorThenAllocateGraphicsMemoryInPreferredPoolReturnsNullptr) {
+TEST(MemoryManagerTest, givenMemoryManagerWhenBufferTypeIsPassedAndAllocateInDevicePoolFailsWithErrorThenAllocateGraphicsMemoryInPreferredPoolReturnsNullptr) {
     MockMemoryManager memoryManager(false);
 
     memoryManager.failInDevicePoolWithError = true;
 
-    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(false, true, false, false, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
+    auto allocation = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, MemoryConstants::pageSize, GraphicsAllocation::AllocationType::BUFFER);
     ASSERT_EQ(nullptr, allocation);
     EXPECT_FALSE(memoryManager.allocationInDevicePoolCreated);
 

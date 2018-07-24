@@ -1141,7 +1141,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
     bool force32Bit = memoryManager->peekForce32BitAllocations();
     EXPECT_TRUE(force32Bit);
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, graphicsAllocation);
     EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddressess);
 
@@ -1161,7 +1161,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExh
     //ask for 4GB - 1
     size_t allocationSize = (4 * 1023 * 1024 * (size_t)1024u - 1) + 4 * 1024 * (size_t)1024u;
 
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_EQ(nullptr, graphicsAllocation);
     EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
 }

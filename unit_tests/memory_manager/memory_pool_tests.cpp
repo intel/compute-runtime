@@ -20,25 +20,29 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "runtime/helpers/array_count.h"
+#include "runtime/memory_manager/memory_pool.h"
 
-#include "runtime/helpers/extendable_enum.h"
+#include "gtest/gtest.h"
 
-namespace MemoryPool {
-struct Type : ExtendableEnum {
-    constexpr Type(uint32_t val) : ExtendableEnum(val) {}
-};
-constexpr Type MemoryNull{0};
-constexpr Type System4KBPages{1};
-constexpr Type System64KBPages{2};
-constexpr Type System4KBPagesWith32BitGpuAddressing{3};
-constexpr Type System64KBPagesWith32BitGpuAddressing{4};
-constexpr Type SystemCpuInaccessible{5};
+TEST(MemoryPool, givenSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenTrueIsReturned) {
 
-inline bool isSystemMemoryPool(Type pool) {
-    if (pool == System4KBPages || pool == MemoryPool::System64KBPages || pool == System4KBPagesWith32BitGpuAddressing || pool == System64KBPagesWith32BitGpuAddressing) {
-        return true;
+    MemoryPool::Type systemMemoryTypes[] = {MemoryPool::System4KBPages,
+                                            MemoryPool::System4KBPagesWith32BitGpuAddressing,
+                                            MemoryPool::System64KBPages,
+                                            MemoryPool::System64KBPagesWith32BitGpuAddressing};
+
+    for (size_t i = 0; i < arrayCount(systemMemoryTypes); i++) {
+        EXPECT_TRUE(MemoryPool::isSystemMemoryPool(systemMemoryTypes[i]));
     }
-    return false;
 }
-} // namespace MemoryPool
+
+TEST(MemoryPool, givenNonSystemMemoryPoolTypesWhenIsSystemMemoryPoolIsCalledThenFalseIsReturned) {
+
+    MemoryPool::Type memoryTypes[] = {MemoryPool::MemoryNull,
+                                      MemoryPool::SystemCpuInaccessible};
+
+    for (size_t i = 0; i < arrayCount(memoryTypes); i++) {
+        EXPECT_FALSE(MemoryPool::isSystemMemoryPool(memoryTypes[i]));
+    }
+}

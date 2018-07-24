@@ -2004,7 +2004,7 @@ HWTEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMem
     WddmMemoryManager memoryManager64k(true, wddm);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
-    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, static_cast<size_t>(MemoryConstants::pageSize64k), GraphicsAllocation::AllocationType::BUFFER);
+    GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(MemoryConstants::pageSize64k), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_EQ(1, wddm->createAllocationResult.called);
     EXPECT_NE(nullptr, galloc);
     EXPECT_EQ(true, galloc->isLocked());

@@ -21,6 +21,7 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/aub/aub_helper.h"
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
@@ -522,7 +523,6 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
     auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
     auto size = gfxAllocation.getUnderlyingBufferSize();
-    auto allocType = gfxAllocation.getAllocationType();
 
     if ((size == 0) || !gfxAllocation.isAubWritable())
         return false;
@@ -549,7 +549,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         gfxAllocation.setLocked(false);
     }
 
-    if (allocType == GraphicsAllocation::AllocationType::BUFFER || allocType == GraphicsAllocation::AllocationType::IMAGE) {
+    if (AubHelper::isOneTimeAubWritableAllocationType(gfxAllocation.getAllocationType())) {
         gfxAllocation.setAubWritable(false);
     }
     return true;

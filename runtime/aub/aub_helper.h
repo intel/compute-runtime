@@ -20,25 +20,22 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#include "runtime/memory_manager/graphics_allocation.h"
 
-#include "runtime/helpers/extendable_enum.h"
+namespace OCLRT {
 
-namespace MemoryPool {
-struct Type : ExtendableEnum {
-    constexpr Type(uint32_t val) : ExtendableEnum(val) {}
-};
-constexpr Type MemoryNull{0};
-constexpr Type System4KBPages{1};
-constexpr Type System64KBPages{2};
-constexpr Type System4KBPagesWith32BitGpuAddressing{3};
-constexpr Type System64KBPagesWith32BitGpuAddressing{4};
-constexpr Type SystemCpuInaccessible{5};
-
-inline bool isSystemMemoryPool(Type pool) {
-    if (pool == System4KBPages || pool == MemoryPool::System64KBPages || pool == System4KBPagesWith32BitGpuAddressing || pool == System64KBPagesWith32BitGpuAddressing) {
-        return true;
+class AubHelper {
+  public:
+    static bool isOneTimeAubWritableAllocationType(const GraphicsAllocation::AllocationType &type) {
+        switch (type) {
+        case GraphicsAllocation::AllocationType::BUFFER:
+        case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+        case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+        case GraphicsAllocation::AllocationType::IMAGE:
+            return true;
+        default:
+            return false;
+        }
     }
-    return false;
-}
-} // namespace MemoryPool
+};
+} // namespace OCLRT

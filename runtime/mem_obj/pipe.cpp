@@ -63,7 +63,7 @@ Pipe *Pipe::create(Context *context,
 
     while (true) {
         auto size = static_cast<size_t>(packetSize * (maxPackets + 1) + intelPipeHeaderReservedSpace);
-        GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, size, GraphicsAllocation::AllocationType::PIPE);
+        GraphicsAllocation *memory = memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, size, GraphicsAllocation::AllocationType::PIPE);
         if (!memory) {
             errcodeRet = CL_OUT_OF_HOST_MEMORY;
             break;

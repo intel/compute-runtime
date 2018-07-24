@@ -1,4 +1,4 @@
-# Copyright (c) 2017 - 2018, Intel Corporation
+# Copyright (c) 2018, Intel Corporation
 #
 # Permission is hereby granted, free of charge, to any person obtaining a
 # copy of this software and associated documentation files (the "Software"),
@@ -18,18 +18,9 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-set(IGDRCL_SRCS_tests_memory_manager
+set(RUNTIME_SRCS_AUB
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/address_mapper_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/deferred_deleter_mt_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/memory_manager_allocate_in_device_pool_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_device_pool_tests.inl
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_allocate_in_preferred_pool_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/memory_pool_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/page_table_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/surface_tests.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_helper.h
 )
-target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_memory_manager})
+target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_AUB})
+set_property(GLOBAL PROPERTY RUNTIME_SRCS_AUB_MEM_DUMP ${RUNTIME_SRCS_AUB})

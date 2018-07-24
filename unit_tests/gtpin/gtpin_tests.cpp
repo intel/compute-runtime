@@ -133,12 +133,12 @@ class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
         if (failAllAllocationsInPreferredPool) {
             failAllAllocationsInPreferredPool = false;
             return nullptr;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(allocateMemory, hostPtr, size, type);
     }
     bool failAllAllocationsInPreferredPool = false;
 };

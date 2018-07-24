@@ -30,6 +30,7 @@ namespace OCLRT {
 class MockMemoryManager : public OsAgnosticMemoryManager {
   public:
     using MemoryManager::allocateGraphicsMemory;
+    using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::getAllocationData;
 
     MockMemoryManager() = default;

@@ -367,14 +367,18 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
     return status;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+bool MemoryManager::getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !allocateMemory);
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
+    bool forcePin = false;
+    bool uncacheable = false;
+    bool mustBeZeroCopy = false;
 
     switch (type) {
     case GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
     case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
     case GraphicsAllocation::AllocationType::PIPE:
     case GraphicsAllocation::AllocationType::SCRATCH_SURFACE:
@@ -384,6 +388,28 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustB
     case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
         allow64KbPages = true;
         allow32Bit = true;
+        break;
+    default:
+        break;
+    }
+
+    switch (type) {
+    case GraphicsAllocation::AllocationType::BUFFER:
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
+        forcePin = true;
+        break;
+    default:
+        break;
+    }
+
+    switch (type) {
+    case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
+    case GraphicsAllocation::AllocationType::PIPE:
+    case GraphicsAllocation::AllocationType::PRINTF_SURFACE:
+    case GraphicsAllocation::AllocationType::CONSTANT_SURFACE:
+    case GraphicsAllocation::AllocationType::GLOBAL_SURFACE:
+        mustBeZeroCopy = true;
         break;
     default:
         break;
@@ -410,11 +436,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool mustB
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(bool mustBeZeroCopy, bool allocateMemory, bool forcePin, bool uncacheable, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
     AllocationData allocationData;
     AllocationStatus status = AllocationStatus::Error;
 
-    getAllocationData(allocationData, mustBeZeroCopy, allocateMemory, forcePin, uncacheable, hostPtr, size, type);
+    getAllocationData(allocationData, allocateMemory, hostPtr, size, type);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 

@@ -1223,16 +1223,16 @@ TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCr
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
 }
 
-TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {
+TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
     OsAgnosticMemoryManager memoryManager(true);
 
-    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(true, true, false, false, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER);
+    GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);
     memoryManager.freeGraphicsMemory(galloc);
 
-    galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(true, true, true, false, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER);
+    galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);
     EXPECT_NE(nullptr, galloc->getUnderlyingBuffer());
     EXPECT_EQ(0u, (uintptr_t)galloc->getUnderlyingBuffer() % MemoryConstants::pageSize64k);

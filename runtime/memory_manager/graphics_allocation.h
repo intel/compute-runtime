@@ -69,6 +69,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     enum class AllocationType {
         UNKNOWN = 0,
         BUFFER_COMPRESSED,
+        BUFFER_HOST_MEMORY,
         BUFFER,
         IMAGE,
         TAG_BUFFER,
@@ -82,7 +83,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
         PRIVATE_SURFACE,
         CONSTANT_SURFACE,
         SCRATCH_SURFACE,
-        CSR_SURFACE,
         INSTRUCTION_HEAP,
         INDIRECT_OBJECT_HEAP,
         SURFACE_STATE_HEAP,

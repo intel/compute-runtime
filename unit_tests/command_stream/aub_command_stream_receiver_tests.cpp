@@ -22,6 +22,7 @@
 
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
+#include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/hw_info.h"
@@ -700,6 +701,29 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     EXPECT_TRUE(gfxDefaultAllocation->isAubWritable());
 
     memoryManager->freeGraphicsMemory(gfxDefaultAllocation);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnBufferAndImageTypeAllocationsThenAllocationsHaveAubWritableSetToFalse) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true));
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+
+    GraphicsAllocation::AllocationType onlyOneTimeAubWritableTypes[] = {
+        GraphicsAllocation::AllocationType::BUFFER,
+        GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY,
+        GraphicsAllocation::AllocationType::BUFFER_COMPRESSED,
+        GraphicsAllocation::AllocationType::IMAGE};
+
+    for (size_t i = 0; i < arrayCount(onlyOneTimeAubWritableTypes); i++) {
+        gfxAllocation->setAubWritable(true);
+        gfxAllocation->setAllocationType(onlyOneTimeAubWritableTypes[i]);
+        aubCsr->writeMemory(*gfxAllocation);
+
+        EXPECT_FALSE(gfxAllocation->isAubWritable());
+    }
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledOnBufferAndImageAllocationsThenAllocationsTypesShouldBeMadeNonAubWritable) {
