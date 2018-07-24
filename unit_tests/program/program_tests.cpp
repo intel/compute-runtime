@@ -2215,11 +2215,11 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     size_t sectionDataSize = 0;
     SProgramBinaryHeader *pBHdr = nullptr;
     EXPECT_NE(nullptr, pElfHeader);
-    EXPECT_EQ(pElfHeader->Type, CLElfLib::EH_TYPE_OPENCL_EXECUTABLE);
+    EXPECT_EQ(pElfHeader->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE);
 
     for (uint32_t i = 1; i < pElfHeader->NumSectionHeaderEntries; i++) {
         const CLElfLib::SElf64SectionHeader *pSectionHeader = pElfReader->getSectionHeader(i);
-        if (pSectionHeader->Type != CLElfLib::SH_TYPE_OPENCL_DEV_BINARY) {
+        if (pSectionHeader->Type != CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY) {
             continue;
         }
         pElfReader->getSectionData(i, pSectionData, sectionDataSize);
@@ -3066,7 +3066,7 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     size_t spvSectionDataSize = 0;
     for (uint32_t i = 0; i < elfReader->getElfHeader()->NumSectionHeaderEntries; i++) {
         const SElf64SectionHeader *section = elfReader->getSectionHeader(i);
-        if (section->Type == CLElfLib::SH_TYPE_SPIRV) {
+        if (section->Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
             EXPECT_EQ(nullptr, spvSection);
             elfReader->getSectionData(i, spvSectionData, spvSectionDataSize);
             spvSection = section;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -77,7 +77,7 @@ class CElfReader {
 
     ELF_CALL ~CElfReader();
 
-    SElf64Header *m_pElfHeader; // pointer to the ELF header
+    const SElf64Header *m_pElfHeader; // pointer to the ELF header
     const char *m_pBinary;      // portable ELF binary
     char *m_pNameTable;         // pointer to the string table
     size_t m_nameTableSize;     // size of string table in bytes

@@ -182,13 +182,13 @@ cl_int Program::rebuildProgramFromIr() {
             isSpirV = true;
         }
 
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::EH_TYPE_OPENCL_OBJECTS, CLElfLib::EH_MACHINE_NONE, 0);
+        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
         UNRECOVERABLE_IF(pElfWriter == nullptr);
 
         CLElfLib::SSectionNode sectionNode;
         sectionNode.Name = "";
-        sectionNode.Type = isSpirV ? CLElfLib::SH_TYPE_SPIRV : CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
-        sectionNode.Flags = 0;
+        sectionNode.Type = isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
+        sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
         sectionNode.pData = irBinary;
         sectionNode.DataSize = static_cast<unsigned int>(irBinarySize);
         pElfWriter->addSection(&sectionNode);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -41,8 +41,8 @@ struct ElfTests : public MemoryManagementFixture,
 
 TEST_F(ElfTests, Create_Delete_Writer_Simple) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     EXPECT_NE((CElfWriter *)NULL, pWriter);
 
@@ -70,8 +70,8 @@ TEST_F(ElfTests, Create_Reader_Garbage_Binary) {
 
 TEST_F(ElfTests, Create_Delete_Reader_Writer_NoCheck) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     EXPECT_NE((CElfWriter *)NULL, pWriter);
 
@@ -103,8 +103,8 @@ TEST_F(ElfTests, givenNullptrWriterWhenDestroyThenDontCrash) {
 
 TEST_F(ElfTests, givenElfWriterWhenNullptrThenFalseIsReturned) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     ASSERT_NE(nullptr, pWriter);
 
@@ -117,8 +117,8 @@ TEST_F(ElfTests, givenElfWriterWhenNullptrThenFalseIsReturned) {
 TEST_F(ElfTests, givenElfWriterWhenSectionAndFailuresThenFalseIsReturned) {
     InjectedFunction method = [](size_t failureIndex) {
         CElfWriter *pWriter = CElfWriter::create(
-            EH_TYPE_EXECUTABLE,
-            EH_MACHINE_NONE,
+            E_EH_TYPE::EH_TYPE_EXECUTABLE,
+            E_EH_MACHINE::EH_MACHINE_NONE,
             0);
         if (nonfailingAllocation == failureIndex) {
             ASSERT_NE(nullptr, pWriter);
@@ -131,9 +131,9 @@ TEST_F(ElfTests, givenElfWriterWhenSectionAndFailuresThenFalseIsReturned) {
             SSectionNode sectionNode;
             sectionNode.DataSize = 16;
             sectionNode.pData = sectionData;
-            sectionNode.Flags = SH_FLAG_WRITE;
+            sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
             sectionNode.Name = "Steve";
-            sectionNode.Type = SH_TYPE_OPENCL_SOURCE;
+            sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
 
             auto ret = pWriter->addSection(&sectionNode);
             if (nonfailingAllocation == failureIndex) {
@@ -150,8 +150,8 @@ TEST_F(ElfTests, givenElfWriterWhenSectionAndFailuresThenFalseIsReturned) {
 
 TEST_F(ElfTests, givenElfWriterWhenPatchNullptrThenFalseIsReturned) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     ASSERT_NE(nullptr, pWriter);
 
@@ -163,8 +163,8 @@ TEST_F(ElfTests, givenElfWriterWhenPatchNullptrThenFalseIsReturned) {
 
 TEST_F(ElfTests, Write_Read_Section_Data_By_Name) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     EXPECT_NE((CElfWriter *)NULL, pWriter);
 
@@ -174,9 +174,9 @@ TEST_F(ElfTests, Write_Read_Section_Data_By_Name) {
     SSectionNode sectionNode;
     sectionNode.DataSize = 16;
     sectionNode.pData = sectionData;
-    sectionNode.Flags = SH_FLAG_WRITE;
+    sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
     sectionNode.Name = "Steve";
-    sectionNode.Type = SH_TYPE_OPENCL_SOURCE;
+    sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
 
     pWriter->addSection(&sectionNode);
 
@@ -212,8 +212,8 @@ TEST_F(ElfTests, Write_Read_Section_Data_By_Name) {
 
 TEST_F(ElfTests, Write_Read_Section_Data_By_Index) {
     CElfWriter *pWriter = CElfWriter::create(
-        EH_TYPE_EXECUTABLE,
-        EH_MACHINE_NONE,
+        E_EH_TYPE::EH_TYPE_EXECUTABLE,
+        E_EH_MACHINE::EH_MACHINE_NONE,
         0);
     EXPECT_NE((CElfWriter *)NULL, pWriter);
 
@@ -223,9 +223,9 @@ TEST_F(ElfTests, Write_Read_Section_Data_By_Index) {
     SSectionNode sectionNode;
     sectionNode.DataSize = 16;
     sectionNode.pData = sectionData;
-    sectionNode.Flags = SH_FLAG_WRITE;
+    sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
     sectionNode.Name = "";
-    sectionNode.Type = SH_TYPE_OPENCL_SOURCE;
+    sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
 
     pWriter->addSection(&sectionNode);
 

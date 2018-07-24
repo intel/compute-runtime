@@ -32,7 +32,7 @@ namespace CLElfLib {
 \******************************************************************************/
 
 // E_ID_IDX - Defines a file as being ELF
-enum E_ID_IDX {
+enum class E_ID_IDX : uint32_t {
     ID_IDX_MAGIC0 = 0,
     ID_IDX_MAGIC1 = 1,
     ID_IDX_MAGIC2 = 2,
@@ -46,7 +46,7 @@ enum E_ID_IDX {
 };
 
 // E_EHT_CLASS - Describes what data types the ELF structures will use.
-enum E_EH_CLASS {
+enum class E_EH_CLASS : uint32_t {
     EH_CLASS_NONE = 0,
     EH_CLASS_32 = 1, // Use Elf32 data types
     EH_CLASS_64 = 2, // Use Elf64 data types
@@ -55,7 +55,7 @@ enum E_EH_CLASS {
 // E_EHT_TYPE - List of pre-defined types header types.
 //    OS-specific codes start at 0xfe00 and run to 0xfeff.
 //    Processor-specific codes start at 0xff00 and end at 0xffff.
-enum E_EH_TYPE {
+enum class E_EH_TYPE : uint16_t {
     EH_TYPE_NONE = 0,
     EH_TYPE_RELOCATABLE = 1,
     EH_TYPE_EXECUTABLE = 2,
@@ -71,21 +71,21 @@ enum E_EH_TYPE {
 // E_EH_MACHINE - List of pre-defined machine types.
 //    For OpenCL, currently, we do not need this information, so this is not
 //    fully defined.
-enum E_EH_MACHINE {
+enum class E_EH_MACHINE : uint16_t {
     EH_MACHINE_NONE = 0,
     //EHT_MACHINE_LO_RSVD    = 1,   // Beginning of range of reserved types.
     //EHT_MACHINE_HI_RSVD    = 200, // End of range of reserved types.
 };
 
 // E_EHT_VERSION - ELF header version options.
-enum E_EHT_VERSION {
+enum class E_EHT_VERSION : uint32_t {
     EH_VERSION_INVALID = 0,
     EH_VERSION_CURRENT = 1,
 };
 
 // E_SH_TYPE - List of pre-defined section header types.
 //    Processor-specific codes start at 0xff00 and end at 0xffff.
-enum E_SH_TYPE {
+enum class E_SH_TYPE : uint32_t {
     SH_TYPE_NULL = 0,
     SH_TYPE_PROG_BITS = 1,
     SH_TYPE_SYM_TBL = 2,
@@ -117,7 +117,8 @@ enum E_SH_TYPE {
 };
 
 // E_SH_FLAG - List of section header flags.
-enum E_SH_FLAG {
+enum class E_SH_FLAG : uint64_t {
+    SH_FLAG_NONE = 0x0,
     SH_FLAG_WRITE = 0x1,
     SH_FLAG_ALLOC = 0x2,
     SH_FLAG_EXEC_INSTR = 0x4,
@@ -135,40 +136,44 @@ enum E_SH_FLAG {
 /******************************************************************************\
  ELF-64 Data Types
 \******************************************************************************/
-#if defined(_MSC_VER) // && (_MSC_VER < 1700)
-typedef unsigned __int64 Elf64_Addr;
-typedef unsigned __int64 Elf64_Off;
-typedef unsigned __int16 Elf64_Short; // Renaming Elf64_Half to Elf64_Short to avoid a conflict with Android
-typedef unsigned __int32 Elf64_Word;
-typedef __int32 Elf64_Sword;
-typedef unsigned __int64 Elf64_Xword;
-#else
 #if !defined(_UAPI_LINUX_ELF_H)
 typedef uint64_t Elf64_Addr;
 typedef uint64_t Elf64_Off;
 typedef uint32_t Elf64_Word;
 typedef int32_t Elf64_Sword;
 typedef uint64_t Elf64_Xword;
-#endif
 typedef uint16_t Elf64_Short; // Renaming Elf64_Half to Elf64_Short to avoid a conflict with Android
 #endif
 
 /******************************************************************************\
  ELF Constants
 \******************************************************************************/
-static const unsigned char ELF_MAG0 = 0x7f;     // ELFHeader.Identity[ELF_ID_MAGIC0]
-static const unsigned char ELF_MAG1 = 'E';      // ELFHeader.Identity[ELF_ID_MAGIC1]
-static const unsigned char ELF_MAG2 = 'L';      // ELFHeader.Identity[ELF_ID_MAGIC2]
-static const unsigned char ELF_MAG3 = 'F';      // ELFHeader.Identity[ELF_ID_MAGIC3]
-static const unsigned int ELF_ALIGN_BYTES = 16; // Alignment set to 16-bytes
+namespace ELFConstants {
+static const unsigned char elfMag0 = 0x7f;    // ELFHeader.Identity[ELF_ID_MAGIC0]
+static const unsigned char elfMag1 = 'E';     // ELFHeader.Identity[ELF_ID_MAGIC1]
+static const unsigned char elfMag2 = 'L';     // ELFHeader.Identity[ELF_ID_MAGIC2]
+static const unsigned char elfMag3 = 'F';     // ELFHeader.Identity[ELF_ID_MAGIC3]
+static const unsigned int elfAlignBytes = 16; // Alignment set to 16-bytes
+
+static const uint32_t idIdxMagic0 = 0;
+static const uint32_t idIdxMagic1 = 1;
+static const uint32_t idIdxMagic2 = 2;
+static const uint32_t idIdxMagic3 = 3;
+static const uint32_t idIdxClass = 4;
+static const uint32_t idIdxVersion = 5;
+static const uint32_t idIdxOsabi = 6;
+static const uint32_t idIdxAbiVersion = 7;
+static const uint32_t idIdxPadding = 8;
+static const uint32_t idIdxNumBytes = 16;
+} // namespace ELFConstants
 
 /******************************************************************************\
  ELF-64 Header
 \******************************************************************************/
 struct SElf64Header {
-    unsigned char Identity[ID_IDX_NUM_BYTES];
-    Elf64_Short Type;
-    Elf64_Short Machine;
+    unsigned char Identity[ELFConstants::idIdxNumBytes];
+    E_EH_TYPE Type;
+    E_EH_MACHINE Machine;
     Elf64_Word Version;
     Elf64_Addr EntryAddress;
     Elf64_Off ProgramHeadersOffset;
@@ -187,8 +192,8 @@ struct SElf64Header {
 \******************************************************************************/
 struct SElf64SectionHeader {
     Elf64_Word Name;
-    Elf64_Word Type;
-    Elf64_Xword Flags;
+    E_SH_TYPE Type;
+    E_SH_FLAG Flags;
     Elf64_Addr Address;
     Elf64_Off DataOffset;
     Elf64_Xword DataSize;

@@ -679,14 +679,14 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     if (retVal) {
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::EH_MACHINE_NONE, 0);
+        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
         if (pElfWriter) {
             CLElfLib::SSectionNode sectionNode;
 
             // Always add the options string
             sectionNode.Name = "BuildOptions";
-            sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_OPTIONS;
+            sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS;
             sectionNode.pData = (char *)options.c_str();
             sectionNode.DataSize = (uint32_t)(strlen(options.c_str()) + 1);
 
@@ -694,7 +694,7 @@ bool OfflineCompiler::generateElfBinary() {
 
             if (retVal) {
                 sectionNode.Name = "Intel(R) OpenCL LLVM Object";
-                sectionNode.Type = isSpirV ? CLElfLib::SH_TYPE_SPIRV : CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
+                sectionNode.Type = isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
                 sectionNode.pData = irBinary;
                 sectionNode.DataSize = (uint32_t)irBinarySize;
                 retVal = pElfWriter->addSection(&sectionNode);
@@ -703,7 +703,7 @@ bool OfflineCompiler::generateElfBinary() {
             // Add the device binary if it exists
             if (retVal && genBinary) {
                 sectionNode.Name = "Intel(R) OpenCL Device Binary";
-                sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_DEV_BINARY;
+                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY;
                 sectionNode.pData = genBinary;
                 sectionNode.DataSize = (uint32_t)genBinarySize;
 

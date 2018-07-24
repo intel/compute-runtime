@@ -31,9 +31,9 @@ namespace CLElfLib {
 CElfReader::CElfReader(
     const char *pElfBinary,
     const size_t elfBinarySize) {
-    m_pNameTable = NULL;
+    m_pNameTable = nullptr;
     m_nameTableSize = 0;
-    m_pElfHeader = (SElf64Header *)pElfBinary;
+    m_pElfHeader = reinterpret_cast<const SElf64Header *>(pElfBinary);
     m_pBinary = pElfBinary;
 
     // get a pointer to the string table
@@ -56,7 +56,7 @@ CElfReader::~CElfReader() {
 CElfReader *CElfReader::create(
     const char *pElfBinary,
     const size_t elfBinarySize) {
-    CElfReader *pNewReader = NULL;
+    CElfReader *pNewReader = nullptr;
 
     if (isValidElf64(pElfBinary, elfBinarySize)) {
         pNewReader = new CElfReader(pElfBinary, elfBinarySize);
@@ -72,7 +72,7 @@ void CElfReader::destroy(
     CElfReader *&pElfReader) {
     if (pElfReader) {
         delete pElfReader;
-        pElfReader = NULL;
+        pElfReader = nullptr;
     }
 }
 
@@ -85,25 +85,26 @@ bool CElfReader::isValidElf64(
     const void *pBinary,
     const size_t binarySize) {
     bool retVal = false;
-    SElf64Header *pElf64Header = NULL;
-    SElf64SectionHeader *pSectionHeader = NULL;
-    char *pNameTable = NULL;
-    char *pEnd = NULL;
+    const SElf64Header *pElf64Header = nullptr;
+    const SElf64SectionHeader *pSectionHeader = nullptr;
+    const char *pNameTable = nullptr;
+    const char *pEnd = nullptr;
     size_t ourSize = 0;
     size_t entrySize = 0;
     size_t indexedSectionHeaderOffset = 0;
+    auto pBinaryLocal = static_cast<const char *>(pBinary);
 
     // validate header
     if (pBinary && (binarySize >= sizeof(SElf64Header))) {
         // calculate a pointer to the end
-        pEnd = (char *)pBinary + binarySize;
-        pElf64Header = (SElf64Header *)pBinary;
+        pEnd = pBinaryLocal + binarySize;
+        pElf64Header = static_cast<const SElf64Header *>(pBinary);
 
-        if ((pElf64Header->Identity[ID_IDX_MAGIC0] == ELF_MAG0) &&
-            (pElf64Header->Identity[ID_IDX_MAGIC1] == ELF_MAG1) &&
-            (pElf64Header->Identity[ID_IDX_MAGIC2] == ELF_MAG2) &&
-            (pElf64Header->Identity[ID_IDX_MAGIC3] == ELF_MAG3) &&
-            (pElf64Header->Identity[ID_IDX_CLASS] == EH_CLASS_64)) {
+        if ((pElf64Header->Identity[ELFConstants::idIdxMagic0] == ELFConstants::elfMag0) &&
+            (pElf64Header->Identity[ELFConstants::idIdxMagic1] == ELFConstants::elfMag1) &&
+            (pElf64Header->Identity[ELFConstants::idIdxMagic2] == ELFConstants::elfMag2) &&
+            (pElf64Header->Identity[ELFConstants::idIdxMagic3] == ELFConstants::elfMag3) &&
+            (pElf64Header->Identity[ELFConstants::idIdxClass] == static_cast<uint32_t>(E_EH_CLASS::EH_CLASS_64))) {
             ourSize += pElf64Header->ElfHeaderSize;
             retVal = true;
         }
@@ -117,29 +118,26 @@ bool CElfReader::isValidElf64(
         // get an offset to the name table
         if (pElf64Header->SectionNameTableIndex <
             pElf64Header->NumSectionHeaderEntries) {
-            indexedSectionHeaderOffset =
-                (size_t)pElf64Header->SectionHeadersOffset +
-                (pElf64Header->SectionNameTableIndex * entrySize);
+            indexedSectionHeaderOffset = static_cast<size_t>(pElf64Header->SectionHeadersOffset) + (pElf64Header->SectionNameTableIndex * entrySize);
 
-            if (((char *)pBinary + indexedSectionHeaderOffset) <= pEnd) {
-                pNameTable = (char *)pBinary + indexedSectionHeaderOffset;
+            if ((pBinaryLocal + indexedSectionHeaderOffset) <= pEnd) {
+                pNameTable = pBinaryLocal + indexedSectionHeaderOffset;
             }
         }
 
         for (unsigned int i = 0; i < pElf64Header->NumSectionHeaderEntries; i++) {
-            indexedSectionHeaderOffset = (size_t)pElf64Header->SectionHeadersOffset +
-                                         (i * entrySize);
+            indexedSectionHeaderOffset = static_cast<size_t>(pElf64Header->SectionHeadersOffset) + (i * entrySize);
 
             // check section header offset
-            if (((char *)pBinary + indexedSectionHeaderOffset) > pEnd) {
+            if ((pBinaryLocal + indexedSectionHeaderOffset) > pEnd) {
                 retVal = false;
                 break;
             }
 
-            pSectionHeader = (SElf64SectionHeader *)((char *)pBinary + indexedSectionHeaderOffset);
+            pSectionHeader = reinterpret_cast<const SElf64SectionHeader *>(pBinaryLocal + indexedSectionHeaderOffset);
 
             // check section data
-            if (((char *)pBinary + pSectionHeader->DataOffset + pSectionHeader->DataSize) > pEnd) {
+            if ((pBinaryLocal + pSectionHeader->DataOffset + pSectionHeader->DataSize) > pEnd) {
                 retVal = false;
                 break;
             }
@@ -151,8 +149,8 @@ bool CElfReader::isValidElf64(
             }
 
             // tally up the sizes
-            ourSize += (size_t)pSectionHeader->DataSize;
-            ourSize += (size_t)entrySize;
+            ourSize += static_cast<size_t>(pSectionHeader->DataSize);
+            ourSize += static_cast<size_t>(entrySize);
         }
 
         if (ourSize != binarySize) {
@@ -177,15 +175,14 @@ const SElf64Header *CElfReader::getElfHeader() {
 \******************************************************************************/
 const SElf64SectionHeader *CElfReader::getSectionHeader(
     unsigned int sectionIndex) {
-    SElf64SectionHeader *pSectionHeader = NULL;
+    const SElf64SectionHeader *pSectionHeader = nullptr;
     size_t indexedSectionHeaderOffset = 0;
     size_t entrySize = m_pElfHeader->SectionHeaderEntrySize;
 
     if (sectionIndex < m_pElfHeader->NumSectionHeaderEntries) {
-        indexedSectionHeaderOffset = (size_t)m_pElfHeader->SectionHeadersOffset +
-                                     (sectionIndex * entrySize);
+        indexedSectionHeaderOffset = static_cast<size_t>(m_pElfHeader->SectionHeadersOffset) + (sectionIndex * entrySize);
 
-        pSectionHeader = (SElf64SectionHeader *)((char *)m_pElfHeader + indexedSectionHeaderOffset);
+        pSectionHeader = reinterpret_cast<const SElf64SectionHeader *>(reinterpret_cast<const char *>(m_pElfHeader) + indexedSectionHeaderOffset);
     }
 
     return pSectionHeader;
@@ -193,7 +190,7 @@ const SElf64SectionHeader *CElfReader::getSectionHeader(
 
 /******************************************************************************\
  Member Function: GetSectionData
- Description:     Returns a pointer to and size of the requested section's 
+ Description:     Returns a pointer to and size of the requested section's
                   data
 \******************************************************************************/
 bool CElfReader::getSectionData(
@@ -203,8 +200,8 @@ bool CElfReader::getSectionData(
     const SElf64SectionHeader *pSectionHeader = getSectionHeader(sectionIndex);
 
     if (pSectionHeader) {
-        pData = (char *)m_pBinary + pSectionHeader->DataOffset;
-        dataSize = (size_t)pSectionHeader->DataSize;
+        pData = const_cast<char *>(m_pBinary) + pSectionHeader->DataOffset;
+        dataSize = static_cast<size_t>(pSectionHeader->DataSize);
         return true;
     }
 
@@ -213,14 +210,14 @@ bool CElfReader::getSectionData(
 
 /******************************************************************************\
  Member Function: GetSectionData
- Description:     Returns a pointer to and size of the requested section's 
+ Description:     Returns a pointer to and size of the requested section's
                   data
 \******************************************************************************/
 bool CElfReader::getSectionData(
     const char *pName,
     char *&pData,
     size_t &dataSize) {
-    const char *pSectionName = NULL;
+    const char *pSectionName = nullptr;
 
     for (unsigned int i = 1; i < m_pElfHeader->NumSectionHeaderEntries; i++) {
         pSectionName = getSectionName(i);
@@ -241,7 +238,7 @@ bool CElfReader::getSectionData(
 \******************************************************************************/
 const char *CElfReader::getSectionName(
     unsigned int sectionIndex) {
-    char *pName = NULL;
+    char *pName = nullptr;
     const SElf64SectionHeader *pSectionHeader = getSectionHeader(sectionIndex);
 
     if (pSectionHeader) {

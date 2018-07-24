@@ -39,15 +39,15 @@ static const unsigned int g_scInitNumSectionHeaders = 8;
 
 struct SSectionNode {
     E_SH_TYPE Type;
-    unsigned int Flags;
+    E_SH_FLAG Flags;
     string Name;
     char *pData;
     unsigned int DataSize;
 
     SSectionNode() {
-        Type = SH_TYPE_NULL;
-        Flags = 0;
-        pData = NULL;
+        Type = E_SH_TYPE::SH_TYPE_NULL;
+        Flags = E_SH_FLAG::SH_FLAG_NONE;
+        pData = nullptr;
         DataSize = 0;
     }
 
@@ -91,14 +91,14 @@ class CElfWriter {
 
     ELF_CALL ~CElfWriter();
 
-    E_EH_TYPE m_type = EH_TYPE_NONE;
-    E_EH_MACHINE m_machine = EH_MACHINE_NONE;
+    E_EH_TYPE m_type = E_EH_TYPE::EH_TYPE_NONE;
+    E_EH_MACHINE m_machine = E_EH_MACHINE::EH_MACHINE_NONE;
     Elf64_Xword m_flags = 0U;
 
     std::queue<SSectionNode *> m_nodeQueue;
 
-    unsigned int m_dataSize = 0U;
-    unsigned int m_numSections = 0U;
+    uint32_t m_dataSize = 0U;
+    uint32_t m_numSections = 0U;
     size_t m_stringTableSize = 0U;
     size_t m_totalBinarySize = 0U;
 };

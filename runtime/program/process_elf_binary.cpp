@@ -68,15 +68,15 @@ cl_int Program::processElfBinary(
         pElfHeader = pElfReader->getElfHeader();
 
         switch (pElfHeader->Type) {
-        case CLElfLib::EH_TYPE_OPENCL_EXECUTABLE:
+        case CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE:
             programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
             break;
 
-        case CLElfLib::EH_TYPE_OPENCL_LIBRARY:
+        case CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY:
             programBinaryType = CL_PROGRAM_BINARY_TYPE_LIBRARY;
             break;
 
-        case CLElfLib::EH_TYPE_OPENCL_OBJECTS:
+        case CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS:
             programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
             break;
 
@@ -94,17 +94,17 @@ cl_int Program::processElfBinary(
             sectionDataSize = 0;
 
             switch (pSectionHeader->Type) {
-            case CLElfLib::SH_TYPE_SPIRV:
+            case CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV:
                 isSpirV = true;
                 CPP_ATTRIBUTE_FALLTHROUGH;
-            case CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY:
+            case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY:
                 pElfReader->getSectionData(i, pSectionData, sectionDataSize);
                 if (pSectionData && sectionDataSize) {
                     storeIrBinary(pSectionData, sectionDataSize, isSpirV);
                 }
                 break;
 
-            case CLElfLib::SH_TYPE_OPENCL_DEV_BINARY:
+            case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY:
                 pElfReader->getSectionData(i, pSectionData, sectionDataSize);
                 if (pSectionData && sectionDataSize && validateGenBinaryHeader((SProgramBinaryHeader *)pSectionData)) {
                     storeGenBinary(pSectionData, sectionDataSize);
@@ -115,14 +115,14 @@ cl_int Program::processElfBinary(
                 }
                 break;
 
-            case CLElfLib::SH_TYPE_OPENCL_OPTIONS:
+            case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS:
                 pElfReader->getSectionData(i, pSectionData, sectionDataSize);
                 if (pSectionData && sectionDataSize) {
                     options = pSectionData;
                 }
                 break;
 
-            case CLElfLib::SH_TYPE_STR_TBL:
+            case CLElfLib::E_SH_TYPE::SH_TYPE_STR_TBL:
                 // We can skip the string table
                 break;
 
@@ -159,7 +159,7 @@ cl_int Program::resolveProgramBinary() {
 
         switch (programBinaryType) {
         case CL_PROGRAM_BINARY_TYPE_EXECUTABLE:
-            headerType = CLElfLib::EH_TYPE_OPENCL_EXECUTABLE;
+            headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE;
 
             if (!genBinary || !genBinarySize) {
                 retVal = CL_INVALID_BINARY;
@@ -167,7 +167,7 @@ cl_int Program::resolveProgramBinary() {
             break;
 
         case CL_PROGRAM_BINARY_TYPE_LIBRARY:
-            headerType = CLElfLib::EH_TYPE_OPENCL_LIBRARY;
+            headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY;
 
             if (!irBinary || !irBinarySize) {
                 retVal = CL_INVALID_BINARY;
@@ -175,7 +175,7 @@ cl_int Program::resolveProgramBinary() {
             break;
 
         case CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT:
-            headerType = CLElfLib::EH_TYPE_OPENCL_OBJECTS;
+            headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS;
 
             if (!irBinary || !irBinarySize) {
                 retVal = CL_INVALID_BINARY;
@@ -187,14 +187,14 @@ cl_int Program::resolveProgramBinary() {
         }
 
         if (retVal == CL_SUCCESS) {
-            pElfWriter = CLElfLib::CElfWriter::create(headerType, CLElfLib::EH_MACHINE_NONE, 0);
+            pElfWriter = CLElfLib::CElfWriter::create(headerType, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
             if (pElfWriter) {
                 CLElfLib::SSectionNode sectionNode;
 
                 // Always add the options string
                 sectionNode.Name = "BuildOptions";
-                sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_OPTIONS;
+                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS;
                 sectionNode.pData = (char *)options.c_str();
                 sectionNode.DataSize = (uint32_t)(strlen(options.c_str()) + 1);
 
@@ -203,11 +203,11 @@ cl_int Program::resolveProgramBinary() {
                 if (elfRetVal) {
                     // Add the LLVM component if available
                     if (getIsSpirV()) {
-                        sectionNode.Type = CLElfLib::SH_TYPE_SPIRV;
+                        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV;
                     } else {
-                        sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
+                        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
                     }
-                    if (headerType == CLElfLib::EH_TYPE_OPENCL_LIBRARY) {
+                    if (headerType == CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY) {
                         sectionNode.Name = "Intel(R) OpenCL LLVM Archive";
                         sectionNode.pData = (char *)irBinary;
                         sectionNode.DataSize = (uint32_t)irBinarySize;
@@ -223,7 +223,7 @@ cl_int Program::resolveProgramBinary() {
                 // Add the device binary if it exists
                 if (elfRetVal && genBinary) {
                     sectionNode.Name = "Intel(R) OpenCL Device Binary";
-                    sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_DEV_BINARY;
+                    sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY;
                     sectionNode.pData = (char *)genBinary;
                     sectionNode.DataSize = (uint32_t)genBinarySize;
 
@@ -233,7 +233,7 @@ cl_int Program::resolveProgramBinary() {
                 // Add the device debug data if it exists
                 if (elfRetVal && (debugData != nullptr)) {
                     sectionNode.Name = "Intel(R) OpenCL Device Debug";
-                    sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_DEV_DEBUG;
+                    sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_DEBUG;
                     sectionNode.pData = debugData;
                     sectionNode.DataSize = (uint32_t)debugDataSize;
                     elfRetVal = pElfWriter->addSection(&sectionNode);

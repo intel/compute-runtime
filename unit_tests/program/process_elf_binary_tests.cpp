@@ -96,7 +96,7 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     ASSERT_NE(nullptr, pElfReader);
     const CLElfLib::SElf64Header *pElfHeader = pElfReader->getElfHeader();
     ASSERT_NE(nullptr, pElfHeader);
-    EXPECT_EQ(pElfHeader->Type, CLElfLib::EH_TYPE_OPENCL_LIBRARY);
+    EXPECT_EQ(pElfHeader->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY);
     EXPECT_TRUE(CLElfLib::CElfReader::isValidElf64(elfBinary, elfBinarySize));
 
     //check if ELF binary contains section SH_TYPE_SPIRV
@@ -104,7 +104,7 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     for (uint32_t i = 1; i < pElfHeader->NumSectionHeaderEntries; i++) {
         const CLElfLib::SElf64SectionHeader *pSectionHeader = pElfReader->getSectionHeader(i);
         ASSERT_NE(nullptr, pSectionHeader);
-        if (pSectionHeader->Type == CLElfLib::SH_TYPE_SPIRV) {
+        if (pSectionHeader->Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
             hasSpirvSection = true;
             break;
         }

@@ -98,7 +98,7 @@ cl_int Program::compile(
         }
 
         // create ELF writer to process all sources to be compiled
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::EH_TYPE_OPENCL_SOURCE, CLElfLib::EH_MACHINE_NONE, 0);
+        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_SOURCE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
         UNRECOVERABLE_IF(pElfWriter == nullptr);
 
         CLElfLib::SSectionNode sectionNode;
@@ -107,8 +107,8 @@ cl_int Program::compile(
         sectionNode.Name = "CLMain";
         sectionNode.pData = (char *)sourceCode.c_str();
         sectionNode.DataSize = (unsigned int)(strlen(sourceCode.c_str()) + 1);
-        sectionNode.Flags = 0;
-        sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_SOURCE;
+        sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
+        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
 
         // add main program's source
         pElfWriter->addSection(&sectionNode);
@@ -125,8 +125,8 @@ cl_int Program::compile(
                 break;
             }
             sectionNode.Name = headerIncludeNames[i];
-            sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_HEADER;
-            sectionNode.Flags = 0;
+            sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_HEADER;
+            sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
             // collect required data from the header
             retVal = pHeaderProgObj->getSource(sectionNode.pData, sectionNode.DataSize);
             if (retVal != CL_SUCCESS) {

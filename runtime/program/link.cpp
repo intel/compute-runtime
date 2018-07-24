@@ -81,7 +81,7 @@ cl_int Program::link(
 
         buildStatus = CL_BUILD_IN_PROGRESS;
 
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::EH_TYPE_OPENCL_OBJECTS, CLElfLib::EH_MACHINE_NONE, 0);
+        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
         StackVec<const Program *, 16> inputProgramsInternal;
         for (cl_uint i = 0; i < numInputPrograms; i++) {
@@ -102,11 +102,11 @@ cl_int Program::link(
             }
             sectionNode.Name = "";
             if (pInputProgObj->getIsSpirV()) {
-                sectionNode.Type = CLElfLib::SH_TYPE_SPIRV;
+                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV;
             } else {
-                sectionNode.Type = CLElfLib::SH_TYPE_OPENCL_LLVM_BINARY;
+                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
             }
-            sectionNode.Flags = 0;
+            sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
             sectionNode.pData = pInputProgObj->irBinary;
             sectionNode.DataSize = static_cast<unsigned int>(pInputProgObj->irBinarySize);
 
