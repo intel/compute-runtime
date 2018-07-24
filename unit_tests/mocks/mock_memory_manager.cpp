@@ -65,12 +65,37 @@ GraphicsAllocation *MockMemoryManager::peekAllocationListHead() {
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
+    allocation64kbPageCreated = true;
+    preferRenderCompressedFlagPassed = preferRenderCompressed;
+
     auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin, preferRenderCompressed);
     if (allocation) {
         allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), size, false, preferRenderCompressed);
         allocation->gmm->isRenderCompressed = preferRenderCompressed;
     }
     return allocation;
+}
+
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
+    if (failInDevicePool) {
+        status = AllocationStatus::RetryInNonDevicePool;
+        return nullptr;
+    }
+    if (failInDevicePoolWithError) {
+        status = AllocationStatus::Error;
+        return nullptr;
+    }
+
+    auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
+    if (allocation) {
+        allocationInDevicePoolCreated = true;
+    }
+    return allocation;
+}
+
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
+    allocationCreated = true;
+    return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
 }
 
 } // namespace OCLRT
