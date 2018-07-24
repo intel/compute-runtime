@@ -29,6 +29,9 @@ namespace OCLRT {
 
 class MockMemoryManager : public OsAgnosticMemoryManager {
   public:
+    MockMemoryManager() = default;
+    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages) {}
+    GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;

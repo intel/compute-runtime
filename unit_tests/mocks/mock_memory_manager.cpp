@@ -64,4 +64,13 @@ GraphicsAllocation *MockMemoryManager::peekAllocationListHead() {
     return graphicsAllocations.peekHead();
 }
 
+GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
+    auto allocation = OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size, alignment, forcePin, preferRenderCompressed);
+    if (allocation) {
+        allocation->gmm = new Gmm(allocation->getUnderlyingBuffer(), size, false, preferRenderCompressed);
+        allocation->gmm->isRenderCompressed = preferRenderCompressed;
+    }
+    return allocation;
+}
+
 } // namespace OCLRT

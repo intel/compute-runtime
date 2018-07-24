@@ -103,6 +103,10 @@ Buffer *Buffer::create(Context *context,
 
     checkMemory(flags, size, hostPtr, errcodeRet, zeroCopy, allocateMemory, copyMemoryFromHostPtr, allocationType, memoryManager);
 
+    if (errcodeRet != CL_SUCCESS) {
+        return nullptr;
+    }
+
     if (hostPtr && context->isProvidingPerformanceHints()) {
         if (zeroCopy) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
@@ -117,73 +121,80 @@ Buffer *Buffer::create(Context *context,
         copyMemoryFromHostPtr = false;
         allocateMemory = false;
     }
-    if (errcodeRet == CL_SUCCESS) {
-        while (true) {
-            if (flags & CL_MEM_USE_HOST_PTR) {
-                memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
-                if (memory) {
-                    allocationType = GraphicsAllocation::AllocationType::BUFFER;
-                    zeroCopy = true;
-                    isHostPtrSVM = true;
-                    copyMemoryFromHostPtr = false;
-                    allocateMemory = false;
-                }
-            }
 
-            if (!memory) {
-                memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), allocationType);
-            }
-
-            if (allocateMemory) {
-                if (memory) {
-                    memoryManager->addAllocationToHostPtrManager(memory);
-                }
-                if (context->isProvidingPerformanceHints()) {
-                    context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
-                }
-            } else {
-                if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
-                    zeroCopy = false;
-                    copyMemoryFromHostPtr = true;
-                    allocateMemory = true;
-                    memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), allocationType);
-                }
-            }
-
-            if (!memory) {
-                errcodeRet = CL_OUT_OF_HOST_MEMORY;
-                break;
-            }
-
-            memory->setAllocationType(allocationType);
-            memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
-
-            DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
-
-            if (copyMemoryFromHostPtr) {
-                memcpy_s(memory->getUnderlyingBuffer(), size, hostPtr, size);
-            }
-
-            pBuffer = createBufferHw(context,
-                                     flags,
-                                     size,
-                                     memory->getUnderlyingBuffer(),
-                                     const_cast<void *>(hostPtr),
-                                     memory,
-                                     zeroCopy,
-                                     isHostPtrSVM,
-                                     false);
-            if (!pBuffer && allocateMemory) {
-                memoryManager->removeAllocationFromHostPtrManager(memory);
-                memoryManager->freeGraphicsMemory(memory);
-                memory = nullptr;
-            }
-
-            if (pBuffer) {
-                pBuffer->setHostPtrMinSize(size);
-            }
-            break;
+    if (flags & CL_MEM_USE_HOST_PTR) {
+        memory = context->getSVMAllocsManager()->getSVMAlloc(hostPtr);
+        if (memory) {
+            allocationType = GraphicsAllocation::AllocationType::BUFFER;
+            zeroCopy = true;
+            isHostPtrSVM = true;
+            copyMemoryFromHostPtr = false;
+            allocateMemory = false;
         }
+    }
+
+    if (!memory) {
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, hostPtr, static_cast<size_t>(size), allocationType);
+    }
+
+    if (allocateMemory) {
+        if (memory) {
+            memoryManager->addAllocationToHostPtrManager(memory);
+        }
+        if (context->isProvidingPerformanceHints()) {
+            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
+        }
+    } else {
+        if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
+            zeroCopy = false;
+            copyMemoryFromHostPtr = true;
+            allocateMemory = true;
+            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(zeroCopy, allocateMemory, true, false, nullptr, static_cast<size_t>(size), allocationType);
+        }
+    }
+
+    if (!memory) {
+        errcodeRet = CL_OUT_OF_HOST_MEMORY;
+        return nullptr;
+    }
+
+    memory->setAllocationType(allocationType);
+    memory->setMemObjectsAllocationWithWritableFlags(!(flags & (CL_MEM_READ_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)));
+
+    DBG_LOG(LogMemoryObject, __FUNCTION__, "hostPtr:", hostPtr, "size:", size, "memoryStorage:", memory->getUnderlyingBuffer(), "GPU address:", std::hex, memory->getGpuAddress());
+
+    pBuffer = createBufferHw(context,
+                             flags,
+                             size,
+                             memory->getUnderlyingBuffer(),
+                             const_cast<void *>(hostPtr),
+                             memory,
+                             zeroCopy,
+                             isHostPtrSVM,
+                             false);
+    if (!pBuffer) {
+        errcodeRet = CL_OUT_OF_HOST_MEMORY;
+        memoryManager->removeAllocationFromHostPtrManager(memory);
+        memoryManager->freeGraphicsMemory(memory);
+        return nullptr;
+    }
+
+    pBuffer->setHostPtrMinSize(size);
+
+    if (copyMemoryFromHostPtr) {
+        if (memory->gmm && memory->gmm->isRenderCompressed) {
+            auto cmdQ = context->getSpecialQueue();
+            if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, 0, nullptr, nullptr)) {
+                errcodeRet = CL_OUT_OF_RESOURCES;
+            }
+        } else {
+            memcpy_s(memory->getUnderlyingBuffer(), size, hostPtr, size);
+        }
+    }
+
+    if (errcodeRet != CL_SUCCESS) {
+        pBuffer->release();
+        return nullptr;
     }
 
     return pBuffer;

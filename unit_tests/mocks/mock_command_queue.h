@@ -44,7 +44,25 @@ class MockCommandQueue : public CommandQueue {
         releaseIndirectHeapCalled = true;
         CommandQueue::releaseIndirectHeap(heap);
     }
+
+    cl_int enqueueWriteBuffer(Buffer *buffer, cl_bool blockingWrite, size_t offset, size_t size, const void *ptr,
+                              cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) override {
+        writeBufferCounter++;
+        writeBufferBlocking = (CL_TRUE == blockingWrite);
+        writeBufferOffset = offset;
+        writeBufferSize = size;
+        writeBufferPtr = const_cast<void *>(ptr);
+        return writeBufferRetValue;
+    }
+
     bool releaseIndirectHeapCalled = false;
+
+    cl_int writeBufferRetValue = CL_SUCCESS;
+    uint32_t writeBufferCounter = 0;
+    bool writeBufferBlocking = false;
+    size_t writeBufferOffset = 0;
+    size_t writeBufferSize = 0;
+    void *writeBufferPtr = nullptr;
 };
 
 template <typename GfxFamily>
