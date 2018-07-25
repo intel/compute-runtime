@@ -8,12 +8,12 @@ components:
     branch: master
     dest_dir: common_clang
     repository: https://github.com/intel/opencl-clang
-    revision: 9b2473dc76bca8e58bf90e859a87f97ed1ca962c
+    revision: 82481202297e69f619766df57ac3cce70a35d82f
   llvm_patches:
     branch: master
     dest_dir: llvm_patches
     repository: https://github.com/intel/llvm-patches
-    revision: 5c67217eafd982e4e83724ec8b19893efd11b7d2
+    revision: b2572b97136fc595d11884a458b74244c6a0a79b
   llvm_source:
     branch: release_40
     dest_dir: llvm_source
