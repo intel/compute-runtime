@@ -235,7 +235,7 @@ TEST_F(Image2dFromBufferTest, givenUnalignedImageWidthAndNoSpaceInBufferForAlign
 }
 
 TEST_F(Image2dFromBufferTest, ExtensionString) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
     std::string extensions = caps.deviceExtensions;
     size_t found = extensions.find("cl_khr_image2d_from_buffer");

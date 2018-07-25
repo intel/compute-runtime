@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@
 using namespace OCLRT;
 
 TEST(GetDeviceInfo, InvalidFlags_returnsError) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     auto retVal = device->getDeviceInfo(
         0,
@@ -39,7 +39,7 @@ TEST(GetDeviceInfo, InvalidFlags_returnsError) {
 }
 
 TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtensionDisabled) {
-    auto device = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     device->getDeviceInfoToModify()->nv12Extension = false;
     uint32_t value;
@@ -62,7 +62,7 @@ TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsErrorWhenPlanarYuvExtens
 }
 
 TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarYuvExtensionEnabled) {
-    auto device = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     device->getDeviceInfoToModify()->nv12Extension = true;
     size_t value = 0;
@@ -87,7 +87,7 @@ TEST(GetDeviceInfo, devicePlanarYuvMaxWidthHeightReturnsCorrectValuesWhenPlanarY
 }
 
 TEST(GetDeviceInfo, numSimultaneousInterops) {
-    auto device = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->simultaneousInterops = {0};
 
     cl_uint value = 0;
@@ -106,7 +106,7 @@ TEST(GetDeviceInfo, numSimultaneousInterops) {
 }
 
 TEST(GetDeviceInfo, simultaneousInterops) {
-    auto device = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->simultaneousInterops = {0};
 
     cl_uint value[4] = {};
@@ -123,7 +123,7 @@ TEST(GetDeviceInfo, simultaneousInterops) {
 }
 
 TEST(GetDeviceInfo, prefferedInteropUserSync) {
-    auto device = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     cl_bool value = 0;
     size_t size = 0;
@@ -143,7 +143,7 @@ struct GetDeviceInfo : public ::testing::TestWithParam<uint32_t /*cl_device_info
 };
 
 TEST_P(GetDeviceInfo, valid_returnsSuccess) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t sizeReturned = 0;
     auto retVal = device->getDeviceInfo(

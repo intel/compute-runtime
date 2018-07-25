@@ -48,7 +48,7 @@ class ExecutionModelKernelFixture : public ProgramFromBinaryTest,
         temp.assign(pPlatform->getDevice(0)->getDeviceInfo().clVersion);
 
         if (temp.find("OpenCL 1.2") != std::string::npos) {
-            pDevice = DeviceHelper<>::create();
+            pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
             return;
         }
 

@@ -26,6 +26,7 @@
 using OCLRT::AUBCommandStreamReceiver;
 using OCLRT::AUBCommandStreamReceiverHw;
 using OCLRT::AUBFamilyMapper;
+using OCLRT::DeviceFixture;
 using OCLRT::EngineType;
 using OCLRT::folderAUB;
 

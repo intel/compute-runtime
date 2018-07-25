@@ -120,7 +120,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
 
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
 
     device->injectMemoryManager(memoryManager);
@@ -150,7 +150,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
 
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
 
     device->injectMemoryManager(memoryManager);
@@ -176,7 +176,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
 
     memset(memory, 0xAA, MemoryConstants::pageSize);
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
 
     device->injectMemoryManager(memoryManager);
@@ -196,7 +196,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
 }
 
 TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAllocationFailsAndReturnsNullptr) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
 
     device->injectMemoryManager(memoryManager);

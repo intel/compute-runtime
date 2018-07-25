@@ -192,7 +192,7 @@ TEST(Event, waitForEventsFlushesAllQueues) {
         uint32_t flushCounter = 0;
     };
 
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
 
     std::unique_ptr<MockCommandQueueWithFlushCheck> cmdQ1(new MockCommandQueueWithFlushCheck(context, device.get()));
@@ -223,7 +223,7 @@ TEST(Event, waitForEventsWithNotReadyEventDoesNotFlushQueue) {
         uint32_t flushCounter = 0;
     };
 
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
 
     std::unique_ptr<MockCommandQueueWithFlushCheck> cmdQ1(new MockCommandQueueWithFlushCheck(context, device.get()));

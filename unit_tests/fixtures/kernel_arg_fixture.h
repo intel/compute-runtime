@@ -39,7 +39,7 @@ namespace iOpenCL {
 struct SKernelBinaryHeaderCommon;
 }
 
-class KernelImageArgTest : public Test<DeviceFixture> {
+class KernelImageArgTest : public Test<OCLRT::DeviceFixture> {
   public:
     KernelImageArgTest() {
     }

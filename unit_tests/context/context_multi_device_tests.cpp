@@ -31,7 +31,7 @@ using namespace OCLRT;
 
 TEST(ContextMultiDevice, singleDevice) {
     cl_device_id devices[] = {
-        DeviceHelper<>::create()};
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     auto numDevices = ARRAY_COUNT(devices);
 
     auto retVal = CL_SUCCESS;
@@ -60,14 +60,14 @@ TEST(ContextMultiDevice, singleDevice) {
 
 TEST(ContextMultiDevice, eightDevices) {
     cl_device_id devices[] = {
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create(),
-        DeviceHelper<>::create()};
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
+        MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
     auto numDevices = ARRAY_COUNT(devices);
     ASSERT_EQ(8u, numDevices);
 

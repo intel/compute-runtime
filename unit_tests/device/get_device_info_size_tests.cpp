@@ -36,7 +36,7 @@ struct GetDeviceInfoSize : public ::testing::TestWithParam<std::pair<uint32_t /*
 };
 
 TEST_P(GetDeviceInfoSize, sizeIsValid) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     size_t sizeReturned = 0;
     auto retVal = device->getDeviceInfo(
@@ -152,7 +152,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(deviceInfoParams2));
 
 TEST(DeviceInfoTests, givenDefaultDeviceWhenQueriedForDeviceVersionThenProperSizeIsReturned) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     size_t sizeReturned = 0;
     auto retVal = device->getDeviceInfo(
         CL_DEVICE_VERSION,

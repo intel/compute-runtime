@@ -68,7 +68,7 @@ TEST_F(DeviceTest, getTagAddress) {
 }
 
 TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
-    auto pDevice = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     OSTime *osTime = pDevice->getOSTime();
     ASSERT_NE(nullptr, osTime);
@@ -76,7 +76,7 @@ TEST_F(DeviceTest, WhenGetOSTimeThenNotNull) {
 
 TEST_F(DeviceTest, GivenDebugVariableForcing32BitAllocationsWhenDeviceIsCreatedThenMemoryManagerHasForce32BitFlagSet) {
     DebugManager.flags.Force32bitAddressing.set(true);
-    auto pDevice = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto pDevice = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     if (is64bit) {
         EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
         EXPECT_TRUE(pDevice->getMemoryManager()->peekForce32BitAllocations());
@@ -108,7 +108,7 @@ TEST_F(DeviceTest, getEngineTypeDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
     EngineType actualEngineType = pDevice->getEngineType();
-    EngineType defaultEngineType = hwInfoHelper.capabilityTable.defaultEngineType;
+    EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
     EXPECT_EQ(defaultEngineType, actualEngineType);
 }
@@ -120,7 +120,7 @@ TEST_F(DeviceTest, givenDebugVariableOverrideEngineTypeWhenDeviceIsCreatedThenUs
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 
     EngineType actualEngineType = pTestDevice->getEngineType();
-    EngineType defaultEngineType = hwInfoHelper.capabilityTable.defaultEngineType;
+    EngineType defaultEngineType = pDevice->getHardwareInfo().capabilityTable.defaultEngineType;
 
     EXPECT_NE(defaultEngineType, actualEngineType);
     EXPECT_EQ(expectedEngine, actualEngineType);

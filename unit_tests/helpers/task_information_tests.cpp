@@ -33,7 +33,7 @@
 using namespace OCLRT;
 
 TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
     csr.setMemoryManager(device->getMemoryManager());
@@ -51,7 +51,7 @@ TEST(CommandTest, mapUnmapSubmitWithoutTerminateFlagFlushesCsr) {
 }
 
 TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
     csr.setMemoryManager(device->getMemoryManager());
@@ -72,7 +72,7 @@ TEST(CommandTest, mapUnmapSubmitWithTerminateFlagAbortsFlush) {
 }
 
 TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
     csr.setMemoryManager(device->getMemoryManager());
@@ -87,7 +87,7 @@ TEST(CommandTest, markerSubmitWithoutTerminateFlagFlushesCsr) {
 }
 
 TEST(CommandTest, markerSubmitWithTerminateFlagAbortsFlush) {
-    std::unique_ptr<Device> device(DeviceHelper<>::create());
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<MockCommandQueue> cmdQ(new MockCommandQueue(nullptr, device.get(), nullptr));
     MockCommandStreamReceiver csr;
     MockBuffer buffer;

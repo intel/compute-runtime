@@ -22,38 +22,20 @@
 
 #pragma once
 #include "unit_tests/mocks/mock_device.h"
-#include <cassert>
 
 namespace OCLRT {
 struct HardwareInfo;
-extern const HardwareInfo **platformDevices;
-} // namespace OCLRT
-
-struct DeviceDefaults {
-};
-
-template <typename DeviceTraits = DeviceDefaults>
-struct DeviceHelper {
-    static OCLRT::MockDevice *create(const OCLRT::HardwareInfo *hardwareInfo = nullptr) {
-        OCLRT::MockDevice *device = OCLRT::MockDevice::createWithNewExecutionEnvironment<OCLRT::MockDevice>(hardwareInfo);
-        assert(device != nullptr);
-        return device;
-    }
-};
 
 struct DeviceFixture {
-    DeviceFixture()
-        : pDevice(nullptr),
-          pTagMemory(nullptr) {
-    }
-
     void SetUp();
     void SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo);
     void TearDown();
-    OCLRT::MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 
-    OCLRT::MockDevice *pDevice;
-    volatile uint32_t *pTagMemory;
-    OCLRT::HardwareInfo hwInfoHelper;
-    PLATFORM platformHelper;
+    MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
+
+    MockDevice *pDevice = nullptr;
+    volatile uint32_t *pTagMemory = nullptr;
+    HardwareInfo hwInfoHelper = {};
+    PLATFORM platformHelper = {};
 };
+} // namespace OCLRT

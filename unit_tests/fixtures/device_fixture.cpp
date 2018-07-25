@@ -20,24 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "device_fixture.h"
-#include "runtime/command_stream/command_stream_receiver.h"
-#include "runtime/helpers/options.h"
 #include "gtest/gtest.h"
-#include "unit_tests/mocks/mock_ostime.h"
+#include "unit_tests/fixtures/device_fixture.h"
 
-using OCLRT::Device;
-using OCLRT::HardwareInfo;
-using OCLRT::MockOSTime;
-using OCLRT::OSTime;
-using OCLRT::platformDevices;
-
+namespace OCLRT {
 void DeviceFixture::SetUp() {
     SetUpImpl(nullptr);
 }
 
 void DeviceFixture::SetUpImpl(const OCLRT::HardwareInfo *hardwareInfo) {
-    pDevice = DeviceHelper<>::create(hardwareInfo);
+    pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(hardwareInfo);
     ASSERT_NE(nullptr, pDevice);
 
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
@@ -49,10 +41,11 @@ void DeviceFixture::TearDown() {
     delete pDevice;
 }
 
-OCLRT::MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
+MockDevice *DeviceFixture::createWithUsDeviceId(unsigned short usDeviceId) {
     hwInfoHelper = *platformDevices[0];
     platformHelper = *platformDevices[0]->pPlatform;
     platformHelper.usDeviceID = usDeviceId;
     hwInfoHelper.pPlatform = &platformHelper;
-    return DeviceHelper<>::create(&hwInfoHelper);
+    return MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoHelper);
 }
+} // namespace OCLRT

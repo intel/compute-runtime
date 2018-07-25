@@ -1035,7 +1035,7 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
     ASSERT_NE(nullptr, gmockMemoryManager);
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ASSERT_NE(nullptr, device.get());
     device->injectMemoryManager(gmockMemoryManager);
     MockContext *mockContext = new MockContext(device.get());
@@ -1068,7 +1068,7 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
     ASSERT_NE(nullptr, gmockMemoryManager);
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ASSERT_NE(nullptr, device.get());
     device->injectMemoryManager(gmockMemoryManager);
     MockContext *mockContext = new MockContext(device.get());

@@ -33,7 +33,7 @@
 using namespace OCLRT;
 
 TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
-    MockDevice *device = DeviceHelper<>::create();
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     MockContext context;
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
     pPrintfSurface->DataParamOffset = 0;
@@ -59,7 +59,7 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
 }
 
 TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResultIsNullptr) {
-    MockDevice *device = DeviceHelper<>::create();
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     MockContext context;
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
     pPrintfSurface->DataParamOffset = 0;
@@ -88,7 +88,7 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
 }
 TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, false));
 
@@ -101,7 +101,7 @@ TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhe
 
 TEST(PrintfHandlerTest, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsNullptr) {
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     std::unique_ptr<MockParentKernel> blockKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, false, false));
 
@@ -113,7 +113,7 @@ TEST(PrintfHandlerTest, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHa
 }
 TEST(PrintfHandlerTest, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     std::unique_ptr<MockParentKernel> parentKernelWithPrintfBlockKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, true, false));
 

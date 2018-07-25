@@ -23,7 +23,7 @@
 #include "aub_batch_buffer_tests_gen10.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
-typedef Test<DeviceFixture> Gen10AubBatchBufferTests;
+using Gen10AubBatchBufferTests = Test<OCLRT::DeviceFixture>;
 
 static constexpr auto gpuBatchBufferAddr = 0x800400001000; // 48-bit GPU address
 

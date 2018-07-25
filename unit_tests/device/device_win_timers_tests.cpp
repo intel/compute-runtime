@@ -34,7 +34,7 @@ typedef ::testing::Test MockOSTimeWinTest;
 
 HWTEST_F(MockOSTimeWinTest, DynamicResolution) {
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock());
-    auto mDev = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     bool error = wddmMock->init<FamilyType>();
     EXPECT_EQ(1u, wddmMock->createContextResult.called);

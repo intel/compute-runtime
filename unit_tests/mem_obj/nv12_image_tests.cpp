@@ -390,7 +390,7 @@ TEST_F(Nv12ImageTest, createNV12UVPlaneImageWithOffsetOfUVPlane) {
 HWTEST_F(Nv12ImageTest, checkIfPlanesAreWritten) {
     KernelBinaryHelper kbHelper(KernelBinaryHelper::BUILT_INS);
 
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     char hostPtr[16 * 16 * 16];
 

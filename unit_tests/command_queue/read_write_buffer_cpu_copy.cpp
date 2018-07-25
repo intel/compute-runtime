@@ -227,7 +227,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
     auto smallBufferPtr = alignedMalloc(1 * MB, MemoryConstants::cacheLineSize);
     auto largeBufferPtr = alignedMalloc(100 * MB, MemoryConstants::cacheLineSize);
 
-    auto mockDevice = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
@@ -276,7 +276,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
     auto unalignedHostPtr = ptrOffset(alignedHostPtr, 1);
     auto largeBufferPtr = alignedMalloc(100 * MB, MemoryConstants::cacheLineSize);
 
-    auto mockDevice = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));

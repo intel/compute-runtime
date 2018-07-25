@@ -153,7 +153,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     cl_image_format imageFormat;
     cl_image_desc imageDesc;
 
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     const auto &caps = device->getDeviceInfo();
 
     auto memoryManager = (OsAgnosticMemoryManager *)context.getMemoryManager();

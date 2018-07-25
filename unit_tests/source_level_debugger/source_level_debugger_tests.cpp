@@ -462,7 +462,7 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryNotActiveWhenDeviceIsCreated
     DebuggerLibrary::setDebuggerActive(false);
     DebuggerLibrary::injectDebuggerLibraryInterceptor(&interceptor);
 
-    unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
     EXPECT_FALSE(interceptor.initCalled);

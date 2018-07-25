@@ -675,7 +675,7 @@ class MockPrintfHandler : public PrintfHandler {
 };
 
 TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithBaseAddressOffset) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -711,7 +711,7 @@ TEST_F(MemoryAllocatorTest, givenStatelessKernelWithPrintfWhenPrintfSurfaceIsCre
 }
 
 HWTEST_F(MemoryAllocatorTest, givenStatefulKernelWithPrintfWhenPrintfSurfaceIsCreatedThenPrintfSurfaceIsPatchedWithCpuAddress) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
     SPatchAllocateStatelessPrintfSurface printfSurface;
@@ -753,7 +753,7 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
     DebugManagerStateRestore dbgRestorer;
     if (is64bit) {
         DebugManager.flags.Force32bitAddressing.set(true);
-        auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+        auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         MockKernelWithInternals kernel(*device);
         MockMultiDispatchInfo multiDispatchInfo(kernel.mockKernel);
         SPatchAllocateStatelessPrintfSurface printfSurface;

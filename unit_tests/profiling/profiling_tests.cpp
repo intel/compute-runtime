@@ -429,7 +429,7 @@ class MyOSTime : public OSTime {
 };
 int MyOSTime::instanceNum = 0;
 TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEndTimestampInCompleteTimestampAndDoesntCallOsTimeMethods) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create());
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MyOSTime::instanceNum = 0;
     device->setOSTime(new MyOSTime());
     EXPECT_EQ(1, MyOSTime::instanceNum);

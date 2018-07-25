@@ -24,17 +24,17 @@
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 
-class EnqueueHandlerTest : public DeviceFixture,
+class EnqueueHandlerTest : public OCLRT::DeviceFixture,
                            public testing::Test {
   public:
     void SetUp() override {
-        context = new OCLRT::MockContext;
         DeviceFixture::SetUp();
+        context = new OCLRT::MockContext(pDevice);
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
         context->decRefInternal();
+        DeviceFixture::TearDown();
     }
     OCLRT::MockContext *context;
 };

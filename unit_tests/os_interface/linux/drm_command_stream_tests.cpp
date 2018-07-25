@@ -531,7 +531,7 @@ struct DrmCsrVfeTests : ::testing::Test {
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlushedThenReprogram) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -559,7 +559,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhe
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorityIsFlushedThenReprogram) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -587,7 +587,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsFlushedThenDontReprogram) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -615,7 +615,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 }
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWithScratchRequirementThenMakeDefaultDirty) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -636,7 +636,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
 }
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaultWithScratchRequirementThenMakeLowDirty) {
-    std::unique_ptr<MockDevice> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockCsr = new MyCsr<FamilyType>;
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -989,7 +989,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     tCsr->makeResident(*dummyAllocation);
 
-    std::unique_ptr<Device> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     tCsr->getMemoryManager()->device = device.get();
 
@@ -1044,7 +1044,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     auto commandBuffer = mm->allocateGraphicsMemory(1024);
     auto dummyAllocation = mm->allocateGraphicsMemory(1024);
     IndirectHeap cs(commandBuffer);
-    std::unique_ptr<Device> device(DeviceHelper<>::create(nullptr));
+    std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     tCsr->getMemoryManager()->device = device.get();
     tCsr->setTagAllocation(tagAllocation);

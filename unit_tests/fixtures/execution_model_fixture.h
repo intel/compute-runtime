@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -108,7 +108,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
 struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
                                          testing::Test {
     void SetUp() override {
-        device = DeviceHelper<>::create();
+        device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
         CommandQueueHwFixture::SetUp(device, 0);
     }
     void TearDown() override {

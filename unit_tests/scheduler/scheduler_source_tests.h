@@ -28,7 +28,7 @@
 class SchedulerSourceTest : public testing::Test {
   public:
     void SetUp() override {
-        pDevice = DeviceHelper<>::create();
+        pDevice = OCLRT::MockDevice::createWithNewExecutionEnvironment<OCLRT::MockDevice>(nullptr);
     }
     void TearDown() override {
         delete pDevice;

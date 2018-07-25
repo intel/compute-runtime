@@ -71,7 +71,7 @@ MockContext::~MockContext() {
 }
 
 MockContext::MockContext() {
-    device = DeviceHelper<>::create();
+    device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
     devices.push_back(device);
     memoryManager = device->getMemoryManager();
     svmAllocsManager = new SVMAllocsManager(memoryManager);

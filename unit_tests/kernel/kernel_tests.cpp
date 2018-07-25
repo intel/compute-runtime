@@ -2084,7 +2084,7 @@ TEST(KernelInfoTest, getArgNumByName) {
 }
 
 TEST(KernelTest, getInstructionHeapSizeForExecutionModelReturnsZeroForNormalKernel) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
 
     EXPECT_EQ(0u, kernel.mockKernel->getInstructionHeapSizeForExecutionModel());
@@ -2107,7 +2107,7 @@ TEST(KernelTest, setKernelArgUsesBuiltinDispatchInfoBuilderIfAvailable) {
         mutable std::vector<std::tuple<uint32_t, size_t, const void *>> receivedArgs;
     };
 
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(platformDevices[0]));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     kernel.kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
     kernel.mockKernel->initialize();
@@ -2172,7 +2172,7 @@ TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMa
     mySysInfo.EUCount = 24;
     mySysInfo.SubSliceCount = 3;
     mySysInfo.ThreadCount = 24 * 7;
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create(&myHwInfo));
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     MockKernelWithInternals kernel(*device);
     kernel.executionEnvironment.LargestCompiledSIMDSize = 32;

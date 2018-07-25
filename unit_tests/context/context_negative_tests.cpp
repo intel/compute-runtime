@@ -36,7 +36,7 @@ using namespace OCLRT;
 typedef Test<MemoryManagementFixture> ContextFailureInjection;
 
 TEST_F(ContextFailureInjection, failedAllocationInjection) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
 
     InjectedFunction method = [deviceID](size_t failureIndex) {
@@ -59,7 +59,7 @@ TEST_F(ContextFailureInjection, failedAllocationInjection) {
 }
 
 TEST(InvalidPropertyContextTest, GivenInvalidPropertiesWhenContextIsCreatedThenErrorIsReturned) {
-    auto device = std::unique_ptr<Device>(DeviceHelper<>::create());
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     cl_device_id deviceID = device.get();
     auto pPlatform = OCLRT::platform();
     cl_platform_id pid[1];

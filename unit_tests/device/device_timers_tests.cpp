@@ -60,7 +60,7 @@ TEST(MockOSTime, DeviceHostDeltaCheck) {
     cl_ulong allowedDiff = 0;
     float allowedErr = 0.005f;
 
-    auto mDev = std::unique_ptr<MockDevice>(DeviceHelper<>::create());
+    auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     mDev->getDeviceAndHostTimer(
         &deviceTimestamp[0],

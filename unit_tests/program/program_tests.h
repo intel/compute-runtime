@@ -31,7 +31,7 @@ extern std::vector<const char *> SourceFileNames;
 extern std::vector<const char *> BinaryForSourceFileNames;
 extern std::vector<const char *> KernelNames;
 
-class ProgramTests : public DeviceFixture,
+class ProgramTests : public OCLRT::DeviceFixture,
                      public ::testing::Test,
                      public OCLRT::ContextFixture {
 
