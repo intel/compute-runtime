@@ -94,6 +94,9 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryInDevicePool(const 
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) {
+    if (failInAllocateWithSizeAndAlignment) {
+        return nullptr;
+    }
     allocationCreated = true;
     return OsAgnosticMemoryManager::allocateGraphicsMemory(size, alignment, forcePin, uncacheable);
 }

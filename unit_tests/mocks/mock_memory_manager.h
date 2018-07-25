@@ -52,6 +52,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     bool allocationInDevicePoolCreated = false;
     bool failInDevicePool = false;
     bool failInDevicePoolWithError = false;
+    bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
 };
 
