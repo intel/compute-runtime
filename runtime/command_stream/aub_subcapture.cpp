@@ -47,7 +47,7 @@ bool AubSubCaptureManager::activateSubCapture(const MultiDispatchInfo &dispatchI
         subCaptureIsActive = isSubCaptureToggleActive();
         break;
     case SubCaptureMode::Filter:
-        subCaptureIsActive = isSubCaptureFilterActive(dispatchInfo, kernelCurrentIdx);
+        subCaptureIsActive = isSubCaptureFilterActive(dispatchInfo);
         break;
     default:
         DEBUG_BREAK_IF(false);
@@ -85,9 +85,8 @@ const std::string &AubSubCaptureManager::getSubCaptureFileName(const MultiDispat
     return currentFileName;
 }
 
-bool AubSubCaptureManager::isKernelIndexInSubCaptureRange(uint32_t kernelIdx) const {
-    return ((subCaptureFilter.dumpKernelStartIdx <= kernelIdx) &&
-            (kernelIdx <= subCaptureFilter.dumpKernelEndIdx));
+bool AubSubCaptureManager::isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const {
+    return ((rangeStartIdx <= kernelIdx) && (kernelIdx <= rangeEndIdx));
 }
 
 bool AubSubCaptureManager::isSubCaptureToggleActive() const {
@@ -105,6 +104,8 @@ std::string AubSubCaptureManager::generateFilterFileName() const {
     filterFileName += "_to_" + std::to_string(subCaptureFilter.dumpKernelEndIdx);
     if (!subCaptureFilter.dumpKernelName.empty()) {
         filterFileName += "_" + subCaptureFilter.dumpKernelName;
+        filterFileName += "_from_" + std::to_string(subCaptureFilter.dumpNamedKernelStartIdx);
+        filterFileName += "_to_" + std::to_string(subCaptureFilter.dumpNamedKernelEndIdx);
     }
     filterFileName += ".aub";
     return filterFileName;
@@ -121,18 +122,20 @@ std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo
     return toggleFileName;
 }
 
-bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo, uint32_t kernelIdx) const {
-    DEBUG_BREAK_IF(dispatchInfo.size() > 1);
+bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo) {
     auto kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().name;
     auto subCaptureIsActive = false;
 
-    if (isKernelIndexInSubCaptureRange(kernelIdx)) {
-        if (subCaptureFilter.dumpKernelName.empty()) {
+    if (subCaptureFilter.dumpKernelName.empty()) {
+        if (isKernelIndexInSubCaptureRange(kernelCurrentIdx, subCaptureFilter.dumpKernelStartIdx, subCaptureFilter.dumpKernelEndIdx)) {
             subCaptureIsActive = true;
-        } else {
-            if (0 == kernelName.compare(subCaptureFilter.dumpKernelName)) {
+        }
+    } else {
+        if (0 == kernelName.compare(subCaptureFilter.dumpKernelName)) {
+            if (isKernelIndexInSubCaptureRange(kernelNameMatchesNum, subCaptureFilter.dumpNamedKernelStartIdx, subCaptureFilter.dumpNamedKernelEndIdx)) {
                 subCaptureIsActive = true;
             }
+            kernelNameMatchesNum++;
         }
     }
     return subCaptureIsActive;

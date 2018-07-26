@@ -38,6 +38,8 @@ class AubSubCaptureManager {
 
     struct SubCaptureFilter {
         std::string dumpKernelName = "";
+        uint32_t dumpNamedKernelStartIdx = 0;
+        uint32_t dumpNamedKernelEndIdx = static_cast<uint32_t>(-1);
         uint32_t dumpKernelStartIdx = 0;
         uint32_t dumpKernelEndIdx = static_cast<uint32_t>(-1);
     } subCaptureFilter;
@@ -62,16 +64,17 @@ class AubSubCaptureManager {
 
   protected:
     MOCKABLE_VIRTUAL bool isSubCaptureToggleActive() const;
-    bool isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo, uint32_t kernelIdx) const;
+    bool isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo);
     MOCKABLE_VIRTUAL std::string getExternalFileName() const;
     MOCKABLE_VIRTUAL std::string generateFilterFileName() const;
     MOCKABLE_VIRTUAL std::string generateToggleFileName(const MultiDispatchInfo &dispatchInfo) const;
-    bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx) const;
+    bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const;
     void setDebugManagerFlags() const;
 
     bool subCaptureIsActive = false;
     bool subCaptureWasActive = false;
     uint32_t kernelCurrentIdx = 0;
+    uint32_t kernelNameMatchesNum = 0;
     bool useExternalFileName = true;
     std::string initialFileName;
     std::string currentFileName;
