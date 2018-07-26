@@ -1125,7 +1125,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
 
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-            buffer->setArgStateful(const_cast<void *>(surfaceState));
+            buffer->setArgStateful(surfaceState);
         }
 
         return CL_SUCCESS;
@@ -1229,9 +1229,9 @@ cl_int Kernel::setArgImageWithMipLevel(uint32_t argIndex,
         // Sets SS structure
         if (kernelArgInfo.isMediaImage) {
             DEBUG_BREAK_IF(!kernelInfo.isVmeWorkload);
-            pImage->setMediaImageArg(const_cast<void *>(surfaceState));
+            pImage->setMediaImageArg(surfaceState);
         } else {
-            pImage->setImageArg(const_cast<void *>(surfaceState), kernelArgInfo.isMediaBlockImage, mipLevel);
+            pImage->setImageArg(surfaceState, kernelArgInfo.isMediaBlockImage, mipLevel);
         }
 
         auto crossThreadData = reinterpret_cast<uint32_t *>(getCrossThreadData());
