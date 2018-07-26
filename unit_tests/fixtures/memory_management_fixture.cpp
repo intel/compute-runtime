@@ -141,7 +141,7 @@ std::string printCallStack(const MemoryManagement::AllocationEvent &event) {
 
     printf("printCallStack.%d.%d\n", printMemoryOpCallStack, event.frames);
     if (!OCLRT::captureCallStacks) {
-        printf("for detailed stack information turn on captureCallStacks in options.h\n");
+        printf("for detailed stack information turn on captureCallStacks in memory_management_fixture.h\n");
     }
     if (printMemoryOpCallStack && event.frames > 0) {
 #if defined(__linux__)
