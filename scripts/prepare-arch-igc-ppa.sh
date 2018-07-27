@@ -19,7 +19,23 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-git fetch -t
-git clone ../compute-runtime neo
-docker build -f scripts/docker/Dockerfile-arch-ppa-gcc-8 -t neo-arch-ppa-gcc-8:ci .
+cd /root
+mkdir /root/igc
+
+install_libs() {
+    wget https://launchpad.net/~jdanecki/+archive/ubuntu/intel-opencl/+files/$1
+    ar -x $1
+    tar -xJf data.tar.xz
+    rm -f data.tar.xz $1
+}
+
+install_libs intel-opencl-clang_4.0.15-1~ppa1~bionic1_amd64.deb
+install_libs intel-igc-core_18.30.707-2~ppa1~bionic1_amd64.deb
+install_libs intel-igc-opencl-dev_18.30.707-2~ppa1~bionic1_amd64.deb
+install_libs intel-igc-opencl_18.30.707-2~ppa1~bionic1_amd64.deb
+
+cp -ar usr /
+ln -sf /usr/lib/x86_64-linux-gnu/*.so /usr/lib64
+ln -s /usr/lib/x86_64-linux-gnu/pkgconfig/*.pc /usr/lib64/pkgconfig
+mkdir /root/build
 
