@@ -56,7 +56,7 @@ void GmmHelper::initContext(const PLATFORM *pPlatform,
     loadLib();
     bool success = GMM_SUCCESS == GmmHelper::initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
     UNRECOVERABLE_IF(!success);
-    gmmClientContext.reset(GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA));
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 
@@ -167,7 +167,7 @@ GmmHelper::~GmmHelper() {
     GmmHelper::destroyGlobalContextFunc();
 };
 bool GmmHelper::useSimplifiedMocsTable = false;
-GmmClientContext *(*GmmHelper::createGmmContextWrapperFunc)(GMM_CLIENT) = GmmClientContextBase::create<GmmClientContext>;
+decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;
 
 const HardwareInfo *GmmHelper::hwInfo = nullptr;
 } // namespace OCLRT

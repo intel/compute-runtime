@@ -102,6 +102,5 @@ target_include_directories(igdrcl_mocks PRIVATE
 target_compile_definitions(igdrcl_mocks PRIVATE MOCKABLE_VIRTUAL=virtual $<TARGET_PROPERTY:${NEO_STATIC_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)
 
 set_target_properties(igdrcl_mocks PROPERTIES POSITION_INDEPENDENT_CODE ON)
-set_target_properties(igdrcl_mocks PROPERTIES CXX_STANDARD 11 CXX_STANDARD_REQUIRED ON)
 set_target_properties(igdrcl_mocks PROPERTIES FOLDER "test mocks")
 create_project_source_tree(igdrcl_mocks)

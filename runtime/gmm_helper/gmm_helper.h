@@ -68,7 +68,7 @@ class GmmHelper {
     static decltype(GmmExportEntries::pfnCreateClientContext) createClientContextFunc;
     static decltype(GmmExportEntries::pfnDeleteClientContext) deleteClientContextFunc;
 
-    static GmmClientContext *(*createGmmContextWrapperFunc)(GMM_CLIENT);
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(GMM_CLIENT);
 
     static bool useSimplifiedMocsTable;
     static const HardwareInfo *hwInfo;

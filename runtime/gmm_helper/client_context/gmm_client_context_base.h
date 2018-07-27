@@ -37,8 +37,8 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static GmmClientContext *create(GMM_CLIENT clientType) {
-        return new T(clientType);
+    static std::unique_ptr<GmmClientContext> create(GMM_CLIENT clientType) {
+        return std::make_unique<T>(clientType);
     }
 
   protected:
