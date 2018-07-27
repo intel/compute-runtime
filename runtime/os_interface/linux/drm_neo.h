@@ -77,8 +77,11 @@ class Drm {
     void setGtType(GTTYPE eGtType) { this->eGtType = eGtType; }
     GTTYPE getGtType() const { return this->eGtType; }
     MOCKABLE_VIRTUAL int getErrno();
+    void setSimplifiedMocsTableUsage(bool value);
+    bool getSimplifiedMocsTableUsage() const;
 
   protected:
+    bool useSimplifiedMocsTable = false;
     int fd;
     int deviceId;
     int revisionId;

@@ -96,8 +96,10 @@ Buffer *Buffer::create(Context *context,
     bool alignementSatisfied = true;
     bool allocateMemory = true;
     bool copyMemoryFromHostPtr = false;
-
-    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(flags, context->isSharedContext, GmmHelper::hwInfo->capabilityTable.ftrRenderCompressedBuffers);
+    GraphicsAllocation::AllocationType allocationType = getGraphicsAllocationType(
+        flags,
+        context->isSharedContext,
+        context->getDevice(0)->getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers);
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);

@@ -22,6 +22,8 @@
 
 #include "runtime/command_stream/linear_stream.h"
 #include "hw_cmds.h"
+#include "runtime/execution_environment/execution_environment.h"
+#include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/mem_obj/buffer.h"
@@ -31,6 +33,7 @@
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "runtime/os_interface/linux/drm_neo.h"
 #include "runtime/os_interface/linux/os_interface.h"
+#include "runtime/platform/platform.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -45,6 +48,8 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
     execObjectsStorage.reserve(512);
     CommandStreamReceiver::osInterface = std::unique_ptr<OSInterface>(new OSInterface());
     CommandStreamReceiver::osInterface.get()->get()->setDrm(this->drm);
+    auto gmmHelper = platform()->peekExecutionEnvironment()->getGmmHelper();
+    gmmHelper->setSimplifiedMocsTableUsage(this->drm->getSimplifiedMocsTableUsage());
 }
 
 template <typename GfxFamily>

@@ -24,8 +24,6 @@
 #include "runtime/helpers/options.h"
 #include "gmm_memory.h"
 #include "gmm_client_context.h"
-#include "runtime/platform/platform.h"
-#include "runtime/execution_environment/execution_environment.h"
 #include "gtest/gtest.h"
 
 using namespace OCLRT;

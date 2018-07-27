@@ -607,9 +607,8 @@ TEST(GmmTest, givenInvalidFlagsSetWhenAskedForUnifiedAuxTranslationCapabilityThe
 
 TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedTheSetThisHwInfoToGmmHelper) {
     HardwareInfo localHwInfo = **platformDevices;
-
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
-    EXPECT_EQ(&localHwInfo, GmmHelper::hwInfo);
+    EXPECT_EQ(&localHwInfo, device->getGmmHelper()->getHardwareInfo());
 }
 
 TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
@@ -641,21 +640,19 @@ TEST(GmmTest, whenResourceIsCreatedThenHandleItsOwnership) {
 }
 
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForUncachedIndexThen0IsReturned) {
-    GmmHelper::useSimplifiedMocsTable = true;
     GmmHelper gmmHelper(*platformDevices);
+    gmmHelper.setSimplifiedMocsTableUsage(true);
     auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED);
     auto expectedIndex = GmmHelper::cacheDisabledIndex;
     EXPECT_EQ(expectedIndex, index);
-    GmmHelper::useSimplifiedMocsTable = false;
 }
 
 TEST(GmmSimplifiedCacheSelectionPolicy, givenGmmInSimplifiedCacheSelectionPolicyWhenItIsAskedForCachedIndexThen4IsReturned) {
-    GmmHelper::useSimplifiedMocsTable = true;
     GmmHelper gmmHelper(*platformDevices);
+    gmmHelper.setSimplifiedMocsTableUsage(true);
     auto index = gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     auto expectedIndex = GmmHelper::cacheEnabledIndex;
     EXPECT_EQ(expectedIndex, index);
-    GmmHelper::useSimplifiedMocsTable = false;
 }
 
 TEST(GmmHelperTest, whenGmmHelperIsInitializedThenClientContextIsSet) {

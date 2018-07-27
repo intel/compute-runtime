@@ -41,8 +41,16 @@ GmmClientContext *GmmHelper::getClientContext() {
     return getInstance()->gmmClientContext.get();
 }
 
+const HardwareInfo *GmmHelper::getHardwareInfo() {
+    return hwInfo;
+}
+
 GmmHelper *GmmHelper::getInstance() {
     return platform()->peekExecutionEnvironment()->getGmmHelper();
+}
+
+void GmmHelper::setSimplifiedMocsTableUsage(bool value) {
+    useSimplifiedMocsTable = value;
 }
 
 void GmmHelper::initContext(const PLATFORM *pPlatform,
@@ -159,15 +167,11 @@ GMM_YUV_PLANE GmmHelper::convertPlane(OCLPlane oclPlane) {
 
     return GMM_NO_PLANE;
 }
-GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) {
-    GmmHelper::hwInfo = pHwInfo;
+GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
     initContext(pHwInfo->pPlatform, pHwInfo->pSkuTable, pHwInfo->pWaTable, pHwInfo->pSysInfo);
 }
 GmmHelper::~GmmHelper() {
     gmmEntries.pfnDestroySingletonContext();
 };
-bool GmmHelper::useSimplifiedMocsTable = false;
 decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;
-
-const HardwareInfo *GmmHelper::hwInfo = nullptr;
 } // namespace OCLRT
