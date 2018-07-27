@@ -22,7 +22,7 @@
 mkdir workspace; cd workspace
 git clone --depth 1 https://github.com/intel/gmmlib gmmlib
 git clone ../../compute-runtime neo
-pushd neo/scripts/igc ; ./prepare.sh ; popd
+#pushd neo/scripts/igc ; ./prepare.sh ; popd
 mkdir build; cd build
 
 cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release ../neo
