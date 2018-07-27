@@ -29,6 +29,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/stdio.h"
 #include "runtime/helpers/string_helpers.h"
+#include "elf/writer.h"
 #include "igfxfmid.h"
 #include "patch_list.h"
 #include <vector>
@@ -178,6 +179,8 @@ class Program : public BaseObject<_cl_program> {
 
     cl_int getSource(char *&pBinary, unsigned int &dataSize) const;
 
+    cl_int getSource(std::string &binary) const;
+
     void storeGenBinary(const void *pSrc, const size_t srcSize);
 
     char *getGenBinary(size_t &genBinarySize) const {
@@ -297,7 +300,7 @@ class Program : public BaseObject<_cl_program> {
     // clang-format off
     cl_program_binary_type    programBinaryType;
     bool                      isSpirV = false;
-    char*                     elfBinary;
+    CLElfLib::ElfBinaryStorage elfBinary;
     size_t                    elfBinarySize;
 
     char*                     genBinary;

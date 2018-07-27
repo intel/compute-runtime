@@ -40,12 +40,9 @@ cl_int Program::link(
     void *userData) {
     cl_int retVal = CL_SUCCESS;
     cl_program program;
-    CLElfLib::CElfWriter *pElfWriter = nullptr;
     Program *pInputProgObj;
     size_t dataSize;
-    char *pData = nullptr;
     bool isCreateLibrary;
-    CLElfLib::SSectionNode sectionNode;
 
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
@@ -81,7 +78,7 @@ cl_int Program::link(
 
         buildStatus = CL_BUILD_IN_PROGRESS;
 
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
         StackVec<const Program *, 16> inputProgramsInternal;
         for (cl_uint i = 0; i < numInputPrograms; i++) {
@@ -100,25 +97,17 @@ cl_int Program::link(
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
-            sectionNode.Name = "";
-            if (pInputProgObj->getIsSpirV()) {
-                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV;
-            } else {
-                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
-            }
-            sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
-            sectionNode.pData = pInputProgObj->irBinary;
-            sectionNode.DataSize = static_cast<unsigned int>(pInputProgObj->irBinarySize);
 
-            pElfWriter->addSection(&sectionNode);
+            elfWriter.addSection(CLElfLib::SSectionNode(pInputProgObj->getIsSpirV() ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY,
+                                                        CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "", std::string(pInputProgObj->irBinary, pInputProgObj->irBinarySize), static_cast<uint32_t>(pInputProgObj->irBinarySize)));
         }
         if (retVal != CL_SUCCESS) {
             break;
         }
 
-        pElfWriter->resolveBinary(nullptr, dataSize);
-        pData = new char[dataSize];
-        pElfWriter->resolveBinary(pData, dataSize);
+        dataSize = elfWriter.getTotalBinarySize();
+        CLElfLib::ElfBinaryStorage data(dataSize);
+        elfWriter.resolveBinary(data);
 
         CompilerInterface *pCompilerInterface = getCompilerInterface();
         if (!pCompilerInterface) {
@@ -128,7 +117,7 @@ cl_int Program::link(
 
         TranslationArgs inputArgs = {};
 
-        inputArgs.pInput = pData;
+        inputArgs.pInput = data.data();
         inputArgs.InputSize = (uint32_t)dataSize;
         inputArgs.pOptions = options.c_str();
         inputArgs.OptionsSize = (uint32_t)options.length();
@@ -173,8 +162,6 @@ cl_int Program::link(
         buildStatus = CL_BUILD_SUCCESS;
     }
 
-    CLElfLib::CElfWriter::destroy(pElfWriter);
-    delete[] pData;
     internalOptions.clear();
 
     if (funcNotify != nullptr) {

@@ -20,266 +20,99 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "writer.h"
-#include "runtime/helpers/string.h"
 #include <cstring>
 
-namespace CLElfLib {
-/******************************************************************************\
- Constructor: CElfWriter::CElfWriter
-\******************************************************************************/
-CElfWriter::CElfWriter(
-    E_EH_TYPE type,
-    E_EH_MACHINE machine,
-    Elf64_Xword flags) {
-    m_type = type;
-    m_machine = machine;
-    m_flags = flags;
-}
+// Need for linux compatibility with memcpy_s
+#include "runtime/helpers/string.h"
 
-/******************************************************************************\
- Destructor: CElfWriter::~CElfWriter
-\******************************************************************************/
-CElfWriter::~CElfWriter() {
-    SSectionNode *pNode = nullptr;
+namespace CLElfLib {
+void CElfWriter::resolveBinary(ElfBinaryStorage &binary) {
+    SElf64SectionHeader *curSectionHeader = nullptr;
+    char *data = nullptr;
+    char *stringTable = nullptr;
+    char *curString = nullptr;
+
+    if (binary.size() < getTotalBinarySize()) {
+        binary.resize(getTotalBinarySize());
+    }
+
+    // get a pointer to the first section header
+    curSectionHeader = reinterpret_cast<SElf64SectionHeader *>(binary.data() + sizeof(SElf64Header));
+
+    // get a pointer to the data
+    data = binary.data() +
+           sizeof(SElf64Header) +
+           ((numSections + 1) * sizeof(SElf64SectionHeader)); // +1 to account for string table entry
+
+    // get a pointer to the string table
+    stringTable = binary.data() + sizeof(SElf64Header) +
+                  ((numSections + 1) * sizeof(SElf64SectionHeader)) + // +1 to account for string table entry
+                  dataSize;
+
+    curString = stringTable;
 
     // Walk through the section nodes
-    while (m_nodeQueue.empty() == false) {
-        pNode = m_nodeQueue.front();
-        m_nodeQueue.pop();
+    while (nodeQueue.empty() == false) {
+        // Copy data into the section header
+        const auto &queueFront = nodeQueue.front();
 
-        // delete the node and it's data
-        if (pNode) {
-            if (pNode->pData) {
-                delete[] pNode->pData;
-                pNode->pData = nullptr;
-            }
+        curSectionHeader->Type = queueFront.type;
+        curSectionHeader->Flags = queueFront.flag;
+        curSectionHeader->DataSize = queueFront.dataSize;
+        curSectionHeader->DataOffset = data - binary.data();
+        curSectionHeader->Name = static_cast<Elf64_Word>(curString - stringTable);
+        curSectionHeader = reinterpret_cast<SElf64SectionHeader *>(reinterpret_cast<unsigned char *>(curSectionHeader) + sizeof(SElf64SectionHeader));
 
-            delete pNode;
-            pNode = nullptr;
+        // copy the data, move the data pointer
+        memcpy_s(data, queueFront.dataSize, queueFront.data.c_str(), queueFront.dataSize);
+        data += queueFront.dataSize;
+
+        // copy the name into the string table, move the string pointer
+        if (queueFront.name.size() > 0) {
+            memcpy_s(curString, queueFront.name.size(), queueFront.name.c_str(), queueFront.name.size());
+            curString += queueFront.name.size();
         }
+        *(curString++) = '\0'; // NOLINT
+
+        nodeQueue.pop();
     }
+
+    // add the string table section header
+    SElf64SectionHeader stringSectionHeader = {0};
+    stringSectionHeader.Type = E_SH_TYPE::SH_TYPE_STR_TBL;
+    stringSectionHeader.Flags = E_SH_FLAG::SH_FLAG_NONE;
+    stringSectionHeader.DataOffset = stringTable - &binary[0];
+    stringSectionHeader.DataSize = stringTableSize;
+    stringSectionHeader.Name = 0;
+
+    // Copy into the last section header
+    memcpy_s(curSectionHeader, sizeof(SElf64SectionHeader),
+             &stringSectionHeader, sizeof(SElf64SectionHeader));
+
+    // Add to our section number
+    numSections++;
+
+    // patch up the ELF header
+    patchElfHeader(*reinterpret_cast<SElf64Header *>(binary.data()));
 }
 
-/******************************************************************************\
- Member Function: CElfWriter::Create
-\******************************************************************************/
-CElfWriter *CElfWriter::create(
-    E_EH_TYPE type,
-    E_EH_MACHINE machine,
-    Elf64_Xword flags) {
-    CElfWriter *pWriter = new CElfWriter(type, machine, flags);
+void CElfWriter::patchElfHeader(SElf64Header &binary) {
+    // Setup the identity
+    binary.Identity[ELFConstants::idIdxMagic0] = ELFConstants::elfMag0;
+    binary.Identity[ELFConstants::idIdxMagic1] = ELFConstants::elfMag1;
+    binary.Identity[ELFConstants::idIdxMagic2] = ELFConstants::elfMag2;
+    binary.Identity[ELFConstants::idIdxMagic3] = ELFConstants::elfMag3;
+    binary.Identity[ELFConstants::idIdxClass] = static_cast<uint32_t>(E_EH_CLASS::EH_CLASS_64);
+    binary.Identity[ELFConstants::idIdxVersion] = static_cast<uint32_t>(E_EHT_VERSION::EH_VERSION_CURRENT);
 
-    if (!pWriter->initialize()) {
-        destroy(pWriter);
-    }
-
-    return pWriter;
+    // Add other non-zero info
+    binary.Type = type;
+    binary.Machine = machine;
+    binary.Flags = static_cast<uint32_t>(flag);
+    binary.ElfHeaderSize = static_cast<uint32_t>(sizeof(SElf64Header));
+    binary.SectionHeaderEntrySize = static_cast<uint32_t>(sizeof(SElf64SectionHeader));
+    binary.NumSectionHeaderEntries = numSections;
+    binary.SectionHeadersOffset = static_cast<uint32_t>(sizeof(SElf64Header));
+    binary.SectionNameTableIndex = numSections - 1; // last index
 }
-
-/******************************************************************************\
- Member Function: CElfWriter::Delete
-\******************************************************************************/
-void CElfWriter::destroy(
-    CElfWriter *&pWriter) {
-    if (pWriter) {
-        delete pWriter;
-        pWriter = nullptr;
-    }
-}
-
-/******************************************************************************\
- Member Function: CElfWriter::AddSection
-\******************************************************************************/
-bool CElfWriter::addSection(
-    SSectionNode *pSectionNode) {
-    bool retVal = true;
-    SSectionNode *pNode = nullptr;
-    size_t nameSize = 0;
-    unsigned int dataSize = 0;
-
-    // The section header must be non-NULL
-    if (pSectionNode) {
-        pNode = new SSectionNode();
-        if (!pNode)
-            return false;
-    } else {
-        return false;
-    }
-
-    pNode->Flags = pSectionNode->Flags;
-    pNode->Type = pSectionNode->Type;
-
-    nameSize = pSectionNode->Name.size() + 1;
-    dataSize = pSectionNode->DataSize;
-
-    pNode->Name = pSectionNode->Name;
-
-    // ok to have NULL data
-    if (dataSize > 0) {
-        pNode->pData = new char[dataSize];
-        if (pNode->pData) {
-            memcpy_s(pNode->pData, dataSize, pSectionNode->pData, dataSize);
-            pNode->DataSize = dataSize;
-        } else {
-            retVal = false;
-        }
-    }
-
-    if (retVal) {
-        // push the node onto the queue
-        m_nodeQueue.push(pNode);
-
-        // increment the sizes for each section
-        m_dataSize += dataSize;
-        m_stringTableSize += nameSize;
-        m_numSections++;
-    } else {
-        delete pNode;
-        pNode = nullptr;
-    }
-
-    return retVal;
-}
-
-/******************************************************************************\
- Member Function: CElfWriter::ResolveBinary
-\******************************************************************************/
-bool CElfWriter::resolveBinary(
-    char *const pBinary,
-    size_t &binarySize) {
-    bool retVal = true;
-    SSectionNode *pNode = nullptr;
-    SElf64SectionHeader *pCurSectionHeader = nullptr;
-    char *pData = nullptr;
-    char *pStringTable = nullptr;
-    char *pCurString = nullptr;
-
-    m_totalBinarySize =
-        sizeof(SElf64Header) +
-        ((m_numSections + 1) * sizeof(SElf64SectionHeader)) + // +1 to account for string table entry
-        m_dataSize +
-        m_stringTableSize;
-
-    if (pBinary) {
-        // get a pointer to the first section header
-        pCurSectionHeader = reinterpret_cast<SElf64SectionHeader *>(pBinary + sizeof(SElf64Header));
-
-        // get a pointer to the data
-        pData = pBinary +
-                sizeof(SElf64Header) +
-                ((m_numSections + 1) * sizeof(SElf64SectionHeader)); // +1 to account for string table entry
-
-        // get a pointer to the string table
-        pStringTable = pBinary + sizeof(SElf64Header) +
-                       ((m_numSections + 1) * sizeof(SElf64SectionHeader)) + // +1 to account for string table entry
-                       m_dataSize;
-
-        pCurString = pStringTable;
-
-        // Walk through the section nodes
-        while (m_nodeQueue.empty() == false) {
-            pNode = m_nodeQueue.front();
-
-            if (pNode) {
-                m_nodeQueue.pop();
-
-                // Copy data into the section header
-                memset(pCurSectionHeader, 0, sizeof(SElf64SectionHeader));
-                pCurSectionHeader->Type = pNode->Type;
-                pCurSectionHeader->Flags = pNode->Flags;
-                pCurSectionHeader->DataSize = pNode->DataSize;
-                pCurSectionHeader->DataOffset = pData - pBinary;
-                pCurSectionHeader->Name = static_cast<Elf64_Word>(pCurString - pStringTable);
-                pCurSectionHeader = reinterpret_cast<SElf64SectionHeader *>(reinterpret_cast<unsigned char *>(pCurSectionHeader) + sizeof(SElf64SectionHeader));
-
-                // copy the data, move the data pointer
-                memcpy_s(pData, pNode->DataSize, pNode->pData, pNode->DataSize);
-                pData += pNode->DataSize;
-
-                // copy the name into the string table, move the string pointer
-                if (pNode->Name.size() > 0) {
-                    memcpy_s(pCurString, pNode->Name.size(), pNode->Name.c_str(), pNode->Name.size());
-                    pCurString += pNode->Name.size();
-                }
-                *(pCurString++) = '\0'; // NOLINT
-
-                // delete the node and it's data
-                if (pNode->pData) {
-                    delete[] pNode->pData;
-                    pNode->pData = nullptr;
-                }
-
-                delete pNode;
-                pNode = nullptr;
-            }
-        }
-
-        // add the string table section header
-        SElf64SectionHeader stringSectionHeader = {0};
-        stringSectionHeader.Type = E_SH_TYPE::SH_TYPE_STR_TBL;
-        stringSectionHeader.Flags = E_SH_FLAG::SH_FLAG_NONE;
-        stringSectionHeader.DataOffset = pStringTable - pBinary;
-        stringSectionHeader.DataSize = m_stringTableSize;
-        stringSectionHeader.Name = 0;
-
-        // Copy into the last section header
-        memcpy_s(pCurSectionHeader, sizeof(SElf64SectionHeader),
-                 &stringSectionHeader, sizeof(SElf64SectionHeader));
-
-        // Add to our section number
-        m_numSections++;
-
-        // patch up the ELF header
-        retVal = patchElfHeader(pBinary);
-    }
-
-    if (retVal) {
-        binarySize = m_totalBinarySize;
-    }
-
-    return retVal;
-}
-
-/******************************************************************************\
- Member Function: CElfWriter::Initialize
-\******************************************************************************/
-bool CElfWriter::initialize() {
-    SSectionNode emptySection;
-
-    // Add an empty section 0 (points to "no-bits")
-    return addSection(&emptySection);
-}
-
-/******************************************************************************\
- Member Function: CElfWriter::PatchElfHeader
-\******************************************************************************/
-bool CElfWriter::patchElfHeader(char *const pBinary) {
-    SElf64Header *pElfHeader = reinterpret_cast<SElf64Header *>(pBinary);
-
-    if (pElfHeader) {
-        // Setup the identity
-        memset(pElfHeader, 0x00, sizeof(SElf64Header));
-        pElfHeader->Identity[ELFConstants::idIdxMagic0] = ELFConstants::elfMag0;
-        pElfHeader->Identity[ELFConstants::idIdxMagic1] = ELFConstants::elfMag1;
-        pElfHeader->Identity[ELFConstants::idIdxMagic2] = ELFConstants::elfMag2;
-        pElfHeader->Identity[ELFConstants::idIdxMagic3] = ELFConstants::elfMag3;
-        pElfHeader->Identity[ELFConstants::idIdxClass] = static_cast<uint32_t>(E_EH_CLASS::EH_CLASS_64);
-        pElfHeader->Identity[ELFConstants::idIdxVersion] = static_cast<uint32_t>(E_EHT_VERSION::EH_VERSION_CURRENT);
-
-        // Add other non-zero info
-        pElfHeader->Type = m_type;
-        pElfHeader->Machine = m_machine;
-        pElfHeader->Flags = static_cast<uint32_t>(m_flags);
-        pElfHeader->ElfHeaderSize = static_cast<uint32_t>(sizeof(SElf64Header));
-        pElfHeader->SectionHeaderEntrySize = static_cast<uint32_t>(sizeof(SElf64SectionHeader));
-        pElfHeader->NumSectionHeaderEntries = m_numSections;
-        pElfHeader->SectionHeadersOffset = static_cast<uint32_t>(sizeof(SElf64Header));
-        pElfHeader->SectionNameTableIndex = m_numSections - 1; // last index
-
-        return true;
-    }
-
-    return false;
-}
-
 } // namespace CLElfLib

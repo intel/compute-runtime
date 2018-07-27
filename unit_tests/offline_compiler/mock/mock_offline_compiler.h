@@ -93,7 +93,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     }
 
     char *getElfBinary() {
-        return elfBinary;
+        return elfBinary.data();
     }
 
     size_t getElfBinarySize() {

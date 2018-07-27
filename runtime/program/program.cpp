@@ -47,7 +47,6 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
     blockKernelManager = new BlockKernelManager();
     pDevice = context ? context->getDevice(0) : nullptr;
     numDevices = 1;
-    elfBinary = nullptr;
     elfBinarySize = 0;
     genBinary = nullptr;
     genBinarySize = 0;
@@ -115,8 +114,6 @@ Program::~Program() {
     delete[] debugData;
     debugData = nullptr;
 
-    delete[] elfBinary;
-    elfBinary = nullptr;
     elfBinarySize = 0;
 
     cleanCurrentKernelInfo();
@@ -170,8 +167,6 @@ cl_int Program::createProgramFromBinary(
 cl_int Program::rebuildProgramFromIr() {
     cl_int retVal = CL_SUCCESS;
     size_t dataSize;
-    char *pData = nullptr;
-    CLElfLib::CElfWriter *pElfWriter = nullptr;
 
     do {
         if (!Program::isValidLlvmBinary(irBinary, irBinarySize)) {
@@ -182,20 +177,14 @@ cl_int Program::rebuildProgramFromIr() {
             isSpirV = true;
         }
 
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
-        UNRECOVERABLE_IF(pElfWriter == nullptr);
+        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
-        CLElfLib::SSectionNode sectionNode;
-        sectionNode.Name = "";
-        sectionNode.Type = isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
-        sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
-        sectionNode.pData = irBinary;
-        sectionNode.DataSize = static_cast<unsigned int>(irBinarySize);
-        pElfWriter->addSection(&sectionNode);
+        elfWriter.addSection(CLElfLib::SSectionNode(isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY,
+                                                    CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "", std::string(irBinary, irBinarySize), static_cast<uint32_t>(irBinarySize)));
 
-        pElfWriter->resolveBinary(nullptr, dataSize);
-        pData = new char[dataSize];
-        pElfWriter->resolveBinary(pData, dataSize);
+        dataSize = elfWriter.getTotalBinarySize();
+        CLElfLib::ElfBinaryStorage data(dataSize);
+        elfWriter.resolveBinary(data);
 
         CompilerInterface *pCompilerInterface = getCompilerInterface();
         if (nullptr == pCompilerInterface) {
@@ -204,12 +193,12 @@ cl_int Program::rebuildProgramFromIr() {
         }
 
         TranslationArgs inputArgs = {};
-        inputArgs.pInput = pData;
-        inputArgs.InputSize = static_cast<unsigned int>(dataSize);
+        inputArgs.pInput = data.data();
+        inputArgs.InputSize = static_cast<uint32_t>(dataSize);
         inputArgs.pOptions = options.c_str();
-        inputArgs.OptionsSize = static_cast<unsigned int>(options.length());
+        inputArgs.OptionsSize = static_cast<uint32_t>(options.length());
         inputArgs.pInternalOptions = internalOptions.c_str();
-        inputArgs.InternalOptionsSize = static_cast<unsigned int>(internalOptions.length());
+        inputArgs.InternalOptionsSize = static_cast<uint32_t>(internalOptions.length());
         inputArgs.pTracingOptions = nullptr;
         inputArgs.TracingOptionsCount = 0;
 
@@ -227,9 +216,6 @@ cl_int Program::rebuildProgramFromIr() {
         isCreatedFromBinary = true;
         isProgramBinaryResolved = true;
     } while (false);
-
-    CLElfLib::CElfWriter::destroy(pElfWriter);
-    delete[] pData;
 
     return retVal;
 }
@@ -269,6 +255,16 @@ cl_int Program::getSource(char *&pBinary, unsigned int &dataSize) const {
     if (!sourceCode.empty()) {
         pBinary = (char *)(sourceCode.c_str());
         dataSize = (unsigned int)(sourceCode.size());
+        retVal = CL_SUCCESS;
+    }
+    return retVal;
+}
+
+cl_int Program::getSource(std::string &binary) const {
+    cl_int retVal = CL_INVALID_PROGRAM;
+    binary = {};
+    if (!sourceCode.empty()) {
+        binary = sourceCode;
         retVal = CL_SUCCESS;
     }
     return retVal;

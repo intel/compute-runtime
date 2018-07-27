@@ -24,6 +24,7 @@
 #include "cif/common/cif_main.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
+#include "elf/writer.h"
 #include <cstdint>
 #include <string>
 #include <memory>
@@ -104,7 +105,7 @@ class OfflineCompiler {
     bool inputFileLlvm = false;
     bool inputFileSpirV = false;
 
-    char *elfBinary = nullptr;
+    CLElfLib::ElfBinaryStorage elfBinary;
     size_t elfBinarySize = 0;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;

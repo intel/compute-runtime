@@ -39,17 +39,6 @@ struct ElfTests : public MemoryManagementFixture,
     }
 };
 
-TEST_F(ElfTests, Create_Delete_Writer_Simple) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    EXPECT_NE((CElfWriter *)NULL, pWriter);
-
-    CElfWriter::destroy(pWriter);
-    EXPECT_EQ((CElfWriter *)NULL, pWriter);
-}
-
 TEST_F(ElfTests, Create_Reader_NULL_Binary) {
     char *pBinary = NULL;
     CElfReader *pReader = CElfReader::create(pBinary, 1);
@@ -68,130 +57,75 @@ TEST_F(ElfTests, Create_Reader_Garbage_Binary) {
     delete[] pBinary;
 }
 
-TEST_F(ElfTests, Create_Delete_Reader_Writer_NoCheck) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    EXPECT_NE((CElfWriter *)NULL, pWriter);
-
-    size_t dataSize;
-    pWriter->resolveBinary(NULL, dataSize);
-
-    char *pBinary = new char[dataSize];
-    if (pBinary) {
-        pWriter->resolveBinary(pBinary, dataSize);
-    }
-
-    CElfReader *pReader = CElfReader::create(pBinary, dataSize);
-    ASSERT_NE(nullptr, pReader);
-    EXPECT_NE(nullptr, pReader->getElfHeader());
-
-    CElfReader::destroy(pReader);
-    EXPECT_EQ((CElfReader *)NULL, pReader);
-
-    CElfWriter::destroy(pWriter);
-    EXPECT_EQ((CElfWriter *)NULL, pWriter);
-
-    delete[] pBinary;
-}
-
-TEST_F(ElfTests, givenNullptrWriterWhenDestroyThenDontCrash) {
-    CElfWriter *ptr = nullptr;
-    CElfWriter::destroy(ptr);
-}
-
-TEST_F(ElfTests, givenElfWriterWhenNullptrThenFalseIsReturned) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    ASSERT_NE(nullptr, pWriter);
-
-    auto ret = pWriter->addSection(nullptr);
-    EXPECT_FALSE(ret);
-
-    CElfWriter::destroy(pWriter);
-}
-
-TEST_F(ElfTests, givenElfWriterWhenSectionAndFailuresThenFalseIsReturned) {
-    InjectedFunction method = [](size_t failureIndex) {
-        CElfWriter *pWriter = CElfWriter::create(
-            E_EH_TYPE::EH_TYPE_EXECUTABLE,
-            E_EH_MACHINE::EH_MACHINE_NONE,
-            0);
-        if (nonfailingAllocation == failureIndex) {
-            ASSERT_NE(nullptr, pWriter);
-        }
-
-        if (pWriter != nullptr) {
-            char sectionData[16];
-            memset(sectionData, 0xdeadbeef, 4);
-
-            SSectionNode sectionNode;
-            sectionNode.DataSize = 16;
-            sectionNode.pData = sectionData;
-            sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
-            sectionNode.Name = "Steve";
-            sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
-
-            auto ret = pWriter->addSection(&sectionNode);
-            if (nonfailingAllocation == failureIndex) {
-                EXPECT_TRUE(ret);
-            } else {
-                EXPECT_FALSE(ret);
-            }
-
-            CElfWriter::destroy(pWriter);
-        }
+TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionIsAdded) {
+    class MockElfWriter : public CElfWriter {
+      public:
+        MockElfWriter() : CElfWriter(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0) {}
+        using CElfWriter::nodeQueue;
     };
-    injectFailures(method);
+
+    MockElfWriter writer;
+    std::string data{"data pattern"};
+
+    writer.addSection(SSectionNode(E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, E_SH_FLAG::SH_FLAG_WRITE, "Steve", data, static_cast<uint32_t>(data.size())));
+
+    ASSERT_EQ(2u, writer.nodeQueue.size());
+    // remove first (default) section
+    writer.nodeQueue.pop();
+    EXPECT_EQ(E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, writer.nodeQueue.front().type);
+    EXPECT_EQ(E_SH_FLAG::SH_FLAG_WRITE, writer.nodeQueue.front().flag);
+    EXPECT_EQ("Steve", writer.nodeQueue.front().name);
+    EXPECT_EQ(data, writer.nodeQueue.front().data);
+    EXPECT_EQ(static_cast<uint32_t>(data.size()), writer.nodeQueue.front().dataSize);
 }
 
-TEST_F(ElfTests, givenElfWriterWhenPatchNullptrThenFalseIsReturned) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    ASSERT_NE(nullptr, pWriter);
+TEST_F(ElfTests, givenCElfWriterWhenPatchElfHeaderThenDefaultAreSet) {
+    class MockElfWriter : public CElfWriter {
+      public:
+        MockElfWriter() : CElfWriter(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0) {}
+        using CElfWriter::patchElfHeader;
+    };
 
-    auto ret = pWriter->patchElfHeader(nullptr);
-    EXPECT_FALSE(ret);
+    MockElfWriter writer;
 
-    CElfWriter::destroy(pWriter);
+    SElf64Header elfHeader;
+
+    writer.patchElfHeader(elfHeader);
+
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxMagic0] == ELFConstants::elfMag0);
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxMagic1] == ELFConstants::elfMag1);
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxMagic2] == ELFConstants::elfMag2);
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxMagic3] == ELFConstants::elfMag3);
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxClass] == static_cast<uint32_t>(E_EH_CLASS::EH_CLASS_64));
+    EXPECT_TRUE(elfHeader.Identity[ELFConstants::idIdxVersion] == static_cast<uint32_t>(E_EHT_VERSION::EH_VERSION_CURRENT));
+
+    EXPECT_TRUE(elfHeader.Type == E_EH_TYPE::EH_TYPE_EXECUTABLE);
+    EXPECT_TRUE(elfHeader.Machine == E_EH_MACHINE::EH_MACHINE_NONE);
+    EXPECT_TRUE(elfHeader.Flags == static_cast<uint32_t>(0));
+    EXPECT_TRUE(elfHeader.ElfHeaderSize == static_cast<uint32_t>(sizeof(SElf64Header)));
+    EXPECT_TRUE(elfHeader.SectionHeaderEntrySize == static_cast<uint32_t>(sizeof(SElf64SectionHeader)));
+    EXPECT_TRUE(elfHeader.NumSectionHeaderEntries == 1);
+    EXPECT_TRUE(elfHeader.SectionHeadersOffset == static_cast<uint32_t>(sizeof(SElf64Header)));
+    EXPECT_TRUE(elfHeader.SectionNameTableIndex == 0);
 }
 
-TEST_F(ElfTests, Write_Read_Section_Data_By_Name) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    EXPECT_NE((CElfWriter *)NULL, pWriter);
+TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionCanBeReadByName) {
+    CElfWriter writer(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
     char sectionData[16];
     memset(sectionData, 0xdeadbeef, 4);
 
-    SSectionNode sectionNode;
-    sectionNode.DataSize = 16;
-    sectionNode.pData = sectionData;
-    sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
-    sectionNode.Name = "Steve";
-    sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
+    writer.addSection(SSectionNode(E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, E_SH_FLAG::SH_FLAG_WRITE, "Steve", std::string(sectionData, 16u), 16u));
 
-    pWriter->addSection(&sectionNode);
+    size_t binarySize = writer.getTotalBinarySize();
 
-    size_t binarySize;
-    pWriter->resolveBinary(NULL, binarySize);
+    ElfBinaryStorage binary(binarySize);
+    writer.resolveBinary(binary);
 
-    char *pBinary = new char[binarySize];
-    if (pBinary) {
-        pWriter->resolveBinary(pBinary, binarySize);
-    }
+    CElfReader *pReader = CElfReader::create(binary.data(), binarySize);
+    EXPECT_NE((CElfReader *)nullptr, pReader);
 
-    CElfReader *pReader = CElfReader::create(pBinary, binarySize);
-    EXPECT_NE((CElfReader *)NULL, pReader);
-
-    char *pData = NULL;
+    char *pData = nullptr;
     size_t dataSize = 0;
     auto retVal = pReader->getSectionData("Steve", pData, dataSize);
 
@@ -202,45 +136,26 @@ TEST_F(ElfTests, Write_Read_Section_Data_By_Name) {
     }
 
     CElfReader::destroy(pReader);
-    EXPECT_EQ((CElfReader *)NULL, pReader);
-
-    CElfWriter::destroy(pWriter);
-    EXPECT_EQ((CElfWriter *)NULL, pWriter);
-
-    delete[] pBinary;
+    EXPECT_EQ((CElfReader *)nullptr, pReader);
 }
 
-TEST_F(ElfTests, Write_Read_Section_Data_By_Index) {
-    CElfWriter *pWriter = CElfWriter::create(
-        E_EH_TYPE::EH_TYPE_EXECUTABLE,
-        E_EH_MACHINE::EH_MACHINE_NONE,
-        0);
-    EXPECT_NE((CElfWriter *)NULL, pWriter);
+TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionCanBeReadByID) {
+    CElfWriter writer(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
     char sectionData[16];
     memset(sectionData, 0xdeadbeef, 4);
 
-    SSectionNode sectionNode;
-    sectionNode.DataSize = 16;
-    sectionNode.pData = sectionData;
-    sectionNode.Flags = E_SH_FLAG::SH_FLAG_WRITE;
-    sectionNode.Name = "";
-    sectionNode.Type = E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
+    writer.addSection(SSectionNode(E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, E_SH_FLAG::SH_FLAG_WRITE, "", std::string(sectionData, 16u), 16u));
 
-    pWriter->addSection(&sectionNode);
+    size_t binarySize = writer.getTotalBinarySize();
 
-    size_t binarySize;
-    pWriter->resolveBinary(NULL, binarySize);
+    ElfBinaryStorage binary(binarySize);
+    writer.resolveBinary(binary);
 
-    char *pBinary = new char[binarySize];
-    if (pBinary) {
-        pWriter->resolveBinary(pBinary, binarySize);
-    }
+    CElfReader *pReader = CElfReader::create(binary.data(), binarySize);
+    EXPECT_NE((CElfReader *)nullptr, pReader);
 
-    CElfReader *pReader = CElfReader::create(pBinary, binarySize);
-    EXPECT_NE((CElfReader *)NULL, pReader);
-
-    char *pData = NULL;
+    char *pData = nullptr;
     size_t dataSize = 0;
     auto retVal = pReader->getSectionData(1, pData, dataSize);
 
@@ -251,10 +166,5 @@ TEST_F(ElfTests, Write_Read_Section_Data_By_Index) {
     }
 
     CElfReader::destroy(pReader);
-    EXPECT_EQ((CElfReader *)NULL, pReader);
-
-    CElfWriter::destroy(pWriter);
-    EXPECT_EQ((CElfWriter *)NULL, pWriter);
-
-    delete[] pBinary;
+    EXPECT_EQ((CElfReader *)nullptr, pReader);
 }

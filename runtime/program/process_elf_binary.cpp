@@ -45,13 +45,8 @@ cl_int Program::processElfBinary(
     }
 
     if (retVal == CL_SUCCESS) {
-        delete[] elfBinary;
-        elfBinarySize = 0;
-
-        elfBinary = new char[binarySize];
-
         elfBinarySize = binarySize;
-        memcpy_s(elfBinary, elfBinarySize, pBinary, binarySize);
+        elfBinary = CLElfLib::ElfBinaryStorage(reinterpret_cast<const char *>(pBinary), reinterpret_cast<const char *>(reinterpret_cast<const char *>(pBinary) + binarySize));
     }
 
     if (retVal == CL_SUCCESS) {
@@ -148,13 +143,10 @@ cl_int Program::processElfBinary(
 }
 
 cl_int Program::resolveProgramBinary() {
-    cl_int retVal = CL_SUCCESS;
     CLElfLib::E_EH_TYPE headerType;
-    CLElfLib::CElfWriter *pElfWriter = nullptr;
 
     if (isProgramBinaryResolved == false) {
-        delete[] elfBinary;
-        elfBinary = nullptr;
+        elfBinary.clear();
         elfBinarySize = 0;
 
         switch (programBinaryType) {
@@ -162,7 +154,7 @@ cl_int Program::resolveProgramBinary() {
             headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE;
 
             if (!genBinary || !genBinarySize) {
-                retVal = CL_INVALID_BINARY;
+                return CL_INVALID_BINARY;
             }
             break;
 
@@ -170,7 +162,7 @@ cl_int Program::resolveProgramBinary() {
             headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY;
 
             if (!irBinary || !irBinarySize) {
-                retVal = CL_INVALID_BINARY;
+                return CL_INVALID_BINARY;
             }
             break;
 
@@ -178,89 +170,40 @@ cl_int Program::resolveProgramBinary() {
             headerType = CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_OBJECTS;
 
             if (!irBinary || !irBinarySize) {
-                retVal = CL_INVALID_BINARY;
+                return CL_INVALID_BINARY;
             }
             break;
 
         default:
-            retVal = CL_INVALID_BINARY;
+            return CL_INVALID_BINARY;
         }
 
-        if (retVal == CL_SUCCESS) {
-            pElfWriter = CLElfLib::CElfWriter::create(headerType, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+        CLElfLib::CElfWriter elfWriter(headerType, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
-            if (pElfWriter) {
-                CLElfLib::SSectionNode sectionNode;
-
-                // Always add the options string
-                sectionNode.Name = "BuildOptions";
-                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS;
-                sectionNode.pData = (char *)options.c_str();
-                sectionNode.DataSize = (uint32_t)(strlen(options.c_str()) + 1);
-
-                auto elfRetVal = pElfWriter->addSection(&sectionNode);
-
-                if (elfRetVal) {
-                    // Add the LLVM component if available
-                    if (getIsSpirV()) {
-                        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV;
-                    } else {
-                        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
-                    }
-                    if (headerType == CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY) {
-                        sectionNode.Name = "Intel(R) OpenCL LLVM Archive";
-                        sectionNode.pData = (char *)irBinary;
-                        sectionNode.DataSize = (uint32_t)irBinarySize;
-                        elfRetVal = pElfWriter->addSection(&sectionNode);
-                    } else {
-                        sectionNode.Name = "Intel(R) OpenCL LLVM Object";
-                        sectionNode.pData = (char *)irBinary;
-                        sectionNode.DataSize = (uint32_t)irBinarySize;
-                        elfRetVal = pElfWriter->addSection(&sectionNode);
-                    }
-                }
-
-                // Add the device binary if it exists
-                if (elfRetVal && genBinary) {
-                    sectionNode.Name = "Intel(R) OpenCL Device Binary";
-                    sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY;
-                    sectionNode.pData = (char *)genBinary;
-                    sectionNode.DataSize = (uint32_t)genBinarySize;
-
-                    elfRetVal = pElfWriter->addSection(&sectionNode);
-                }
-
-                // Add the device debug data if it exists
-                if (elfRetVal && (debugData != nullptr)) {
-                    sectionNode.Name = "Intel(R) OpenCL Device Debug";
-                    sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_DEBUG;
-                    sectionNode.pData = debugData;
-                    sectionNode.DataSize = (uint32_t)debugDataSize;
-                    elfRetVal = pElfWriter->addSection(&sectionNode);
-                }
-
-                if (elfRetVal) {
-                    elfRetVal = pElfWriter->resolveBinary(elfBinary, elfBinarySize);
-                }
-
-                if (elfRetVal) {
-                    elfBinary = new char[elfBinarySize];
-
-                    elfRetVal = pElfWriter->resolveBinary(elfBinary, elfBinarySize);
-                }
-
-                if (elfRetVal) {
-                    isProgramBinaryResolved = true;
-                } else {
-                    retVal = CL_INVALID_BINARY;
-                }
-            } else {
-                retVal = CL_OUT_OF_HOST_MEMORY;
-            }
-
-            CLElfLib::CElfWriter::destroy(pElfWriter);
+        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "BuildOptions", options, static_cast<uint32_t>(strlen(options.c_str()) + 1u)));
+        std::string irBinaryTemp = irBinary ? std::string(irBinary, irBinarySize) : "";
+        // Add the LLVM component if available
+        elfWriter.addSection(CLElfLib::SSectionNode(getIsSpirV() ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE,
+                                                    headerType == CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY ? "Intel(R) OpenCL LLVM Archive" : "Intel(R) OpenCL LLVM Object", std::move(irBinaryTemp), static_cast<uint32_t>(irBinarySize)));
+        // Add the device binary if it exists
+        if (genBinary) {
+            std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
+            elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
         }
+
+        // Add the device debug data if it exists
+        if (debugData != nullptr) {
+            std::string debugDataTemp = debugData ? std::string(debugData, debugDataSize) : "";
+            elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_DEBUG, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Debug", std::move(debugDataTemp), static_cast<uint32_t>(debugDataSize)));
+        }
+
+        elfBinarySize = elfWriter.getTotalBinarySize();
+        elfBinary = CLElfLib::ElfBinaryStorage(elfBinarySize);
+        elfWriter.resolveBinary(elfBinary);
+        isProgramBinaryResolved = true;
+    } else {
+        return CL_OUT_OF_HOST_MEMORY;
     }
-    return retVal;
+    return CL_SUCCESS;
 }
 } // namespace OCLRT

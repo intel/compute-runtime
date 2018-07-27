@@ -42,10 +42,8 @@ cl_int Program::compile(
     void *userData) {
     cl_int retVal = CL_SUCCESS;
     cl_program program;
-    CLElfLib::CElfWriter *pElfWriter = nullptr;
     Program *pHeaderProgObj;
     size_t compileDataSize;
-    char *pCompileData = nullptr;
 
     do {
         if (((deviceList == nullptr) && (numDevices != 0)) ||
@@ -98,20 +96,12 @@ cl_int Program::compile(
         }
 
         // create ELF writer to process all sources to be compiled
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_SOURCE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
-        UNRECOVERABLE_IF(pElfWriter == nullptr);
+        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_SOURCE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
-        CLElfLib::SSectionNode sectionNode;
-
-        // create main section
-        sectionNode.Name = "CLMain";
-        sectionNode.pData = (char *)sourceCode.c_str();
-        sectionNode.DataSize = (unsigned int)(strlen(sourceCode.c_str()) + 1);
-        sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
-        sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_SOURCE;
+        CLElfLib::SSectionNode sectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "CLMain", sourceCode, static_cast<uint32_t>(sourceCode.size() + 1u));
 
         // add main program's source
-        pElfWriter->addSection(&sectionNode);
+        elfWriter.addSection(sectionNode);
 
         for (cl_uint i = 0; i < numInputHeaders; i++) {
             program = inputHeaders[i];
@@ -124,23 +114,25 @@ cl_int Program::compile(
                 retVal = CL_INVALID_PROGRAM;
                 break;
             }
-            sectionNode.Name = headerIncludeNames[i];
-            sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_HEADER;
-            sectionNode.Flags = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
+            sectionNode.name = headerIncludeNames[i];
+            sectionNode.type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_HEADER;
+            sectionNode.flag = CLElfLib::E_SH_FLAG::SH_FLAG_NONE;
             // collect required data from the header
-            retVal = pHeaderProgObj->getSource(sectionNode.pData, sectionNode.DataSize);
+            retVal = pHeaderProgObj->getSource(sectionNode.data);
             if (retVal != CL_SUCCESS) {
                 break;
             }
-            pElfWriter->addSection(&sectionNode);
+
+            sectionNode.dataSize = static_cast<uint32_t>(sectionNode.data.size());
+            elfWriter.addSection(sectionNode);
         }
         if (retVal != CL_SUCCESS) {
             break;
         }
 
-        pElfWriter->resolveBinary(nullptr, compileDataSize);
-        pCompileData = new char[compileDataSize];
-        pElfWriter->resolveBinary(pCompileData, compileDataSize);
+        compileDataSize = elfWriter.getTotalBinarySize();
+        std::vector<char> compileData(compileDataSize);
+        elfWriter.resolveBinary(compileData);
 
         CompilerInterface *pCompilerInterface = getCompilerInterface();
         if (!pCompilerInterface) {
@@ -168,12 +160,12 @@ cl_int Program::compile(
             }
         }
 
-        inputArgs.pInput = pCompileData;
-        inputArgs.InputSize = (uint32_t)compileDataSize;
+        inputArgs.pInput = compileData.data();
+        inputArgs.InputSize = static_cast<uint32_t>(compileDataSize);
         inputArgs.pOptions = options.c_str();
-        inputArgs.OptionsSize = (uint32_t)options.length();
+        inputArgs.OptionsSize = static_cast<uint32_t>(options.length());
         inputArgs.pInternalOptions = internalOptions.c_str();
-        inputArgs.InternalOptionsSize = (uint32_t)internalOptions.length();
+        inputArgs.InternalOptionsSize = static_cast<uint32_t>(internalOptions.length());
         inputArgs.pTracingOptions = nullptr;
         inputArgs.TracingOptionsCount = 0;
 
@@ -192,8 +184,6 @@ cl_int Program::compile(
         programBinaryType = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
     }
 
-    CLElfLib::CElfWriter::destroy(pElfWriter);
-    delete[] pCompileData;
     internalOptions.clear();
 
     if (funcNotify != nullptr) {

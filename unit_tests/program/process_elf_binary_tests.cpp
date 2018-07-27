@@ -38,7 +38,7 @@ TEST_F(ProcessElfBinaryTests, NullBinary) {
     cl_int retVal = processElfBinary(nullptr, 0, binaryVersion);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_EQ(nullptr, elfBinary);
+    EXPECT_TRUE(elfBinary.empty());
     EXPECT_EQ(0u, elfBinarySize);
     EXPECT_NE(0u, binaryVersion);
 }
@@ -50,7 +50,7 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_EQ(nullptr, elfBinary);
+    EXPECT_TRUE(elfBinary.empty());
     EXPECT_EQ(0u, elfBinarySize);
     EXPECT_NE(0u, binaryVersion);
 }
@@ -65,7 +65,7 @@ TEST_F(ProcessElfBinaryTests, ValidBinary) {
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, elfBinary, binarySize));
+    EXPECT_EQ(0, memcmp(pBinary, elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
     deleteDataReadFromFile(pBinary);
 }
@@ -87,17 +87,17 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     //clGetProgramInfo => SPIR-V stored as ELF binary
     cl_int retVal = resolveProgramBinary();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, elfBinary);
+    EXPECT_FALSE(elfBinary.empty());
     EXPECT_NE(0u, elfBinarySize);
 
     //use ELF reader to parse and validate ELF binary
     CLElfLib::CElfReader *pElfReader = CLElfLib::CElfReader::create(
-        reinterpret_cast<const char *>(elfBinary), elfBinarySize);
+        reinterpret_cast<const char *>(elfBinary.data()), elfBinarySize);
     ASSERT_NE(nullptr, pElfReader);
     const CLElfLib::SElf64Header *pElfHeader = pElfReader->getElfHeader();
     ASSERT_NE(nullptr, pElfHeader);
     EXPECT_EQ(pElfHeader->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY);
-    EXPECT_TRUE(CLElfLib::CElfReader::isValidElf64(elfBinary, elfBinarySize));
+    EXPECT_TRUE(CLElfLib::CElfReader::isValidElf64(elfBinary.data(), elfBinarySize));
 
     //check if ELF binary contains section SH_TYPE_SPIRV
     bool hasSpirvSection = false;
@@ -115,7 +115,7 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     isSpirV = false;
     uint32_t elfBinaryVersion;
     auto pElfBinary = std::unique_ptr<char>(new char[elfBinarySize]);
-    memcpy_s(pElfBinary.get(), elfBinarySize, elfBinary, elfBinarySize);
+    memcpy_s(pElfBinary.get(), elfBinarySize, elfBinary.data(), elfBinarySize);
     retVal = processElfBinary(pElfBinary.get(), elfBinarySize, elfBinaryVersion);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(isSpirV);
@@ -151,7 +151,7 @@ TEST_P(ProcessElfBinaryTestsWithBinaryType, GivenBinaryTypeWhenResolveProgramThe
     memcpy_s(pTmpOptions, optionsSize, options.c_str(), optionsSize);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, elfBinary, binarySize));
+    EXPECT_EQ(0, memcmp(pBinary, elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
 
     // delete program's elf reference to force a resolve
@@ -184,7 +184,7 @@ TEST_F(ProcessElfBinaryTests, BackToBack) {
     cl_int retVal = processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, elfBinary, binarySize));
+    EXPECT_EQ(0, memcmp(pBinary, elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
     deleteDataReadFromFile(pBinary);
 
@@ -195,7 +195,7 @@ TEST_F(ProcessElfBinaryTests, BackToBack) {
     retVal = processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, memcmp(pBinary, elfBinary, binarySize));
+    EXPECT_EQ(0, memcmp(pBinary, elfBinary.data(), binarySize));
     EXPECT_NE(0u, binaryVersion);
     deleteDataReadFromFile(pBinary);
 }

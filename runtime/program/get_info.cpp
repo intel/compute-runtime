@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -48,7 +48,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
 
     case CL_PROGRAM_BINARIES:
         resolveProgramBinary();
-        pSrc = elfBinary;
+        pSrc = elfBinary.data();
         retSize = sizeof(void **);
         srcSize = elfBinarySize;
         if (paramValue != nullptr) {

@@ -98,7 +98,6 @@ OfflineCompiler::OfflineCompiler() = default;
 OfflineCompiler::~OfflineCompiler() {
     delete[] irBinary;
     delete[] genBinary;
-    delete[] elfBinary;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -613,7 +612,7 @@ std::string getDevicesTypes() {
         prefixes.push_back(hardwarePrefix[j]);
     }
 
-    ostringstream os;
+    std::ostringstream os;
     for (auto it = prefixes.begin(); it != prefixes.end(); it++) {
         if (it != prefixes.begin())
             os << ",";
@@ -675,60 +674,27 @@ void OfflineCompiler::storeBinary(
 ////////////////////////////////////////////////////////////////////////////////
 bool OfflineCompiler::generateElfBinary() {
     bool retVal = true;
-    CLElfLib::CElfWriter *pElfWriter = nullptr;
 
     if (!genBinary || !genBinarySize) {
         retVal = false;
     }
 
     if (retVal) {
-        pElfWriter = CLElfLib::CElfWriter::create(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+        CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
-        if (pElfWriter) {
-            CLElfLib::SSectionNode sectionNode;
+        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "BuildOptions", options, static_cast<uint32_t>(strlen(options.c_str()) + 1u)));
+        std::string irBinaryTemp = irBinary ? std::string(irBinary, irBinarySize) : "";
+        elfWriter.addSection(CLElfLib::SSectionNode(isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL LLVM Object", std::move(irBinaryTemp), static_cast<uint32_t>(irBinarySize)));
 
-            // Always add the options string
-            sectionNode.Name = "BuildOptions";
-            sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS;
-            sectionNode.pData = (char *)options.c_str();
-            sectionNode.DataSize = (uint32_t)(strlen(options.c_str()) + 1);
-
-            retVal = pElfWriter->addSection(&sectionNode);
-
-            if (retVal) {
-                sectionNode.Name = "Intel(R) OpenCL LLVM Object";
-                sectionNode.Type = isSpirV ? CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV : CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY;
-                sectionNode.pData = irBinary;
-                sectionNode.DataSize = (uint32_t)irBinarySize;
-                retVal = pElfWriter->addSection(&sectionNode);
-            }
-
-            // Add the device binary if it exists
-            if (retVal && genBinary) {
-                sectionNode.Name = "Intel(R) OpenCL Device Binary";
-                sectionNode.Type = CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY;
-                sectionNode.pData = genBinary;
-                sectionNode.DataSize = (uint32_t)genBinarySize;
-
-                retVal = pElfWriter->addSection(&sectionNode);
-            }
-
-            if (retVal) {
-                // get the size
-                retVal = pElfWriter->resolveBinary(elfBinary, elfBinarySize);
-            }
-
-            if (retVal) {
-                // allocate the binary
-                elfBinary = new char[elfBinarySize];
-
-                retVal = pElfWriter->resolveBinary(elfBinary, elfBinarySize);
-            }
-        } else {
-            retVal = false;
+        // Add the device binary if it exists
+        if (genBinary) {
+            std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
+            elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
         }
 
-        CLElfLib::CElfWriter::destroy(pElfWriter);
+        elfBinarySize = elfWriter.getTotalBinarySize();
+        elfBinary.resize(elfBinarySize);
+        elfWriter.resolveBinary(elfBinary);
     }
 
     return retVal;
@@ -787,12 +753,12 @@ void OfflineCompiler::writeOutAllFiles() {
         }
     }
 
-    if (elfBinary) {
+    if (!elfBinary.empty()) {
         std::string elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
 
         writeDataToFile(
             elfOutputFile.c_str(),
-            elfBinary,
+            elfBinary.data(),
             elfBinarySize);
     }
 
