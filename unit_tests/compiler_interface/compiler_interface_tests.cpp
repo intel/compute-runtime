@@ -369,15 +369,20 @@ TEST_F(CompilerInterfaceTest, LinkIrLinkFailure) {
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, LinkIr) {
+TEST_F(CompilerInterfaceTest, WhenLinkIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
     // link only from .ll to gen ISA
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
     gEnvironment->igcPushDebugVars(igcDebugVars);
     retVal = pCompilerInterface->link(*pProgram, inputArgs);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
     gEnvironment->igcPopDebugVars();
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(2U, pCompilerInterface->requestedTranslationCtxs.size());
+
+    MockCompilerInterface::TranslationOpT firstTranslation = {IGC::CodeType::elf, IGC::CodeType::llvmBc},
+                                          secondTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+    EXPECT_EQ(firstTranslation, pCompilerInterface->requestedTranslationCtxs[0]);
+    EXPECT_EQ(secondTranslation, pCompilerInterface->requestedTranslationCtxs[1]);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenLinkFailsGracefully) {
@@ -429,15 +434,17 @@ TEST_F(CompilerInterfaceTest, CreateLibFailure) {
     gEnvironment->igcPopDebugVars();
 }
 
-TEST_F(CompilerInterfaceTest, CreateLib) {
+TEST_F(CompilerInterfaceTest, WhenCreateLibraryIsCalledThenLlvmBcIsUsedAsIntermediateRepresentation) {
     // create library from .ll to IR
     MockCompilerDebugVars igcDebugVars;
     igcDebugVars.fileName = clFiles + "copybuffer.ll";
     gEnvironment->igcPushDebugVars(igcDebugVars);
     retVal = pCompilerInterface->createLibrary(*pProgram, inputArgs);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
     gEnvironment->igcPopDebugVars();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(1U, pCompilerInterface->requestedTranslationCtxs.size());
+
+    EXPECT_EQ(IGC::CodeType::llvmBc, pCompilerInterface->requestedTranslationCtxs[0].second);
 }
 
 TEST_F(CompilerInterfaceTest, whenCompilerIsNotAvailableThenCreateLibraryFailsGracefully) {

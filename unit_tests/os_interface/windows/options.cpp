@@ -29,8 +29,8 @@ namespace Os {
 // These options determine the Windows specific behavior for
 // the runtime unit tests
 ///////////////////////////////////////////////////////////////////////////////
-const char *frontEndDllName = "mock_igdfcl.dll";
-const char *igcDllName = "mock_igc.dll";
+const char *frontEndDllName = "";
+const char *igcDllName = "";
 const char *gdiDllName = "gdi32_mock.dll";
 const char *gmmDllName = "mock_gmm.dll";
 const char *gmmEntryName = "openMockGmm";

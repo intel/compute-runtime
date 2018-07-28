@@ -251,8 +251,7 @@ cl_int CompilerInterface::link(
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> currOut;
         inSrc->Retain(); // shared with currSrc
         CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> currSrc(inSrc.get());
-        auto intermediateRepresentation = getPreferredIntermediateRepresentation(device);
-        IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, intermediateRepresentation, IGC::CodeType::oclGenBin};
+        IGC::CodeType::CodeType_t translationChain[] = {IGC::CodeType::elf, IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
         constexpr size_t numTranslations = sizeof(translationChain) / sizeof(translationChain[0]);
         for (size_t ti = 1; ti < numTranslations; ti++) {
             IGC::CodeType::CodeType_t inType = translationChain[ti - 1];
@@ -297,7 +296,7 @@ cl_int CompilerInterface::createLibrary(
         auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pOptions, inputArgs.OptionsSize);
         auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), inputArgs.pInternalOptions, inputArgs.InternalOptionsSize);
 
-        auto intermediateRepresentation = getPreferredIntermediateRepresentation(device);
+        auto intermediateRepresentation = IGC::CodeType::llvmBc;
         auto igcTranslationCtx = createIgcTranslationCtx(device, IGC::CodeType::elf, intermediateRepresentation);
 
         auto igcOutput = translate(igcTranslationCtx.get(), igcSrc.get(),
