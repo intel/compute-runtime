@@ -34,7 +34,6 @@
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/platform/platform.h"
-#include "runtime/program/program.h"
 #include "runtime/utilities/spinlock.h"
 #include <deque>
 #include <vector>
@@ -45,8 +44,7 @@ namespace OCLRT {
 
 extern gtpin::ocl::gtpin_events_t GTPinCallbacks;
 
-igc_init_t *pIgcInit = nullptr;
-const igc_info_t *pIgcInfo = nullptr;
+igc_init_t *pIgcInfo = nullptr;
 std::atomic<int> sequenceCount(1);
 CommandQueue *pCmdQueueForFlushTask = nullptr;
 std::deque<gtpinkexec_t> kernelExecQueue;
@@ -61,7 +59,7 @@ void gtpinNotifyContextCreate(cl_context context) {
         GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
         gtpinPlatformInfo.gen_version = (gtpin::GTPIN_GEN_VERSION)gtpinHelper.getGenVersion();
         gtpinPlatformInfo.device_id = static_cast<uint32_t>(pDevice->getHardwareInfo().pPlatform->usDeviceID);
-        (*GTPinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInit);
+        (*GTPinCallbacks.onContextCreate)((context_handle_t)context, &gtpinPlatformInfo, &pIgcInfo);
     }
 }
 
@@ -92,8 +90,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         Context *pContext = &(pKernel->getContext());
         cl_context context = (cl_context)pContext;
         auto &kernelInfo = pKernel->getKernelInfo();
-        instrument_params_in_t paramsIn = {};
-
+        instrument_params_in_t paramsIn;
         paramsIn.kernel_type = GTPIN_KERNEL_TYPE_CS;
         paramsIn.simd = (GTPIN_SIMD_WIDTH)kernelInfo.getMaxSimdSize();
         paramsIn.orig_kernel_binary = (uint8_t *)pKernel->getKernelHeap();
@@ -102,9 +99,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         paramsIn.buffer_desc.BTI = static_cast<uint32_t>(gtpinBTI);
         paramsIn.igc_hash_id = kernelInfo.heapInfo.pKernelHeader->ShaderHashCode;
         paramsIn.kernel_name = (char *)kernelInfo.name.c_str();
-        paramsIn.igc_info = pIgcInfo;
-        paramsIn.debug_data = pKernel->getProgram()->getDebugData();
-        paramsIn.debug_data_size = static_cast<uint32_t>(pKernel->getProgram()->getDebugDataSize());
+        paramsIn.igc_info = nullptr;
         instrument_params_out_t paramsOut = {0};
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
         // Substitute ISA of created kernel with instrumented code
@@ -249,16 +244,5 @@ void gtpinNotifyPlatformShutdown() {
         // Clear Kernel Execution Queue
         kernelExecQueue.clear();
     }
-}
-void *gtpinGetIgcInit() {
-    return pIgcInit;
-}
-
-void setIgcInfo(const void *igcInfo) {
-    pIgcInfo = reinterpret_cast<const igc_info_t *>(igcInfo);
-}
-
-const void *gtpinGetIgcInfo() {
-    return pIgcInfo;
 }
 } // namespace OCLRT

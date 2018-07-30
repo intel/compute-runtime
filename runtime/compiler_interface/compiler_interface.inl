@@ -49,24 +49,6 @@ inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationC
 
     return ret;
 }
-template <typename TranslationCtx>
-inline CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> translate(TranslationCtx *tCtx, CIFBuffer *src, CIFBuffer *options,
-                                                                    CIFBuffer *internalOptions, void *gtpinInit) {
-    if (false == OCLRT::areNotNullptr(tCtx, src, options, internalOptions)) {
-        return nullptr;
-    }
-
-    auto ret = tCtx->Translate(src, options, internalOptions, nullptr, 0, gtpinInit);
-    if (ret == nullptr) {
-        return nullptr; // assume OOM or internal error
-    }
-
-    if ((ret->GetOutput() == nullptr) || (ret->GetBuildLog() == nullptr) || (ret->GetDebugData() == nullptr)) {
-        return nullptr; // assume OOM or internal error
-    }
-
-    return ret;
-}
 
 CIF::CIFMain *createMainNoSanitize(CIF::CreateCIFMainFunc_t createFunc);
 

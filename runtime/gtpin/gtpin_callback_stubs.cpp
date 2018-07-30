@@ -55,15 +55,4 @@ void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector) {
 
 void gtpinNotifyPlatformShutdown() {
 }
-
-void *gtpinGetIgcInit() {
-    return nullptr;
-}
-
-void setIgcInfo(const void *igcInfo) {
-}
-
-const void *gtpinGetIgcInfo() {
-    return nullptr;
-}
 } // namespace OCLRT

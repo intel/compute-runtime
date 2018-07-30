@@ -246,14 +246,6 @@ class Program : public BaseObject<_cl_program> {
         return kernelDebugEnabled;
     }
 
-    char *getDebugData() {
-        return debugData;
-    }
-
-    size_t getDebugDataSize() {
-        return debugDataSize;
-    }
-
   protected:
     Program();
 

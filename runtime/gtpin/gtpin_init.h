@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, gtpin::interface_version_t *pDriverVersion);
+gtpin::GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, gtpin::driver_services_t *pDriverServices, uint32_t *pDriverVersion);
 
 #ifdef __cplusplus
 }
