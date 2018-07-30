@@ -27,6 +27,7 @@
 #include "runtime/program/program.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 #include "unit_tests/helpers/test_files.h"
+#include "unit_tests/mocks/mock_compilers.h"
 
 using namespace OCLRT;
 
@@ -185,37 +186,34 @@ TEST_F(clBuildProgramTests, GivenProgramCreatedFromBinaryWhenBuildProgramWithOpt
     CompilerInterface::shutdown();
 }
 
-TEST_F(clBuildProgramTests, FromBinarySpir) {
+TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
-    void *pBinary = nullptr;
-    size_t binarySize = 0;
-
-    KernelBinaryHelper kbHeler("CopyBuffer_simd8", false);
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bc");
-
-    binarySize = loadDataFromFile(
-        testFile.c_str(),
-        pBinary);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
+    char llvm[16] = "BC\xc0\xde";
+    void *binary = llvm;
+    size_t binarySize = sizeof(llvm);
 
     pProgram = clCreateProgramWithBinary(
         pContext,
         num_devices,
         devices,
         &binarySize,
-        (const unsigned char **)&pBinary,
+        (const unsigned char **)&binary,
         &binaryStatus,
         &retVal);
-
-    deleteDataReadFromFile(pBinary);
 
     EXPECT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
+    MockCompilerDebugVars igcDebugVars;
+    SProgramBinaryHeader progBin = {};
+    progBin.Magic = iOpenCL::MAGIC_CL;
+    progBin.Version = iOpenCL::CURRENT_ICBE_VERSION;
+    progBin.Device = pContext->getDevice(0)->getHardwareInfo().pPlatform->eRenderCoreFamily;
+    igcDebugVars.binaryToReturn = &progBin;
+    igcDebugVars.binaryToReturnSize = sizeof(progBin);
+    auto prevDebugVars = getIgcDebugVars();
+    setIgcDebugVars(igcDebugVars);
     retVal = clBuildProgram(
         pProgram,
         num_devices,
@@ -223,8 +221,9 @@ TEST_F(clBuildProgramTests, FromBinarySpir) {
         "-x spir -spir-std=1.2",
         nullptr,
         nullptr);
+    setIgcDebugVars(prevDebugVars);
 
-    ASSERT_EQ(CL_SUCCESS, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);

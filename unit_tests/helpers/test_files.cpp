@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/file_io.h"
 #include "test_files.h"
 #include "config.h"
 
@@ -37,4 +38,8 @@ void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string
     outputFilename.append(binaryNameSuffix);
     outputFilename.append(extension);
     outputFilename.append(options);
+
+    if (!fileExists(outputFilename) && (extension == ".bc")) {
+        retrieveBinaryKernelFilename(outputFilename, kernelName, ".spv", options);
+    }
 }

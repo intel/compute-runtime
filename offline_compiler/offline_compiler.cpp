@@ -360,7 +360,7 @@ int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
     }
 
     fclDeviceCtx->SetOclApiVersion(hwInfo->capabilityTable.clVersionSupport * 10);
-    preferredIntermediateRepresentation = IGC::CodeType::llvmBc;
+    preferredIntermediateRepresentation = fclDeviceCtx->GetPreferredIntermediateRepresentation();
 
     this->igcLib.reset(OsLibrary::load(Os::igcDllName));
     if (this->igcLib == nullptr) {

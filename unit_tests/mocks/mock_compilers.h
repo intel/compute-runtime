@@ -42,6 +42,8 @@ struct MockCompilerDebugVars {
     bool appendOptionsToFileName = true;
     void *debugDataToReturn = nullptr;
     size_t debugDataToReturnSize = 0;
+    void *binaryToReturn = nullptr;
+    size_t binaryToReturnSize = 0;
     bool failCreatePlatformInterface = false;
     bool failCreateGtSystemInfoInterface = false;
     bool failCreateIgcFeWaInterface = false;

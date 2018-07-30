@@ -406,12 +406,16 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             }
         }
 
-        size_t fileSize = 0;
-        auto fileData = loadBinaryFile(inputFile, fileSize);
+        if ((debugVars.binaryToReturn != nullptr) || (debugVars.binaryToReturnSize != 0)) {
+            out->setOutput(debugVars.binaryToReturn, debugVars.binaryToReturnSize);
+        } else {
+            size_t fileSize = 0;
+            auto fileData = loadBinaryFile(inputFile, fileSize);
 
-        out->setOutput(fileData.get(), fileSize);
-        if (fileSize == 0) {
-            out->setError("error: Mock compiler could not find cached input file: " + inputFile);
+            out->setOutput(fileData.get(), fileSize);
+            if (fileSize == 0) {
+                out->setError("error: Mock compiler could not find cached input file: " + inputFile);
+            }
         }
 
         if (debugVars.debugDataToReturn != nullptr) {
