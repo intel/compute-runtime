@@ -21,8 +21,5 @@
 
 cd /root
 git clone --depth 1 https://github.com/intel/gmmlib gmmlib
-pushd neo/scripts/igc
-./prepare.sh
-popd
 mkdir build
 
