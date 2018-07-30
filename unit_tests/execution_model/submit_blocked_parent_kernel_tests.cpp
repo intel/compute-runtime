@@ -91,7 +91,7 @@ class MockDeviceQueueHwWithCriticalSectionRelease : public DeviceQueueHw<GfxFami
 HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentKernelCommandIsSubmittedThenItWaitsForcriticalSectionReleasement) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -133,7 +133,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenLockedEMcritcalSectionWhenParentK
 HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenPassedDshIsUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -198,7 +198,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenIndirectStateAndEMCleanupSectionIsSetup) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -240,7 +240,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingWhenCommandIsSubmittedThenEMCleanupSectionsSetsCompleteTimestamp) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -283,7 +283,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenBlockedParentKernelWithProfilingW
 HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmittedThenSchedulerIsDispatched) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHwWithCriticalSectionRelease<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -323,7 +323,7 @@ HWTEST_F(ParentKernelCommandQueueFixture, givenParentKernelWhenCommandIsSubmitte
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQueueHeapshenParentKernelIsSubmittedThenQueueHeapsAreNotUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -379,7 +379,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenUsedCommandQue
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhenParentKernelIsSubmittedThenExistingSSHIsUsed) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        MockParentKernel *parentKernel = MockParentKernel::create(*device);
+        MockParentKernel *parentKernel = MockParentKernel::create(*context);
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();
         context->setDefaultDeviceQueue(&mockDevQueue);
@@ -428,7 +428,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenNotUsedSSHWhen
 HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommandQueueWhenDispatchWalkerIsCalledThenHeapsHaveProperSizes) {
     if (device->getSupportedClVersion() >= 20) {
         cl_queue_properties properties[3] = {0};
-        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*device));
+        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context));
 
         MockDeviceQueueHw<FamilyType> mockDevQueue(context, device, properties[0]);
         parentKernel->createReflectionSurface();

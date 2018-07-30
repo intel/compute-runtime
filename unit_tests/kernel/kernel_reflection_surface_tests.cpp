@@ -1910,9 +1910,9 @@ typedef ParentKernelCommandQueueFixture ReflectionSurfaceTestForPrintfHandler;
 
 TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrintfBufferWhenPrintfHandlerIsPassed) {
 
-    MockContext context;
+    MockContext context(device);
     cl_queue_properties properties[3] = {0};
-    MockParentKernel *parentKernel = MockParentKernel::create(*device);
+    MockParentKernel *parentKernel = MockParentKernel::create(context);
 
     DeviceQueue devQueue(&context, device, properties[0]);
     parentKernel->createReflectionSurface();
@@ -1938,9 +1938,9 @@ TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfacePatchesPrint
 
 TEST_F(ReflectionSurfaceTestForPrintfHandler, PatchReflectionSurfaceDoesNotPatchPrintfBufferWhenPrintfSurfaceIsNotCreated) {
 
-    MockContext context;
+    MockContext context(device);
     cl_queue_properties properties[3] = {0};
-    MockParentKernel *parentKernel = MockParentKernel::create(*device);
+    MockParentKernel *parentKernel = MockParentKernel::create(context);
 
     DeviceQueue devQueue(&context, device, properties[0]);
     parentKernel->createReflectionSurface();
@@ -1976,8 +1976,8 @@ class ReflectionSurfaceConstantValuesPatchingTest : public DeviceFixture,
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramGlobalMemoryAddressIsPatched) {
 
-    MockContext context;
-    MockParentKernel *parentKernel = MockParentKernel::create(*pDevice, false, true, false);
+    MockContext context(pDevice);
+    MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
     // graphicsMemory is released by Program
     GraphicsAllocation *globalMemory = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
@@ -2010,8 +2010,8 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryWh
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAndProgramWithoutGlobalMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
-    MockContext context;
-    MockParentKernel *parentKernel = MockParentKernel::create(*pDevice, false, true, false);
+    MockContext context(pDevice);
+    MockParentKernel *parentKernel = MockParentKernel::create(context, false, true, false);
 
     if (parentKernel->mockProgram->getGlobalSurface()) {
         pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getGlobalSurface());
@@ -2043,8 +2043,8 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithGlobalMemoryAn
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryWhenReflectionSurfaceIsPatchedWithConstantValuesThenProgramConstantMemoryAddressIsPatched) {
 
-    MockContext context;
-    MockParentKernel *parentKernel = MockParentKernel::create(*pDevice, false, false, true);
+    MockContext context(pDevice);
+    MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
     // graphicsMemory is released by Program
     GraphicsAllocation *constantMemory = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
@@ -2086,8 +2086,8 @@ TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemory
 
 TEST_F(ReflectionSurfaceConstantValuesPatchingTest, GivenBlockWithConstantMemoryAndProgramWithoutConstantMemortWhenReflectionSurfaceIsPatchedWithConstantValuesThenZeroAddressIsPatched) {
 
-    MockContext context;
-    MockParentKernel *parentKernel = MockParentKernel::create(*pDevice, false, false, true);
+    MockContext context(pDevice);
+    MockParentKernel *parentKernel = MockParentKernel::create(context, false, false, true);
 
     if (parentKernel->mockProgram->getConstantSurface()) {
         pDevice->getMemoryManager()->freeGraphicsMemory(parentKernel->mockProgram->getConstantSurface());

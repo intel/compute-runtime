@@ -573,7 +573,8 @@ HWTEST_F(ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKer
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
 
-        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(*pDevice, false, false, false, false, false));
+        MockContext context(pDevice);
+        std::unique_ptr<MockParentKernel> kernelToRun(MockParentKernel::create(context, false, false, false, false, false));
 
         pCmdQ->enqueueKernel(kernelToRun.get(), 1, offset, gws, gws, 0, nullptr, nullptr);
 

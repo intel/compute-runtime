@@ -310,7 +310,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]);
     auto commandsSize = mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize();
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(mockDeviceQueueHw->getQueueBuffer()->getUnderlyingBuffer());
-    MockParentKernel *mockParentKernel = MockParentKernel::create(*device);
+    MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
     uint32_t taskCount = 7;
 
     mockDeviceQueueHw->buildSlbDummyCommands();
@@ -364,7 +364,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     auto mockDeviceQueueHw = new MockDeviceQueueHw<FamilyType>(pContext, device, deviceQueueProperties::minimumProperties[0]);
     auto commandsSize = mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize();
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(mockDeviceQueueHw->getQueueBuffer()->getUnderlyingBuffer());
-    MockParentKernel *mockParentKernel = MockParentKernel::create(*device);
+    MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
     uint32_t taskCount = 7;
 
     HwTimeStamps hwTimeStamp;
@@ -684,10 +684,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addExecutionModelClea
         }
     };
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockContext context;
+    MockContext context(device.get());
     std::unique_ptr<MockDeviceQueueWithMediaStateClearRegistering> mockDeviceQueueHw(new MockDeviceQueueWithMediaStateClearRegistering(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
-    std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(*device));
+    std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(context));
     uint32_t taskCount = 7;
     mockDeviceQueueHw->buildSlbDummyCommands();
 

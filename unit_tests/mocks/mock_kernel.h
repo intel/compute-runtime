@@ -308,7 +308,9 @@ class MockKernelWithInternals {
 class MockParentKernel : public Kernel {
   public:
     using Kernel::patchBlocksCurbeWithConstantValues;
-    static MockParentKernel *create(Device &device, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
+    static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
+        Device &device = *context.getDevice(0);
+
         KernelInfo *info = new KernelInfo();
         const size_t crossThreadSize = 160;
         uint32_t crossThreadOffset = 0;
@@ -367,7 +369,7 @@ class MockParentKernel : public Kernel {
         }
 
         MockProgram *mockProgram = new MockProgram();
-        mockProgram->setContext(getContext());
+        mockProgram->setContext(&context);
         mockProgram->setDevice(&device);
 
         if (addChildSimdSize) {
@@ -502,7 +504,6 @@ class MockParentKernel : public Kernel {
         delete kernelInfo.patchInfo.threadPayload;
         delete kernelInfo.heapInfo.pKernelHeader;
         delete &kernelInfo;
-        cleanContext();
         BlockKernelManager *blockManager = program->getBlockKernelManager();
 
         for (uint32_t i = 0; i < blockManager->getCount(); i++) {
@@ -525,17 +526,8 @@ class MockParentKernel : public Kernel {
         }
     }
 
-    static MockContext *&getContext() {
-        static MockContext *context;
-        if (context == nullptr)
-            context = new MockContext;
-        return context;
-    }
-
-    static void cleanContext() {
-        MockContext *&context = getContext();
-        delete context;
-        context = nullptr;
+    Context *getContext() {
+        return &mockProgram->getContext();
     }
 
     void setReflectionSurface(GraphicsAllocation *reflectionSurface) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -80,8 +80,9 @@ TEST(ParentKernelTest, GetObjectCounts) {
 }
 
 TEST(ParentKernelTest, patchBlocksSimdSize) {
-    MockDevice *device = new MockDevice(*platformDevices[0]);
-    MockParentKernel *parentKernel = MockParentKernel::create(*device, true);
+    MockDevice device(*platformDevices[0]);
+    MockContext context(&device);
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     parentKernel->patchBlocksSimdSize();
@@ -90,13 +91,12 @@ TEST(ParentKernelTest, patchBlocksSimdSize) {
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
-    delete parentKernel;
-    delete device;
 }
 
 TEST(ParentKernelTest, hasDeviceEnqueue) {
     MockDevice device(*platformDevices[0]);
-    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(device));
+    MockContext context(&device);
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context));
 
     EXPECT_TRUE(parentKernel->getKernelInfo().hasDeviceEnqueue());
 }
@@ -109,8 +109,9 @@ TEST(ParentKernelTest, doesnthaveDeviceEnqueue) {
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
-    MockDevice *device = new MockDevice(*platformDevices[0]);
-    MockParentKernel *parentKernel = MockParentKernel::create(*device, true);
+    MockDevice device(*platformDevices[0]);
+    MockContext context(&device);
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     parentKernel->initialize();
@@ -119,13 +120,12 @@ TEST(ParentKernelTest, initializeOnParentKernelPatchesBlocksSimdSize) {
     uint32_t *simdSize = reinterpret_cast<uint32_t *>(blockSimdSize);
 
     EXPECT_EQ(program->getBlockKernelInfo(0)->getMaxSimdSize(), *simdSize);
-    delete parentKernel;
-    delete device;
 }
 
 TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) {
-    MockDevice *device = new MockDevice(*platformDevices[0]);
-    MockParentKernel *parentKernel = MockParentKernel::create(*device, true);
+    MockDevice device(*platformDevices[0]);
+    MockContext context(&device);
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(context, true));
     MockProgram *program = (MockProgram *)parentKernel->mockProgram;
 
     uint32_t crossThreadOffsetBlock = 0;
@@ -149,14 +149,14 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
 
     crossThreadOffsetBlock += 8;
 
-    SPatchAllocateStatelessPrivateSurface *privateSurfaceBlock = new SPatchAllocateStatelessPrivateSurface;
+    auto privateSurfaceBlock = std::make_unique<SPatchAllocateStatelessPrivateSurface>();
     privateSurfaceBlock->DataParamOffset = crossThreadOffsetBlock;
     privateSurfaceBlock->DataParamSize = 8;
     privateSurfaceBlock->Size = 8;
     privateSurfaceBlock->SurfaceStateHeapOffset = 0;
     privateSurfaceBlock->Token = 0;
     privateSurfaceBlock->PerThreadPrivateMemorySize = 1000;
-    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock;
+    infoBlock->patchInfo.pAllocateStatelessPrivateSurface = privateSurfaceBlock.get();
 
     crossThreadOffsetBlock += 8;
 
@@ -213,10 +213,6 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
     parentKernel->initialize();
 
     EXPECT_NE(nullptr, program->getBlockKernelManager()->getPrivateSurface(program->getBlockKernelManager()->getCount() - 1));
-
-    delete privateSurfaceBlock;
-    delete parentKernel;
-    delete device;
 }
 
 TEST_P(ParentKernelFromBinaryTest, getInstructionHeapSizeForExecutionModelReturnsNonZeroForParentKernel) {

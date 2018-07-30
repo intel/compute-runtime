@@ -217,7 +217,7 @@ typedef ParentKernelCommandQueueFixture ParentKernelCommandStreamFixture;
 HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhenCommandStreamIsAcquiredThenSizeAccountsForSchedulerDispatch) {
 
     if (device->getSupportedClVersion() >= 20) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*device);
+        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         DispatchInfo dispatchInfo(mockParentKernel, 1, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{24, 1, 1}, Vec3<size_t>{0, 0, 0});
         MultiDispatchInfo multiDispatchInfo;
@@ -263,7 +263,7 @@ class MockParentKernelDispatch : public ExecutionModelSchedulerTest,
 HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatchedThenDshHeapForIndirectObjectHeapIsUsed) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*pDevice);
+        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -296,7 +296,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
 
     if (pDevice->getSupportedClVersion() >= 20) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*pDevice);
+        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -341,7 +341,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
 HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedThenNewSSHIsAllocated) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*pDevice);
+        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};
@@ -381,7 +381,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
 HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatchedThenExistingSSHIsUsed) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
-        MockParentKernel *mockParentKernel = MockParentKernel::create(*pDevice);
+        MockParentKernel *mockParentKernel = MockParentKernel::create(*context);
 
         KernelOperation *blockedCommandsData = nullptr;
         const size_t globalOffsets[3] = {0, 0, 0};

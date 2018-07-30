@@ -89,12 +89,12 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
 TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, false));
+    MockContext context(device.get());
+    std::unique_ptr<MockParentKernel> parentKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, false));
 
     MockMultiDispatchInfo multiDispatchInfo(parentKernelWithoutPrintf.get());
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
 
     ASSERT_NE(nullptr, printfHandler.get());
 }
@@ -102,24 +102,24 @@ TEST(PrintfHandlerTest, givenParentKernelWihoutPrintfAndBlockKernelWithPrintfWhe
 TEST(PrintfHandlerTest, givenParentKernelAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsNullptr) {
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    std::unique_ptr<MockParentKernel> blockKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, false, false));
+    MockContext context(device.get());
+    std::unique_ptr<MockParentKernel> blockKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, false, false));
 
     MockMultiDispatchInfo multiDispatchInfo(blockKernelWithoutPrintf.get());
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
 
     ASSERT_EQ(nullptr, printfHandler.get());
 }
 TEST(PrintfHandlerTest, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWhenPrintfHandlerCreateCalledThenResaultIsAnObject) {
 
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    std::unique_ptr<MockParentKernel> parentKernelWithPrintfBlockKernelWithoutPrintf(MockParentKernel::create(*device.get(), false, false, false, true, false));
+    MockContext context(device.get());
+    std::unique_ptr<MockParentKernel> parentKernelWithPrintfBlockKernelWithoutPrintf(MockParentKernel::create(context, false, false, false, true, false));
 
     MockMultiDispatchInfo multiDispatchInfo(parentKernelWithPrintfBlockKernelWithoutPrintf.get());
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
 
     ASSERT_NE(nullptr, printfHandler);
 }

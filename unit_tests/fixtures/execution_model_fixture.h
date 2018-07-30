@@ -90,7 +90,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
         CommandQueueHwFixture::SetUp(pDevice, 0);
         DeviceQueueFixture::SetUp(context, pDevice);
 
-        parentKernel = MockParentKernel::create(*pDevice);
+        parentKernel = MockParentKernel::create(*context);
         ASSERT_NE(nullptr, parentKernel);
     }
 
@@ -107,6 +107,7 @@ class ExecutionModelSchedulerTest : public DeviceFixture,
 
 struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
                                          testing::Test {
+
     void SetUp() override {
         device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
         CommandQueueHwFixture::SetUp(device, 0);
