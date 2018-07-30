@@ -830,34 +830,20 @@ TEST_P(KernelReflectionSurfaceTest, CreateKernelReflectionSurface) {
 
         IGIL_KernelDataHeader *pKernelHeader = reinterpret_cast<IGIL_KernelDataHeader *>(reflectionSurface->getUnderlyingBuffer());
 
-        // Kernel Data Header
-        IGIL_KernelDataHeader kernelDataHeaderExpected;
+        uint32_t parentImages = 0;
+        uint32_t parentSamplers = 0;
 
         if (pKernel->getKernelInfo().name == "kernel_reflection") {
-            if (sizeof(uintptr_t) == 8)
-                MockKernel::ReflectionSurfaceHelperPublic::setKernelDataHeader(&kernelDataHeaderExpected, (uint32_t)blockCount, 1, 1, 1944, 1980);
-            else
-                MockKernel::ReflectionSurfaceHelperPublic::setKernelDataHeader(&kernelDataHeaderExpected, (uint32_t)blockCount, 1, 1, 1836, 1872);
-
-            EXPECT_EQ(kernelDataHeaderExpected.m_numberOfKernels, pKernelHeader->m_numberOfKernels);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentKernelImageCount, pKernelHeader->m_ParentKernelImageCount);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentImageDataOffset, pKernelHeader->m_ParentImageDataOffset);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentSamplerCount, pKernelHeader->m_ParentSamplerCount);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentSamplerParamsOffset, pKernelHeader->m_ParentSamplerParamsOffset);
-        } else if (pKernel->getKernelInfo().name == "simple_block_kernel") {
-            if (sizeof(uintptr_t) == 8)
-                MockKernel::ReflectionSurfaceHelperPublic::setKernelDataHeader(&kernelDataHeaderExpected, (uint32_t)blockCount, 0, 0, 1920, 0);
-            else
-                MockKernel::ReflectionSurfaceHelperPublic::setKernelDataHeader(&kernelDataHeaderExpected, (uint32_t)blockCount, 0, 0, 1812, 0);
-
-            EXPECT_EQ(kernelDataHeaderExpected.m_numberOfKernels, pKernelHeader->m_numberOfKernels);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentKernelImageCount, pKernelHeader->m_ParentKernelImageCount);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentImageDataOffset, pKernelHeader->m_ParentImageDataOffset);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentSamplerCount, pKernelHeader->m_ParentSamplerCount);
-            EXPECT_EQ(kernelDataHeaderExpected.m_ParentSamplerParamsOffset, pKernelHeader->m_ParentSamplerParamsOffset);
-        } else {
-            EXPECT_TRUE(false);
+            parentImages = 1;
+            parentSamplers = 1;
+            EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentSamplerParamsOffset);
         }
+
+        EXPECT_EQ(blockCount, pKernelHeader->m_numberOfKernels);
+        EXPECT_EQ(parentImages, pKernelHeader->m_ParentKernelImageCount);
+        EXPECT_LT(sizeof(IGIL_KernelDataHeader), pKernelHeader->m_ParentImageDataOffset);
+        EXPECT_EQ(parentSamplers, pKernelHeader->m_ParentSamplerCount);
+        EXPECT_NE(pKernelHeader->m_ParentImageDataOffset, pKernelHeader->m_ParentSamplerParamsOffset);
 
         // Curbe tokens
         EXPECT_NE(0u, totalCurbeParamsSize);
