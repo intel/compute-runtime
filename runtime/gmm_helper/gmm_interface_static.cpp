@@ -26,15 +26,11 @@ namespace OCLRT {
 GMM_STATUS GMM_STDCALL myPfnCreateSingletonContext(const PLATFORM platform, const void *pSkuTable, const void *pWaTable, const void *pGtSysInfo) {
     return GmmInitGlobalContext(platform, reinterpret_cast<const SKU_FEATURE_TABLE *>(pSkuTable), reinterpret_cast<const WA_TABLE *>(pWaTable), reinterpret_cast<const GT_SYSTEM_INFO *>(pGtSysInfo), GMM_CLIENT::GMM_OCL_VISTA);
 }
-decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = nullptr;
-decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
-decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
-decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
 void GmmHelper::loadLib() {
-    GmmHelper::initGlobalContextFunc = myPfnCreateSingletonContext;
-    GmmHelper::destroyGlobalContextFunc = GmmDestroyGlobalContext;
-    GmmHelper::createClientContextFunc = GmmCreateClientContext;
-    GmmHelper::deleteClientContextFunc = GmmDeleteClientContext;
+    gmmEntries.pfnCreateSingletonContext = myPfnCreateSingletonContext;
+    gmmEntries.pfnDestroySingletonContext = GmmDestroyGlobalContext;
+    gmmEntries.pfnCreateClientContext = GmmCreateClientContext;
+    gmmEntries.pfnDeleteClientContext = GmmDeleteClientContext;
 }
 } // namespace OCLRT

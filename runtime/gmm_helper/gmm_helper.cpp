@@ -54,9 +54,9 @@ void GmmHelper::initContext(const PLATFORM *pPlatform,
     SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, pSkuTable);
     SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, pWaTable);
     loadLib();
-    bool success = GMM_SUCCESS == GmmHelper::initGlobalContextFunc(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
+    bool success = GMM_SUCCESS == gmmEntries.pfnCreateSingletonContext(*pPlatform, &gmmFtrTable, &gmmWaTable, pGtSysInfo);
     UNRECOVERABLE_IF(!success);
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA);
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(GMM_CLIENT::GMM_OCL_VISTA, gmmEntries);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 
@@ -164,7 +164,7 @@ GmmHelper::GmmHelper(const HardwareInfo *pHwInfo) {
     initContext(pHwInfo->pPlatform, pHwInfo->pSkuTable, pHwInfo->pWaTable, pHwInfo->pSysInfo);
 }
 GmmHelper::~GmmHelper() {
-    GmmHelper::destroyGlobalContextFunc();
+    gmmEntries.pfnDestroySingletonContext();
 };
 bool GmmHelper::useSimplifiedMocsTable = false;
 decltype(GmmHelper::createGmmContextWrapperFunc) GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<GmmClientContext>;

@@ -63,12 +63,7 @@ class GmmHelper {
     static uint32_t getRenderMultisamplesCount(uint32_t numSamples);
     static GMM_YUV_PLANE convertPlane(OCLPlane oclPlane);
 
-    static decltype(GmmExportEntries::pfnCreateSingletonContext) initGlobalContextFunc;
-    static decltype(GmmExportEntries::pfnDestroySingletonContext) destroyGlobalContextFunc;
-    static decltype(GmmExportEntries::pfnCreateClientContext) createClientContextFunc;
-    static decltype(GmmExportEntries::pfnDeleteClientContext) deleteClientContextFunc;
-
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(GMM_CLIENT);
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(GMM_CLIENT, GmmExportEntries &);
 
     static bool useSimplifiedMocsTable;
     static const HardwareInfo *hwInfo;
@@ -79,5 +74,6 @@ class GmmHelper {
 
     std::unique_ptr<OsLibrary> gmmLib;
     std::unique_ptr<GmmClientContext> gmmClientContext;
+    GmmExportEntries gmmEntries = {};
 };
 } // namespace OCLRT

@@ -37,12 +37,13 @@ class GmmClientContextBase {
     MOCKABLE_VIRTUAL void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo);
     GMM_CLIENT_CONTEXT *getHandle() const;
     template <typename T>
-    static std::unique_ptr<GmmClientContext> create(GMM_CLIENT clientType) {
-        return std::make_unique<T>(clientType);
+    static std::unique_ptr<GmmClientContext> create(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) {
+        return std::make_unique<T>(clientType, gmmEntries);
     }
 
   protected:
     GMM_CLIENT_CONTEXT *clientContext;
-    GmmClientContextBase(GMM_CLIENT clientType);
+    GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
+    GmmExportEntries &gmmEntries;
 };
 } // namespace OCLRT

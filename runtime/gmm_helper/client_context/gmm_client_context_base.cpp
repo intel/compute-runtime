@@ -23,11 +23,11 @@
 #include "runtime/gmm_helper/client_context/gmm_client_context_base.h"
 
 namespace OCLRT {
-GmmClientContextBase::GmmClientContextBase(GMM_CLIENT clientType) {
-    clientContext = GmmHelper::createClientContextFunc(clientType);
+GmmClientContextBase::GmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) : gmmEntries(gmmEntries) {
+    clientContext = gmmEntries.pfnCreateClientContext(clientType);
 }
 GmmClientContextBase::~GmmClientContextBase() {
-    GmmHelper::deleteClientContextFunc(clientContext);
+    gmmEntries.pfnDeleteClientContext(clientContext);
 };
 
 MEMORY_OBJECT_CONTROL_STATE GmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {

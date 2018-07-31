@@ -23,7 +23,7 @@
 #include "unit_tests/mocks/mock_gmm_client_context.h"
 
 namespace OCLRT {
-MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType) : GmmClientContext(clientType) {
+MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries) : GmmClientContext(clientType, gmmExportEntries) {
 }
 
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {

@@ -32,6 +32,6 @@ class MockGmmClientContextBase : public GmmClientContext {
     void destroyResInfoObject(GMM_RESOURCE_INFO *pResInfo) override;
 
   protected:
-    MockGmmClientContextBase(GMM_CLIENT clientType);
+    MockGmmClientContextBase(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries);
 };
 } // namespace OCLRT

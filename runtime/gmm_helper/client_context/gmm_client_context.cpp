@@ -23,5 +23,5 @@
 #include "gmm_client_context.h"
 
 namespace OCLRT {
-GmmClientContext::GmmClientContext(GMM_CLIENT clientType) : GmmClientContextBase(clientType){};
+GmmClientContext::GmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmEntries) : GmmClientContextBase(clientType, gmmEntries){};
 } // namespace OCLRT

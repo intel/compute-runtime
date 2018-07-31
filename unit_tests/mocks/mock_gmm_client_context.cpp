@@ -23,6 +23,6 @@
 #include "mock_gmm_client_context.h"
 
 namespace OCLRT {
-MockGmmClientContext::MockGmmClientContext(GMM_CLIENT clientType) : MockGmmClientContextBase(clientType) {
+MockGmmClientContext::MockGmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries) : MockGmmClientContextBase(clientType, gmmExportEntries) {
 }
 } // namespace OCLRT

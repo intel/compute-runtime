@@ -26,6 +26,6 @@
 namespace OCLRT {
 class MockGmmClientContext : public MockGmmClientContextBase {
   public:
-    MockGmmClientContext(GMM_CLIENT clientType);
+    MockGmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmExportEntries);
 };
 } // namespace OCLRT

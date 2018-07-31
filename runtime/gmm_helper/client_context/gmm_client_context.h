@@ -26,6 +26,6 @@
 namespace OCLRT {
 class GmmClientContext : public GmmClientContextBase {
   public:
-    GmmClientContext(GMM_CLIENT clientType);
+    GmmClientContext(GMM_CLIENT clientType, GmmExportEntries &gmmEntries);
 };
 } // namespace OCLRT

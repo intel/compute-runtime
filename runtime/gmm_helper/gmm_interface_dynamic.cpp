@@ -30,10 +30,6 @@ extern const char *gmmEntryName;
 } // namespace Os
 
 namespace OCLRT {
-decltype(GmmHelper::initGlobalContextFunc) GmmHelper::initGlobalContextFunc = nullptr;
-decltype(GmmHelper::destroyGlobalContextFunc) GmmHelper::destroyGlobalContextFunc = nullptr;
-decltype(GmmHelper::createClientContextFunc) GmmHelper::createClientContextFunc = nullptr;
-decltype(GmmHelper::deleteClientContextFunc) GmmHelper::deleteClientContextFunc = nullptr;
 
 void GmmHelper::loadLib() {
     gmmLib.reset(OsLibrary::load(Os::gmmDllName));
@@ -41,14 +37,12 @@ void GmmHelper::loadLib() {
     UNRECOVERABLE_IF(!gmmLib);
     if (gmmLib->isLoaded()) {
         auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(Os::gmmEntryName));
-        GmmExportEntries entries;
-        auto status = openGmmFunc(&entries);
+        auto status = openGmmFunc(&gmmEntries);
         if (status == GMM_SUCCESS) {
-            GmmHelper::initGlobalContextFunc = entries.pfnCreateSingletonContext;
-            GmmHelper::destroyGlobalContextFunc = entries.pfnDestroySingletonContext;
-            GmmHelper::createClientContextFunc = entries.pfnCreateClientContext;
-            GmmHelper::deleteClientContextFunc = entries.pfnDeleteClientContext;
-            isLoaded = GmmHelper::initGlobalContextFunc && GmmHelper::destroyGlobalContextFunc && GmmHelper::createClientContextFunc && GmmHelper::deleteClientContextFunc;
+            isLoaded = gmmEntries.pfnCreateClientContext &&
+                       gmmEntries.pfnCreateSingletonContext &&
+                       gmmEntries.pfnDeleteClientContext &&
+                       gmmEntries.pfnDestroySingletonContext;
         }
     }
     UNRECOVERABLE_IF(!isLoaded);
