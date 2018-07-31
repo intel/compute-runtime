@@ -59,6 +59,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
                                     cl_uint *numPlatforms) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("numEntries", numEntries,
+                   "platforms", platforms,
+                   "numPlatforms", numPlatforms);
 
     do {
         // if platforms is nullptr, we must return the number of valid platforms we
@@ -102,6 +105,9 @@ CL_API_ENTRY cl_int CL_API_CALL clIcdGetPlatformIDsKHR(cl_uint numEntries,
                                                        cl_uint *numPlatforms) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("numEntries", numEntries,
+                   "platforms", platforms,
+                   "numPlatforms", numPlatforms);
     retVal = clGetPlatformIDs(numEntries, platforms, numPlatforms);
     return retVal;
 }
@@ -113,6 +119,11 @@ cl_int CL_API_CALL clGetPlatformInfo(cl_platform_id platform,
                                      size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_PLATFORM;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("platform", platform,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     auto pPlatform = castToObject<Platform>(platform);
     if (pPlatform) {
         retVal = pPlatform->getInfo(paramName, paramValueSize,
@@ -128,6 +139,11 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                                   cl_uint *numDevices) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("platform", platform,
+                   "deviceType", deviceType,
+                   "numEntries", numEntries,
+                   "devices", devices,
+                   "numDevices", numDevices);
     const cl_device_type validType = CL_DEVICE_TYPE_GPU | CL_DEVICE_TYPE_CPU |
                                      CL_DEVICE_TYPE_ACCELERATOR | CL_DEVICE_TYPE_DEFAULT |
                                      CL_DEVICE_TYPE_CUSTOM;
@@ -215,7 +231,7 @@ cl_int CL_API_CALL clGetDeviceInfo(cl_device_id device,
                                    size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("clDevice", device, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", DebugManager.deviceInfoPointerToString(paramValue, paramValueSize), "paramValueSizeRet", paramValueSizeRet);
+    DBG_LOG_INPUTS("clDevice", device, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize), "paramValueSizeRet", paramValueSizeRet);
 
     Device *pDevice = castToObject<Device>(device);
     if (pDevice != nullptr) {
@@ -230,12 +246,21 @@ cl_int CL_API_CALL clCreateSubDevices(cl_device_id inDevice,
                                       cl_uint numDevices,
                                       cl_device_id *outDevices,
                                       cl_uint *numDevicesRet) {
-    return CL_INVALID_DEVICE;
+    cl_int retVal = CL_INVALID_DEVICE;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("inDevice", inDevice,
+                   "properties", properties,
+                   "numDevices", numDevices,
+                   "outDevices:", outDevices,
+                   "numDevicesRet", numDevicesRet);
+
+    return retVal;
 }
 
 cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device);
     auto pDevice = castToObject<Device>(device);
     if (pDevice) {
         pDevice->retain();
@@ -248,6 +273,7 @@ cl_int CL_API_CALL clRetainDevice(cl_device_id device) {
 cl_int CL_API_CALL clReleaseDevice(cl_device_id device) {
     cl_int retVal = CL_INVALID_DEVICE;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device);
     auto pDevice = castToObject<Device>(device);
     if (pDevice) {
         pDevice->release();
@@ -308,6 +334,7 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
                                                cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("properties", properties, "deviceType", deviceType, "funcNotify", funcNotify, "userData", userData);
     Context *pContext = nullptr;
 
     do {

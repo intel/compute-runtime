@@ -800,25 +800,25 @@ TEST(DebugSettingsApiEnterWrapper, WithoutDebugFunctionality) {
     delete debugApiWrapper2;
 }
 
-TEST(DebugSettingsManager, deviceInfoPointerToStringReturnsCorrectString) {
+TEST(DebugSettingsManager, infoPointerToStringReturnsCorrectString) {
     FullyEnabledTestDebugManager debugManager;
 
     uint64_t value64bit = 64;
-    string string64bit = debugManager.deviceInfoPointerToString(&value64bit, sizeof(uint64_t));
+    string string64bit = debugManager.infoPointerToString(&value64bit, sizeof(uint64_t));
     uint32_t value32bit = 32;
-    string string32bit = debugManager.deviceInfoPointerToString(&value32bit, sizeof(uint32_t));
+    string string32bit = debugManager.infoPointerToString(&value32bit, sizeof(uint32_t));
     uint8_t value8bit = 0;
-    string string8bit = debugManager.deviceInfoPointerToString(&value8bit, sizeof(uint8_t));
+    string string8bit = debugManager.infoPointerToString(&value8bit, sizeof(uint8_t));
 
     EXPECT_STREQ("64", string64bit.c_str());
     EXPECT_STREQ("32", string32bit.c_str());
     EXPECT_STREQ("0", string8bit.c_str());
 
-    string stringNonValue = debugManager.deviceInfoPointerToString(nullptr, 56);
+    string stringNonValue = debugManager.infoPointerToString(nullptr, 56);
     EXPECT_STREQ("", stringNonValue.c_str());
 
     char valueChar = 0;
-    stringNonValue = debugManager.deviceInfoPointerToString(&valueChar, 56);
+    stringNonValue = debugManager.infoPointerToString(&valueChar, 56);
     EXPECT_STREQ("", stringNonValue.c_str());
 }
 

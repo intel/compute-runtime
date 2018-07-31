@@ -149,7 +149,7 @@ class DebugSettingsManager {
         return os.str();
     }
 
-    const std::string deviceInfoPointerToString(const void *paramValue, size_t paramSize) {
+    const std::string infoPointerToString(const void *paramValue, size_t paramSize) {
         if (false == debugLoggingAvailable()) {
             return "";
         }
