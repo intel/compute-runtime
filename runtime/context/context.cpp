@@ -31,6 +31,7 @@
 #include "runtime/platform/platform.h"
 #include "runtime/helpers/string.h"
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
@@ -174,10 +175,14 @@ bool Context::createImpl(const cl_context_properties *properties,
 
     // We currently assume each device uses the same MemoryManager
     if (devices.size() > 0) {
-        this->memoryManager = this->getDevice(0)->getMemoryManager();
+        auto device = this->getDevice(0);
+        this->memoryManager = device->getMemoryManager();
         this->svmAllocsManager = new SVMAllocsManager(this->memoryManager);
         if (memoryManager->isAsyncDeleterEnabled()) {
             memoryManager->getDeferredDeleter()->addClient();
+        }
+        if (sharingBuilder->isSharingPresent(SharingType::VA_SHARING)) {
+            device->getCommandStreamReceiver().peekKmdNotifyHelper()->initMaxPowerSavingMode();
         }
     }
 

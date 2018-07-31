@@ -70,6 +70,7 @@ class SharingFactory {
     static std::unique_ptr<SharingFactory> build();
     bool processProperties(cl_context_properties &propertyType, cl_context_properties &propertyValue, cl_int &errcodeRet);
     bool finalizeProperties(Context &context, int32_t &errcodeRet);
+    bool isSharingPresent(SharingType sharingId);
     std::string getExtensions();
     void fillGlobalDispatchTable();
     void *getExtensionFunctionAddress(const std::string &functionName);

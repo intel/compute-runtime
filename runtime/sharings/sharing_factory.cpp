@@ -81,6 +81,10 @@ bool SharingFactory::finalizeProperties(Context &context, int32_t &errcodeRet) {
     return true;
 }
 
+bool SharingFactory::isSharingPresent(SharingType sharingId) {
+    return sharingContextBuilder[sharingId] != nullptr;
+}
+
 SharingBuilderFactory *SharingFactory::sharingContextBuilder[SharingType::MAX_SHARING_VALUE] = {
     nullptr,
 };

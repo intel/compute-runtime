@@ -144,6 +144,10 @@ class CommandStreamReceiver {
 
     bool initializeTagAllocation();
 
+    KmdNotifyHelper *peekKmdNotifyHelper() {
+        return kmdNotifyHelper.get();
+    }
+
   protected:
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
@@ -195,6 +199,7 @@ class CommandStreamReceiver {
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
+    std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);

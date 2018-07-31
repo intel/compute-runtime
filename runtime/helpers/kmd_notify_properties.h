@@ -64,6 +64,10 @@ class KmdNotifyHelper {
     static void overrideFromDebugVariable(int32_t debugVariableValue, int64_t &destination);
     static void overrideFromDebugVariable(int32_t debugVariableValue, bool &destination);
 
+    void initMaxPowerSavingMode() {
+        maxPowerSavingMode = true;
+    }
+
   protected:
     bool applyQuickKmdSleepForSporadicWait() const;
     int64_t getBaseTimeout(const int64_t &multiplier) const;
@@ -72,5 +76,6 @@ class KmdNotifyHelper {
     const KmdNotifyProperties *properties = nullptr;
     std::atomic<int64_t> lastWaitForCompletionTimestampUs{0};
     std::atomic<bool> acLineConnected{true};
+    bool maxPowerSavingMode = false;
 };
 } // namespace OCLRT

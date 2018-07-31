@@ -109,8 +109,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     const HardwareInfo &hwInfo;
     CsrSizeRequestFlags csrSizeRequestFlags = {};
-
-    std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 };
 
 } // namespace OCLRT

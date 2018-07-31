@@ -37,7 +37,9 @@ bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
 
     quickKmdSleepRequest |= applyQuickKmdSleepForSporadicWait();
 
-    if (!properties->enableKmdNotify && !acLineConnected) {
+    if (maxPowerSavingMode) {
+        timeoutValueOutput = 1;
+    } else if (!properties->enableKmdNotify && !acLineConnected) {
         timeoutValueOutput = KmdNotifyConstants::timeoutInMicrosecondsForDisconnectedAcLine;
     } else if (quickKmdSleepRequest && properties->enableQuickKmdSleep) {
         timeoutValueOutput = properties->delayQuickKmdSleepMicroseconds;

@@ -22,6 +22,7 @@
 
 #include "gtest/gtest.h"
 #include "runtime/context/context.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/device/device.h"
 #include "runtime/helpers/string.h"
 #include "runtime/platform/platform.h"
@@ -196,6 +197,14 @@ TEST(SharingFactoryTests, givenMockFactoryWithSharingWhenAskedThenAddressIsRetur
     EXPECT_EQ(reinterpret_cast<void *>(dummyHandler), ptr);
 }
 
+TEST(SharingFactoryTests, givenSharingFactoryWhenSharingIsRegisteredThenIsSharingPresentReflectsThatStatus) {
+    SharingFactoryStateRestore stateRestore;
+    stateRestore.clearCurrentState();
+    EXPECT_FALSE(stateRestore.isSharingPresent(SharingType::CLGL_SHARING));
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
+    EXPECT_TRUE(stateRestore.isSharingPresent(SharingType::CLGL_SHARING));
+}
+
 TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContextCreateShouldFail) {
     SharingFactoryStateRestore stateRestore;
 
@@ -226,3 +235,35 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     context.reset(Context::create<Context>(validProperties, deviceVector, nullptr, nullptr, retVal));
     EXPECT_NE(nullptr, context.get());
 };
+
+TEST(Context, GivenVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
+    SharingFactoryStateRestore stateRestore;
+
+    stateRestore.clearCurrentState();
+    stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::VA_SHARING);
+
+    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    cl_device_id clDevice = static_cast<cl_device_id>(device.get());
+    DeviceVector deviceVector((cl_device_id *)&clDevice, 1);
+    cl_int retVal;
+
+    auto pPlatform = OCLRT::platform();
+    cl_platform_id platformId[1];
+    platformId[0] = pPlatform;
+
+    auto &commandStreamReceiver = device->getCommandStreamReceiver();
+    auto kmdNotifyHelper = commandStreamReceiver.peekKmdNotifyHelper();
+
+    int64_t timeout = 0;
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    EXPECT_NE(1, timeout);
+
+    cl_context_properties validProperties[5] = {CL_CONTEXT_PLATFORM, (cl_context_properties)platformId[0],
+                                                clContextPropertyMock, mockContextPassFinalize, 0};
+
+    std::unique_ptr<Context> ctx(Context::create<Context>(validProperties, deviceVector, nullptr, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, ctx);
+    kmdNotifyHelper->obtainTimeoutParams(timeout, true, 1, 10, 2);
+    EXPECT_EQ(1, timeout);
+}
