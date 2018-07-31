@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+#include "runtime/context/context.h"
 #include "runtime/helpers/hash.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_graphics_allocation.h"
@@ -26,8 +27,12 @@
 
 namespace OCLRT {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
-uint64_t MockProgram::getHash() {
-    return Hash::hash(genBinary, genBinarySize);
+std::string MockProgram::getCachedFileName() const {
+    auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
+    auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
+    auto opts = ArrayRef<const char>(this->options.c_str(), this->options.size());
+    auto internalOpts = ArrayRef<const char>(this->internalOptions.c_str(), this->internalOptions.size());
+    return BinaryCache::getCachedFileName(hwInfo, input, opts, internalOpts);
 }
 cl_int GlobalMockSipProgram::processGenBinary() {
     return CL_SUCCESS;

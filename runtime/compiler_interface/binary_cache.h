@@ -34,8 +34,8 @@ struct HardwareInfo;
 class Program;
 class BinaryCache {
   public:
-    const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
-                                        ArrayRef<const char> options, ArrayRef<const char> internalOptions);
+    static const std::string getCachedFileName(const HardwareInfo &hwInfo, ArrayRef<const char> input,
+                                               ArrayRef<const char> options, ArrayRef<const char> internalOptions);
 
     virtual ~BinaryCache(){};
 

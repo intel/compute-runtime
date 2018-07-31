@@ -108,7 +108,10 @@ cl_int Program::build(
                 }
             }
 
-            internalOptions.append(platform()->peekCompilerExtensions());
+            auto compilerExtensionsOptions = platform()->peekCompilerExtensions();
+            if (internalOptions.find(compilerExtensionsOptions) == std::string::npos) {
+                internalOptions.append(compilerExtensionsOptions);
+            }
 
             inputArgs.pInput = (char *)(sourceCode.c_str());
             inputArgs.InputSize = (uint32_t)sourceCode.size();

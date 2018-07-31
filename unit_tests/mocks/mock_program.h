@@ -26,6 +26,8 @@
 #include "runtime/helpers/string.h"
 #include "runtime/program/program.h"
 
+#include <string>
+
 namespace OCLRT {
 
 class GraphicsAllocation;
@@ -109,7 +111,7 @@ class MockProgram : public Program {
         this->isSpirV = isSpirV;
     }
 
-    uint64_t getHash();
+    std::string getCachedFileName() const;
     void setAllowNonUniform(bool allow) {
         allowNonUniform = allow;
     }

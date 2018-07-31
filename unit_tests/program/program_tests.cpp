@@ -860,14 +860,14 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
 
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto hash1 = p->getHash();
+    auto hash1 = p->getCachedFileName();
     auto kernel1 = pProgram->getKernelInfo("CopyBuffer");
     Callback::watch(kernel1);
     EXPECT_NE(nullptr, kernel1);
 
     retVal = pProgram->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto hash2 = p->getHash();
+    auto hash2 = p->getCachedFileName();
     auto kernel2 = pProgram->getKernelInfo("CopyBuffer");
     EXPECT_NE(nullptr, kernel2);
     EXPECT_NE(hash1, hash2);
@@ -876,7 +876,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
 
     retVal = pProgram->build(0, nullptr, "-cl-finite-math-only", nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto hash3 = p->getHash();
+    auto hash3 = p->getCachedFileName();
     auto kernel3 = pProgram->getKernelInfo("CopyBuffer");
     EXPECT_NE(nullptr, kernel3);
     EXPECT_NE(hash1, hash3);
@@ -886,7 +886,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_BuildFromCache) {
 
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, true);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    auto hash4 = p->getHash();
+    auto hash4 = p->getCachedFileName();
     auto kernel4 = pProgram->getKernelInfo("CopyBuffer");
     EXPECT_NE(nullptr, kernel4);
     EXPECT_EQ(hash1, hash4);
