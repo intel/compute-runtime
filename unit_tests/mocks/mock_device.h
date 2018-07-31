@@ -96,11 +96,6 @@ class MockDevice : public Device {
     void resetCommandStreamReceiver(CommandStreamReceiver *newCsr);
 
     GraphicsAllocation *getTagAllocation() { return this->getCommandStreamReceiver().getTagAllocation(); }
-    GraphicsAllocation *disconnectCurrentTagAllocationAndReturnIt() {
-        auto currentTagAllocation = getTagAllocation();
-        this->getCommandStreamReceiver().setTagAllocation(nullptr);
-        return currentTagAllocation;
-    }
 
     void setSourceLevelDebuggerActive(bool active) {
         this->deviceInfo.sourceLevelDebuggerActive = active;

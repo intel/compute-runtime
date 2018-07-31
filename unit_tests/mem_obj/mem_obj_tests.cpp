@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/gmm.h"
@@ -177,7 +178,8 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 2;
-    *memoryManager.device->getTagAddress() = 1;
+    memoryManager.csr = &context.getDevice(0)->getCommandStreamReceiver();
+    *(memoryManager.csr->getTagAddress()) = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 

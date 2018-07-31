@@ -775,7 +775,7 @@ struct CommandStreamReceiverHwLog : public UltCommandStreamReceiver<FamilyType> 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithBothCSCallsFlushOnce) {
     CommandStreamReceiverHwLog<FamilyType> commandStreamReceiver(*platformDevices[0]);
     commandStreamReceiver.setMemoryManager(pDevice->getMemoryManager());
-    commandStreamReceiver.setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
+    commandStreamReceiver.initializeTagAllocation();
     commandStream.getSpace(sizeof(typename FamilyType::MI_NOOP));
 
     flushTask(commandStreamReceiver);
@@ -2602,7 +2602,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
 
     mockedMemoryManager->device = pDevice;
     mockCsr->setMemoryManager(mockedMemoryManager.get());
-    mockCsr->setTagAllocation(pDevice->disconnectCurrentTagAllocationAndReturnIt());
+    mockCsr->initializeTagAllocation();
     mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 

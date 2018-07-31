@@ -29,6 +29,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -338,6 +339,21 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
     csr->initializeTagAllocation();
     EXPECT_NE(nullptr, csr->getTagAllocation());
     EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(*csr->getTagAddress(), initialHardwareTag);
+}
+
+TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableNullHardware.set(true);
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
+    csr->setMemoryManager(memoryManager.get());
+    EXPECT_EQ(nullptr, csr->getTagAllocation());
+    EXPECT_TRUE(csr->getTagAddress() == nullptr);
+    csr->initializeTagAllocation();
+    EXPECT_NE(nullptr, csr->getTagAllocation());
+    EXPECT_TRUE(csr->getTagAddress() != nullptr);
+    EXPECT_EQ(*csr->getTagAddress(), static_cast<uint32_t>(-1));
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhenRequiredIsCalledWithBlockingFlagSetThenItReturnsImmediately) {

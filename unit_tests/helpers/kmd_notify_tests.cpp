@@ -127,7 +127,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountAndKmdNotifyDisabledWhenWaitUntilCompleti
 
 HWTEST_F(KmdNotifyTests, givenNotReadyTaskCountWhenWaitUntilCompletionCalledThenTryCpuPollingAndKmdWait) {
     auto csr = createMockCsr<FamilyType>();
-    *device->getTagAddress() = taskCountToWait - 1;
+    *csr->getTagAddress() = taskCountToWait - 1;
 
     ::testing::InSequence is;
     EXPECT_CALL(*csr, waitForCompletionWithTimeout(true, 2, taskCountToWait)).Times(1).WillOnce(::testing::Return(false));
@@ -227,7 +227,7 @@ HWTEST_F(KmdNotifyTests, givenQuickSleepRequestWhenItsSporadicWaitOptimizationIs
 
 HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultiplyTimeout) {
     auto csr = createMockCsr<FamilyType>();
-    *device->getTagAddress() = taskCountToWait;
+    *csr->getTagAddress() = taskCountToWait;
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 
@@ -238,7 +238,7 @@ HWTEST_F(KmdNotifyTests, givenTaskCountEqualToHwTagWhenWaitCalledThenDontMultipl
 
 HWTEST_F(KmdNotifyTests, givenTaskCountLowerThanHwTagWhenWaitCalledThenDontMultiplyTimeout) {
     auto csr = createMockCsr<FamilyType>();
-    *device->getTagAddress() = taskCountToWait + 5;
+    *csr->getTagAddress() = taskCountToWait + 5;
 
     auto expectedTimeout = device->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds;
 

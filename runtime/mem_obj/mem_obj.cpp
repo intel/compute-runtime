@@ -308,8 +308,8 @@ void MemObj::waitForCsrCompletion() {
 }
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {
-    if (asyncDestroy && memoryManager->device && allocation->taskCount != ObjectNotUsed) {
-        auto currentTag = *memoryManager->device->getTagAddress();
+    if (asyncDestroy && memoryManager->csr && allocation->taskCount != ObjectNotUsed) {
+        auto currentTag = *memoryManager->csr->getTagAddress();
         if (currentTag < allocation->taskCount) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
             return;

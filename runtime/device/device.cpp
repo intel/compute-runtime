@@ -145,9 +145,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     pDevice->driverInfo.reset(DriverInfo::create(commandStreamReceiver->getOSInterface()));
     pDevice->tagAddress = reinterpret_cast<uint32_t *>(commandStreamReceiver->getTagAllocation()->getUnderlyingBuffer());
 
-    // Initialize HW tag to a known value
-    *pDevice->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
-
     pDevice->initializeCaps();
 
     if (pDevice->osTime->getOSInterface()) {

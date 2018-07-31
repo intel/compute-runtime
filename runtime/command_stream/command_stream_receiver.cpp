@@ -358,6 +358,8 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     }
 
     this->setTagAllocation(tagAllocation);
+    *this->tagAddress = DebugManager.flags.EnableNullHardware.get() ? -1 : initialHardwareTag;
+
     return true;
 }
 

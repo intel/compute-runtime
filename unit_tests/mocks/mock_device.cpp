@@ -72,12 +72,12 @@ void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
-    auto tagAllocation = this->disconnectCurrentTagAllocationAndReturnIt();
     executionEnvironment->commandStreamReceiver.reset(newCsr);
     executionEnvironment->commandStreamReceiver->setMemoryManager(executionEnvironment->memoryManager.get());
-    executionEnvironment->commandStreamReceiver->setTagAllocation(tagAllocation);
+    executionEnvironment->commandStreamReceiver->initializeTagAllocation();
     executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
     executionEnvironment->memoryManager->csr = executionEnvironment->commandStreamReceiver.get();
+    this->tagAddress = executionEnvironment->commandStreamReceiver->getTagAddress();
 }
 
 OCLRT::FailMemoryManager::FailMemoryManager() : MockMemoryManager() {
