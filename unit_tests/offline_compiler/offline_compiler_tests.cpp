@@ -103,9 +103,9 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
     retVal = pOfflineCompiler->build();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bc"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     std::string buildLog = pOfflineCompiler->getBuildLog();
     EXPECT_STREQ(buildLog.c_str(), "");
@@ -129,9 +129,9 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
 
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "ll"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "ll"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     delete pOfflineCompiler;
 }
@@ -199,10 +199,10 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
 
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "cpp"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bc"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "gen"));
-    EXPECT_EQ(true, compilerOutputExists("copybuffer", "bin"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "cpp"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
 
     delete pOfflineCompiler;
 }
@@ -224,9 +224,9 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
 
     retVal = pOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "bc"));
-    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "gen"));
-    EXPECT_EQ(true, compilerOutputExists("offline_compiler_test/copybuffer", "bin"));
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "bc") || compilerOutputExists("offline_compiler_test/copybuffer", "spv"));
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("offline_compiler_test/copybuffer", "bin"));
 
     delete pOfflineCompiler;
 }
@@ -613,18 +613,19 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
 
     retVal = mockOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
 
     compilerOutputRemove("myOutputFileName", "bc");
+    compilerOutputRemove("myOutputFileName", "spv");
     compilerOutputRemove("myOutputFileName", "bin");
     compilerOutputRemove("myOutputFileName", "gen");
 }
@@ -652,7 +653,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "gen"));
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "dbg"));
@@ -660,12 +661,13 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     retVal = mockOfflineCompiler->build();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc"));
+    EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "bin"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "gen"));
     EXPECT_TRUE(compilerOutputExists("myOutputFileName", "dbg"));
 
     compilerOutputRemove("myOutputFileName", "bc");
+    compilerOutputRemove("myOutputFileName", "spv");
     compilerOutputRemove("myOutputFileName", "bin");
     compilerOutputRemove("myOutputFileName", "gen");
     compilerOutputRemove("myOutputFileName", "dbg");

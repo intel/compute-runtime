@@ -328,7 +328,7 @@ IGC::FclOclTranslationCtxBase *CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 1)::Crea
 }
 
 CodeType::CodeType_t CIF_GET_INTERFACE_CLASS(FclOclDeviceCtx, 2)::GetPreferredIntermediateRepresentation() {
-    return CodeType::llvmBc;
+    return CodeType::spirV;
 }
 
 } // namespace IGC
