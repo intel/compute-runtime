@@ -811,7 +811,13 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
                                    cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-
+    DBG_LOG_INPUTS("context", context,
+                   "flags", flags,
+                   "imageFormat", imageFormat,
+                   "imageWidth", imageWidth,
+                   "imageHeight", imageHeight,
+                   "imageRowPitch", imageRowPitch,
+                   "hostPtr", hostPtr);
     Context *pContext = nullptr;
 
     retVal = validateObjects(WithCastToInternal(context, &pContext));
@@ -846,6 +852,15 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
                                    cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "flags", flags,
+                   "imageFormat", imageFormat,
+                   "imageWidth", imageWidth,
+                   "imageHeight", imageHeight,
+                   "imageDepth", imageDepth,
+                   "imageRowPitch", imageRowPitch,
+                   "imageSlicePitch", imageSlicePitch,
+                   "hostPtr", hostPtr);
 
     Context *pContext = nullptr;
 
@@ -909,15 +924,23 @@ cl_int CL_API_CALL clGetSupportedImageFormats(cl_context context,
                                               cl_uint *numImageFormats) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "flags", flags,
+                   "imageType", imageType,
+                   "numEntries", numEntries,
+                   "imageFormats", imageFormats,
+                   "numImageFormats", numImageFormats);
     auto pContext = castToObject<Context>(context);
     auto pPlatform = platform();
     auto pDevice = pPlatform->getDevice(0);
+
     if (pContext) {
         retVal = pContext->getSupportedImageFormats(pDevice, flags, imageType, numEntries,
                                                     imageFormats, numImageFormats);
     } else {
         retVal = CL_INVALID_CONTEXT;
     }
+
     return retVal;
 }
 
@@ -928,6 +951,11 @@ cl_int CL_API_CALL clGetMemObjectInfo(cl_mem memobj,
                                       size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("memobj", memobj,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     MemObj *pMemObj = nullptr;
     retVal = validateObjects(WithCastToInternal(memobj, &pMemObj));
     if (CL_SUCCESS != retVal) {
@@ -946,6 +974,11 @@ cl_int CL_API_CALL clGetImageInfo(cl_mem image,
                                   size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("image", image,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     retVal = validateObjects(image);
     if (CL_SUCCESS != retVal) {
         return retVal;
@@ -953,7 +986,8 @@ cl_int CL_API_CALL clGetImageInfo(cl_mem image,
 
     auto pImgObj = castToObject<Image>(image);
     if (pImgObj == nullptr) {
-        return CL_INVALID_MEM_OBJECT;
+        retVal = CL_INVALID_MEM_OBJECT;
+        return retVal;
     }
 
     retVal = pImgObj->getImageInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
@@ -967,6 +1001,11 @@ cl_int CL_API_CALL clGetImageParamsINTEL(cl_context context,
                                          size_t *imageSlicePitch) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "imageFormat", imageFormat,
+                   "imageDesc", imageDesc,
+                   "imageRowPitch", imageRowPitch,
+                   "imageSlicePitch", imageSlicePitch);
     SurfaceFormatInfo *surfaceFormat = nullptr;
     cl_mem_flags memFlags = CL_MEM_READ_ONLY;
     retVal = validateObjects(context);
@@ -995,6 +1034,7 @@ cl_int CL_API_CALL clSetMemObjectDestructorCallback(cl_mem memobj,
                                                     void *userData) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("memobj", memobj, "funcNotify", funcNotify, "userData", userData);
     retVal = validateObjects(memobj, (void *)funcNotify);
 
     if (CL_SUCCESS != retVal) {
@@ -1013,6 +1053,10 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
                                        cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "normalizedCoords", normalizedCoords,
+                   "addressingMode", addressingMode,
+                   "filterMode", filterMode);
     retVal = validateObjects(context);
     cl_sampler sampler = nullptr;
 
@@ -1037,25 +1081,29 @@ cl_sampler CL_API_CALL clCreateSampler(cl_context context,
 }
 
 cl_int CL_API_CALL clRetainSampler(cl_sampler sampler) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("sampler", sampler);
     auto pSampler = castToObject<Sampler>(sampler);
     if (pSampler) {
         pSampler->retain();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_SAMPLER;
+    retVal = CL_INVALID_SAMPLER;
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseSampler(cl_sampler sampler) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("sampler", sampler);
     auto pSampler = castToObject<Sampler>(sampler);
     if (pSampler) {
         pSampler->release();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_SAMPLER;
+    retVal = CL_INVALID_SAMPLER;
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
@@ -1065,6 +1113,11 @@ cl_int CL_API_CALL clGetSamplerInfo(cl_sampler sampler,
                                     size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_SAMPLER;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("sampler", sampler,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
 
     auto pSampler = castToObject<Sampler>(sampler);
 
@@ -1083,6 +1136,10 @@ cl_program CL_API_CALL clCreateProgramWithSource(cl_context context,
                                                  cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "count", count,
+                   "strings", strings,
+                   "lengths", lengths);
     retVal = validateObjects(context, count, strings);
     cl_program program = nullptr;
 
@@ -1111,6 +1168,12 @@ cl_program CL_API_CALL clCreateProgramWithBinary(cl_context context,
                                                  cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "numDevices", numDevices,
+                   "deviceList", deviceList,
+                   "lengths", lengths,
+                   "binaries", binaries,
+                   "binaryStatus", binaryStatus);
     retVal = validateObjects(context, deviceList, *deviceList, binaries, *binaries, lengths, *lengths);
     cl_program program = nullptr;
 
