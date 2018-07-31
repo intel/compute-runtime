@@ -26,8 +26,8 @@ wait_apt() {
 		sleep 5
 	done
 }
-echo "deb http://ppa.launchpad.net/jdanecki/intel-opencl/ubuntu xenial main" >> /etc/apt/sources.list
-apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7B77841DF9C7FE04
+echo "deb http://ppa.launchpad.net/intel-opencl/intel-opencl/ubuntu xenial main" >> /etc/apt/sources.list
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B9732172C4830B8F
 
 apt-get -y update
 if [ $? -ne 0 ]

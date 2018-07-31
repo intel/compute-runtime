@@ -3,8 +3,8 @@ MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
 
 COPY neo /root/neo
 RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg; \
-    echo "deb http://ppa.launchpad.net/jdanecki/intel-opencl/ubuntu bionic main" >> /etc/apt/sources.list; \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 7B77841DF9C7FE04; \
+    echo "deb http://ppa.launchpad.net/intel-opencl/intel-opencl/ubuntu bionic main" >> /etc/apt/sources.list; \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B9732172C4830B8F; \
     apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++-5 git pkg-config ninja-build intel-igc-opencl-dev
 RUN cd /root; git clone --depth 1 https://github.com/intel/gmmlib gmmlib
 RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release \
