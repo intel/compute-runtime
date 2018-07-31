@@ -788,16 +788,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
     EXPECT_EQ(prevCount14 + 2, CommandBufferCompleteCallbackCount);
     EXPECT_EQ(prevCount24 + 2, CommandBufferCompleteCallbackCount);
 
-    auto taskCount0 = castToObject<MemObj>(buff10)->getCompletionStamp().taskCount;
-    auto taskCount1 = castToObject<MemObj>(buff11)->getCompletionStamp().taskCount;
-    EXPECT_EQ(1u, taskCount0);
-    EXPECT_EQ(1u, taskCount1);
-
-    taskCount0 = castToObject<MemObj>(buff20)->getCompletionStamp().taskCount;
-    taskCount1 = castToObject<MemObj>(buff21)->getCompletionStamp().taskCount;
-    EXPECT_EQ(2u, taskCount0);
-    EXPECT_EQ(2u, taskCount1);
-
     // Cleanup
     retVal = clReleaseKernel(kernel1);
     EXPECT_EQ(CL_SUCCESS, retVal);

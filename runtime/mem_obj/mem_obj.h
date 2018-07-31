@@ -23,7 +23,6 @@
 #pragma once
 #include "runtime/api/cl_types.h"
 #include "runtime/helpers/base_object.h"
-#include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/mipmap.h"
 #include "runtime/sharings/sharing.h"
 #include "runtime/mem_obj/map_operations_handler.h"
@@ -33,12 +32,11 @@
 #include <vector>
 
 namespace OCLRT {
+class ExecutionEnvironment;
 class GraphicsAllocation;
 struct KernelInfo;
 class MemoryManager;
 class Context;
-class CommandQueue;
-class Device;
 
 template <>
 struct OpenCLObjectMapper<_cl_mem> {
@@ -74,8 +72,6 @@ class MemObj : public BaseObject<_cl_mem> {
     bool getIsObjectRedescribed() const { return isObjectRedescribed; };
     size_t getSize() const;
     cl_mem_flags getFlags() const;
-    void setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ);
-    CompletionStamp getCompletionStamp() const;
 
     bool addMappedPtr(void *ptr, size_t ptrLength, cl_map_flags &mapFlags, MemObjSizeArray &size, MemObjOffsetArray &offset, uint32_t mipLevel);
     bool findMappedPtr(void *mappedPtr, MapInfo &outMapInfo) { return mapOperationsHandler.find(mappedPtr, outMapInfo); }
@@ -104,7 +100,6 @@ class MemObj : public BaseObject<_cl_mem> {
 
     virtual bool allowTiling() const { return false; }
 
-    CommandQueue *getAssociatedCommandQueue() { return cmdQueuePtr; }
     bool isImageFromImage() const { return isImageFromImageCreated; }
 
     void *getCpuAddressForMapping();
@@ -141,9 +136,7 @@ class MemObj : public BaseObject<_cl_mem> {
     size_t offset = 0;
     MemObj *associatedMemObject = nullptr;
     cl_uint refCount = 0;
-    CompletionStamp completionStamp;
-    CommandQueue *cmdQueuePtr = nullptr;
-    Device *device = nullptr;
+    ExecutionEnvironment *executionEnvironment = nullptr;
     bool isZeroCopy;
     bool isHostPtrSVM;
     bool isObjectRedescribed;

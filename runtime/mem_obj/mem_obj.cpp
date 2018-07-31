@@ -48,12 +48,11 @@ MemObj::MemObj(Context *context,
       memoryStorage(memoryStorage), hostPtr(hostPtr),
       isZeroCopy(zeroCopy), isHostPtrSVM(isHostPtrSVM), isObjectRedescribed(isObjectRedescribed),
       graphicsAllocation(gfxAllocation) {
-    completionStamp = {};
 
     if (context) {
         context->incRefInternal();
         memoryManager = context->getMemoryManager();
-        device = context->getDevice(0);
+        executionEnvironment = context->getDevice(0)->getExecutionEnvironment();
     }
 }
 
@@ -215,15 +214,6 @@ void *MemObj::getHostPtr() const {
 
 size_t MemObj::getSize() const {
     return size;
-}
-
-void MemObj::setCompletionStamp(CompletionStamp completionStamp, Device *pDevice, CommandQueue *pCmdQ) {
-    this->completionStamp = completionStamp;
-    cmdQueuePtr = pCmdQ;
-}
-
-CompletionStamp MemObj::getCompletionStamp() const {
-    return completionStamp;
 }
 
 void MemObj::setAllocatedMapPtr(void *allocatedMapPtr) {

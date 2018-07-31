@@ -235,9 +235,6 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       taskLevel,
                                                       dispatchFlags,
                                                       commandQueue.getDevice());
-    for (auto &surface : surfaces) {
-        surface->setCompletionStamp(completionStamp, nullptr, nullptr);
-    }
     commandQueue.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
     if (printfHandler) {
         printfHandler.get()->printEnqueueOutput();

@@ -547,37 +547,6 @@ TEST_P(NoHostPtr, GivenNoHostPtrWhenHwBufferCreationFailsThenReturnNullptr) {
     }
 }
 
-TEST_P(NoHostPtr, completionStamp) {
-    auto buffer = Buffer::create(
-        context.get(),
-        flags,
-        g_scTestBufferSizeInBytes,
-        nullptr,
-        retVal);
-
-    FlushStamp expectedFlushstamp = 0;
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, buffer);
-    EXPECT_EQ(0u, buffer->getCompletionStamp().taskCount);
-    EXPECT_EQ(expectedFlushstamp, buffer->getCompletionStamp().flushStamp);
-    EXPECT_EQ(0u, buffer->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(0u, buffer->getCompletionStamp().engineType);
-
-    CompletionStamp completionStamp;
-    completionStamp.taskCount = 42;
-    completionStamp.deviceOrdinal = 43;
-    completionStamp.engineType = EngineType::ENGINE_RCS;
-    completionStamp.flushStamp = 5;
-    buffer->setCompletionStamp(completionStamp, nullptr, nullptr);
-    EXPECT_EQ(completionStamp.taskCount, buffer->getCompletionStamp().taskCount);
-    EXPECT_EQ(completionStamp.flushStamp, buffer->getCompletionStamp().flushStamp);
-    EXPECT_EQ(completionStamp.deviceOrdinal, buffer->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(completionStamp.engineType, buffer->getCompletionStamp().engineType);
-
-    delete buffer;
-}
-
 TEST_P(NoHostPtr, WithUseHostPtr_returnsError) {
     auto buffer = Buffer::create(
         context.get(),

@@ -85,9 +85,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, GPGPUWalker) {
     EXPECT_NE(0u, cmd->getIndirectDataLength());
     EXPECT_FALSE(cmd->getIndirectParameterEnable());
 
-    // Verify srcBuffer internal state
-    EXPECT_EQ(nullptr, srcBuffer->getAssociatedCommandQueue());
-
     // Compute the SIMD lane mask
     size_t simd =
         cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD32 ? 32 : cmd->getSimdSize() == GPGPU_WALKER::SIMD_SIZE_SIMD16 ? 16 : 8;

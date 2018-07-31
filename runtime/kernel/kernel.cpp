@@ -935,20 +935,6 @@ inline void Kernel::makeArgsResident(CommandStreamReceiver &commandStreamReceive
     }
 }
 
-void Kernel::updateWithCompletionStamp(CommandStreamReceiver &commandStreamReceiver, CompletionStamp *completionStamp) {
-    auto numArgs = kernelInfo.kernelArgInfo.size();
-    for (decltype(numArgs) argIndex = 0; argIndex < numArgs; argIndex++) {
-        if (kernelArguments[argIndex].object) {
-            if (Kernel::isMemObj(kernelArguments[argIndex].type)) {
-                auto clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(kernelArguments[argIndex].object));
-                auto memObj = castToObjectOrAbort<MemObj>(clMem);
-                DEBUG_BREAK_IF(memObj == nullptr);
-                memObj->setCompletionStamp(*completionStamp, nullptr, nullptr);
-            }
-        }
-    }
-}
-
 void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
     if (privateSurface) {
         commandStreamReceiver.makeResident(*privateSurface);

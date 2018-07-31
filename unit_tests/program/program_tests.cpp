@@ -1416,7 +1416,6 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     EXPECT_EQ(*pDst, reinterpret_cast<uintptr_t>(constBuffGpuAddr));
 
-    pKernel->updateWithCompletionStamp(*pCommandStreamReceiver, nullptr);
     pCommandStreamReceiver->makeSurfacePackNonResident(nullptr, false);
     EXPECT_EQ(0u, pCommandStreamReceiver->residency.size());
 

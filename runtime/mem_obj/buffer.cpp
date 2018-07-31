@@ -438,7 +438,7 @@ Buffer *Buffer::createBufferHwFromDevice(const Device *device,
     DEBUG_BREAK_IF(nullptr == funcCreate);
     auto pBuffer = funcCreate(nullptr, flags, size, memoryStorage, hostPtr, gfxAllocation,
                               zeroCopy, isHostPtrSVM, isImageRedescribed);
-    pBuffer->device = const_cast<Device *>(device);
+    pBuffer->executionEnvironment = device->getExecutionEnvironment();
     return pBuffer;
 }
 

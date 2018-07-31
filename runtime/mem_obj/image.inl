@@ -21,7 +21,7 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/image.h"
@@ -45,7 +45,7 @@ void ImageHw<GfxFamily>::setImageArg(void *memory, bool setAsMediaBlockImage, ui
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     auto gmm = getGraphicsAllocation()->gmm;
-    auto gmmHelper = device->getGmmHelper();
+    auto gmmHelper = executionEnvironment->getGmmHelper();
 
     auto imageCount = std::max(getImageDesc().image_depth, getImageDesc().image_array_size);
     if (imageCount == 0) {
@@ -220,7 +220,7 @@ void ImageHw<GfxFamily>::setMediaImageArg(void *memory) {
     using SURFACE_FORMAT = typename MEDIA_SURFACE_STATE::SURFACE_FORMAT;
     SURFACE_FORMAT surfaceFormat = MEDIA_SURFACE_STATE::SURFACE_FORMAT_Y8_UNORM_VA;
 
-    auto gmmHelper = device->getGmmHelper();
+    auto gmmHelper = executionEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<MEDIA_SURFACE_STATE *>(memory);
     *surfaceState = MEDIA_SURFACE_STATE::sInit();
 

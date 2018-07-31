@@ -131,6 +131,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool getEnabled64kbPages();
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
+    ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
 
   protected:
     Device() = delete;

@@ -58,40 +58,6 @@ TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_null_kernel) {
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_SetCompletionStampTaskCountOnBuffersAndDcFlushOnMapBufferIfItsTaskCountIsGreaterThanLatestDcFlushTaskCount) {
-    const size_t n = 512;
-    size_t globalWorkSize[3] = {n, 1, 1};
-    size_t localWorkSize[3] = {256, 1, 1};
-    cl_int retVal = CL_SUCCESS;
-    CommandQueue *pCmdQ2 = createCommandQueue(pDevice, 0);
-
-    auto b0 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
-    auto b1 = clCreateBuffer(context, 0, n * sizeof(float), nullptr, nullptr);
-
-    retVal = clSetKernelArg(pKernel, 0, sizeof(cl_mem), &b0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pKernel, 1, sizeof(cl_mem), &b1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clEnqueueNDRangeKernel(pCmdQ2, pKernel, 1, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    auto taskCount0 = castToObject<MemObj>(b0)->getCompletionStamp().taskCount;
-    auto taskCount1 = castToObject<MemObj>(b1)->getCompletionStamp().taskCount;
-
-    EXPECT_EQ(1u, taskCount0);
-    EXPECT_EQ(1u, taskCount1);
-
-    auto ptrResult = clEnqueueMapBuffer(pCmdQ, b1, CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, 8, 0, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clEnqueueUnmapMemObject(pCmdQ, b1, ptrResult, 0, nullptr, nullptr);
-
-    retVal = clReleaseMemObject(b0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(b1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    clReleaseCommandQueue(pCmdQ2);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
 TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDRangeKernelReturnsSuccess) {
     const size_t n = 512;
     size_t globalWorkSize[3] = {n, 1, 1};

@@ -415,10 +415,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
         } else {
             waitUntilComplete(taskCount, flushStamp->peekStamp(), false);
-            for (auto sIt = surfacesForResidency, sE = surfacesForResidency + numSurfaceForResidency;
-                 sIt != sE; ++sIt) {
-                (*sIt)->setCompletionStamp(completionStamp, nullptr, nullptr);
-            }
             if (printfHandler) {
                 printfHandler->printEnqueueOutput();
             }
@@ -574,14 +570,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         taskLevel,
         dispatchFlags,
         *device);
-
-    for (auto surface : CreateRange(surfaces, surfaceCount)) {
-        surface->setCompletionStamp(completionStamp, device, this);
-    }
-
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.getKernel()->updateWithCompletionStamp(commandStreamReceiver, &completionStamp);
-    }
 
     return completionStamp;
 }

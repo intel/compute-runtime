@@ -26,13 +26,12 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
-
+class CommandQueue;
 class Surface {
   public:
     Surface(bool isCoherent = false) : IsCoherent(isCoherent) {}
     virtual ~Surface() = default;
     virtual void makeResident(CommandStreamReceiver &csr) = 0;
-    virtual void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) = 0;
     virtual Surface *duplicate() = 0;
     const bool IsCoherent;
 };
@@ -43,7 +42,6 @@ class NullSurface : public Surface {
     ~NullSurface() override = default;
 
     void makeResident(CommandStreamReceiver &csr) override{};
-    void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override{};
     Surface *duplicate() override { return new NullSurface(); };
 };
 
@@ -66,10 +64,6 @@ class HostPtrSurface : public Surface {
     void makeResident(CommandStreamReceiver &csr) override {
         DEBUG_BREAK_IF(!gfxAllocation);
         csr.makeResidentHostPtrAllocation(gfxAllocation);
-    }
-    void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override {
-        DEBUG_BREAK_IF(!gfxAllocation);
-        gfxAllocation->taskCount = cs.taskCount;
     }
     Surface *duplicate() override {
         return new HostPtrSurface(this->memoryPointer, this->surfaceSize, this->gfxAllocation);
@@ -103,28 +97,25 @@ class HostPtrSurface : public Surface {
 
 class MemObjSurface : public Surface {
   public:
-    MemObjSurface(MemObj *memObj) : Surface(memObj->getGraphicsAllocation()->isCoherent()), memory_object(memObj) {
-        memory_object->retain();
+    MemObjSurface(MemObj *memObj) : Surface(memObj->getGraphicsAllocation()->isCoherent()), memObj(memObj) {
+        memObj->retain();
     }
     ~MemObjSurface() override {
-        memory_object->release();
-        memory_object = nullptr;
+        memObj->release();
+        memObj = nullptr;
     };
 
     void makeResident(CommandStreamReceiver &csr) override {
-        DEBUG_BREAK_IF(!memory_object);
-        csr.makeResident(*memory_object->getGraphicsAllocation());
+        DEBUG_BREAK_IF(!memObj);
+        csr.makeResident(*memObj->getGraphicsAllocation());
     }
-    void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override {
-        DEBUG_BREAK_IF(!memory_object);
-        memory_object->setCompletionStamp(cs, pDevice, pCmdQ);
-    }
+
     Surface *duplicate() override {
-        return new MemObjSurface(this->memory_object);
+        return new MemObjSurface(this->memObj);
     };
 
   protected:
-    class MemObj *memory_object;
+    class MemObj *memObj;
 };
 
 class GeneralSurface : public Surface {
@@ -136,9 +127,6 @@ class GeneralSurface : public Surface {
 
     void makeResident(CommandStreamReceiver &csr) override {
         csr.makeResident(*gfxAllocation);
-    };
-    void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override {
-        gfxAllocation->taskCount = cs.taskCount;
     };
     Surface *duplicate() override { return new GeneralSurface(gfxAllocation); };
 

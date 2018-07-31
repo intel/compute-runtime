@@ -447,33 +447,6 @@ TEST_P(CreateImageNoHostPtr, getImageDesc) {
     delete image;
 }
 
-TEST_P(CreateImageNoHostPtr, completionStamp) {
-    auto image = createImageWithFlags(flags);
-
-    FlushStamp expectedFlushStamp = 0;
-
-    ASSERT_EQ(CL_SUCCESS, retVal);
-    ASSERT_NE(nullptr, image);
-    ASSERT_EQ(true, image->isMemObjZeroCopy());
-    EXPECT_EQ(0u, image->getCompletionStamp().taskCount);
-    EXPECT_EQ(expectedFlushStamp, image->getCompletionStamp().flushStamp);
-    EXPECT_EQ(0u, image->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(0u, image->getCompletionStamp().engineType);
-
-    CompletionStamp completionStamp;
-    completionStamp.taskCount = 42;
-    completionStamp.deviceOrdinal = 43;
-    completionStamp.engineType = EngineType::ENGINE_RCS;
-    completionStamp.flushStamp = 5;
-    image->setCompletionStamp(completionStamp, nullptr, nullptr);
-    EXPECT_EQ(completionStamp.taskCount, image->getCompletionStamp().taskCount);
-    EXPECT_EQ(completionStamp.flushStamp, image->getCompletionStamp().flushStamp);
-    EXPECT_EQ(completionStamp.deviceOrdinal, image->getCompletionStamp().deviceOrdinal);
-    EXPECT_EQ(completionStamp.engineType, image->getCompletionStamp().engineType);
-
-    delete image;
-}
-
 TEST_P(CreateImageNoHostPtr, withImageGraphicsAllocationReportsImageType) {
     auto image = createImageWithFlags(flags);
 

@@ -292,7 +292,6 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     //residency for kernel surfaces
     MOCKABLE_VIRTUAL void makeResident(CommandStreamReceiver &commandStreamReceiver);
-    void updateWithCompletionStamp(CommandStreamReceiver &commandStreamReceiver, CompletionStamp *completionStamp);
     MOCKABLE_VIRTUAL void getResidency(std::vector<Surface *> &dst);
     bool requiresCoherency();
     void resetSharedObjectsPatchAddresses();

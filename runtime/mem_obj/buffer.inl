@@ -21,7 +21,7 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/surface_formats.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
@@ -46,7 +46,7 @@ void BufferHw<GfxFamily>::setArgStateful(void *memory) {
     using SURFACE_FORMAT = typename RENDER_SURFACE_STATE::SURFACE_FORMAT;
     using AUXILIARY_SURFACE_MODE = typename RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE;
 
-    auto gmmHelper = device->getGmmHelper();
+    auto gmmHelper = executionEnvironment->getGmmHelper();
     auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(memory);
     auto surfaceSize = alignUp(getSize(), 4);
 

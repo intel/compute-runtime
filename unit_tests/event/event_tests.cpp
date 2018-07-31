@@ -413,7 +413,7 @@ TEST_F(EventTest, givenEventContainingCommandQueueWhenItsStatusIsUpdatedToComple
 class SurfaceMock : public Surface {
   public:
     SurfaceMock() {
-        resident = nonResident = completionStamp = 0;
+        resident = nonResident = 0;
     };
     ~SurfaceMock() override{};
 
@@ -427,13 +427,6 @@ class SurfaceMock : public Surface {
             csr.makeResident(*graphicsAllocation);
         }
     };
-    void setCompletionStamp(CompletionStamp &cs, Device *pDevice, CommandQueue *pCmdQ) override {
-        if (parent) {
-            parent->completionStamp++;
-        } else {
-            completionStamp++;
-        }
-    };
     Surface *duplicate() override {
         return new SurfaceMock(this);
     };
@@ -441,7 +434,6 @@ class SurfaceMock : public Surface {
     SurfaceMock *parent = nullptr;
     std::atomic<uint32_t> resident;
     std::atomic<uint32_t> nonResident;
-    std::atomic<uint32_t> completionStamp;
 
     GraphicsAllocation *graphicsAllocation = nullptr;
 
@@ -486,7 +478,6 @@ TEST_F(InternalsEventTest, processBlockedCommandsKernelOperation) {
     EXPECT_EQ(surface->resident, 1u);
     EXPECT_FALSE(surface->graphicsAllocation->isResident());
     delete surface->graphicsAllocation;
-    EXPECT_EQ(surface->completionStamp, 1u);
 }
 
 TEST_F(InternalsEventTest, processBlockedCommandsAbortKernelOperation) {
