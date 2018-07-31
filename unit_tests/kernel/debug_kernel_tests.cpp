@@ -31,7 +31,7 @@
 using namespace OCLRT;
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCalledThenCorrectValueIsReturned) {
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     MockProgram program;
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockDebugKernel>(*device.get(), &program));
@@ -40,7 +40,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetDebugSurfaceBtiIsCal
 }
 
 TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenCorrectValueIsReturned) {
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     MockProgram program;
     program.enableKernelDebug();
     std::unique_ptr<MockDebugKernel> kernel(MockKernel::create<MockDebugKernel>(*device.get(), &program));
@@ -49,7 +49,7 @@ TEST(DebugKernelTest, givenKernelCompiledForDebuggingWhenGetPerThreadSystemThrea
 }
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledThenInvalidIndexValueIsReturned) {
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     MockProgram program;
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*device.get(), &program));
@@ -58,7 +58,7 @@ TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetDebugSurfaceBtiIsCalledT
 }
 
 TEST(DebugKernelTest, givenKernelWithoutDebugFlagWhenGetPerThreadSystemThreadSurfaceSizeIsCalledThenZeroIsReturned) {
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     MockProgram program;
     program.enableKernelDebug();
     std::unique_ptr<MockKernel> kernel(MockKernel::create<MockKernel>(*device.get(), &program));

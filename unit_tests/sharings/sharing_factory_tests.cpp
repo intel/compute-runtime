@@ -211,7 +211,7 @@ TEST(Context, givenMockSharingBuilderWhenContextWithInvalidPropertiesThenContext
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::CLGL_SHARING);
 
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     cl_device_id clDevice = static_cast<cl_device_id>(device.get());
     DeviceVector deviceVector((cl_device_id *)&clDevice, 1);
     cl_int retVal;
@@ -242,7 +242,7 @@ TEST(Context, GivenVaContextWhenItIsCreatedItInitializesPowerSavingMode) {
     stateRestore.clearCurrentState();
     stateRestore.registerSharing<MockSharingBuilderFactory>(SharingType::VA_SHARING);
 
-    std::unique_ptr<MockDevice> device(new MockDevice(*platformDevices[0]));
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
     cl_device_id clDevice = static_cast<cl_device_id>(device.get());
     DeviceVector deviceVector((cl_device_id *)&clDevice, 1);
     cl_int retVal;
