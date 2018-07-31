@@ -371,25 +371,29 @@ cl_context CL_API_CALL clCreateContextFromType(const cl_context_properties *prop
 }
 
 cl_int CL_API_CALL clRetainContext(cl_context context) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context);
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->retain();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_CONTEXT;
+    retVal = CL_INVALID_CONTEXT;
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseContext(cl_context context) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context);
     Context *pContext = castToObject<Context>(context);
     if (pContext) {
         pContext->release();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_CONTEXT;
+    retVal = CL_INVALID_CONTEXT;
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetContextInfo(cl_context context,
@@ -399,6 +403,11 @@ cl_int CL_API_CALL clGetContextInfo(cl_context context,
                                     size_t *paramValueSizeRet) {
     auto retVal = CL_INVALID_CONTEXT;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     auto pContext = castToObject<Context>(context);
 
     if (pContext) {
@@ -417,6 +426,9 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "device", device,
+                   "properties", properties);
 
     do {
         if (properties &
@@ -464,7 +476,7 @@ cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context context,
 cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
-
+    DBG_LOG_INPUTS("commandQueue", commandQueue);
     retainQueue<CommandQueue>(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
         return retVal;
@@ -478,6 +490,7 @@ cl_int CL_API_CALL clRetainCommandQueue(cl_command_queue commandQueue) {
 cl_int CL_API_CALL clReleaseCommandQueue(cl_command_queue commandQueue) {
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue);
 
     releaseQueue<CommandQueue>(commandQueue, retVal);
     if (retVal == CL_SUCCESS) {
@@ -496,6 +509,11 @@ cl_int CL_API_CALL clGetCommandQueueInfo(cl_command_queue commandQueue,
                                          size_t *paramValueSizeRet) {
     cl_int retVal = CL_INVALID_COMMAND_QUEUE;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
 
     getQueueInfo<CommandQueue>(commandQueue, paramName, paramValueSize, paramValue, paramValueSizeRet, retVal);
     // if host queue not found - try to query device queue
@@ -512,7 +530,13 @@ cl_int CL_API_CALL clSetCommandQueueProperty(cl_command_queue commandQueue,
                                              cl_command_queue_properties properties,
                                              cl_bool enable,
                                              cl_command_queue_properties *oldProperties) {
-    return CL_INVALID_VALUE;
+    cl_int retVal = CL_INVALID_VALUE;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "properties", properties,
+                   "enable", enable,
+                   "oldProperties", oldProperties);
+    return retVal;
 }
 
 cl_mem CL_API_CALL clCreateBuffer(cl_context context,
@@ -525,7 +549,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
     DBG_LOG_INPUTS("cl_context", context,
                    "cl_mem_flags", flags,
                    "size", size,
-                   "hostPtr", hostPtr);
+                   "hostPtr", DebugManager.infoPointerToString(hostPtr, size));
     cl_mem buffer = nullptr;
     const cl_mem_flags allValidFlags =
         CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
@@ -588,6 +612,10 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
                                      cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("buffer", buffer,
+                   "flags", flags,
+                   "bufferCreateType", bufferCreateType,
+                   "bufferCreateInfo", bufferCreateInfo);
     cl_mem subBuffer = nullptr;
     Buffer *parentBuffer = castToObject<Buffer>(buffer);
     const cl_mem_flags allValidFlags =
