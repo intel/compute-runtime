@@ -29,7 +29,8 @@ struct ExtendableEnum {
         return value;
     }
 
-  protected:
     constexpr ExtendableEnum(uint32_t val) : value(val) {}
+
+  protected:
     uint32_t value;
 };
