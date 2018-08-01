@@ -55,6 +55,27 @@ See [README.md](https://github.com/intel/compute-runtime/blob/master/README.md).
 
 Any platforms supporting OpenCL 2.1 are eligible for move to OpenCL 2.2.
 
+## Feature: cl_cache
+
+### What is cl_cache?
+
+This is a mechanism to cache binary representations of OpenCL kernels provided in text form by the application.
+By storing the binary representations, compiling is required only the first time, which improves performance.
+
+### How can cl_cache be enabled?
+
+In the working directory, manually create *cl_cache* directory.
+The driver will use this directory to store the binary representations of the compiled kernels.
+Note: This will work on all supported OSes. 
+
+### What are the known limitations of cl_cache?
+
+1. Not thread safe. (Workaround: Make sure your clBuildProgram calls are executed in thread safe fashion.)
+1. Binary representation may not be compatible between various versions of NEO and IGC drivers. (Workaround: Manually empty *cl_cache* directory prior to update)
+1. Cache is not automatically cleaned. (Workaround: Manually empty *cl_cache* directory)
+1. Cache may exhaust disk space and cause further failures.  (Workaround: Monitor and manually empty *cl_cache* directory)
+1. Cache is not process safe.
+
 ## Who are we?
 
 NEO OpenCL team is part of VPG (Visual and Parallel Computing group). Historically, our team
