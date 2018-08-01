@@ -1112,6 +1112,9 @@ cl_program CL_API_CALL clCreateProgramWithIL(cl_context context,
                                              cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "il", il,
+                   "length", length);
 
     cl_program program = nullptr;
     retVal = validateObjects(context, il);
@@ -1137,6 +1140,10 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
                                                          cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "numDevices", numDevices,
+                   "deviceList", deviceList,
+                   "kernelNames", kernelNames);
     cl_program program = nullptr;
 
     retVal = validateObjects(
@@ -1173,25 +1180,29 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
 }
 
 cl_int CL_API_CALL clRetainProgram(cl_program program) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("program", program);
     auto pProgram = castToObject<Program>(program);
     if (pProgram) {
         pProgram->retain();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_PROGRAM;
+    retVal = CL_INVALID_PROGRAM;
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseProgram(cl_program program) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("program", program);
     auto pProgram = castToObject<Program>(program);
     if (pProgram) {
         pProgram->release();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_PROGRAM;
+    retVal = CL_INVALID_PROGRAM;
+    return retVal;
 }
 
 cl_int CL_API_CALL clBuildProgram(cl_program program,
@@ -1269,7 +1280,10 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
 }
 
 cl_int CL_API_CALL clUnloadPlatformCompiler(cl_platform_id platform) {
-    return CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("platform", platform);
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetProgramInfo(cl_program program,
@@ -1279,7 +1293,10 @@ cl_int CL_API_CALL clGetProgramInfo(cl_program program,
                                     size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("clProgram", program, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", paramValue, "paramValueSizeRet", paramValueSizeRet);
+    DBG_LOG_INPUTS("clProgram", program, "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     retVal = validateObjects(program);
 
     if (CL_SUCCESS == retVal) {
@@ -1302,7 +1319,10 @@ cl_int CL_API_CALL clGetProgramBuildInfo(cl_program program,
                                          size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("clProgram", program, "cl_device_id", device, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", paramValue, "paramValueSizeRet", paramValueSizeRet);
+    DBG_LOG_INPUTS("clProgram", program, "cl_device_id", device,
+                   "paramName", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSize", paramValueSize, "paramValue", paramValue,
+                   "paramValueSizeRet", paramValueSizeRet);
     retVal = validateObjects(program);
 
     if (CL_SUCCESS == retVal) {
@@ -1366,7 +1386,12 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                                             cl_uint numKernels,
                                             cl_kernel *kernels,
                                             cl_uint *numKernelsRet) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("clProgram", clProgram,
+                   "numKernels", numKernels,
+                   "kernels", kernels,
+                   "numKernelsRet", numKernelsRet);
     auto program = castToObject<Program>(clProgram);
     if (program) {
         auto numKernels = program->getNumKernels();
@@ -1389,32 +1414,36 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         if (numKernelsRet) {
             *numKernelsRet = static_cast<cl_uint>(numKernels);
         }
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_PROGRAM;
+    retVal = CL_INVALID_PROGRAM;
+    return retVal;
 }
 
 cl_int CL_API_CALL clRetainKernel(cl_kernel kernel) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("kernel", kernel);
     auto pKernel = castToObject<Kernel>(kernel);
     if (pKernel) {
         pKernel->retain();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_KERNEL;
+    retVal = CL_INVALID_KERNEL;
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseKernel(cl_kernel kernel) {
-    API_ENTER(0);
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("kernel", kernel);
     auto pKernel = castToObject<Kernel>(kernel);
     if (pKernel) {
         pKernel->release();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_KERNEL;
+    retVal = CL_INVALID_KERNEL;
+    return retVal;
 }
 
 cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
@@ -1425,7 +1454,8 @@ cl_int CL_API_CALL clSetKernelArg(cl_kernel kernel,
     API_ENTER(&retVal);
 
     auto pKernel = castToObject<Kernel>(kernel);
-    DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argSize", argSize, "argValue", argValue);
+    DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex,
+                   "argSize", argSize, "argValue", DebugManager.infoPointerToString(argValue, argSize));
     do {
         if (!pKernel) {
             retVal = CL_INVALID_KERNEL;
@@ -1457,7 +1487,10 @@ cl_int CL_API_CALL clGetKernelInfo(cl_kernel kernel,
                                    size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-    DBG_LOG_INPUTS("kernel", kernel, "paramName", paramName, "paramValueSize", paramValueSize, "paramValue", paramValue, "paramValueSizeRet", paramValueSizeRet);
+    DBG_LOG_INPUTS("kernel", kernel, "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     auto pKernel = castToObject<Kernel>(kernel);
     retVal = pKernel
                  ? pKernel->getInfo(
@@ -1477,6 +1510,14 @@ cl_int CL_API_CALL clGetKernelArgInfo(cl_kernel kernel,
                                       size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("kernel", kernel,
+                   "argIndx", argIndx,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
+
     auto pKernel = castToObject<Kernel>(kernel);
     retVal = pKernel
                  ? pKernel->getArgInfo(
@@ -1497,6 +1538,14 @@ cl_int CL_API_CALL clGetKernelWorkGroupInfo(cl_kernel kernel,
                                             size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("kernel", kernel,
+                   "device", device,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
+
     auto pKernel = castToObject<Kernel>(kernel);
     retVal = pKernel
                  ? pKernel->getWorkGroupInfo(
