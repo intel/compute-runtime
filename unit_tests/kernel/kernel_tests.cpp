@@ -452,7 +452,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
         uint32_t taskLevel,
-        DispatchFlags &dispatchFlags) override {
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
         CompletionStamp cs = {};
         return cs;
     }

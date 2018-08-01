@@ -520,9 +520,9 @@ struct DrmCsrVfeTests : ::testing::Test {
         }
     };
 
-    void flushTask(CommandStreamReceiver &csr, IndirectHeap &stream, bool lowPriority) {
+    void flushTask(CommandStreamReceiver &csr, IndirectHeap &stream, bool lowPriority, Device &device) {
         dispatchFlags.lowPriority = lowPriority;
-        csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags);
+        csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags, device);
     }
 
     HardwareParse hwParser;
@@ -541,13 +541,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhe
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
-    flushTask(*mockCsr, stream, false); //default priority
+    flushTask(*mockCsr, stream, false, *device); //default priority
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
     auto startOffset = mockCsr->commandStream.getUsed();
 
-    flushTask(*mockCsr, stream, true); // low priority
+    flushTask(*mockCsr, stream, true, *device); // low priority
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
@@ -569,13 +569,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
-    flushTask(*mockCsr, stream, true); //low priority
+    flushTask(*mockCsr, stream, true, *device); //low priority
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
     auto startOffset = mockCsr->commandStream.getUsed();
 
-    flushTask(*mockCsr, stream, false); // default priority
+    flushTask(*mockCsr, stream, false, *device); // default priority
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
@@ -597,13 +597,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
-    flushTask(*mockCsr, stream, true); //low priority
+    flushTask(*mockCsr, stream, true, *device); //low priority
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
     auto startOffset = mockCsr->commandStream.getUsed();
 
-    flushTask(*mockCsr, stream, true); // low priority
+    flushTask(*mockCsr, stream, true, *device); // low priority
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
@@ -628,7 +628,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
     mockCsr->setRequiredScratchSize(123);
 
-    flushTask(*mockCsr, stream, true); //low priority
+    flushTask(*mockCsr, stream, true, *device); //low priority
     EXPECT_TRUE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
@@ -649,7 +649,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaul
     EXPECT_FALSE(mockCsr->peekLowPriorityMediaVfeStateDirty());
     mockCsr->setRequiredScratchSize(123);
 
-    flushTask(*mockCsr, stream, false); //default priority
+    flushTask(*mockCsr, stream, false, *device); //default priority
     EXPECT_FALSE(mockCsr->peekDefaultMediaVfeStateDirty());
     EXPECT_TRUE(mockCsr->peekLowPriorityMediaVfeStateDirty());
 
@@ -997,7 +997,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     DispatchFlags dispatchFlags;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
-    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
     //make sure command buffer is recorded
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
@@ -1056,7 +1056,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     DispatchFlags dispatchFlags;
     dispatchFlags.guardCommandBufferWithPipeControl = true;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(device->getHardwareInfo());
-    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags);
+    tCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
     auto &cmdBuffers = mockedSubmissionsAggregator->peekCommandBuffers();
     auto storedCommandBuffer = cmdBuffers.peekHead();

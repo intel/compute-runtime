@@ -88,7 +88,8 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
                                     cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
                                     cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
                                     taskLevel,
-                                    dispatchFlags);
+                                    dispatchFlags,
+                                    cmdQ.getDevice());
 
     cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 
@@ -232,7 +233,8 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
                                                       *ioh,
                                                       *ssh,
                                                       taskLevel,
-                                                      dispatchFlags);
+                                                      dispatchFlags,
+                                                      commandQueue.getDevice());
     for (auto &surface : surfaces) {
         surface->setCompletionStamp(completionStamp, nullptr, nullptr);
     }
@@ -272,7 +274,8 @@ CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
                                     cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u),
                                     cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
                                     taskLevel,
-                                    dispatchFlags);
+                                    dispatchFlags,
+                                    cmdQ.getDevice());
 
     cmdQ.waitUntilComplete(completionStamp.taskCount, completionStamp.flushStamp, false);
 

@@ -47,7 +47,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags) override;
+                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     void flushBatchedSubmissions() override;
 

@@ -68,7 +68,7 @@ HWTEST_F(CommandQueueSimpleTest, flushWaitlistDoesNotFlushSingleEventWhenTaskCou
     dispatchFlags.blocking = true;
     dispatchFlags.dcFlush = true;
 
-    csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags);
+    csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags, *pDevice);
 
     EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
     csr.taskCount = 1;

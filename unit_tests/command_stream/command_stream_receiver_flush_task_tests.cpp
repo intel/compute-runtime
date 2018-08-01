@@ -156,7 +156,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto expectedUsedSize = 2 * MemoryConstants::cacheLineSize;
     EXPECT_EQ(expectedUsedSize, commandStream.getUsed());
@@ -173,7 +174,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIoh
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(dsh.getGraphicsAllocation()->peekEvictable(), true);
     EXPECT_EQ(ssh.getGraphicsAllocation()->peekEvictable(), true);
@@ -202,7 +204,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
@@ -232,7 +235,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
     bool found = false;
@@ -838,7 +842,8 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
         linear,
         linear,
         1,
-        dispatchFlags);
+        dispatchFlags,
+        *pDevice);
 
     auto expectedSize = 0x1000u - sizeCQReserves;
 
@@ -885,7 +890,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
         ioh,
         ssh,
         taskLevel,
-        dispatchFlags);
+        dispatchFlags,
+        *pDevice);
 
     // Verify that taskCS got modified, while csrCS remained intact
     EXPECT_GT(commandStreamTask.getUsed(), 0u);
@@ -930,7 +936,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
         ioh,
         ssh,
         taskLevel,
-        dispatchFlags);
+        dispatchFlags,
+        *pDevice);
 
     parseCommands<FamilyType>(commandStreamTask, 0);
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1055,7 +1062,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
         ioh,
         ssh,
         taskLevel,
-        dispatchFlags);
+        dispatchFlags,
+        *pDevice);
 
     // Verify that flushTask returned a valid completion stamp
     EXPECT_EQ(commandStreamReceiver.peekTaskCount(), cs.taskCount);
@@ -1792,7 +1800,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, flushTaskWithPC
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
     expectedUsed = alignUp(expectedUsed, MemoryConstants::cacheLineSize);
 
-    commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, flushTaskFlags);
+    commandStreamReceiver.flushTask(commandStream, 0, dsh, ioh, ssh, taskLevel, flushTaskFlags, *pDevice);
 
     // Verify that we didn't grab a new CS buffer
     EXPECT_EQ(expectedUsed, csrCS.getUsed());
@@ -1911,7 +1919,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateWhenflushTa
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
 }
@@ -1938,7 +1947,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
 
@@ -1972,7 +1982,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
     EXPECT_FALSE(cmdBufferList.peekIsEmpty());
@@ -2027,7 +2038,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecord
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -2035,7 +2047,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndTwoRecord
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto secondBatchBuffer = primaryBatch->next;
@@ -2077,7 +2090,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -2085,7 +2099,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -2093,7 +2108,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto lastBatchBuffer = primaryBatch->next->next;
@@ -2139,7 +2155,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->makeResident(largeAllocation);
 
@@ -2149,7 +2166,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->makeResident(largeAllocation);
 
@@ -2159,7 +2177,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
 
@@ -2201,7 +2220,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //ensure command stream still used
     EXPECT_EQ(initialBase, commandStream.getCpuBase());
@@ -2217,7 +2237,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto baseAfterSecondFlushTask = commandStream.getCpuBase();
     auto usedAfterSecondFlushTask = commandStream.getUsed();
@@ -2277,7 +2298,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
 
@@ -2349,7 +2371,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenBlocking
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(1, mockCsr->flushCalledCount);
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
@@ -2401,7 +2424,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenFlushTas
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(1u, mockCsr->peekLatestSentTaskCount());
     EXPECT_EQ(0u, mockCsr->peekLatestFlushedTaskCount());
@@ -2427,7 +2451,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeWhenFlushTask
                   ioh,
                   ssh,
                   taskLevel,
-                  dispatchFlags);
+                  dispatchFlags,
+                  *pDevice);
 
     EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
     EXPECT_EQ(1u, csr.peekLatestFlushedTaskCount());
@@ -2455,7 +2480,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenWaitForT
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
     EXPECT_FALSE(cmdBufferList.peekIsEmpty());
@@ -2494,7 +2520,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenEnqueueI
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
 
@@ -2533,7 +2560,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
 
@@ -2553,7 +2581,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(expectedUsed + additionalSize, mockCsr->peekTotalMemoryUsed());
     mockCsr->flushBatchedSubmissions();
@@ -2592,7 +2621,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
 
@@ -2613,7 +2643,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //expect 2 flushes, since we cannot batch those submissions
     EXPECT_EQ(2u, mockCsr->peekLatestFlushedTaskCount());
@@ -2646,7 +2677,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
@@ -2655,7 +2687,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
@@ -2719,7 +2752,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushI
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     parseCommands<FamilyType>(commandStream);
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -2747,7 +2781,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenCommandA
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     parseCommands<FamilyType>(commandStream);
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -2777,7 +2812,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWithOutOfOrd
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     parseCommands<FamilyType>(commandStream);
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -2810,7 +2846,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenDcFlushI
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     EXPECT_EQ(nullptr, cmdBuffer->pipeControlThatMayBeErasedLocation);
@@ -2841,7 +2878,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
@@ -2850,7 +2888,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
@@ -2898,7 +2937,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
@@ -2907,7 +2947,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //validate if we recorded ppc positions
     auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
@@ -2957,7 +2998,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     //now emit with the same taskLevel
     mockCsr->flushTask(commandStream,
@@ -2966,7 +3008,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -2974,7 +3017,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
                        ioh,
                        ssh,
                        taskLevelPriorToSubmission,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(taskLevelPriorToSubmission, mockCsr->peekTaskLevel());
 
@@ -3090,7 +3134,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
     auto cmdBuffer = cmdBufferList.peekHead();
@@ -3121,7 +3166,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
     auto cmdBuffer = cmdBufferList.peekHead();
@@ -3152,7 +3198,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetT
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();
     auto cmdBuffer = cmdBufferList.peekHead();

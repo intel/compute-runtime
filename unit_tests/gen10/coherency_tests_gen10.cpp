@@ -112,7 +112,7 @@ struct Gen10CoherencyProgramingTest : public Gen10CoherencyRequirements {
         IndirectHeap stream(graphicAlloc);
 
         startOffset = csr->commandStream.getUsed();
-        csr->flushTask(stream, 0, stream, stream, stream, 0, flags);
+        csr->flushTask(stream, 0, stream, stream, stream, 0, flags, *device);
 
         csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
     };

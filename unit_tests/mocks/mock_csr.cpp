@@ -35,7 +35,8 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     const IndirectHeap &ioh,
     const IndirectHeap &ssh,
     uint32_t taskLevel,
-    DispatchFlags &dispatchFlags) {
+    DispatchFlags &dispatchFlags,
+    Device &device) {
     ++taskCount;
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp(), 0, EngineType::ENGINE_RCS};
     return stamp;

@@ -572,7 +572,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         *ioh,
         getIndirectHeap(IndirectHeap::SURFACE_STATE, 0u),
         taskLevel,
-        dispatchFlags);
+        dispatchFlags,
+        *device);
 
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
         surface->setCompletionStamp(completionStamp, device, this);

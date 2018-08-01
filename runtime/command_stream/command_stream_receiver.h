@@ -66,7 +66,7 @@ class CommandStreamReceiver {
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                                      uint32_t taskLevel, DispatchFlags &dispatchFlags) = 0;
+                                      uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     virtual void flushBatchedSubmissions() = 0;
 

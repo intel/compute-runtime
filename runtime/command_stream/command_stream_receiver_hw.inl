@@ -136,14 +136,15 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     const IndirectHeap &ioh,
     const IndirectHeap &ssh,
     uint32_t taskLevel,
-    DispatchFlags &dispatchFlags) {
+    DispatchFlags &dispatchFlags,
+    Device &device) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
     DEBUG_BREAK_IF(&commandStreamTask == &commandStream);
-    DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? getMemoryManager()->device->getPreemptionMode() == PreemptionMode::Disabled : true));
+    DEBUG_BREAK_IF(!(dispatchFlags.preemptionMode == PreemptionMode::Disabled ? device.getPreemptionMode() == PreemptionMode::Disabled : true));
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskLevel", taskLevel);
@@ -151,7 +152,6 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto levelClosed = false;
     void *currentPipeControlForNooping = nullptr;
     void *epiloguePipeControlLocation = nullptr;
-    Device *device = this->getMemoryManager()->device;
 
     if (DebugManager.flags.ForceCsrFlushing.get()) {
         flushBatchedSubmissions();
@@ -232,7 +232,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
 
-    size_t requiredScratchSizeInBytes = requiredScratchSize * device->getDeviceInfo().computeUnitsUsedForScratch;
+    size_t requiredScratchSizeInBytes = requiredScratchSize * device.getDeviceInfo().computeUnitsUsedForScratch;
 
     auto force32BitAllocations = getMemoryManager()->peekForce32BitAllocations();
 
@@ -311,7 +311,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             newGSHbase,
             requiredL3Index,
             memoryManager->getInternalHeapBaseAddress(),
-            device->getGmmHelper());
+            device.getGmmHelper());
 
         latestSentStatelessMocsConfig = requiredL3Index;
 
@@ -322,7 +322,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
 
-    if (getMemoryManager()->device->getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+    if (device.getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             auto pCmd = addPipeControlCmd(commandStreamCSR);
             pCmd->setTextureCacheInvalidationEnable(true);
@@ -364,9 +364,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (preemptionCsrAllocation)
         makeResident(*preemptionCsrAllocation);
 
-    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device->isSourceLevelDebuggerActive()) {
-        auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, device->isSourceLevelDebuggerActive());
-        makeResident(*BuiltIns::getInstance().getSipKernel(sipType, *device).getSipAllocation());
+    if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
+        auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, device.isSourceLevelDebuggerActive());
+        makeResident(*BuiltIns::getInstance().getSipKernel(sipType, device).getSipAllocation());
     }
 
     if (experimentalCmdBuffer.get() != nullptr) {
@@ -420,7 +420,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     size_t startOffset = submitCommandStreamFromCsr ? commandStreamStartCSR : commandStreamStartTask;
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, chainedBatchBuffer, dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, streamToSubmit.getUsed(), &streamToSubmit};
-    EngineType engineType = device->getEngineType();
+    EngineType engineType = device.getEngineType();
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -444,7 +444,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     //check if we are not over the budget, if we are do implicit flush
     if (getMemoryManager()->isMemoryBudgetExhausted()) {
-        if (this->totalMemoryUsed >= device->getDeviceInfo().globalMemSize / 4) {
+        if (this->totalMemoryUsed >= device.getDeviceInfo().globalMemSize / 4) {
             dispatchFlags.implicitFlush = true;
         }
     }

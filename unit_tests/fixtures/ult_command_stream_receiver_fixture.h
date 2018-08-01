@@ -104,7 +104,8 @@ struct UltCommandStreamReceiverTest
             ioh,
             ssh,
             taskLevel,
-            flushTaskFlags);
+            flushTaskFlags,
+            *pDevice);
     }
 
     template <typename GfxFamily>

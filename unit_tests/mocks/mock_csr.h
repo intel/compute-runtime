@@ -122,7 +122,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
         uint32_t taskLevel,
-        DispatchFlags &dispatchFlags) override {
+        DispatchFlags &dispatchFlags,
+        Device &device) override {
         this->flushTaskStamp = *this->executionStamp;
         (*this->executionStamp)++;
         slmUsedInLastFlushTask = dispatchFlags.useSLM;
@@ -136,7 +137,8 @@ class MockCsr : public MockCsrBase<GfxFamily> {
             ioh,
             ssh,
             taskLevel,
-            dispatchFlags);
+            dispatchFlags,
+            device);
     }
 
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
@@ -192,10 +194,10 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh,
-                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags) override {
+                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
         return CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
-                                                             dsh, ioh, ssh, taskLevel, dispatchFlags);
+                                                             dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     int flushCalledCount = 0;
@@ -235,7 +237,8 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
         uint32_t taskLevel,
-        DispatchFlags &dispatchFlags) override;
+        DispatchFlags &dispatchFlags,
+        Device &device) override;
 
     void flushBatchedSubmissions() override {
         if (flushBatchedSubmissionsCallCounter) {

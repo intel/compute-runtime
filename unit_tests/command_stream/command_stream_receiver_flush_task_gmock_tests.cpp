@@ -99,7 +99,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -107,7 +108,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     mockCsr->flushTask(commandStream,
                        0,
@@ -115,7 +117,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenCsrInBatchingModeThreeRe
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     auto primaryBatch = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto lastBatchBuffer = primaryBatch->next->next;
@@ -153,7 +156,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenAddPatchInfoCommentsForAUBDumpIsSetThenAddPatchInfoDataIsCollected) {
@@ -186,7 +190,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskGmockTests, givenMockCommandStreamerWhenA
                        ioh,
                        ssh,
                        taskLevel,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *pDevice);
 
     EXPECT_EQ(4u, patchInfoDataVector.size());
 

@@ -57,7 +57,8 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        *heap.get(),
                        *heap.get(),
                        0,
-                       dispatchFlags);
+                       dispatchFlags,
+                       *device);
 
     auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, true);
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(sipType, *device.get()).getSipAllocation();
