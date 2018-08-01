@@ -81,6 +81,10 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
     ${IGDRCL_SRC_tests_mock_wddm}
   )
+else()
+  list(APPEND IGDRCL_SRCS_tests_mocks
+    ${CMAKE_CURRENT_SOURCE_DIR}/linux/mock_drm_memory_manager.h
+  )
 endif()
 
 add_subdirectories()

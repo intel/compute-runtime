@@ -94,7 +94,7 @@ class DrmMemoryManager : public MemoryManager {
     decltype(&munmap) munmapFunction = munmap;
     decltype(&close) closeFunction = close;
     std::vector<BufferObject *> sharingBufferObjects;
-    std::recursive_mutex mtx;
+    std::mutex mtx;
     std::unique_ptr<Allocator32bit> internal32bitAllocator;
 };
 } // namespace OCLRT

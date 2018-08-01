@@ -20,9 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/device_command_stream.h"
-#include "hw_cmds.h"
 #include "runtime/event/event.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/ptr_math.h"
@@ -33,91 +33,28 @@
 #include "runtime/os_interface/linux/drm_buffer_object.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
+#include "runtime/os_interface/32bit_memory.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "runtime/mem_obj/buffer.h"
-#include "unit_tests/mocks/mock_context.h"
+
 #include "unit_tests/fixtures/memory_management_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/memory_management.h"
-#include "test.h"
-#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
-#include "runtime/os_interface/32bit_memory.h"
 #include "unit_tests/mocks/mock_32bitAllocator.h"
+#include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
+#include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
+
+#include "test.h"
 #include "drm/i915_drm.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
 #include <iostream>
 #include <memory>
 
 using namespace OCLRT;
-
-static off_t lseekReturn = 4096u;
-static int lseekCalledCount = 0;
-static int mmapMockCallCount = 0;
-static int munmapMockCallCount = 0;
-
-off_t lseekMock(int fd, off_t offset, int whence) noexcept {
-    lseekCalledCount++;
-    return lseekReturn;
-}
-void *mmapMock(void *addr, size_t length, int prot, int flags,
-               int fd, long offset) noexcept {
-    mmapMockCallCount++;
-    return reinterpret_cast<void *>(0x1000);
-}
-
-int munmapMock(void *addr, size_t length) noexcept {
-    munmapMockCallCount++;
-    return 0;
-}
-
-int closeMock(int) {
-    return 0;
-}
-
-class TestedDrmMemoryManager : public DrmMemoryManager {
-  public:
-    using DrmMemoryManager::allocUserptr;
-    using DrmMemoryManager::setDomainCpu;
-
-    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false) {
-        this->lseekFunction = &lseekMock;
-        this->mmapFunction = &mmapMock;
-        this->munmapFunction = &munmapMock;
-        this->closeFunction = &closeMock;
-        lseekReturn = 4096;
-        lseekCalledCount = 0;
-        mmapMockCallCount = 0;
-        munmapMockCallCount = 0;
-    };
-    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory) {
-        this->lseekFunction = &lseekMock;
-        this->mmapFunction = &mmapMock;
-        this->munmapFunction = &munmapMock;
-        this->closeFunction = &closeMock;
-        lseekReturn = 4096;
-        lseekCalledCount = 0;
-        mmapMockCallCount = 0;
-        munmapMockCallCount = 0;
-    }
-
-    void unreference(BufferObject *bo) {
-        DrmMemoryManager::unreference(bo);
-    }
-
-    void injectPinBB(BufferObject *newPinBB) {
-        BufferObject *currentPinBB = pinBB;
-        pinBB = nullptr;
-        DrmMemoryManager::unreference(currentPinBB);
-        pinBB = newPinBB;
-    }
-
-    DrmGemCloseWorker *getgemCloseWorker() { return this->gemCloseWorker.get(); }
-
-    Allocator32bit *getDrmInternal32BitAllocator() { return internal32bitAllocator.get(); }
-};
 
 class DrmMemoryManagerFixture : public MemoryManagementFixture {
   public:

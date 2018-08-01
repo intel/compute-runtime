@@ -79,8 +79,6 @@ DrmMemoryManager::~DrmMemoryManager() {
 }
 
 void DrmMemoryManager::eraseSharedBufferObject(OCLRT::BufferObject *bo) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
-
     auto it = std::find(sharingBufferObjects.begin(), sharingBufferObjects.end(), bo);
     //If an object isReused = true, it must be in the vector
     DEBUG_BREAK_IF(it == sharingBufferObjects.end());
@@ -88,8 +86,6 @@ void DrmMemoryManager::eraseSharedBufferObject(OCLRT::BufferObject *bo) {
 }
 
 void DrmMemoryManager::pushSharedBufferObject(OCLRT::BufferObject *bo) {
-    std::lock_guard<decltype(mtx)> lock(mtx);
-
     bo->isReused = true;
     sharingBufferObjects.push_back(bo);
 }
@@ -111,6 +107,7 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
         auto allocatorType = bo->peekAllocationType();
 
         if (bo->isReused) {
+            std::lock_guard<decltype(mtx)> lock(mtx);
             eraseSharedBufferObject(bo);
         }
 
@@ -314,8 +311,6 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
 
 BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle) {
     BufferObject *bo = nullptr;
-
-    std::lock_guard<decltype(mtx)> lock(mtx);
     for (const auto &i : sharingBufferObjects) {
         if (i->handle == static_cast<int>(boHandle)) {
             bo = i;
@@ -365,7 +360,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto boHandle = openFd.handle;
     BufferObject *bo = nullptr;
 
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
+
     if (reuseBO) {
+        lock.lock();
         bo = findAndReferenceSharedBufferObject(boHandle);
     }
 
