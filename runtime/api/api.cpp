@@ -3038,6 +3038,11 @@ clCreatePerfCountersCommandQueueINTEL(
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
+    DBG_LOG_INPUTS("context", context,
+                   "device", device,
+                   "properties", properties,
+                   "configuration", configuration);
+
     cl_command_queue commandQueue = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
@@ -3083,25 +3088,37 @@ clSetPerformanceConfigurationINTEL(
     cl_uint count,
     cl_uint *offsets,
     cl_uint *values) {
-    API_ENTER(0);
-
     Device *pDevice = nullptr;
 
     auto retVal = validateObjects(WithCastToInternal(device, &pDevice));
+
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device,
+                   "count", count,
+                   "offsets", offsets,
+                   "values", values);
     if (CL_SUCCESS != retVal) {
         return retVal;
     }
     if (!pDevice->getHardwareInfo().capabilityTable.instrumentationEnabled) {
-        return CL_PROFILING_INFO_NOT_AVAILABLE;
+        retVal = CL_PROFILING_INFO_NOT_AVAILABLE;
+        return retVal;
     }
     auto perfCounters = pDevice->getPerformanceCounters();
-    return perfCounters->sendPerfConfiguration(count, offsets, values);
+    retVal = perfCounters->sendPerfConfiguration(count, offsets, values);
+    return retVal;
 }
 
 cl_command_queue CL_API_CALL clCreateCommandQueueWithPropertiesKHR(cl_context context,
                                                                    cl_device_id device,
                                                                    const cl_queue_properties_khr *properties,
                                                                    cl_int *errcodeRet) {
+
+    API_ENTER(errcodeRet);
+    DBG_LOG_INPUTS("context", context,
+                   "device", device,
+                   "properties", properties);
+
     return clCreateCommandQueueWithProperties(context, device, properties, errcodeRet);
 }
 
@@ -3111,9 +3128,12 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
     size_t descriptorSize,
     const void *descriptor,
     cl_int *errcodeRet) {
-
-    API_ENTER(0);
     cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "acceleratorType", acceleratorType,
+                   "descriptorSize", descriptorSize,
+                   "descriptor", DebugManager.infoPointerToString(descriptor, descriptorSize));
     cl_accelerator_intel accelerator = nullptr;
 
     do {
@@ -3152,9 +3172,10 @@ cl_accelerator_intel CL_API_CALL clCreateAcceleratorINTEL(
 
 cl_int CL_API_CALL clRetainAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
-
-    API_ENTER(0);
     cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("accelerator", accelerator);
+
     IntelAccelerator *pAccelerator = nullptr;
 
     do {
@@ -3177,9 +3198,13 @@ cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
     size_t paramValueSize,
     void *paramValue,
     size_t *paramValueSizeRet) {
-
-    API_ENTER(0);
     cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("accelerator", accelerator,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     IntelAccelerator *pAccelerator = nullptr;
 
     do {
@@ -3200,9 +3225,10 @@ cl_int CL_API_CALL clGetAcceleratorInfoINTEL(
 
 cl_int CL_API_CALL clReleaseAcceleratorINTEL(
     cl_accelerator_intel accelerator) {
-
-    API_ENTER(0);
     cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("accelerator", accelerator);
+
     IntelAccelerator *pAccelerator = nullptr;
 
     do {
@@ -3225,6 +3251,9 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
                                                 cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "il", DebugManager.infoPointerToString(il, length),
+                   "length", length);
 
     cl_program program = nullptr;
     retVal = validateObjects(context, il);
@@ -3250,6 +3279,8 @@ cl_program CL_API_CALL clCreateProgramWithILKHR(cl_context context,
         }                                \
     }
 void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
+
+    DBG_LOG_INPUTS("func_name", func_name);
     // Support an internal call by the ICD
     RETURN_FUNC_PTR_IF_EXIST(clIcdGetPlatformIDsKHR);
 
@@ -3276,6 +3307,7 @@ void *CL_API_CALL clGetExtensionFunctionAddress(const char *func_name) {
 // OpenCL 1.2
 void *CL_API_CALL clGetExtensionFunctionAddressForPlatform(cl_platform_id platform,
                                                            const char *funcName) {
+    DBG_LOG_INPUTS("platform", platform, "funcName", funcName);
     auto pPlatform = castToObject<Platform>(platform);
 
     if (pPlatform == nullptr) {
@@ -3289,6 +3321,10 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
                              cl_svm_mem_flags flags,
                              size_t size,
                              cl_uint alignment) {
+    DBG_LOG_INPUTS("context", context,
+                   "flags", flags,
+                   "size", size,
+                   "alignment", alignment);
     void *pAlloc = nullptr;
     auto pPlatform = platform();
     auto pDevice = pPlatform->getDevice(0);
@@ -3344,7 +3380,8 @@ void *CL_API_CALL clSVMAlloc(cl_context context,
 
 void CL_API_CALL clSVMFree(cl_context context,
                            void *svmPointer) {
-
+    DBG_LOG_INPUTS("context", context,
+                   "svmPointer", svmPointer);
     Context *pContext = nullptr;
     if (validateObject(WithCastToInternal(context, &pContext)) == CL_SUCCESS) {
         pContext->getSVMAllocsManager()->freeSVMAlloc(svmPointer);
@@ -3377,8 +3414,8 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
                    "pfnFreeFunc", pfnFreeFunc,
                    "userData", userData,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", eventWaitList,
-                   "event", event);
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
         return retVal;
@@ -3386,7 +3423,8 @@ cl_int CL_API_CALL clEnqueueSVMFree(cl_command_queue commandQueue,
 
     if (((svmPointers != nullptr) && (numSvmPointers == 0)) ||
         ((svmPointers == nullptr) && (numSvmPointers != 0))) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     retVal = pCommandQueue->enqueueSVMFree(
@@ -3424,15 +3462,16 @@ cl_int CL_API_CALL clEnqueueSVMMemcpy(cl_command_queue commandQueue,
                    "srcPtr", srcPtr,
                    "size", size,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", eventWaitList,
-                   "event", event);
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
 
     if ((dstPtr == nullptr) || (srcPtr == nullptr)) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     retVal = pCommandQueue->enqueueSVMMemcpy(
@@ -3465,20 +3504,21 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("commandQueue", commandQueue,
-                   "svmPtr", svmPtr,
-                   "pattern", pattern,
+                   "svmPtr", DebugManager.infoPointerToString(svmPtr, size),
+                   "pattern", DebugManager.infoPointerToString(pattern, patternSize),
                    "patternSize", patternSize,
                    "size", size,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", eventWaitList,
-                   "event", event);
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
         return retVal;
     }
 
     if ((svmPtr == nullptr) || (size == 0)) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     retVal = pCommandQueue->enqueueSVMMemFill(
