@@ -29,6 +29,7 @@
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 using namespace OCLRT;
@@ -113,33 +114,42 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 }
 
 auto destructorId = 0u;
-static_assert(sizeof(ExecutionEnvironment) == (is64bit ? 64 : 36), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) + (is64bit ? 72 : 40), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     destructorId = 0u;
-    struct OsInterfaceMock : public OSInterface {
-        ~OsInterfaceMock() override {
-            EXPECT_EQ(destructorId, 3u);
-            destructorId++;
-        }
-    };
 
     struct GmmHelperMock : public GmmHelper {
         using GmmHelper::GmmHelper;
         ~GmmHelperMock() override {
+            EXPECT_EQ(destructorId, 5u);
+            destructorId++;
+        }
+    };
+
+    struct OsInterfaceMock : public OSInterface {
+        ~OsInterfaceMock() override {
             EXPECT_EQ(destructorId, 4u);
             destructorId++;
         }
     };
+
     struct MemoryMangerMock : public OsAgnosticMemoryManager {
         ~MemoryMangerMock() override {
-            EXPECT_EQ(destructorId, 2u);
+            EXPECT_EQ(destructorId, 3u);
             destructorId++;
         }
     };
 
     struct CommandStreamReceiverMock : public MockCommandStreamReceiver {
         ~CommandStreamReceiverMock() override {
+            EXPECT_EQ(destructorId, 2u);
+            destructorId++;
+        };
+    };
+
+    struct CompilerInterfaceMock : public CompilerInterface {
+        ~CompilerInterfaceMock() override {
             EXPECT_EQ(destructorId, 1u);
             destructorId++;
         };
@@ -161,11 +171,12 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->gmmHelper.reset(new GmmHelperMock(platformDevices[0]));
     executionEnvironment->memoryManager.reset(new MemoryMangerMock);
     executionEnvironment->commandStreamReceiver.reset(new CommandStreamReceiverMock);
+    executionEnvironment->compilerInterface.reset(new CompilerInterfaceMock());
     executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebuggerMock);
     executionEnvironment->osInterface.reset(new OsInterfaceMock);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(5u, destructorId);
+    EXPECT_EQ(6u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

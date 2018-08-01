@@ -54,32 +54,6 @@ class BinaryCacheFixture
     BinaryCache *cache;
 };
 
-class TestedCompilerInterface : public CompilerInterface {
-  public:
-    static TestedCompilerInterface *getInstance() {
-        if (pInstance == nullptr) {
-            auto instance = new TestedCompilerInterface();
-
-            if (!instance->initialize()) {
-                delete instance;
-                instance = nullptr;
-            }
-
-            pInstance = instance;
-        }
-        return pInstance;
-    }
-    static void shutdown() {
-        if (pInstance) {
-            delete pInstance;
-            pInstance = nullptr;
-        }
-    }
-
-    static TestedCompilerInterface *pInstance;
-};
-TestedCompilerInterface *TestedCompilerInterface::pInstance = nullptr;
-
 class BinaryCacheMock : public BinaryCache {
   public:
     BinaryCacheMock() {
@@ -103,12 +77,11 @@ class CompilerInterfaceCachedFixture : public DeviceFixture {
   public:
     void SetUp() {
         DeviceFixture::SetUp();
-        pCompilerInterface = TestedCompilerInterface::getInstance();
+        pCompilerInterface = pDevice->getExecutionEnvironment()->getCompilerInterface();
         ASSERT_NE(pCompilerInterface, nullptr);
     }
 
     void TearDown() {
-        TestedCompilerInterface::shutdown();
         DeviceFixture::TearDown();
     }
 

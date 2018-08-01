@@ -275,8 +275,6 @@ class Program : public BaseObject<_cl_program> {
 
     std::string getKernelNamesString() const;
 
-    MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface() const;
-
     void separateBlockKernels();
 
     void updateNonUniformFlag();

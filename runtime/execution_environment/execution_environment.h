@@ -23,15 +23,19 @@
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/utilities/reference_tracked_object.h"
 
+#include <mutex>
+
 namespace OCLRT {
 class GmmHelper;
 class CommandStreamReceiver;
 class MemoryManager;
 class SourceLevelDebugger;
+class CompilerInterface;
 struct HardwareInfo;
 class OSInterface;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
+    std::mutex mtx;
     DeviceFactoryCleaner cleaner;
 
   protected:
@@ -47,10 +51,12 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void initSourceLevelDebugger(const HardwareInfo &hwInfo);
 
     GmmHelper *getGmmHelper() const;
+    MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
+    std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
 };
 } // namespace OCLRT

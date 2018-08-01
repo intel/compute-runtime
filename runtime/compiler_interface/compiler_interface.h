@@ -51,31 +51,21 @@ struct TranslationArgs {
 
 class CompilerInterface {
   public:
+    CompilerInterface();
     CompilerInterface(const CompilerInterface &) = delete;
     CompilerInterface &operator=(const CompilerInterface &) = delete;
+    virtual ~CompilerInterface();
 
-    static CompilerInterface *getInstance() {
-        if (pInstance == nullptr) {
-            std::lock_guard<std::mutex> guard(mtx);
-            if (pInstance == nullptr) {
-                auto instance = new CompilerInterface();
-
-                if (!instance->initialize()) {
-                    delete instance;
-                    instance = nullptr;
-                }
-                pInstance = instance;
-            }
+    static CompilerInterface *createInstance() {
+        auto instance = new CompilerInterface();
+        if (!instance->initialize()) {
+            delete instance;
+            instance = nullptr;
         }
-        return pInstance;
+        return instance;
     }
 
     static void shutdown() {
-        std::unique_lock<std::mutex> destructionLock(CompilerInterface::mtx);
-        if (pInstance) {
-            delete pInstance;
-            pInstance = nullptr;
-        }
     }
 
     MOCKABLE_VIRTUAL cl_int build(Program &program, const TranslationArgs &pInputArgs, bool enableCaching);
@@ -91,9 +81,6 @@ class CompilerInterface {
     BinaryCache *replaceBinaryCache(BinaryCache *newCache);
 
   protected:
-    CompilerInterface();
-    virtual ~CompilerInterface();
-
     bool initialize();
 
     static std::mutex mtx;
@@ -103,7 +90,6 @@ class CompilerInterface {
     std::unique_ptr<BinaryCache> cache = nullptr;
 
     static bool useLlvmText;
-    static CompilerInterface *pInstance;
 
     using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;

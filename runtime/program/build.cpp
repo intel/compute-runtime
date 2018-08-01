@@ -81,7 +81,7 @@ cl_int Program::build(
                 internalOptions.append(" ");
             }
 
-            CompilerInterface *pCompilerInterface = getCompilerInterface();
+            CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
             if (!pCompilerInterface) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;

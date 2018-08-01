@@ -22,6 +22,7 @@
 
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -75,5 +76,14 @@ void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {
 }
 GmmHelper *ExecutionEnvironment::getGmmHelper() const {
     return gmmHelper.get();
+}
+CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
+    if (this->compilerInterface.get() == nullptr) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        if (this->compilerInterface.get() == nullptr) {
+            this->compilerInterface.reset(CompilerInterface::createInstance());
+        }
+    }
+    return this->compilerInterface.get();
 }
 } // namespace OCLRT

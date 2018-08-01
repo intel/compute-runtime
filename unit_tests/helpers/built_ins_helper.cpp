@@ -26,9 +26,12 @@
 #include "unit_tests/mocks/mock_program.h"
 
 namespace OCLRT {
+
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
-    std::unique_ptr<MockCompilerInterface> mockCompilerInterface(new MockCompilerInterface());
-    mockCompilerInterface->overrideGlobalCompilerInterface();
+    auto mockCompilerInterface = new MockCompilerInterface();
+    mockCompilerInterface->initialize();
+
+    device.getExecutionEnvironment()->compilerInterface.reset(mockCompilerInterface);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     return BuiltIns::getInstance().getSipKernel(type, device);
 }

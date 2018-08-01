@@ -38,7 +38,6 @@
 #include <fstream>
 
 namespace OCLRT {
-CompilerInterface *CompilerInterface::pInstance = nullptr;
 bool CompilerInterface::useLlvmText = false;
 std::mutex CompilerInterface::mtx;
 

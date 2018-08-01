@@ -90,16 +90,28 @@ std::vector<const char *> KernelNames{
     "CopyBuffer",
 };
 
-class NoCompilerInterfaceProgram : public MockProgram {
+class MockExecutionEnvironment : public ExecutionEnvironment {
   public:
-    NoCompilerInterfaceProgram(ExecutionEnvironment &executionEnvironment) : MockProgram(executionEnvironment) {}
-    CompilerInterface *getCompilerInterface() const override { return nullptr; }
+    MockExecutionEnvironment(CompilerInterface *compilerInterface) : compilerInterface(compilerInterface) {}
+
+    CompilerInterface *getCompilerInterface() override {
+        return compilerInterface;
+    }
+
+  protected:
+    CompilerInterface *compilerInterface;
 };
 
 class FailingGenBinaryProgram : public MockProgram {
   public:
     FailingGenBinaryProgram(ExecutionEnvironment &executionEnvironment) : MockProgram(executionEnvironment) {}
     cl_int processGenBinary() override { return CL_INVALID_BINARY; }
+};
+
+class SucceedingGenBinaryProgram : public MockProgram {
+  public:
+    SucceedingGenBinaryProgram(ExecutionEnvironment &executionEnvironment) : MockProgram(executionEnvironment) {}
+    cl_int processGenBinary() override { return CL_SUCCESS; }
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -716,10 +728,12 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
 
     // fail build - CompilerInterface cannot be obtained
-    auto p2 = std::make_unique<NoCompilerInterfaceProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     retVal = p2->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
+    noCompilerInterfaceExecutionEnvironment.reset();
 
     // fail build - any build error (here caused by specifying unrecognized option)
     retVal = pProgram->build(0, nullptr, "-invalid-option", nullptr, nullptr, false);
@@ -992,10 +1006,12 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
     delete p3;
 
     // fail compilation - CompilerInterface cannot be obtained
-    auto p2 = std::make_unique<NoCompilerInterfaceProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto p2 = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
     p2.reset(nullptr);
+    noCompilerInterfaceExecutionEnvironment.reset();
 
     // fail compilation - any compilation error (here caused by specifying unrecognized option)
     retVal = pProgram->compile(0, nullptr, "-invalid-option", 0, nullptr, nullptr, nullptr, nullptr);
@@ -1036,33 +1052,12 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
         std::string buildInternalOptions;
     };
 
-    class MyProgram : public Program {
-      public:
-        MyProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment), cip(nullptr) {}
-        ~MyProgram() override {
-            delete cip;
-        }
-
-        cl_int processGenBinary() override { return CL_SUCCESS; }
-
-        MyCompilerInterface *getCompilerInterface() const override {
-            if (cip == nullptr) {
-                cip = new MyCompilerInterface();
-            }
-            return cip;
-        }
-
-      protected:
-        mutable MyCompilerInterface *cip;
-    };
-
-    auto program = std::make_unique<MyProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
-    EXPECT_NE(nullptr, program);
+    auto cip = std::make_unique<MyCompilerInterface>();
+    MockExecutionEnvironment executionEnvironment(cip.get());
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
     program->setDevice(pDevice);
-    MyCompilerInterface *cip = program->getCompilerInterface();
-    EXPECT_NE(nullptr, cip);
     program->setSource((char *)"__kernel mock() {}");
 
     // Check default build options
@@ -1266,7 +1261,8 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
 // Program::Link (create library)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
-    auto p = std::make_unique<NoCompilerInterfaceProgram>(*pPlatform->getDevice(0)->getExecutionEnvironment());
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto p = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -2149,7 +2145,6 @@ TEST_F(ProgramTests, GetGenBinaryReturnsBinaryStoreInProgram) {
 
 TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     cl_int retVal;
-    CompilerInterface::getInstance();
 
     auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
     EXPECT_NE(nullptr, program);
@@ -2204,7 +2199,8 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
-    auto program = std::make_unique<NoCompilerInterfaceProgram>(*pDevice->getExecutionEnvironment());
+    auto noCompilerInterfaceExecutionEnvironment = std::make_unique<MockExecutionEnvironment>(nullptr);
+    auto program = std::make_unique<MockProgram>(*noCompilerInterfaceExecutionEnvironment);
     EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
@@ -2238,23 +2234,9 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
         cl_int link(Program &program, const TranslationArgs &pInputArgs) override { return CL_LINK_PROGRAM_FAILURE; }
     };
 
-    class MyProgram : public MockProgram {
-      public:
-        MyProgram(ExecutionEnvironment &executionEnvironment) : MockProgram(executionEnvironment), cip(nullptr) {}
-        ~MyProgram() override {
-            delete cip;
-        }
-
-      protected:
-        CompilerInterface *getCompilerInterface() const override {
-            cip = new MyCompilerInterface();
-            return cip;
-        }
-        mutable MyCompilerInterface *cip;
-    };
-
-    auto program = std::make_unique<MyProgram>(*pDevice->getExecutionEnvironment());
-    EXPECT_NE(nullptr, program);
+    auto cip = std::make_unique<MyCompilerInterface>();
+    MockExecutionEnvironment executionEnvironment(cip.get());
+    auto program = std::make_unique<MockProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
     program->setDevice(pDevice);
@@ -2297,33 +2279,12 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
         char buildInternalOptions[1024];
     };
 
-    class MyProgram : public Program {
-      public:
-        MyProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment), cip(nullptr) {}
-        ~MyProgram() override {
-            delete cip;
-        }
-
-        cl_int processGenBinary() override { return CL_SUCCESS; }
-
-        MyCompilerInterface *getCompilerInterface() const override {
-            if (cip == nullptr) {
-                cip = new MyCompilerInterface;
-            }
-            return cip;
-        }
-
-      protected:
-        mutable MyCompilerInterface *cip;
-    };
-
-    auto program = std::make_unique<MyProgram>(*pDevice->getExecutionEnvironment());
-    EXPECT_NE(nullptr, program);
+    auto cip = std::make_unique<MyCompilerInterface>();
+    MockExecutionEnvironment executionEnvironment(cip.get());
+    auto program = std::make_unique<SucceedingGenBinaryProgram>(executionEnvironment);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
     program->setDevice(pDevice);
-    MyCompilerInterface *cip = program->getCompilerInterface();
-    EXPECT_NE(nullptr, cip);
     program->setSource((char *)"__kernel mock() {}");
 
     // Check default build options
@@ -2370,7 +2331,6 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
 TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
 
     cl_int retVal;
-    CompilerInterface::getInstance();
 
     auto program = std::make_unique<FailingGenBinaryProgram>(*pDevice->getExecutionEnvironment());
     EXPECT_NE(nullptr, program);
@@ -2891,47 +2851,47 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
     input.pInput = &inputData;
     input.InputSize = 1;
 
-    SmallMockCompilerInterface compilerInterface;
+    auto compilerInterface = new SmallMockCompilerInterface();
     auto compilerMain = new MockCIFMain();
-    compilerInterface.overrideGlobalCompilerInterface();
-    compilerInterface.SetFclMain(compilerMain);
+    compilerInterface->SetFclMain(compilerMain);
     compilerMain->Retain();
-    compilerInterface.SetIgcMain(compilerMain);
+    compilerInterface->SetIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
     compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+    pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
 
-    compilerInterface.useLlvmText = true;
+    compilerInterface->useLlvmText = true;
     auto programLlvmText = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programLlvmText->setDevice(device);
-    compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
-    compilerInterface.compile(*programLlvmText, input);
+    compilerInterface->intermediateRepresentation = IGC::CodeType::spirV;
+    compilerInterface->compile(*programLlvmText, input);
     EXPECT_FALSE(programLlvmText->getIsSpirV());
 
-    compilerInterface.useLlvmText = false;
+    compilerInterface->useLlvmText = false;
     auto programSpirV = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programSpirV->setDevice(device);
-    compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
-    compilerInterface.compile(*programSpirV, input);
+    compilerInterface->intermediateRepresentation = IGC::CodeType::spirV;
+    compilerInterface->compile(*programSpirV, input);
     EXPECT_TRUE(programSpirV->getIsSpirV());
 
     auto programLlvmBc = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
     programLlvmBc->setDevice(device);
-    compilerInterface.intermediateRepresentation = IGC::CodeType::llvmBc;
-    compilerInterface.compile(*programLlvmBc, input);
+    compilerInterface->intermediateRepresentation = IGC::CodeType::llvmBc;
+    compilerInterface->compile(*programLlvmBc, input);
     EXPECT_FALSE(programLlvmBc->getIsSpirV());
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPathIsTaken) {
     auto device = castToObject<Device>(pContext->getDevice(0));
 
-    MockCompilerInterface compilerInterface;
+    auto compilerInterface = new MockCompilerInterface();
     auto compilerMain = new MockCIFMain();
-    compilerInterface.overrideGlobalCompilerInterface();
-    compilerInterface.SetFclMain(compilerMain);
+    compilerInterface->SetFclMain(compilerMain);
     compilerMain->Retain();
-    compilerInterface.SetIgcMain(compilerMain);
+    compilerInterface->SetIgcMain(compilerMain);
     compilerMain->setDefaultCreatorFunc<OCLRT::MockIgcOclDeviceCtx>(OCLRT::MockIgcOclDeviceCtx::Create);
     compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
+    pDevice->getExecutionEnvironment()->compilerInterface.reset(compilerInterface);
 
     std::string receivedInput;
     MockCompilerDebugVars debugVars = {};

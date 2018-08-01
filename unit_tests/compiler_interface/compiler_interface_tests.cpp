@@ -58,10 +58,10 @@ class CompilerInterfaceTest : public DeviceFixture,
         retVal = CL_SUCCESS;
 
         // create the compiler interface
-        pCompilerInterface.reset(new MockCompilerInterface());
-        ASSERT_NE(nullptr, pCompilerInterface);
+        this->pCompilerInterface = new MockCompilerInterface();
         bool initRet = pCompilerInterface->initialize();
         ASSERT_TRUE(initRet);
+        pDevice->getExecutionEnvironment()->compilerInterface.reset(pCompilerInterface);
 
         std::string testFile;
 
@@ -94,12 +94,11 @@ class CompilerInterfaceTest : public DeviceFixture,
         delete pContext;
 
         deleteDataReadFromFile(pSource);
-        pCompilerInterface.reset();
 
         DeviceFixture::TearDown();
     }
 
-    std::unique_ptr<MockCompilerInterface> pCompilerInterface = nullptr;
+    MockCompilerInterface *pCompilerInterface;
     TranslationArgs inputArgs;
     Program *pProgram = nullptr;
     MockContext *pContext = nullptr;
@@ -203,12 +202,6 @@ TEST_F(CompilerInterfaceTest, BuildWithDebugData) {
 
     delete[] debugData;
     delete cip;
-}
-
-TEST_F(CompilerInterfaceTest, GetInstance_Shutdown) {
-    auto *pCompilerInterface = CompilerInterface::getInstance();
-    EXPECT_NE(nullptr, pCompilerInterface);
-    CompilerInterface::shutdown();
 }
 
 TEST_F(CompilerInterfaceTest, CompileClToIsa) {

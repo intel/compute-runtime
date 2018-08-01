@@ -109,7 +109,7 @@ cl_int Program::link(
         CLElfLib::ElfBinaryStorage data(dataSize);
         elfWriter.resolveBinary(data);
 
-        CompilerInterface *pCompilerInterface = getCompilerInterface();
+        CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
         if (!pCompilerInterface) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;

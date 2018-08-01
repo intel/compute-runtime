@@ -1715,11 +1715,11 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
 
 TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompilerInterface) {
     MockBuiltins mockBuiltins;
-    MockCompilerInterface mockCompilerInterface;
-    mockCompilerInterface.overrideGlobalCompilerInterface();
-    mockCompilerInterface.sipKernelBinaryOverride = mockCompilerInterface.getDummyGenBinary();
+    auto mockCompilerInterface = new MockCompilerInterface();
+    pDevice->getExecutionEnvironment()->compilerInterface.reset(mockCompilerInterface);
+    mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
-    auto p = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, mockCompilerInterface.sipKernelBinaryOverride.data(), mockCompilerInterface.sipKernelBinaryOverride.size(),
+    auto p = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, mockCompilerInterface->sipKernelBinaryOverride.data(), mockCompilerInterface->sipKernelBinaryOverride.size(),
                                           false, &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
     errCode = p->processGenBinary();
@@ -1735,7 +1735,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     auto expectedMem = reinterpret_cast<const char *>(sipKernelInfo->heapInfo.pKernelHeap) + sipOffset;
     ASSERT_EQ(compbinedKernelHeapSize - sipOffset, sipKern.getBinarySize());
     EXPECT_EQ(0, memcmp(expectedMem, sipKern.getBinary(), sipKern.getBinarySize()));
-    EXPECT_EQ(SipKernelType::Csr, mockCompilerInterface.requestedSipKernel);
+    EXPECT_EQ(SipKernelType::Csr, mockCompilerInterface->requestedSipKernel);
     p->release();
 }
 

@@ -185,7 +185,7 @@ cl_int Program::rebuildProgramFromIr() {
         CLElfLib::ElfBinaryStorage data(dataSize);
         elfWriter.resolveBinary(data);
 
-        CompilerInterface *pCompilerInterface = getCompilerInterface();
+        CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
         if (nullptr == pCompilerInterface) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;
@@ -336,10 +336,6 @@ const char *Program::getBuildLog(const Device *pDevice) const {
     }
 
     return entry;
-}
-
-CompilerInterface *Program::getCompilerInterface() const {
-    return CompilerInterface::getInstance();
 }
 
 void Program::separateBlockKernels() {

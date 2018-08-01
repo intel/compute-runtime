@@ -32,7 +32,6 @@ BuiltInFixture::BuiltInFixture() : pBuiltIns(nullptr) {
 }
 
 void BuiltInFixture::SetUp(Device *pDevice) {
-    CompilerInterface::getInstance();
     // create an instance of the builtins
     pBuiltIns = &BuiltIns::getInstance();
     pBuiltIns->setCacheingEnableState(false);
