@@ -1608,18 +1608,28 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
                                   size_t paramValueSize,
                                   void *paramValue,
                                   size_t *paramValueSizeRet) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("event", event,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
+
     Event *neoEvent = castToObject<Event>(event);
     if (neoEvent == nullptr) {
-        return CL_INVALID_EVENT;
+        retVal = CL_INVALID_EVENT;
+        return retVal;
     }
 
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
     switch (paramName) {
-    default:
-        return CL_INVALID_VALUE;
-
+    default: {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
     // From OCL spec :
     // "Return the command-queue associated with event. For user event objects,"
     //  a nullptr value is returned."
@@ -1655,7 +1665,10 @@ cl_int CL_API_CALL clGetEventInfo(cl_event event,
 
 cl_event CL_API_CALL clCreateUserEvent(cl_context context,
                                        cl_int *errcodeRet) {
-    API_ENTER(0);
+    API_ENTER(errcodeRet);
+
+    DBG_LOG_INPUTS("context", context);
+
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
     Context *ctx = castToObject<Context>(context);
@@ -1672,79 +1685,96 @@ cl_event CL_API_CALL clCreateUserEvent(cl_context context,
 }
 
 cl_int CL_API_CALL clRetainEvent(cl_event event) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("event", event);
+
     auto pEvent = castToObject<Event>(event);
     DebugManager.logInputs("cl_event", event, "Event", pEvent);
 
     if (pEvent) {
         pEvent->retain();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_EVENT;
+    retVal = CL_INVALID_EVENT;
+    return retVal;
 }
 
 cl_int CL_API_CALL clReleaseEvent(cl_event event) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
     DBG_LOG_INPUTS("cl_event", event);
     auto pEvent = castToObject<Event>(event);
     DebugManager.logInputs("cl_event", event, "Event", pEvent);
 
     if (pEvent) {
         pEvent->release();
-        return CL_SUCCESS;
+        return retVal;
     }
-
-    return CL_INVALID_EVENT;
+    retVal = CL_INVALID_EVENT;
+    return retVal;
 }
 
 cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
                                         cl_int executionStatus) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
     auto userEvent = castToObject<UserEvent>(event);
     DBG_LOG_INPUTS("cl_event", event, "executionStatus", executionStatus, "UserEvent", userEvent);
 
-    if (userEvent == nullptr)
-        return CL_INVALID_EVENT;
+    if (userEvent == nullptr) {
+        retVal = CL_INVALID_EVENT;
+        return retVal;
+    }
 
     if (executionStatus > CL_COMPLETE) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     if (!userEvent->isInitialEventStatus()) {
-        return CL_INVALID_OPERATION;
+        retVal = CL_INVALID_OPERATION;
+        return retVal;
     }
 
     TakeOwnershipWrapper<Device> deviceOwnership(*userEvent->getContext()->getDevice(0));
 
     userEvent->setStatus(executionStatus);
-    return CL_SUCCESS;
+    return retVal;
 }
 
 cl_int CL_API_CALL clSetEventCallback(cl_event event,
                                       cl_int commandExecCallbackType,
                                       void(CL_CALLBACK *funcNotify)(cl_event, cl_int, void *),
                                       void *userData) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
     auto eventObject = castToObject<Event>(event);
     DBG_LOG_INPUTS("cl_event", event, "commandExecCallbackType", commandExecCallbackType, "Event", eventObject);
 
-    if (eventObject == nullptr)
-        return CL_INVALID_EVENT;
+    if (eventObject == nullptr) {
+        retVal = CL_INVALID_EVENT;
+        return retVal;
+    }
     switch (commandExecCallbackType) {
     case CL_COMPLETE:
     case CL_SUBMITTED:
     case CL_RUNNING:
         break;
-    default:
-        return CL_INVALID_VALUE;
+    default: {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
-    if (funcNotify == nullptr)
-        return CL_INVALID_VALUE;
+    }
+    if (funcNotify == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
 
     eventObject->tryFlushEvent();
     eventObject->addCallback(funcNotify, commandExecCallbackType, userData);
-    return CL_SUCCESS;
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
@@ -1752,11 +1782,19 @@ cl_int CL_API_CALL clGetEventProfilingInfo(cl_event event,
                                            size_t paramValueSize,
                                            void *paramValue,
                                            size_t *paramValueSizeRet) {
-    API_ENTER(0);
+    auto retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("event", event,
+                   "paramName", paramName,
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
     auto eventObject = castToObject<Event>(event);
 
-    if (eventObject == nullptr)
-        return CL_INVALID_EVENT;
+    if (eventObject == nullptr) {
+        retVal = CL_INVALID_EVENT;
+        return retVal;
+    }
 
     return eventObject->getEventProfilingInfo(paramName,
                                               paramValueSize,
@@ -1851,6 +1889,26 @@ cl_int CL_API_CALL clEnqueueReadBufferRect(cl_command_queue commandQueue,
                                            cl_event *event) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "buffer", buffer,
+                   "blockingRead", blockingRead,
+                   "bufferOrigin[0]", DebugManager.getInput(bufferOrigin, 0),
+                   "bufferOrigin[1]", DebugManager.getInput(bufferOrigin, 1),
+                   "bufferOrigin[2]", DebugManager.getInput(bufferOrigin, 2),
+                   "hostOrigin[0]", DebugManager.getInput(hostOrigin, 0),
+                   "hostOrigin[1]", DebugManager.getInput(hostOrigin, 1),
+                   "hostOrigin[2]", DebugManager.getInput(hostOrigin, 2),
+                   "region[0]", DebugManager.getInput(region, 0),
+                   "region[1]", DebugManager.getInput(region, 1),
+                   "region[2]", DebugManager.getInput(region, 2),
+                   "bufferRowPitch", bufferRowPitch,
+                   "bufferSlicePitch", bufferSlicePitch,
+                   "hostRowPitch", hostRowPitch,
+                   "hostSlicePitch", hostSlicePitch,
+                   "ptr", ptr,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pBuffer = nullptr;
@@ -1961,6 +2019,16 @@ cl_int CL_API_CALL clEnqueueWriteBufferRect(cl_command_queue commandQueue,
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
 
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "buffer", buffer, "blockingWrite", blockingWrite,
+                   "bufferOrigin[0]", DebugManager.getInput(bufferOrigin, 0), "bufferOrigin[1]", DebugManager.getInput(bufferOrigin, 1), "bufferOrigin[2]", DebugManager.getInput(bufferOrigin, 2),
+                   "hostOrigin[0]", DebugManager.getInput(hostOrigin, 0), "hostOrigin[1]", DebugManager.getInput(hostOrigin, 1), "hostOrigin[2]", DebugManager.getInput(hostOrigin, 2),
+                   "region[0]", DebugManager.getInput(region, 0), "region[1]", DebugManager.getInput(region, 1), "region[2]", DebugManager.getInput(region, 2),
+                   "bufferRowPitch", bufferRowPitch, "bufferSlicePitch", bufferSlicePitch,
+                   "hostRowPitch", hostRowPitch, "hostSlicePitch", hostSlicePitch, "ptr", ptr,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
+
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pBuffer = nullptr;
 
@@ -2017,6 +2085,13 @@ cl_int CL_API_CALL clEnqueueFillBuffer(cl_command_queue commandQueue,
                                        cl_event *event) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "buffer", buffer,
+                   "pattern", DebugManager.infoPointerToString(pattern, patternSize), "patternSize", patternSize,
+                   "offset", offset, "size", size,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     Buffer *pBuffer = nullptr;
