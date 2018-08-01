@@ -3551,18 +3551,19 @@ cl_int CL_API_CALL clEnqueueSVMMap(cl_command_queue commandQueue,
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "blockingMap", blockingMap,
                    "mapFlags", mapFlags,
-                   "svmPtr", svmPtr,
+                   "svmPtr", DebugManager.infoPointerToString(svmPtr, size),
                    "size", size,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", eventWaitList,
-                   "event", event);
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (CL_SUCCESS != retVal) {
         return retVal;
     }
 
     if ((svmPtr == nullptr) || (size == 0)) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     retVal = pCommandQueue->enqueueSVMMap(
@@ -3595,8 +3596,8 @@ cl_int CL_API_CALL clEnqueueSVMUnmap(cl_command_queue commandQueue,
     DBG_LOG_INPUTS("commandQueue", commandQueue,
                    "svmPtr", svmPtr,
                    "numEventsInWaitList", numEventsInWaitList,
-                   "eventWaitList", eventWaitList,
-                   "event", event);
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     if (retVal != CL_SUCCESS) {
         return retVal;
@@ -3627,24 +3628,27 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
     }
 
     if (argIndex >= pKernel->getKernelArgsNumber()) {
-        return CL_INVALID_ARG_INDEX;
+        retVal = CL_INVALID_ARG_INDEX;
+        return retVal;
     }
 
     cl_int kernelArgAddressQualifier = pKernel->getKernelArgAddressQualifier(argIndex);
     if ((kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_GLOBAL) &&
         (kernelArgAddressQualifier != CL_KERNEL_ARG_ADDRESS_CONSTANT)) {
-        return CL_INVALID_ARG_VALUE;
+        retVal = CL_INVALID_ARG_VALUE;
+        return retVal;
     }
 
     GraphicsAllocation *pSvmAlloc = nullptr;
     if (argValue != nullptr) {
         pSvmAlloc = pKernel->getContext().getSVMAllocsManager()->getSVMAlloc(argValue);
         if (pSvmAlloc == nullptr) {
-            return CL_INVALID_ARG_VALUE;
+            retVal = CL_INVALID_ARG_VALUE;
+            return retVal;
         }
     }
-
-    return pKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAlloc);
+    retVal = pKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAlloc);
+    return retVal;
 }
 
 cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
@@ -3657,7 +3661,7 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("kernel", kernel, "paramName", paramName,
-                   "paramValueSize", paramValueSize, "paramValue", paramValue);
+                   "paramValueSize", paramValueSize, "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize));
 
     if (CL_SUCCESS != retVal) {
         return retVal;
@@ -3668,7 +3672,8 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         if ((paramValueSize == 0) ||
             (paramValueSize % sizeof(void *)) ||
             (paramValue == nullptr)) {
-            return CL_INVALID_VALUE;
+            retVal = CL_INVALID_VALUE;
+            return retVal;
         }
         size_t numPointers = paramValueSize / sizeof(void *);
         size_t *pSvmPtrList = (size_t *)paramValue;
@@ -3678,16 +3683,21 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
             OCLRT::GraphicsAllocation *pSvmAlloc =
                 pKernel->getContext().getSVMAllocsManager()->getSVMAlloc((const void *)pSvmPtrList[i]);
             if (pSvmAlloc == nullptr) {
-                return CL_INVALID_VALUE;
+                retVal = CL_INVALID_VALUE;
+                return retVal;
             }
             pKernel->setKernelExecInfo(pSvmAlloc);
         }
         break;
     }
-    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM:
-        return CL_INVALID_OPERATION;
-    default:
-        return CL_INVALID_VALUE;
+    case CL_KERNEL_EXEC_INFO_SVM_FINE_GRAIN_SYSTEM: {
+        retVal = CL_INVALID_OPERATION;
+        return retVal;
+    }
+    default: {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
     }
 
     return retVal;
@@ -3767,7 +3777,7 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
     DBG_LOG_INPUTS("cl_mem", pipe,
                    "cl_pipe_info", paramName,
                    "size_t", paramValueSize,
-                   "void *", paramValue,
+                   "void *", DebugManager.infoPointerToString(paramValue, paramValueSize),
                    "size_t*", paramValueSizeRet);
 
     retVal = validateObjects(pipe);
@@ -3778,7 +3788,8 @@ cl_int CL_API_CALL clGetPipeInfo(cl_mem pipe,
     auto pPipeObj = castToObject<Pipe>(pipe);
 
     if (pPipeObj == nullptr) {
-        return CL_INVALID_MEM_OBJECT;
+        retVal = CL_INVALID_MEM_OBJECT;
+        return retVal;
     }
 
     retVal = pPipeObj->getPipeInfo(paramName, paramValueSize, paramValue, paramValueSizeRet);
@@ -3791,6 +3802,10 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
                                                                 cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "device", device,
+                   "properties", properties);
+
     cl_command_queue commandQueue = nullptr;
     ErrorCodeHelper err(errcodeRet, CL_SUCCESS);
 
@@ -3905,6 +3920,8 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
                                                      cl_int *errcodeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "samplerProperties", samplerProperties);
     cl_sampler sampler = nullptr;
     retVal = validateObjects(context);
 
@@ -3923,7 +3940,9 @@ cl_sampler CL_API_CALL clCreateSamplerWithProperties(cl_context context,
 }
 
 cl_int CL_API_CALL clUnloadCompiler() {
-    return CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_OUT_OF_HOST_MEMORY;
+    API_ENTER(&retVal);
+    return retVal;
 }
 
 cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
@@ -3936,6 +3955,14 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
                                               size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("kernel", kernel,
+                   "device", device,
+                   "paramName", paramName,
+                   "inputValueSize", inputValueSize,
+                   "inputValue", DebugManager.infoPointerToString(inputValue, inputValueSize),
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
     retVal = validateObjects(device,
@@ -3953,8 +3980,10 @@ cl_int CL_API_CALL clGetKernelSubGroupInfoKHR(cl_kernel kernel,
                                         inputValueSize, inputValue,
                                         paramValueSize, paramValue,
                                         paramValueSizeRet);
-    default:
-        return CL_INVALID_VALUE;
+    default: {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
     }
 }
 
@@ -3963,7 +3992,9 @@ cl_int CL_API_CALL clGetDeviceAndHostTimer(cl_device_id device,
                                            cl_ulong *hostTimestamp) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
-
+    DBG_LOG_INPUTS("device", device,
+                   "deviceTimestamp", deviceTimestamp,
+                   "hostTimestamp", hostTimestamp);
     do {
         Device *pDevice = castToObject<Device>(device);
         if (pDevice == nullptr) {
@@ -3987,6 +4018,8 @@ cl_int CL_API_CALL clGetHostTimer(cl_device_id device,
                                   cl_ulong *hostTimestamp) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("device", device,
+                   "hostTimestamp", hostTimestamp);
 
     do {
         Device *pDevice = castToObject<Device>(device);
@@ -4017,6 +4050,14 @@ cl_int CL_API_CALL clGetKernelSubGroupInfo(cl_kernel kernel,
                                            size_t *paramValueSizeRet) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("kernel", kernel,
+                   "device", device,
+                   "paramName", paramName,
+                   "inputValueSize", inputValueSize,
+                   "inputValue", DebugManager.infoPointerToString(inputValue, inputValueSize),
+                   "paramValueSize", paramValueSize,
+                   "paramValue", DebugManager.infoPointerToString(paramValue, paramValueSize),
+                   "paramValueSizeRet", paramValueSizeRet);
 
     Kernel *pKernel = nullptr;
     retVal = validateObjects(device,
@@ -4038,6 +4079,9 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
 
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("context", context,
+                   "device", device,
+                   "commandQueue", commandQueue);
 
     Context *pContext = nullptr;
 
@@ -4050,16 +4094,19 @@ cl_int CL_API_CALL clSetDefaultDeviceCommandQueue(cl_context context,
     auto pDeviceQueue = castToObject<DeviceQueue>(static_cast<_device_queue *>(commandQueue));
 
     if (!pDeviceQueue) {
-        return CL_INVALID_COMMAND_QUEUE;
+        retVal = CL_INVALID_COMMAND_QUEUE;
+        return retVal;
     }
 
     if (&pDeviceQueue->getContext() != pContext) {
-        return CL_INVALID_COMMAND_QUEUE;
+        retVal = CL_INVALID_COMMAND_QUEUE;
+        return retVal;
     }
 
     pContext->setDefaultDeviceQueue(pDeviceQueue);
 
-    return CL_SUCCESS;
+    retVal = CL_SUCCESS;
+    return retVal;
 }
 
 cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
@@ -4072,6 +4119,14 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
                                           cl_event *event) {
     cl_int retVal = CL_SUCCESS;
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue,
+                   "numSvmPointers", numSvmPointers,
+                   "svmPointers", DebugManager.infoPointerToString(svmPointers ? svmPointers[0] : 0, DebugManager.getInput(sizes, 0)),
+                   "sizes", DebugManager.getInput(sizes, 0),
+                   "flags", flags,
+                   "numEventsInWaitList", numEventsInWaitList,
+                   "eventWaitList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventWaitList), numEventsInWaitList),
+                   "event", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(event), 1));
 
     CommandQueue *pCommandQueue = nullptr;
     retVal = validateObjects(
@@ -4082,26 +4137,31 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
         return retVal;
     }
 
-    if (numSvmPointers == 0 || svmPointers == nullptr)
-        return CL_INVALID_VALUE;
+    if (numSvmPointers == 0 || svmPointers == nullptr) {
+        retVal = CL_INVALID_VALUE;
+        return retVal;
+    }
 
     const cl_mem_migration_flags allValidFlags =
         CL_MIGRATE_MEM_OBJECT_HOST | CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED;
 
     if ((flags & (~allValidFlags)) != 0) {
-        return CL_INVALID_VALUE;
+        retVal = CL_INVALID_VALUE;
+        return retVal;
     }
 
     for (uint32_t i = 0; i < numSvmPointers; i++) {
         SVMAllocsManager *pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
         GraphicsAllocation *pSvmAlloc = pSvmAllocMgr->getSVMAlloc(svmPointers[i]);
         if (pSvmAlloc == nullptr) {
-            return CL_INVALID_VALUE;
+            retVal = CL_INVALID_VALUE;
+            return retVal;
         }
         if (sizes != nullptr && sizes[i] != 0) {
             pSvmAlloc = pSvmAllocMgr->getSVMAlloc(reinterpret_cast<void *>((size_t)svmPointers[i] + sizes[i] - 1));
             if (pSvmAlloc == nullptr) {
-                return CL_INVALID_VALUE;
+                retVal = CL_INVALID_VALUE;
+                return retVal;
             }
         }
     }
@@ -4109,17 +4169,18 @@ cl_int CL_API_CALL clEnqueueSVMMigrateMem(cl_command_queue commandQueue,
     for (uint32_t i = 0; i < numEventsInWaitList; i++) {
         auto pEvent = castToObject<Event>(eventWaitList[i]);
         if (pEvent->getContext() != &pCommandQueue->getContext()) {
-            return CL_INVALID_CONTEXT;
+            retVal = CL_INVALID_CONTEXT;
+            return retVal;
         }
     }
-
-    return pCommandQueue->enqueueSVMMigrateMem(numSvmPointers,
-                                               svmPointers,
-                                               sizes,
-                                               flags,
-                                               numEventsInWaitList,
-                                               eventWaitList,
-                                               event);
+    retVal = pCommandQueue->enqueueSVMMigrateMem(numSvmPointers,
+                                                 svmPointers,
+                                                 sizes,
+                                                 flags,
+                                                 numEventsInWaitList,
+                                                 eventWaitList,
+                                                 event);
+    return retVal;
 }
 
 cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
@@ -4129,6 +4190,7 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
 
     auto retVal = validateObjects(WithCastToInternal(sourceKernel, &pSourceKernel));
     API_ENTER(&retVal);
+    DBG_LOG_INPUTS("sourceKernel", sourceKernel);
 
     if (CL_SUCCESS == retVal) {
         pClonedKernel = Kernel::create(pSourceKernel->getProgram(),
