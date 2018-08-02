@@ -30,9 +30,9 @@
 #include "runtime/helpers/surface_formats.h"
 
 namespace OCLRT {
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false) {}
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable) : Gmm(alignedPtr, alignedSize, uncacheable, false, true) {}
 
-Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed) {
+Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool) {
     resourceParams.Type = RESOURCE_BUFFER;
     resourceParams.Format = GMM_FORMAT_GENERIC_8BIT;
     resourceParams.BaseWidth = static_cast<uint32_t>(alignedSize);
@@ -58,6 +58,7 @@ Gmm::Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool pref
     }
 
     applyAuxFlagsForBuffer(preferRenderCompressed);
+    applyMemoryFlags(systemMemoryPool);
 
     gmmResourceInfo.reset(GmmResourceInfo::create(&resourceParams));
 }

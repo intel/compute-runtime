@@ -88,11 +88,13 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     auto allocation = memoryManager->allocateGraphicsMemory(size);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(allocation);
 
     allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -102,6 +104,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
     auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System64KBPages, allocation->getMemoryPool());
+    EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -112,6 +115,9 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
     auto allocation = memoryManager->allocateGraphicsMemory(size, ptr, false);
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPages, allocation->getMemoryPool());
+    for (size_t i = 0; i < allocation->fragmentsStorage.fragmentCount; i++) {
+        EXPECT_TRUE(allocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm->useSystemMemoryPool);
+    }
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -124,6 +130,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
+    EXPECT_TRUE(allocation->gmm->useSystemMemoryPool);
 
     memoryManager->freeGraphicsMemory(allocation);
 }
@@ -135,6 +142,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
     auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
     EXPECT_NE(nullptr, svmAllocation);
     EXPECT_EQ(MemoryPool::System4KBPages, svmAllocation->getMemoryPool());
+    EXPECT_TRUE(svmAllocation->gmm->useSystemMemoryPool);
     memoryManager->freeGraphicsMemory(svmAllocation);
 }
 

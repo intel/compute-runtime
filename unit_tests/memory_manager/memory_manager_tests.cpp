@@ -818,6 +818,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
     auto imageAllocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, queryGmm.get());
     ASSERT_NE(nullptr, imageAllocation);
     EXPECT_TRUE(imageAllocation->gmm->resourceParams.Usage == GMM_RESOURCE_USAGE_TYPE::GMM_RESOURCE_USAGE_OCL_IMAGE);
+    EXPECT_TRUE(imageAllocation->gmm->useSystemMemoryPool);
     queryGmm.release();
     memoryManager.freeGraphicsMemory(imageAllocation);
 }
@@ -914,7 +915,6 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(MemoryPool::System4KBPagesWith32BitGpuAddressing, allocation->getMemoryPool());
-
     memoryManager.freeGraphicsMemory(allocation);
 }
 

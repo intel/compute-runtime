@@ -39,7 +39,7 @@ class Gmm {
     Gmm() = delete;
     Gmm(ImageInfo &inputOutputImgInfo);
     Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable);
-    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed);
+    Gmm(const void *alignedPtr, size_t alignedSize, bool uncacheable, bool preferRenderCompressed, bool systemMemoryPool);
     Gmm(GMM_RESOURCE_INFO *inputGmm);
 
     void queryImageParams(ImageInfo &inputOutputImgInfo);
@@ -49,6 +49,8 @@ class Gmm {
 
     void applyAuxFlagsForImage(ImageInfo &imgInfo);
     void applyAuxFlagsForBuffer(bool preferRenderCompression);
+    void applyMemoryFlags(bool systemMemoryPool);
+
     bool unifiedAuxTranslationCapable() const;
 
     uint32_t queryQPitch(GMM_RESOURCE_TYPE resType);
@@ -59,5 +61,6 @@ class Gmm {
     std::unique_ptr<GmmResourceInfo> gmmResourceInfo;
 
     bool isRenderCompressed = false;
+    bool useSystemMemoryPool = true;
 };
 } // namespace OCLRT

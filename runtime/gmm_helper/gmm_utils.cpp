@@ -29,3 +29,7 @@ using namespace OCLRT;
 
 void Gmm::applyAuxFlagsForImage(ImageInfo &imgInfo) {}
 void Gmm::applyAuxFlagsForBuffer(bool preferRenderCompression) {}
+
+void Gmm::applyMemoryFlags(bool systemMemoryPool) {
+    this->useSystemMemoryPool = systemMemoryPool;
+}
