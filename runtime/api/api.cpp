@@ -2942,7 +2942,25 @@ cl_int CL_API_CALL clEnqueueMarker(cl_command_queue commandQueue,
 cl_int CL_API_CALL clEnqueueWaitForEvents(cl_command_queue commandQueue,
                                           cl_uint numEvents,
                                           const cl_event *eventList) {
-    return CL_OUT_OF_HOST_MEMORY;
+    cl_int retVal = CL_SUCCESS;
+    API_ENTER(&retVal);
+    DBG_LOG_INPUTS("commandQueue", commandQueue, "eventList", DebugManager.getEvents(reinterpret_cast<const uintptr_t *>(eventList), numEvents));
+
+    auto pCommandQueue = castToObject<CommandQueue>(commandQueue);
+    if (!pCommandQueue) {
+        retVal = CL_INVALID_COMMAND_QUEUE;
+        return retVal;
+    }
+    for (unsigned int i = 0; i < numEvents && retVal == CL_SUCCESS; i++) {
+        retVal = validateObjects(eventList[i]);
+    }
+
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
+    retVal = Event::waitForEvents(numEvents, eventList);
+    return retVal;
 }
 
 // deprecated OpenCL 1.1
