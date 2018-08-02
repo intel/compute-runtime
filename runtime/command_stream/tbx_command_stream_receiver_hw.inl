@@ -391,14 +391,12 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfx
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::waitBeforeMakingNonResidentWhenRequired(bool blocking) {
-    if (blocking) {
-        auto allocation = this->getTagAllocation();
-        UNRECOVERABLE_IF(allocation == nullptr);
+void TbxCommandStreamReceiverHw<GfxFamily>::waitBeforeMakingNonResidentWhenRequired() {
+    auto allocation = this->getTagAllocation();
+    UNRECOVERABLE_IF(allocation == nullptr);
 
-        while (*this->getTagAddress() < this->latestFlushedTaskCount) {
-            this->makeCoherent(*allocation);
-        }
+    while (*this->getTagAddress() < this->latestFlushedTaskCount) {
+        this->makeCoherent(*allocation);
     }
 }
 

@@ -362,7 +362,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
     GraphicsAllocation allocation(&tag, sizeof(tag));
     csr.latestFlushedTaskCount = 3;
     csr.setTagAllocation(&allocation);
-    csr.waitBeforeMakingNonResidentWhenRequired(true);
+    csr.waitBeforeMakingNonResidentWhenRequired();
 
     EXPECT_EQ(0u, tag);
 }

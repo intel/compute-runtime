@@ -49,7 +49,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer *allocationsForResidency) override;
-    void waitBeforeMakingNonResidentWhenRequired(bool blocking) override;
+    void waitBeforeMakingNonResidentWhenRequired() override;
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 
     // Family specific version

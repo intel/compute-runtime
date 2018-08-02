@@ -332,25 +332,8 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhen
     *tbxCsr.getTagAddress() = 3;
     tbxCsr.latestFlushedTaskCount = 6;
 
-    tbxCsr.waitBeforeMakingNonResidentWhenRequired(true);
+    tbxCsr.waitBeforeMakingNonResidentWhenRequired();
 
     EXPECT_TRUE(tbxCsr.makeCoherentCalled);
     EXPECT_EQ(6u, tag);
-}
-
-HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagFalseThenFunctionReturns) {
-    uint32_t tag = 0;
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag);
-    GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
-    tbxCsr.setTagAllocation(&graphicsAllocation);
-
-    EXPECT_FALSE(tbxCsr.makeCoherentCalled);
-
-    *tbxCsr.getTagAddress() = 3;
-    tbxCsr.latestFlushedTaskCount = 6;
-
-    tbxCsr.waitBeforeMakingNonResidentWhenRequired(false);
-
-    EXPECT_FALSE(tbxCsr.makeCoherentCalled);
-    EXPECT_EQ(3u, *tbxCsr.getTagAddress());
 }

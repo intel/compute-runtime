@@ -1416,7 +1416,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
 
     EXPECT_EQ(*pDst, reinterpret_cast<uintptr_t>(constBuffGpuAddr));
 
-    pCommandStreamReceiver->makeSurfacePackNonResident(nullptr, false);
+    pCommandStreamReceiver->makeSurfacePackNonResident(nullptr);
     EXPECT_EQ(0u, pCommandStreamReceiver->residency.size());
 
     std::vector<Surface *> surfaces;
