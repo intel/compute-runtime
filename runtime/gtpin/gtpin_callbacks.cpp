@@ -148,7 +148,7 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         void *pSurfaceState = gtpinHelper.getSurfaceState(pKernel, gtpinBTI);
         cl_mem buffer = (cl_mem)resource;
         auto pBuffer = castToObjectOrAbort<Buffer>(buffer);
-        pBuffer->setArgStateful(pSurfaceState);
+        pBuffer->setArgStateful(pSurfaceState, false);
     }
 }
 

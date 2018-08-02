@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/surface.h"
@@ -166,6 +167,27 @@ HWTEST_F(BufferSetArgTest, givenSetArgBufferWithNullArgStatelessThenDontProgramN
     EXPECT_EQ(CL_SUCCESS, ret);
 
     EXPECT_EQ(memcmp(sshOriginal, surfaceStateHeap, sizeof(surfaceStateHeap)), 0);
+}
+
+HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSetThenSetNonAuxMode) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    auto surfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
+    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer->getGraphicsAllocation()->gmm = new Gmm(buffer->getGraphicsAllocation()->getUnderlyingBuffer(), buffer->getSize(), false);
+    buffer->getGraphicsAllocation()->gmm->isRenderCompressed = true;
+    pKernelInfo->requiresSshForBuffers = true;
+    cl_mem clMem = buffer;
+
+    pKernelInfo->kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    cl_int ret = pKernel->setArgBuffer(0, sizeof(cl_mem), &clMem);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_TRUE(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_NONE == surfaceState->getAuxiliarySurfaceMode());
+
+    pKernelInfo->kernelArgInfo.at(0).pureStatefulBufferAccess = true;
+    ret = pKernel->setArgBuffer(0, sizeof(cl_mem), &clMem);
+    EXPECT_EQ(CL_SUCCESS, ret);
+    EXPECT_TRUE(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState->getAuxiliarySurfaceMode());
 }
 
 TEST_F(BufferSetArgTest, setKernelArgBufferFor32BitAddressing) {

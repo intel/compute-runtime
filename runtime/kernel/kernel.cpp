@@ -1109,9 +1109,12 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
             this->patchInfoDataList.push_back(patchInfoData);
         }
 
+        bool forceNonAuxMode = buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
+                               !kernelArgInfo.pureStatefulBufferAccess;
+
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
-            buffer->setArgStateful(surfaceState);
+            buffer->setArgStateful(surfaceState, forceNonAuxMode);
         }
 
         return CL_SUCCESS;

@@ -1682,7 +1682,7 @@ class DrmMockBuffer : public Buffer {
                                                                    gfxAllocation(alloc) {
     }
 
-    void setArgStateful(void *memory) override {
+    void setArgStateful(void *memory, bool forceNonAuxMode) override {
     }
 
   protected:

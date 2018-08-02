@@ -451,7 +451,7 @@ void Buffer::setSurfaceState(const Device *device,
                              GraphicsAllocation *gfxAlloc,
                              cl_mem_flags flags) {
     auto buffer = Buffer::createBufferHwFromDevice(device, flags, svmSize, svmPtr, svmPtr, gfxAlloc, false, false, false);
-    buffer->setArgStateful(surfaceState);
+    buffer->setArgStateful(surfaceState, false);
     buffer->graphicsAllocation = nullptr;
     delete buffer;
 }
