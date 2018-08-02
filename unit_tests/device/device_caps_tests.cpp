@@ -790,9 +790,9 @@ TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNot
 
     hwInfo.capabilityTable.sourceLevelDebuggerSupported = false;
 
-    std::unique_ptr<MockDeviceWithSourceLevelDebugger<>> device(MockDevice::createWithNewExecutionEnvironment<MockDeviceWithSourceLevelDebugger<>>(&hwInfo));
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
 
     const auto &caps = device->getDeviceInfo();
-    EXPECT_NE(nullptr, device->getSourceLevelDebugger());
+    EXPECT_EQ(nullptr, device->getSourceLevelDebugger());
     EXPECT_FALSE(caps.sourceLevelDebuggerActive);
 }

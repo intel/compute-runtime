@@ -219,13 +219,4 @@ class MockAlignedMallocManagerDevice : public MockDevice {
     MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
 };
 
-template <typename T = SourceLevelDebugger>
-class MockDeviceWithSourceLevelDebugger : public MockDevice {
-  public:
-    MockDeviceWithSourceLevelDebugger(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
-        T *sourceLevelDebuggerCreated = new T(nullptr);
-        executionEnvironment->sourceLevelDebugger.reset(sourceLevelDebuggerCreated);
-    }
-};
-
 } // namespace OCLRT
