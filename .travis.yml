@@ -28,7 +28,10 @@ matrix:
           env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-6
         - os: linux
           compiler: gcc
-          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-8
+        - os: linux
+          compiler: gcc
+          env: BUILD_OS=ubuntu-18.04 COMPILER=gcc-7 GEN=gen-9
 
 script: ./scripts/run-build.sh
 
