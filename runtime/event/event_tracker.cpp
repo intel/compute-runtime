@@ -39,10 +39,6 @@ EventsTracker &EventsTracker::getEventsTracker() {
     return *EventsTracker::globalEvTracker;
 }
 
-void EventsTracker::shutdownGlobalEvTracker() {
-    EventsTracker::globalEvTracker.reset();
-}
-
 std::string EventsTracker::label(Event *node, const EventIdMap &eventsIdMapping) {
     std::string retLabel("e");
 
@@ -164,10 +160,6 @@ void EventsTracker::dumpGraph(Event *node, std::ostream &out, CmdqSet &dumpedCmd
     }
 }
 
-IFList<TrackedEvent, true, true> *EventsTracker::getList() {
-    return &trackedEvents;
-}
-
 TrackedEvent *EventsTracker::getNodes() {
     return trackedEvents.detachNodes();
 }
@@ -179,7 +171,7 @@ void EventsTracker::dump() {
     std::string dumpFileName = "eg_"
                                "reg" +
                                std::to_string(reinterpret_cast<uintptr_t>(this)) + "_" + std::to_string(time.time_since_epoch().count()) + ".gv";
-    std::shared_ptr<std::ostream> out = createDumpStream(dumpFileName);
+    auto out = createDumpStream(dumpFileName);
 
     *out << "digraph events_registry_" << this << " {\n";
     *out << "node [shape=record]\n";
@@ -266,9 +258,8 @@ void EventsTracker::notifyTransitionedExecutionStatus() {
     dump();
 }
 
-std::shared_ptr<std::ostream> EventsTracker::createDumpStream(const std::string &filename) {
-    std::shared_ptr<std::fstream> out{new std::fstream(filename, std::ios::binary | std::ios::out)};
-    return out;
+std::unique_ptr<std::ostream> EventsTracker::createDumpStream(const std::string &filename) {
+    return std::make_unique<std::fstream>(filename, std::ios::binary | std::ios::out);
 }
 
 } // namespace OCLRT

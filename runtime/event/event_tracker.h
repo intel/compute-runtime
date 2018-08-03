@@ -46,16 +46,16 @@ class EventsTracker {
     EventsTracker() = default;
 
   public:
-    MOCKABLE_VIRTUAL ~EventsTracker() = default;
-    IFList<TrackedEvent, true, true> *getList();
-    MOCKABLE_VIRTUAL TrackedEvent *getNodes();
     void dump();
     void notifyCreation(Event *eventToTrack);
     void notifyDestruction(Event *eventToDestroy);
     void notifyTransitionedExecutionStatus();
-    MOCKABLE_VIRTUAL std::shared_ptr<std::ostream> createDumpStream(const std::string &filename);
+
+    MOCKABLE_VIRTUAL ~EventsTracker() = default;
+    MOCKABLE_VIRTUAL TrackedEvent *getNodes();
+    MOCKABLE_VIRTUAL std::unique_ptr<std::ostream> createDumpStream(const std::string &filename);
+
     static EventsTracker &getEventsTracker();
-    static void shutdownGlobalEvTracker();
     static std::string label(Event *node, const EventIdMap &eventsIdMapping);
     static std::string label(CommandQueue *cmdQ);
     static void dumpQueue(CommandQueue *cmdQ, std::ostream &out, CmdqSet &dumpedCmdQs);

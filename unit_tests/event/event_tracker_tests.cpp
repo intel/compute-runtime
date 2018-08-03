@@ -29,13 +29,48 @@
 #include <array>
 #include <functional>
 
+struct ClonedStream : std::stringstream {
+    ClonedStream(std::string &clonedOutput)
+        : clonedOutput(clonedOutput) {
+    }
+
+    ~ClonedStream() override {
+        clonedOutput = this->str();
+    }
+
+    std::string &clonedOutput;
+};
+
+class EventsTrackerMock : public EventsTracker {
+  public:
+    std::unique_ptr<std::ostream> createDumpStream(const std::string &filename) override {
+        return std::make_unique<ClonedStream>(streamMock);
+    }
+    void overrideGlobal() {
+        originGlobal.swap(EventsTracker::globalEvTracker);
+        EventsTracker::globalEvTracker = std::unique_ptr<EventsTracker>{new EventsTrackerMock()};
+    }
+    void restoreGlobal() {
+        EventsTrackerMock::shutdownGlobalEvTracker();
+        EventsTracker::globalEvTracker.swap(originGlobal);
+    }
+    static void shutdownGlobalEvTracker() {
+        EventsTracker::globalEvTracker.reset();
+    }
+    IFList<TrackedEvent, true, true> *getList() {
+        return &trackedEvents;
+    }
+    std::string streamMock;
+    std::unique_ptr<EventsTracker> originGlobal;
+};
+
 TEST(EventsTracker, whenCallingGetEventsTrackerThenGetGlobalEventsTrackerInstance) {
     auto &evTracker1 = EventsTracker::getEventsTracker();
     auto &evTracker2 = EventsTracker::getEventsTracker();
 
     EXPECT_EQ(&evTracker1, &evTracker2);
 
-    EventsTracker::shutdownGlobalEvTracker();
+    EventsTrackerMock::shutdownGlobalEvTracker();
 }
 
 TEST(EventsTracker, whenCallLabelFunctionThenGetStringWithProperEventId) {
@@ -422,28 +457,8 @@ TEST(EventsTracker, whenCalingCreateDumpStreamThenGettingValidFstreamInstance) {
 
     static_cast<std::fstream *>(stream.get())->close();
     remove(testFileName.c_str());
-    EventsTracker::shutdownGlobalEvTracker();
+    EventsTrackerMock::shutdownGlobalEvTracker();
 }
-
-class EventsTrackerMock : public EventsTracker {
-  public:
-    std::shared_ptr<std::ostream> createDumpStream(const std::string &filename) override {
-        streamMock.reset();
-        std::shared_ptr<std::stringstream> out{new std::stringstream()};
-        streamMock = out;
-        return out;
-    }
-    void overrideGlobal() {
-        originGlobal.swap(EventsTracker::globalEvTracker);
-        EventsTracker::globalEvTracker = std::unique_ptr<EventsTracker>{new EventsTrackerMock()};
-    }
-    void restoreGlobal() {
-        EventsTracker::shutdownGlobalEvTracker();
-        EventsTracker::globalEvTracker.swap(originGlobal);
-    }
-    std::shared_ptr<std::stringstream> streamMock;
-    std::unique_ptr<EventsTracker> originGlobal;
-};
 
 TEST(EventsTracker, whenDeletingEventTwoTimesThenDeletingIsProper) {
     UserEvent uEvent1;
@@ -458,7 +473,7 @@ TEST(EventsTracker, whenDeletingEventTwoTimesThenDeletingIsProper) {
 
     expected << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 }
 
 TEST(EventsTracker, givenTwoEventsWithSamePtrWhenFirstOneIsDeletedThenDumpingFirstProperly) {
@@ -474,7 +489,7 @@ TEST(EventsTracker, givenTwoEventsWithSamePtrWhenFirstOneIsDeletedThenDumpingFir
     expected << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\ne2[label=\"{------USER_EVENT ptr="
              << &uEvent << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 }
 
 TEST(EventsTracker, whenNotifyCreationOfEventThenEventIsDumped) {
@@ -487,7 +502,7 @@ TEST(EventsTracker, whenNotifyCreationOfEventThenEventIsDumped) {
 
     expected << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 }
 
 TEST(EventsTracker, whenNotifyTransitionedExecutionStatusOfEventThenEventIsDumpedWithProperDescription) {
@@ -501,7 +516,7 @@ TEST(EventsTracker, whenNotifyTransitionedExecutionStatusOfEventThenEventIsDumpe
     expected << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\ne0[label=\"{------USER_EVENT ptr=" << &uEvent
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 }
 
 TEST(EventsTracker, whenNotifyDestructionOfEventThenEventIsDumped) {
@@ -515,7 +530,7 @@ TEST(EventsTracker, whenNotifyDestructionOfEventThenEventIsDumped) {
     std::stringstream stream;
     stream << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(stream.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(stream.str().c_str(), evTrackerMock.streamMock.c_str());
 }
 
 TEST(EventsTracker, givenSeveralEventsWhenOneIsCompleteThenDumpingWithProperLabels) {
@@ -537,7 +552,7 @@ TEST(EventsTracker, givenSeveralEventsWhenOneIsCompleteThenDumpingWithProperLabe
            << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0[label=\"{------USER_EVENT ptr=" << uEvent1
            << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(stream.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(stream.str().c_str(), evTrackerMock.streamMock.c_str());
     delete uEvent1;
     delete uEvent3;
 }
@@ -553,7 +568,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
     expected << "digraph events_registry_" << &evTrackerMock << " {\nnode [shape=record]\n//pragma: somePragmaData\ne0[label=\"{------USER_EVENT ptr=" << &uEvent1
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
     UserEvent uEvent2;
     evTrackerMock.notifyCreation(&uEvent2);
@@ -564,7 +579,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0[label=\"{------USER_EVENT ptr=" << &uEvent1
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
     UserEvent uEventChild1;
     evTrackerMock.notifyCreation(&uEventChild1);
@@ -577,7 +592,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne2[label=\"{------USER_EVENT ptr=" << &uEventChild1
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0->e2;\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
     UserEvent uEventChild2;
     evTrackerMock.notifyCreation(&uEventChild2);
@@ -591,7 +606,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0->e3;\ne2[label=\"{------USER_EVENT ptr=" << &uEventChild1
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0->e2;\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
     uEvent2.addChild(uEvent1);
     evTrackerMock.dump();
@@ -603,7 +618,7 @@ TEST(EventsTracker, givenEventsWithDependenciesBetweenThemThenDumpingProperGraph
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0->e3;\ne2[label=\"{------USER_EVENT ptr=" << &uEventChild1
              << "------||CL_QUEUED|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\ne0->e2;\ne1->e0;\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMock.streamMock.c_str());
 
     uEvent2.setStatus(0);
     uEvent1.setStatus(0);
@@ -621,7 +636,7 @@ TEST(EventsTracker, whenEventsDebugEnableFlagIsTrueAndCreateOrChangeStatusOrDest
     std::stringstream expected;
     expected << "digraph events_registry_" << &EventsTracker::getEventsTracker() << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock.c_str());
 
     ev->setStatus(1);
 
@@ -629,28 +644,29 @@ TEST(EventsTracker, whenEventsDebugEnableFlagIsTrueAndCreateOrChangeStatusOrDest
     expected << "digraph events_registry_" << &EventsTracker::getEventsTracker() << " {\nnode [shape=record]\n//pragma: somePragmaData\ne0[label=\"{-----------EVENT  ptr=" << ev
              << "------|CL_COMMAND_NDRANGE_KERNEL|CL_RUNNING|task count=NOT_READY, level=NOT_READY|CALLBACKS=FALSE}\",color=red];\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock.c_str());
 
     delete ev;
 
     expected.str(std::string());
     expected << "digraph events_registry_" << &EventsTracker::getEventsTracker() << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), static_cast<EventsTrackerMock *>(&EventsTracker::getEventsTracker())->streamMock.c_str());
 
     evTrackerMock.restoreGlobal();
 }
 
-class EventsTrackerMockMT : public EventsTrackerMock {
-  public:
-    TrackedEvent *getNodes() override {
-        auto TrackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
-        return TrackedEventsMock->detachNodes();
-    }
-    std::shared_ptr<IFList<TrackedEvent, true, true>> *TrackedEventsMock;
-};
-
 TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
+
+    class EventsTrackerMockMT : public EventsTrackerMock {
+      public:
+        TrackedEvent *getNodes() override {
+            auto TrackedEventsMock = std::shared_ptr<IFList<TrackedEvent, true, true>>{new IFList<TrackedEvent, true, true>};
+            return TrackedEventsMock->detachNodes();
+        }
+        std::shared_ptr<IFList<TrackedEvent, true, true>> *TrackedEventsMock;
+    };
+
     auto evTrackerMockMT = std::shared_ptr<EventsTrackerMockMT>{new EventsTrackerMockMT()};
     UserEvent uEvent1;
     UserEvent uEvent2;
@@ -663,5 +679,5 @@ TEST(EventsTracker, givenEventsFromDifferentThreadsThenDumpingProperly) {
     expected << "digraph events_registry_" << evTrackerMockMT
              << " {\nnode [shape=record]\n//pragma: somePragmaData\n\n}\n";
 
-    EXPECT_STREQ(expected.str().c_str(), evTrackerMockMT->streamMock->str().c_str());
+    EXPECT_STREQ(expected.str().c_str(), evTrackerMockMT->streamMock.c_str());
 }
