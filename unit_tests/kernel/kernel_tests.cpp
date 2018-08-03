@@ -2211,3 +2211,25 @@ TEST(KernelTest, givenKernelWithKernelInfoWith64bitPointerSizeThenReport64bit) {
 
     EXPECT_FALSE(kernel->is32Bit());
 }
+
+TEST(KernelTest, givenFtrRenderCompressedBuffersWhenInitializingArgsWithNonStatefulAccessThenMarkKernelForAuxTranslation) {
+    HardwareInfo localHwInfo = *platformDevices[0];
+
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&localHwInfo));
+    MockKernelWithInternals kernel(*device);
+    kernel.kernelInfo.kernelArgInfo.resize(1);
+    kernel.kernelInfo.kernelArgInfo.at(0).typeStr = "char *";
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = true;
+    kernel.mockKernel->initialize();
+    EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
+
+    kernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    kernel.mockKernel->initialize();
+    EXPECT_FALSE(kernel.mockKernel->isAuxTranslationRequired());
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    kernel.mockKernel->initialize();
+    EXPECT_TRUE(kernel.mockKernel->isAuxTranslationRequired());
+}

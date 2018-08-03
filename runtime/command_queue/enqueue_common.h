@@ -83,6 +83,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         if (DebugManager.flags.ForceDispatchScheduler.get()) {
             forceDispatchScheduler(multiDispatchInfo);
         } else {
+            if (kernel->isAuxTranslationRequired()) {
+                dispatchAuxTranslation(multiDispatchInfo);
+            }
+
             if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
                 DispatchInfoBuilder<SplitDispatch::Dim::d3D, SplitDispatch::SplitMode::WalkerSplit> builder;
                 builder.setDispatchGeometry(workDim, workItems, localWorkSizesIn, globalOffsets);
@@ -95,6 +99,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 if (multiDispatchInfo.size() == 0) {
                     return;
                 }
+            }
+            if (kernel->isAuxTranslationRequired()) {
+                dispatchAuxTranslation(multiDispatchInfo);
             }
         }
 

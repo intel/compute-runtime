@@ -115,6 +115,8 @@ class Kernel : public BaseObject<_cl_kernel> {
         return kernelArg == BUFFER_OBJ || kernelArg == IMAGE_OBJ || kernelArg == PIPE_OBJ;
     }
 
+    bool isAuxTranslationRequired() const { return auxTranslationRequired; }
+
     char *getCrossThreadData() const {
         return crossThreadData;
     }
@@ -475,7 +477,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     size_t numberOfBindingTableStates;
     size_t localBindingTableOffset;
-    char *pSshLocal;
+    std::unique_ptr<char[]> pSshLocal;
     uint32_t sshLocalSize;
 
     char *crossThreadData;
@@ -487,6 +489,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     GraphicsAllocation *kernelReflectionSurface;
 
     bool usingSharedObjArgs;
+    bool auxTranslationRequired = false;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
 

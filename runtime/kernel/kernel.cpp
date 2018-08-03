@@ -98,7 +98,6 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Devic
       kernelInfo(kernelInfoArg),
       numberOfBindingTableStates(0),
       localBindingTableOffset(0),
-      pSshLocal(nullptr),
       sshLocalSize(0),
       crossThreadData(nullptr),
       crossThreadDataSize(0),
@@ -111,9 +110,6 @@ Kernel::Kernel(Program *programArg, const KernelInfo &kernelInfoArg, const Devic
 }
 
 Kernel::~Kernel() {
-    delete[] pSshLocal;
-    pSshLocal = nullptr;
-
     delete[] crossThreadData;
     crossThreadData = nullptr;
     crossThreadDataSize = 0;
@@ -245,10 +241,10 @@ cl_int Kernel::initialize() {
                            : 0;
 
         if (sshLocalSize) {
-            pSshLocal = new char[sshLocalSize];
+            pSshLocal = std::make_unique<char[]>(sshLocalSize);
 
             // copy the ssh into our local copy
-            memcpy_s(pSshLocal, sshLocalSize, heapInfo.pSsh, sshLocalSize);
+            memcpy_s(pSshLocal.get(), sshLocalSize, heapInfo.pSsh, sshLocalSize);
         }
         numberOfBindingTableStates = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Count : 0;
         localBindingTableOffset = (patchInfo.bindingTableState != nullptr) ? patchInfo.bindingTableState->Offset : 0;
@@ -334,6 +330,8 @@ cl_int Kernel::initialize() {
             } else if ((argInfo.typeStr.find("*") != std::string::npos) || argInfo.isBuffer) {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
+                this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
+                                                getDevice().getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers;
             } else if (argInfo.isImage) {
                 kernelArgHandlers[i] = &Kernel::setArgImage;
                 kernelArguments[i].type = IMAGE_OBJ;
@@ -734,7 +732,7 @@ void Kernel::setStartOffset(uint32_t offset) {
 
 const void *Kernel::getSurfaceStateHeap() const {
     return kernelInfo.usesSsh
-               ? pSshLocal
+               ? pSshLocal.get()
                : nullptr;
 }
 
@@ -761,8 +759,7 @@ size_t Kernel::getNumberOfBindingTableStates() const {
 }
 
 void Kernel::resizeSurfaceStateHeap(void *pNewSsh, size_t newSshSize, size_t newBindingTableCount, size_t newBindingTableOffset) {
-    delete[] pSshLocal;
-    pSshLocal = reinterpret_cast<char *>(pNewSsh);
+    pSshLocal.reset(reinterpret_cast<char *>(pNewSsh));
     sshLocalSize = static_cast<uint32_t>(newSshSize);
     numberOfBindingTableStates = newBindingTableCount;
     localBindingTableOffset = newBindingTableOffset;

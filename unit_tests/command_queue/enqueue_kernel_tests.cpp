@@ -22,6 +22,7 @@
 
 #include "runtime/built_ins/built_ins.h"
 #include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/command_queue/command_queue_hw.h"
 #include "reg_configs_common.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -1566,4 +1567,31 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
     mockKernel.kernelInfo.isVmeWorkload = false;
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.mediaSamplerRequired);
+}
+
+HWTEST_F(EnqueueKernelTest, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenGuardKernelWithAuxTranslations) {
+    class MyCmdQ : public CommandQueueHw<FamilyType> {
+      public:
+        MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
+        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo) override {
+            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo);
+            multiDispatchInfoSizes.push_back(multiDispatchInfo.size());
+        }
+
+        std::vector<size_t> multiDispatchInfoSizes;
+    };
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    MyCmdQ cmdQ(context, pDevice);
+    size_t gws[3] = {1, 0, 0};
+
+    mockKernel.mockKernel->auxTranslationRequired = true;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, cmdQ.multiDispatchInfoSizes.size());
+    EXPECT_EQ(0u, cmdQ.multiDispatchInfoSizes.at(0)); // before kernel
+    EXPECT_EQ(1u, cmdQ.multiDispatchInfoSizes.at(1)); // after kernel
+
+    mockKernel.mockKernel->auxTranslationRequired = false;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, cmdQ.multiDispatchInfoSizes.size()); // not changed
 }

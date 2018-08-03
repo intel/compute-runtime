@@ -37,6 +37,8 @@ namespace OCLRT {
 ////////////////////////////////////////////////////////////////////////////////
 class MockKernel : public Kernel {
   public:
+    using Kernel::auxTranslationRequired;
+
     struct BlockPatchValues {
         uint64_t offset;
         uint32_t size;
@@ -94,10 +96,6 @@ class MockKernel : public Kernel {
             Kernel::crossThreadData = nullptr;
         }
 
-        if (Kernel::pSshLocal == mockSshLocal.data()) {
-            Kernel::pSshLocal = nullptr;
-        }
-
         if (kernelInfoAllocated) {
             delete kernelInfoAllocated->heapInfo.pKernelHeader;
             delete kernelInfoAllocated->patchInfo.executionEnvironment;
@@ -148,9 +146,6 @@ class MockKernel : public Kernel {
 
     uint32_t getPatchedArgumentsNum() const { return patchedArgumentsNum; }
 
-    cl_int initialize() {
-        return Kernel::initialize();
-    }
     bool isPatched() const override;
 
     bool canTransformImages() const override;
@@ -177,25 +172,16 @@ class MockKernel : public Kernel {
     }
 
     void setSshLocal(const void *sshPattern, uint32_t newSshSize) {
-        if ((Kernel::pSshLocal != nullptr) && (Kernel::pSshLocal != mockSshLocal.data())) {
-            delete[] Kernel::pSshLocal;
-            Kernel::pSshLocal = nullptr;
-            Kernel::sshLocalSize = 0;
-        }
-
-        if (sshPattern && (newSshSize > 0)) {
-            mockSshLocal.clear();
-            mockSshLocal.insert(mockSshLocal.begin(), (char *)sshPattern, ((char *)sshPattern) + newSshSize);
-        } else {
-            mockSshLocal.resize(newSshSize, 0);
-        }
+        sshLocalSize = newSshSize;
 
         if (newSshSize == 0) {
-            return;
+            pSshLocal.reset(nullptr);
+        } else {
+            pSshLocal = std::make_unique<char[]>(newSshSize);
+            if (sshPattern) {
+                memcpy_s(pSshLocal.get(), newSshSize, sshPattern, newSshSize);
+            }
         }
-
-        Kernel::pSshLocal = mockSshLocal.data();
-        Kernel::sshLocalSize = static_cast<uint32_t>(mockSshLocal.size());
     }
 
     void setPrivateSurface(GraphicsAllocation *gfxAllocation, uint32_t size) {
