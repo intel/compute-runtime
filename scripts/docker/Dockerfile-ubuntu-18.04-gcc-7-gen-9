@@ -1,0 +1,16 @@
+FROM docker.io/ubuntu:18.04
+MAINTAINER Jacek Danecki <jacek.danecki@intel.com>
+
+COPY neo /root/neo
+RUN apt-get -y update ; apt-get install -y --allow-unauthenticated gpg; \
+    echo "deb http://ppa.launchpad.net/intel-opencl/intel-opencl/ubuntu bionic main" >> /etc/apt/sources.list; \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys B9732172C4830B8F; \
+    apt-get -y update ; apt-get install -y --allow-unauthenticated cmake g++-7 git pkg-config ninja-build intel-igc-opencl-dev
+RUN cd /root; git clone --depth 1 https://github.com/intel/gmmlib gmmlib
+RUN mkdir /root/build; cd /root/build ; cmake -G Ninja -DBUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=gcc-7 -DCMAKE_CXX_COMPILER=g++-7 \
+    -DSUPPORT_GEN8=0 -DSUPPORT_GEN10=0 \
+    -DDO_NOT_RUN_AUB_TESTS=1 -DDONT_CARE_OF_VIRTUALS=1 \
+    ../neo; \
+    ninja -j `nproc`
+CMD ["/bin/bash"]
