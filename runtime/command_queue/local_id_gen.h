@@ -22,9 +22,11 @@
 
 #pragma once
 
-#include <cstdint>
-#include <algorithm>
 #include "runtime/helpers/ptr_math.h"
+
+#include <algorithm>
+#include <array>
+#include <cstdint>
 
 namespace OCLRT {
 union GRF {
@@ -60,9 +62,9 @@ inline size_t getPerThreadSizeLocalIDs(uint32_t simd, uint32_t numChannels = 3) 
 }
 
 struct LocalIDHelper {
-    static void (*generateSimd8)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
-    static void (*generateSimd16)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
-    static void (*generateSimd32)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
+    static void (*generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
+    static void (*generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
+    static void (*generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
 
     static LocalIDHelper initializer;
 
@@ -73,7 +75,10 @@ struct LocalIDHelper {
 extern const uint16_t initialLocalID[];
 
 template <typename Vec, int simd>
-void generateLocalIDsSimd(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
+void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
+                          const std::array<uint8_t, 3> &dimensionsOrder);
 
-void generateLocalIDs(void *buffer, uint32_t simd, size_t lwsX, size_t lwsY, size_t lwsZ);
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize,
+                      const std::array<uint8_t, 3> &dimensionsOrder);
+
 } // namespace OCLRT

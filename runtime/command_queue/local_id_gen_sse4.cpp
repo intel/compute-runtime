@@ -23,8 +23,10 @@
 #include "runtime/command_queue/local_id_gen.inl"
 #include "runtime/helpers/uint16_sse4.h"
 
+#include <array>
+
 namespace OCLRT {
-template void generateLocalIDsSimd<uint16x8_t, 32>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
-template void generateLocalIDsSimd<uint16x8_t, 16>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
-template void generateLocalIDsSimd<uint16x8_t, 8>(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup);
+template void generateLocalIDsSimd<uint16x8_t, 32>(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
+template void generateLocalIDsSimd<uint16x8_t, 16>(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
+template void generateLocalIDsSimd<uint16x8_t, 8>(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder);
 } // namespace OCLRT

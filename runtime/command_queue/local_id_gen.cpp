@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +24,8 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/utilities/cpu_info.h"
 
+#include <array>
+
 namespace OCLRT {
 
 struct uint16x8_t;
@@ -38,9 +40,9 @@ const uint16_t initialLocalID[] = {
     16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
 
 // Lookup table for generating LocalIDs based on the SIMD of the kernel
-void (*LocalIDHelper::generateSimd8)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup) = generateLocalIDsSimd<uint16x8_t, 8>;
-void (*LocalIDHelper::generateSimd16)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup) = generateLocalIDsSimd<uint16x8_t, 16>;
-void (*LocalIDHelper::generateSimd32)(void *buffer, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup) = generateLocalIDsSimd<uint16x8_t, 32>;
+void (*LocalIDHelper::generateSimd8)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 8>;
+void (*LocalIDHelper::generateSimd16)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 16>;
+void (*LocalIDHelper::generateSimd32)(void *buffer, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup, const std::array<uint8_t, 3> &dimensionsOrder) = generateLocalIDsSimd<uint16x8_t, 32>;
 
 // Initialize the lookup table based on CPU capabilities
 LocalIDHelper::LocalIDHelper() {
@@ -55,14 +57,14 @@ LocalIDHelper::LocalIDHelper() {
 LocalIDHelper LocalIDHelper::initializer;
 
 //traditional function to generate local IDs
-void generateLocalIDs(void *buffer, uint32_t simd, size_t lwsX, size_t lwsY, size_t lwsZ) {
-    auto threadsPerWorkGroup = getThreadsPerWG(simd, lwsX * lwsY * lwsZ);
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder) {
+    auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]));
     if (simd == 32) {
-        LocalIDHelper::generateSimd32(buffer, lwsX, lwsY, threadsPerWorkGroup);
+        LocalIDHelper::generateSimd32(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     } else if (simd == 16) {
-        LocalIDHelper::generateSimd16(buffer, lwsX, lwsY, threadsPerWorkGroup);
+        LocalIDHelper::generateSimd16(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     } else {
-        LocalIDHelper::generateSimd8(buffer, lwsX, lwsY, threadsPerWorkGroup);
+        LocalIDHelper::generateSimd8(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     }
 }
 } // namespace OCLRT

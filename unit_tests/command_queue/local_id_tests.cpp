@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -172,6 +172,42 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
         }
     }
 
+    void validateWalkOrder(uint32_t simd, uint32_t localWorkgroupSizeX, uint32_t localWorkgroupSizeY, uint32_t localWorkgroupSizeZ,
+                           const std::array<uint8_t, 3> &dimensionsOrder) {
+        std::array<uint8_t, 3> walkOrder = {};
+        for (uint32_t i = 0; i < 3; ++i) {
+            // inverts the walk order mapping (from DIM_ID->ORDER_ID to ORDER_ID->DIM_ID)
+            walkOrder[dimensionsOrder[i]] = i;
+        }
+
+        auto skipPerThread = simd == 32 ? 32 : 16;
+
+        auto pBufferX = buffer;
+        auto pBufferY = pBufferX + skipPerThread;
+        auto pBufferZ = pBufferY + skipPerThread;
+        decltype(pBufferX) ids[] = {pBufferX, pBufferY, pBufferZ};
+        uint32_t sizes[] = {localWorkgroupSizeX, localWorkgroupSizeY, localWorkgroupSizeZ};
+
+        uint32_t flattenedId = 0;
+        for (uint32_t id2 = 0; id2 < sizes[walkOrder[2]]; ++id2) {
+            for (uint32_t id1 = 0; id1 < sizes[walkOrder[1]]; ++id1) {
+                for (uint32_t id0 = 0; id0 < sizes[walkOrder[0]]; ++id0) {
+                    uint32_t threadId = flattenedId / simd;
+                    uint32_t channelId = flattenedId % simd;
+                    uint16_t foundId0 = ids[walkOrder[0]][channelId + threadId * skipPerThread * 3];
+                    uint16_t foundId1 = ids[walkOrder[1]][channelId + threadId * skipPerThread * 3];
+                    uint16_t foundId2 = ids[walkOrder[2]][channelId + threadId * skipPerThread * 3];
+                    if ((id0 != foundId0) || (id1 != foundId1) || (id2 != foundId2)) {
+                        EXPECT_EQ(id0, foundId0) << simd << " X @ (" << id0 << ", " << id1 << ", " << id2 << ") - flat " << flattenedId;
+                        EXPECT_EQ(id1, foundId1) << simd << " Y @ (" << id0 << ", " << id1 << ", " << id2 << ") - flat " << flattenedId;
+                        EXPECT_EQ(id2, foundId2) << simd << " Z @ (" << id0 << ", " << id1 << ", " << id2 << ") - flat " << flattenedId;
+                    }
+                    ++flattenedId;
+                }
+            }
+        }
+    }
+
     void dumpBuffer(uint32_t simd, uint32_t lwsX, uint32_t lwsY, uint32_t lwsZ) {
         auto workSize = lwsX * lwsY * lwsZ;
         auto threads = (workSize + simd - 1) / simd;
@@ -211,13 +247,39 @@ struct LocalIDFixture : public ::testing::TestWithParam<std::tuple<int, int, int
 };
 
 TEST_P(LocalIDFixture, checkIDWithinLimits) {
-    generateLocalIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
+                     std::array<uint8_t, 3>{{0, 1, 2}});
     validateIDWithinLimits(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
 }
 
 TEST_P(LocalIDFixture, checkAllWorkItemsCovered) {
-    generateLocalIDs(buffer, simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
+                     std::array<uint8_t, 3>{{0, 1, 2}});
     validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+}
+
+TEST_P(LocalIDFixture, WhenWalkOrderIsXyzThenProperLocalIdsAreGenerated) {
+    auto dimensionsOrder = std::array<uint8_t, 3>{{0, 1, 2}};
+    generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
+                     dimensionsOrder);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
+}
+
+TEST_P(LocalIDFixture, WhenWalkOrderIsYxzThenProperLocalIdsAreGenerated) {
+    auto dimensionsOrder = std::array<uint8_t, 3>{{1, 0, 2}};
+    generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
+                     dimensionsOrder);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
+}
+
+TEST_P(LocalIDFixture, WhenWalkOrderIsZyxThenProperLocalIdsAreGenerated) {
+    auto dimensionsOrder = std::array<uint8_t, 3>{{2, 1, 0}};
+    generateLocalIDs(buffer, simd, std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizeX), static_cast<uint16_t>(localWorkSizeY), static_cast<uint16_t>(localWorkSizeZ)}},
+                     dimensionsOrder);
+    validateAllWorkItemsCovered(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ);
+    validateWalkOrder(simd, localWorkSizeX, localWorkSizeY, localWorkSizeZ, dimensionsOrder);
 }
 
 TEST_P(LocalIDFixture, sizeCalculationLocalIDs) {

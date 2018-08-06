@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include <array>
 #include <cstdint>
 #include <cstddef>
 #include "runtime/command_queue/local_id_gen.h"
@@ -47,7 +48,16 @@ struct PerThreadDataHelper {
         LinearStream &indirectHeap,
         uint32_t simd,
         uint32_t numChannels,
-        const size_t localWorkSizes[3]);
+        const size_t localWorkSizes[3],
+        const std::array<uint8_t, 3> &workgroupWalkOrder);
+
+    static size_t sendPerThreadData(
+        LinearStream &indirectHeap,
+        uint32_t simd,
+        uint32_t numChannels,
+        const size_t localWorkSizes[3]) {
+        return sendPerThreadData(indirectHeap, simd, numChannels, localWorkSizes, std::array<uint8_t, 3>{0, 1, 2});
+    }
 
     static inline uint32_t getNumLocalIdChannels(const iOpenCL::SPatchThreadPayload &threadPayload) {
         return threadPayload.LocalIDXPresent +

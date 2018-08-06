@@ -371,7 +371,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         ioh,
         simd,
         numChannels,
-        localWorkSize);
+        localWorkSize,
+        kernel.getKernelInfo().workgroupDimensionsOrder);
 
     // send interface descriptor data
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];

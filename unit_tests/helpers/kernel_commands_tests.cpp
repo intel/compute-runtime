@@ -347,6 +347,74 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
     EXPECT_GE(KernelCommandsHelper<FamilyType>::getSizeRequiredCS(), usedAfterCS - usedBeforeCS);
 }
 
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTakenIntoAccount) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
+
+    MultiDispatchInfo multiDispatchInfo;
+    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                          cmdQ.getContext(), cmdQ.getDevice());
+
+    BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
+    dc.srcMemObj = img.get();
+    dc.dstMemObj = img.get();
+    dc.size = {1, 1, 1};
+    builder.buildDispatchInfos(multiDispatchInfo, dc);
+    ASSERT_NE(0u, multiDispatchInfo.size());
+
+    auto kernel = multiDispatchInfo.begin()->getKernel();
+    ASSERT_NE(nullptr, kernel);
+
+    const size_t localWorkSizeX = 2;
+    const size_t localWorkSizeY = 3;
+    const size_t localWorkSizeZ = 4;
+    const size_t localWorkSizes[3]{localWorkSizeX, localWorkSizeY, localWorkSizeZ};
+
+    auto &commandStream = cmdQ.getCS();
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+
+    dsh.align(KernelCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
+    size_t IDToffset = dsh.getUsed();
+    dsh.getSpace(sizeof(INTERFACE_DESCRIPTOR_DATA));
+
+    KernelInfo modifiedKernelInfo = {};
+    modifiedKernelInfo.patchInfo = kernel->getKernelInfo().patchInfo;
+    modifiedKernelInfo.workgroupWalkOrder[0] = 2;
+    modifiedKernelInfo.workgroupWalkOrder[1] = 1;
+    modifiedKernelInfo.workgroupWalkOrder[2] = 0;
+    modifiedKernelInfo.workgroupDimensionsOrder[0] = 2;
+    modifiedKernelInfo.workgroupDimensionsOrder[1] = 1;
+    modifiedKernelInfo.workgroupDimensionsOrder[2] = 0;
+    MockKernel mockKernel{kernel->getProgram(), modifiedKernelInfo, kernel->getDevice(), false};
+    KernelCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        mockKernel,
+        modifiedKernelInfo.getMaxSimdSize(),
+        localWorkSizes,
+        IDToffset,
+        0,
+        pDevice->getPreemptionMode(),
+        nullptr);
+    size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
+    numThreads = (numThreads + modifiedKernelInfo.getMaxSimdSize() - 1) / modifiedKernelInfo.getMaxSimdSize();
+    size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
+    ASSERT_LE(expectedIohSize, ioh.getUsed());
+    auto expectedLocalIds = alignedMalloc(expectedIohSize, 64);
+    generateLocalIDs(expectedLocalIds, modifiedKernelInfo.getMaxSimdSize(),
+                     std::array<uint16_t, 3>{{localWorkSizeX, localWorkSizeY, localWorkSizeZ}},
+                     std::array<uint8_t, 3>{{modifiedKernelInfo.workgroupDimensionsOrder[0], modifiedKernelInfo.workgroupDimensionsOrder[1], modifiedKernelInfo.workgroupDimensionsOrder[2]}});
+    EXPECT_EQ(0, memcmp(expectedLocalIds, ioh.getCpuBase(), expectedIohSize));
+    alignedFree(expectedLocalIds);
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
     typedef typename FamilyType::BINDING_TABLE_STATE BINDING_TABLE_STATE;
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;

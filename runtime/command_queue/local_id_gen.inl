@@ -22,15 +22,22 @@
 
 #include "runtime/command_queue/local_id_gen.h"
 
+#include <array>
+
 namespace OCLRT {
 
 template <typename Vec, int simd>
-inline void generateLocalIDsSimd(void *b, size_t lwsX, size_t lwsY, size_t threadsPerWorkGroup) {
+inline void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t threadsPerWorkGroup,
+                                 const std::array<uint8_t, 3> &dimensionsOrder) {
     const int passes = simd / Vec::numChannels;
     int pass = 0;
 
-    const Vec vLwsX(static_cast<uint16_t>(lwsX));
-    const Vec vLwsY(static_cast<uint16_t>(lwsY));
+    uint32_t xDimNum = dimensionsOrder[0];
+    uint32_t yDimNum = dimensionsOrder[1];
+    uint32_t zDimNum = dimensionsOrder[2];
+
+    const Vec vLwsX(localWorkgroupSize[xDimNum]);
+    const Vec vLwsY(localWorkgroupSize[yDimNum]);
 
     auto zero = Vec::zero();
     auto one = Vec::one();
@@ -113,9 +120,9 @@ inline void generateLocalIDsSimd(void *b, size_t lwsX, size_t lwsY, size_t threa
         } while (xWrap);
 
         for (size_t i = 0; i < threadsPerWorkGroup; ++i) {
-            x.store(buffer);
-            y.store(ptrOffset(buffer, threadSkipSize));
-            z.store(ptrOffset(buffer, 2 * threadSkipSize));
+            x.store(ptrOffset(buffer, xDimNum * threadSkipSize));
+            y.store(ptrOffset(buffer, yDimNum * threadSkipSize));
+            z.store(ptrOffset(buffer, zDimNum * threadSkipSize));
 
             x += vSimdX;
             y += vSimdY;

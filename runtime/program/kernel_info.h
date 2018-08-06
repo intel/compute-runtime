@@ -26,13 +26,15 @@
 #include "kernel_arg_info.h"
 #include "patch_info.h"
 #include "runtime/helpers/hw_info.h"
+
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cmath>
-#include <vector>
+#include <map>
 #include <string>
 #include <unordered_map>
-#include <map>
+#include <vector>
 
 namespace OCLRT {
 class BuiltinDispatchInfoBuilder;
@@ -243,6 +245,8 @@ struct KernelInfo {
     char *crossThreadData = nullptr;
     size_t reqdWorkGroupSize[3];
     size_t requiredSubGroupSize = 0;
+    std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
+    std::array<uint8_t, 3> workgroupDimensionsOrder = {{0, 1, 2}};
     uint32_t gpuPointerSize = 0;
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t argumentsToPatchNum = 0;

@@ -440,6 +440,22 @@ TEST_F(KernelDataTest, KernelAttributesInfo) {
     EXPECT_EQ_CONST(PATCH_TOKEN_KERNEL_ATTRIBUTES_INFO, pKernelInfo->patchInfo.pKernelAttributesInfo->Token);
 }
 
+TEST_F(KernelDataTest, WhenDecodingExecutionEnvironmentTokenThenWalkOrderIsForcedToXMajor) {
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
+    executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
+    executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
+
+    pPatchList = &executionEnvironment;
+    patchListSize = executionEnvironment.Size;
+
+    buildAndDecode();
+
+    std::array<uint8_t, 3> expectedWalkOrder = {{0, 1, 2}};
+    std::array<uint8_t, 3> expectedDimsIds = {{0, 1, 2}};
+    EXPECT_EQ(expectedWalkOrder, pKernelInfo->workgroupWalkOrder);
+    EXPECT_EQ(expectedDimsIds, pKernelInfo->workgroupDimensionsOrder);
+}
+
 // Test all the different data parameters with the same "made up" data
 class DataParameterTest : public KernelDataTest, public testing::WithParamInterface<uint32_t> {};
 
