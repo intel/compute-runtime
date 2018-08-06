@@ -36,13 +36,14 @@ gtpin::ocl::gtpin_events_t GTPinCallbacks = {0};
 } // namespace OCLRT
 
 GTPIN_DI_STATUS GTPin_Init(gtpin::ocl::gtpin_events_t *pGtpinEvents, driver_services_t *pDriverServices,
-                           uint32_t *pDriverVersion) {
+                           interface_version_t *pDriverVersion) {
     if (isGTPinInitialized) {
         return GTPIN_DI_ERROR_INSTANCE_ALREADY_CREATED;
     }
     if (pDriverVersion != nullptr) {
         // GT-Pin is asking to obtain GT-Pin Interface version that is supported
-        *pDriverVersion = gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION;
+        pDriverVersion->common = gtpin::GTPIN_COMMON_INTERFACE_VERSION;
+        pDriverVersion->specific = gtpin::ocl::GTPIN_OCL_INTERFACE_VERSION;
 
         if ((pDriverServices == nullptr) || (pGtpinEvents == nullptr)) {
             return GTPIN_DI_SUCCESS;

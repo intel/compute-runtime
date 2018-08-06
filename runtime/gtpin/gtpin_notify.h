@@ -36,4 +36,7 @@ void gtpinNotifyMakeResident(void *pKernel, void *pCommandStreamReceiver);
 void gtpinNotifyUpdateResidencyList(void *pKernel, void *pResidencyVector);
 void gtpinNotifyPlatformShutdown();
 inline bool gtpinIsGTPinInitialized() { return isGTPinInitialized; }
+void *gtpinGetIgcInit();
+void setIgcInfo(const void *igcInfo);
+const void *gtpinGetIgcInfo();
 } // namespace OCLRT
