@@ -69,5 +69,8 @@ void SchedulerKernel::computeGws() {
         DEBUG_BREAK_IF(DebugManager.flags.SchedulerGWS.get() % (PARALLEL_SCHEDULER_HWTHREADS_IN_HW_GROUP20 * PARALLEL_SCHEDULER_COMPILATION_SIZE_20) != 0);
         gws = DebugManager.flags.SchedulerGWS.get();
     }
+
+    DBG_LOG(PrintEMDebugInformation, "Scheduler GWS: ", gws);
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "Scheduler GWS: ", gws);
 }
 } // namespace OCLRT
