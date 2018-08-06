@@ -1074,7 +1074,8 @@ TEST_F(EventTests, givenUserEventWhenSetStatusIsDoneThenDeviceMutextisAcquired) 
     struct mockedEvent : public UserEvent {
         using UserEvent::UserEvent;
         bool setStatus(cl_int status) override {
-            mutexProperlyAcquired = this->getContext()->getDevice(0)->hasOwnership();
+            auto commandStreamReceiverOwnership = this->getContext()->getDevice(0)->getCommandStreamReceiver().obtainUniqueOwnership();
+            mutexProperlyAcquired = commandStreamReceiverOwnership.owns_lock();
             return true;
         }
         bool mutexProperlyAcquired = false;

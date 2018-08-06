@@ -66,9 +66,8 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
     //call a flush while other threads enqueue, we can't drop anything
     while (currentTaskCount < enqueueCount * threadCount) {
         clFlush(pCmdQ);
-        pCmdQ->getDevice().takeOwnership(true);
+        auto locker = mockCsr->obtainUniqueOwnership();
         currentTaskCount = mockCsr->peekTaskCount();
-        pCmdQ->getDevice().releaseOwnership();
     }
 
     for (auto &thread : threads) {

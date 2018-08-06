@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event_builder.h"
@@ -64,7 +65,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         *eventsRequest.outEvent = outEventObj;
     }
 
-    TakeOwnershipWrapper<Device> deviceOwnership(*device);
+    auto commandStreamReceieverOwnership = device->getCommandStreamReceiver().obtainUniqueOwnership();
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
 
     auto blockQueue = false;
@@ -81,7 +82,6 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         (transferProperties.cmdType == CL_COMMAND_MAP_BUFFER ||
          transferProperties.cmdType == CL_COMMAND_MAP_IMAGE ||
          transferProperties.cmdType == CL_COMMAND_UNMAP_MEM_OBJECT)) {
-
         // Pass size and offset only. Unblocked command will call transferData(size, offset) method
         enqueueBlockedMapUnmapOperation(eventsRequest.eventWaitList,
                                         static_cast<size_t>(eventsRequest.numEventsInWaitList),
@@ -94,7 +94,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     queueOwnership.unlock();
-    deviceOwnership.unlock();
+    commandStreamReceieverOwnership.unlock();
 
     // read/write buffers are always blocking
     if (!blockQueue || transferProperties.blocking) {

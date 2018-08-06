@@ -363,4 +363,8 @@ bool CommandStreamReceiver::initializeTagAllocation() {
     return true;
 }
 
+std::unique_lock<CommandStreamReceiver::MutexType> CommandStreamReceiver::obtainUniqueOwnership() {
+    return std::unique_lock<CommandStreamReceiver::MutexType>(this->ownershipMutex);
+}
+
 } // namespace OCLRT

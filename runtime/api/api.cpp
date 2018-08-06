@@ -1801,8 +1801,7 @@ cl_int CL_API_CALL clSetUserEventStatus(cl_event event,
         return retVal;
     }
 
-    TakeOwnershipWrapper<Device> deviceOwnership(*userEvent->getContext()->getDevice(0));
-
+    auto commandStreamReceiverOwnership = userEvent->getContext()->getDevice(0)->getCommandStreamReceiver().obtainUniqueOwnership();
     userEvent->setStatus(executionStatus);
     return retVal;
 }

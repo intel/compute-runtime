@@ -481,7 +481,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     Device *device = this->getMemoryManager()->device;
-    TakeOwnershipWrapper<Device> deviceOwnership(*device);
+    std::unique_lock<MutexType> lockGuard(ownershipMutex);
     EngineType engineType = device->getEngineType();
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();

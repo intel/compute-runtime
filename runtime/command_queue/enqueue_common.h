@@ -159,8 +159,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     DeviceQueueHw<GfxFamily> *devQueueHw = castToObject<DeviceQueueHw<GfxFamily>>(devQueue);
 
     HwTimeStamps *hwTimeStamps = nullptr;
-
-    TakeOwnershipWrapper<Device> deviceOwnership(*device);
+    auto &commandStreamReceiver = device->getCommandStreamReceiver();
+    auto commandStreamRecieverOwnership = commandStreamReceiver.obtainUniqueOwnership();
 
     TimeStampData queueTimeStamp;
     if (isProfilingEnabled() && event) {
@@ -197,7 +197,6 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, profilingRequired, perfCountersRequired, multiDispatchInfo);
     auto commandStreamStart = commandStream.getUsed();
-    auto &commandStreamReceiver = device->getCommandStreamReceiver();
 
     DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);
 
@@ -413,7 +412,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     queueOwnership.unlock();
-    deviceOwnership.unlock();
+    commandStreamRecieverOwnership.unlock();
 
     if (blocking) {
         if (blockQueue) {

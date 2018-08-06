@@ -59,6 +59,7 @@ class CommandStreamReceiver {
         samplerCacheFlushBefore, //add sampler cache flush before Walker with redescribed image
         samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
     };
+    using MutexType = std::recursive_mutex;
     CommandStreamReceiver();
     virtual ~CommandStreamReceiver();
 
@@ -143,6 +144,7 @@ class CommandStreamReceiver {
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);
 
     bool initializeTagAllocation();
+    std::unique_lock<MutexType> obtainUniqueOwnership();
 
     KmdNotifyHelper *peekKmdNotifyHelper() {
         return kmdNotifyHelper.get();
@@ -199,6 +201,7 @@ class CommandStreamReceiver {
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
     std::unique_ptr<FlatBatchBufferHelper> flatBatchBufferHelper;
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
+    MutexType ownershipMutex;
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
 };
 

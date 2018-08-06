@@ -55,7 +55,8 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         batchBuffer.stream->replaceBuffer(nullptr, 0);
         batchBuffer.stream->replaceGraphicsAllocation(nullptr);
 
-        EXPECT_TRUE(pDevice->hasOwnership());
+        EXPECT_TRUE(this->ownershipMutex.try_lock());
+        this->ownershipMutex.unlock();
         return 0;
     }
 
