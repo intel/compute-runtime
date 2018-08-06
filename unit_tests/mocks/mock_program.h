@@ -41,6 +41,17 @@ class MockProgram : public Program {
     using Program::getProgramCompilerVersion;
     using Program::isKernelDebugEnabled;
     using Program::rebuildProgramFromIr;
+    using Program::resolveProgramBinary;
+
+    using Program::elfBinary;
+    using Program::elfBinarySize;
+    using Program::genBinary;
+    using Program::genBinarySize;
+    using Program::irBinary;
+    using Program::irBinarySize;
+    using Program::isProgramBinaryResolved;
+    using Program::isSpirV;
+    using Program::programBinaryType;
 
     using Program::sourceCode;
 
