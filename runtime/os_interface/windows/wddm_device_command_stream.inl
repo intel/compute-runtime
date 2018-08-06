@@ -63,6 +63,11 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     this->osInterface.get()->get()->setWddm(this->wddm);
     commandBufferHeader = new COMMAND_BUFFER_HEADER;
     *commandBufferHeader = CommandBufferHeader;
+
+    if (preemptionMode != PreemptionMode::Disabled) {
+        commandBufferHeader->NeedsMidBatchPreEmptionSupport = true;
+    }
+
     this->dispatchMode = DispatchMode::BatchedDispatch;
 
     if (DebugManager.flags.CsrDispatchMode.get()) {
@@ -100,11 +105,6 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
     this->processResidency(allocationsForResidency);
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
-    if (memoryManager->device->getPreemptionMode() != PreemptionMode::Disabled) {
-        pHeader->NeedsMidBatchPreEmptionSupport = 1u;
-    } else {
-        pHeader->NeedsMidBatchPreEmptionSupport = 0u;
-    }
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
 
     pHeader->UmdRequestedSliceState = 0;
