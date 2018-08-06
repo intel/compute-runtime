@@ -41,6 +41,7 @@
 namespace OCLRT {
 class Context;
 class CompilerInterface;
+class ExecutionEnvironment;
 template <>
 struct OpenCLObjectMapper<_cl_program> {
     typedef class Program DerivedType;
@@ -95,7 +96,7 @@ class Program : public BaseObject<_cl_program> {
                            size_t length,
                            cl_int &errcodeRet);
 
-    Program(Context *context, bool isBuiltIn);
+    Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn);
     ~Program() override;
 
     Program(const Program &) = delete;
@@ -142,6 +143,10 @@ class Program : public BaseObject<_cl_program> {
 
     Context *getContextPtr() const {
         return context;
+    }
+
+    ExecutionEnvironment &peekExecutionEnvironment() const {
+        return executionEnvironment;
     }
 
     const Device &getDevice(cl_uint deviceOrdinal) const {
@@ -240,7 +245,7 @@ class Program : public BaseObject<_cl_program> {
     }
 
   protected:
-    Program();
+    Program(ExecutionEnvironment &executionEnvironment);
 
     MOCKABLE_VIRTUAL bool isSafeToSkipUnhandledToken(unsigned int token) const;
 
@@ -322,6 +327,7 @@ class Program : public BaseObject<_cl_program> {
 
     std::map<const Device*, std::string>  buildLog;
 
+    ExecutionEnvironment&     executionEnvironment;
     Context*                  context;
     Device*                   pDevice;
     cl_uint                   numDevices;

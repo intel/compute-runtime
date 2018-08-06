@@ -42,7 +42,7 @@ TEST_F(ProgramTests, GivenProgramWithDebugDataForTwoKernelsWhenPorcessedThenDebu
     kernelInfo1->name = kernelName1;
     KernelInfo *kernelInfo2 = new KernelInfo();
     kernelInfo2->name = kernelName2;
-    std::unique_ptr<MockProgram> program(new MockProgram());
+    auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
     SProgramDebugDataHeaderIGC *programDebugHeader = reinterpret_cast<SProgramDebugDataHeaderIGC *>(debugData.get());
     programDebugHeader->NumberOfKernels = 2;

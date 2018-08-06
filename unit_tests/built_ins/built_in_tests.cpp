@@ -458,7 +458,7 @@ HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThe
     auto mockAuxBuiltInOp = new MockAuxBuilInOp<FamilyType>(*pBuiltIns, *pContext, *pDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
 
-    MockProgram mockProgram;
+    MockProgram mockProgram(*pDevice->getExecutionEnvironment());
     auto mockBuiltinKernel = MockKernel::create(*pDevice, &mockProgram);
     mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
 

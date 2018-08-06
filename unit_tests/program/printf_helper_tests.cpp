@@ -61,7 +61,7 @@ class PrintFormatterTest : public testing::Test {
 
         kernelInfo = KernelInfo::create();
         device = MockDevice::createWithNewExecutionEnvironment<Device>(nullptr);
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
         printFormatter = new PrintFormatter(*kernel, *data);

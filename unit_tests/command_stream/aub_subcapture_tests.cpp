@@ -35,7 +35,7 @@ struct AubSubCaptureTest : public DeviceFixture,
                            public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         kernelInfo.name = "kernel_name";
         dbgRestore = new DebugManagerStateRestore();
     }

@@ -65,7 +65,7 @@ void KernelImageArgTest::SetUp() {
     pKernelInfo->kernelArgInfo[0].isImage = true;
 
     DeviceFixture::SetUp();
-    program.reset(new OCLRT::MockProgram);
+    program = std::make_unique<OCLRT::MockProgram>(*pDevice->getExecutionEnvironment());
     pKernel.reset(new OCLRT::MockKernel(program.get(), *pKernelInfo, *pDevice));
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

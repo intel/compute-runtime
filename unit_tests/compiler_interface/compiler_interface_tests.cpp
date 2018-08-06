@@ -77,7 +77,7 @@ class CompilerInterfaceTest : public DeviceFixture,
 
         cl_device_id clDevice = pDevice;
         pContext = Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1), nullptr, nullptr, retVal);
-        pProgram = new Program(pContext, false);
+        pProgram = new Program(*pDevice->getExecutionEnvironment(), pContext, false);
 
         inputArgs.pInput = (char *)pSource;
         inputArgs.InputSize = (uint32_t)sourceSize;
@@ -286,7 +286,7 @@ TEST_F(CompilerInterfaceTest, CompileClToIr) {
 }
 
 TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenIrFormatIsPreserved) {
-    MockProgram prog(pContext, false);
+    MockProgram prog(*pDevice->getExecutionEnvironment(), pContext, false);
     prog.programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
     prog.isSpirV = true;
     retVal = pCompilerInterface->compile(prog, inputArgs);
@@ -498,7 +498,7 @@ TEST_F(CompilerInterfaceTest, igcBuildFailure) {
 
 TEST_F(CompilerInterfaceTest, CompileAndLinkSpirToIsa) {
     // compile and link from SPIR binary to gen ISA
-    MockProgram program(pContext, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
     char binary[] = "BC\xc0\xde ";
     auto retVal = program.createProgramFromBinary(binary, sizeof(binary));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -510,7 +510,7 @@ TEST_F(CompilerInterfaceTest, CompileAndLinkSpirToIsa) {
 
 TEST_F(CompilerInterfaceTest, BuildSpirToIsa) {
     // build from SPIR binary to gen ISA
-    MockProgram program(pContext, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
     char binary[] = "BC\xc0\xde ";
     auto retVal = program.createProgramFromBinary(binary, sizeof(binary));
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -520,7 +520,7 @@ TEST_F(CompilerInterfaceTest, BuildSpirToIsa) {
 
 TEST_F(CompilerInterfaceTest, BuildSpirvToIsa) {
     // build from SPIR binary to gen ISA
-    MockProgram program(pContext, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
     uint64_t spirv[16] = {0x03022307};
     auto retVal = program.createProgramFromBinary(spirv, sizeof(spirv));
     EXPECT_EQ(CL_SUCCESS, retVal);

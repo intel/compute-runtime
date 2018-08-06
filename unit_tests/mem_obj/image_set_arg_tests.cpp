@@ -95,7 +95,7 @@ class ImageSetArgTest : public DeviceFixture,
         pKernelInfo->kernelArgInfo[1].isImage = true;
         pKernelInfo->kernelArgInfo[0].isImage = true;
 
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
@@ -773,7 +773,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
         pKernelInfo->kernelArgInfo[1].isMediaBlockImage = true;
         pKernelInfo->kernelArgInfo[0].isMediaBlockImage = true;
 
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());

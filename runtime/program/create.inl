@@ -37,7 +37,7 @@ T *Program::create(
     auto pContext = castToObject<Context>(context);
     DEBUG_BREAK_IF(!pContext);
 
-    auto program = new T(pContext, false);
+    auto program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
 
     auto retVal = program->createProgramFromBinary(binaries[0], lengths[0]);
 
@@ -76,7 +76,7 @@ T *Program::create(
         lengths);
 
     if (CL_SUCCESS == retVal) {
-        program = new T(pContext, false);
+        program = new T(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
         program->sourceCode.swap(combinedString);
     }
 
@@ -99,7 +99,7 @@ T *Program::create(
     }
 
     if (retVal == CL_SUCCESS) {
-        program = new T();
+        program = new T(*device.getExecutionEnvironment());
         program->setSource((char *)nullTerminatedString);
         program->context = context;
         program->isBuiltIn = isBuiltIn;
@@ -136,7 +136,7 @@ T *Program::createFromGenBinary(
     }
 
     if (CL_SUCCESS == retVal) {
-        program = new T(context, isBuiltIn);
+        program = new T(executionEnvironment, context, isBuiltIn);
         program->numDevices = 1;
         program->storeGenBinary(binary, size);
         program->isCreatedFromBinary = true;
@@ -164,7 +164,7 @@ T *Program::createFromIL(Context *ctx,
         return nullptr;
     }
 
-    T *program = new T(ctx, false);
+    T *program = new T(*ctx->getDevice(0)->getExecutionEnvironment(), ctx, false);
     errcodeRet = program->createProgramFromBinary(il, length);
     if (errcodeRet != CL_SUCCESS) {
         delete program;

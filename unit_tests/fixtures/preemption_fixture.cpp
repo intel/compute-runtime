@@ -56,7 +56,7 @@ void DevicePreemptionTests::SetUp() {
     executionEnvironment.reset(new SPatchExecutionEnvironment);
     memset(executionEnvironment.get(), 0, sizeof(SPatchExecutionEnvironment));
     kernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
-    program.reset(new MockProgram);
+    program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
     kernel.reset(new MockKernel(program.get(), *kernelInfo, *device));
     dispatchInfo.reset(new DispatchInfo(kernel.get(), 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0)));
 

@@ -36,7 +36,7 @@ struct KernelSLMAndBarrierTest : public DeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
         DeviceFixture::SetUp();
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);

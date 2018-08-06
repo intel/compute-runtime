@@ -1361,7 +1361,7 @@ cl_program CL_API_CALL clLinkProgram(cl_context context,
         pContext = castToObject<Context>(context);
     }
     if (pContext != nullptr) {
-        program = new Program(pContext, false);
+        program = new Program(*pContext->getDevice(0)->getExecutionEnvironment(), pContext, false);
         retVal = program->link(numDevices, deviceList, options,
                                numInputPrograms, inputPrograms,
                                funcNotify, userData);

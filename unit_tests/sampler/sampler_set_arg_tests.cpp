@@ -70,7 +70,7 @@ class SamplerSetArgFixture : public DeviceFixture {
         pKernelInfo->kernelArgInfo[1].offsetHeap = 0x40;
         pKernelInfo->kernelArgInfo[1].isSampler = true;
 
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());

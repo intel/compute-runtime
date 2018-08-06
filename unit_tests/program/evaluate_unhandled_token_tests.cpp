@@ -25,6 +25,8 @@
 #include "runtime/program/create.inl"
 #include "runtime/program/program.h"
 
+using namespace OCLRT;
+
 extern GFXCORE_FAMILY renderCoreFamily;
 
 template <typename ContainerT, typename TokenT>
@@ -33,11 +35,12 @@ inline void PushBackToken(ContainerT &container, const TokenT &token) {
                      reinterpret_cast<const typename ContainerT::value_type *>(&token) + sizeof(token));
 }
 
-struct MockProgramRecordUnhandledTokens : OCLRT::Program {
+struct MockProgramRecordUnhandledTokens : public Program {
     bool allowUnhandledTokens;
     mutable int lastUnhandledTokenFound;
 
-    using Program::Program;
+    MockProgramRecordUnhandledTokens(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment) {}
+    MockProgramRecordUnhandledTokens(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltinKernel) : Program(executionEnvironment, context, isBuiltinKernel) {}
 
     bool isSafeToSkipUnhandledToken(unsigned int token) const override {
         lastUnhandledTokenFound = static_cast<int>(token);
@@ -131,7 +134,8 @@ inline std::vector<char> CreateBinary(bool addUnhandledProgramScopePatchToken, b
 constexpr int32_t unhandledTokenId = iOpenCL::NUM_PATCH_TOKENS;
 
 TEST(EvaluateUnhandledToken, ByDefaultSkippingOfUnhandledTokensInUnitTestsIsSafe) {
-    MockProgramRecordUnhandledTokens program;
+    ExecutionEnvironment executionEnvironment;
+    MockProgramRecordUnhandledTokens program(executionEnvironment);
     EXPECT_TRUE(program.getDefaultIsSafeToSkipUnhandledToken());
 }
 

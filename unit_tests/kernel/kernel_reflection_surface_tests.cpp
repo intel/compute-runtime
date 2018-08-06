@@ -620,8 +620,8 @@ TEST_P(KernelReflectionSurfaceTest, getCurbeParamsReturnsTokenMask) {
 }
 
 TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNonParentKernelDoesNotCreateReflectionSurface) {
-    MockProgram program;
     MockDevice device(*platformDevices[0]);
+    MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);
 
@@ -638,8 +638,8 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.ForceDispatchScheduler.set(true);
 
-    MockProgram program;
     MockDevice device(*platformDevices[0]);
+    MockProgram program(*device.getExecutionEnvironment());
     KernelInfo info;
     MockKernel kernel(&program, info, device);
 
@@ -653,9 +653,9 @@ TEST(KernelReflectionSurfaceTestSingle, CreateKernelReflectionSurfaceCalledOnNon
 }
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKernelArgs) {
-    MockProgram program;
     MockContext context;
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockProgram program(*device->getExecutionEnvironment());
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;
     cl_queue_properties properties[1] = {0};
@@ -704,9 +704,9 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
 }
 
 TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQueueKernelArg) {
-    MockProgram program;
     MockContext context;
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockProgram program(*device->getExecutionEnvironment());
 
     KernelInfo *blockInfo = new KernelInfo;
     KernelInfo &info = *blockInfo;

@@ -323,13 +323,15 @@ TEST_F(BinaryCacheTests, doNotCacheEmpty) {
 }
 
 TEST_F(BinaryCacheTests, loadNotFound) {
-    MockProgram program;
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
     bool ret = cache->loadCachedBinary("----do-not-exists----", program);
     EXPECT_FALSE(ret);
 }
 
 TEST_F(BinaryCacheTests, cacheThenLoad) {
-    MockProgram program;
+    ExecutionEnvironment executionEnvironment;
+    MockProgram program(executionEnvironment);
     static const char *hash = "SOME_HASH";
     std::unique_ptr<char> data(new char[32]);
     for (size_t i = 0; i < 32; i++)
@@ -352,7 +354,7 @@ TEST_F(CompilerInterfaceCachedTests, canInjectCache) {
 }
 TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -383,7 +385,7 @@ TEST_F(CompilerInterfaceCachedTests, notCachedAndIgcFailed) {
 
 TEST_F(CompilerInterfaceCachedTests, wasCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -414,7 +416,7 @@ TEST_F(CompilerInterfaceCachedTests, wasCached) {
 
 TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -444,7 +446,7 @@ TEST_F(CompilerInterfaceCachedTests, builtThenCached) {
 
 TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsNotCalled) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 
@@ -478,7 +480,7 @@ TEST_F(CompilerInterfaceCachedTests, givenKernelWithoutIncludesAndBinaryInCacheW
 
 TEST_F(CompilerInterfaceCachedTests, givenKernelWithIncludesAndBinaryInCacheWhenCompilationRequestedThenFCLIsCalled) {
     MockContext context(pDevice, true);
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     BinaryCacheMock cache;
     TranslationArgs inputArgs;
 

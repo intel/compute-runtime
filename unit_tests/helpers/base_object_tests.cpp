@@ -100,6 +100,28 @@ class MockObject<Buffer> : public Buffer {
     cl_ulong validMagic;
 };
 
+template <>
+class MockObject<Program> : public Program {
+  public:
+    MockObject() : Program(*new ExecutionEnvironment()),
+                   executionEnvironment(&this->peekExecutionEnvironment()) {}
+
+    void setInvalidMagic() {
+        validMagic = this->magic;
+        this->magic = 0x0101010101010101LL;
+    }
+    void setValidMagic() {
+        this->magic = validMagic;
+    }
+
+    bool isObjectValid() const {
+        return this->isValid();
+    }
+
+    cl_ulong validMagic;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+};
+
 typedef ::testing::Types<
     Platform,
     IntelAccelerator,

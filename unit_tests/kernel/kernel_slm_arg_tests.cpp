@@ -33,10 +33,6 @@
 using namespace OCLRT;
 
 class KernelSlmArgTest : public Test<DeviceFixture> {
-  public:
-    KernelSlmArgTest() {
-    }
-
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -56,7 +52,7 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
         pKernelInfo->kernelArgInfo[2].slmAlignment = 0x400;
         pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
 
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

@@ -56,8 +56,8 @@ class MockProgram : public Program {
 
     using Program::sourceCode;
 
-    MockProgram() : Program() {}
-    MockProgram(Context *context, bool isBuiltinKernel) : Program(context, isBuiltinKernel) {}
+    MockProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment) {}
+    MockProgram(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltinKernel) : Program(executionEnvironment, context, isBuiltinKernel) {}
     ~MockProgram() {
         if (contextSet)
             context = nullptr;
@@ -146,7 +146,7 @@ class MockProgram : public Program {
 class GlobalMockSipProgram : public Program {
   public:
     using Program::Program;
-    GlobalMockSipProgram() : Program() {
+    GlobalMockSipProgram(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment) {
     }
     cl_int processGenBinary() override;
     cl_int processGenBinaryOnce();

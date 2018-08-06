@@ -48,7 +48,7 @@ class MediaImageSetArgTest : public DeviceFixture,
     void SetUp() override {
         DeviceFixture::SetUp();
         pKernelInfo = KernelInfo::create();
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
         kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
         pKernelInfo->heapInfo.pSsh = surfaceStateHeap;

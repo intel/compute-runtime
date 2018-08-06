@@ -183,7 +183,7 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
     MockContext context;
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
 
@@ -238,7 +238,7 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
     MockContext context;
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
     std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
 
@@ -634,7 +634,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
 
     // setup global memory
     char globalBuffer[16];
@@ -758,7 +758,7 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiri
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
@@ -817,7 +817,7 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForNoSurfaces) {
 
     // create program with valid context
     MockContext context;
-    MockProgram program(&context, false);
+    MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
 
     // create kernel
     MockKernel *pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);

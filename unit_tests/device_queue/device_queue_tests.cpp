@@ -317,7 +317,7 @@ TEST_F(DeviceQueueTest, sizeOfDshBuffer) {
 TEST_F(DeviceQueueTest, dispatchScheduler) {
     DeviceQueue devQueue;
     MockContext context;
-    MockProgram program;
+    MockProgram program(*device->getExecutionEnvironment());
     CommandQueue cmdQ(nullptr, nullptr, 0);
     KernelInfo info;
     MockSchedulerKernel *kernel = new MockSchedulerKernel(&program, info, *device);

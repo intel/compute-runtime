@@ -36,11 +36,13 @@ namespace OCLRT {
 const std::string Program::clOptNameClVer("-cl-std=CL");
 const std::string Program::clOptNameUniformWgs{"-cl-uniform-work-group-size"};
 
-Program::Program() : Program(nullptr, false) {
+Program::Program(ExecutionEnvironment &executionEnvironment) : Program(executionEnvironment, nullptr, false) {
     numDevices = 0;
 }
 
-Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn(isBuiltIn) {
+Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, bool isBuiltIn) : executionEnvironment(executionEnvironment),
+                                                                                                 context(context),
+                                                                                                 isBuiltIn(isBuiltIn) {
     if (this->context && !this->isBuiltIn) {
         this->context->incRefInternal();
     }

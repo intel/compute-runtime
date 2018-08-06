@@ -31,8 +31,6 @@ using namespace DeviceHostQueue;
 
 struct KernelArgDevQueueTest : public DeviceFixture,
                                public DeviceHostQueueFixture<DeviceQueue> {
-    KernelArgDevQueueTest() : program(), kernelArgPatchInfo() {}
-
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
@@ -50,7 +48,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
 
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 

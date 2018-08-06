@@ -33,9 +33,11 @@ using namespace OCLRT;
 class ProcessElfBinaryTests : public ::testing::Test {
   public:
     void SetUp() override {
-        program = std::make_unique<MockProgram>();
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        program = std::make_unique<MockProgram>(*executionEnvironment);
     }
 
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockProgram> program;
 };
 
@@ -138,9 +140,11 @@ unsigned int BinaryTypeValues[] = {
 class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsigned int> {
   public:
     void SetUp() override {
-        program = std::make_unique<MockProgram>();
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        program = std::make_unique<MockProgram>(*executionEnvironment);
     }
 
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockProgram> program;
 };
 

@@ -277,7 +277,7 @@ class MockKernelWithInternals {
             mockContext = context;
         }
 
-        mockProgram = new MockProgram(context, false);
+        mockProgram = new MockProgram(*deviceArg.getExecutionEnvironment(), context, false);
         mockKernel = new MockKernel(mockProgram, kernelInfo, deviceArg);
         mockKernel->setCrossThreadData(&crossThreadData, sizeof(crossThreadData));
         mockKernel->setSshLocal(&sshLocal, sizeof(sshLocal));
@@ -369,7 +369,7 @@ class MockParentKernel : public Kernel {
             crossThreadOffset += 8;
         }
 
-        MockProgram *mockProgram = new MockProgram();
+        MockProgram *mockProgram = new MockProgram(*device.getExecutionEnvironment());
         mockProgram->setContext(&context);
         mockProgram->setDevice(&device);
 

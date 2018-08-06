@@ -32,9 +32,11 @@ using namespace OCLRT;
 class ProcessSpirBinaryTests : public ::testing::Test {
   public:
     void SetUp() override {
-        program = std::make_unique<MockProgram>();
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        program = std::make_unique<MockProgram>(*executionEnvironment);
     }
 
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     std::unique_ptr<MockProgram> program;
 };
 

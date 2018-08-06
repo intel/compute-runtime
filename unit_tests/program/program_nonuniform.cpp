@@ -46,8 +46,16 @@
 
 using namespace OCLRT;
 
+class MyMockProgram : public MockProgram {
+  public:
+    MyMockProgram() : MockProgram(*new ExecutionEnvironment()), executionEnvironment(&this->peekExecutionEnvironment()) {}
+
+  private:
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+};
+
 TEST(ProgramNonUniform, UpdateAllowNonUniform) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions(nullptr);
@@ -57,7 +65,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL1.2");
@@ -67,7 +75,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.0");
@@ -77,7 +85,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.1");
@@ -87,7 +95,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.0 -cl-uniform-work-group-size");
@@ -97,7 +105,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
-    MockProgram pm;
+    MyMockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.1 -cl-uniform-work-group-size");
@@ -107,9 +115,9 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
 }
 
 TEST(KernelNonUniform, GetAllowNonUniformFlag) {
-    MockProgram pm;
     KernelInfo ki;
     MockDevice d(*platformDevices[0]);
+    MockProgram pm(*d.getExecutionEnvironment());
     struct KernelMock : Kernel {
         KernelMock(Program *p, KernelInfo &ki, Device &d)
             : Kernel(p, ki, d) {
@@ -126,9 +134,10 @@ TEST(KernelNonUniform, GetAllowNonUniformFlag) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
-    MockProgram pm;
-    MockProgram pm1;
-    MockProgram pm2;
+    ExecutionEnvironment executionEnvironment;
+    MockProgram pm(executionEnvironment);
+    MockProgram pm1(executionEnvironment);
+    MockProgram pm2(executionEnvironment);
     const MockProgram *inputPrograms[] = {&pm1, &pm2};
     cl_uint numInputPrograms = 2;
 

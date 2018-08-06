@@ -46,7 +46,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
                         public ::testing::Test {
     void SetUp() override {
         CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
-        program = std::make_unique<MockProgram>();
+        program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
         memset(&kernelHeader, 0, sizeof(kernelHeader));
         kernelHeader.KernelHeapSize = sizeof(kernelIsa);
