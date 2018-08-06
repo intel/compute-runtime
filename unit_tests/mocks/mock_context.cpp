@@ -91,6 +91,10 @@ void MockContext::releaseSharingFunctions(SharingType sharing) {
     this->sharingFunctions[sharing].release();
 }
 
+void MockContext::registerSharingWithId(SharingFunctions *sharing, SharingType sharingId) {
+    this->sharingFunctions[sharingId].reset(sharing);
+}
+
 void MockContext::clearSharingFunctions() {
     std::vector<decltype(this->sharingFunctions)::value_type> v;
     this->sharingFunctions.swap(v);

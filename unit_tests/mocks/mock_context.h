@@ -44,6 +44,7 @@ class MockContext : public Context {
     void clearSharingFunctions();
     void setSharingFunctions(SharingFunctions *sharingFunctions);
     void releaseSharingFunctions(SharingType sharing);
+    void registerSharingWithId(SharingFunctions *sharing, SharingType sharingId);
 
     cl_bool peekPreferD3dSharedResources() { return preferD3dSharedResources; }
 
