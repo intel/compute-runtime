@@ -42,6 +42,8 @@ class MockProgram : public Program {
     using Program::isKernelDebugEnabled;
     using Program::rebuildProgramFromIr;
 
+    using Program::sourceCode;
+
     MockProgram() : Program() {}
     MockProgram(Context *context, bool isBuiltinKernel) : Program(context, isBuiltinKernel) {}
     ~MockProgram() {

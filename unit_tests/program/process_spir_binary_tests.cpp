@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,41 +22,49 @@
 
 #include "runtime/helpers/string.h"
 #include "runtime/program/program.h"
+
+#include "unit_tests/mocks/mock_program.h"
+
 #include "gtest/gtest.h"
 
 using namespace OCLRT;
 
-class ProcessSpirBinaryTests : public Program,
-                               public ::testing::Test {
+class ProcessSpirBinaryTests : public ::testing::Test {
+  public:
+    void SetUp() override {
+        program = std::make_unique<MockProgram>();
+    }
+
+    std::unique_ptr<MockProgram> program;
 };
 
 TEST_F(ProcessSpirBinaryTests, NullBinary) {
-    auto retVal = processSpirBinary(nullptr, 0, false);
+    auto retVal = program->processSpirBinary(nullptr, 0, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(true, sourceCode.empty());
+    EXPECT_EQ(true, program->sourceCode.empty());
 }
 
 TEST_F(ProcessSpirBinaryTests, InvalidSizeBinary) {
     char pBinary[] = "somebinary\0";
     size_t binarySize = 1;
-    auto retVal = processSpirBinary(pBinary, binarySize, false);
+    auto retVal = program->processSpirBinary(pBinary, binarySize, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(binarySize, sourceCode.size());
+    EXPECT_EQ(binarySize, program->sourceCode.size());
 }
 
 TEST_F(ProcessSpirBinaryTests, SomeBinary) {
     char pBinary[] = "somebinary\0";
     size_t binarySize = strnlen_s(pBinary, 11);
-    auto retVal = processSpirBinary(pBinary, binarySize, false);
+    auto retVal = program->processSpirBinary(pBinary, binarySize, false);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(0, strcmp(pBinary, sourceCode.c_str()));
-    EXPECT_EQ(binarySize, sourceCode.size());
+    EXPECT_EQ(0, strcmp(pBinary, program->sourceCode.c_str()));
+    EXPECT_EQ(binarySize, program->sourceCode.size());
 
     // Verify no built log is available
-    auto pBuildLog = getBuildLog(pDevice);
+    auto pBuildLog = program->getBuildLog(program->getDevicePtr());
     EXPECT_EQ(nullptr, pBuildLog);
 }
 
@@ -64,9 +72,9 @@ TEST_F(ProcessSpirBinaryTests, SpirvBinary) {
     const uint32_t pBinary[2] = {0x03022307, 0x07230203};
     size_t binarySize = sizeof(pBinary);
 
-    processSpirBinary(pBinary, binarySize, false);
-    EXPECT_FALSE(this->isSpirV);
+    program->processSpirBinary(pBinary, binarySize, false);
+    EXPECT_FALSE(program->getIsSpirV());
 
-    processSpirBinary(pBinary, binarySize, true);
-    EXPECT_TRUE(this->isSpirV);
+    program->processSpirBinary(pBinary, binarySize, true);
+    EXPECT_TRUE(program->getIsSpirV());
 }

@@ -19,34 +19,37 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-#include "runtime/kernel/kernel.h"
+
+#include "program_tests.h"
+
+#include "elf/reader.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/compiler_interface/compiler_options.h"
-#include "unit_tests/libult/ult_command_stream_receiver.h"
-#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/hash.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
+#include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/kernel/kernel.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/surface.h"
 #include "runtime/program/create.inl"
-#include "program_tests.h"
+#include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/program_fixture.inl"
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
+#include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/program/program_from_binary.h"
 #include "unit_tests/program/program_with_source.h"
-#include "test.h"
-#include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/mocks/mock_program.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "elf/reader.h"
+#include "test.h"
 
 #include <map>
 #include <memory>
@@ -2888,9 +2891,6 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
         }
     };
 
-    struct SmallMockProgram : public Program {};
-    using ProgramAutoPtr = std::unique_ptr<SmallMockProgram, void (*)(SmallMockProgram *)>;
-
     auto device = castToObject<Device>(pContext->getDevice(0));
 
     TranslationArgs input = {};
@@ -2908,20 +2908,20 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
     compilerMain->setDefaultCreatorFunc<OCLRT::MockFclOclDeviceCtx>(OCLRT::MockFclOclDeviceCtx::Create);
 
     compilerInterface.useLlvmText = true;
-    ProgramAutoPtr programLlvmText{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    auto programLlvmText = wrapReleasableObjectWithUniquePtr(new MockProgram());
     programLlvmText->setDevice(device);
     compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
     compilerInterface.compile(*programLlvmText, input);
     EXPECT_FALSE(programLlvmText->getIsSpirV());
 
     compilerInterface.useLlvmText = false;
-    ProgramAutoPtr programSpirV{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    auto programSpirV = wrapReleasableObjectWithUniquePtr(new MockProgram());
     programSpirV->setDevice(device);
     compilerInterface.intermediateRepresentation = IGC::CodeType::spirV;
     compilerInterface.compile(*programSpirV, input);
     EXPECT_TRUE(programSpirV->getIsSpirV());
 
-    ProgramAutoPtr programLlvmBc{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    auto programLlvmBc = wrapReleasableObjectWithUniquePtr(new MockProgram());
     programLlvmBc->setDevice(device);
     compilerInterface.intermediateRepresentation = IGC::CodeType::llvmBc;
     compilerInterface.compile(*programLlvmBc, input);
@@ -2929,11 +2929,6 @@ TEST_F(ProgramTests, givenCompilerInterfaceWhenCompileIsCalledThenProperIntermed
 }
 
 TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPathIsTaken) {
-    struct SmallMockProgram : public Program {
-        using Program::rebuildProgramFromIr;
-    };
-    using ProgramAutoPtr = std::unique_ptr<SmallMockProgram, void (*)(SmallMockProgram *)>;
-
     auto device = castToObject<Device>(pContext->getDevice(0));
 
     MockCompilerInterface compilerInterface;
@@ -2952,7 +2947,7 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     gEnvironment->igcPushDebugVars(debugVars);
     std::unique_ptr<void, void (*)(void *)> igcDebugVarsAutoPop{&gEnvironment, [](void *) { gEnvironment->igcPopDebugVars(); }};
 
-    ProgramAutoPtr program{new SmallMockProgram(), [](SmallMockProgram *p) { p->release(); }};
+    auto program = wrapReleasableObjectWithUniquePtr(new MockProgram());
     program->setDevice(device);
     uint32_t spirv[16] = {0x03022307, 0x23471113, 0x17192329};
     program->storeIrBinary(spirv, sizeof(spirv), true);
