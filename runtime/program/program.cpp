@@ -258,7 +258,7 @@ bool Program::isValidLlvmBinary(
     return retVal;
 }
 
-void Program::setSource(char *pSourceString) {
+void Program::setSource(const char *pSourceString) {
     sourceCode = pSourceString;
 }
 

@@ -87,6 +87,16 @@ std::vector<const char *> KernelNames{
     "CopyBuffer",
 };
 
+class NoCompilerInterfaceProgram : public MockProgram {
+  public:
+    CompilerInterface *getCompilerInterface() const override { return nullptr; }
+};
+
+class FailingGenBinaryProgram : public MockProgram {
+  public:
+    cl_int processGenBinary() override { return CL_INVALID_BINARY; }
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 // Program::createProgramWithBinary
 ////////////////////////////////////////////////////////////////////////////////
@@ -662,20 +672,6 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButG
 // Program::Build (source)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
-    class MyProgram2 : public Program {
-      public:
-        MyProgram2(){};
-
-      protected:
-        CompilerInterface *getCompilerInterface() const override { return nullptr; }
-    };
-    class MyProgram3 : public Program {
-      public:
-        MyProgram3(){};
-        cl_int processGenBinary() override { return CL_INVALID_BINARY; }
-        void setDevice(Device *device) { pDevice = device; }
-        void SetSourceCode(const char *ptr) { sourceCode = ptr; }
-    };
     KernelBinaryHelper kbHelper(BinaryFileName, true);
 
     cl_device_id deviceList = {0};
@@ -715,17 +711,17 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
 
     // fail build - CompilerInterface cannot be obtained
-    MyProgram2 *p2 = new MyProgram2();
+    auto p2 = std::make_unique<NoCompilerInterfaceProgram>();
     retVal = p2->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
-    delete p2;
+    p2.reset(nullptr);
 
     // fail build - any build error (here caused by specifying unrecognized option)
     retVal = pProgram->build(0, nullptr, "-invalid-option", nullptr, nullptr, false);
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail build - linked code is corrupted and cannot be postprocessed
-    MyProgram3 *p3 = new MyProgram3();
+    auto p3 = std::make_unique<FailingGenBinaryProgram>();
     Device *device = pPlatform->getDevice(0);
     p3->setDevice(device);
     std::string testFile;
@@ -736,10 +732,10 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     sourceSize = loadDataFromFile(testFile.c_str(), pSourceBuffer);
     EXPECT_NE(0u, sourceSize);
     EXPECT_NE(nullptr, pSourceBuffer);
-    p3->SetSourceCode((const char *)pSourceBuffer);
+    p3->setSource((const char *)pSourceBuffer);
     retVal = p3->build(0, nullptr, nullptr, nullptr, nullptr, false);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    delete p3;
+    p3.reset(nullptr);
 
     // build successfully without notifyFunc - build kernel and write it to Kernel Cache
     pMockProgram->ClearOptions();
@@ -786,7 +782,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Build) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // fail build - code to be build does not exist
-    pMockProgram->SetSourceCode(""); // set source code as non-existent (invalid)
+    pMockProgram->setSource(""); // set source code as non-existent (invalid)
     pMockProgram->SetBuildStatus(CL_BUILD_NONE);
     pMockProgram->SetCreatedFromBinary(false);
     retVal = pProgram->build(0, nullptr, nullptr, nullptr, nullptr, false);
@@ -904,13 +900,6 @@ TEST_P(ProgramFromSourceTest, CreateWithNoStrings) {
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
-    class MyProgram2 : public Program {
-      public:
-        MyProgram2(){};
-
-      protected:
-        CompilerInterface *getCompilerInterface() const override { return nullptr; }
-    };
 
     cl_device_id usedDevice = pPlatform->getDevice(0);
     CreateProgramWithSource<MockProgram>(
@@ -992,16 +981,16 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
 
     // fail compilation of kernel with header - header is invalid
     p = (MockProgram *)p3;
-    p->SetSourceCode(""); // set header source code as non-existent (invalid)
+    p->setSource(""); // set header source code as non-existent (invalid)
     retVal = pProgram->compile(0, nullptr, nullptr, 1, &inputHeaders, &headerIncludeNames, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     delete p3;
 
     // fail compilation - CompilerInterface cannot be obtained
-    MyProgram2 *p2 = new MyProgram2();
+    auto p2 = std::make_unique<NoCompilerInterfaceProgram>();
     retVal = p2->compile(0, nullptr, nullptr, 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
-    delete p2;
+    p2.reset(nullptr);
 
     // fail compilation - any compilation error (here caused by specifying unrecognized option)
     retVal = pProgram->compile(0, nullptr, "-invalid-option", 0, nullptr, nullptr, nullptr, nullptr);
@@ -1020,10 +1009,10 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Compile) {
 }
 
 TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
-    class MyCompilerInterface2 : public CompilerInterface {
+    class MyCompilerInterface : public CompilerInterface {
       public:
-        MyCompilerInterface2() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
-        ~MyCompilerInterface2() override{};
+        MyCompilerInterface() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
+        ~MyCompilerInterface() override{};
 
         cl_int compile(Program &program, const TranslationArgs &inputArgs) override {
             if ((inputArgs.OptionsSize > 0) && (inputArgs.pOptions != nullptr)) {
@@ -1042,39 +1031,34 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
         std::string buildInternalOptions;
     };
 
-    class MyProgram2 : public Program {
+    class MyProgram : public Program {
       public:
-        MyProgram2() { cip = nullptr; };
-
-        void setDevice(Device *device) { pDevice = device; }
-        cl_int processGenBinary() override { return CL_SUCCESS; }
-        void releaseCompilerInterface() {
+        MyProgram() { cip = nullptr; };
+        ~MyProgram() override {
             delete cip;
-            cip = nullptr;
         }
-        MyCompilerInterface2 *getCompilerInterfacePub() {
-            getCompilerInterface();
+
+        cl_int processGenBinary() override { return CL_SUCCESS; }
+
+        MyCompilerInterface *getCompilerInterface() const override {
+            if (cip == nullptr) {
+                cip = new MyCompilerInterface();
+            }
             return cip;
         }
 
       protected:
-        CompilerInterface *getCompilerInterface() const override {
-            if (cip == nullptr) {
-                cip = new MyCompilerInterface2;
-            }
-            return cip;
-        }
-        mutable MyCompilerInterface2 *cip;
+        mutable MyCompilerInterface *cip;
     };
 
-    MyProgram2 *pProgram = new MyProgram2();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<MyProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
-    MyCompilerInterface2 *cip = pProgram->getCompilerInterfacePub();
+    program->setDevice(pDevice);
+    MyCompilerInterface *cip = program->getCompilerInterface();
     EXPECT_NE(nullptr, cip);
-    pProgram->setSource((char *)"__kernel mock() {}");
+    program->setSource((char *)"__kernel mock() {}");
 
     // Check default build options
     std::string s1;
@@ -1089,7 +1073,7 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     // Ask to build created program without "-cl-intel-gtpin-rera" flag.
     s1.assign("");
     s2.assign("");
-    cl_int retVal = pProgram->compile(0, nullptr, "-cl-fast-relaxed-math", 0, nullptr, nullptr, nullptr, nullptr);
+    cl_int retVal = program->compile(0, nullptr, "-cl-fast-relaxed-math", 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1103,7 +1087,7 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     // Ask to build created program with "-cl-intel-gtpin-rera" flag.
     s1.assign("");
     s2.assign("");
-    retVal = pProgram->compile(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", 0, nullptr, nullptr, nullptr, nullptr);
+    retVal = program->compile(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", 0, nullptr, nullptr, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -1115,10 +1099,6 @@ TEST_P(ProgramFromSourceTest, CompileProgramWithReraFlag) {
     cip->getBuildInternalOptions(s2);
     pos = s2.find("-cl-intel-gtpin-rera");
     EXPECT_NE(pos, std::string::npos);
-
-    // Cleanup
-    pProgram->releaseCompilerInterface();
-    delete pProgram;
 }
 
 TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
@@ -1182,13 +1162,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSourceAdvanced) {
 // Program::Link (compiled source)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
-    class MyProgram2 : public Program {
-      public:
-        MyProgram2(){};
-        cl_int processGenBinary() override { return CL_INVALID_BINARY; }
-        void setDevice(Device *device) { pDevice = device; }
-    };
-
     cl_device_id usedDevice = pPlatform->getDevice(0);
     CreateProgramWithSource<MockProgram>(
         pContext,
@@ -1266,12 +1239,12 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
     EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     // fail linking - linked code is corrupted and cannot be postprocessed
-    MyProgram2 *p2 = new MyProgram2();
+    auto p2 = std::make_unique<FailingGenBinaryProgram>();
     Device *device = pPlatform->getDevice(0);
     p2->setDevice(device);
     retVal = p2->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    delete p2;
+    p2.reset(nullptr);
 
     // link successfully without notifyFunc
     retVal = pProgram->link(0, nullptr, nullptr, 1, &program, nullptr, nullptr);
@@ -1288,14 +1261,7 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_Link) {
 // Program::Link (create library)
 ////////////////////////////////////////////////////////////////////////////////
 TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
-    class MyProgram : public Program {
-      public:
-        MyProgram(){};
-
-      protected:
-        CompilerInterface *getCompilerInterface() const override { return nullptr; }
-    };
-    MyProgram *p = new MyProgram();
+    auto p = std::make_unique<NoCompilerInterfaceProgram>();
     cl_program program = pProgram;
 
     // Order of following microtests is important - do not change.
@@ -1316,8 +1282,6 @@ TEST_P(ProgramFromSourceTest, CreateWithSource_CreateLibrary) {
     // fail library creation - CompilerInterface cannot be obtaine
     retVal = p->link(0, nullptr, "-create-library", 1, &program, nullptr, nullptr);
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
-
-    delete p;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -2176,23 +2140,14 @@ TEST_F(ProgramTests, GetGenBinaryReturnsBinaryStoreInProgram) {
 }
 
 TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
-    class MyProgram3 : public Program {
-      public:
-        MyProgram3(){};
-        cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
-        void setDevice(Device *device) { pDevice = device; }
-        using Program::rebuildProgramFromIr;
-        char *getIrBinary() { return irBinary; };
-    };
-
     cl_int retVal;
     CompilerInterface::getInstance();
 
-    MyProgram3 *pProgram = new MyProgram3();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<MockProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
+    program->setDevice(pDevice);
 
     // Load a binary program file
     void *pBinary = nullptr;
@@ -2229,41 +2184,28 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     EXPECT_NE(nullptr, pBHdr);
 
     // Create program from modified binary, is should be successfully rebuilt
-    retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
+    retVal = program->createProgramFromBinary(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Get IR binary and modify its header magic,
     // then ask to rebuild program from its IR binary - it should fail
-    char *pIrBinary = pProgram->getIrBinary();
+    char *pIrBinary = program->GetIrBinary();
     (*pIrBinary)--;
-    retVal = pProgram->rebuildProgramFromIr();
+    retVal = program->rebuildProgramFromIr();
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // Cleanup
     CLElfLib::CElfReader::destroy(pElfReader);
     deleteDataReadFromFile(pBinary);
-    delete pProgram;
     CompilerInterface::shutdown();
 }
 
 TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
-    class MyProgram2 : public Program {
-      public:
-        MyProgram2(){};
-
-        cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
-        void setDevice(Device *device) { pDevice = device; }
-        using Program::rebuildProgramFromIr;
-
-      protected:
-        CompilerInterface *getCompilerInterface() const override { return nullptr; }
-    };
-
-    MyProgram2 *pProgram = new MyProgram2();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<NoCompilerInterfaceProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
+    program->setDevice(pDevice);
 
     // Load a binary program file
     void *pBinary = nullptr;
@@ -2273,52 +2215,46 @@ TEST_F(ProgramTests, RebuildBinaryButNoCompilerInterface) {
     EXPECT_NE(0u, binarySize);
 
     // Create program from loaded binary
-    cl_int retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
+    cl_int retVal = program->createProgramFromBinary(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Ask to rebuild program from its IR binary - it should fail (no Compiler Interface)
-    retVal = pProgram->rebuildProgramFromIr();
+    retVal = program->rebuildProgramFromIr();
     EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, retVal);
 
     // Cleanup
     deleteDataReadFromFile(pBinary);
-    delete pProgram;
 }
 
 TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
-    class MyCompilerInterface2 : public CompilerInterface {
+    class MyCompilerInterface : public CompilerInterface {
       public:
-        MyCompilerInterface2(){};
-        ~MyCompilerInterface2() override{};
+        MyCompilerInterface(){};
+        ~MyCompilerInterface() override{};
 
         cl_int link(Program &program, const TranslationArgs &pInputArgs) override { return CL_LINK_PROGRAM_FAILURE; }
     };
 
-    class MyProgram2 : public Program {
+    class MyProgram : public MockProgram {
       public:
-        MyProgram2() { cip = nullptr; };
-
-        cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
-        void setDevice(Device *device) { pDevice = device; }
-        using Program::rebuildProgramFromIr;
-        void releaseCompilerInterface() {
+        MyProgram() { cip = nullptr; };
+        ~MyProgram() override {
             delete cip;
-            cip = nullptr;
         }
 
       protected:
         CompilerInterface *getCompilerInterface() const override {
-            cip = new MyCompilerInterface2;
+            cip = new MyCompilerInterface();
             return cip;
         }
-        mutable MyCompilerInterface2 *cip;
+        mutable MyCompilerInterface *cip;
     };
 
-    MyProgram2 *pProgram = new MyProgram2();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<MyProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
+    program->setDevice(pDevice);
 
     // Load a binary program file
     void *pBinary = nullptr;
@@ -2328,24 +2264,22 @@ TEST_F(ProgramTests, RebuildBinaryWithRebuildError) {
     EXPECT_NE(0u, binarySize);
 
     // Create program from loaded binary
-    cl_int retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
+    cl_int retVal = program->createProgramFromBinary(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Ask to rebuild program from its IR binary - it should fail (linking error)
-    retVal = pProgram->rebuildProgramFromIr();
+    retVal = program->rebuildProgramFromIr();
     EXPECT_EQ(CL_LINK_PROGRAM_FAILURE, retVal);
 
     // Cleanup
-    pProgram->releaseCompilerInterface();
     deleteDataReadFromFile(pBinary);
-    delete pProgram;
 }
 
 TEST_F(ProgramTests, BuildProgramWithReraFlag) {
-    class MyCompilerInterface2 : public CompilerInterface {
+    class MyCompilerInterface : public CompilerInterface {
       public:
-        MyCompilerInterface2() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
-        ~MyCompilerInterface2() override{};
+        MyCompilerInterface() { buildOptions[0] = buildInternalOptions[0] = '\0'; };
+        ~MyCompilerInterface() override{};
 
         cl_int build(Program &program, const TranslationArgs &inputArgs, bool enableCaching) override {
             strcpy_s(&buildOptions[0], sizeof(buildOptions), inputArgs.pOptions);
@@ -2360,39 +2294,34 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
         char buildInternalOptions[1024];
     };
 
-    class MyProgram2 : public Program {
+    class MyProgram : public Program {
       public:
-        MyProgram2() { cip = nullptr; };
-
-        void setDevice(Device *device) { pDevice = device; }
-        cl_int processGenBinary() override { return CL_SUCCESS; }
-        void releaseCompilerInterface() {
+        MyProgram() { cip = nullptr; };
+        ~MyProgram() override {
             delete cip;
-            cip = nullptr;
         }
-        MyCompilerInterface2 *getCompilerInterfacePub() {
-            getCompilerInterface();
+
+        cl_int processGenBinary() override { return CL_SUCCESS; }
+
+        MyCompilerInterface *getCompilerInterface() const override {
+            if (cip == nullptr) {
+                cip = new MyCompilerInterface;
+            }
             return cip;
         }
 
       protected:
-        CompilerInterface *getCompilerInterface() const override {
-            if (cip == nullptr) {
-                cip = new MyCompilerInterface2;
-            }
-            return cip;
-        }
-        mutable MyCompilerInterface2 *cip;
+        mutable MyCompilerInterface *cip;
     };
 
-    MyProgram2 *pProgram = new MyProgram2();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<MyProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
-    MyCompilerInterface2 *cip = pProgram->getCompilerInterfacePub();
+    program->setDevice(pDevice);
+    MyCompilerInterface *cip = program->getCompilerInterface();
     EXPECT_NE(nullptr, cip);
-    pProgram->setSource((char *)"__kernel mock() {}");
+    program->setSource((char *)"__kernel mock() {}");
 
     // Check default build options
     std::string s1;
@@ -2407,7 +2336,7 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     // Ask to build created program without "-cl-intel-gtpin-rera" flag.
     s1.assign("");
     s2.assign("");
-    cl_int retVal = pProgram->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, false);
+    cl_int retVal = program->build(0, nullptr, "-cl-fast-relaxed-math", nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2421,7 +2350,7 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     // Ask to build created program with "-cl-intel-gtpin-rera" flag.
     s1.assign("");
     s2.assign("");
-    retVal = pProgram->build(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", nullptr, nullptr, false);
+    retVal = program->build(0, nullptr, "-cl-intel-gtpin-rera -cl-finite-math-only", nullptr, nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Check build options that were applied
@@ -2433,30 +2362,18 @@ TEST_F(ProgramTests, BuildProgramWithReraFlag) {
     cip->getBuildInternalOptions(s2);
     pos = s2.find("-cl-intel-gtpin-rera");
     EXPECT_NE(pos, std::string::npos);
-
-    // Cleanup
-    pProgram->releaseCompilerInterface();
-    delete pProgram;
 }
 
 TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
-    class MyProgram3 : public Program {
-      public:
-        MyProgram3(){};
-        cl_int createProgramFromBinaryPub(const void *pBinary, size_t binarySize) { return createProgramFromBinary(pBinary, binarySize); }
-        void setDevice(Device *device) { pDevice = device; }
-        using Program::rebuildProgramFromIr;
-        cl_int processGenBinary() override { return CL_INVALID_BINARY; }
-    };
 
     cl_int retVal;
     CompilerInterface::getInstance();
 
-    MyProgram3 *pProgram = new MyProgram3();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<FailingGenBinaryProgram>();
+    EXPECT_NE(nullptr, program);
     cl_device_id deviceId = pContext->getDevice(0);
     Device *pDevice = castToObject<Device>(deviceId);
-    pProgram->setDevice(pDevice);
+    program->setDevice(pDevice);
 
     // Load a binary program file
     void *pBinary = nullptr;
@@ -2466,29 +2383,20 @@ TEST_F(ProgramTests, RebuildBinaryWithProcessGenBinaryError) {
     EXPECT_NE(0u, binarySize);
 
     // Create program from loaded binary
-    retVal = pProgram->createProgramFromBinaryPub(pBinary, binarySize);
+    retVal = program->createProgramFromBinary(pBinary, binarySize);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Ask to rebuild program from its IR binary - it should fail (simulated invalid binary)
-    retVal = pProgram->rebuildProgramFromIr();
+    retVal = program->rebuildProgramFromIr();
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
 
     // Cleanup
     deleteDataReadFromFile(pBinary);
-    delete pProgram;
     CompilerInterface::shutdown();
 }
 
 TEST_F(ProgramTests, GetProgramCompilerVersion) {
-    class MyProgram2 : public Program {
-      public:
-        MyProgram2(){};
-
-        void getProgramCompilerVersionPub(SProgramBinaryHeader *pSectionData, uint32_t &binaryVersion) { getProgramCompilerVersion(pSectionData, binaryVersion); }
-    };
-
-    MyProgram2 *pProgram = new MyProgram2();
-    EXPECT_NE(nullptr, pProgram);
+    auto program = std::make_unique<MockProgram>();
 
     // Create example header of OpenCL Program Binary
     cl_device_id deviceId = pContext->getDevice(0);
@@ -2504,16 +2412,13 @@ TEST_F(ProgramTests, GetProgramCompilerVersion) {
 
     // Check whether Program Binary version is returned correctly
     uint32_t binaryVersion = 0;
-    pProgram->getProgramCompilerVersionPub(&prgHdr, binaryVersion);
+    program->getProgramCompilerVersion(&prgHdr, binaryVersion);
     EXPECT_EQ(binaryVersion, 12u);
 
     // Check whether Program Binary version is left intact
     binaryVersion = 1;
-    pProgram->getProgramCompilerVersionPub(nullptr, binaryVersion);
+    program->getProgramCompilerVersion(nullptr, binaryVersion);
     EXPECT_EQ(binaryVersion, 1u);
-
-    // Cleanup
-    delete pProgram;
 }
 
 TEST_F(ProgramTests, GivenZeroPrivateSizeInBlockWhenAllocateBlockProvateSurfacesCalledThenNoSurfaceIsCreated) {

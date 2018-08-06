@@ -174,7 +174,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL cl_int processElfBinary(const void *pBinary, size_t binarySize, uint32_t &binaryVersion);
     cl_int processSpirBinary(const void *pBinary, size_t binarySize, bool isSpirV);
 
-    void setSource(char *pSourceString);
+    void setSource(const char *pSourceString);
 
     cl_int getSource(char *&pBinary, unsigned int &dataSize) const;
 
