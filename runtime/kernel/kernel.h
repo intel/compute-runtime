@@ -129,7 +129,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     cl_int initialize();
 
-    cl_int cloneKernel(Kernel *pSourceKernel);
+    MOCKABLE_VIRTUAL cl_int cloneKernel(Kernel *pSourceKernel);
 
     MOCKABLE_VIRTUAL bool canTransformImages() const;
     MOCKABLE_VIRTUAL bool isPatched() const;

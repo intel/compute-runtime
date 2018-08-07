@@ -312,7 +312,7 @@ set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
 )
 
 set(TEST_KERNELS
-  test_files/15895692906525787409.cl
+  test_files/17246368129176860573.cl
   test_files/copybuffer.cl
   test_files/CopyBuffer_simd16.cl
   test_files/CopyBuffer_simd32.cl

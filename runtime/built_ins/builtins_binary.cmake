@@ -24,6 +24,7 @@ add_library(${BUILTINS_BINARIES_LIB_NAME} OBJECT builtins_binary.cmake)
 add_subdirectory(registry)
 
 set(GENERATED_BUILTINS
+  "aux_translation"
   "copy_buffer_rect"
   "copy_buffer_to_buffer"
   "copy_buffer_to_image3d"

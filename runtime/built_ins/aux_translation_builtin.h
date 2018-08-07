@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,32 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/global_environment.h"
-#include "unit_tests/helpers/kernel_binary_helper.h"
-#include "unit_tests/helpers/test_files.h"
+#pragma once
+#include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
+#include "runtime/helpers/dispatch_info_builder.h"
+#include <memory>
 
-#include <string>
+namespace OCLRT {
+template <typename HWFamily>
+class BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder {
+  public:
+    BuiltInOp(BuiltIns &kernelsLib, Context &context, Device &device);
+    bool buildDispatchInfos(MultiDispatchInfo &multiDispatchInfo, const BuiltinOpParams &operationParams) const override;
 
-extern PRODUCT_FAMILY productFamily;
+  protected:
+    void resizeKernelInstances(size_t size) const;
 
-const std::string KernelBinaryHelper::BUILT_INS("17246368129176860573");
+    Kernel *baseKernel = nullptr;
+    mutable std::vector<std::unique_ptr<Kernel>> convertToNonAuxKernel;
+    mutable std::vector<std::unique_ptr<Kernel>> convertToAuxKernel;
+};
 
-KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptionsToFileName) {
-    // set mock compiler to return expected kernel
-    MockCompilerDebugVars fclDebugVars;
-    MockCompilerDebugVars igcDebugVars;
-
-    retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".gen");
-
-    fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
-    igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;
-
-    gEnvironment->fclPushDebugVars(fclDebugVars);
-    gEnvironment->igcPushDebugVars(igcDebugVars);
-}
-
-KernelBinaryHelper::~KernelBinaryHelper() {
-    gEnvironment->igcPopDebugVars();
-    gEnvironment->fclPopDebugVars();
-}
+} // namespace OCLRT

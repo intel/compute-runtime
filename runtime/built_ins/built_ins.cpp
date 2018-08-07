@@ -21,7 +21,9 @@
  */
 
 #include <cstdint>
+#include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/built_ins.inl"
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/compiler_interface/compiler_interface.h"
@@ -234,14 +236,6 @@ void BuiltinDispatchInfoBuilder::releaseOwnership() {
         k->setContext(nullptr);
         k->releaseOwnership();
     }
-}
-
-template <typename... KernelsDescArgsT>
-void BuiltinDispatchInfoBuilder::populate(Context &context, Device &device, EBuiltInOps op, const char *options, KernelsDescArgsT &&... desc) {
-    auto src = kernelsLib.getBuiltinsLib().getBuiltinCode(op, BuiltinCode::ECodeType::Any, device);
-    prog.reset(BuiltinsLib::createProgramFromCode(src, context, device).release());
-    prog->build(0, nullptr, options, nullptr, nullptr, kernelsLib.isCacheingEnabled());
-    grabKernels(std::forward<KernelsDescArgsT>(desc)...);
 }
 
 template <typename HWFamily>
@@ -818,6 +812,9 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps 
         break;
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
         std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>(*this, context, device)); });
+        break;
+    case EBuiltInOps::AuxTranslation:
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>(*this, context, device)); });
         break;
     }
     return *operationBuilder.first;

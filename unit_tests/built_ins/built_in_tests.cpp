@@ -22,7 +22,10 @@
 
 #include "gtest/gtest.h"
 #include "test.h"
+#include "runtime/built_ins/aux_translation_builtin.h"
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/built_ins/built_ins.inl"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/built_ins/vme_dispatch_builder.h"
 #include "runtime/helpers/dispatch_info_builder.h"
 #include "runtime/helpers/file_io.h"
@@ -105,6 +108,10 @@ class BuiltInTests
 
 TEST_F(BuiltInTests, SourceConsistency) {
     size_t size = 0;
+
+    AppendBuiltInStringFromFile(
+        "test_files/aux_translation.igdrcl_built_in", size);
+    ASSERT_NE(0u, size);
 
     AppendBuiltInStringFromFile(
         "test_files/copy_buffer_to_buffer.igdrcl_built_in", size);
@@ -249,6 +256,193 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
 
     delete srcPtr;
     delete dstPtr;
+}
+
+TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+
+    BuffersForAuxTranslation buffersForAuxTranslation;
+    MultiDispatchInfo multiDispatchInfo;
+    std::vector<Kernel *> builtinKernels;
+    MockBuffer mockBuffer[3];
+    mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
+    mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
+    mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
+
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.forceNonAuxMode = true;
+
+    for (auto &buffer : mockBuffer) {
+        buffersForAuxTranslation.insert(&buffer);
+    }
+
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    EXPECT_EQ(3u, multiDispatchInfo.size());
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        auto kernel = dispatchInfo.getKernel();
+        builtinKernels.push_back(kernel);
+        Buffer *buffer = *buffersForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(0).object));
+        EXPECT_NE(nullptr, buffer);
+        buffersForAuxTranslation.erase(buffer);
+
+        cl_mem clMem = buffer;
+        void *gpuAddress = reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress());
+        EXPECT_EQ(clMem, kernel->getKernelArguments().at(0).object);
+        EXPECT_EQ(gpuAddress, kernel->getKernelArguments().at(1).value);
+        EXPECT_EQ(nullptr, kernel->getKernelArguments().at(1).object);
+
+        EXPECT_EQ(1u, dispatchInfo.getDim());
+        size_t xGws = buffer->getGraphicsAllocation()->getUnderlyingBufferSize() / (sizeof(uint32_t) * 4);
+        Vec3<size_t> gws = {xGws, 1, 1};
+        EXPECT_EQ(gws, dispatchInfo.getGWS());
+    }
+
+    // always pick different kernel
+    EXPECT_EQ(3u, builtinKernels.size());
+    EXPECT_NE(builtinKernels[0], builtinKernels[1]);
+    EXPECT_NE(builtinKernels[0], builtinKernels[2]);
+    EXPECT_NE(builtinKernels[1], builtinKernels[2]);
+}
+
+TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslationThenPickAndSetupCorrectKernels) {
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+
+    BuffersForAuxTranslation buffersForAuxTranslation;
+    MultiDispatchInfo multiDispatchInfo;
+    std::vector<Kernel *> builtinKernels;
+    MockBuffer mockBuffer[3];
+    mockBuffer[0].getGraphicsAllocation()->setSize(0x1000);
+    mockBuffer[1].getGraphicsAllocation()->setSize(0x20000);
+    mockBuffer[2].getGraphicsAllocation()->setSize(0x30000);
+
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.forceNonAuxMode = false;
+
+    for (auto &buffer : mockBuffer) {
+        buffersForAuxTranslation.insert(&buffer);
+    }
+
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    EXPECT_EQ(3u, multiDispatchInfo.size());
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        auto kernel = dispatchInfo.getKernel();
+        builtinKernels.push_back(kernel);
+        Buffer *buffer = *buffersForAuxTranslation.find(castToObject<Buffer>(kernel->getKernelArguments().at(1).object));
+        EXPECT_NE(nullptr, buffer);
+        buffersForAuxTranslation.erase(buffer);
+
+        cl_mem clMem = buffer;
+        void *gpuAddress = reinterpret_cast<void *>(buffer->getGraphicsAllocation()->getGpuAddress());
+        EXPECT_EQ(gpuAddress, kernel->getKernelArguments().at(0).value);
+        EXPECT_EQ(nullptr, kernel->getKernelArguments().at(0).object);
+        EXPECT_EQ(clMem, kernel->getKernelArguments().at(1).object);
+
+        EXPECT_EQ(1u, dispatchInfo.getDim());
+        size_t xGws = buffer->getGraphicsAllocation()->getUnderlyingBufferSize() / (sizeof(uint32_t) * 4);
+        Vec3<size_t> gws = {xGws, 1, 1};
+        EXPECT_EQ(gws, dispatchInfo.getGWS());
+    }
+
+    // always pick different kernel
+    EXPECT_EQ(3u, builtinKernels.size());
+    EXPECT_NE(builtinKernels[0], builtinKernels[1]);
+    EXPECT_NE(builtinKernels[0], builtinKernels[2]);
+    EXPECT_NE(builtinKernels[1], builtinKernels[2]);
+}
+
+TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickDifferentKernelsDependingOnRequest) {
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+
+    BuffersForAuxTranslation buffersForAuxTranslation;
+    MockBuffer mockBuffer[3];
+    std::vector<Kernel *> builtinKernels;
+
+    MultiDispatchInfo multiDispatchInfo;
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+
+    for (auto &buffer : mockBuffer) {
+        buffersForAuxTranslation.insert(&buffer);
+    }
+
+    builtinOpsParams.forceNonAuxMode = true;
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+
+    builtinOpsParams.forceNonAuxMode = false;
+    EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+
+    EXPECT_EQ(6u, multiDispatchInfo.size());
+
+    for (auto &dispatchInfo : multiDispatchInfo) {
+        builtinKernels.push_back(dispatchInfo.getKernel());
+    }
+
+    // nonAux vs Aux instance
+    EXPECT_EQ(6u, builtinKernels.size());
+    EXPECT_NE(builtinKernels[0], builtinKernels[3]);
+    EXPECT_NE(builtinKernels[1], builtinKernels[4]);
+    EXPECT_NE(builtinKernels[2], builtinKernels[5]);
+}
+
+template <typename Family>
+class MockAuxBuilInOp : public BuiltInOp<Family, EBuiltInOps::AuxTranslation> {
+  public:
+    using BuiltinDispatchInfoBuilder::populate;
+    using BaseClass = BuiltInOp<Family, EBuiltInOps::AuxTranslation>;
+    using BaseClass::baseKernel;
+    using BaseClass::convertToAuxKernel;
+    using BaseClass::convertToNonAuxKernel;
+    using BaseClass::resizeKernelInstances;
+
+    MockAuxBuilInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BaseClass(kernelsLib, context, device) {}
+};
+
+HWTEST_F(BuiltInTests, whenAuxBuiltInIsConstructedThenResizeKernelInstancedTo5) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
+    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+}
+
+HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenDispatchingThenResize) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToAuxKernel.size());
+    EXPECT_EQ(5u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+
+    BuffersForAuxTranslation buffersForAuxTranslation;
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    MultiDispatchInfo multiDispatchInfo;
+    MockBuffer mockBuffer[7];
+
+    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+
+    for (auto &buffer : mockBuffer) {
+        buffersForAuxTranslation.insert(&buffer);
+    }
+
+    EXPECT_TRUE(mockAuxBuiltInOp.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
+    EXPECT_EQ(7u, mockAuxBuiltInOp.convertToAuxKernel.size());
+    EXPECT_EQ(7u, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+}
+
+HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+
+    size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
+    mockAuxBuiltInOp.resizeKernelInstances(newSize);
+
+    EXPECT_EQ(newSize, mockAuxBuiltInOp.convertToAuxKernel.size());
+    for (auto &convertToAuxKernel : mockAuxBuiltInOp.convertToAuxKernel) {
+        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(), &convertToAuxKernel->getKernelInfo());
+    }
+
+    EXPECT_EQ(newSize, mockAuxBuiltInOp.convertToNonAuxKernel.size());
+    for (auto &convertToNonAuxKernel : mockAuxBuiltInOp.convertToNonAuxKernel) {
+        EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(), &convertToNonAuxKernel->getKernelInfo());
+    }
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
@@ -598,6 +792,7 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderAdvancedVMEBuilder) {
 }
 
 TEST_F(BuiltInTests, getBuiltinAsString) {
+    EXPECT_EQ(0, strcmp("aux_translation.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::AuxTranslation)));
     EXPECT_EQ(0, strcmp("copy_buffer_to_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferToBuffer)));
     EXPECT_EQ(0, strcmp("copy_buffer_rect.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::CopyBufferRect)));
     EXPECT_EQ(0, strcmp("fill_buffer.igdrcl_built_in", getBuiltinAsString(EBuiltInOps::FillBuffer)));
@@ -787,6 +982,7 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeSource) {
         }
     };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Source, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Source, *pDevice).size());
@@ -813,6 +1009,7 @@ TEST_F(BuiltInTests, getBuiltinResourcesForTypeBinary) {
         }
     };
     auto mockBuiltinsLib = std::unique_ptr<MockBuiltinsLib>(new MockBuiltinsLib());
+    EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::AuxTranslation, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferToBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::CopyBufferRect, BuiltinCode::ECodeType::Binary, *pDevice).size());
     EXPECT_NE(0u, mockBuiltinsLib->getBuiltinResource(EBuiltInOps::FillBuffer, BuiltinCode::ECodeType::Binary, *pDevice).size());

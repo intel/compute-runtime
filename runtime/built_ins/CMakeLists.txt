@@ -20,10 +20,12 @@
 
 set(RUNTIME_SRCS_BUILT_INS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/aux_translation_builtin.h
   ${CMAKE_CURRENT_SOURCE_DIR}/builtins_dispatch_builder.h
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_storage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/sip.h
   ${CMAKE_CURRENT_SOURCE_DIR}/vme_dispatch_builder.h
@@ -32,6 +34,7 @@ target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_BUILT_INS})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_BUILT_INS ${RUNTIME_SRCS_BUILT_INS})
 
 set(RUNTIME_SRCS_BUILT_IN_KERNELS
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernels/aux_translation.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_rect.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_buffer.igdrcl_built_in
   ${CMAKE_CURRENT_SOURCE_DIR}/kernels/copy_buffer_to_image3d.igdrcl_built_in

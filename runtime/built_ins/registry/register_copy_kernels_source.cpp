@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -122,6 +122,15 @@ static RegisterEmbeddedResource registerFillImage3dSrc(
         .c_str(),
     std::string(
 #include "runtime/built_ins/kernels/fill_image3d.igdrcl_built_in"
+        ));
+
+static RegisterEmbeddedResource registerAuxTranslationSrc(
+    createBuiltinResourceName(
+        EBuiltInOps::AuxTranslation,
+        BuiltinCode::getExtension(BuiltinCode::ECodeType::Source))
+        .c_str(),
+    std::string(
+#include "runtime/built_ins/kernels/aux_translation.igdrcl_built_in"
         ));
 
 } // namespace OCLRT

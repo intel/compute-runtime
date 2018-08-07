@@ -49,7 +49,8 @@ class SchedulerKernel;
 extern const char *mediaKernelsBuildOptions;
 
 enum class EBuiltInOps : uint32_t {
-    CopyBufferToBuffer = 0,
+    AuxTranslation = 0,
+    CopyBufferToBuffer,
     CopyBufferRect,
     FillBuffer,
     CopyBufferToImage3d,

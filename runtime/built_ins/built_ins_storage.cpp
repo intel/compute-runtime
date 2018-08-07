@@ -32,6 +32,8 @@ const char *getBuiltinAsString(EBuiltInOps builtin) {
     switch (builtin) {
     default:
         return "unknown";
+    case EBuiltInOps::AuxTranslation:
+        return "aux_translation.igdrcl_built_in";
     case EBuiltInOps::CopyBufferToBuffer:
         return "copy_buffer_to_buffer.igdrcl_built_in";
     case EBuiltInOps::CopyBufferRect:
