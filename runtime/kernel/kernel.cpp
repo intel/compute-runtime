@@ -309,6 +309,8 @@ cl_int Kernel::initialize() {
         // resolve the new kernel info to account for kernel handlers
         // I think by this time we have decoded the binary and know the number of args etc.
         // double check this assumption
+        bool usingBuffers = false;
+        bool usingImages = false;
         auto numArgs = kernelInfo.kernelArgInfo.size();
         kernelArguments.resize(numArgs);
         slmSizes.resize(numArgs);
@@ -330,11 +332,13 @@ cl_int Kernel::initialize() {
             } else if ((argInfo.typeStr.find("*") != std::string::npos) || argInfo.isBuffer) {
                 kernelArgHandlers[i] = &Kernel::setArgBuffer;
                 kernelArguments[i].type = BUFFER_OBJ;
+                usingBuffers = true;
                 this->auxTranslationRequired |= !kernelInfo.kernelArgInfo[i].pureStatefulBufferAccess &&
                                                 getDevice().getHardwareInfo().capabilityTable.ftrRenderCompressedBuffers;
             } else if (argInfo.isImage) {
                 kernelArgHandlers[i] = &Kernel::setArgImage;
                 kernelArguments[i].type = IMAGE_OBJ;
+                usingImages = true;
                 DEBUG_BREAK_IF(argInfo.typeStr.find("image") == std::string::npos);
             } else if (argInfo.isSampler) {
                 kernelArgHandlers[i] = &Kernel::setArgSampler;
@@ -346,6 +350,10 @@ cl_int Kernel::initialize() {
             } else {
                 kernelArgHandlers[i] = &Kernel::setArgImmediate;
             }
+        }
+
+        if (usingImages && !usingBuffers) {
+            usingImagesOnly = true;
         }
 
         if (isParentKernel) {

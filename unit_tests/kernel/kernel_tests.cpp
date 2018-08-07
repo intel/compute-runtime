@@ -1626,6 +1626,52 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
+TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+
+    pKernelInfo->kernelArgInfo.resize(3);
+    pKernelInfo->kernelArgInfo[2].isImage = true;
+    pKernelInfo->kernelArgInfo[1].isMediaBlockImage = true;
+    pKernelInfo->kernelArgInfo[0].isMediaImage = true;
+
+    MockProgram program;
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    EXPECT_FALSE(kernel->usesOnlyImages());
+    kernel->initialize();
+    EXPECT_TRUE(kernel->usesOnlyImages());
+}
+
+TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+
+    pKernelInfo->kernelArgInfo.resize(3);
+    pKernelInfo->kernelArgInfo[2].isImage = true;
+    pKernelInfo->kernelArgInfo[1].isBuffer = true;
+    pKernelInfo->kernelArgInfo[0].isMediaImage = true;
+
+    MockProgram program;
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    EXPECT_FALSE(kernel->usesOnlyImages());
+    kernel->initialize();
+    EXPECT_FALSE(kernel->usesOnlyImages());
+}
+
+TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
+    auto device = std::make_unique<MockDevice>(*platformDevices[0]);
+    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+
+    pKernelInfo->kernelArgInfo.resize(1);
+    pKernelInfo->kernelArgInfo[0].isBuffer = true;
+
+    MockProgram program;
+    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *device));
+    EXPECT_FALSE(kernel->usesOnlyImages());
+    kernel->initialize();
+    EXPECT_FALSE(kernel->usesOnlyImages());
+}
+
 HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     ASSERT_NE(nullptr, pDevice);
 

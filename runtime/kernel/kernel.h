@@ -380,6 +380,9 @@ class Kernel : public BaseObject<_cl_kernel> {
     }
 
     std::vector<PatchInfoData> &getPatchInfoDataList() { return patchInfoDataList; };
+    bool usesOnlyImages() const {
+        return usingImagesOnly;
+    }
 
   protected:
     struct ObjectCounts {
@@ -489,6 +492,7 @@ class Kernel : public BaseObject<_cl_kernel> {
     GraphicsAllocation *kernelReflectionSurface;
 
     bool usingSharedObjArgs;
+    bool usingImagesOnly = false;
     bool auxTranslationRequired = false;
     uint32_t patchedArgumentsNum = 0;
     uint32_t startOffset = 0;
