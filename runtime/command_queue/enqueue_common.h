@@ -83,8 +83,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         if (DebugManager.flags.ForceDispatchScheduler.get()) {
             forceDispatchScheduler(multiDispatchInfo);
         } else {
+            BuffersForAuxTranslation buffersForAuxTranslation;
             if (kernel->isAuxTranslationRequired()) {
-                dispatchAuxTranslation(multiDispatchInfo);
+                kernel->fillWithBuffersForAuxTranslation(buffersForAuxTranslation);
+                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
             }
 
             if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
@@ -101,7 +103,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 }
             }
             if (kernel->isAuxTranslationRequired()) {
-                dispatchAuxTranslation(multiDispatchInfo);
+                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
             }
         }
 

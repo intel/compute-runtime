@@ -77,6 +77,12 @@ inline const DerivedType *castToObject(const typename DerivedType::BaseType *obj
     return const_cast<const DerivedType *>(castToObject<DerivedType>(const_cast<typename DerivedType::BaseType *>(object)));
 }
 
+template <typename DerivedType>
+inline DerivedType *castToObject(const void *object) {
+    cl_mem clMem = const_cast<cl_mem>(static_cast<const _cl_mem *>(object));
+    return castToObject<DerivedType>(clMem);
+}
+
 extern std::thread::id invalidThreadID;
 
 class ConditionVariableWithCounter {

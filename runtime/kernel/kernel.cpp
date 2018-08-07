@@ -2103,4 +2103,16 @@ void Kernel::resolveArgs() {
 bool Kernel::canTransformImages() const {
     return device.getHardwareInfo().pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE;
 }
+
+void Kernel::fillWithBuffersForAuxTranslation(BuffersForAuxTranslation &buffersForAuxTranslation) {
+    buffersForAuxTranslation.reserve(getKernelArgsNumber());
+    for (uint32_t i = 0; i < getKernelArgsNumber(); i++) {
+        if (BUFFER_OBJ == kernelArguments.at(i).type && !kernelInfo.kernelArgInfo.at(i).pureStatefulBufferAccess) {
+            auto buffer = castToObject<Buffer>(getKernelArg(i));
+            if (buffer && buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED) {
+                buffersForAuxTranslation.insert(buffer);
+            }
+        }
+    }
+}
 } // namespace OCLRT

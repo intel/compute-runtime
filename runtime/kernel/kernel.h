@@ -27,6 +27,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/address_patch.h"
+#include "runtime/helpers/properties_helper.h"
 #include "runtime/program/program.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -34,6 +35,7 @@
 
 namespace OCLRT {
 struct CompletionStamp;
+class Buffer;
 class GraphicsAllocation;
 class ImageTransformer;
 class Surface;
@@ -383,6 +385,8 @@ class Kernel : public BaseObject<_cl_kernel> {
     bool usesOnlyImages() const {
         return usingImagesOnly;
     }
+
+    void fillWithBuffersForAuxTranslation(BuffersForAuxTranslation &buffersForAuxTranslation);
 
   protected:
     struct ObjectCounts {

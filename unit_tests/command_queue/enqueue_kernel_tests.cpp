@@ -1573,8 +1573,8 @@ HWTEST_F(EnqueueKernelTest, givenKernelWithRequiredAuxTranslationWhenEnqueuedThe
     class MyCmdQ : public CommandQueueHw<FamilyType> {
       public:
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo);
+        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation) override {
+            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
             multiDispatchInfoSizes.push_back(multiDispatchInfo.size());
         }
 
@@ -1594,4 +1594,58 @@ HWTEST_F(EnqueueKernelTest, givenKernelWithRequiredAuxTranslationWhenEnqueuedThe
     mockKernel.mockKernel->auxTranslationRequired = false;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(2u, cmdQ.multiDispatchInfoSizes.size()); // not changed
+}
+
+HWTEST_F(EnqueueKernelTest, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
+    class MyCmdQ : public CommandQueueHw<FamilyType> {
+      public:
+        MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
+        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation) override {
+            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
+            inputBuffersForAuxTranslation.push_back(buffersForAuxTranslation);
+        }
+
+        std::vector<BuffersForAuxTranslation> inputBuffersForAuxTranslation;
+    };
+    MyCmdQ cmdQ(context, pDevice);
+    size_t gws[3] = {1, 0, 0};
+    MockBuffer buffer0, buffer1, buffer2, buffer3;
+    cl_mem clMem0 = &buffer0;
+    cl_mem clMem1 = &buffer1;
+    cl_mem clMem2 = &buffer2;
+    cl_mem clMem3 = &buffer3;
+    buffer0.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer1.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+    buffer2.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    buffer3.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    mockKernel.mockKernel->auxTranslationRequired = true;
+    mockKernel.kernelInfo.kernelArgInfo.resize(6);
+    for (auto &kernelInfo : mockKernel.kernelInfo.kernelArgInfo) {
+        kernelInfo.kernelArgPatchInfoVector.resize(1);
+    }
+
+    mockKernel.mockKernel->initialize();
+    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(1).pureStatefulBufferAccess = true;
+    mockKernel.kernelInfo.kernelArgInfo.at(2).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(3).pureStatefulBufferAccess = true;
+    mockKernel.kernelInfo.kernelArgInfo.at(4).pureStatefulBufferAccess = false;
+    mockKernel.kernelInfo.kernelArgInfo.at(5).pureStatefulBufferAccess = false;
+
+    mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem0);                    // stateless on regular buffer - dont insert
+    mockKernel.mockKernel->setArgBuffer(1, sizeof(cl_mem *), &clMem1);                    // stateful on regular buffer - dont insert
+    mockKernel.mockKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2);                    // stateless on BUFFER_COMPRESSED - insert
+    mockKernel.mockKernel->setArgBuffer(3, sizeof(cl_mem *), &clMem3);                    // stateful on BUFFER_COMPRESSED - dont insert
+    mockKernel.mockKernel->setArgBuffer(4, sizeof(cl_mem *), nullptr);                    // nullptr - dont insert
+    mockKernel.mockKernel->kernelArguments.at(5).type = Kernel::kernelArgType::IMAGE_OBJ; // non-buffer arg - dont insert
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, cmdQ.inputBuffersForAuxTranslation.size());
+    EXPECT_EQ(1u, cmdQ.inputBuffersForAuxTranslation[0].size()); // before kernel
+    EXPECT_EQ(1u, cmdQ.inputBuffersForAuxTranslation[1].size()); // after kernel
+
+    EXPECT_EQ(&buffer2, *cmdQ.inputBuffersForAuxTranslation[0].begin());
+    EXPECT_EQ(&buffer2, *cmdQ.inputBuffersForAuxTranslation[1].begin());
 }
