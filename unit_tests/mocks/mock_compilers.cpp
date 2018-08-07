@@ -455,6 +455,7 @@ CIF::ICIF *MockIgcOclDeviceCtx::Create(CIF::InterfaceId_t intId, CIF::Version_t 
 IGC::IgcOclTranslationCtxBase *MockIgcOclDeviceCtx::CreateTranslationCtxImpl(CIF::Version_t ver,
                                                                              IGC::CodeType::CodeType_t inType,
                                                                              IGC::CodeType::CodeType_t outType) {
+    requestedTranslationCtxs.emplace_back(inType, outType);
     return new MockIgcOclTranslationCtx;
 }
 

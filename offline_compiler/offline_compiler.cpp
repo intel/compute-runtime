@@ -135,8 +135,8 @@ int OfflineCompiler::buildSourceCode() {
         UNRECOVERABLE_IF(igcDeviceCtx == nullptr);
 
         CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
-
-        if (!inputFileLlvm) {
+        bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
+        if (false == inputIsIntermediateRepresentation) {
             IGC::CodeType::CodeType_t intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl : preferredIntermediateRepresentation;
             // sourceCode.size() returns the number of characters without null terminated char
             auto fclSrc = CIF::Builtins::CreateConstBuffer(fclMain.get(), sourceCode.c_str(), sourceCode.size() + 1);
@@ -181,7 +181,7 @@ int OfflineCompiler::buildSourceCode() {
             auto igcSrc = CIF::Builtins::CreateConstBuffer(igcMain.get(), sourceCode.c_str(), sourceCode.size());
             auto igcOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), nullptr, 0);
             auto igcInternalOptions = CIF::Builtins::CreateConstBuffer(igcMain.get(), internalOptions.c_str(), internalOptions.size());
-            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(IGC::CodeType::llvmLl, IGC::CodeType::oclGenBin);
+            auto igcTranslationCtx = igcDeviceCtx->CreateTranslationCtx(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
             igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
         }
         if (igcOutput == nullptr) {
@@ -469,6 +469,8 @@ int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
             useLlvmText = true;
         } else if (stringsAreEqual(argv[argIndex], "-llvm_input")) {
             inputFileLlvm = true;
+        } else if (stringsAreEqual(argv[argIndex], "-spirv_input")) {
+            inputFileSpirV = true;
         } else if (stringsAreEqual(argv[argIndex], "-cpp_file")) {
             useCppFile = true;
         } else if ((stringsAreEqual(argv[argIndex], "-options")) &&
@@ -642,6 +644,7 @@ void OfflineCompiler::printUsage() {
     printf("  -llvm_text                   Readable LLVM text will be output in a .ll file instead of\n");
     printf("                               through the default lllvm binary (.bc) file.\n");
     printf("  -llvm_input                  Indicates input file is llvm source\n");
+    printf("  -spirv_input                  Indicates input file is a SpirV binary\n");
     printf("  -options <options>           Compiler options.\n");
     printf("  -options_name                Add suffix with compile options to filename\n");
     printf("  -q                           Be more quiet. print only warnings and errors.\n");

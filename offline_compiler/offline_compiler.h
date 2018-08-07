@@ -102,6 +102,7 @@ class OfflineCompiler {
     bool useOptionsSuffix = false;
     bool quiet = false;
     bool inputFileLlvm = false;
+    bool inputFileSpirV = false;
 
     char *elfBinary = nullptr;
     size_t elfBinarySize = 0;

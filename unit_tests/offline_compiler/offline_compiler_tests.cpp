@@ -28,6 +28,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_compilers.h"
 #include "gmock/gmock.h"
 
 #include <algorithm>
@@ -561,40 +562,53 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
     EXPECT_FALSE(llvmFileOption);
 }
 
-TEST(OfflineCompilerTest, givenLlvmInputFileAndLlvmInputFlagWhenBuildSourceCodeIsCalledThenGenBinaryIsProduced) {
+TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputFileSpirvIsSetTrue) {
+    const char *argv[] = {"cloc", "-spirv_input"};
+
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    auto retVal = mockOfflineCompiler->buildSourceCode();
-    EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(0u, output.size());
 
-    std::string sipKernelFileName = "test_files/sip_dummy_kernel";
+    EXPECT_TRUE(mockOfflineCompiler->inputFileSpirV);
+}
 
-    if (sizeof(uintptr_t) == 8) {
-        sipKernelFileName += "_64.ll";
-    } else {
-        sipKernelFileName += "_32.ll";
-    }
+TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChangedThenSpirvInputFileIsFalse) {
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    EXPECT_FALSE(mockOfflineCompiler->inputFileSpirV);
+}
 
+TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUed) {
+    MockOfflineCompiler mockOfflineCompiler;
     const char *argv[] = {
         "cloc",
         "-file",
-        sipKernelFileName.c_str(),
-        "-llvm_input",
+        "test_files/emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    auto retVal = mockOfflineCompiler.initialize(ARRAY_COUNT(argv), argv);
+    auto mockIgcOclDeviceCtx = new OCLRT::MockIgcOclDeviceCtx();
+    mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxLatest>(mockIgcOclDeviceCtx);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    mockOfflineCompiler.inputFileSpirV = true;
+    retVal = mockOfflineCompiler.buildSourceCode();
     EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
+    OCLRT::MockIgcOclDeviceCtx::TranslationOpT expectedTranslation = {IGC::CodeType::spirV, IGC::CodeType::oclGenBin};
+    ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 
-    EXPECT_EQ(nullptr, mockOfflineCompiler->getGenBinary());
-    EXPECT_EQ(0u, mockOfflineCompiler->getGenBinarySize());
-
-    retVal = mockOfflineCompiler->buildSourceCode();
+    mockOfflineCompiler.inputFileSpirV = false;
+    mockOfflineCompiler.inputFileLlvm = true;
+    mockIgcOclDeviceCtx->requestedTranslationCtxs.clear();
+    retVal = mockOfflineCompiler.buildSourceCode();
     EXPECT_EQ(CL_SUCCESS, retVal);
-
-    EXPECT_NE(nullptr, mockOfflineCompiler->getGenBinary());
-    EXPECT_NE(0u, mockOfflineCompiler->getGenBinarySize());
+    ASSERT_EQ(1U, mockIgcOclDeviceCtx->requestedTranslationCtxs.size());
+    expectedTranslation = {IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin};
+    ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 }
 
 TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {

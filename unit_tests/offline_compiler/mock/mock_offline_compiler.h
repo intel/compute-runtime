@@ -30,11 +30,14 @@ class MockOfflineCompiler : public OfflineCompiler {
   public:
     using OfflineCompiler::generateFilePathForIr;
     using OfflineCompiler::generateOptsSuffix;
+    using OfflineCompiler::igcDeviceCtx;
     using OfflineCompiler::inputFileLlvm;
+    using OfflineCompiler::inputFileSpirV;
     using OfflineCompiler::isSpirV;
     using OfflineCompiler::options;
     using OfflineCompiler::outputDirectory;
     using OfflineCompiler::outputFile;
+    using OfflineCompiler::sourceCode;
     using OfflineCompiler::useLlvmText;
     using OfflineCompiler::useOptionsSuffix;
 

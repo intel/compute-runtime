@@ -206,6 +206,9 @@ struct MockIgcOclDeviceCtx : MockCIF<IGC::IgcOclDeviceCtxTagOCL> {
     MockGTSystemInfo *gtSystemInfo = nullptr;
     MockIgcFeaturesAndWorkarounds *igcFeWa = nullptr;
     MockCompilerDebugVars debugVars;
+
+    using TranslationOpT = std::pair<IGC::CodeType::CodeType_t, IGC::CodeType::CodeType_t>;
+    std::vector<TranslationOpT> requestedTranslationCtxs;
 };
 
 struct MockFclOclTranslationCtx : MockCIF<IGC::FclOclTranslationCtxTagOCL> {
