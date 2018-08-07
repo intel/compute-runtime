@@ -23,6 +23,7 @@
 #pragma once
 
 #include "runtime/device/device.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/device_factory.h"
 #include "unit_tests/mocks/mock_device_factory.h"
@@ -50,4 +51,5 @@ struct DeviceFactoryLinuxTest : public ::testing::Test {
     }
 
     DrmMock *pDrm;
+    ExecutionEnvironment executionEnvironment;
 };

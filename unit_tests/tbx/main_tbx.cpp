@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/hw_info.h"
 #include "unit_tests/custom_event_listener.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -28,7 +29,7 @@
 using namespace OCLRT;
 
 namespace OCLRT {
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned);
+bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 }
 
 TEST(CSRTests, getDevices) {
@@ -37,7 +38,8 @@ TEST(CSRTests, getDevices) {
 
     DebugManagerStateRestore dbgState;
     DebugManager.flags.SetCommandStreamReceiver.set(2);
-    OCLRT::getDevices(&hwInfo, numDevicesReturned);
+    ExecutionEnvironment executionEnvironment;
+    OCLRT::getDevices(&hwInfo, numDevicesReturned, executionEnvironment);
 
     ASSERT_NE(nullptr, hwInfo);
     ASSERT_NE(nullptr, hwInfo->pSysInfo);

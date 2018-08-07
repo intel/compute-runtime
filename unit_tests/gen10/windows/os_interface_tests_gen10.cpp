@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "unit_tests/os_interface/windows/os_interface_win_tests.h"
 #include "unit_tests/gen_common/test.h"
 
@@ -30,7 +31,8 @@ GEN10TEST_F(OsInterfaceTestCnl, askKmdIfPreemptionRegisterWhitelisted) {
     const HardwareInfo *refHwinfo = *platformDevices;
     size_t numDevices = 0;
 
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    ExecutionEnvironment executionEnvironment;
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
     EXPECT_TRUE(success);
 
     for (size_t i = 0u; i < numDevices; i++) {

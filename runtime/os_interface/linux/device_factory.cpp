@@ -38,7 +38,7 @@ namespace OCLRT {
 size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
-bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
+bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     std::vector<HardwareInfo> tHwInfos;
     unsigned int devNum = 0;
     size_t requiredDeviceCount = 1;

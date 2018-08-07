@@ -61,7 +61,7 @@ CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo) {
     return commandStreamReceiver;
 }
 
-bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
+bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     bool result;
     int32_t csr = DebugManager.flags.SetCommandStreamReceiver.get();
     if (csr) {
@@ -78,12 +78,12 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
             return true;
         }
         case CSR_HW_WITH_AUB:
-            return DeviceFactory::getDevices(hwInfo, numDevicesReturned);
+            return DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
         default:
             return false;
         }
     }
-    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned);
+    result = DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
     DEBUG_BREAK_IF(result && (hwInfo == nullptr));
     return result;
 }

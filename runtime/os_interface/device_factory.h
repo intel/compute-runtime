@@ -26,10 +26,11 @@
 namespace OCLRT {
 
 struct HardwareInfo;
+class ExecutionEnvironment;
 
 class DeviceFactory {
   public:
-    static bool getDevices(HardwareInfo **pHWInfos, size_t &numDevices);
+    static bool getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment);
     static void releaseDevices();
 
   protected:

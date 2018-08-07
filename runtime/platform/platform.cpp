@@ -42,7 +42,7 @@ namespace OCLRT {
 
 std::unique_ptr<Platform> platformImpl;
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned);
+bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 
 Platform *platform() { return platformImpl.get(); }
 
@@ -138,7 +138,7 @@ bool Platform::initialize() {
         return true;
     }
 
-    state = OCLRT::getDevices(&hwInfo, numDevicesReturned) ? StateIniting : StateNone;
+    state = OCLRT::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;
 
     if (state == StateNone) {
         return false;

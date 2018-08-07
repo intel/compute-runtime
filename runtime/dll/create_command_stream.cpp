@@ -36,8 +36,8 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
     return createCommandStreamImpl(pHwInfo);
 }
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
-    return getDevicesImpl(hwInfo, numDevicesReturned);
+bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnviornment) {
+    return getDevicesImpl(hwInfo, numDevicesReturned, executionEnviornment);
 }
 
 } // namespace OCLRT

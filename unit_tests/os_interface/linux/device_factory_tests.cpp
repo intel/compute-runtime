@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -30,7 +30,7 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
     pDrm->StoredEUVal = 11;
     pDrm->StoredSSVal = 8;
 
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
 
     EXPECT_TRUE(success);
     EXPECT_EQ((int)numDevices, 1);
@@ -52,7 +52,7 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailed) {
     size_t numDevices = 0;
 
     pushDrmMock(nullptr);
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
     EXPECT_FALSE(success);
 
     popDrmMock();
@@ -64,7 +64,7 @@ TEST_F(DeviceFactoryLinuxTest, GetDevicesDrmCreateFailedConfigureHwInfo) {
 
     pDrm->StoredRetValForDeviceID = -1;
 
-    bool success = DeviceFactory::getDevices(&hwInfo, numDevices);
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
     EXPECT_FALSE(success);
 
     pDrm->StoredRetValForDeviceID = 0;
@@ -83,7 +83,7 @@ TEST_F(DeviceFactoryLinuxTest, ReleaseDevices) {
     pDrm->StoredMinEUinPool = 9;
     pDrm->StoredRetVal = -1;
 
-    bool success = mockDeviceFactory.getDevices(&hwInfo, numDevices);
+    bool success = mockDeviceFactory.getDevices(&hwInfo, numDevices, executionEnvironment);
     EXPECT_TRUE(success);
 
     mockDeviceFactory.releaseDevices();

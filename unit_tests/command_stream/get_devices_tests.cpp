@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/helpers/options.h"
@@ -57,7 +58,8 @@ HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFuntionRet
     int i = 0;
     size_t numDevices = 0;
     HardwareInfo *hwInfo = nullptr;
-    auto ret = getDevices(&hwInfo, numDevices);
+    ExecutionEnvironment executionEnvironment;
+    auto ret = getDevices(&hwInfo, numDevices, executionEnvironment);
 
     switch (csrType) {
     case CSR_HW:

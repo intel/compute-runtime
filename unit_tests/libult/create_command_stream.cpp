@@ -52,13 +52,13 @@ CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo) {
     return commandStreamReceiver;
 }
 
-bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned) {
+bool getDevices(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment) {
     if (overrideDeviceWithDefaultHardwareInfo) {
         *hwInfo = const_cast<HardwareInfo *>(*platformDevices);
         numDevicesReturned = numPlatformDevices;
         return getDevicesResult;
     }
 
-    return getDevicesImpl(hwInfo, numDevicesReturned);
+    return getDevicesImpl(hwInfo, numDevicesReturned, executionEnvironment);
 }
 } // namespace OCLRT

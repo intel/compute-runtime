@@ -36,7 +36,7 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 size_t DeviceFactory::numDevices = 0;
 HardwareInfo *DeviceFactory::hwInfos = nullptr;
 
-bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
+bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment) {
     auto totalDeviceCount = 1u;
     if (DebugManager.flags.CreateMultipleDevices.get()) {
         totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
