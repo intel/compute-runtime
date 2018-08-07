@@ -42,8 +42,6 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         totalDeviceCount = DebugManager.flags.CreateMultipleDevices.get();
     }
     std::unique_ptr<HardwareInfo[]> tempHwInfos(new HardwareInfo[totalDeviceCount]);
-    std::unique_ptr<OSInterface> osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-
     numDevices = 0;
 
     while (numDevices < totalDeviceCount) {
@@ -52,7 +50,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices) {
         }
 
         HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos[numDevices].pPlatform->eProductFamily);
-        if (hwConfig->configureHwInfo(&tempHwInfos[numDevices], &tempHwInfos[numDevices], osInterface.get())) {
+        if (hwConfig->configureHwInfo(&tempHwInfos[numDevices], &tempHwInfos[numDevices], nullptr)) {
             return false;
         }
         numDevices++;
