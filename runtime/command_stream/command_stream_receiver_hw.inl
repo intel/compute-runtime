@@ -250,7 +250,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
     }
 
-    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags));
+    auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     initPageTableManagerRegisters(commandStreamCSR);
@@ -602,13 +602,13 @@ uint64_t CommandStreamReceiverHw<GfxFamily>::getScratchPatchAddress() {
     return scratchAddress;
 }
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags) {
-    size_t size = getRequiredCmdStreamSize(dispatchFlags);
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device) {
+    size_t size = getRequiredCmdStreamSize(dispatchFlags, device);
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags) {
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble();
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size += getRequiredPipeControlSize();
@@ -620,7 +620,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
 
-    if (getMemoryManager()->device->getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
+    if (device.getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
             size += sizeof(typename GfxFamily::PIPE_CONTROL);
         }
