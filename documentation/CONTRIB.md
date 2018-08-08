@@ -8,7 +8,8 @@ Start with a patch (we prefer smaller self-contained incremental changes vs. lar
 When adding new code, please also add corresponding unit level tests (ULT). Added ULTs should cover
 all the decision points introduced by the commit and should fail if executed without the code changes.
 Make sure it builds and passes _all_ ULT tests. For details about what compilers and build configurations
-we expect, refer to [BUILD.md](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD.md).
+we expect, refer to instructions for [Ubuntu](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Ubuntu.md)
+or [Centos](https://github.com/intel/compute-runtime/blob/master/documentation/BUILD_Centos.md).
 Make sure you adhere to our coding standard - this will be verified by clang-format and clang-tidy
 (tool configuration is already included in NEO repository).
 
