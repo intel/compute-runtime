@@ -836,6 +836,7 @@ cl_mem CL_API_CALL clCreateImage2D(cl_context context,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
+    DBG_LOG_INPUTS("image 2D", image2D);
     return image2D;
 }
 
@@ -882,6 +883,7 @@ cl_mem CL_API_CALL clCreateImage3D(cl_context context,
     if (errcodeRet) {
         *errcodeRet = retVal;
     }
+    DBG_LOG_INPUTS("image 3D", image3D);
     return image3D;
 }
 
