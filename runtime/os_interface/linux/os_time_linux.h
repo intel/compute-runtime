@@ -38,7 +38,7 @@ class OSTimeLinux : public OSTime {
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime) override;
     typedef bool (OSTimeLinux::*TimestampFunction)(uint64_t *);
     void timestampTypeDetect();
-    TimestampFunction getGpuTime;
+    TimestampFunction getGpuTime = nullptr;
     bool getGpuTime32(uint64_t *timestamp);
     bool getGpuTime36(uint64_t *timestamp);
     bool getGpuTimeSplitted(uint64_t *timestamp);

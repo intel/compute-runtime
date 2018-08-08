@@ -148,6 +148,12 @@ TEST_F(DrmTimeTest, GIVENDrmWHENGetCpuGpuTimeTHENPassed) {
     delete pDrm;
 }
 
+TEST_F(DrmTimeTest, givenGetCpuGpuTimeWhenItIsUnavailableThenReturnFalse) {
+    TimeStampData CPUGPUTime = {0, 0};
+    auto error = osTime->getCpuGpuTime(&CPUGPUTime);
+    EXPECT_FALSE(error);
+}
+
 TEST_F(DrmTimeTest, GetCpuGpuTimeFails) {
     TimeStampData CPUGPUTime01 = {0, 0};
     auto pDrm = new DrmMockFail();

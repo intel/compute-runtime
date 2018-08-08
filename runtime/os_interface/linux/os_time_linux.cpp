@@ -125,6 +125,9 @@ bool OSTimeLinux::getGpuTimeSplitted(uint64_t *timestamp) {
 }
 
 bool OSTimeLinux::getCpuGpuTime(TimeStampData *pGpuCpuTime) {
+    if (nullptr == this->getGpuTime) {
+        return false;
+    }
     if (!(this->*getGpuTime)(&pGpuCpuTime->GPUTimeStamp)) {
         return false;
     }
