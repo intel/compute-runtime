@@ -321,7 +321,7 @@ HWTEST_P(PreemptionHwTest, getRequiredCmdStreamSizeReturns0WhenPreemptionModeIsN
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     {
         MockBuiltins tmpBuiltins;
-        tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, getSipProgramWithCustomBinary()}));
+        tmpBuiltins.overrideSipKernel(std::unique_ptr<OCLRT::SipKernel>(new OCLRT::SipKernel{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()}));
         tmpBuiltins.overrideGlobalBuiltins();
         PreemptionHelper::programCmdStream<FamilyType>(cmdStream, mode, mode,
                                                        nullptr, *mockDevice);

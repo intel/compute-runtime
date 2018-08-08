@@ -157,64 +157,10 @@ class GlobalMockSipProgram : public Program {
     static void initSipProgram();
     static void shutDownSipProgram();
     static GlobalMockSipProgram *sipProgram;
+    static Program *getSipProgramWithCustomBinary();
 
   protected:
     void *sipAllocationStorage;
 };
-
-inline Program *getSipProgramWithCustomBinary() {
-    char binary[1024];
-    char *pBinary = binary;
-    auto totalSize = 0u;
-
-    SProgramBinaryHeader *pBHdr = (SProgramBinaryHeader *)binary;
-    pBHdr->Magic = iOpenCL::MAGIC_CL;
-    pBHdr->Version = iOpenCL::CURRENT_ICBE_VERSION;
-    pBHdr->Device = platformDevices[0]->pPlatform->eRenderCoreFamily;
-    pBHdr->GPUPointerSizeInBytes = 8;
-    pBHdr->NumberOfKernels = 1;
-    pBHdr->SteppingId = 0;
-    pBHdr->PatchListSize = 0;
-    pBinary += sizeof(SProgramBinaryHeader);
-    totalSize += sizeof(SProgramBinaryHeader);
-
-    SKernelBinaryHeaderCommon *pKHdr = (SKernelBinaryHeaderCommon *)pBinary;
-    pKHdr->CheckSum = 0;
-    pKHdr->ShaderHashCode = 0;
-    pKHdr->KernelNameSize = 4;
-    pKHdr->PatchListSize = 0;
-    pKHdr->KernelHeapSize = 16;
-    pKHdr->GeneralStateHeapSize = 0;
-    pKHdr->DynamicStateHeapSize = 0;
-    pKHdr->SurfaceStateHeapSize = 0;
-    pKHdr->KernelUnpaddedSize = 0;
-    pBinary += sizeof(SKernelBinaryHeaderCommon);
-    totalSize += sizeof(SKernelBinaryHeaderCommon);
-    char *pKernelBin = pBinary;
-    strcpy_s(pBinary, 4, "sip");
-    pBinary += pKHdr->KernelNameSize;
-    totalSize += pKHdr->KernelNameSize;
-
-    strcpy_s(pBinary, 18, "kernel morphEUs()");
-    pBinary += pKHdr->KernelHeapSize;
-    totalSize += pKHdr->KernelHeapSize;
-
-    uint32_t kernelBinSize =
-        pKHdr->DynamicStateHeapSize +
-        pKHdr->GeneralStateHeapSize +
-        pKHdr->KernelHeapSize +
-        pKHdr->KernelNameSize +
-        pKHdr->PatchListSize +
-        pKHdr->SurfaceStateHeapSize;
-    uint64_t hashValue = Hash::hash(reinterpret_cast<const char *>(pKernelBin), kernelBinSize);
-    pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
-
-    auto errCode = CL_SUCCESS;
-    auto program = Program::createFromGenBinary(nullptr, binary, totalSize, false, &errCode);
-    UNRECOVERABLE_IF(errCode != CL_SUCCESS);
-    errCode = program->processGenBinary();
-    UNRECOVERABLE_IF(errCode != CL_SUCCESS);
-    return program;
-}
 
 } // namespace OCLRT

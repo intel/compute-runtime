@@ -86,30 +86,7 @@ class Program : public BaseObject<_cl_program> {
         const void *binary,
         size_t size,
         bool isBuiltIn,
-        cl_int *errcodeRet) {
-        cl_int retVal = CL_SUCCESS;
-        T *program = nullptr;
-
-        if ((binary == nullptr) || (size == 0)) {
-            retVal = CL_INVALID_VALUE;
-        }
-
-        if (CL_SUCCESS == retVal) {
-            program = new T(context, isBuiltIn);
-            program->numDevices = 1;
-            program->storeGenBinary(binary, size);
-            program->isCreatedFromBinary = true;
-            program->programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
-            program->isProgramBinaryResolved = true;
-            program->buildStatus = CL_BUILD_SUCCESS;
-        }
-
-        if (errcodeRet) {
-            *errcodeRet = retVal;
-        }
-
-        return program;
-    }
+        cl_int *errcodeRet);
 
     template <typename T = Program>
     static T *createFromIL(Context *context,

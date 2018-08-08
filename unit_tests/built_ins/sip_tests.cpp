@@ -98,16 +98,16 @@ TEST(Sip, SipLlContainsMetadataRequiredByCompiler) {
 }
 
 TEST(Sip, getType) {
-    SipKernel csr{SipKernelType::Csr, getSipProgramWithCustomBinary()};
+    SipKernel csr{SipKernelType::Csr, GlobalMockSipProgram::getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::Csr, csr.getType());
 
-    SipKernel dbgCsr{SipKernelType::DbgCsr, getSipProgramWithCustomBinary()};
+    SipKernel dbgCsr{SipKernelType::DbgCsr, GlobalMockSipProgram::getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
 
-    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, getSipProgramWithCustomBinary()};
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, GlobalMockSipProgram::getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
 
-    SipKernel undefined{SipKernelType::COUNT, getSipProgramWithCustomBinary()};
+    SipKernel undefined{SipKernelType::COUNT, GlobalMockSipProgram::getSipProgramWithCustomBinary()};
     EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
 }
 

@@ -21,6 +21,7 @@
  */
 
 #include "gtest/gtest.h"
+#include "runtime/program/create.inl"
 #include "runtime/program/program.h"
 
 extern GFXCORE_FAMILY renderCoreFamily;
