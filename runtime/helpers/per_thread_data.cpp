@@ -33,7 +33,8 @@ size_t PerThreadDataHelper::sendPerThreadData(
     uint32_t simd,
     uint32_t numChannels,
     const size_t localWorkSizes[3],
-    const std::array<uint8_t, 3> &workgroupWalkOrder) {
+    const std::array<uint8_t, 3> &workgroupWalkOrder,
+    bool hasKernelOnlyImages) {
     auto offsetPerThreadData = indirectHeap.getUsed();
     if (numChannels) {
         auto localWorkSize = localWorkSizes[0] * localWorkSizes[1] * localWorkSizes[2];
@@ -46,7 +47,8 @@ size_t PerThreadDataHelper::sendPerThreadData(
                          std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSizes[0]),
                                                   static_cast<uint16_t>(localWorkSizes[1]),
                                                   static_cast<uint16_t>(localWorkSizes[2])}},
-                         std::array<uint8_t, 3>{{workgroupWalkOrder[0], workgroupWalkOrder[1], workgroupWalkOrder[2]}});
+                         std::array<uint8_t, 3>{{workgroupWalkOrder[0], workgroupWalkOrder[1], workgroupWalkOrder[2]}},
+                         hasKernelOnlyImages);
     }
     return offsetPerThreadData;
 }

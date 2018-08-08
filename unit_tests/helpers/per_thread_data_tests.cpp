@@ -73,6 +73,8 @@ struct PerThreadDataTests : public DeviceFixture,
         alignedFree(indirectHeapMemory);
         DeviceFixture::TearDown();
     }
+
+    const std::array<uint8_t, 3> workgroupWalkOrder = {{0, 1, 2}};
     uint32_t simd;
     uint32_t numChannels;
     uint32_t kernelIsa[32];
@@ -107,7 +109,9 @@ HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_256x1x1) {
         indirectHeap,
         simd,
         numChannels,
-        localWorkSizes);
+        localWorkSizes,
+        workgroupWalkOrder,
+        false);
     auto expectedPerThreadDataSizeTotal = PerThreadDataHelper::getPerThreadDataSizeTotal(simd, numChannels, localWorkSize);
 
     size_t sizeConsumed = indirectHeap.getUsed() - offsetPerThreadData;
@@ -123,7 +127,9 @@ HWTEST_F(PerThreadDataXYZTests, sendPerThreadData_2x4x8) {
         indirectHeap,
         simd,
         numChannels,
-        localWorkSizes);
+        localWorkSizes,
+        workgroupWalkOrder,
+        false);
 
     size_t sizeConsumed = indirectHeap.getUsed() - offsetPerThreadData;
     EXPECT_EQ(64u * (3u * 2u * 4u * 8u) / 32u, sizeConsumed);
@@ -174,7 +180,9 @@ HWTEST_F(PerThreadDataNoIdsTests, sendPerThreadDataDoesntSendAnyData) {
         indirectHeap,
         simd,
         numChannels,
-        localWorkSizes);
+        localWorkSizes,
+        workgroupWalkOrder,
+        false);
 
     size_t sizeConsumed = indirectHeap.getUsed() - offsetPerThreadData;
     EXPECT_EQ(0u, sizeConsumed);
@@ -245,7 +253,9 @@ TEST(PerThreadDataTest, generateLocalIDs) {
         stream,
         simd,
         numChannels,
-        localWorkSizes);
+        localWorkSizes,
+        {{0, 1, 2}},
+        false);
 
     // Check if buffer overrun happend, only first sizePerThreadDataTotal bytes can be overwriten, following should be same as reference.
     for (auto i = sizePerThreadDataTotal; i < sizeOverSizedBuffer; i += sizePerThreadDataTotal) {

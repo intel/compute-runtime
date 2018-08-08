@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,6 +28,8 @@
 #include <cstdint>
 #include <cstddef>
 #include <algorithm>
+#include <memory>
+#include <functional>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))
@@ -111,4 +113,7 @@ inline bool isAligned(T *ptr) {
 template <typename T>
 inline bool isAligned(T *ptr) {
     return (reinterpret_cast<uintptr_t>(ptr) & (alignof(T) - 1)) == 0;
+}
+inline auto allocateAlignedMemory(size_t bytes, size_t alignment) {
+    return std::unique_ptr<void, std::function<decltype(alignedFree)>>(alignedMalloc(bytes, alignment), alignedFree);
 }

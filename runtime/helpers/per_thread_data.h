@@ -49,15 +49,8 @@ struct PerThreadDataHelper {
         uint32_t simd,
         uint32_t numChannels,
         const size_t localWorkSizes[3],
-        const std::array<uint8_t, 3> &workgroupWalkOrder);
-
-    static size_t sendPerThreadData(
-        LinearStream &indirectHeap,
-        uint32_t simd,
-        uint32_t numChannels,
-        const size_t localWorkSizes[3]) {
-        return sendPerThreadData(indirectHeap, simd, numChannels, localWorkSizes, std::array<uint8_t, 3>{{0, 1, 2}});
-    }
+        const std::array<uint8_t, 3> &workgroupWalkOrder,
+        bool hasKernelOnlyImages);
 
     static inline uint32_t getNumLocalIdChannels(const iOpenCL::SPatchThreadPayload &threadPayload) {
         return threadPayload.LocalIDXPresent +
