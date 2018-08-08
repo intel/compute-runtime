@@ -1117,6 +1117,8 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
         bool forceNonAuxMode = buffer->getGraphicsAllocation()->getAllocationType() == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED &&
                                !kernelArgInfo.pureStatefulBufferAccess;
 
+        UNRECOVERABLE_IF(forceNonAuxMode && isBuiltIn);
+
         if (requiresSshForBuffers()) {
             auto surfaceState = ptrOffset(getSurfaceStateHeap(), kernelArgInfo.offsetHeap);
             buffer->setArgStateful(surfaceState, forceNonAuxMode);

@@ -190,6 +190,15 @@ HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenRenderCompressedBufferIsSe
     EXPECT_TRUE(RENDER_SURFACE_STATE::AUXILIARY_SURFACE_MODE::AUXILIARY_SURFACE_MODE_AUX_CCS_E == surfaceState->getAuxiliarySurfaceMode());
 }
 
+HWTEST_F(BufferSetArgTest, givenNonPureStatefulArgWhenSetArgOnBuiltinIsCalledThenAbort) {
+    buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    cl_mem clMem = buffer;
+
+    pKernelInfo->kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    pKernel->isBuiltIn = true;
+    EXPECT_THROW(pKernel->setArgBuffer(0, sizeof(cl_mem), &clMem), std::exception);
+}
+
 TEST_F(BufferSetArgTest, setKernelArgBufferFor32BitAddressing) {
     auto pKernelArg = (void **)(pKernel->getCrossThreadData() +
                                 pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector[0].crossthreadOffset);
