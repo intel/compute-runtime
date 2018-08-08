@@ -23,6 +23,7 @@
 #include "unit_tests/libult/ult_command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
 
 #include "test.h"
@@ -30,7 +31,7 @@
 using namespace OCLRT;
 
 struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
-    MyMockCsr(const HardwareInfo &hwInfoIn, void *ptr) : UltCommandStreamReceiver(hwInfoIn) {
+    MyMockCsr(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver(hwInfoIn, executionEnvironment) {
     }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) override {
@@ -92,14 +93,14 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
 
 template <typename BaseCSR>
 struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
-    MyMockCsrWithAubDump<BaseCSR>(const HardwareInfo &hwInfoIn, bool createAubCSR) : CommandStreamReceiverWithAUBDump<BaseCSR>(hwInfoIn) {
+    MyMockCsrWithAubDump<BaseCSR>(const HardwareInfo &hwInfoIn, bool createAubCSR, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverWithAUBDump<BaseCSR>(hwInfoIn, executionEnvironment) {
         if (this->aubCSR != nullptr) {
             delete this->aubCSR;
             this->aubCSR = nullptr;
         }
         if (createAubCSR) {
             // overwrite with mock
-            this->aubCSR = new MyMockCsr(hwInfoIn, nullptr);
+            this->aubCSR = new MyMockCsr(hwInfoIn, nullptr, executionEnvironment);
         }
     }
 
@@ -111,7 +112,7 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
 struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bool /*createAubCSR*/> {
     void SetUp() override {
         createAubCSR = GetParam();
-        csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(DEFAULT_TEST_PLATFORM::hwInfo, createAubCSR);
+        csrWithAubDump = new MyMockCsrWithAubDump<MyMockCsr>(DEFAULT_TEST_PLATFORM::hwInfo, createAubCSR, executionEnvironment);
         ASSERT_NE(nullptr, csrWithAubDump);
 
         memoryManager = csrWithAubDump->createMemoryManager(false);
@@ -122,7 +123,7 @@ struct CommandStreamReceiverWithAubDumpTest : public ::testing::TestWithParam<bo
         delete csrWithAubDump;
         delete memoryManager;
     }
-
+    ExecutionEnvironment executionEnvironment;
     MyMockCsrWithAubDump<MyMockCsr> *csrWithAubDump;
     MemoryManager *memoryManager;
     bool createAubCSR;

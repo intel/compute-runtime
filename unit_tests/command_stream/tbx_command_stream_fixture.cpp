@@ -33,7 +33,7 @@ namespace OCLRT {
 void TbxCommandStreamFixture::SetUp(MockDevice *pDevice) {
     // Create our TBX command stream receiver based on HW type
     const auto &hwInfo = pDevice->getHardwareInfo();
-    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, false);
+    pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, false, *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
     mmTbx = pCommandStreamReceiver->createMemoryManager(false);
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);

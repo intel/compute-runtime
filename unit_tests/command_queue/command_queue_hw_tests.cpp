@@ -355,7 +355,7 @@ HWTEST_F(CommandQueueHwTest, GivenEventsWaitlistOnBlockingMapBufferWillWaitForEv
 
 HWTEST_F(CommandQueueHwTest, GivenNotCompleteUserEventPassedToEnqueueWhenEventIsUnblockedThenAllSurfacesForBlockedCommandsAreMadeResident) {
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp);
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCSR);
 
     UserEvent userEvent(context);
@@ -846,7 +846,7 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp);
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
 
     pDevice->resetCommandStreamReceiver(mockCSR);
 
@@ -901,7 +901,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     int32_t executionStamp = 0;
-    auto mockCSR = new MockCsr<FamilyType>(executionStamp);
+    auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCSR);
 
     MockKernelWithInternals mockKernelWithInternals(*pDevice);

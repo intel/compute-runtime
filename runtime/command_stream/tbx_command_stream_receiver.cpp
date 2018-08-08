@@ -29,7 +29,7 @@ namespace OCLRT {
 
 TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwInfo, bool withAubDump) {
+CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
 
     if (hwInfo.pPlatform->eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
@@ -38,6 +38,6 @@ CommandStreamReceiver *TbxCommandStreamReceiver::create(const HardwareInfo &hwIn
 
     auto pCreate = tbxCommandStreamReceiverFactory[hwInfo.pPlatform->eRenderCoreFamily];
 
-    return pCreate ? pCreate(hwInfo, withAubDump) : nullptr;
+    return pCreate ? pCreate(hwInfo, withAubDump, executionEnvironment) : nullptr;
 }
 } // namespace OCLRT

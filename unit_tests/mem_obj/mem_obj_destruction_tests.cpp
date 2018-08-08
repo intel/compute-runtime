@@ -32,7 +32,7 @@ using namespace OCLRT;
 template <typename Family>
 class MyCsr : public UltCommandStreamReceiver<Family> {
   public:
-    MyCsr(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<Family>(hwInfo) {}
+    MyCsr(const HardwareInfo &hwInfo, const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(hwInfo, const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
     MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
     MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
@@ -138,7 +138,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj->setDestructorCallback(emptyDestructorCallback, nullptr);
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo(), *device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
 
     bool desired = true;
@@ -168,7 +168,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
         memObj->setAllocatedMapPtr(allocatedPtr);
     }
 
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo(), *device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
 
     bool desired = true;
@@ -209,7 +209,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     }
 
     makeMemObjUsed();
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo(), *device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
 
     bool desired = true;
@@ -242,7 +242,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo(), *device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
 
     bool desired = true;
@@ -267,7 +267,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
     } else {
         makeMemObjNotReady();
     }
-    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo());
+    auto mockCsr = new ::testing::NiceMock<MyCsr<FamilyType>>(device->getHardwareInfo(), *device->executionEnvironment);
     device->resetCommandStreamReceiver(mockCsr);
 
     bool desired = true;

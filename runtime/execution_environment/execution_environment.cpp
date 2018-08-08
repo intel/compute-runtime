@@ -31,7 +31,7 @@
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
-extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
+extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
     if (!gmmHelper) {
@@ -42,7 +42,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     if (this->commandStreamReceiver) {
         return true;
     }
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo);
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo, *this);
     if (!commandStreamReceiver) {
         return false;
     }

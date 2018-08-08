@@ -34,6 +34,7 @@ namespace OCLRT {
 struct HardwareInfo;
 class CommandStreamReceiver;
 class TbxSockets;
+class ExecutionEnvironment;
 
 class TbxStream : public AubMemDump::AubStream {
     TbxSockets *socket = nullptr;
@@ -58,10 +59,10 @@ class TbxStream : public AubMemDump::AubStream {
 };
 
 struct TbxCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
     using TbxStream = OCLRT::TbxStream;
 };
 
-typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);
+typedef CommandStreamReceiver *(*TbxCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

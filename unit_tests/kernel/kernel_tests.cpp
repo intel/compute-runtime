@@ -422,7 +422,8 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
 
   public:
-    CommandStreamReceiverMock() : BaseClass() {
+    CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
+        this->mockExecutionEnvironment.reset(&this->executionEnvironment);
     }
 
     void makeResident(GraphicsAllocation &graphicsAllocation) override {
@@ -465,6 +466,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     }
 
     std::map<const void *, size_t> residency;
+    std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
 
 TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {

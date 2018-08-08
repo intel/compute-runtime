@@ -32,8 +32,8 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr)
-    : BaseClass(hwInfoIn) {
+TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment)
+    : BaseClass(hwInfoIn, executionEnvironment) {
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
         engineInfo.ggttLRCA = 0u;
@@ -170,12 +170,12 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, bool withAubDump) {
+CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     TbxCommandStreamReceiverHw<GfxFamily> *csr;
     if (withAubDump) {
-        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn);
+        csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, executionEnvironment);
     } else {
-        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, nullptr);
+        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, nullptr, executionEnvironment);
     }
 
     // Open our stream

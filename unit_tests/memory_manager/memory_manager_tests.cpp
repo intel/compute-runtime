@@ -1386,7 +1386,7 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleanin
 
     // All fragments ready for release
     taskCount = taskCountReady;
-    csr.latestSentTaskCount = taskCountReady;
+    csr->latestSentTaskCount = taskCountReady;
 
     auto graphicsAllocation3 = memoryManager->allocateGraphicsMemory(MemoryConstants::pageSize * 10, cpuPtr3);
 
@@ -1474,7 +1474,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     // All fragments ready for release
     taskCount = taskCountReady;
-    csr.latestSentTaskCount = taskCountReady;
+    csr->latestSentTaskCount = taskCountReady;
 
     AllocationRequirements requirements;
     CheckedFragments checkedFragments;
@@ -1518,7 +1518,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     // All fragments ready for release
     currentGpuTag = 1;
-    csr.latestSentTaskCount = taskCountReady - 1;
+    csr->latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
     CheckedFragments checkedFragments;
@@ -1574,7 +1574,7 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 
     // All fragments ready for release
     currentGpuTag = taskCountReady - 1;
-    csr.latestSentTaskCount = taskCountReady - 1;
+    csr->latestSentTaskCount = taskCountReady - 1;
 
     AllocationRequirements requirements;
     CheckedFragments checkedFragments;

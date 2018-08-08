@@ -55,7 +55,8 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
 
     overrideCommandStreamReceiverCreation = true;
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
-    executionEnvironment.commandStreamReceiver.reset(createCommandStream(&hwInfo));
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.commandStreamReceiver.reset(createCommandStream(&hwInfo, executionEnvironment));
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, executionEnvironment.commandStreamReceiver.get());
         executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false));

@@ -28,7 +28,7 @@ namespace OCLRT {
 template <typename BaseCSR>
 class CommandStreamReceiverWithAUBDump : public BaseCSR {
   public:
-    CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn);
+    CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     ~CommandStreamReceiverWithAUBDump() override;
 
     CommandStreamReceiverWithAUBDump(const CommandStreamReceiverWithAUBDump &) = delete;

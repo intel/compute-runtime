@@ -48,8 +48,8 @@ namespace OCLRT {
 DECLARE_COMMAND_BUFFER(CommandBufferHeader, UMD_OCL, FALSE, FALSE, PERFTAG_OCL);
 
 template <typename GfxFamily>
-WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Wddm *wddm)
-    : BaseClass(hwInfoIn) {
+WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Wddm *wddm, ExecutionEnvironment &executionEnvironment)
+    : BaseClass(hwInfoIn, executionEnvironment) {
     this->wddm = wddm;
     if (this->wddm == nullptr) {
         this->wddm = Wddm::createWddm(Wddm::pickWddmInterfaceVersion(hwInfoIn));

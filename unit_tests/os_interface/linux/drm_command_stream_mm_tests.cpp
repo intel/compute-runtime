@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_command_stream.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -34,12 +35,13 @@ class DrmCommandStreamMMTest : public ::testing::Test {
 HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
     DebugManagerStateRestore dbgRestorer;
     {
+        ExecutionEnvironment executionEnvironment;
         DebugManager.flags.EnableForcePin.set(true);
 
         std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
         ASSERT_NE(nullptr, mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive);
+        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive);
 
         auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
         ASSERT_NE(nullptr, mm);
@@ -53,12 +55,13 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
 HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreatedThenPinBBIsCreated) {
     DebugManagerStateRestore dbgRestorer;
     {
+        ExecutionEnvironment executionEnvironment;
         DebugManager.flags.EnableForcePin.set(false);
 
         std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom());
         ASSERT_NE(nullptr, mock);
 
-        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), gemCloseWorkerMode::gemCloseWorkerInactive);
+        DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], mock.get(), executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive);
 
         auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
         csr.setMemoryManager(nullptr);

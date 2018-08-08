@@ -37,7 +37,7 @@ using namespace OCLRT;
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) {
     int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
 
     MockKernelWithInternals mockKernel(*pDevice);
@@ -51,7 +51,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerWithKernelCallsProcessEvictionOnCSR) 
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerCallOnEnqueueMarkerDoesntCallProcessEvictionOnCSR) {
     int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
@@ -68,7 +68,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerCallOnEnqueueMarkerDoesntCallProcessE
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnUnblockedQueueDoesntIncrementTaskLevel) {
     int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
@@ -86,7 +86,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnUnblockedQueueDoesntIncrem
 
 HWTEST_F(EnqueueHandlerTest, enqueueHandlerForMarkerOnBlockedQueueShouldNotIncrementTaskLevel) {
     int32_t tag;
-    auto csr = new MockCsrBase<FamilyType>(tag);
+    auto csr = new MockCsrBase<FamilyType>(tag, *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(csr);
 
     auto mockCmdQ = std::unique_ptr<MockCommandQueueHw<FamilyType>>(new MockCommandQueueHw<FamilyType>(context, pDevice, 0));
@@ -233,7 +233,7 @@ HWTEST_F(EnqueueHandlerTest, enqueueWithOutputEventRegistersEvent) {
 }
 
 HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDumpIsNotSetThenPatchInfoDataIsNotTransferredToCSR) {
-    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
     csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);
@@ -255,7 +255,7 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenAddPatchInfoCommentsForAUBDu
     DebugManager.flags.AddPatchInfoCommentsForAUBDump.set(true);
     DebugManager.flags.FlattenBatchBufferForAUBDump.set(true);
 
-    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto csr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(csr->getMemoryManager());
     csr->overwriteFlatBatchBufferHelper(mockHelper);
     pDevice->resetCommandStreamReceiver(csr);

@@ -42,6 +42,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::commandStream;
     using BaseClass::CommandStreamReceiver::disableL3Cache;
     using BaseClass::CommandStreamReceiver::dispatchMode;
+    using BaseClass::CommandStreamReceiver::executionEnvironment;
     using BaseClass::CommandStreamReceiver::experimentalCmdBuffer;
     using BaseClass::CommandStreamReceiver::flushStamp;
     using BaseClass::CommandStreamReceiver::isPreambleSent;
@@ -60,11 +61,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     UltCommandStreamReceiver(const UltCommandStreamReceiver &) = delete;
     UltCommandStreamReceiver &operator=(const UltCommandStreamReceiver &) = delete;
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump) {
-        return new UltCommandStreamReceiver<GfxFamily>(hwInfoIn);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
+        return new UltCommandStreamReceiver<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
-    UltCommandStreamReceiver(const HardwareInfo &hwInfoIn) : BaseClass(hwInfoIn) {
+    UltCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseClass(hwInfoIn, executionEnvironment) {
         this->storeMakeResidentAllocations = false;
         if (hwInfoIn.capabilityTable.defaultPreemptionMode == PreemptionMode::MidThread) {
             tempPreemptionLocation = new GraphicsAllocation(nullptr, 0);

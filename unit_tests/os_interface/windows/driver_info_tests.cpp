@@ -35,7 +35,7 @@ namespace OCLRT {
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
-CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump);
+CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
 class DriverInfoDeviceTest : public ::testing::Test {
   public:
@@ -56,7 +56,7 @@ class DriverInfoDeviceTest : public ::testing::Test {
     const HardwareInfo *hwInfo;
 };
 
-CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump) {
+CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     auto csr = new MockCommandStreamReceiver();
     OSInterface *osInterface = new OSInterface();
     DriverInfoDeviceTest::wddmMock = new WddmMock();

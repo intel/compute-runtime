@@ -36,7 +36,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->setSourceLevelDebuggerActive(true);
     device->allocatePreemptionAllocationIfNotPresent();
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 

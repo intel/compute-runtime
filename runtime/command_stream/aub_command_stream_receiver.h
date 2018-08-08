@@ -27,12 +27,13 @@
 namespace OCLRT {
 struct HardwareInfo;
 class CommandStreamReceiver;
+class ExecutionEnvironment;
 
 struct AUBCommandStreamReceiver {
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename, bool standalone);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, const std::string &filename, bool standalone, ExecutionEnvironment &executionEnvironment);
 
     using AubFileStream = AubMemDump::AubFileStream;
 };
 
-typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone);
+typedef CommandStreamReceiver *(*AubCommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

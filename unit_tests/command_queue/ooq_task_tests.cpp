@@ -136,7 +136,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueWithLowerTaskLevelThenCsrWhenItIsSubmitt
 }
 
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDoneThenTaskLevelDoesntChnage) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
@@ -151,7 +151,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenMultipleEnqueueAreDone
 }
 
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsThenTheyHaveHigherTaskLevel) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
@@ -170,7 +170,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 }
 
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndBarrierThenCsrTaskLevelIncreases) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
@@ -190,7 +190,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 }
 
 HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowedByNewCommandsAndMarkerThenCsrTaskLevelIsNotIncreasing) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     mockCsr->taskLevel = 100;
@@ -210,7 +210,7 @@ HWTEST_F(OOQTaskTests, givenCommandQueueAtTaskLevel100WhenItIsFlushedAndFollowed
 }
 
 HWTEST_F(OOQTaskTests, givenTwoEnqueueCommandSynchronizedByEventsWhenTheyAreEnqueueThenSecondHasHigherTaskLevelThenFirst) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0]);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     pDevice->resetCommandStreamReceiver(mockCsr);
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     auto currentTaskLevel = this->pCmdQ->taskLevel;

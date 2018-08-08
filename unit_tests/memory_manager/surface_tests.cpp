@@ -71,7 +71,8 @@ TYPED_TEST_CASE(SurfaceTest, SurfaceTypes);
 HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehavesCorrectly) {
     int32_t execStamp;
 
-    MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp);
+    ExecutionEnvironment executionEnvironment;
+    MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
 
     auto memManager = csr->createMemoryManager(false);
 

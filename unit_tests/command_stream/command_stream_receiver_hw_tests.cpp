@@ -148,7 +148,7 @@ typedef Test<DeviceFixture> CommandStreamReceiverHwTest;
 
 HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
-    auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(hwInfo));
+    auto csr = std::unique_ptr<CommandStreamReceiver>(CommandStreamReceiverHw<FamilyType>::create(hwInfo, *pDevice->executionEnvironment));
 
     EXPECT_EQ(CommandStreamReceiverType::CSR_HW, csr->getType());
 }

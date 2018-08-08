@@ -82,14 +82,14 @@ struct KmdNotifyTests : public ::testing::Test {
     template <typename Family>
     class MockKmdNotifyCsr : public UltCommandStreamReceiver<Family> {
       public:
-        MockKmdNotifyCsr(const HardwareInfo &hwInfo) : UltCommandStreamReceiver<Family>(hwInfo) {}
+        MockKmdNotifyCsr(const HardwareInfo &hwInfo, const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(hwInfo, const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
         MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
         MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
     };
 
     template <typename Family>
     MockKmdNotifyCsr<Family> *createMockCsr() {
-        auto csr = new ::testing::NiceMock<MockKmdNotifyCsr<Family>>(device->getHardwareInfo());
+        auto csr = new ::testing::NiceMock<MockKmdNotifyCsr<Family>>(device->getHardwareInfo(), *device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
 
         mockKmdNotifyHelper = new MockKmdNotifyHelper(&device->getHardwareInfo().capabilityTable.kmdNotifyProperties);

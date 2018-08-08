@@ -34,7 +34,7 @@ struct Gen10CoherencyRequirements : public ::testing::Test {
 
     struct myCsr : public CommandStreamReceiverHw<CNLFamily> {
         using CommandStreamReceiver::commandStream;
-        myCsr() : CommandStreamReceiverHw<CNLFamily>(*platformDevices[0]){};
+        myCsr(ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<CNLFamily>(*platformDevices[0], executionEnvironment){};
         CsrSizeRequestFlags *getCsrRequestFlags() { return &csrSizeRequestFlags; }
     };
 
@@ -44,8 +44,8 @@ struct Gen10CoherencyRequirements : public ::testing::Test {
     }
 
     void SetUp() override {
-        csr = new myCsr();
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+        csr = new myCsr(*device->executionEnvironment);
         device->resetCommandStreamReceiver(csr);
     }
 

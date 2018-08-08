@@ -1307,7 +1307,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     typedef UltCommandStreamReceiver<FamilyType> BaseClass;
 
   public:
-    CommandStreamReceiverMock() : BaseClass(*platformDevices[0]) {
+    CommandStreamReceiverMock(ExecutionEnvironment &executionEnvironment) : BaseClass(*platformDevices[0], executionEnvironment) {
     }
 
     void makeResident(GraphicsAllocation &graphicsAllocation) override {
@@ -1357,7 +1357,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
-    auto pCommandStreamReceiver = new CommandStreamReceiverMock<FamilyType>();
+    auto pCommandStreamReceiver = new CommandStreamReceiverMock<FamilyType>(*pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);

@@ -44,7 +44,7 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
 
   public:
     size_t expectedToFreeCount = (size_t)-1;
-    CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*platformDevices[0]) {
+    CommandStreamReceiverMock(Device *pDevice) : UltCommandStreamReceiver<FamilyType>(*platformDevices[0], *pDevice->getExecutionEnvironment()) {
         this->pDevice = pDevice;
     }
 

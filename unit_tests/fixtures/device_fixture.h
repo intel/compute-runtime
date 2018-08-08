@@ -37,5 +37,6 @@ struct DeviceFixture {
     volatile uint32_t *pTagMemory = nullptr;
     HardwareInfo hwInfoHelper = {};
     PLATFORM platformHelper = {};
+    ExecutionEnvironment executionEnvironment;
 };
 } // namespace OCLRT

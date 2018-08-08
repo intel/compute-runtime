@@ -51,7 +51,7 @@ GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenBlockedKernelWithSlmWhenPreviou
 }
 
 GEN8TEST_F(CommandStreamReceiverHwTestGen8, GivenChangedL3ConfigWhenL3IsProgrammedThenClearSLMWorkAroundIsAdded) {
-    MockCsrHw2<FamilyType> csr(pDevice->getHardwareInfo());
+    MockCsrHw2<FamilyType> csr(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
     csr.csrSizeRequestFlags.l3ConfigChanged = true;
     csr.isPreambleSent = true;
 

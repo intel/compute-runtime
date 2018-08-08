@@ -34,8 +34,8 @@ void MemoryManagerWithCsrFixture::SetUp() {
     ON_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerCleanAllocationList));
     ON_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerPopulateOsHandles));
 
-    csr.tagAddress = &currentGpuTag;
-    memoryManager->csr = &csr;
+    csr->tagAddress = &currentGpuTag;
+    memoryManager->csr = csr.get();
 }
 
 void MemoryManagerWithCsrFixture::TearDown() {

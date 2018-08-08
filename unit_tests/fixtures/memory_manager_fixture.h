@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,11 +34,13 @@ class MemoryManagerWithCsrFixture {
   public:
     MemoryManager *memoryManager;
     GMockMemoryManager *gmockMemoryManager;
-    MockCommandStreamReceiver csr;
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<MockCommandStreamReceiver> csr;
     uint32_t taskCount = 0;
     uint32_t currentGpuTag = initialHardwareTag;
 
     MemoryManagerWithCsrFixture() {
+        csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment);
     }
 
     ~MemoryManagerWithCsrFixture() = default;

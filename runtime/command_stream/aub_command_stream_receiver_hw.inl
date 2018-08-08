@@ -36,8 +36,8 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone)
-    : BaseClass(hwInfoIn),
+AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
+    : BaseClass(hwInfoIn, executionEnvironment),
       stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
       subCaptureManager(std::unique_ptr<AubSubCaptureManager>(new AubSubCaptureManager(fileName))),
       standalone(standalone) {
@@ -233,8 +233,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfoTable() {
 }
 
 template <typename GfxFamily>
-CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone) {
-    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone);
+CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment) {
+    auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {
         csr->initFile(fileName);

@@ -31,11 +31,11 @@ class DeviceCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
 
   protected:
-    DeviceCommandStreamReceiver(const HardwareInfo &hwInfoIn)
-        : BaseClass(hwInfoIn) {
+    DeviceCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
+        : BaseClass(hwInfoIn, executionEnvironment) {
     }
 
   public:
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 };
 } // namespace OCLRT

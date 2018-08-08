@@ -33,7 +33,7 @@
 namespace OCLRT {
 AubCommandStreamReceiverCreateFunc aubCommandStreamReceiverFactory[IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwInfo, const std::string &baseName, bool standalone) {
+CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwInfo, const std::string &baseName, bool standalone, ExecutionEnvironment &executionEnvironment) {
     std::string hwPrefix = hardwarePrefix[hwInfo.pPlatform->eProductFamily];
 
     // Generate the full filename
@@ -57,7 +57,7 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwIn
     }
 
     auto pCreate = aubCommandStreamReceiverFactory[hwInfo.pPlatform->eRenderCoreFamily];
-    return pCreate ? pCreate(hwInfo, filePath, standalone) : nullptr;
+    return pCreate ? pCreate(hwInfo, filePath, standalone, executionEnvironment) : nullptr;
 }
 } // namespace OCLRT
 

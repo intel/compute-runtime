@@ -37,11 +37,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
 
   public:
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn) {
-        return new CommandStreamReceiverHw<GfxFamily>(hwInfoIn);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) {
+        return new CommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
-    CommandStreamReceiverHw(const HardwareInfo &hwInfoIn);
+    CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
 

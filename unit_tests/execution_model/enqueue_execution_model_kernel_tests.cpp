@@ -122,7 +122,7 @@ HWTEST_P(ParentKernelEnqueueTest, GivenParentKernelWithPrivateSurfaceWhenEnqueue
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t executionStamp = 0;
-        auto mockCSR = new MockCsr<FamilyType>(executionStamp);
+        auto mockCSR = new MockCsr<FamilyType>(executionStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCSR);
         GraphicsAllocation *privateSurface = mockCSR->getMemoryManager()->allocateGraphicsMemory(10);
 
@@ -367,7 +367,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, ParentKernelEnqueueTest, givenNonBlockedQueueWhenPar
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
 
         int32_t executionStamp = 0;
-        auto mockCSR = new MockCsrBase<FamilyType>(executionStamp);
+        auto mockCSR = new MockCsrBase<FamilyType>(executionStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCSR);
 
         pCmdQ->enqueueKernel(pKernel, 1, globalOffsets, workItems, workItems, 0, nullptr, nullptr);
@@ -522,7 +522,7 @@ HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueuedToNonBlockedQueueFlushe
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
         pCmdQ->enqueueKernel(parentKernel, 1, offset, gws, gws, 0, nullptr, nullptr);
@@ -546,7 +546,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedWith
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
 
         BuiltinKernelsSimulation::SchedulerSimulation<FamilyType>::enabled = false;
 
@@ -563,7 +563,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelEnqueueFixture, ParentKernelEnqueuedWith
 
 HWTEST_F(ParentKernelEnqueueFixture, givenCsrInBatchingModeWhenExecutionModelKernelIsSubmittedThenItIsFlushed) {
     if (pDevice->getSupportedClVersion() >= 20) {
-        auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo());
+        auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
         mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
@@ -589,7 +589,7 @@ HWTEST_F(ParentKernelEnqueueFixture, ParentKernelEnqueueMarksCSRMediaVFEStateDir
         size_t offset[3] = {0, 0, 0};
         size_t gws[3] = {1, 1, 1};
         int32_t execStamp;
-        auto mockCsr = new MockCsr<FamilyType>(execStamp);
+        auto mockCsr = new MockCsr<FamilyType>(execStamp, *pDevice->executionEnvironment);
         pDevice->resetCommandStreamReceiver(mockCsr);
 
         mockCsr->overrideMediaVFEStateDirty(false);

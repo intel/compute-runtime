@@ -63,7 +63,7 @@ class DrmCommandStreamFixture {
 
         this->mock = new DrmMockImpl(mockFd);
 
-        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, gemCloseWorkerMode::gemCloseWorkerActive);
+        csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], mock, executionEnvironment, gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
@@ -91,6 +91,7 @@ class DrmCommandStreamFixture {
     }
     static const uint64_t alignment = MemoryConstants::allocationAlignment;
     DebugManagerStateRestore *dbgState;
+    ExecutionEnvironment executionEnvironment;
 };
 
 typedef Test<DrmCommandStreamFixture> DrmCommandStreamTest;
@@ -508,7 +509,7 @@ struct DrmCsrVfeTests : ::testing::Test {
         using DrmCommandStreamReceiver<FamilyType>::mediaVfeStateLowPriorityDirty;
         using CommandStreamReceiver::commandStream;
 
-        MyCsr() : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], nullptr, gemCloseWorkerMode::gemCloseWorkerInactive) {}
+        MyCsr(ExecutionEnvironment &executionEnvironment) : DrmCommandStreamReceiver<FamilyType>(*platformDevices[0], nullptr, executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive) {}
         FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
             return (FlushStamp)0;
         }
@@ -532,7 +533,7 @@ struct DrmCsrVfeTests : ::testing::Test {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlushedThenReprogram) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockCsr = new MyCsr<FamilyType>;
+    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 
@@ -560,7 +561,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhe
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorityIsFlushedThenReprogram) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockCsr = new MyCsr<FamilyType>;
+    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 
@@ -588,7 +589,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsFlushedThenDontReprogram) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockCsr = new MyCsr<FamilyType>;
+    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 
@@ -616,7 +617,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWithScratchRequirementThenMakeDefaultDirty) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockCsr = new MyCsr<FamilyType>;
+    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 
@@ -637,7 +638,7 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaultWithScratchRequirementThenMakeLowDirty) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto mockCsr = new MyCsr<FamilyType>;
+    auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
 
@@ -668,16 +669,17 @@ class DrmCommandStreamEnhancedFixture
     DrmMemoryManager *mm = nullptr;
     MockDevice *device = nullptr;
     DebugManagerStateRestore *dbgState;
+    ExecutionEnvironment *executionEnvironment;
 
     void SetUp() {
-        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
+        executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->initGmm(*platformDevices);
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
 
         mock = new DrmMockCustom();
-        tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(mock);
+        tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(mock, *executionEnvironment);
         csr = tCsr;
         ASSERT_NE(nullptr, csr);
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
@@ -710,9 +712,9 @@ class DrmCommandStreamEnhancedFixture
       public:
         using CommandStreamReceiver::commandStream;
 
-        TestedDrmCommandStreamReceiver(Drm *drm, gemCloseWorkerMode mode) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, mode) {
+        TestedDrmCommandStreamReceiver(Drm *drm, gemCloseWorkerMode mode, ExecutionEnvironment &executionEnvironment) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, executionEnvironment, mode) {
         }
-        TestedDrmCommandStreamReceiver(Drm *drm) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, gemCloseWorkerMode::gemCloseWorkerInactive) {
+        TestedDrmCommandStreamReceiver(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmCommandStreamReceiver<GfxFamily>(*platformDevices[0], drm, executionEnvironment, gemCloseWorkerMode::gemCloseWorkerInactive) {
         }
 
         void overrideGemCloseWorkerOperationMode(gemCloseWorkerMode overrideValue) {
@@ -923,7 +925,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenCommandStreamWithDuplicatesWhenItIsF
 }
 
 TEST_F(DrmCommandStreamGemWorkerTests, givenDrmCsrCreatedWithInactiveGemCloseWorkerPolicyThenThreadIsNotCreated) {
-    TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> testedCsr(mock, gemCloseWorkerMode::gemCloseWorkerInactive);
+    TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> testedCsr(mock, gemCloseWorkerMode::gemCloseWorkerInactive, *this->executionEnvironment);
     EXPECT_EQ(gemCloseWorkerMode::gemCloseWorkerInactive, testedCsr.peekGemCloseWorkerOperationMode());
 }
 

@@ -40,7 +40,7 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn) : hwInfo(hwInfoIn) {
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));

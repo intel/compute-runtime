@@ -58,7 +58,7 @@ template <typename GfxFamily>
 class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using CommandStreamReceiver::latestFlushedTaskCount;
-    MockTbxCsr(const HardwareInfo &hwInfoIn, void *ptr) : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, ptr) {}
+    MockTbxCsr(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment) : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, ptr, executionEnvironment) {}
 
     void makeCoherent(GraphicsAllocation &gfxAllocation) override {
         auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
@@ -134,14 +134,6 @@ HWTEST_F(TbxCommandStreamTests, DISABLED_getCsTraits) {
 }
 
 #if defined(__linux__)
-TEST(TbxCommandStreamReceiverTest, DISABLED_createShouldReturnFunctionPointer) {
-    TbxCommandStreamReceiver tbx;
-    const HardwareInfo *hwInfo = platformDevices[0];
-    CommandStreamReceiver *csr = tbx.create(*hwInfo, false);
-    EXPECT_NE(nullptr, csr);
-    delete csr;
-}
-
 namespace OCLRT {
 TEST(TbxCommandStreamReceiverTest, createShouldReturnNullptrForEmptyEntryInFactory) {
     extern TbxCommandStreamReceiverCreateFunc tbxCommandStreamReceiverFactory[IGFX_MAX_PRODUCT];
@@ -152,7 +144,8 @@ TEST(TbxCommandStreamReceiverTest, createShouldReturnNullptrForEmptyEntryInFacto
     auto pCreate = tbxCommandStreamReceiverFactory[family];
 
     tbxCommandStreamReceiverFactory[family] = nullptr;
-    CommandStreamReceiver *csr = tbx.create(*hwInfo, false);
+    ExecutionEnvironment executionEnvironment;
+    CommandStreamReceiver *csr = tbx.create(*hwInfo, false, executionEnvironment);
     EXPECT_EQ(nullptr, csr);
 
     tbxCommandStreamReceiverFactory[family] = pCreate;
@@ -165,8 +158,8 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
     GFXCORE_FAMILY family = hwInfo.pPlatform->eRenderCoreFamily;
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = GFXCORE_FAMILY_FORCE_ULONG; // wrong gfx core family
-
-    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, false);
+    ExecutionEnvironment executionEnvironment;
+    CommandStreamReceiver *csr = TbxCommandStreamReceiver::create(hwInfo, false, executionEnvironment);
     EXPECT_EQ(nullptr, csr);
 
     const_cast<PLATFORM *>(hwInfo.pPlatform)->eRenderCoreFamily = family;
@@ -174,7 +167,8 @@ TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenItIsCreatedW
 
 TEST(TbxCommandStreamReceiverTest, givenTbxCommandStreamReceiverWhenTypeIsCheckedThenTbxCsrIsReturned) {
     HardwareInfo hwInfo = *platformDevices[0];
-    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, false));
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<CommandStreamReceiver> csr(TbxCommandStreamReceiver::create(hwInfo, false, executionEnvironment));
     EXPECT_NE(nullptr, csr);
     EXPECT_EQ(CommandStreamReceiverType::CSR_TBX, csr->getType());
 }
@@ -317,13 +311,14 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.OverrideAubDeviceId.set(9); //this is Hsw, not used
     const HardwareInfo &hwInfoIn = *platformDevices[0];
-    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, false)));
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TbxCommandStreamReceiverHw<FamilyType>> tbxCsr(reinterpret_cast<TbxCommandStreamReceiverHw<FamilyType> *>(TbxCommandStreamReceiver::create(hwInfoIn, false, executionEnvironment)));
     EXPECT_EQ(9u, tbxCsr->aubDeviceId);
 }
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
     uint32_t tag = 0;
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag);
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag, *pDevice->executionEnvironment);
     GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
     tbxCsr.setTagAllocation(&graphicsAllocation);
 

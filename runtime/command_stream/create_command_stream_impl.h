@@ -26,6 +26,6 @@
 
 namespace OCLRT {
 class ExecutionEnvironment;
-extern CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo);
+extern CommandStreamReceiver *createCommandStreamImpl(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 extern bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

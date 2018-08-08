@@ -23,6 +23,7 @@
 #pragma once
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/helpers/options.h"
@@ -46,11 +47,11 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
 
     MockCsrBase() = delete;
 
-    MockCsrBase(int32_t &execStamp)
-        : BaseUltCsrClass(*platformDevices[0]), executionStamp(&execStamp), flushTaskStamp(-1) {
+    MockCsrBase(int32_t &execStamp, ExecutionEnvironment &executionEnvironment)
+        : BaseUltCsrClass(*platformDevices[0], executionEnvironment), executionStamp(&execStamp), flushTaskStamp(-1) {
     }
 
-    MockCsrBase(const HardwareInfo &hwInfoIn) : BaseUltCsrClass(hwInfoIn) {
+    MockCsrBase(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : BaseUltCsrClass(hwInfoIn, executionEnvironment) {
     }
 
     void makeResident(GraphicsAllocation &gfxAllocation) override {
@@ -108,7 +109,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
 
     MockCsr() = delete;
     MockCsr(const HardwareInfo &hwInfoIn) = delete;
-    MockCsr(int32_t &execStamp) : BaseClass(execStamp) {
+    MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : BaseClass(execStamp, executionEnvironment) {
     }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
@@ -161,7 +162,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
 
-    MockCsrHw2(const HardwareInfo &hwInfoIn) : CommandStreamReceiverHw<GfxFamily>(hwInfoIn) {}
+    MockCsrHw2(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
 
     SubmissionAggregator *peekSubmissionAggregator() {
         return this->submissionAggregator.get();
@@ -219,11 +220,18 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {
   public:
+    using CommandStreamReceiver::CommandStreamReceiver;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::tagAddress;
     std::vector<char> instructionHeapReserveredData;
     int *flushBatchedSubmissionsCallCounter = nullptr;
+
+    std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
+
+    MockCommandStreamReceiver() : CommandStreamReceiver(*(new ExecutionEnvironment)) {
+        mockExecutionEnvironment.reset(&this->executionEnvironment);
+    }
 
     ~MockCommandStreamReceiver() {
     }

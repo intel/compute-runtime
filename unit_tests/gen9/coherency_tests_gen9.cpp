@@ -21,6 +21,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -28,7 +29,8 @@ using namespace OCLRT;
 typedef ::testing::Test Gen9CoherencyRequirements;
 
 GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
-    CommandStreamReceiverHw<SKLFamily> csr(*platformDevices[0]);
+    ExecutionEnvironment executionEnvironment;
+    CommandStreamReceiverHw<SKLFamily> csr(*platformDevices[0], executionEnvironment);
     LinearStream stream;
     DispatchFlags flags = {};
 

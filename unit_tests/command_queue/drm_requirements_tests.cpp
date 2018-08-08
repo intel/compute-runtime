@@ -49,8 +49,8 @@ class CommandStreamReceiverDrmMock : public UltCommandStreamReceiver<FamilyType>
         return 0;
     }
 
-    CommandStreamReceiverDrmMock<FamilyType>()
-        : BaseClass(*platformDevices[0]) {
+    CommandStreamReceiverDrmMock<FamilyType>(ExecutionEnvironment &executionEnvironment)
+        : BaseClass(*platformDevices[0], executionEnvironment) {
     }
 
     ~CommandStreamReceiverDrmMock() override {
@@ -66,7 +66,7 @@ HWTEST_F(DrmRequirementsTests, enqueueKernel) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
 
-    auto pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>;
+    auto pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>(*pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
@@ -85,7 +85,7 @@ HWTEST_F(DrmRequirementsTests, enqueueKernel) {
 }
 
 HWTEST_F(DrmRequirementsTests, finishTwice) {
-    CommandStreamReceiver *pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>;
+    CommandStreamReceiver *pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>(*pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
     size_t GWS = 1;
     pDevice->resetCommandStreamReceiver(pCommandStreamReceiver);
@@ -112,7 +112,7 @@ HWTEST_F(DrmRequirementsTests, enqueueKernelFinish) {
     size_t globalWorkOffset[3] = {0, 0, 0};
     size_t globalWorkSize[3] = {1, 1, 1};
 
-    CommandStreamReceiver *pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>();
+    CommandStreamReceiver *pCommandStreamReceiver = new CommandStreamReceiverDrmMock<FamilyType>(*pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCommandStreamReceiver);
 
     // Replace the legacy command streamer with the Drm file version
@@ -145,7 +145,7 @@ HWTEST_F(DrmRequirementsTests, enqueueKernelFinish) {
 }
 
 HWTEST_F(DrmRequirementsTests, csrNewCS) {
-    CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0]);
+    CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCSR);
     pCSR->setMemoryManager(pDevice->getMemoryManager());
     auto memoryManager = pCSR->getMemoryManager();
@@ -171,7 +171,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCS) {
 }
 
 HWTEST_F(DrmRequirementsTests, csrNewCSSized) {
-    CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0]);
+    CommandStreamReceiver *pCSR = new UltCommandStreamReceiver<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
     ASSERT_NE(nullptr, pCSR);
     pCSR->setMemoryManager(pDevice->getMemoryManager());
     auto memoryManager = pCSR->getMemoryManager();

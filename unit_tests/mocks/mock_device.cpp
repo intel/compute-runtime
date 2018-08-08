@@ -32,7 +32,7 @@ using namespace OCLRT;
 
 MockDevice::MockDevice(const HardwareInfo &hwInfo)
     : MockDevice(hwInfo, new ExecutionEnvironment) {
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo);
+    CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
     executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
     commandStreamReceiver->setMemoryManager(this->mockMemoryManager.get());
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);

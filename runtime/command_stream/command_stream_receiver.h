@@ -43,6 +43,7 @@ class IndirectHeap;
 class LinearStream;
 class MemoryManager;
 class OSInterface;
+class ExecutionEnvironment;
 
 enum class DispatchMode {
     DeviceDefault = 0,          //default for given device
@@ -60,7 +61,7 @@ class CommandStreamReceiver {
         samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
     };
     using MutexType = std::recursive_mutex;
-    CommandStreamReceiver();
+    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment);
     virtual ~CommandStreamReceiver();
 
     virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
@@ -203,7 +204,8 @@ class CommandStreamReceiver {
     std::unique_ptr<ExperimentalCommandBuffer> experimentalCmdBuffer;
     MutexType ownershipMutex;
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
+    ExecutionEnvironment &executionEnvironment;
 };
 
-typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump);
+typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 } // namespace OCLRT

@@ -33,11 +33,11 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump) {
+CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const HardwareInfo &hwInfo, bool withAubDump, ExecutionEnvironment &executionEnvironment) {
     if (withAubDump) {
-        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>(hwInfo);
+        return new CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<GfxFamily>>(hwInfo, executionEnvironment);
     } else {
-        return new WddmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr);
+        return new WddmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr, executionEnvironment);
     }
 }
 } // namespace OCLRT

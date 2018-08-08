@@ -37,7 +37,7 @@ namespace OCLRT {
 // Global table of CommandStreamReceiver factories for HW and tests
 CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] = {};
 
-CommandStreamReceiver::CommandStreamReceiver() {
+CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment) : executionEnvironment(executionEnvironment) {
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     submissionAggregator.reset(new SubmissionAggregator());
     if (DebugManager.flags.CsrDispatchMode.get()) {

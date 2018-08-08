@@ -58,9 +58,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void initGlobalMMIO();
     void initEngineMMIO(EngineType engineType);
 
-    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump);
+    static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
-    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr);
+    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment);
     ~TbxCommandStreamReceiverHw() override;
 
     void initializeEngine(EngineType engineType);

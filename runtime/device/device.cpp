@@ -63,7 +63,7 @@ void DeviceVector::toDeviceIDs(std::vector<cl_device_id> &devIDs) {
     }
 }
 
-CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo);
+CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
 // Global table of hardware prefixes
 const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {

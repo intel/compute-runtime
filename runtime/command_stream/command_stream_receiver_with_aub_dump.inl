@@ -28,9 +28,9 @@ namespace OCLRT {
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
 template <typename BaseCSR>
-CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn)
-    : BaseCSR(hwInfoIn, nullptr) {
-    aubCSR = AUBCommandStreamReceiver::create(hwInfoIn, "aubfile", false);
+CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
+    : BaseCSR(hwInfoIn, nullptr, executionEnvironment) {
+    aubCSR = AUBCommandStreamReceiver::create(hwInfoIn, "aubfile", false, executionEnvironment);
 }
 
 template <typename BaseCSR>
