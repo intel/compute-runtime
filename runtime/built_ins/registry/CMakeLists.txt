@@ -20,6 +20,7 @@
 
 add_library(${BUILTINS_SOURCES_LIB_NAME} OBJECT
   CMakeLists.txt
+  built_ins_registry.h
   register_copy_kernels_source.cpp
   register_ext_vme_source.cpp
 )

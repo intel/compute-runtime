@@ -20,6 +20,7 @@
 
 set(RUNTIME_SRCS_BUILT_INS
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/builtins_dispatch_builder.h
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins_storage.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/built_ins.h
