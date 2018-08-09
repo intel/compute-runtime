@@ -61,7 +61,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
-    closeFile();
+    AUBCommandStreamReceiverHw<GfxFamily>::closeFile();
     freeEngineInfoTable();
 }
 
