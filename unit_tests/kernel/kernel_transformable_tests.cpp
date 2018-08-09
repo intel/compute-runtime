@@ -60,7 +60,8 @@ class KernelTransformableTest : public ::testing::Test {
         pKernelInfo->kernelArgInfo[3].isImage = true;
         pKernelInfo->argumentsToPatchNum = 4;
 
-        pKernel.reset(new MockKernel(&program, *pKernelInfo, *context.getDevice(0)));
+        program = std::make_unique<MockProgram>();
+        pKernel.reset(new MockKernel(program.get(), *pKernelInfo, *context.getDevice(0)));
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
@@ -81,7 +82,7 @@ class KernelTransformableTest : public ::testing::Test {
 
     cl_int retVal = CL_SUCCESS;
     MockContext context;
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     std::unique_ptr<MockKernel> pKernel;
     std::unique_ptr<KernelInfo> pKernelInfo;
 

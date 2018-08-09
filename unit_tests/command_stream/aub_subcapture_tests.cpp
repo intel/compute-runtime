@@ -35,6 +35,7 @@ struct AubSubCaptureTest : public DeviceFixture,
                            public ::testing::Test {
     void SetUp() override {
         DeviceFixture::SetUp();
+        program = std::make_unique<MockProgram>();
         kernelInfo.name = "kernel_name";
         dbgRestore = new DebugManagerStateRestore();
     }
@@ -44,7 +45,7 @@ struct AubSubCaptureTest : public DeviceFixture,
         delete dbgRestore;
     }
 
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     KernelInfo kernelInfo;
     DebugManagerStateRestore *dbgRestore;
 };
@@ -151,7 +152,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -165,7 +166,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -180,7 +181,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -195,7 +196,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -211,7 +212,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -226,7 +227,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInFilterModeWhenActivateSubCaptu
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -252,7 +253,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureKeepsInactiveThenM
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -270,7 +271,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureGetsActiveThenDont
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -288,7 +289,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureKeepsActiveThenDon
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -306,7 +307,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerWhenSubCaptureGetsInactiveThenMa
     AubSubCaptureManagerMock aubSubCaptureManager("");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
 
@@ -384,7 +385,7 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGetSubCaptureFil
     AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub");
 
     DispatchInfo dispatchInfo;
-    MockKernel kernel(&program, kernelInfo, *pDevice);
+    MockKernel kernel(program.get(), kernelInfo, *pDevice);
     dispatchInfo.setKernel(&kernel);
     MultiDispatchInfo multiDispatchInfo(dispatchInfo);
     std::string externalFileName = "";

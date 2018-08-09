@@ -69,7 +69,8 @@ class SamplerSetArgFixture : public DeviceFixture {
         pKernelInfo->kernelArgInfo[1].offsetHeap = 0x40;
         pKernelInfo->kernelArgInfo[1].isSampler = true;
 
-        pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+        program = std::make_unique<MockProgram>();
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
@@ -111,16 +112,14 @@ class SamplerSetArgFixture : public DeviceFixture {
 
     static const uint32_t crossThreadDataSize = 0x40;
 
-    // clang-format off
-    cl_int                    retVal = CL_SUCCESS;
-    MockProgram               program;
-    MockKernel                *pKernel = nullptr;
+    cl_int retVal = CL_SUCCESS;
+    std::unique_ptr<MockProgram> program;
+    MockKernel *pKernel = nullptr;
     SKernelBinaryHeaderCommon kernelHeader;
-    KernelInfo                *pKernelInfo = nullptr;
-    char                      samplerStateHeap[0x80];
-    MockContext               *context;
-    Sampler                   *sampler = nullptr;
-    // clang-format on
+    KernelInfo *pKernelInfo = nullptr;
+    char samplerStateHeap[0x80];
+    MockContext *context;
+    Sampler *sampler = nullptr;
 };
 
 typedef Test<SamplerSetArgFixture> SamplerSetArgTest;

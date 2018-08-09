@@ -378,7 +378,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentDoesntHaveDeviceEnqueue) {
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ_VAL(0u, program.getParentKernelInfoArray().size());
+    EXPECT_EQ_VAL(0u, program->getParentKernelInfoArray().size());
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironmentHasDeviceEnqueue) {
@@ -393,7 +393,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentHasDeviceEnqueue) {
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ_VAL(1u, program.getParentKernelInfoArray().size());
+    EXPECT_EQ_VAL(1u, program->getParentKernelInfoArray().size());
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironmentDoesntRequireSubgroupIndependentForwardProgress) {
@@ -408,7 +408,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentDoesntRequireSubgroupIndependentForwa
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ_VAL(0u, program.getSubgroupKernelInfoArray().size());
+    EXPECT_EQ_VAL(0u, program->getSubgroupKernelInfoArray().size());
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironmentRequiresSubgroupIndependentForwardProgress) {
@@ -423,7 +423,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentRequiresSubgroupIndependentForwardPro
     buildAndDecode();
 
     EXPECT_EQ_CONST(PATCH_TOKEN_EXECUTION_ENVIRONMENT, pKernelInfo->patchInfo.executionEnvironment->Token);
-    EXPECT_EQ_VAL(1u, program.getSubgroupKernelInfoArray().size());
+    EXPECT_EQ_VAL(1u, program->getSubgroupKernelInfoArray().size());
 }
 
 TEST_F(KernelDataTest, KernelAttributesInfo) {

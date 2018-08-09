@@ -64,6 +64,7 @@ class KernelDataTest : public testing::Test {
     void SetUp() override {
         kernelBinaryHeader.KernelNameSize = kernelNameSize;
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr);
+        program = std::make_unique<MockProgram>();
     }
 
     void TearDown() override {
@@ -97,7 +98,7 @@ class KernelDataTest : public testing::Test {
     uint64_t shaderHashCode;
     uint32_t kernelUnpaddedSize;
 
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     MockDevice *pDevice;
     const KernelInfo *pKernelInfo;
 };

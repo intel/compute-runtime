@@ -56,7 +56,8 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
         pKernelInfo->kernelArgInfo[2].slmAlignment = 0x400;
         pKernelInfo->workloadInfo.slmStaticSize = 3 * KB;
 
-        pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+        program = std::make_unique<MockProgram>();
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         pKernel->setKernelArgHandler(0, &Kernel::setArgLocal);
@@ -75,7 +76,7 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
     }
 
     cl_int retVal = CL_SUCCESS;
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     KernelInfo *pKernelInfo;
 

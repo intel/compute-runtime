@@ -50,7 +50,8 @@ struct KernelArgDevQueueTest : public DeviceFixture,
 
         pKernelInfo->kernelArgInfo[0].kernelArgPatchInfoVector.push_back(kernelArgPatchInfo);
 
-        pKernel = new MockKernel(&program, *pKernelInfo, *pDevice);
+        program = std::make_unique<MockProgram>();
+        pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
         ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
         uint8_t pCrossThreadData[crossThreadDataSize];
@@ -80,7 +81,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
     static const uint32_t crossThreadDataSize = 0x10;
     static const char crossThreadDataInit = 0x7e;
 
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     DeviceQueue *pDeviceQueue = nullptr;
     MockKernel *pKernel = nullptr;
     KernelInfo *pKernelInfo = nullptr;

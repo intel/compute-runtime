@@ -44,7 +44,7 @@ class PrintFormatterTest : public testing::Test {
 
     MockGraphicsAllocation *data;
     MockKernel *kernel;
-    MockProgram program;
+    std::unique_ptr<MockProgram> program;
     KernelInfo *kernelInfo;
     Device *device;
 
@@ -61,7 +61,8 @@ class PrintFormatterTest : public testing::Test {
 
         kernelInfo = KernelInfo::create();
         device = MockDevice::createWithNewExecutionEnvironment<Device>(nullptr);
-        kernel = new MockKernel(&program, *kernelInfo, *device);
+        program = std::make_unique<MockProgram>();
+        kernel = new MockKernel(program.get(), *kernelInfo, *device);
 
         printFormatter = new PrintFormatter(*kernel, *data);
 

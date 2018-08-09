@@ -42,7 +42,7 @@ void KernelDataTest::buildAndDecode() {
                      kernelNameSize + sshSize + dshSize + gshSize + kernelHeapSize + patchListSize;
 
     kernelDataSize += sizeof(SPatchDataParameterStream);
-    program.setDevice(pDevice);
+    program->setDevice(pDevice);
 
     pKernelData = reinterpret_cast<char *>(alignedMalloc(kernelDataSize, MemoryConstants::cacheLineSize));
     ASSERT_NE(nullptr, pKernelData);
@@ -92,11 +92,11 @@ void KernelDataTest::buildAndDecode() {
     pCurPtr += sizeof(SPatchDataParameterStream);
 
     // now build a program with this kernel data
-    error = program.build(pKernelData, kernelDataSize);
+    error = program->build(pKernelData, kernelDataSize);
     EXPECT_EQ(CL_SUCCESS, error);
 
     // extract the kernel info
-    pKernelInfo = program.Program::getKernelInfo(kernelName.c_str());
+    pKernelInfo = program->Program::getKernelInfo(kernelName.c_str());
 
     // validate kernel info
     // vaidate entire set of data
