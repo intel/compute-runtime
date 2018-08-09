@@ -170,6 +170,23 @@ TEST_F(clCreateKernelTests, nullProgram) {
     ASSERT_EQ(nullptr, kernel);
 }
 
+TEST_F(clCreateKernelTests, givenNullKernelNameWhenCreatingNewKernelThenReturnClInvalidValue) {
+    cl_kernel kernel = nullptr;
+    KernelInfo *pKernelInfo = KernelInfo::create();
+    pKernelInfo->isValid = true;
+
+    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(pContext, false);
+    pMockProg->addKernelInfo(pKernelInfo);
+
+    kernel = clCreateKernel(
+        pMockProg.get(),
+        nullptr,
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, kernel);
+}
+
 TEST_F(clCreateKernelTests, invalidProgram) {
     cl_kernel kernel = nullptr;
 

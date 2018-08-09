@@ -1447,6 +1447,11 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
+        if (kernelName == nullptr) {
+            retVal = CL_INVALID_VALUE;
+            break;
+        }
+
         const KernelInfo *pKernelInfo = pProgram->getKernelInfo(kernelName);
         if (!pKernelInfo) {
             retVal = CL_INVALID_KERNEL_NAME;
