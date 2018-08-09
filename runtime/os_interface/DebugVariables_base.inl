@@ -35,7 +35,6 @@ DECLARE_DEBUG_VARIABLE(bool, FlattenBatchBufferForAUBDump, false, "Dump multi-le
 DECLARE_DEBUG_VARIABLE(bool, AddPatchInfoCommentsForAUBDump, false, "Dump comments containing allocations and patching information")
 
 /*DEBUG FLAGS*/
-DECLARE_DEBUG_VARIABLE(int32_t, InitializeMemoryInDebug, 0x10, "Memory initialization in debug")
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerSimulationReturnInstance, 0, "prints execution model related debug information")
 DECLARE_DEBUG_VARIABLE(int32_t, SchedulerGWS, 0, "Forces gws of scheduler kernel, only multiple of 24 allowed or 0 - default selected")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableExperimentalCommandBuffer, 0, "Enables injection of experimental command buffer")

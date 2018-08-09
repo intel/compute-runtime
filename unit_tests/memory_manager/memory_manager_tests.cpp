@@ -234,34 +234,6 @@ TEST_F(MemoryAllocatorTest, storeTemporaryAllocation) {
     EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty() == false);
 }
 
-TEST_F(MemoryAllocatorTest, DISABLED_allocateGraphicsPageDebugInitialized) {
-    // Test the memory initialization control when debugging
-    if (OCLRT::DebugManager.disabled() == false) {
-        auto f = DebugManager.flags.InitializeMemoryInDebug.get();
-
-        DebugManager.flags.InitializeMemoryInDebug.set(0x10);
-        auto allocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
-        EXPECT_NE(nullptr, allocation);
-        uint32_t *a = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
-        EXPECT_EQ(0xFEFEFEFE, *a);
-        memoryManager->freeGraphicsMemory(allocation);
-
-        DebugManager.flags.InitializeMemoryInDebug.set(0x20);
-        allocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
-        EXPECT_NE(nullptr, allocation);
-        a = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
-        EXPECT_EQ(0u, *a);
-        memoryManager->freeGraphicsMemory(allocation);
-
-        DebugManager.flags.InitializeMemoryInDebug.set(0x00);
-        allocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
-        EXPECT_NE(nullptr, allocation);
-        memoryManager->freeGraphicsMemory(allocation);
-
-        DebugManager.flags.InitializeMemoryInDebug.set(f);
-    }
-}
-
 TEST_F(MemoryAllocatorTest, selectiveDestroy) {
     void *host_ptr = (void *)0x1234;
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
