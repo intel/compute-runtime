@@ -28,16 +28,7 @@
 
 using namespace OCLRT;
 
-struct WorkGroupSizeBase : public DeviceFixture {
-
-    void SetUp() {
-        DeviceFixture::SetUp();
-    }
-
-    void TearDown() {
-        DeviceFixture::TearDown();
-    }
-
+struct WorkGroupSizeBase {
     template <typename FamilyType>
     size_t computeWalkerWorkItems(typename FamilyType::GPGPU_WALKER &pCmd) {
         typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
@@ -74,7 +65,7 @@ struct WorkGroupSizeBase : public DeviceFixture {
                    (dimZ > 1 ? 1 : 0);
 
         size_t workGroupSize[3];
-        auto maxWorkGroupSize = static_cast<uint32_t>(pDevice->getDeviceInfo().maxWorkGroupSize);
+        auto maxWorkGroupSize = 256u;
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, IGFX_GEN9_CORE, 32u, 0u, false, false);
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dims);
@@ -89,7 +80,6 @@ struct WorkGroupSizeBase : public DeviceFixture {
 
         EXPECT_GT(localWorkItems, 0u);
         EXPECT_LE(localWorkItems, 256u);
-        EXPECT_LE(localWorkItems, pDevice->getDeviceInfo().maxWorkGroupSize);
 
         auto xRemainder = workItems[0] % workGroupSize[0];
         auto yRemainder = workItems[1] % workGroupSize[1];
@@ -132,13 +122,6 @@ struct WorkGroupSizeBase : public DeviceFixture {
 
 struct WorkGroupSizeChannels : public WorkGroupSizeBase,
                                public ::testing::TestWithParam<std::tuple<uint32_t, size_t>> {
-    void SetUp() override {
-        WorkGroupSizeBase::SetUp();
-    }
-
-    void TearDown() override {
-        WorkGroupSizeBase::TearDown();
-    }
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeChannels, allChannelsWithEnableComputeWorkSizeNDDefault) {
@@ -330,13 +313,6 @@ INSTANTIATE_TEST_CASE_P(wgs,
 // ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ==== ====
 struct WorkGroupSize2D : public WorkGroupSizeBase,
                          public ::testing::TestWithParam<std::tuple<uint32_t, size_t, size_t>> {
-    void SetUp() override {
-        WorkGroupSizeBase::SetUp();
-    }
-
-    void TearDown() override {
-        WorkGroupSizeBase::TearDown();
-    }
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSize2D, XY) {
@@ -363,13 +339,6 @@ struct Region {
 
 struct WorkGroupSizeRegion : public WorkGroupSizeBase,
                              public ::testing::TestWithParam<std::tuple<uint32_t, Region>> {
-    void SetUp() override {
-        WorkGroupSizeBase::SetUp();
-    }
-
-    void TearDown() override {
-        WorkGroupSizeBase::TearDown();
-    }
 };
 
 HWCMDTEST_P(IGFX_GEN8_CORE, WorkGroupSizeRegion, allChannels) {
