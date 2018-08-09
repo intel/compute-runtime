@@ -42,6 +42,7 @@ class MockProgram : public Program {
     using Program::isKernelDebugEnabled;
     using Program::rebuildProgramFromIr;
     using Program::resolveProgramBinary;
+    using Program::updateNonUniformFlag;
 
     using Program::elfBinary;
     using Program::elfBinarySize;

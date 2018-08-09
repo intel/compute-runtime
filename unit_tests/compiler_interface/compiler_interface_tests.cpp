@@ -56,7 +56,6 @@ class CompilerInterfaceTest : public DeviceFixture,
         DeviceFixture::SetUp();
 
         retVal = CL_SUCCESS;
-        MockProgram mockProgram;
 
         // create the compiler interface
         pCompilerInterface.reset(new MockCompilerInterface());
@@ -287,14 +286,8 @@ TEST_F(CompilerInterfaceTest, CompileClToIr) {
 }
 
 TEST_F(CompilerInterfaceTest, GivenProgramCreatedFromIrWhenCompileIsCalledThenIrFormatIsPreserved) {
-    struct MockProgram : Program {
-        using Program::isSpirV;
-        using Program::pDevice;
-        using Program::programBinaryType;
-    };
-    MockProgram prog;
+    MockProgram prog(pContext, false);
     prog.programBinaryType = CL_PROGRAM_BINARY_TYPE_INTERMEDIATE;
-    prog.pDevice = pContext->getDevice(0);
     prog.isSpirV = true;
     retVal = pCompilerInterface->compile(prog, inputArgs);
     EXPECT_EQ(CL_SUCCESS, retVal);

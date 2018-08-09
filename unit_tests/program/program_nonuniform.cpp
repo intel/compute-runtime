@@ -46,26 +46,8 @@
 
 using namespace OCLRT;
 
-struct ProgramMock : Program {
-    void updateNonUniformFlag() {
-        Program::updateNonUniformFlag();
-    }
-
-    void updateNonUniformFlag(const Program **inputPrograms, uint32_t numInputPrograms) {
-        Program::updateNonUniformFlag(inputPrograms, numInputPrograms);
-    }
-
-    void setBuildOptions(const char *buildOptions) {
-        options = buildOptions != nullptr ? buildOptions : "";
-    }
-
-    void forceNonUniformFlag(bool flag) {
-        this->allowNonUniform = flag;
-    }
-};
-
 TEST(ProgramNonUniform, UpdateAllowNonUniform) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions(nullptr);
@@ -75,7 +57,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL1.2");
@@ -85,7 +67,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform12) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.0");
@@ -95,7 +77,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.1");
@@ -105,7 +87,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.0 -cl-uniform-work-group-size");
@@ -115,7 +97,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform20UniformFlag) {
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
-    ProgramMock pm;
+    MockProgram pm;
     EXPECT_FALSE(pm.getAllowNonUniform());
     EXPECT_EQ(12u, pm.getProgramOptionVersion());
     pm.setBuildOptions("-cl-std=CL2.1 -cl-uniform-work-group-size");
@@ -125,7 +107,7 @@ TEST(ProgramNonUniform, UpdateAllowNonUniform21UniformFlag) {
 }
 
 TEST(KernelNonUniform, GetAllowNonUniformFlag) {
-    ProgramMock pm;
+    MockProgram pm;
     KernelInfo ki;
     MockDevice d(*platformDevices[0]);
     struct KernelMock : Kernel {
@@ -135,38 +117,38 @@ TEST(KernelNonUniform, GetAllowNonUniformFlag) {
     };
 
     KernelMock k{&pm, ki, d};
-    pm.forceNonUniformFlag(false);
+    pm.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
-    pm.forceNonUniformFlag(true);
+    pm.setAllowNonUniform(true);
     EXPECT_TRUE(k.getAllowNonUniform());
-    pm.forceNonUniformFlag(false);
+    pm.setAllowNonUniform(false);
     EXPECT_FALSE(k.getAllowNonUniform());
 }
 
 TEST(ProgramNonUniform, UpdateAllowNonUniformOutcomeUniformFlag) {
-    ProgramMock pm;
-    ProgramMock pm1;
-    ProgramMock pm2;
-    const ProgramMock *inputPrograms[] = {&pm1, &pm2};
+    MockProgram pm;
+    MockProgram pm1;
+    MockProgram pm2;
+    const MockProgram *inputPrograms[] = {&pm1, &pm2};
     cl_uint numInputPrograms = 2;
 
-    pm1.forceNonUniformFlag(false);
-    pm2.forceNonUniformFlag(false);
+    pm1.setAllowNonUniform(false);
+    pm2.setAllowNonUniform(false);
     pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
     EXPECT_FALSE(pm.getAllowNonUniform());
 
-    pm1.forceNonUniformFlag(false);
-    pm2.forceNonUniformFlag(true);
+    pm1.setAllowNonUniform(false);
+    pm2.setAllowNonUniform(true);
     pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
     EXPECT_FALSE(pm.getAllowNonUniform());
 
-    pm1.forceNonUniformFlag(true);
-    pm2.forceNonUniformFlag(false);
+    pm1.setAllowNonUniform(true);
+    pm2.setAllowNonUniform(false);
     pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
     EXPECT_FALSE(pm.getAllowNonUniform());
 
-    pm1.forceNonUniformFlag(true);
-    pm2.forceNonUniformFlag(true);
+    pm1.setAllowNonUniform(true);
+    pm2.setAllowNonUniform(true);
     pm.updateNonUniformFlag((const Program **)inputPrograms, numInputPrograms);
     EXPECT_TRUE(pm.getAllowNonUniform());
 }
