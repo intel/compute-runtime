@@ -82,7 +82,6 @@ Program::Program(Context *context, bool isBuiltIn) : context(context), isBuiltIn
         if (force32BitAddressess) {
             internalOptions += "-m32 ";
         }
-        pDevice->increaseProgramCount();
 
         if (DebugManager.flags.DisableStatelessToStatefulOptimization.get()) {
             internalOptions += "-cl-intel-greater-than-4GB-buffer-required ";

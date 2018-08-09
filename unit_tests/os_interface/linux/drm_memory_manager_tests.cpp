@@ -1050,58 +1050,6 @@ TEST_F(DrmMemoryManagerTest, GivenSizeAbove2GBWhenAllocHostPtrAndUseHostPtrAreCr
 
     delete buffer;
 }
-TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExhaustedThenOptimizationIsTurningOfIfNoProgramsAreCreated) {
-    mock->ioctl_expected.gemUserptr = 1;
-    mock->ioctl_expected.gemWait = 1;
-    mock->ioctl_expected.gemClose = 1;
-
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.Force32bitAddressing.set(true);
-    std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    memoryManager->device = pDevice.get();
-    memoryManager->setForce32BitAllocations(true);
-
-    mockAllocator32Bit::resetState();
-    fail32BitMmap = true;
-    failLowerRanger = true;
-    failUpperRange = true;
-    failMmap = true;
-    mockAllocator32Bit::OsInternalsPublic *osInternals = mockAllocator32Bit::createOsInternals();
-    osInternals->mmapFunction = MockMmap;
-    osInternals->munmapFunction = MockMunmap;
-    std::unique_ptr<mockAllocator32Bit> mock32BitAllocator(new mockAllocator32Bit(osInternals));
-
-    memoryManager->allocator32Bit.reset(mock32BitAllocator.release());
-
-    //ask for 4GB
-    auto allocationSize = 4096u;
-    bool force32Bit = memoryManager->peekForce32BitAllocations();
-    EXPECT_TRUE(force32Bit);
-
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_NE(nullptr, graphicsAllocation);
-    EXPECT_FALSE(pDevice->getDeviceInfo().force32BitAddressess);
-
-    memoryManager->freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenAllHeapsAreExhaustedAndThereAreProgramsThenOptimizationIsStillOnAndFailureIsReturned) {
-    mock->ioctl_expected.reset();
-
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.Force32bitAddressing.set(true);
-    std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    pDevice->increaseProgramCount();
-    memoryManager->device = pDevice.get();
-    memoryManager->setForce32BitAllocations(true);
-
-    //ask for 4GB - 1
-    size_t allocationSize = (4 * 1023 * 1024 * (size_t)1024u - 1) + 4 * 1024 * (size_t)1024u;
-
-    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(allocationSize), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
-    EXPECT_EQ(nullptr, graphicsAllocation);
-    EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
-}
 
 TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIsExhaustedAndNewAllocationsIsMadeThenNullIsReturned) {
     DebugManagerStateRestore dbgStateRestore;

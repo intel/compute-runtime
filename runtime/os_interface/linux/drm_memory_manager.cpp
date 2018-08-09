@@ -282,12 +282,6 @@ DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemory(size_t size, const 
     auto res = allocatorToUse->allocate(allocationSize);
 
     if (!res) {
-        if (allocationOrigin == AllocationOrigin::EXTERNAL_ALLOCATION && device && device->getProgramCount() == 0) {
-            this->force32bitAllocations = false;
-            device->setForce32BitAddressing(false);
-            return (DrmAllocation *)allocateGraphicsMemoryInPreferredPool(ptr == nullptr, ptr, static_cast<size_t>(size), GraphicsAllocation::AllocationType::BUFFER);
-        }
-
         return nullptr;
     }
 

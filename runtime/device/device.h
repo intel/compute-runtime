@@ -112,8 +112,6 @@ class Device : public BaseObject<_cl_device_id> {
     unique_ptr_if_unused<Device> release() override;
     OSTime *getOSTime() const { return osTime.get(); };
     double getProfilingTimerResolution();
-    void increaseProgramCount() { programCount++; }
-    uint64_t getProgramCount() { return programCount; }
     unsigned int getEnabledClVersion() const { return enabledClVersion; };
     unsigned int getSupportedClVersion() const;
     double getPlatformHostTimerResolution() const;
@@ -162,7 +160,6 @@ class Device : public BaseObject<_cl_device_id> {
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
-    uint64_t programCount = 0u;
 
     void *slmWindowStartAddress;
 

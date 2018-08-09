@@ -2569,13 +2569,6 @@ TEST_F(Program32BitTests, givenDeviceWithForce32BitAddressingOnWhenProgramIsCrea
     }
 }
 
-TEST_F(Program32BitTests, givenDeviceWhenProgramIsCreatedThenProgramCountInDeviceIncreases) {
-    auto device = pContext->getDevice(0);
-    EXPECT_EQ(0u, device->getProgramCount());
-    MockProgram pProgram(pContext, false);
-    EXPECT_EQ(1u, device->getProgramCount());
-}
-
 TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizationIsMatchingThePlatformEnablingStatus) {
     MockProgram prog(pContext, false);
     auto &internalOpts = prog.getInternalOptions();
