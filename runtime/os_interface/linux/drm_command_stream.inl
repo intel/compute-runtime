@@ -47,7 +47,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
     residency.reserve(512);
     execObjectsStorage.reserve(512);
     if (!executionEnvironment.osInterface) {
-        executionEnvironment.osInterface.reset(new OSInterface());
+        executionEnvironment.osInterface = std::make_unique<OSInterface>();
     }
     executionEnvironment.osInterface->get()->setDrm(this->drm);
     CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
