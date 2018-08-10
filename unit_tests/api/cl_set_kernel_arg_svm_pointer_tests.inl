@@ -65,8 +65,8 @@ class KernelArgSvmFixture : public api_fixture, public DeviceFixture {
     }
 
     void TearDown() override {
-        delete pKernelInfo;
         delete pMockKernel;
+        delete pKernelInfo;
 
         DeviceFixture::TearDown();
         api_fixture::TearDown();

@@ -66,7 +66,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     struct SimpleKernelArgInfo {
         kernelArgType type;
-        const void *object;
+        void *object;
         const void *value;
         size_t size;
         GraphicsAllocation *pSvmAlloc;
@@ -283,7 +283,7 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void storeKernelArg(uint32_t argIndex,
                         kernelArgType argType,
-                        const void *argObject,
+                        void *argObject,
                         const void *argValue,
                         size_t argSize,
                         GraphicsAllocation *argSvmAlloc = nullptr,

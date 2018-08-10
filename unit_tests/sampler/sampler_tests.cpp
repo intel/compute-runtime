@@ -21,6 +21,7 @@
  */
 
 #include "runtime/sampler/sampler.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_sampler.h"
 #include "gtest/gtest.h"
@@ -130,3 +131,29 @@ INSTANTIATE_TEST_CASE_P(Sampler,
                             ::testing::ValuesIn(normalizedCoordModes),
                             ::testing::ValuesIn(addressingModes),
                             ::testing::ValuesIn(filterModes)));
+
+TEST(castToSamplerTest, GivenGenericPointerWhichHoldsSamplerObjectWhenCastToSamplerIsCalledThenCastWithSuccess) {
+    cl_int retVal;
+    auto context = std::make_unique<MockContext>();
+    cl_sampler clSampler = Sampler::create(
+        context.get(),
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto ptr = reinterpret_cast<void *>(clSampler);
+    auto sampler = castToObject<Sampler>(ptr);
+
+    EXPECT_NE(nullptr, sampler);
+    clReleaseSampler(clSampler);
+}
+
+TEST(castToSamplerTest, GivenGenericPointerWhichDoestNotHoldSamplerObjectWhenCastToSamplerIsCalledThenCastWithAFailure) {
+    auto context = std::make_unique<MockContext>();
+    auto notSamplerObj = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context.get()));
+    auto ptr = reinterpret_cast<void *>(notSamplerObj.get());
+    auto notSampler = castToObject<Sampler>(ptr);
+
+    EXPECT_EQ(nullptr, notSampler);
+}

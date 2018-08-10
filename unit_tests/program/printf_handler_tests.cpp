@@ -52,8 +52,8 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
 
     delete printfHandler;
     delete pPrintfSurface;
-    delete pKernelInfo;
     delete pKernel;
+    delete pKernelInfo;
     delete pProgram;
     delete device;
 }
@@ -81,8 +81,8 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
 
     delete printfHandler;
     delete pPrintfSurface;
-    delete pKernelInfo;
     delete pKernel;
+    delete pKernelInfo;
     delete pProgram;
     delete device;
 }

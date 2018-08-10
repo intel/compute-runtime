@@ -70,8 +70,8 @@ void KernelArgBufferFixture::SetUp() {
 }
 
 void KernelArgBufferFixture::TearDown() {
-    delete pKernelInfo;
     delete pKernel;
+    delete pKernelInfo;
     delete pProgram;
     ContextFixture::TearDown();
     DeviceFixture::TearDown();

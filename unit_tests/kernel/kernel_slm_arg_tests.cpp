@@ -70,8 +70,8 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
-        delete pKernelInfo;
         delete pKernel;
+        delete pKernelInfo;
         DeviceFixture::TearDown();
     }
 

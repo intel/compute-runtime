@@ -146,4 +146,10 @@ typedef Sampler *(*SamplerCreateFunc)(Context *context,
                                       float lodMax);
 
 typedef size_t (*getSamplerStateSizeHwFunc)();
+
+template <>
+inline Sampler *castToObject<Sampler>(const void *object) {
+    auto clSamplerObj = reinterpret_cast<const _cl_sampler *>(object);
+    return castToObject<Sampler>(const_cast<cl_sampler>(clSamplerObj));
+}
 } // namespace OCLRT

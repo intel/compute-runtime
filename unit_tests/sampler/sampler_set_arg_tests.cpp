@@ -27,6 +27,7 @@
 #include "runtime/helpers/sampler_helpers.h"
 #include "runtime/utilities/numeric.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/fixtures/image_fixture.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -84,9 +85,9 @@ class SamplerSetArgFixture : public DeviceFixture {
     }
 
     void TearDown() {
+        delete pKernel;
         delete pKernelInfo;
         delete sampler;
-        delete pKernel;
         delete context;
         DeviceFixture::TearDown();
     }
@@ -163,6 +164,124 @@ HWTEST_F(SamplerSetArgTest, getKernelArgShouldReturnSampler) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(samplerObj, pKernel->getKernelArg(0));
+}
+
+HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledThenIncreaseSamplerRefcount) {
+    cl_sampler samplerObj = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+
+    auto pSampler = castToObject<Sampler>(samplerObj);
+    auto refCountBefore = pSampler->getRefInternalCount();
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj),
+        &samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    auto refCountAfter = pSampler->getRefInternalCount();
+
+    EXPECT_EQ(refCountBefore + 1, refCountAfter);
+
+    retVal = clReleaseSampler(samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledAndKernelIsDeletedThenRefCountIsUnchanged) {
+    auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
+    ASSERT_NE(nullptr, myKernel.get());
+    ASSERT_EQ(CL_SUCCESS, myKernel->initialize());
+
+    myKernel->setKernelArgHandler(0, &Kernel::setArgSampler);
+    myKernel->setKernelArgHandler(1, &Kernel::setArgSampler);
+
+    uint32_t crossThreadData[crossThreadDataSize] = {};
+    myKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+    cl_sampler samplerObj = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+
+    auto pSampler = castToObject<Sampler>(samplerObj);
+    auto refCountBefore = pSampler->getRefInternalCount();
+
+    retVal = myKernel->setArg(
+        0,
+        sizeof(samplerObj),
+        &samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    myKernel.reset();
+
+    auto refCountAfter = pSampler->getRefInternalCount();
+
+    EXPECT_EQ(refCountBefore, refCountAfter);
+
+    retVal = clReleaseSampler(samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(SamplerSetArgTest, GivenNewSamplerObjectWhensSetKernelArgIsCalledThenDecreaseOldSamplerRefcount) {
+    cl_sampler samplerObj = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+
+    auto clSamplerObj = *(static_cast<const cl_sampler *>(&samplerObj));
+    cl_sampler s = clSamplerObj;
+    auto pSampler = castToObjectOrAbort<Sampler>(s);
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj),
+        &samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto refCountBefore = pSampler->getRefInternalCount();
+
+    cl_sampler samplerObj2 = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj2),
+        &samplerObj2);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto refCountAfter = pSampler->getRefInternalCount();
+
+    EXPECT_EQ(refCountBefore - 1, refCountAfter);
+
+    retVal = clReleaseSampler(samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+    retVal = clReleaseSampler(samplerObj2);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST_F(SamplerSetArgTest, GivenIncorrentSamplerObjectWhenSetKernelArgSamplerIsCalledThenLeaveRefcountAsIs) {
+    auto notSamplerObj = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(context));
+
+    auto pNotSampler = castToObject<Image>(notSamplerObj.get());
+    auto refCountBefore = pNotSampler->getRefInternalCount();
+
+    retVal = pKernel->setArgSampler(
+        0,
+        sizeof(notSamplerObj.get()),
+        notSamplerObj.get());
+    auto refCountAfter = pNotSampler->getRefInternalCount();
+
+    EXPECT_EQ(refCountBefore, refCountAfter);
 }
 
 HWTEST_F(SamplerSetArgTest, WithFilteringNearestAndAddressingClClampSetAsKernelArgumentSetsConstantBuffer) {

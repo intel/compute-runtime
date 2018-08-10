@@ -47,8 +47,8 @@ class KernelExecInfoFixture : public api_fixture {
             clSVMFree(pContext, ptrSvm);
         }
 
-        delete pKernelInfo;
         delete pMockKernel;
+        delete pKernelInfo;
 
         api_fixture::TearDown();
     }

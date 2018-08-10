@@ -41,13 +41,8 @@ class MockSchedulerKernel : public SchedulerKernel {
     MockSchedulerKernel(Program *program, const KernelInfo &info, const Device &device) : SchedulerKernel(program, info, device) {
     }
 
-    ~MockSchedulerKernel() override {
-        if (kernelInfoOwner)
-            delete &kernelInfo;
-    }
-
-    static MockSchedulerKernel *create(Program &program, Device &device) {
-        KernelInfo *info = new KernelInfo;
+    static MockSchedulerKernel *create(Program &program, Device &device, KernelInfo *&info) {
+        info = new KernelInfo;
         SPatchDataParameterStream dataParametrStream;
         dataParametrStream.DataParameterStreamSize = 8;
         dataParametrStream.Size = 8;
@@ -70,11 +65,8 @@ class MockSchedulerKernel : public SchedulerKernel {
         }
 
         MockSchedulerKernel *mock = Kernel::create<MockSchedulerKernel>(&program, *info, nullptr);
-        mock->kernelInfoOwner = true;
         return mock;
     }
-
-    bool kernelInfoOwner = false;
 };
 
 TEST(SchedulerKernelTest, getLws) {
@@ -142,8 +134,10 @@ TEST(SchedulerKernelTest, setArgsForSchedulerKernel) {
     auto device = unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockProgram program;
     program.setDevice(device.get());
-
-    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get()));
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get(), infoPtr));
+    info.reset(infoPtr);
     unique_ptr<MockGraphicsAllocation> allocs[9];
 
     for (uint32_t i = 0; i < 9; i++) {
@@ -170,7 +164,10 @@ TEST(SchedulerKernelTest, setArgsForSchedulerKernelWithNullDebugQueue) {
     MockProgram program;
     program.setDevice(device.get());
 
-    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get()));
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get(), infoPtr));
+    info.reset(infoPtr);
     unique_ptr<MockGraphicsAllocation> allocs[9];
 
     for (uint32_t i = 0; i < 9; i++) {
@@ -200,7 +197,10 @@ TEST(SchedulerKernelTest, createKernelReflectionForForcedSchedulerDispatch) {
     MockProgram program;
     program.setDevice(device.get());
 
-    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get()));
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get(), infoPtr));
+    info.reset(infoPtr);
 
     scheduler->createReflectionSurface();
 
@@ -215,7 +215,10 @@ TEST(SchedulerKernelTest, createKernelReflectionSecondTimeForForcedSchedulerDisp
     MockProgram program;
     program.setDevice(device.get());
 
-    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get()));
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get(), infoPtr));
+    info.reset(infoPtr);
 
     scheduler->createReflectionSurface();
 
@@ -234,7 +237,10 @@ TEST(SchedulerKernelTest, createKernelReflectionForSchedulerDoesNothing) {
     MockProgram program;
     program.setDevice(device.get());
 
-    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get()));
+    unique_ptr<KernelInfo> info(nullptr);
+    KernelInfo *infoPtr = nullptr;
+    unique_ptr<MockSchedulerKernel> scheduler = unique_ptr<MockSchedulerKernel>(MockSchedulerKernel::create(program, *device.get(), infoPtr));
+    info.reset(infoPtr);
 
     scheduler->createReflectionSurface();
 

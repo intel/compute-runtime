@@ -112,9 +112,9 @@ class ImageSetArgTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        delete pKernelInfo;
         delete srcImage;
         delete pKernel;
+        delete pKernelInfo;
         delete context;
         DeviceFixture::TearDown();
     }

@@ -90,8 +90,8 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
     }
 
     void TearDown() override {
-        delete pKernelInfo;
         delete pKernel;
+        delete pKernelInfo;
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();

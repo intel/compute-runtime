@@ -60,8 +60,8 @@ struct KernelArgDevQueueTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        delete pKernelInfo;
         delete pKernel;
+        delete pKernelInfo;
         delete pDeviceQueue;
 
         DeviceHostQueueFixture<DeviceQueue>::TearDown();

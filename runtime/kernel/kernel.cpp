@@ -124,6 +124,15 @@ Kernel::~Kernel() {
         kernelReflectionSurface = nullptr;
     }
 
+    for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
+        if (kernelInfo.kernelArgInfo.at(i).isSampler) {
+            auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
+            if (sampler) {
+                sampler->decRefInternal();
+            }
+        }
+    }
+
     kernelArgHandlers.clear();
     program->release();
 }
@@ -889,7 +898,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
     return CL_SUCCESS;
 }
 
-void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, const void *argObject,
+void Kernel::storeKernelArg(uint32_t argIndex, kernelArgType argType, void *argObject,
                             const void *argValue, size_t argSize,
                             GraphicsAllocation *argSvmAlloc, cl_mem_flags argSvmFlags) {
     kernelArguments[argIndex].type = argType;
@@ -1301,6 +1310,16 @@ cl_int Kernel::setArgSampler(uint32_t argIndex,
 
     auto clSamplerObj = *(static_cast<const cl_sampler *>(argVal));
     auto pSampler = castToObject<Sampler>(clSamplerObj);
+
+    if (pSampler) {
+        pSampler->incRefInternal();
+    }
+
+    if (kernelArguments.at(argIndex).object) {
+        auto oldSampler = castToObject<Sampler>(kernelArguments.at(argIndex).object);
+        UNRECOVERABLE_IF(!oldSampler);
+        oldSampler->decRefInternal();
+    }
 
     if (pSampler && argSize == sizeof(cl_sampler *)) {
         const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];

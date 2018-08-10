@@ -83,11 +83,11 @@ class KernelTransformableTest : public ::testing::Test {
     cl_int retVal = CL_SUCCESS;
     MockContext context;
     std::unique_ptr<MockProgram> program;
-    std::unique_ptr<MockKernel> pKernel;
+    std::unique_ptr<Sampler> sampler;
     std::unique_ptr<KernelInfo> pKernelInfo;
+    std::unique_ptr<MockKernel> pKernel;
 
     std::unique_ptr<Image> image;
-    std::unique_ptr<Sampler> sampler;
     SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[0x80];
 };
@@ -262,6 +262,7 @@ HWTEST_F(KernelTransformableTest, givenKernelWithTwoTransformableImagesAndTwoTra
     EXPECT_FALSE(firstSurfaceState->getSurfaceArray());
     EXPECT_EQ(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_3D, secondSurfaceState->getSurfaceType());
     EXPECT_FALSE(secondSurfaceState->getSurfaceArray());
+    pKernel.reset();
 }
 
 HWTEST_F(KernelTransformableTest, givenKernelWithNonTransformableSamplersWhenResetSamplerWithNontransformableThenImagesNotChangedAgain) {

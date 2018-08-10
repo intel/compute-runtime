@@ -98,8 +98,8 @@ class BufferSetArgTest : public ContextFixture,
     void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
-        delete pKernelInfo;
         delete pKernel;
+        delete pKernelInfo;
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
