@@ -103,7 +103,7 @@ TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDevi
 
 TEST(DeviceWithSourceLevelDebugger, givenDeviceWithSourceLevelDebuggerActiveWhenDeviceIsDestructedThenSourceLevelDebuggerIsNotified) {
     auto exeEnv = new ExecutionEnvironment;
-    auto gmock = new GMockSourceLevelDebugger(new MockOsLibrary);
+    auto gmock = new ::testing::NiceMock<GMockSourceLevelDebugger>(new MockOsLibrary);
     exeEnv->sourceLevelDebugger.reset(gmock);
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv));
 
