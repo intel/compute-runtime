@@ -1064,19 +1064,17 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeAndBatchedKe
     EXPECT_EQ(1, mockCsrmockCsr->flushCalledCount);
 }
 HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIsEnqueuedTwiceThenTwoSubmissionsAreRecorded) {
-    auto mockCsrmockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
-    mockCsrmockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    pDevice->resetCommandStreamReceiver(mockCsrmockCsr);
-
+    auto &mockCsrmockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    mockCsrmockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    mockCsrmockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    mockCsrmockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pDevice, context);
     size_t gws[3] = {1, 0, 0};
     //make sure csr emits something
-    mockCsrmockCsr->overrideMediaVFEStateDirty(true);
+    mockCsrmockCsr.mediaVfeStateDirty = true;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    mockCsrmockCsr->overrideMediaVFEStateDirty(true);
+    mockCsrmockCsr.mediaVfeStateDirty = true;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     EXPECT_FALSE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
@@ -1328,12 +1326,10 @@ HWTEST_F(EnqueueKernelTest, givenInOrderCommandQueueWhenEnqueueKernelIsMadeThenP
     const cl_queue_properties props[] = {0};
     auto inOrderQueue = clCreateCommandQueueWithProperties(context, pDevice, props, nullptr);
 
-    auto mockCsr = new MockCsrHw2<FamilyType>(pDevice->getHardwareInfo(), *pDevice->executionEnvironment);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     MockKernelWithInternals mockKernel(*pDevice, context);
     size_t gws[3] = {1, 0, 0};

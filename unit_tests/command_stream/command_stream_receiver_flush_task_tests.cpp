@@ -116,30 +116,28 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenconfigureCSRtoNonDirtyStateWh
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCsrThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     configureCSRtoNonDirtyState<FamilyType>();
 
-    mockCsr->getCS(1024u);
-    auto &csrCommandStream = mockCsr->commandStream;
+    mockCsr.getCS(1024u);
+    auto &csrCommandStream = mockCsr.commandStream;
 
     //we do level change that will emit PPC, fill all the space so only BB end fits.
     taskLevel++;
-    auto ppcSize = mockCsr->getRequiredPipeControlSize();
+    auto ppcSize = mockCsr.getRequiredPipeControlSize();
     auto fillSize = MemoryConstants::cacheLineSize - ppcSize - sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     csrCommandStream.getSpace(fillSize);
     auto expectedUsedSize = 2 * MemoryConstants::cacheLineSize;
 
-    flushTask(*mockCsr);
+    flushTask(mockCsr);
 
-    EXPECT_EQ(expectedUsedSize, mockCsr->commandStream.getUsed());
+    EXPECT_EQ(expectedUsedSize, mockCsr.commandStream.getUsed());
 }
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSubmittedViaCommandStreamThenBbEndCoversPaddingEnoughToFitMiBatchBufferStart) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
@@ -150,32 +148,31 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTaskIsSu
     DispatchFlags dispatchFlags;
     dispatchFlags.preemptionMode = PreemptionHelper::getDefaultPreemptionMode(pDevice->getHardwareInfo());
 
-    mockCsr->flushTask(commandStream,
-                       0,
-                       dsh,
-                       ioh,
-                       ssh,
-                       taskLevel,
-                       dispatchFlags,
-                       *pDevice);
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *pDevice);
 
     auto expectedUsedSize = 2 * MemoryConstants::cacheLineSize;
     EXPECT_EQ(expectedUsedSize, commandStream.getUsed());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIohNotEvictable) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    pDevice->resetCommandStreamReceiver(mockCsr);
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     DispatchFlags dispatchFlags;
 
-    mockCsr->flushTask(commandStream,
-                       0,
-                       dsh,
-                       ioh,
-                       ssh,
-                       taskLevel,
-                       dispatchFlags,
-                       *pDevice);
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *pDevice);
 
     EXPECT_EQ(dsh.getGraphicsAllocation()->peekEvictable(), true);
     EXPECT_EQ(ssh.getGraphicsAllocation()->peekEvictable(), true);
@@ -188,24 +185,22 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenflushTaskThenDshAndIoh
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThreadPreemptionWhenFlushTaskIsCalledThenSipKernelIsMadeResident) {
-    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-    pDevice->resetCommandStreamReceiver(mockCsr);
-    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-
+    auto &mockCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    mockCsr.overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
-    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+    mockCsr.submissionAggregator.reset(mockedSubmissionsAggregator);
 
     DispatchFlags dispatchFlags;
     dispatchFlags.preemptionMode = PreemptionMode::MidThread;
 
-    mockCsr->flushTask(commandStream,
-                       0,
-                       dsh,
-                       ioh,
-                       ssh,
-                       taskLevel,
-                       dispatchFlags,
-                       *pDevice);
+    mockCsr.flushTask(commandStream,
+                      0,
+                      dsh,
+                      ioh,
+                      ssh,
+                      taskLevel,
+                      dispatchFlags,
+                      *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
@@ -252,18 +247,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
 HWTEST_F(CommandStreamReceiverFlushTaskTests, sameTaskLevelShouldntSendAPipeControl) {
     WhitelistedRegisters forceRegs = {0};
     pDevice->setForceWhitelistedRegs(true, &forceRegs);
-    auto commandStreamReceiver = new MockCsrHw<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
-
-    pDevice->resetCommandStreamReceiver(commandStreamReceiver);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     // Configure the CSR to not need to submit any state or commands.
     configureCSRtoNonDirtyState<FamilyType>();
 
-    flushTask(*commandStreamReceiver);
+    flushTask(commandStreamReceiver);
 
-    EXPECT_EQ(taskLevel, commandStreamReceiver->peekTaskLevel());
+    EXPECT_EQ(taskLevel, commandStreamReceiver.taskLevel);
 
-    auto sizeUsed = commandStreamReceiver->commandStream.getUsed();
+    auto sizeUsed = commandStreamReceiver.commandStream.getUsed();
     EXPECT_EQ(sizeUsed, 0u);
 }
 
