@@ -55,13 +55,13 @@ class WddmMemoryManagerFixture : public GmmEnvironmentFixture, public GdiDllFixt
             heap32Base = 0x1000;
         }
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    WddmMock *wddm = nullptr;
+    std::unique_ptr<WddmMock> wddm;
 };
 
 typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
@@ -70,7 +70,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
   public:
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
     }
@@ -83,7 +83,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
             heap32Base = 0x1000;
         }
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
@@ -92,7 +92,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         GmmEnvironmentFixture::TearDown();
     }
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    WddmMock *wddm = nullptr;
+    std::unique_ptr<WddmMock> wddm;
     MockGdi *gdi = nullptr;
 };
 
@@ -134,18 +134,18 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
         // wddm is deleted by memory manager
-        wddm = new NiceMock<GmockWddm>;
+        wddm.reset(new NiceMock<GmockWddm>);
         ASSERT_NE(nullptr, wddm);
     }
 
     template <typename FamiltyType>
     void SetUpMm() {
         wddm->init<FamiltyType>();
-        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm.get());
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
 
-        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm, &GmockWddm::baseCreateAllocationAndMapGpuVa));
+        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm.get(), &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
     void TearDown() {
         delete memoryManager;
@@ -153,7 +153,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         GmmEnvironmentFixture::TearDown();
     }
 
-    NiceMock<GmockWddm> *wddm;
+    std::unique_ptr<NiceMock<GmockWddm>> wddm;
 };
 
 typedef ::Test<WddmMemoryManagerFixtureWithGmockWddm> WddmMemoryManagerTest2;
@@ -175,7 +175,7 @@ class BufferWithWddmMemory : public ::testing::Test,
             heap32Base = 0x1000;
         }
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
         context.setMemoryManager(memoryManager.get());

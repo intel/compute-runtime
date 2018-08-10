@@ -102,7 +102,9 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     const HardwareInfo hwInfo = *platformDevices[0];
     OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 
-    bool success = Wddm::enumAdapters(outHwInfo);
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    bool success = wddm->enumAdapters(outHwInfo);
+
     EXPECT_TRUE(success);
 
     const HardwareInfo *hwinfo = *platformDevices;
@@ -123,7 +125,8 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     auto hwInfo = *platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
 
-    bool success = Wddm::enumAdapters(outHwInfo);
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    bool success = wddm->enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
     const HardwareInfo *hwinfo = *platformDevices;
@@ -164,7 +167,8 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
             fSetAdpaterInfo(&platform, hwInfo.pSysInfo);
             delete ptr;
         });
-    bool ret = Wddm::enumAdapters(outHwInfo);
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    auto ret = wddm->enumAdapters(outHwInfo);
     EXPECT_FALSE(ret);
     EXPECT_EQ(nullptr, outHwInfo.pPlatform);
     EXPECT_EQ(nullptr, outHwInfo.pSkuTable);
@@ -453,7 +457,7 @@ TEST_F(Wddm20Tests, GetCpuGpuTime) {
     TimeStampData CPUGPUTime01 = {0};
     TimeStampData CPUGPUTime02 = {0};
     std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(wddm.get());
+    osInterface->get()->setWddm(wddm.release());
     std::unique_ptr<OSTime> osTime(OSTime::create(osInterface.get()).release());
     auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
     EXPECT_TRUE(success);
@@ -474,7 +478,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
     EXPECT_EQ(0u, status);
 
     wddm->init<FamilyType>();
-    WddmMemoryManager mm(false, wddm.release());
+    WddmMemoryManager mm(false, wddm.get());
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -511,7 +515,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocatio
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    auto mockWddm = wddm.release();
+    auto mockWddm = wddm.get();
     mockWddm->init<FamilyType>();
     WddmMemoryManager mm(false, mockWddm);
 

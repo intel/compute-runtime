@@ -63,6 +63,5 @@ void PerformanceCountersFixture::fillOsInterface() {
     osInterfaceBase->get()->setWddm(new WddmMock());
 }
 void PerformanceCountersFixture::releaseOsInterface() {
-    delete osInterfaceBase->get()->getWddm();
 }
 } // namespace OCLRT

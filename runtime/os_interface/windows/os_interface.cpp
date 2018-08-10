@@ -45,9 +45,7 @@ uint32_t OSInterface::getDeviceHandle() const {
     return static_cast<uint32_t>(osInterfaceImpl->getDeviceHandle());
 }
 
-OSInterface::OSInterfaceImpl::OSInterfaceImpl() {
-    wddm = nullptr;
-}
+OSInterface::OSInterfaceImpl::OSInterfaceImpl() = default;
 
 D3DKMT_HANDLE OSInterface::OSInterfaceImpl::getAdapterHandle() const {
     return wddm->getAdapter();
@@ -73,11 +71,11 @@ bool OSInterface::are64kbPagesEnabled() {
 }
 
 Wddm *OSInterface::OSInterfaceImpl::getWddm() const {
-    return wddm;
+    return wddm.get();
 }
 
 void OSInterface::OSInterfaceImpl::setWddm(Wddm *wddm) {
-    this->wddm = wddm;
+    this->wddm.reset(wddm);
 }
 
 HANDLE OSInterface::OSInterfaceImpl::createEvent(LPSECURITY_ATTRIBUTES lpEventAttributes, BOOL bManualReset, BOOL bInitialState,

@@ -25,6 +25,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/os_interface/os_interface.h"
 #include "runtime/platform/platform.h"
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -112,14 +113,21 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 }
 
 auto destructorId = 0u;
-static_assert(sizeof(ExecutionEnvironment) == (is64bit ? 56 : 32), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == (is64bit ? 64 : 36), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     destructorId = 0u;
+    struct OsInterfaceMock : public OSInterface {
+        ~OsInterfaceMock() override {
+            EXPECT_EQ(destructorId, 3u);
+            destructorId++;
+        }
+    };
+
     struct GmmHelperMock : public GmmHelper {
         using GmmHelper::GmmHelper;
         ~GmmHelperMock() override {
-            EXPECT_EQ(destructorId, 3u);
+            EXPECT_EQ(destructorId, 4u);
             destructorId++;
         }
     };
@@ -154,9 +162,10 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->memoryManager.reset(new MemoryMangerMock);
     executionEnvironment->commandStreamReceiver.reset(new CommandStreamReceiverMock);
     executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebuggerMock);
+    executionEnvironment->osInterface.reset(new OsInterfaceMock);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(4u, destructorId);
+    EXPECT_EQ(5u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

@@ -29,6 +29,7 @@ class CommandStreamReceiver;
 class MemoryManager;
 class SourceLevelDebugger;
 struct HardwareInfo;
+class OSInterface;
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
     DeviceFactoryCleaner cleaner;
@@ -47,6 +48,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     GmmHelper *getGmmHelper() const;
 
+    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

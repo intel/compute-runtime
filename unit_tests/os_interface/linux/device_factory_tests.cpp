@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/os_interface/os_interface.h"
+#include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/os_interface/linux/device_factory_tests.h"
 
 TEST_F(DeviceFactoryLinuxTest, GetDevicesCheckEUCntSSCnt) {
@@ -89,4 +91,14 @@ TEST_F(DeviceFactoryLinuxTest, ReleaseDevices) {
     mockDeviceFactory.releaseDevices();
     EXPECT_TRUE(mockDeviceFactory.getNumDevices() == 0);
     EXPECT_TRUE(pDrm->getFileDescriptor() == -1);
+}
+
+TEST_F(DeviceFactoryLinuxTest, givenGetDeviceCallWhenItIsDoneThenOsInterfaceIsAllocatedAndItContainDrm) {
+    MockDeviceFactory mockDeviceFactory;
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
+    bool success = mockDeviceFactory.getDevices(&hwInfo, numDevices, executionEnvironment);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, executionEnvironment.osInterface);
+    EXPECT_EQ(pDrm, executionEnvironment.osInterface->get()->getDrm());
 }

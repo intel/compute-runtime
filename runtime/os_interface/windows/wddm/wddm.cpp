@@ -91,32 +91,29 @@ Wddm::~Wddm() {
 }
 
 bool Wddm::enumAdapters(HardwareInfo &outHardwareInfo) {
-    std::unique_ptr<Wddm> wddm(createWddm(Wddm::pickWddmInterfaceVersion(outHardwareInfo)));
-    UNRECOVERABLE_IF(!wddm.get());
-
-    if (!wddm->gdi->isInitialized()) {
+    if (!gdi->isInitialized()) {
         return false;
     }
-    if (!wddm->openAdapter()) {
+    if (!openAdapter()) {
         return false;
     }
-    if (!wddm->queryAdapterInfo()) {
+    if (!queryAdapterInfo()) {
         return false;
     }
 
-    auto productFamily = wddm->gfxPlatform->eProductFamily;
+    auto productFamily = gfxPlatform->eProductFamily;
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
 
-    outHardwareInfo.pPlatform = new PLATFORM(*wddm->gfxPlatform);
-    outHardwareInfo.pSkuTable = new FeatureTable(*wddm->featureTable);
-    outHardwareInfo.pWaTable = new WorkaroundTable(*wddm->waTable);
-    outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*wddm->gtSystemInfo);
+    outHardwareInfo.pPlatform = new PLATFORM(*gfxPlatform);
+    outHardwareInfo.pSkuTable = new FeatureTable(*featureTable);
+    outHardwareInfo.pWaTable = new WorkaroundTable(*waTable);
+    outHardwareInfo.pSysInfo = new GT_SYSTEM_INFO(*gtSystemInfo);
 
     outHardwareInfo.capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
-    outHardwareInfo.capabilityTable.maxRenderFrequency = wddm->maxRenderFrequency;
-    outHardwareInfo.capabilityTable.instrumentationEnabled &= wddm->instrumentationEnabled;
+    outHardwareInfo.capabilityTable.maxRenderFrequency = maxRenderFrequency;
+    outHardwareInfo.capabilityTable.instrumentationEnabled &= instrumentationEnabled;
 
     HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
     hwConfig->adjustPlatformForProductFamily(&outHardwareInfo);

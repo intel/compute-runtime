@@ -27,6 +27,7 @@
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/os_interface.h"
 
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;

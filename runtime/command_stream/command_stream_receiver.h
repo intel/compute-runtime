@@ -91,7 +91,7 @@ class CommandStreamReceiver {
     void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
-    OSInterface *getOSInterface() { return osInterface.get(); };
+    OSInterface *getOSInterface() { return osInterface; };
 
     MOCKABLE_VIRTUAL void setTagAllocation(GraphicsAllocation *allocation);
     GraphicsAllocation *getTagAllocation() const {
@@ -190,7 +190,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *debugSurface = nullptr;
 
     MemoryManager *memoryManager = nullptr;
-    std::unique_ptr<OSInterface> osInterface;
+    OSInterface *osInterface = nullptr;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
     bool nTo1SubmissionModelEnabled = false;

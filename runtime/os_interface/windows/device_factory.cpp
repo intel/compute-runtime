@@ -45,9 +45,13 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     numDevices = 0;
 
     while (numDevices < totalDeviceCount) {
-        if (!Wddm::enumAdapters(tempHwInfos[numDevices])) {
+        std::unique_ptr<Wddm> wddm(Wddm ::createWddm(Wddm::pickWddmInterfaceVersion(tempHwInfos[numDevices])));
+        if (!wddm->enumAdapters(tempHwInfos[numDevices])) {
             return false;
         }
+
+        executionEnvironment.osInterface.reset(new OSInterface());
+        executionEnvironment.osInterface->get()->setWddm(wddm.release());
 
         HwInfoConfig *hwConfig = HwInfoConfig::get(tempHwInfos[numDevices].pPlatform->eProductFamily);
         if (hwConfig->configureHwInfo(&tempHwInfos[numDevices], &tempHwInfos[numDevices], nullptr)) {

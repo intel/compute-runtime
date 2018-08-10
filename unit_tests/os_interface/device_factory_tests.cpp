@@ -180,3 +180,12 @@ TEST_F(DeviceFactoryTest, givenCreateMultipleDevicesDebugFlagWhenGetDevicesIsCal
     ASSERT_TRUE(success);
     EXPECT_EQ(requiredDeviceCount, numDevices);
 }
+
+TEST_F(DeviceFactoryTest, givenGetDevicesCallWhenItIsDoneThenOsInterfaceIsAllocated) {
+    DeviceFactoryCleaner cleaner;
+    HardwareInfo *hwInfo = nullptr;
+    size_t numDevices = 0;
+    bool success = DeviceFactory::getDevices(&hwInfo, numDevices, executionEnvironment);
+    EXPECT_TRUE(success);
+    EXPECT_NE(nullptr, executionEnvironment.osInterface);
+}

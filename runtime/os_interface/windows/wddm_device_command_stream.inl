@@ -59,8 +59,9 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     this->wddm->setNode(nodeOrdinal);
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoIn);
     this->wddm->setPreemptionMode(preemptionMode);
-    this->osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-    this->osInterface.get()->get()->setWddm(this->wddm);
+    executionEnvironment.osInterface.reset(new OSInterface());
+    this->osInterface = executionEnvironment.osInterface.get();
+    this->osInterface->get()->setWddm(this->wddm);
     commandBufferHeader = new COMMAND_BUFFER_HEADER;
     *commandBufferHeader = CommandBufferHeader;
 

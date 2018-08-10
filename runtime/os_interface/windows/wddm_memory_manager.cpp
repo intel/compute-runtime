@@ -39,7 +39,6 @@ namespace OCLRT {
 
 WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
-    delete this->wddm;
 }
 
 WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, Wddm *wddm) : MemoryManager(enable64kbPages), residencyLock(false) {

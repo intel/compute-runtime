@@ -26,6 +26,7 @@
 #include "runtime/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
+#include <memory>
 #include "profileapi.h"
 #include "umKmInc/sharedata.h"
 
@@ -48,6 +49,6 @@ class OSInterface::OSInterfaceImpl {
     MOCKABLE_VIRTUAL BOOL closeHandle(HANDLE hObject);
 
   protected:
-    Wddm *wddm;
+    std::unique_ptr<Wddm> wddm;
 };
 } // namespace OCLRT

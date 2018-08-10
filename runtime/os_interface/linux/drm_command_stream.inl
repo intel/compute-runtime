@@ -46,8 +46,11 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
     this->drm = drm ? drm : Drm::get(0);
     residency.reserve(512);
     execObjectsStorage.reserve(512);
-    CommandStreamReceiver::osInterface = std::unique_ptr<OSInterface>(new OSInterface());
-    CommandStreamReceiver::osInterface.get()->get()->setDrm(this->drm);
+    if (!executionEnvironment.osInterface) {
+        executionEnvironment.osInterface.reset(new OSInterface());
+    }
+    executionEnvironment.osInterface->get()->setDrm(this->drm);
+    CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
     auto gmmHelper = platform()->peekExecutionEnvironment()->getGmmHelper();
     gmmHelper->setSimplifiedMocsTableUsage(this->drm->getSimplifiedMocsTableUsage());
 }

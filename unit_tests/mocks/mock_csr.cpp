@@ -43,5 +43,5 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
 }
 
 void MockCommandStreamReceiver::setOSInterface(OSInterface *osInterface) {
-    this->osInterface.reset(osInterface);
+    this->osInterface = osInterface;
 }
