@@ -126,10 +126,10 @@ TEST_F(BufferSetArgTest, setKernelArgBuffer) {
     EXPECT_EQ((void *)((uintptr_t)buffer->getGraphicsAllocation()->getGpuAddress()), *pKernelArg);
 }
 
-TEST_F(BufferSetArgTest, setKernelArgBufferWithWrongSizeReturnsInvalidArgValueError) {
+TEST_F(BufferSetArgTest, givenInvalidSizeWhenSettingKernelArgBufferThenReturnClInvalidArgSize) {
     cl_mem arg = buffer;
     cl_int err = pKernel->setArgBuffer(0, sizeof(cl_mem) + 1, arg);
-    EXPECT_EQ(CL_INVALID_ARG_VALUE, err);
+    EXPECT_EQ(CL_INVALID_ARG_SIZE, err);
 }
 
 HWTEST_F(BufferSetArgTest, givenSetArgBufferWhenNullArgStatefulThenProgramNullSurfaceState) {

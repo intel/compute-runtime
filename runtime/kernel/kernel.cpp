@@ -1093,7 +1093,7 @@ cl_int Kernel::setArgBuffer(uint32_t argIndex,
                             const void *argVal) {
 
     if (argSize != sizeof(cl_mem *))
-        return CL_INVALID_ARG_VALUE;
+        return CL_INVALID_ARG_SIZE;
 
     const auto &kernelArgInfo = kernelInfo.kernelArgInfo[argIndex];
     auto clMem = reinterpret_cast<const cl_mem *>(argVal);
