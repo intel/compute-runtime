@@ -99,8 +99,6 @@ endif()
 
 if(NOT MSVC)
   set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
-else()
-  set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/api/api_tests_wrapper.cpp PROPERTIES COMPILE_FLAGS -bigobj)
 endif()
 
 target_link_libraries(igdrcl_tests ${NEO_MOCKABLE_LIB_NAME})

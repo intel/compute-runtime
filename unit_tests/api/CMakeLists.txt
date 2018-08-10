@@ -20,7 +20,8 @@
 
 set(IGDRCL_SRCS_tests_api
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-  ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper1.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/api_tests_wrapper2.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_api_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_api_tests.h
   ${CMAKE_CURRENT_SOURCE_DIR}/cl_build_program_tests.inl
