@@ -95,6 +95,7 @@ TEST_F(clCreateKernelTests, invalidKernel) {
 
     MockProgram *pMockProg = new MockProgram(pContext, false);
     pMockProg->addKernelInfo(pKernelInfo);
+    pMockProg->SetBuildStatus(CL_BUILD_SUCCESS);
 
     kernel = clCreateKernel(
         pMockProg,
@@ -197,6 +198,20 @@ TEST_F(clCreateKernelTests, invalidProgram) {
 
     ASSERT_EQ(CL_INVALID_PROGRAM, retVal);
     ASSERT_EQ(nullptr, kernel);
+}
+
+TEST_F(clCreateKernelTests, givenProgramWithBuildErrorWhenCreatingNewKernelThenReturnClInvalidProgramExecutable) {
+    cl_kernel kernel = nullptr;
+    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(pContext, false);
+    pMockProg->SetBuildStatus(CL_BUILD_ERROR);
+
+    kernel = clCreateKernel(
+        pMockProg.get(),
+        "",
+        &retVal);
+
+    EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
+    EXPECT_EQ(nullptr, kernel);
 }
 
 TEST_F(clCreateKernelTests, noRet) {

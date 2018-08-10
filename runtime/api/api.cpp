@@ -1452,6 +1452,11 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
             break;
         }
 
+        if (pProgram->getBuildStatus() != CL_SUCCESS) {
+            retVal = CL_INVALID_PROGRAM_EXECUTABLE;
+            break;
+        }
+
         const KernelInfo *pKernelInfo = pProgram->getKernelInfo(kernelName);
         if (!pKernelInfo) {
             retVal = CL_INVALID_KERNEL_NAME;

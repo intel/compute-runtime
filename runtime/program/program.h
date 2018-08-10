@@ -154,6 +154,10 @@ class Program : public BaseObject<_cl_program> {
     cl_int getBuildInfo(cl_device_id device, cl_program_build_info paramName,
                         size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
 
+    cl_build_status getBuildStatus() const {
+        return buildStatus;
+    }
+
     Context &getContext() const {
         return *context;
     }
