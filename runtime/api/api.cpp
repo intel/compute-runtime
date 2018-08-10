@@ -1464,7 +1464,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
         }
 
         if (pKernelInfo->isValid == false) {
-            retVal = CL_INVALID_KERNEL;
+            retVal = CL_INVALID_PROGRAM_EXECUTABLE;
             break;
         }
 

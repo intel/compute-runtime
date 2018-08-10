@@ -87,25 +87,22 @@ TEST_F(clCreateKernelTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, invalidKernel) {
+TEST_F(clCreateKernelTests, givenInvalidKernelWhenCreatingNewKernelThenReturnClInvalidProgramExecutable) {
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = KernelInfo::create();
     pKernelInfo->isValid = false;
-    pKernelInfo->name = "CopyBuffer";
 
-    MockProgram *pMockProg = new MockProgram(pContext, false);
+    std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(pContext, false);
     pMockProg->addKernelInfo(pKernelInfo);
     pMockProg->SetBuildStatus(CL_BUILD_SUCCESS);
 
     kernel = clCreateKernel(
-        pMockProg,
-        "CopyBuffer",
+        pMockProg.get(),
+        "",
         &retVal);
 
-    ASSERT_EQ(CL_INVALID_KERNEL, retVal);
-    ASSERT_EQ(nullptr, kernel);
-
-    delete pMockProg;
+    EXPECT_EQ(CL_INVALID_PROGRAM_EXECUTABLE, retVal);
+    EXPECT_EQ(nullptr, kernel);
 }
 
 TEST_F(clCreateKernelTests, invalidParams) {
