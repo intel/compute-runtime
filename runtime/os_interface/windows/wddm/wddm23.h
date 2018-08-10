@@ -28,13 +28,7 @@ class Wddm23 : public Wddm20 {
   protected:
     friend Wddm20;
     Wddm23();
-    ~Wddm23();
-
-    bool createHwQueue() override;
-    void destroyHwQueue();
-    bool createMonitoredFence() override { return true; }
-    const bool hwQueuesSupported() const override { return true; }
-    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
+    ~Wddm23() = default;
 
     D3DKMT_HANDLE hwQueueHandle = 0;
 };

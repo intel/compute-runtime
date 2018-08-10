@@ -61,10 +61,10 @@ bool Wddm::init() {
         if (!createContext()) {
             return false;
         }
-        if (hwQueuesSupported() && !createHwQueue()) {
+        if (wddmInterface->hwQueuesSupported() && !wddmInterface->createHwQueue(preemptionMode)) {
             return false;
         }
-        if (!createMonitoredFence()) {
+        if (!wddmInterface->createMonitoredFence()) {
             return false;
         }
         initialized = true;

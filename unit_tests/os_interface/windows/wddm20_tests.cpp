@@ -676,17 +676,12 @@ HWTEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToTrueW
 
 HWTEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) {
     wddm->init<FamilyType>();
-    EXPECT_FALSE(wddm->hwQueuesSupported());
+    EXPECT_FALSE(wddm->wddmInterface->hwQueuesSupported());
     EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
 TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
-    EXPECT_FALSE(wddm->createHwQueue());
-}
-
-HWTEST_F(Wddm20Tests, whenInitCalledThenDontCallToCreateHwQueue) {
-    wddm->init<FamilyType>();
-    EXPECT_EQ(0u, wddm->createHwQueueResult.called);
+    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode));
 }
 
 HWTEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
@@ -898,7 +893,7 @@ HWTEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurr
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
-    wddm->createMonitoredFence();
+    wddm->wddmInterface->createMonitoredFence();
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
     EXPECT_EQ(1u, wddm->getMonitoredFence().currentFenceValue);

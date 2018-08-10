@@ -126,11 +126,6 @@ bool WddmMock::createContext() {
     return createContextResult.success = Wddm::createContext();
 }
 
-bool WddmMock::createHwQueue() {
-    createHwQueueResult.called++;
-    return createHwQueueResult.success = Wddm::createHwQueue();
-}
-
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
     destroyContextResult.called++;
     return destroyContextResult.success = Wddm::destroyContext(context);
@@ -260,10 +255,10 @@ bool WddmMock::initializeWithoutConfiguringAddressSpace() {
         if (!createContext()) {
             return false;
         }
-        if (hwQueuesSupported() && !createHwQueue()) {
+        if (wddmInterface->hwQueuesSupported() && !wddmInterface->createHwQueue(preemptionMode)) {
             return false;
         }
-        if (!createMonitoredFence()) {
+        if (!wddmInterface->createMonitoredFence()) {
             return false;
         }
         initialized = true;

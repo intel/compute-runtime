@@ -24,75 +24,7 @@
 #include "runtime/os_interface/windows/wddm/wddm23.h"
 
 namespace OCLRT {
-Wddm23::Wddm23() : Wddm20() {}
-
-Wddm23::~Wddm23() {
-    destroyHwQueue();
-}
-
-bool Wddm23::createHwQueue() {
-    D3DKMT_CREATEHWQUEUE createHwQueue = {};
-
-    if (!gdi->setupHwQueueProcAddresses()) {
-        return false;
-    }
-
-    createHwQueue.hHwContext = context;
-    if (preemptionMode >= PreemptionMode::MidBatch) {
-        createHwQueue.Flags.DisableGpuTimeout = readEnablePreemptionRegKey();
-    }
-
-    auto status = gdi->createHwQueue(&createHwQueue);
-    UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-    hwQueueHandle = createHwQueue.hHwQueue;
-
-    resetMonitoredFenceParams(createHwQueue.hHwQueueProgressFence,
-                              reinterpret_cast<uint64_t *>(createHwQueue.HwQueueProgressFenceCPUVirtualAddress),
-                              createHwQueue.HwQueueProgressFenceGPUVirtualAddress);
-
-    return status == STATUS_SUCCESS;
-}
-
-void Wddm23::destroyHwQueue() {
-    if (hwQueueHandle) {
-        D3DKMT_DESTROYHWQUEUE destroyHwQueue = {};
-        destroyHwQueue.hHwQueue = hwQueueHandle;
-
-        auto status = gdi->destroyHwQueue(&destroyHwQueue);
-        DEBUG_BREAK_IF(status != STATUS_SUCCESS);
-    }
-}
-
-bool Wddm23::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
-    D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommand = {};
-    submitCommand.hHwQueue = hwQueueHandle;
-    submitCommand.HwQueueProgressFenceId = monitoredFence.fenceHandle;
-    submitCommand.CommandBuffer = commandBuffer;
-    submitCommand.CommandLength = static_cast<UINT>(size);
-
-    COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
-    pHeader->MonitorFenceVA = monitoredFence.gpuAddress;
-    pHeader->MonitorFenceValue = monitoredFence.currentFenceValue;
-
-    submitCommand.pPrivateDriverData = commandHeader;
-    submitCommand.PrivateDriverDataSize = sizeof(COMMAND_BUFFER_HEADER);
-
-    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU()) {
-        return false;
-    }
-
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", monitoredFence.currentFenceValue);
-
-    auto status = gdi->submitCommandToHwQueue(&submitCommand);
-    UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-
-    if (STATUS_SUCCESS == status) {
-        monitoredFence.lastSubmittedFence = monitoredFence.currentFenceValue;
-        monitoredFence.currentFenceValue++;
-    }
-
-    getDeviceState();
-
-    return status == STATUS_SUCCESS;
+Wddm23::Wddm23() : Wddm20() {
+    wddmInterface = std::make_unique<WddmInterface23>(*this);
 }
 } // namespace OCLRT

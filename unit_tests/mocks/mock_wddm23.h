@@ -27,14 +27,12 @@
 namespace OCLRT {
 class WddmMock23 : public Wddm23 {
   public:
+    using Wddm::preemptionMode;
+    using Wddm::wddmInterface;
     using Wddm23::context;
-    using Wddm23::createHwQueue;
-    using Wddm23::createMonitoredFence;
     using Wddm23::currentPagingFenceValue;
-    using Wddm23::destroyHwQueue;
     using Wddm23::gdi;
     using Wddm23::hwQueueHandle;
-    using Wddm23::hwQueuesSupported;
     using Wddm23::pagingFenceAddress;
     using Wddm23::submit;
 
@@ -45,13 +43,21 @@ class WddmMock23 : public Wddm23 {
         return true;
     }
 
-    bool createHwQueue() override {
+    uint32_t waitOnGPUCalled = 0;
+    uint32_t createHwQueueCalled = 0;
+    bool createHwQueueResult = false;
+};
+
+class WddmMockInterface23 : public WddmInterface23 {
+  public:
+    using WddmInterface23::WddmInterface23;
+
+    bool createHwQueue(PreemptionMode preemptionMode) override {
         createHwQueueCalled++;
-        createHwQueueResult = forceCreateHwQueueFail ? false : Wddm23::createHwQueue();
+        createHwQueueResult = forceCreateHwQueueFail ? false : WddmInterface23::createHwQueue(preemptionMode);
         return createHwQueueResult;
     }
 
-    uint32_t waitOnGPUCalled = 0;
     uint32_t createHwQueueCalled = 0;
     bool forceCreateHwQueueFail = false;
     bool createHwQueueResult = false;
