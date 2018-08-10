@@ -62,6 +62,8 @@ class MockGmmResourceInfo : public GmmResourceInfo {
 
     uint32_t getVAlign() override { return 4u; }
 
+    uint32_t getMaxLod() override { return 7u; }
+
     GMM_TILE_TYPE getTileType() override { return mockResourceCreateParams.Flags.Info.TiledY ? GMM_TILED_Y : GMM_NOT_TILED; }
 
     GMM_RESOURCE_FORMAT getResourceFormat() override { return mockResourceCreateParams.Format; }

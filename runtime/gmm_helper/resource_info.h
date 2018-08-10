@@ -56,6 +56,8 @@ class GmmResourceInfo {
 
     MOCKABLE_VIRTUAL uint32_t getVAlign() { return resourceInfo->GetVAlign(); }
 
+    MOCKABLE_VIRTUAL uint32_t getMaxLod() { return resourceInfo->GetMaxLod(); }
+
     MOCKABLE_VIRTUAL GMM_TILE_TYPE getTileType() { return resourceInfo->GetTileType(); }
 
     MOCKABLE_VIRTUAL GMM_RESOURCE_FORMAT getResourceFormat() { return resourceInfo->GetResourceFormat(); }
