@@ -50,11 +50,12 @@ bool BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>::buildDispatchInfos(MultiD
         auto graphicsAllocation = buffer->getGraphicsAllocation();
         size_t allocationSize = graphicsAllocation->getUnderlyingBufferSize();
 
-        if (operationParams.forceNonAuxMode) {
+        if (AuxTranslationDirection::AuxToNonAux == operationParams.auxTranslationDirection) {
             builder.setKernel(convertToNonAuxKernel.at(kernelInstanceNumber++).get());
             builder.setArg(0, buffer);
             builder.setArgSvm(1, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
         } else {
+            UNRECOVERABLE_IF(AuxTranslationDirection::NonAuxToAux != operationParams.auxTranslationDirection);
             builder.setKernel(convertToAuxKernel.at(kernelInstanceNumber++).get());
             builder.setArgSvm(0, allocationSize, reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()));
             builder.setArg(1, buffer);

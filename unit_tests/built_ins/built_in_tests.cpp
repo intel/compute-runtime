@@ -271,7 +271,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingNonAuxDispatchInfoForAuxTransla
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
     builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
-    builtinOpsParams.forceNonAuxMode = true;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
         buffersForAuxTranslation.insert(&buffer);
@@ -319,7 +319,7 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxDispatchInfoForAuxTranslatio
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
     builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
-    builtinOpsParams.forceNonAuxMode = false;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
 
     for (auto &buffer : mockBuffer) {
         buffersForAuxTranslation.insert(&buffer);
@@ -369,10 +369,10 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickD
         buffersForAuxTranslation.insert(&buffer);
     }
 
-    builtinOpsParams.forceNonAuxMode = true;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
     EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
 
-    builtinOpsParams.forceNonAuxMode = false;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::NonAuxToAux;
     EXPECT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
 
     EXPECT_EQ(6u, multiDispatchInfo.size());
@@ -386,6 +386,22 @@ TEST_F(BuiltInTests, givenInputBufferWhenBuildingAuxTranslationDispatchThenPickD
     EXPECT_NE(builtinKernels[0], builtinKernels[3]);
     EXPECT_NE(builtinKernels[1], builtinKernels[4]);
     EXPECT_NE(builtinKernels[2], builtinKernels[5]);
+}
+
+TEST_F(BuiltInTests, givenInvalidAuxTranslationDirectionWhenBuildingDispatchInfosThenAbort) {
+    BuiltinDispatchInfoBuilder &builder = pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+
+    BuffersForAuxTranslation buffersForAuxTranslation;
+    MockBuffer mockBuffer;
+
+    MultiDispatchInfo multiDispatchInfo;
+    BuiltinDispatchInfoBuilder::BuiltinOpParams builtinOpsParams;
+    builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+
+    buffersForAuxTranslation.insert(&mockBuffer);
+
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::None;
+    EXPECT_THROW(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams), std::exception);
 }
 
 template <typename Family>
@@ -418,6 +434,7 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
     MockBuffer mockBuffer[7];
 
     builtinOpsParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    builtinOpsParams.auxTranslationDirection = AuxTranslationDirection::AuxToNonAux;
 
     for (auto &buffer : mockBuffer) {
         buffersForAuxTranslation.insert(&buffer);

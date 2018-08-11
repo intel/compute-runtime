@@ -1565,45 +1565,49 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
     EXPECT_FALSE(mockCsr->passedDispatchFlags.mediaSamplerRequired);
 }
 
-HWTEST_F(EnqueueKernelTest, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenGuardKernelWithAuxTranslations) {
+struct EnqueueAuxKernelTests : public EnqueueKernelTest {
+    template <typename FamilyType>
     class MyCmdQ : public CommandQueueHw<FamilyType> {
       public:
         MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
-            multiDispatchInfoSizes.push_back(multiDispatchInfo.size());
+        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
+                                    AuxTranslationDirection auxTranslationDirection) override {
+            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, auxTranslationDirection);
+            Kernel *lastKernel = nullptr;
+            for (const auto &dispatchInfo : multiDispatchInfo) {
+                lastKernel = dispatchInfo.getKernel();
+            }
+            dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), buffersForAuxTranslation, auxTranslationDirection);
         }
 
-        std::vector<size_t> multiDispatchInfoSizes;
+        std::vector<std::tuple<Kernel *, size_t, BuffersForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
     };
+};
 
+HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenGuardKernelWithAuxTranslations) {
     MockKernelWithInternals mockKernel(*pDevice, context);
-    MyCmdQ cmdQ(context, pDevice);
+    MyCmdQ<FamilyType> cmdQ(context, pDevice);
     size_t gws[3] = {1, 0, 0};
 
     mockKernel.mockKernel->auxTranslationRequired = true;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.multiDispatchInfoSizes.size());
-    EXPECT_EQ(0u, cmdQ.multiDispatchInfoSizes.at(0)); // before kernel
-    EXPECT_EQ(1u, cmdQ.multiDispatchInfoSizes.at(1)); // after kernel
+    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
+
+    // before kernel
+    EXPECT_EQ(0u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0)));
+    EXPECT_EQ(AuxTranslationDirection::AuxToNonAux, std::get<AuxTranslationDirection>(cmdQ.dispatchAuxTranslationInputs.at(0)));
+
+    // after kernel
+    EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1)));
+    EXPECT_EQ(AuxTranslationDirection::NonAuxToAux, std::get<AuxTranslationDirection>(cmdQ.dispatchAuxTranslationInputs.at(1)));
 
     mockKernel.mockKernel->auxTranslationRequired = false;
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.multiDispatchInfoSizes.size()); // not changed
+    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size()); // not changed
 }
 
-HWTEST_F(EnqueueKernelTest, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
-    class MyCmdQ : public CommandQueueHw<FamilyType> {
-      public:
-        MyCmdQ(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
-        void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation) override {
-            CommandQueueHw<FamilyType>::dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
-            inputBuffersForAuxTranslation.push_back(buffersForAuxTranslation);
-        }
-
-        std::vector<BuffersForAuxTranslation> inputBuffersForAuxTranslation;
-    };
-    MyCmdQ cmdQ(context, pDevice);
+HWTEST_F(EnqueueAuxKernelTests, givenMultipleArgsWhenAuxTranslationIsRequiredThenPickOnlyApplicableBuffers) {
+    MyCmdQ<FamilyType> cmdQ(context, pDevice);
     size_t gws[3] = {1, 0, 0};
     MockBuffer buffer0, buffer1, buffer2, buffer3;
     cl_mem clMem0 = &buffer0;
@@ -1638,10 +1642,41 @@ HWTEST_F(EnqueueKernelTest, givenMultipleArgsWhenAuxTranslationIsRequiredThenPic
     mockKernel.mockKernel->kernelArguments.at(5).type = Kernel::kernelArgType::IMAGE_OBJ; // non-buffer arg - dont insert
 
     cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    EXPECT_EQ(2u, cmdQ.inputBuffersForAuxTranslation.size());
-    EXPECT_EQ(1u, cmdQ.inputBuffersForAuxTranslation[0].size()); // before kernel
-    EXPECT_EQ(1u, cmdQ.inputBuffersForAuxTranslation[1].size()); // after kernel
+    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
+    EXPECT_EQ(1u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
+    EXPECT_EQ(1u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).size()); // after kernel
 
-    EXPECT_EQ(&buffer2, *cmdQ.inputBuffersForAuxTranslation[0].begin());
-    EXPECT_EQ(&buffer2, *cmdQ.inputBuffersForAuxTranslation[1].begin());
+    EXPECT_EQ(&buffer2, *std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).begin());
+    EXPECT_EQ(&buffer2, *std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(1)).begin());
+}
+
+HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueuedThenDispatchAuxTranslationBuiltin) {
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    MyCmdQ<FamilyType> cmdQ(context, pDevice);
+    size_t gws[3] = {1, 0, 0};
+    MockBuffer buffer;
+    cl_mem clMem = &buffer;
+
+    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    mockKernel.kernelInfo.kernelArgInfo.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.mockKernel->initialize();
+    mockKernel.mockKernel->auxTranslationRequired = true;
+    mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
+
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(2u, cmdQ.dispatchAuxTranslationInputs.size());
+
+    // before kernel
+    EXPECT_EQ(1u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(0))); // aux before NDR
+    auto kernelBefore = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(0));
+    EXPECT_EQ("fullCopy", kernelBefore->getKernelInfo().name);
+    EXPECT_TRUE(kernelBefore->isBuiltIn);
+
+    // after kernel
+    EXPECT_EQ(3u, std::get<size_t>(cmdQ.dispatchAuxTranslationInputs.at(1))); // aux + NDR + aux
+    auto kernelAfter = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
+    EXPECT_EQ("fullCopy", kernelAfter->getKernelInfo().name);
+    EXPECT_TRUE(kernelAfter->isBuiltIn);
 }

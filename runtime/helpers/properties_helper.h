@@ -51,6 +51,12 @@ using MemObjSizeArray = std::array<size_t, 3>;
 using MemObjOffsetArray = std::array<size_t, 3>;
 using BuffersForAuxTranslation = std::unordered_set<Buffer *>;
 
+enum class AuxTranslationDirection {
+    None,
+    AuxToNonAux,
+    NonAuxToAux
+};
+
 struct TransferProperties {
     TransferProperties() = delete;
 

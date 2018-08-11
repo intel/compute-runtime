@@ -541,3 +541,9 @@ TEST_F(CloneKernelTest, cloneKernelWithExecInfo) {
 
     pContext->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
 }
+
+TEST_F(CloneKernelTest, givenBuiltinSourceKernelWhenCloningThenSetBuiltinFlagToClonedKernel) {
+    pSourceKernel->isBuiltIn = true;
+    pClonedKernel->cloneKernel(pSourceKernel);
+    EXPECT_TRUE(pClonedKernel->isBuiltIn);
+}

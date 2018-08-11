@@ -413,6 +413,8 @@ cl_int Kernel::cloneKernel(Kernel *pSourceKernel) {
         kernelSvmGfxAllocations.push_back(gfxAlloc);
     }
 
+    this->isBuiltIn = pSourceKernel->isBuiltIn;
+
     return CL_SUCCESS;
 }
 

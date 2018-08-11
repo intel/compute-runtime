@@ -54,7 +54,7 @@ class BuiltinDispatchInfoBuilder {
         GraphicsAllocation *srcSvmAlloc = nullptr;
         GraphicsAllocation *dstSvmAlloc = nullptr;
         const BuffersForAuxTranslation *buffersForAuxTranslation = nullptr;
-        bool forceNonAuxMode = false;
+        AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
         Vec3<size_t> srcOffset = {0, 0, 0};
         Vec3<size_t> dstOffset = {0, 0, 0};
         Vec3<size_t> size = {0, 0, 0};

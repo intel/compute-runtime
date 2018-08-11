@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/built_ins/sip.h"
+#include "runtime/built_ins/builtins_dispatch_builder.h"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/command_queue_hw.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -594,4 +594,14 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
     this->getDevice().getCommandStreamReceiver().releaseIndirectHeap(heapType);
 }
 
+void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
+                                          AuxTranslationDirection auxTranslationDirection) {
+    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+    BuiltinDispatchInfoBuilder::BuiltinOpParams dispatchParams;
+
+    dispatchParams.buffersForAuxTranslation = &buffersForAuxTranslation;
+    dispatchParams.auxTranslationDirection = auxTranslationDirection;
+
+    builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
+}
 } // namespace OCLRT

@@ -86,7 +86,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
             BuffersForAuxTranslation buffersForAuxTranslation;
             if (kernel->isAuxTranslationRequired()) {
                 kernel->fillWithBuffersForAuxTranslation(buffersForAuxTranslation);
-                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
+                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
             }
 
             if (kernel->getKernelInfo().builtinDispatchBuilder == nullptr) {
@@ -103,7 +103,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 }
             }
             if (kernel->isAuxTranslationRequired()) {
-                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation);
+                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
             }
         }
 
