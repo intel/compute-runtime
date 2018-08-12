@@ -328,9 +328,14 @@ int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
         return retVal;
     }
 
-    // we also accept files used as runtime builtins
-    pSource = strstr((const char *)pSourceFromFile, "R\"===(");
-    sourceCode = (pSource != nullptr) ? getStringWithinDelimiters((char *)pSourceFromFile) : (char *)pSourceFromFile;
+    if (inputFileLlvm || inputFileSpirV) {
+        // use the binary input "as is"
+        sourceCode.assign(reinterpret_cast<char *>(pSourceFromFile), sourceFromFileSize);
+    } else {
+        // for text input, we also accept files used as runtime builtins
+        pSource = strstr((const char *)pSourceFromFile, "R\"===(");
+        sourceCode = (pSource != nullptr) ? getStringWithinDelimiters((char *)pSourceFromFile) : (char *)pSourceFromFile;
+    }
 
     this->fclLib.reset(OsLibrary::load(Os::frontEndDllName));
     if (this->fclLib == nullptr) {

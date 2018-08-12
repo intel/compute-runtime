@@ -612,6 +612,20 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
     ASSERT_EQ(expectedTranslation, mockIgcOclDeviceCtx->requestedTranslationCtxs[0]);
 }
 
+TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
+    const char *argv[] = {"cloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
+                          "-device", gEnvironment->devicePrefix.c_str()};
+    uint32_t argc = sizeof(argv) / sizeof(argv[0]);
+    auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+    mockOfflineCompiler->initialize(argc, argv);
+    EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
+
+    argv[1] = "-spirv_input";
+    mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
+    mockOfflineCompiler->initialize(argc, argv);
+    EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
+}
+
 TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {
     const char *argv[] = {
         "cloc",
