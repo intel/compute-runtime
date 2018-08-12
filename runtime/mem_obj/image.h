@@ -175,7 +175,7 @@ class Image : public MemObj {
     void setMipCount(uint32_t mipCountNew) { this->mipCount = mipCountNew; }
 
     static const SurfaceFormatInfo *getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat);
-    static bool validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
+    static cl_int validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc);
 
     cl_int writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch);
     void setMcsSurfaceInfo(McsSurfaceInfo &info) { mcsSurfaceInfo = info; }

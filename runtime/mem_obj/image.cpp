@@ -1236,29 +1236,33 @@ size_t Image::calculateOffsetForMapping(const MemObjOffsetArray &origin) const {
     return offset;
 }
 
-bool Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc) {
+cl_int Image::validateRegionAndOrigin(const size_t *origin, const size_t *region, const cl_image_desc &imgDesc) {
     if (region[0] == 0 || region[1] == 0 || region[2] == 0) {
-        return false;
+        return CL_INVALID_VALUE;
     }
 
     bool notMippMapped = (false == isMipMapped(imgDesc));
 
     if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
         (((origin[1] > 0) && notMippMapped) || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
-        return false;
+        return CL_INVALID_VALUE;
     }
 
     if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
         (((origin[2] > 0) && notMippMapped) || region[2] > 1)) {
-        return false;
+        return CL_INVALID_VALUE;
     }
 
     if (notMippMapped) {
-        return true;
+        return CL_SUCCESS;
     }
 
     uint32_t mipLevel = findMipLevel(imgDesc.image_type, origin);
-    return mipLevel < imgDesc.num_mip_levels;
+    if (mipLevel < imgDesc.num_mip_levels) {
+        return CL_SUCCESS;
+    } else {
+        return CL_INVALID_MIP_LEVEL;
+    }
 }
 
 bool Image::hasSameDescriptor(const cl_image_desc &imageDesc) const {
