@@ -784,37 +784,37 @@ BuiltinDispatchInfoBuilder &BuiltIns::getBuiltinDispatchInfoBuilder(EBuiltInOps 
     default:
         throw std::runtime_error("getBuiltinDispatchInfoBuilder failed");
     case EBuiltInOps::CopyBufferToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToBuffer>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToBuffer>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyBufferRect:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::CopyBufferRect>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::CopyBufferRect>>(*this, context, device); });
         break;
     case EBuiltInOps::FillBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::FillBuffer>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::FillBuffer>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyBufferToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToImage3d>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyImage3dToBuffer:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::CopyImage3dToBuffer>>(*this, context, device); });
         break;
     case EBuiltInOps::CopyImageToImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::CopyImageToImage3d>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::CopyImageToImage3d>>(*this, context, device); });
         break;
     case EBuiltInOps::FillImage3d:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::FillImage3d>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::FillImage3d>>(*this, context, device); });
         break;
     case EBuiltInOps::VmeBlockMotionEstimateIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::VmeBlockMotionEstimateIntel>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::VmeBlockMotionEstimateIntel>>(*this, context, device); });
         break;
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel>>(*this, context, device); });
         break;
     case EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel>>(*this, context, device); });
         break;
     case EBuiltInOps::AuxTranslation:
-        std::call_once(operationBuilder.second, [&] { operationBuilder.first.reset(new BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>(*this, context, device)); });
+        std::call_once(operationBuilder.second, [&] { operationBuilder.first = std::make_unique<BuiltInOp<HWFamily, EBuiltInOps::AuxTranslation>>(*this, context, device); });
         break;
     }
     return *operationBuilder.first;
