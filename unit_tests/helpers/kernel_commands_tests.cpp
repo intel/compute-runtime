@@ -103,7 +103,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programInterfaceDescriptorDataRe
 
     size_t crossThreadDataSize = kernel->getCrossThreadDataSize();
     KernelCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
-        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, false, pDevice->getPreemptionMode(), nullptr);
+        indirectHeap, 0, 0, crossThreadDataSize, 64, 0, 0, 0, 1, 0 * KB, 0, false, pDevice->getPreemptionMode(), nullptr);
 
     auto usedIndirectHeapAfter = indirectHeap.getUsed();
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), usedIndirectHeapAfter - usedIndirectHeapBefore);
@@ -345,6 +345,110 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
 
     auto usedAfterCS = commandStream.getUsed();
     EXPECT_GE(KernelCommandsHelper<FamilyType>::getSizeRequiredCS(), usedAfterCS - usedBeforeCS);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWithFourBindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsCorrectBindingTableEntryCount) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    auto &commandStream = cmdQ.getCS();
+
+    MockKernelWithInternals mockKernel(*pDevice, pContext);
+
+    auto expectedBindingTableCount = 3u;
+    mockKernel.mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    const size_t localWorkSize = 256;
+    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+
+    KernelCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        *mockKernel.mockKernel,
+        mockKernel.mockKernel->getKernelInfo().getMaxSimdSize(),
+        localWorkSizes,
+        0,
+        0,
+        pDevice->getPreemptionMode(),
+        nullptr);
+
+    auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
+    EXPECT_EQ(expectedBindingTableCount, interfaceDescriptor->getBindingTableEntryCount());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelThatIsSchedulerWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsZeroBindingTableEntryCount) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    auto &commandStream = cmdQ.getCS();
+
+    MockKernelWithInternals mockKernel(*pDevice, pContext);
+
+    auto expectedBindingTableCount = 3u;
+    mockKernel.mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+    auto isScheduler = const_cast<bool *>(&mockKernel.mockKernel->isSchedulerKernel);
+    *isScheduler = true;
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    const size_t localWorkSize = 256;
+    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+
+    KernelCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        *mockKernel.mockKernel,
+        mockKernel.mockKernel->getKernelInfo().getMaxSimdSize(),
+        localWorkSizes,
+        0,
+        0,
+        pDevice->getPreemptionMode(),
+        nullptr);
+
+    auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
+    EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWith100BindingTableEntriesWhenIndirectStateIsEmittedThenInterfaceDescriptorHas31BindingTableEntriesSet) {
+    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
+    CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
+
+    auto &commandStream = cmdQ.getCS();
+
+    MockKernelWithInternals mockKernel(*pDevice, pContext);
+
+    auto expectedBindingTableCount = 100u;
+    mockKernel.mockKernel->numberOfBindingTableStates = expectedBindingTableCount;
+
+    auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
+    auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
+    const size_t localWorkSize = 256;
+    const size_t localWorkSizes[3]{localWorkSize, 1, 1};
+
+    KernelCommandsHelper<FamilyType>::sendIndirectState(
+        commandStream,
+        dsh,
+        ioh,
+        ssh,
+        *mockKernel.mockKernel,
+        mockKernel.mockKernel->getKernelInfo().getMaxSimdSize(),
+        localWorkSizes,
+        0,
+        0,
+        pDevice->getPreemptionMode(),
+        nullptr);
+
+    auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
+    EXPECT_EQ(31u, interfaceDescriptor->getBindingTableEntryCount());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTakenIntoAccount) {

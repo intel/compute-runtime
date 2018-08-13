@@ -110,6 +110,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
         0,
         1,
         kernelInfo.workloadInfo.slmStaticSize,
+        4u,
         !!executionEnvironment.HasBarriers, // Barriers Enabled
         pDevice->getPreemptionMode(),
         nullptr);
@@ -155,6 +156,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, test_SLMProgramming) {
     EXPECT_EQ(ExpectedSLMSize, pSrcIDData->getSharedLocalMemorySize());
     EXPECT_EQ(!!executionEnvironment.HasBarriers, pSrcIDData->getBarrierEnable());
     EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::DENORM_MODE_SETBYKERNEL, pSrcIDData->getDenormMode());
+    EXPECT_EQ(4u, pSrcIDData->getBindingTableEntryCount());
 }
 
 INSTANTIATE_TEST_CASE_P(

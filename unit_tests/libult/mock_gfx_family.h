@@ -86,6 +86,8 @@ struct GENX {
         }
         inline void setBarrierEnable(const bool value) {
         }
+        inline void setBindingTableEntryCount(const uint32_t value) {
+        }
     } INTERFACE_DESCRIPTOR_DATA;
 
     typedef struct tagBINDING_TABLE_STATE {

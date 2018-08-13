@@ -143,6 +143,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     uint32_t numSamplers,
     uint32_t threadsPerThreadGroup,
     uint32_t sizeSlm,
+    uint32_t bindingTablePrefetchSize,
     bool barrierEnable,
     PreemptionMode preemptionMode,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
@@ -184,6 +185,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     pInterfaceDescriptor->setSharedLocalMemorySize(programmableIDSLMSize);
     pInterfaceDescriptor->setBarrierEnable(barrierEnable);
+
+    pInterfaceDescriptor->setBindingTableEntryCount(bindingTablePrefetchSize);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(pInterfaceDescriptor, preemptionMode);
 
@@ -382,6 +385,12 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
     DEBUG_BREAK_IF(patchInfo.executionEnvironment == nullptr);
+
+    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
+    if (kernel.isSchedulerKernel) {
+        bindingTablePrefetchSize = 0;
+    }
+
     KernelCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
         dsh,
         offsetInterfaceDescriptor,
@@ -393,6 +402,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         samplerCount,
         threadsPerThreadGroup,
         kernel.slmTotalSize,
+        bindingTablePrefetchSize,
         !!patchInfo.executionEnvironment->HasBarriers,
         preemptionMode,
         inlineInterfaceDescriptor);

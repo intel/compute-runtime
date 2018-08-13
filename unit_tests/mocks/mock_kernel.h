@@ -38,7 +38,9 @@ namespace OCLRT {
 class MockKernel : public Kernel {
   public:
     using Kernel::auxTranslationRequired;
+    using Kernel::isSchedulerKernel;
     using Kernel::kernelArguments;
+    using Kernel::numberOfBindingTableStates;
 
     struct BlockPatchValues {
         uint64_t offset;

@@ -58,6 +58,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         uint32_t numSamplers,
         uint32_t threadsPerThreadGroup,
         uint32_t sizeSlm,
+        uint32_t bindingTablePrefetchSize,
         bool barrierEnable,
         PreemptionMode preemptionMode,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
