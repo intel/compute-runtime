@@ -86,6 +86,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueKernel(
                     return CL_INVALID_WORK_GROUP_SIZE;
                 }
             }
+            if (localWorkSizeIn[i] == 0) {
+                return CL_INVALID_WORK_GROUP_SIZE;
+            }
             workGroupSize[i] = localWorkSizeIn[i];
             totalWorkItems *= localWorkSizeIn[i];
         }
