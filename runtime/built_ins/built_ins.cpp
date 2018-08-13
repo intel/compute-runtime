@@ -224,20 +224,6 @@ Program *BuiltIns::createBuiltInProgram(
     return pBuiltInProgram;
 }
 
-void BuiltinDispatchInfoBuilder::takeOwnership(Context *context) {
-    for (auto &k : usedKernels) {
-        k->takeOwnership(true);
-        k->setContext(context);
-    }
-}
-
-void BuiltinDispatchInfoBuilder::releaseOwnership() {
-    for (auto &k : usedKernels) {
-        k->setContext(nullptr);
-        k->releaseOwnership();
-    }
-}
-
 template <typename HWFamily>
 class BuiltInOp<HWFamily, EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBuilder {
   public:
@@ -825,6 +811,26 @@ std::unique_ptr<BuiltinDispatchInfoBuilder> BuiltIns::setBuiltinDispatchInfoBuil
     auto &operationBuilder = BuiltinOpsBuilders[operationId];
     operationBuilder.first.swap(builder);
     return builder;
+}
+
+BuiltInOwnershipWrapper::BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+    takeOwnership(inputBuilder, context);
+}
+BuiltInOwnershipWrapper::~BuiltInOwnershipWrapper() {
+    if (builder) {
+        for (auto &kernel : builder->peekUsedKernels()) {
+            kernel->setContext(nullptr);
+            kernel->releaseOwnership();
+        }
+    }
+}
+void BuiltInOwnershipWrapper::takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context) {
+    UNRECOVERABLE_IF(builder);
+    builder = &inputBuilder;
+    for (auto &kernel : builder->peekUsedKernels()) {
+        kernel->takeOwnership(true);
+        kernel->setContext(context);
+    }
 }
 
 } // namespace OCLRT

@@ -22,6 +22,7 @@
 
 #pragma once
 #include "CL/cl.h"
+#include "runtime/helpers/properties_helper.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/utilities/vec.h"
 
@@ -236,6 +237,18 @@ class BuiltIns {
     using ProgramsContainerT = std::array<std::pair<std::unique_ptr<Program>, std::once_flag>, static_cast<size_t>(EBuiltInOps::COUNT)>;
     ProgramsContainerT builtinPrograms;
     bool enableCacheing = true;
+};
+
+class BuiltInOwnershipWrapper : public NonCopyableOrMovableClass {
+  public:
+    BuiltInOwnershipWrapper() = default;
+    BuiltInOwnershipWrapper(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
+    ~BuiltInOwnershipWrapper();
+
+    void takeOwnership(BuiltinDispatchInfoBuilder &inputBuilder, Context *context);
+
+  protected:
+    BuiltinDispatchInfoBuilder *builder = nullptr;
 };
 
 template <typename HWFamily, EBuiltInOps OpCode>

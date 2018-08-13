@@ -41,6 +41,7 @@
 #include "unit_tests/global_environment.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_buffer.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
@@ -204,11 +205,6 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
     builtinOpsParams.size = {dst.getSize(), 0, 0};
 
     ASSERT_TRUE(builder.buildDispatchInfos(multiDispatchInfo, builtinOpsParams));
-    builder.takeOwnership(pContext);
-
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        EXPECT_TRUE(dispatchInfo.getKernel()->hasOwnership());
-    }
 
     size_t leftSize = reinterpret_cast<uintptr_t>(dst.getCpuAddress()) % MemoryConstants::cacheLineSize;
     if (leftSize > 0) {
@@ -247,11 +243,6 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBuffer) {
             EXPECT_EQ(Vec3<size_t>(rightSize, 1, 1), dispatchInfo.getGWS());
         }
         i++;
-    }
-
-    builder.releaseOwnership();
-    for (auto &dispatchInfo : multiDispatchInfo) {
-        EXPECT_FALSE(dispatchInfo.getKernel()->hasOwnership());
     }
 
     delete srcPtr;
@@ -413,6 +404,7 @@ class MockAuxBuilInOp : public BuiltInOp<Family, EBuiltInOps::AuxTranslation> {
     using BaseClass::convertToAuxKernel;
     using BaseClass::convertToNonAuxKernel;
     using BaseClass::resizeKernelInstances;
+    using BaseClass::usedKernels;
 
     MockAuxBuilInOp(BuiltIns &kernelsLib, Context &context, Device &device) : BaseClass(kernelsLib, context, device) {}
 };
@@ -447,7 +439,6 @@ HWTEST_F(BuiltInTests, givenMoreBuffersForAuxTranslationThanKernelInstancesWhenD
 
 HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstancesFromBaseKernel) {
     MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
-
     size_t newSize = mockAuxBuiltInOp.convertToAuxKernel.size() + 3;
     mockAuxBuiltInOp.resizeKernelInstances(newSize);
 
@@ -460,6 +451,39 @@ HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
     for (auto &convertToNonAuxKernel : mockAuxBuiltInOp.convertToNonAuxKernel) {
         EXPECT_EQ(&mockAuxBuiltInOp.baseKernel->getKernelInfo(), &convertToNonAuxKernel->getKernelInfo());
     }
+}
+
+HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin) {
+    BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+    auto mockAuxBuiltInOp = new MockAuxBuilInOp<FamilyType>(*pBuiltIns, *pContext, *pDevice);
+    pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
+
+    MockProgram mockProgram;
+    auto mockBuiltinKernel = MockKernel::create(*pDevice, &mockProgram);
+    mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
+
+    MockKernelWithInternals mockKernel(*pDevice, pContext);
+    MockCommandQueueHw<FamilyType> cmdQ(pContext, pDevice, nullptr);
+    size_t gws[3] = {1, 0, 0};
+    MockBuffer buffer;
+    cl_mem clMem = &buffer;
+
+    buffer.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+    mockKernel.kernelInfo.kernelArgInfo.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).kernelArgPatchInfoVector.resize(1);
+    mockKernel.kernelInfo.kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+    mockKernel.mockKernel->initialize();
+    mockKernel.mockKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem);
+
+    mockKernel.mockKernel->auxTranslationRequired = false;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(0u, mockBuiltinKernel->takeOwnershipCalls);
+    EXPECT_EQ(0u, mockBuiltinKernel->releaseOwnershipCalls);
+
+    mockKernel.mockKernel->auxTranslationRequired = true;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, mockBuiltinKernel->takeOwnershipCalls);
+    EXPECT_EQ(1u, mockBuiltinKernel->releaseOwnershipCalls);
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderCopyBufferToBufferAligned) {
@@ -1739,4 +1763,47 @@ TEST_F(BuiltInTests, givenDebugFlagForceUseSourceWhenArgIsAnyThenReturnBuiltinCo
     EXPECT_EQ(BuiltinCode::ECodeType::Source, code.type);
     EXPECT_NE(0u, code.resource.size());
     EXPECT_EQ(pDevice, code.targetDevice);
+}
+
+using BuiltInOwnershipWrapperTests = BuiltInTests;
+
+HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltinWhenConstructedThenLockAndUnlockOnDestruction) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+    MockContext mockContext;
+
+    {
+        BuiltInOwnershipWrapper lock(mockAuxBuiltInOp, &mockContext);
+        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+        EXPECT_EQ(&mockContext, &mockAuxBuiltInOp.baseKernel->getContext());
+    }
+    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+    EXPECT_EQ(pContext, &mockAuxBuiltInOp.baseKernel->getContext());
+}
+
+HWTEST_F(BuiltInOwnershipWrapperTests, givenLockWithoutParametersWhenConstructingThenLockOnlyWhenRequested) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp(*pBuiltIns, *pContext, *pDevice);
+    MockContext mockContext;
+
+    {
+        BuiltInOwnershipWrapper lock;
+        lock.takeOwnership(mockAuxBuiltInOp, &mockContext);
+        EXPECT_TRUE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+        EXPECT_EQ(&mockContext, &mockAuxBuiltInOp.baseKernel->getContext());
+    }
+    EXPECT_FALSE(mockAuxBuiltInOp.baseKernel->hasOwnership());
+    EXPECT_EQ(pContext, &mockAuxBuiltInOp.baseKernel->getContext());
+}
+
+HWTEST_F(BuiltInOwnershipWrapperTests, givenLockWithAcquiredOwnershipWhenTakeOwnershipCalledThenAbort) {
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp1(*pBuiltIns, *pContext, *pDevice);
+    MockAuxBuilInOp<FamilyType> mockAuxBuiltInOp2(*pBuiltIns, *pContext, *pDevice);
+
+    BuiltInOwnershipWrapper lock(mockAuxBuiltInOp1, pContext);
+    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp1, pContext), std::exception);
+    EXPECT_THROW(lock.takeOwnership(mockAuxBuiltInOp2, pContext), std::exception);
+}
+
+HWTEST_F(BuiltInOwnershipWrapperTests, givenBuiltInOwnershipWrapperWhenAskedForTypeTraitsThenDisableCopyConstructorAndOperator) {
+    EXPECT_FALSE(std::is_copy_constructible<BuiltInOwnershipWrapper>::value);
+    EXPECT_FALSE(std::is_copy_assignable<BuiltInOwnershipWrapper>::value);
 }

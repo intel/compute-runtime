@@ -50,7 +50,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
 
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
                                                                           this->getContext(), this->getDevice());
-    builder.takeOwnership(this->context);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface srcImgSurf(srcImage);
     MemObjSurface dstImgSurf(dstImage);
@@ -77,8 +77,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    builder.releaseOwnership();
 
     return CL_SUCCESS;
 }

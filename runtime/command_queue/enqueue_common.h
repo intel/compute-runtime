@@ -78,6 +78,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
     if (kernel == nullptr) {
         enqueueHandler<commandType>(surfaces, blocking, MultiDispatchInfo(), numEventsInWaitList, eventWaitList, event);
     } else {
+        BuiltInOwnershipWrapper builtInLock;
         MultiDispatchInfo multiDispatchInfo;
 
         if (DebugManager.flags.ForceDispatchScheduler.get()) {
@@ -85,6 +86,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         } else {
             BuffersForAuxTranslation buffersForAuxTranslation;
             if (kernel->isAuxTranslationRequired()) {
+                auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+                builtInLock.takeOwnership(builder, this->context);
                 kernel->fillWithBuffersForAuxTranslation(buffersForAuxTranslation);
                 dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
             }

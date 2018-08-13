@@ -78,7 +78,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
     }
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferRect,
                                                                           this->getContext(), this->getDevice());
-    builder.takeOwnership(this->context);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, hostRowPitch, hostSlicePitch);
     void *srcPtr = const_cast<void *>(ptr);
@@ -92,7 +92,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
         region[2] != 0) {
         bool status = createAllocationForHostSurface(hostPtrSurf);
         if (!status) {
-            builder.releaseOwnership();
             return CL_OUT_OF_RESOURCES;
         }
         srcPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
@@ -117,8 +116,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueWriteBufferRect(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    builder.releaseOwnership();
 
     if (context->isProvidingPerformanceHints()) {
         context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, CL_ENQUEUE_WRITE_BUFFER_RECT_REQUIRES_COPY_DATA, static_cast<cl_mem>(buffer));

@@ -90,8 +90,7 @@ class BuiltinDispatchInfoBuilder {
         return true;
     }
 
-    void takeOwnership(Context *context);
-    void releaseOwnership();
+    std::vector<std::unique_ptr<Kernel>> &peekUsedKernels() { return usedKernels; }
 
   protected:
     template <typename KernelNameT, typename... KernelsDescArgsT>

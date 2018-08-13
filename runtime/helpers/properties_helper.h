@@ -87,4 +87,14 @@ struct MapInfo {
     bool readOnly = false;
     uint32_t mipLevel = 0;
 };
+
+class NonCopyableOrMovableClass {
+  public:
+    NonCopyableOrMovableClass() = default;
+    NonCopyableOrMovableClass(const NonCopyableOrMovableClass &) = delete;
+    NonCopyableOrMovableClass &operator=(const NonCopyableOrMovableClass &) = delete;
+
+    NonCopyableOrMovableClass(NonCopyableOrMovableClass &&) = delete;
+    NonCopyableOrMovableClass &operator=(NonCopyableOrMovableClass &&) = delete;
+};
 } // namespace OCLRT

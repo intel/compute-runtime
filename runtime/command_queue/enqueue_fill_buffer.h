@@ -64,7 +64,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
                                                                           this->getContext(), this->getDevice());
 
-    builder.takeOwnership(this->context);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     MemObj patternMemObj(this->context, 0, 0, alignUp(patternSize, 4), patternAllocation->getUnderlyingBuffer(),
@@ -88,8 +88,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillBuffer(
         event);
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(patternAllocation), TEMPORARY_ALLOCATION, taskCount);
-
-    builder.releaseOwnership();
 
     return CL_SUCCESS;
 }

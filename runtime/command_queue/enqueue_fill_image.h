@@ -49,7 +49,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
 
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::FillImage3d,
                                                                           this->getContext(), this->getDevice());
-    builder.takeOwnership(this->context);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     MemObjSurface dstImgSurf(image);
     Surface *surfaces[] = {&dstImgSurf};
@@ -69,8 +69,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueFillImage(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    builder.releaseOwnership();
 
     return CL_SUCCESS;
 }

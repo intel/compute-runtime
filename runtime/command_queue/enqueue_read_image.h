@@ -82,7 +82,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImage3dToBuffer,
                                                                           this->getContext(), this->getDevice());
 
-    builder.takeOwnership(this->context);
+    BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     size_t hostPtrSize = calculateHostPtrSizeForImage(const_cast<size_t *>(region), inputRowPitch, inputSlicePitch, srcImage);
     void *dstPtr = ptr;
@@ -96,7 +96,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         region[2] != 0) {
         bool status = createAllocationForHostSurface(hostPtrSurf);
         if (!status) {
-            builder.releaseOwnership();
             return CL_OUT_OF_RESOURCES;
         }
         dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddressToPatch());
@@ -121,8 +120,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         numEventsInWaitList,
         eventWaitList,
         event);
-
-    builder.releaseOwnership();
 
     if (context->isProvidingPerformanceHints()) {
         if (!isL3Capable(ptr, hostPtrSize)) {
