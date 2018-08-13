@@ -131,7 +131,7 @@ cl_int Program::compile(
         }
 
         compileDataSize = elfWriter.getTotalBinarySize();
-        std::vector<char> compileData(compileDataSize);
+        CLElfLib::ElfBinaryStorage compileData(compileDataSize);
         elfWriter.resolveBinary(compileData);
 
         CompilerInterface *pCompilerInterface = getCompilerInterface();

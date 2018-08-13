@@ -23,63 +23,32 @@
 #pragma once
 #include "types.h"
 
-#if defined(_WIN32)
-#define ELF_CALL __stdcall
-#else
-#define ELF_CALL
-#endif
-
 namespace CLElfLib {
+using ElfSectionHeaderStorage = std::vector<SElf64SectionHeader>;
 /******************************************************************************\
 
  Class:         CElfReader
 
  Description:   Class to provide simpler interaction with the ELF standard
-                binary object.  SElf64Header defines the ELF header type and 
+                binary object.  SElf64Header defines the ELF header type and
                 SElf64SectionHeader defines the section header type.
 
 \******************************************************************************/
 class CElfReader {
   public:
-    static CElfReader *ELF_CALL create(
-        const char *pElfBinary,
-        const size_t elfBinarySize);
+    CElfReader(ElfBinaryStorage &elfBinary);
+    ElfSectionHeaderStorage &getSectionHeaders() {
+        return sectionHeaders;
+    }
 
-    static void ELF_CALL destroy(
-        CElfReader *&pElfObject);
-
-    static bool ELF_CALL isValidElf64(
-        const void *pBinary,
-        const size_t binarySize);
-
-    const SElf64Header *ELF_CALL getElfHeader();
-
-    const SElf64SectionHeader *ELF_CALL getSectionHeader(
-        unsigned int sectionIndex);
-
-    const char *ELF_CALL getSectionName(
-        unsigned int sectionIndex);
-
-    bool ELF_CALL getSectionData(
-        const unsigned int sectionIndex,
-        char *&pData,
-        size_t &dataSize);
-
-    bool ELF_CALL getSectionData(
-        const char *sectionName,
-        char *&pData,
-        size_t &dataSize);
+    const SElf64Header *getElfHeader();
+    char *getSectionData(Elf64_Off dataOffset);
 
   protected:
-    ELF_CALL CElfReader(
-        const char *pElfBinary,
-        const size_t elfBinarySize);
+    void validateElfBinary(ElfBinaryStorage &elfBinary);
 
-    ELF_CALL ~CElfReader();
-
-    const SElf64Header *m_pElfHeader; // pointer to the ELF header
-    const char *m_pBinary;      // portable ELF binary
-    char *m_pNameTable;         // pointer to the string table
-    size_t m_nameTableSize;     // size of string table in bytes
+    ElfSectionHeaderStorage sectionHeaders;
+    char *beginBinary;
+    const SElf64Header *elf64Header;
 };
 } // namespace CLElfLib

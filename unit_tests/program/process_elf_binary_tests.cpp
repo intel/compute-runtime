@@ -46,8 +46,6 @@ TEST_F(ProcessElfBinaryTests, NullBinary) {
     cl_int retVal = program->processElfBinary(nullptr, 0, binaryVersion);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_TRUE(program->elfBinary.empty());
-    EXPECT_EQ(0u, program->elfBinarySize);
     EXPECT_NE(0u, binaryVersion);
 }
 
@@ -58,8 +56,6 @@ TEST_F(ProcessElfBinaryTests, InvalidBinary) {
     cl_int retVal = program->processElfBinary(pBinary, binarySize, binaryVersion);
 
     EXPECT_EQ(CL_INVALID_BINARY, retVal);
-    EXPECT_TRUE(program->elfBinary.empty());
-    EXPECT_EQ(0u, program->elfBinarySize);
     EXPECT_NE(0u, binaryVersion);
 }
 
@@ -100,20 +96,15 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     EXPECT_NE(0u, program->elfBinarySize);
 
     //use ELF reader to parse and validate ELF binary
-    CLElfLib::CElfReader *pElfReader = CLElfLib::CElfReader::create(
-        reinterpret_cast<const char *>(program->elfBinary.data()), program->elfBinarySize);
-    ASSERT_NE(nullptr, pElfReader);
-    const CLElfLib::SElf64Header *pElfHeader = pElfReader->getElfHeader();
-    ASSERT_NE(nullptr, pElfHeader);
-    EXPECT_EQ(pElfHeader->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY);
-    EXPECT_TRUE(CLElfLib::CElfReader::isValidElf64(program->elfBinary.data(), program->elfBinarySize));
+    CLElfLib::CElfReader elfReader(program->elfBinary);
+    const CLElfLib::SElf64Header *elf64Header = elfReader.getElfHeader();
+    ASSERT_NE(nullptr, elf64Header);
+    EXPECT_EQ(elf64Header->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_LIBRARY);
 
     //check if ELF binary contains section SH_TYPE_SPIRV
     bool hasSpirvSection = false;
-    for (uint32_t i = 1; i < pElfHeader->NumSectionHeaderEntries; i++) {
-        const CLElfLib::SElf64SectionHeader *pSectionHeader = pElfReader->getSectionHeader(i);
-        ASSERT_NE(nullptr, pSectionHeader);
-        if (pSectionHeader->Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
+    for (const auto &elfSectionHeader : elfReader.getSectionHeaders()) {
+        if (elfSectionHeader.Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
             hasSpirvSection = true;
             break;
         }
@@ -128,8 +119,6 @@ TEST_F(ProcessElfBinaryTests, ValidSpirvBinary) {
     retVal = program->processElfBinary(pElfBinary.get(), program->elfBinarySize, elfBinaryVersion);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(program->getIsSpirV());
-
-    CLElfLib::CElfReader::destroy(pElfReader);
 }
 
 unsigned int BinaryTypeValues[] = {

@@ -25,8 +25,6 @@
 #include <string>
 
 namespace CLElfLib {
-using ElfBinaryStorage = std::vector<char>;
-
 struct SSectionNode {
     E_SH_TYPE type = E_SH_TYPE::SH_TYPE_NULL;
     E_SH_FLAG flag = E_SH_FLAG::SH_FLAG_NONE;

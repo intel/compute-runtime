@@ -39,24 +39,6 @@ struct ElfTests : public MemoryManagementFixture,
     }
 };
 
-TEST_F(ElfTests, Create_Reader_NULL_Binary) {
-    char *pBinary = NULL;
-    CElfReader *pReader = CElfReader::create(pBinary, 1);
-    EXPECT_EQ(nullptr, pReader);
-}
-
-TEST_F(ElfTests, Create_Reader_Garbage_Binary) {
-    char *pBinary = new char[16];
-    if (pBinary) {
-        memset(pBinary, 0x00, 16);
-    }
-
-    CElfReader *pReader = CElfReader::create(pBinary, 16);
-    EXPECT_EQ((CElfReader *)NULL, pReader);
-
-    delete[] pBinary;
-}
-
 TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionIsAdded) {
     class MockElfWriter : public CElfWriter {
       public:
@@ -109,36 +91,6 @@ TEST_F(ElfTests, givenCElfWriterWhenPatchElfHeaderThenDefaultAreSet) {
     EXPECT_TRUE(elfHeader.SectionNameTableIndex == 0);
 }
 
-TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionCanBeReadByName) {
-    CElfWriter writer(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0);
-
-    char sectionData[16];
-    memset(sectionData, 0xdeadbeef, 4);
-
-    writer.addSection(SSectionNode(E_SH_TYPE::SH_TYPE_OPENCL_SOURCE, E_SH_FLAG::SH_FLAG_WRITE, "Steve", std::string(sectionData, 16u), 16u));
-
-    size_t binarySize = writer.getTotalBinarySize();
-
-    ElfBinaryStorage binary(binarySize);
-    writer.resolveBinary(binary);
-
-    CElfReader *pReader = CElfReader::create(binary.data(), binarySize);
-    EXPECT_NE((CElfReader *)nullptr, pReader);
-
-    char *pData = nullptr;
-    size_t dataSize = 0;
-    auto retVal = pReader->getSectionData("Steve", pData, dataSize);
-
-    EXPECT_TRUE(retVal);
-    EXPECT_EQ(16u, dataSize);
-    for (unsigned int i = 0; i < dataSize; i++) {
-        EXPECT_EQ(sectionData[i], pData[i]);
-    }
-
-    CElfReader::destroy(pReader);
-    EXPECT_EQ((CElfReader *)nullptr, pReader);
-}
-
 TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionCanBeReadByID) {
     CElfWriter writer(E_EH_TYPE::EH_TYPE_EXECUTABLE, E_EH_MACHINE::EH_MACHINE_NONE, 0);
 
@@ -152,19 +104,18 @@ TEST_F(ElfTests, givenSectionDataWhenWriteToBinaryThenSectionCanBeReadByID) {
     ElfBinaryStorage binary(binarySize);
     writer.resolveBinary(binary);
 
-    CElfReader *pReader = CElfReader::create(binary.data(), binarySize);
-    EXPECT_NE((CElfReader *)nullptr, pReader);
+    CElfReader elfReader(binary);
 
-    char *pData = nullptr;
-    size_t dataSize = 0;
-    auto retVal = pReader->getSectionData(1, pData, dataSize);
+    char *pData = elfReader.getSectionData(elfReader.getSectionHeaders()[1].DataOffset);
 
-    EXPECT_TRUE(retVal);
-    EXPECT_EQ(16u, dataSize);
-    for (unsigned int i = 0; i < dataSize; i++) {
+    EXPECT_EQ(16u, elfReader.getSectionHeaders()[1].DataSize);
+    for (unsigned int i = 0; i < elfReader.getSectionHeaders()[1].DataSize; i++) {
         EXPECT_EQ(sectionData[i], pData[i]);
     }
+}
 
-    CElfReader::destroy(pReader);
-    EXPECT_EQ((CElfReader *)nullptr, pReader);
+TEST_F(ElfTests, givenInvalidBinaryStorageThenExceptionIsThrown) {
+    ElfBinaryStorage binary;
+
+    EXPECT_THROW(CElfReader elfReader(binary), ElfException);
 }

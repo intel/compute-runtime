@@ -32,35 +32,18 @@ cl_int Program::processElfBinary(
     const void *pBinary,
     size_t binarySize,
     uint32_t &binaryVersion) {
-    cl_int retVal = CL_SUCCESS;
-    CLElfLib::CElfReader *pElfReader = nullptr;
     const CLElfLib::SElf64Header *pElfHeader = nullptr;
     char *pSectionData = nullptr;
-    size_t sectionDataSize = 0;
 
     binaryVersion = iOpenCL::CURRENT_ICBE_VERSION;
 
-    if (CLElfLib::CElfReader::isValidElf64(pBinary, binarySize) == false) {
-        retVal = CL_INVALID_BINARY;
-    }
+    elfBinarySize = binarySize;
+    elfBinary = CLElfLib::ElfBinaryStorage(reinterpret_cast<const char *>(pBinary), reinterpret_cast<const char *>(reinterpret_cast<const char *>(pBinary) + binarySize));
 
-    if (retVal == CL_SUCCESS) {
-        elfBinarySize = binarySize;
-        elfBinary = CLElfLib::ElfBinaryStorage(reinterpret_cast<const char *>(pBinary), reinterpret_cast<const char *>(reinterpret_cast<const char *>(pBinary) + binarySize));
-    }
+    try {
+        CLElfLib::CElfReader elfReader(elfBinary);
 
-    if (retVal == CL_SUCCESS) {
-        pElfReader = CLElfLib::CElfReader::create(
-            (const char *)pBinary,
-            binarySize);
-
-        if (pElfReader == nullptr) {
-            retVal = CL_OUT_OF_HOST_MEMORY;
-        }
-    }
-
-    if (retVal == CL_SUCCESS) {
-        pElfHeader = pElfReader->getElfHeader();
+        pElfHeader = elfReader.getElfHeader();
 
         switch (pElfHeader->Type) {
         case CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE:
@@ -76,44 +59,34 @@ cl_int Program::processElfBinary(
             break;
 
         default:
-            retVal = CL_INVALID_BINARY;
+            return CL_INVALID_BINARY;
         }
-    }
-
-    if (retVal == CL_SUCCESS) {
         // section 0 is always null
-        for (uint32_t i = 1; i < pElfHeader->NumSectionHeaderEntries; i++) {
-            const CLElfLib::SElf64SectionHeader *pSectionHeader = pElfReader->getSectionHeader(i);
-
-            pSectionData = nullptr;
-            sectionDataSize = 0;
-
-            switch (pSectionHeader->Type) {
+        for (size_t i = 1u; i < elfReader.getSectionHeaders().size(); ++i) {
+            const auto &sectionHeader = elfReader.getSectionHeaders()[i];
+            switch (sectionHeader.Type) {
             case CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV:
                 isSpirV = true;
                 CPP_ATTRIBUTE_FALLTHROUGH;
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_LLVM_BINARY:
-                pElfReader->getSectionData(i, pSectionData, sectionDataSize);
-                if (pSectionData && sectionDataSize) {
-                    storeIrBinary(pSectionData, sectionDataSize, isSpirV);
+                if (sectionHeader.DataSize > 0) {
+                    storeIrBinary(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize), isSpirV);
                 }
                 break;
 
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY:
-                pElfReader->getSectionData(i, pSectionData, sectionDataSize);
-                if (pSectionData && sectionDataSize && validateGenBinaryHeader((SProgramBinaryHeader *)pSectionData)) {
-                    storeGenBinary(pSectionData, sectionDataSize);
+                if (sectionHeader.DataSize > 0 && validateGenBinaryHeader(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)))) {
+                    storeGenBinary(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
                     isCreatedFromBinary = true;
                 } else {
                     getProgramCompilerVersion((SProgramBinaryHeader *)pSectionData, binaryVersion);
-                    retVal = CL_INVALID_BINARY;
+                    return CL_INVALID_BINARY;
                 }
                 break;
 
             case CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_OPTIONS:
-                pElfReader->getSectionData(i, pSectionData, sectionDataSize);
-                if (pSectionData && sectionDataSize) {
-                    options = pSectionData;
+                if (sectionHeader.DataSize > 0) {
+                    options = std::string(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
                 }
                 break;
 
@@ -122,24 +95,19 @@ cl_int Program::processElfBinary(
                 break;
 
             default:
-                retVal = CL_INVALID_BINARY;
-            }
-
-            if (retVal != CL_SUCCESS) {
-                break;
+                return CL_INVALID_BINARY;
             }
         }
-    }
 
-    if (retVal == CL_SUCCESS) {
         isProgramBinaryResolved = true;
 
         // Create an empty build log since program is effectively built
         updateBuildLog(pDevice, "", 1);
+    } catch (const CLElfLib::ElfException &) {
+        return CL_INVALID_BINARY;
     }
 
-    CLElfLib::CElfReader::destroy(pElfReader);
-    return retVal;
+    return CL_SUCCESS;
 }
 
 cl_int Program::resolveProgramBinary() {

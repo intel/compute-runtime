@@ -2163,28 +2163,24 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     retrieveBinaryKernelFilename(filePath, "CopyBuffer_simd8_", ".bin");
     size_t binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     EXPECT_NE(0u, binarySize);
+    program->elfBinary = CLElfLib::ElfBinaryStorage(reinterpret_cast<const char *>(pBinary), reinterpret_cast<const char *>(reinterpret_cast<const char *>(pBinary) + binarySize));
 
     // Find its OpenCL program data and mark that the data were created with unknown compiler version,
     // which means that the program has to be rebuild from its IR binary
-    CLElfLib::CElfReader *pElfReader = nullptr;
-    pElfReader = CLElfLib::CElfReader::create((const char *)pBinary, binarySize);
-    EXPECT_NE(nullptr, pElfReader);
-    EXPECT_TRUE(CLElfLib::CElfReader::isValidElf64(pBinary, binarySize));
-    const CLElfLib::SElf64Header *pElfHeader = pElfReader->getElfHeader();
+    CLElfLib::CElfReader elfReader(program->elfBinary);
+    const CLElfLib::SElf64Header *elf64Header = elfReader.getElfHeader();
     char *pSectionData = nullptr;
-    size_t sectionDataSize = 0;
     SProgramBinaryHeader *pBHdr = nullptr;
-    EXPECT_NE(nullptr, pElfHeader);
-    EXPECT_EQ(pElfHeader->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE);
+    EXPECT_NE(nullptr, elf64Header);
+    EXPECT_EQ(elf64Header->Type, CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE);
 
-    for (uint32_t i = 1; i < pElfHeader->NumSectionHeaderEntries; i++) {
-        const CLElfLib::SElf64SectionHeader *pSectionHeader = pElfReader->getSectionHeader(i);
-        if (pSectionHeader->Type != CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY) {
+    for (const auto &elfHeaderSection : elfReader.getSectionHeaders()) {
+        if (elfHeaderSection.Type != CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY) {
             continue;
         }
-        pElfReader->getSectionData(i, pSectionData, sectionDataSize);
+        pSectionData = elfReader.getSectionData(elfHeaderSection.DataOffset);
         EXPECT_NE(nullptr, pSectionData);
-        EXPECT_NE(0u, sectionDataSize);
+        EXPECT_NE(0u, elfHeaderSection.DataSize);
         pBHdr = (SProgramBinaryHeader *)pSectionData;
         pBHdr->Version = 0; // Simulate compiler Version = 0
         break;
@@ -2203,7 +2199,6 @@ TEST_F(ProgramTests, ValidBinaryWithIGCVersionEqual0) {
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
     // Cleanup
-    CLElfLib::CElfReader::destroy(pElfReader);
     deleteDataReadFromFile(pBinary);
     CompilerInterface::shutdown();
 }
@@ -2952,21 +2947,17 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     auto buildRet = program->rebuildProgramFromIr();
     EXPECT_NE(CL_SUCCESS, buildRet);
 
-    using namespace CLElfLib;
-    using AutoElfReader = std::unique_ptr<CElfReader, void (*)(CElfReader *)>;
-    AutoElfReader elfReader{CElfReader::create(receivedInput.data(), receivedInput.size()), [](CElfReader *r) { CElfReader::destroy(r); }};
-    const SElf64SectionHeader *spvSection = nullptr;
+    CLElfLib::ElfBinaryStorage elfBin(receivedInput.begin(), receivedInput.end());
+    CLElfLib::CElfReader elfReader(elfBin);
+
     char *spvSectionData = nullptr;
     size_t spvSectionDataSize = 0;
-    for (uint32_t i = 0; i < elfReader->getElfHeader()->NumSectionHeaderEntries; i++) {
-        const SElf64SectionHeader *section = elfReader->getSectionHeader(i);
-        if (section->Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
-            EXPECT_EQ(nullptr, spvSection);
-            elfReader->getSectionData(i, spvSectionData, spvSectionDataSize);
-            spvSection = section;
+    for (const auto &elfSectionHeader : elfReader.getSectionHeaders()) {
+        if (elfSectionHeader.Type == CLElfLib::E_SH_TYPE::SH_TYPE_SPIRV) {
+            spvSectionData = elfReader.getSectionData(elfSectionHeader.DataOffset);
+            spvSectionDataSize = static_cast<size_t>(elfSectionHeader.DataSize);
         }
     }
-    ASSERT_NE(nullptr, spvSection);
     EXPECT_EQ(sizeof(spirv), spvSectionDataSize);
     EXPECT_EQ(0, memcmp(spirv, spvSectionData, spvSectionDataSize));
 }

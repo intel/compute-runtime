@@ -25,8 +25,13 @@
 
 #include <inttypes.h>
 #include <stddef.h>
+#include <vector>
 
 namespace CLElfLib {
+struct ElfException : std::exception {
+};
+
+using ElfBinaryStorage = std::vector<char>;
 /******************************************************************************\
  ELF Enumerates
 \******************************************************************************/
