@@ -44,11 +44,11 @@ class MockOfflineCompiler : public OfflineCompiler {
     MockOfflineCompiler() : OfflineCompiler() {
     }
 
-    int initialize(uint32_t numArgs, const char **argv) {
+    int initialize(size_t numArgs, const char *const *argv) {
         return OfflineCompiler::initialize(numArgs, argv);
     }
 
-    int parseCommandLine(uint32_t numArgs, const char **argv) {
+    int parseCommandLine(size_t numArgs, const char *const *argv) {
         return OfflineCompiler::parseCommandLine(numArgs, argv);
     }
 

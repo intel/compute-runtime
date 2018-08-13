@@ -46,7 +46,7 @@ std::string generateFilePath(const std::string &directory, const std::string &fi
 
 class OfflineCompiler {
   public:
-    static OfflineCompiler *create(uint32_t numArgs, const char **argv, int &retVal);
+    static OfflineCompiler *create(size_t numArgs, const char *const *argv, int &retVal);
     int build();
     std::string &getBuildLog();
     void printUsage();
@@ -68,8 +68,8 @@ class OfflineCompiler {
     int getHardwareInfo(const char *pDeviceName);
     std::string getFileNameTrunk(std::string &filePath);
     std::string getStringWithinDelimiters(const std::string &src);
-    int initialize(uint32_t numArgs, const char **argv);
-    int parseCommandLine(uint32_t numArgs, const char **argv);
+    int initialize(size_t numArgs, const char *const *argv);
+    int parseCommandLine(size_t numArgs, const char *const *argv);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     int buildSourceCode();

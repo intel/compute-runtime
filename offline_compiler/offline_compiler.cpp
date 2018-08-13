@@ -103,7 +103,7 @@ OfflineCompiler::~OfflineCompiler() {
 ////////////////////////////////////////////////////////////////////////////////
 // Create
 ////////////////////////////////////////////////////////////////////////////////
-OfflineCompiler *OfflineCompiler::create(uint32_t numArgs, const char **argv, int &retVal) {
+OfflineCompiler *OfflineCompiler::create(size_t numArgs, const char *const *argv, int &retVal) {
     retVal = CL_SUCCESS;
     auto pOffCompiler = new OfflineCompiler();
 
@@ -282,7 +282,7 @@ std::string OfflineCompiler::getStringWithinDelimiters(const std::string &src) {
 ////////////////////////////////////////////////////////////////////////////////
 // Initialize
 ////////////////////////////////////////////////////////////////////////////////
-int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
+int OfflineCompiler::initialize(size_t numArgs, const char *const *argv) {
     int retVal = CL_SUCCESS;
     const char *pSource = nullptr;
     void *pSourceFromFile = nullptr;
@@ -438,7 +438,7 @@ int OfflineCompiler::initialize(uint32_t numArgs, const char **argv) {
 ////////////////////////////////////////////////////////////////////////////////
 // ParseCommandLine
 ////////////////////////////////////////////////////////////////////////////////
-int OfflineCompiler::parseCommandLine(uint32_t numArgs, const char **argv) {
+int OfflineCompiler::parseCommandLine(size_t numArgs, const char *const *argv) {
     int retVal = CL_SUCCESS;
     bool compile32 = false;
     bool compile64 = false;

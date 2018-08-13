@@ -57,14 +57,14 @@ void compilerOutputRemove(const std::string &fileName, const std::string &type) 
 }
 
 TEST_F(OfflineCompilerTests, GoodArgTest) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -73,7 +73,7 @@ TEST_F(OfflineCompilerTests, GoodArgTest) {
 }
 
 TEST_F(OfflineCompilerTests, TestExtensions) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -82,20 +82,20 @@ TEST_F(OfflineCompilerTests, TestExtensions) {
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv.begin());
     std::string internalOptions = mockOfflineCompiler->getInternalOptions();
     EXPECT_THAT(internalOptions, ::testing::HasSubstr(std::string("cl_khr_3d_image_writes")));
 }
 
 TEST_F(OfflineCompilerTests, GoodBuildTest) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -115,7 +115,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTest) {
 }
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -123,7 +123,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
         gEnvironment->devicePrefix.c_str(),
         "-llvm_text"};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -138,14 +138,14 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithLlvmText) {
 }
 
 TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
     // clang-format off
     uint8_t binary[] = {
         0x02, 0x23, 0x3, 0x40, 0x56, 0x7, 0x80, 0x90, 0x1, 0x03,
@@ -185,7 +185,7 @@ TEST_F(OfflineCompilerTests, GoodParseBinToCharArray) {
 }
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -193,7 +193,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
         gEnvironment->devicePrefix.c_str(),
         "-cpp_file"};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -209,7 +209,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithCppFile) {
 }
 
 TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -218,7 +218,7 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
         "-out_dir",
         "offline_compiler_test"};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -233,12 +233,12 @@ TEST_F(OfflineCompilerTests, GoodBuildTestWithOutputDir) {
 }
 
 TEST_F(OfflineCompilerTests, PrintUsage) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-?"};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_STRNE("", output.c_str());
@@ -249,7 +249,7 @@ TEST_F(OfflineCompilerTests, PrintUsage) {
 
 TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
     DebugManager.flags.PrintDebugMessages.set(true);
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/ImANaughtyFile.cl",
@@ -257,7 +257,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -267,7 +267,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_File) {
 }
 
 TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-n",
         "test_files/ImANaughtyFile.cl",
@@ -275,7 +275,7 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
         gEnvironment->devicePrefix.c_str()};
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -285,13 +285,13 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_Flag) {
 }
 
 TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
-    const char *argv_a[] = {
+    auto argvA = {
         "cloc",
         "-file",
     };
 
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv_a), argv_a, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvA.size(), argvA.begin(), retVal);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
 
@@ -300,13 +300,13 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
 
     delete pOfflineCompiler;
 
-    const char *argv_b[] = {
+    auto argvB = {
         "cloc",
         "-file",
         "test_files/ImANaughtyFile.cl",
         "-device"};
     testing::internal::CaptureStdout();
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv_b), argv_b, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argvB.size(), argvB.begin(), retVal);
     output = testing::internal::GetCapturedStdout();
     EXPECT_STRNE(output.c_str(), "");
     EXPECT_EQ(nullptr, pOfflineCompiler);
@@ -316,14 +316,14 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
 }
 
 TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/shouldfail.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    pOfflineCompiler = OfflineCompiler::create(ARRAY_COUNT(argv), argv, retVal);
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
 
     EXPECT_NE(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -346,7 +346,7 @@ TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
 }
 
 TEST(OfflineCompilerTest, parseCmdLine) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-cl-intel-greater-than-4GB-buffer-required"};
 
@@ -354,11 +354,11 @@ TEST(OfflineCompilerTest, parseCmdLine) {
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     testing::internal::CaptureStdout();
-    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv.begin());
     std::string output = testing::internal::GetCapturedStdout();
 
     std::string internalOptions = mockOfflineCompiler->getInternalOptions();
-    size_t found = internalOptions.find(argv[1]);
+    size_t found = internalOptions.find(argv.begin()[1]);
     EXPECT_NE(std::string::npos, found);
 
     delete mockOfflineCompiler;
@@ -466,14 +466,14 @@ TEST(OfflineCompilerTest, buildSourceCode) {
     auto retVal = mockOfflineCompiler->buildSourceCode();
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    retVal = mockOfflineCompiler->initialize(argv.size(), argv.begin());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_EQ(nullptr, mockOfflineCompiler->getGenBinary());
@@ -493,14 +493,14 @@ TEST(OfflineCompilerTest, GivenKernelWhenNoCharAfterKernelSourceThenBuildWithSuc
     auto retVal = mockOfflineCompiler->buildSourceCode();
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
 
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    retVal = mockOfflineCompiler->initialize(argv.size(), argv.begin());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     retVal = mockOfflineCompiler->buildSourceCode();
@@ -538,7 +538,7 @@ TEST(OfflineCompilerTest, generateElfBinary) {
 }
 
 TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFileLlvmIsSetTrue) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-llvm_input"};
 
@@ -546,7 +546,7 @@ TEST(OfflineCompilerTest, givenLlvmInputOptionPassedWhenCmdLineParsedThenInputFi
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     testing::internal::CaptureStdout();
-    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv.begin());
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_NE(0u, output.size());
@@ -564,12 +564,12 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
 }
 
 TEST(OfflineCompilerTest, givenSpirvInputOptionPassedWhenCmdLineParsedThenInputFileSpirvIsSetTrue) {
-    const char *argv[] = {"cloc", "-spirv_input"};
+    auto argv = {"cloc", "-spirv_input"};
 
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
 
     testing::internal::CaptureStdout();
-    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv.begin());
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(0u, output.size());
 
@@ -583,14 +583,14 @@ TEST(OfflineCompilerTest, givenDefaultOfflineCompilerObjectWhenNoOptionsAreChang
 
 TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCodeIsCalledThenProperTranslationContextIsUed) {
     MockOfflineCompiler mockOfflineCompiler;
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/emptykernel.cl",
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    auto retVal = mockOfflineCompiler.initialize(ARRAY_COUNT(argv), argv);
+    auto retVal = mockOfflineCompiler.initialize(argv.size(), argv.begin());
     auto mockIgcOclDeviceCtx = new OCLRT::MockIgcOclDeviceCtx();
     mockOfflineCompiler.igcDeviceCtx = CIF::RAII::Pack<IGC::IgcOclDeviceCtxLatest>(mockIgcOclDeviceCtx);
     ASSERT_EQ(CL_SUCCESS, retVal);
@@ -613,21 +613,21 @@ TEST(OfflineCompilerTest, givenIntermediatedRepresentationInputWhenBuildSourceCo
 }
 
 TEST(OfflineCompilerTest, givenBinaryInputThenDontTruncateSourceAtFirstZero) {
-    const char *argv[] = {"cloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
-                          "-device", gEnvironment->devicePrefix.c_str()};
-    uint32_t argc = sizeof(argv) / sizeof(argv[0]);
+    auto argvLlvm = {"cloc", "-llvm_input", "-file", "test_files/binary_with_zeroes",
+                     "-device", gEnvironment->devicePrefix.c_str()};
     auto mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
-    mockOfflineCompiler->initialize(argc, argv);
+    mockOfflineCompiler->initialize(argvLlvm.size(), argvLlvm.begin());
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 
-    argv[1] = "-spirv_input";
+    auto argvSpirV = {"cloc", "-spirv_input", "-file", "test_files/binary_with_zeroes",
+                      "-device", gEnvironment->devicePrefix.c_str()};
     mockOfflineCompiler = std::make_unique<MockOfflineCompiler>();
-    mockOfflineCompiler->initialize(argc, argv);
+    mockOfflineCompiler->initialize(argvSpirV.size(), argvSpirV.begin());
     EXPECT_LT(0U, mockOfflineCompiler->sourceCode.size());
 }
 
 TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFileHasCorrectName) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -639,7 +639,7 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv.begin());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
@@ -660,7 +660,7 @@ TEST(OfflineCompilerTest, givenOutputFileOptionWhenSourceIsCompiledThenOutputFil
 }
 
 TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataFileIsCreated) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-file",
         "test_files/copybuffer.cl",
@@ -679,7 +679,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
-    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv.begin());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     EXPECT_FALSE(compilerOutputExists("myOutputFileName", "bc") || compilerOutputExists("myOutputFileName", "spv"));
@@ -705,7 +705,7 @@ TEST(OfflineCompilerTest, givenDebugDataAvailableWhenSourceIsBuiltThenDebugDataF
 }
 
 TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreAppendedToInternalOptionsString) {
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-internal_options",
         "myInternalOptions"};
@@ -714,7 +714,7 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
     ASSERT_NE(nullptr, mockOfflineCompiler);
 
     testing::internal::CaptureStdout();
-    mockOfflineCompiler->parseCommandLine(ARRAY_COUNT(argv), argv);
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv.begin());
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_NE(0u, output.size());
@@ -730,7 +730,7 @@ TEST(OfflineCompilerTest, givenInputOtpionsAndInternalOptionsFilesWhenOfflineCom
     ASSERT_TRUE(fileExists("test_files/shouldfail_options.txt"));
     ASSERT_TRUE(fileExists("test_files/shouldfail_internal_options.txt"));
 
-    const char *argv[] = {
+    auto argv = {
         "cloc",
         "-q",
         "-file",
@@ -738,7 +738,7 @@ TEST(OfflineCompilerTest, givenInputOtpionsAndInternalOptionsFilesWhenOfflineCom
         "-device",
         gEnvironment->devicePrefix.c_str()};
 
-    int retVal = mockOfflineCompiler->initialize(ARRAY_COUNT(argv), argv);
+    int retVal = mockOfflineCompiler->initialize(argv.size(), argv.begin());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto &options = mockOfflineCompiler->getOptions();
