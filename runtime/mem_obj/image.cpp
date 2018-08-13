@@ -1230,19 +1230,19 @@ cl_int Image::validateRegionAndOrigin(const size_t *origin, const size_t *region
         return CL_INVALID_VALUE;
     }
 
-    bool notMippMapped = (false == isMipMapped(imgDesc));
+    bool notMipMapped = (false == isMipMapped(imgDesc));
 
     if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER) &&
-        (((origin[1] > 0) && notMippMapped) || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
+        (((origin[1] > 0) && notMipMapped) || origin[2] > 0 || region[1] > 1 || region[2] > 1)) {
         return CL_INVALID_VALUE;
     }
 
     if ((imgDesc.image_type == CL_MEM_OBJECT_IMAGE2D || imgDesc.image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) &&
-        (((origin[2] > 0) && notMippMapped) || region[2] > 1)) {
+        (((origin[2] > 0) && notMipMapped) || region[2] > 1)) {
         return CL_INVALID_VALUE;
     }
 
-    if (notMippMapped) {
+    if (notMipMapped) {
         return CL_SUCCESS;
     }
 
