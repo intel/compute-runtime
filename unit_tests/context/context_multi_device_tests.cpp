@@ -32,7 +32,7 @@ using namespace OCLRT;
 TEST(ContextMultiDevice, singleDevice) {
     cl_device_id devices[] = {
         MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
-    auto numDevices = ARRAY_COUNT(devices);
+    auto numDevices = static_cast<cl_uint>(arrayCount(devices));
 
     auto retVal = CL_SUCCESS;
     auto pContext = Context::create<Context>(nullptr, DeviceVector(devices, numDevices),
@@ -68,7 +68,7 @@ TEST(ContextMultiDevice, eightDevices) {
         MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
         MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr),
         MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr)};
-    auto numDevices = ARRAY_COUNT(devices);
+    auto numDevices = static_cast<cl_uint>(arrayCount(devices));
     ASSERT_EQ(8u, numDevices);
 
     auto retVal = CL_SUCCESS;

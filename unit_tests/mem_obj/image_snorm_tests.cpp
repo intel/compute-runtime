@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -29,10 +29,10 @@ using namespace OCLRT;
 
 const cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
 
-const std::tuple<const SurfaceFormatInfo *, const size_t> paramsForSnormTests[] = {
-    std::make_tuple(readOnlySurfaceFormats, numReadOnlySurfaceFormats),
-    std::make_tuple(writeOnlySurfaceFormats, numWriteOnlySurfaceFormats),
-    std::make_tuple(readWriteSurfaceFormats, numReadWriteSurfaceFormats),
+const std::tuple<const SurfaceFormatInfo *, const size_t *> paramsForSnormTests[] = {
+    std::make_tuple(readOnlySurfaceFormats, &numReadOnlySurfaceFormats),
+    std::make_tuple(writeOnlySurfaceFormats, &numWriteOnlySurfaceFormats),
+    std::make_tuple(readWriteSurfaceFormats, &numReadWriteSurfaceFormats),
 };
 
 const std::array<SurfaceFormatInfo, 6> referenceSnormSurfaceFormats = {{
@@ -60,11 +60,11 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     }
 }
 
-using SnormSurfaceFormatTests = ::testing::TestWithParam<std::tuple<const SurfaceFormatInfo *, const size_t>>;
+using SnormSurfaceFormatTests = ::testing::TestWithParam<std::tuple<const SurfaceFormatInfo *, const size_t *>>;
 
 TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceFormatsThenFindExactCount) {
     const SurfaceFormatInfo *formatsTable = std::get<0>(GetParam());
-    size_t formatsTableCount = std::get<1>(GetParam());
+    size_t formatsTableCount = *std::get<1>(GetParam());
 
     size_t snormFormatsFound = 0;
     for (size_t i = 0; i < formatsTableCount; i++) {

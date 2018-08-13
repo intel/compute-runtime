@@ -36,6 +36,6 @@ static const HardwareInfo *DefaultPlatformDevices[] = {
     &DEFAULT_PLATFORM::hwInfo,
 };
 
-size_t numPlatformDevices = ARRAY_COUNT(DefaultPlatformDevices);
+size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
 } // namespace OCLRT

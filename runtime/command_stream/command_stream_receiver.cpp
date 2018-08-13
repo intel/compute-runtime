@@ -270,7 +270,7 @@ GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
 
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
                                                      size_t minRequiredSize) {
-    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
+    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= arrayCount(indirectHeap));
     auto &heap = indirectHeap[heapType];
     GraphicsAllocation *heapMemory = nullptr;
 
@@ -332,7 +332,7 @@ void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
 }
 
 void CommandStreamReceiver::releaseIndirectHeap(IndirectHeap::Type heapType) {
-    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= ARRAY_COUNT(indirectHeap));
+    DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= arrayCount(indirectHeap));
     auto &heap = indirectHeap[heapType];
 
     if (heap) {

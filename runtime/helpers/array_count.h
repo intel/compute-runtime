@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -23,8 +23,6 @@
 #pragma once
 
 #include <stddef.h>
-
-#define ARRAY_COUNT(x) static_cast<unsigned int>(sizeof(x) / sizeof(x[0]))
 
 template <typename T, size_t N>
 constexpr size_t arrayCount(const T (&)[N]) {

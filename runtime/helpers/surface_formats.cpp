@@ -193,8 +193,8 @@ const SurfaceFormatInfo planarYuvSurfaceFormats[] = {
     {{CL_NV12_INTEL,      CL_UNORM_INT8},     GMM_FORMAT_NV12,                     GFX3DSTATE_SURFACEFORMAT_NV12                    , 0, 1, 1, 1}
 };
 
-const size_t numPackedYuvSurfaceFormats = ARRAY_COUNT(packedYuvSurfaceFormats);
-const size_t numPlanarYuvSurfaceFormats = ARRAY_COUNT(planarYuvSurfaceFormats);
+const size_t numPackedYuvSurfaceFormats = arrayCount(packedYuvSurfaceFormats);
+const size_t numPlanarYuvSurfaceFormats = arrayCount(planarYuvSurfaceFormats);
 #endif
 
 const SurfaceFormatInfo readOnlyDepthSurfaceFormats[] = {
@@ -209,13 +209,13 @@ const SurfaceFormatInfo readWriteDepthSurfaceFormats[] = {
     {{ CL_DEPTH,          CL_UNORM_INT16},   GMM_FORMAT_R16_UNORM_TYPE,           GFX3DSTATE_SURFACEFORMAT_R16_UNORM               , 0, 1, 2, 2}
 };
 
-const size_t numReadOnlyDepthSurfaceFormats  = ARRAY_COUNT(readOnlyDepthSurfaceFormats);
-const size_t numReadWriteDepthSurfaceFormats = ARRAY_COUNT(readWriteDepthSurfaceFormats);
+const size_t numReadOnlyDepthSurfaceFormats  = arrayCount(readOnlyDepthSurfaceFormats);
+const size_t numReadWriteDepthSurfaceFormats = arrayCount(readWriteDepthSurfaceFormats);
 
 
-const size_t numReadOnlySurfaceFormats = ARRAY_COUNT(readOnlySurfaceFormats);
-const size_t numWriteOnlySurfaceFormats = ARRAY_COUNT(writeOnlySurfaceFormats);
-const size_t numReadWriteSurfaceFormats = ARRAY_COUNT(readWriteSurfaceFormats);
+const size_t numReadOnlySurfaceFormats = arrayCount(readOnlySurfaceFormats);
+const size_t numWriteOnlySurfaceFormats = arrayCount(writeOnlySurfaceFormats);
+const size_t numReadWriteSurfaceFormats = arrayCount(readWriteSurfaceFormats);
 
 // clang-format on
 } // namespace OCLRT

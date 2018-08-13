@@ -33,8 +33,6 @@
 
 #include <algorithm>
 
-#define ARRAY_COUNT(x) (sizeof(x) / sizeof(x[0]))
-
 extern Environment *gEnvironment;
 
 namespace OCLRT {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -36,6 +36,6 @@ uint32_t initialHardwareTag = (uint32_t)-1;
 static const HardwareInfo *DefaultPlatformDevices[] = {
     &DEFAULT_PLATFORM::hwInfo};
 
-size_t numPlatformDevices = ARRAY_COUNT(DefaultPlatformDevices);
+size_t numPlatformDevices = arrayCount(DefaultPlatformDevices);
 const HardwareInfo **platformDevices = DefaultPlatformDevices;
 } // namespace OCLRT

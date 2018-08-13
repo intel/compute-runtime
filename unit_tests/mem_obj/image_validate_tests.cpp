@@ -809,7 +809,7 @@ TEST_P(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannel
     image.imageFormat = parentImageFormat;
 
     bool retVal;
-    for (unsigned int i = 0; i < ARRAY_COUNT(allChannelOrders); i++) {
+    for (unsigned int i = 0; i < arrayCount(allChannelOrders); i++) {
         imageFormat.image_channel_order = allChannelOrders[i];
         retVal = image.hasValidParentImageFormat(imageFormat);
         EXPECT_EQ(imageFormat.image_channel_order == validChannelOrder, retVal);
