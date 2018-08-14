@@ -99,6 +99,11 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
             ;
     }
 
+    std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
+    if (bo->isReused) {
+        lock.lock();
+    }
+
     uint32_t r = bo->refCount.fetch_sub(1);
 
     if (r == 1) {
@@ -107,11 +112,14 @@ uint32_t DrmMemoryManager::unreference(OCLRT::BufferObject *bo, bool synchronous
         auto allocatorType = bo->peekAllocationType();
 
         if (bo->isReused) {
-            std::lock_guard<decltype(mtx)> lock(mtx);
             eraseSharedBufferObject(bo);
         }
 
         bo->close();
+
+        if (lock) {
+            lock.unlock();
+        }
 
         delete bo;
         if (address) {
@@ -344,20 +352,28 @@ BufferObject *DrmMemoryManager::createSharedBufferObject(int boHandle, size_t si
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) {
-
-    drm_prime_handle openFd = {0, 0, 0};
-    openFd.fd = handle;
-    auto ret = this->drm->ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
-    DEBUG_BREAK_IF(ret != 0);
-    ((void)(ret));
-
-    auto boHandle = openFd.handle;
-    BufferObject *bo = nullptr;
-
     std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
 
     if (reuseBO) {
         lock.lock();
+    }
+    drm_prime_handle openFd = {0, 0, 0};
+    openFd.fd = handle;
+
+    auto ret = this->drm->ioctl(DRM_IOCTL_PRIME_FD_TO_HANDLE, &openFd);
+
+    if (ret != 0) {
+        int err = errno;
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(ret != 0);
+        ((void)(ret));
+        return nullptr;
+    }
+
+    auto boHandle = openFd.handle;
+    BufferObject *bo = nullptr;
+
+    if (reuseBO) {
         bo = findAndReferenceSharedBufferObject(boHandle);
     }
 
@@ -372,6 +388,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         if (reuseBO) {
             pushSharedBufferObject(bo);
         }
+    }
+    if (lock) {
+        lock.unlock();
     }
 
     auto drmAllocation = new DrmAllocation(bo, bo->address, bo->size, handle, MemoryPool::SystemCpuInaccessible);

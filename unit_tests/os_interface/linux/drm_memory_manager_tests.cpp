@@ -1568,6 +1568,18 @@ TEST_F(DrmMemoryManagerTest, givenNon32BitAddressingWhenBufferFromSharedHandleIs
     EXPECT_EQ(1, munmapMockCallCount);
 }
 
+TEST_F(DrmMemoryManagerTest, givenSharedHandleWhenAllocationIsCreatedAndIoctlPrimeFdToHandleFailsThenNullPtrIsReturned) {
+    mock->ioctl_expected.primeFdToHandle = 1;
+    this->ioctlResExt = {0, -1};
+    mock->ioctl_res_ext = &this->ioctlResExt;
+
+    osHandle handle = 1u;
+    this->mock->outputHandle = 2u;
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false, false);
+    EXPECT_EQ(nullptr, graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
 TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
     auto graphicsAllocation = memoryManager->createGraphicsAllocationFromNTHandle(reinterpret_cast<void *>(1));
     EXPECT_EQ(nullptr, graphicsAllocation);

@@ -75,3 +75,63 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
         memoryManager->freeGraphicsMemory(createdAllocations[i]);
     }
 }
+
+TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThenPrimeFdToHandleDoesNotRaceWithClose) {
+    class MockDrm : public Drm {
+      public:
+        MockDrm(int fd) : Drm(fd) {
+            primeFdHandle = 1;
+            closeHandle = 1;
+        }
+        atomic<int> primeFdHandle;
+        atomic<int> closeHandle;
+
+        int ioctl(unsigned long request, void *arg) override {
+            if (request == DRM_IOCTL_PRIME_FD_TO_HANDLE) {
+                auto *primeToHandleParams = (drm_prime_handle *)arg;
+                primeToHandleParams->handle = primeFdHandle;
+
+                // PrimeFdHandle should not be lower than closeHandle
+                // GemClose shouldn't be executed concurrently with primtFdToHandle
+                EXPECT_EQ(closeHandle.load(), primeFdHandle.load());
+            }
+
+            else if (request == DRM_IOCTL_GEM_CLOSE) {
+                closeHandle++;
+                this_thread::yield();
+
+                primeFdHandle.store(closeHandle.load());
+            }
+
+            return 0;
+        }
+    };
+
+    auto mock = make_unique<MockDrm>(0);
+    auto memoryManager = make_unique<TestedDrmMemoryManager>(mock.get());
+
+    osHandle handle = 3;
+    constexpr size_t maxThreads = 10;
+
+    GraphicsAllocation *createdAllocations[maxThreads];
+    thread threads[maxThreads];
+    atomic<size_t> index(0);
+
+    auto createFunction = [&]() {
+        size_t indexFree = index++;
+        createdAllocations[indexFree] = memoryManager->createGraphicsAllocationFromSharedHandle(handle, false, true);
+        EXPECT_NE(nullptr, createdAllocations[indexFree]);
+
+        this_thread::yield();
+
+        memoryManager->freeGraphicsMemory(createdAllocations[indexFree]);
+    };
+
+    for (size_t i = 0; i < maxThreads; i++) {
+        threads[i] = std::thread(createFunction);
+    }
+
+    for (size_t i = 0; i < maxThreads; i++) {
+        threads[i].join();
+    }
+}
