@@ -33,6 +33,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/string.h"
 #include "runtime/os_interface/device_factory.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/event/async_events_handler.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/platform/extensions.h"
@@ -136,6 +137,11 @@ bool Platform::initialize() {
 
     if (state == StateInited) {
         return true;
+    }
+
+    if (DebugManager.flags.LoopAtPlatformInitialize.get()) {
+        while (DebugManager.flags.LoopAtPlatformInitialize.get())
+            this->initializationLoopHelper();
     }
 
     state = OCLRT::getDevices(&hwInfo, numDevicesReturned, *executionEnvironment) ? StateIniting : StateNone;

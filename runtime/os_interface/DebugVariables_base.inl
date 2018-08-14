@@ -47,6 +47,7 @@ DECLARE_DEBUG_VARIABLE(bool, DisableResourceRecycling, false, "when set to true 
 DECLARE_DEBUG_VARIABLE(bool, ForceDispatchScheduler, false, "dispatches scheduler kernel instead of kernel enqueued")
 DECLARE_DEBUG_VARIABLE(bool, TrackParentEvents, false, "events track their parents")
 DECLARE_DEBUG_VARIABLE(bool, RebuildPrecompiledKernels, false, "forces driver to recompile precompiled kernels from sources")
+DECLARE_DEBUG_VARIABLE(bool, LoopAtPlatformInitialize, false, "Adds endless loop in platform initalize, useful for debugging.")
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, PrintDebugMessages, false, "when enabled, some debug messages will be propagated to console")
 DECLARE_DEBUG_VARIABLE(bool, DumpKernels, false, "Enables dumping kernels' program source code to text files and program from binary to bin file")

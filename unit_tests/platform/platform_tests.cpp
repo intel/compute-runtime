@@ -24,6 +24,7 @@
 #include "runtime/device/device.h"
 #include "runtime/platform/extensions.h"
 #include "runtime/sharings/sharing_factory.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/platform_fixture.h"
 #include "unit_tests/mocks/mock_async_event_handler.h"
 #include "unit_tests/mocks/mock_csr.h"
@@ -207,4 +208,29 @@ TEST(PlatformConstructionTest, givenPlatformThatIsNotInitializedWhenGetDevicesIs
     Platform platform;
     auto devices = platform.getDevices();
     EXPECT_EQ(nullptr, devices);
+}
+
+TEST(PlatformInitLoopTests, givenPlatformWhenInitLoopHelperIsCalledThenItDoesNothing) {
+    struct mockPlatform : public Platform {
+        using Platform::initializationLoopHelper;
+    };
+    mockPlatform platform;
+    platform.initializationLoopHelper();
+}
+
+TEST(PlatformInitLoopTests, givenPlatformWithDebugSettingWhenInitIsCalledThenItEntersEndlessLoop) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.LoopAtPlatformInitialize.set(true);
+    bool called = false;
+    struct mockPlatform : public Platform {
+        mockPlatform(bool &called) : called(called){};
+        void initializationLoopHelper() override {
+            DebugManager.flags.LoopAtPlatformInitialize.set(false);
+            called = true;
+        }
+        bool &called;
+    };
+    mockPlatform platform(called);
+    platform.initialize();
+    EXPECT_TRUE(called);
 }
