@@ -331,6 +331,34 @@ TEST(DebugSettingsManager, WithDebugFunctionalityGetEventsNegative) {
     EXPECT_EQ(0u, event.size());
 }
 
+TEST(DebugSettingsManager, GivenDebugManagerWithDebugFunctionalityWhenGetMemObjectsIsCalledThenCorrectStringIsReturned) {
+    FullyEnabledTestDebugManager debugManager;
+    debugManager.flags.LogApiCalls.set(true);
+    MockBuffer buffer;
+    MemObj *memoryObject = &buffer;
+    cl_mem clMem = memoryObject;
+    cl_mem clMemObjects[] = {clMem, clMem};
+    cl_uint numObjects = 2;
+
+    string memObjectString = debugManager.getMemObjects(reinterpret_cast<const uintptr_t *>(clMemObjects), numObjects);
+    EXPECT_NE(0u, memObjectString.size());
+    stringstream output;
+    output << "cl_mem " << clMem << ", MemObj " << memoryObject;
+    EXPECT_THAT(memObjectString, ::testing::HasSubstr(output.str()));
+}
+
+TEST(DebugSettingsManager, GivenDebugManagerWithDebugFunctionalityWhenGetMemObjectsIsCalledWithNullptrThenStringIsEmpty) {
+    FullyEnabledTestDebugManager debugManager;
+    string memObjectString = debugManager.getMemObjects(nullptr, 2);
+    EXPECT_EQ(0u, memObjectString.size());
+}
+
+TEST(DebugSettingsManager, GivenDebugManagerWithoutDebugFunctionalityWhenGetMemObjectsIsCalledThenCallReturnsImmediately) {
+    FullyDisabledTestDebugManager debugManager;
+    string memObjectString = debugManager.getMemObjects(nullptr, 2);
+    EXPECT_EQ(0u, memObjectString.size());
+}
+
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernel) {
     FullyEnabledTestDebugManager debugManager;
     string kernelDumpFile = "testDumpKernel";

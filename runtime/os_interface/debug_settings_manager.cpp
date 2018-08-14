@@ -132,6 +132,22 @@ const std::string DebugSettingsManager<DebugLevel>::getEvents(const uintptr_t *i
 }
 
 template <DebugFunctionalityLevel DebugLevel>
+const std::string DebugSettingsManager<DebugLevel>::getMemObjects(const uintptr_t *input, uint32_t numOfObjects) {
+    if (false == debugLoggingAvailable()) {
+        return "";
+    }
+
+    std::stringstream os;
+    for (uint32_t i = 0; i < numOfObjects; i++) {
+        if (input != nullptr) {
+            cl_mem mem = const_cast<cl_mem>(reinterpret_cast<const cl_mem *>(input)[i]);
+            os << "cl_mem " << mem << ", MemObj " << static_cast<MemObj *>(mem) << ", ";
+        }
+    }
+    return os.str();
+}
+
+template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::dumpBinaryProgram(int32_t numDevices, const size_t *lengths, const unsigned char **binaries) {
     if (false == debugKernelDumpingAvailable()) {
         return;
