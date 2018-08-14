@@ -26,6 +26,7 @@
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/helpers/file_io.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/elflib/elf_binary_simulator.h"
 #include "unit_tests/helpers/test_files.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
 
@@ -113,28 +114,21 @@ TEST_F(clGetProgramBuildInfoTests, givenSourceWhenclGetProgramBuildInfoIsCalledT
 TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCalledThenReturnClBuildNone) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_INVALID_VALUE;
-    void *pBinary = nullptr;
-    size_t binarySize = 0;
-    std::string testFile;
-    retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd8_", ".bin");
 
-    ASSERT_EQ(true, fileExists(testFile));
+    CLElfLib::ElfBinaryStorage elfBinary;
+    MockElfBinary(elfBinary);
 
-    binarySize = loadDataFromFile(
-        testFile.c_str(),
-        pBinary);
-
-    ASSERT_NE(0u, binarySize);
-    ASSERT_NE(nullptr, pBinary);
-
+    const size_t binarySize = elfBinary.size();
+    const unsigned char *elfBinaryTemp = reinterpret_cast<unsigned char *>(elfBinary.data());
     pProgram = clCreateProgramWithBinary(
         pContext,
         num_devices,
         devices,
         &binarySize,
-        (const unsigned char **)&pBinary,
+        &elfBinaryTemp,
         &binaryStatus,
         &retVal);
+
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, binaryStatus);
@@ -143,8 +137,6 @@ TEST_F(clGetProgramBuildInfoTests, givenElfBinaryWhenclGetProgramBuildInfoIsCall
     retVal = clGetProgramBuildInfo(pProgram, devices[0], CL_PROGRAM_BUILD_STATUS, sizeof(buildStatus), &buildStatus, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(CL_BUILD_NONE, buildStatus);
-
-    deleteDataReadFromFile(pBinary);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
