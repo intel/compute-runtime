@@ -323,7 +323,7 @@ endif()
 set(GMM_LIBRARY_NAME "igdgmm${NEO_BITS}")
 
 macro(copy_gmm_dll_for target)
-  if(WIN32 AND NOT USE_STATIC_GMM)
+  if(NOT USE_STATIC_GMM)
     add_dependencies(${target} ${GMMUMD_LIB_NAME})
     add_custom_command(
       TARGET ${target}
