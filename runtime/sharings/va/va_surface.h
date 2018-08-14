@@ -34,7 +34,7 @@ class VASurface : VASharing {
                                         cl_mem_flags flags, VASurfaceID *surface, cl_uint plane,
                                         cl_int *errcodeRet);
 
-    void synchronizeObject(UpdateData *updateData) override;
+    void synchronizeObject(UpdateData &updateData) override;
 
     void getMemObjectInfo(size_t &paramValueSize, void *&paramValue) override;
 

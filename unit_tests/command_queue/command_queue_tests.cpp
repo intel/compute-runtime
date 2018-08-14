@@ -758,8 +758,8 @@ TEST(CommandQueue, givenEnqueueAcquireSharedObjectsWhenNoObjectsThenReturnSucces
 
 class MockSharingHandler : public SharingHandler {
   public:
-    void synchronizeObject(UpdateData *updateData) override {
-        updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+    void synchronizeObject(UpdateData &updateData) override {
+        updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
     }
 };
 
@@ -902,7 +902,7 @@ TEST(CommandQueue, givenEnqueueReleaseSharedObjectsWhenIncorrectArgumentsThenRet
 
 TEST(CommandQueue, givenEnqueueAcquireSharedObjectsCallWhenAcquireFailsThenCorrectErrorIsReturned) {
     class MockSharingHandler : public SharingHandler {
-        int validateUpdateData(UpdateData *data) override {
+        int validateUpdateData(UpdateData &data) override {
             return CL_INVALID_MEM_OBJECT;
         }
     };

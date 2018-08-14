@@ -33,7 +33,7 @@ int SharingHandler::acquire(MemObj *memObj) {
         auto currentSharedHandle = memObj->getGraphicsAllocation()->peekSharedHandle();
         updateData.sharedHandle = currentSharedHandle;
         updateData.memObject = memObj;
-        int result = synchronizeHandler(&updateData);
+        int result = synchronizeHandler(updateData);
         resolveGraphicsAllocationChange(currentSharedHandle, &updateData);
         if (result != CL_SUCCESS) {
             return result;
@@ -48,7 +48,7 @@ int SharingHandler::acquire(MemObj *memObj) {
     return CL_SUCCESS;
 }
 
-int SharingHandler::synchronizeHandler(UpdateData *updateData) {
+int SharingHandler::synchronizeHandler(UpdateData &updateData) {
     auto result = validateUpdateData(updateData);
     if (result == CL_SUCCESS) {
         synchronizeObject(updateData);
@@ -56,8 +56,7 @@ int SharingHandler::synchronizeHandler(UpdateData *updateData) {
     return result;
 }
 
-int SharingHandler::validateUpdateData(UpdateData *updateData) {
-    UNRECOVERABLE_IF(updateData == nullptr);
+int SharingHandler::validateUpdateData(UpdateData &updateData) {
     return CL_SUCCESS;
 }
 

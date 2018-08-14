@@ -30,12 +30,12 @@ using namespace OCLRT;
 
 TEST(sharingHandler, givenBasicSharingHandlerWhenSynchronizeObjectThenErrorIsReturned) {
     struct SH : SharingHandler {
-        int synchronizeHandlerMock(UpdateData *updateData) { return synchronizeHandler(updateData); }
+        int synchronizeHandlerMock(UpdateData &updateData) { return synchronizeHandler(updateData); }
 
     } sharingHandler;
 
     UpdateData updateData;
-    sharingHandler.synchronizeHandlerMock(&updateData);
+    sharingHandler.synchronizeHandlerMock(updateData);
     EXPECT_EQ(SynchronizeStatus::SYNCHRONIZE_ERROR, updateData.synchronizationStatus);
 
     size_t paramSize = 0;
@@ -62,8 +62,8 @@ TEST(sharingHandler, givenMemObjWhenAcquireIncrementCounterThenReleaseShouldDecr
             SharingHandler::release(memObj);
             return acquireCount;
         }
-        void synchronizeObject(UpdateData *updateData) override {
-            updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+        void synchronizeObject(UpdateData &updateData) override {
+            updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
         }
     } sharingHandler;
 
@@ -90,8 +90,8 @@ TEST(sharingHandler, givenMemObjWhenAcquireTwoTimesThenReleaseShouldBeCalledTwoT
             SharingHandler::release(memObj);
             return acquireCount;
         }
-        void synchronizeObject(UpdateData *updateData) override {
-            updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+        void synchronizeObject(UpdateData &updateData) override {
+            updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
         }
         void releaseResource(MemObj *memObject) override {
             releaseCount++;
@@ -113,7 +113,7 @@ TEST(sharingHandler, givenSharingHandlerWhenValidateUpdateDataIsCalledWithNonNul
     };
     MockSharingHandler sharingHandler;
     UpdateData updateData;
-    sharingHandler.validateUpdateData(&updateData);
+    sharingHandler.validateUpdateData(updateData);
 }
 
 TEST(sharingHandler, givenSharingHandlerWhenAcquiringThenReturnErrorCode) {

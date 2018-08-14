@@ -251,8 +251,8 @@ TEST_F(KernelImageArgTest, givenNullKernelWhenClSetKernelArgCalledThenInvalidKer
 
 class MockSharingHandler : public SharingHandler {
   public:
-    void synchronizeObject(UpdateData *updateData) override {
-        updateData->synchronizationStatus = ACQUIRE_SUCCESFUL;
+    void synchronizeObject(UpdateData &updateData) override {
+        updateData.synchronizationStatus = ACQUIRE_SUCCESFUL;
     }
 };
 

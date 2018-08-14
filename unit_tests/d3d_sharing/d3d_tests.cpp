@@ -1471,7 +1471,7 @@ TEST(D3DSurfaceTest, givenD3DSurfaceWhenInvalidMemObjectIsPassedToValidateUpdate
     MockBuffer buffer;
     UpdateData updateData;
     updateData.memObject = &buffer;
-    auto result = surface->validateUpdateData(&updateData);
+    auto result = surface->validateUpdateData(updateData);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, result);
 }
 } // namespace OCLRT

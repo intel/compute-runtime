@@ -55,7 +55,7 @@ D3DSharing<D3D>::~D3DSharing() {
 };
 
 template <typename D3D>
-void D3DSharing<D3D>::synchronizeObject(UpdateData *updateData) {
+void D3DSharing<D3D>::synchronizeObject(UpdateData &updateData) {
     void *sharedHandle = nullptr;
 
     sharingFunctions->getDeviceContext(d3dQuery);
@@ -67,7 +67,7 @@ void D3DSharing<D3D>::synchronizeObject(UpdateData *updateData) {
     }
     sharingFunctions->releaseDeviceContext(d3dQuery);
 
-    updateData->synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
 template <typename D3D>

@@ -115,7 +115,7 @@ Image *D3DSurface::create(Context *context, cl_dx9_surface_info_khr *surfaceInfo
     return Image::createSharedImage(context, surface, mcsSurfaceInfo, alloc, nullptr, flags, imgInfo, __GMM_NO_CUBE_MAP, 0, 0);
 }
 
-void D3DSurface::synchronizeObject(UpdateData *updateData) {
+void D3DSurface::synchronizeObject(UpdateData &updateData) {
     D3DLOCKED_RECT lockedRect = {};
     sharingFunctions->setDevice(resourceDevice);
     if (sharedResource && !context->getInteropUserSyncEnabled()) {
@@ -128,7 +128,7 @@ void D3DSurface::synchronizeObject(UpdateData *updateData) {
             sharingFunctions->lockRect(d3d9SurfaceStaging, &lockedRect, D3DLOCK_READONLY);
         }
 
-        auto image = castToObjectOrAbort<Image>(updateData->memObject);
+        auto image = castToObjectOrAbort<Image>(updateData.memObject);
         auto sys = lockedRect.pBits;
         auto gpu = context->getMemoryManager()->lockResource(image->getGraphicsAllocation());
         auto pitch = static_cast<ULONG>(lockedRect.Pitch);
@@ -136,7 +136,7 @@ void D3DSurface::synchronizeObject(UpdateData *updateData) {
 
         image->getGraphicsAllocation()->gmm->resourceCopyBlt(sys, gpu, pitch, height, 1u, oclPlane);
 
-        context->getMemoryManager()->unlockResource(updateData->memObject->getGraphicsAllocation());
+        context->getMemoryManager()->unlockResource(updateData.memObject->getGraphicsAllocation());
 
         if (lockable) {
             sharingFunctions->unlockRect(d3d9Surface);
@@ -146,7 +146,7 @@ void D3DSurface::synchronizeObject(UpdateData *updateData) {
 
         sharingFunctions->flushAndWait(d3dQuery);
     }
-    updateData->synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
+    updateData.synchronizationStatus = SynchronizeStatus::ACQUIRE_SUCCESFUL;
 }
 
 void D3DSurface::releaseResource(MemObj *memObject) {
@@ -314,9 +314,8 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     return CL_SUCCESS;
 }
 
-int D3DSurface::validateUpdateData(UpdateData *updateData) {
-    UNRECOVERABLE_IF(updateData == nullptr);
-    auto image = castToObject<Image>(updateData->memObject);
+int D3DSurface::validateUpdateData(UpdateData &updateData) {
+    auto image = castToObject<Image>(updateData.memObject);
     if (!image) {
         return CL_INVALID_MEM_OBJECT;
     }
