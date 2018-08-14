@@ -190,6 +190,31 @@ HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledThenIncrea
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
+HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledThenSamplerObjectSurvivesClReleaseSampler) {
+    cl_sampler samplerObj = Sampler::create(
+        context,
+        CL_TRUE,
+        CL_ADDRESS_MIRRORED_REPEAT,
+        CL_FILTER_NEAREST,
+        retVal);
+
+    auto pSampler = castToObject<Sampler>(samplerObj);
+    auto refCountBefore = pSampler->getRefInternalCount();
+
+    retVal = pKernel->setArg(
+        0,
+        sizeof(samplerObj),
+        &samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseSampler(samplerObj);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto refCountAfter = pSampler->getRefInternalCount();
+
+    EXPECT_EQ(refCountBefore, refCountAfter);
+}
+
 HWTEST_F(SamplerSetArgTest, GivenSamplerObjectWhenSetKernelArgIsCalledAndKernelIsDeletedThenRefCountIsUnchanged) {
     auto myKernel = std::make_unique<MockKernel>(program.get(), *pKernelInfo, *pDevice);
     ASSERT_NE(nullptr, myKernel.get());
@@ -234,9 +259,7 @@ HWTEST_F(SamplerSetArgTest, GivenNewSamplerObjectWhensSetKernelArgIsCalledThenDe
         CL_FILTER_NEAREST,
         retVal);
 
-    auto clSamplerObj = *(static_cast<const cl_sampler *>(&samplerObj));
-    cl_sampler s = clSamplerObj;
-    auto pSampler = castToObjectOrAbort<Sampler>(s);
+    auto pSampler = castToObject<Sampler>(samplerObj);
 
     retVal = pKernel->setArg(
         0,

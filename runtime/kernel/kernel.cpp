@@ -2104,8 +2104,7 @@ void Kernel::resolveArgs() {
     bool canTransformImageTo2dArray = true;
     for (uint32_t i = 0; i < patchedArgumentsNum; i++) {
         if (kernelInfo.kernelArgInfo.at(i).isSampler) {
-            auto clSamplerObj = *(static_cast<const cl_sampler *>(kernelArguments.at(i).value));
-            auto sampler = castToObjectOrAbort<Sampler>(clSamplerObj);
+            auto sampler = castToObject<Sampler>(kernelArguments.at(i).object);
             if (sampler->isTransformable()) {
                 canTransformImageTo2dArray = true;
             } else {
