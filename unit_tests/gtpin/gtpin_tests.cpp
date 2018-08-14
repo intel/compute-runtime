@@ -844,7 +844,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
     // Prepare a kernel without SSH
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    Program *pProgram = Program::createFromGenBinary(pContext, &binary[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -932,7 +932,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithExecEnvIsUsedThen
     // Prepare a kernel with fake Execution Environment
     char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
-    Program *pProgram = Program::createFromGenBinary(pContext, &binary[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
     ASSERT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1938,7 +1938,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
         // Prepare a program with one kernel having Stateless Private Surface
         char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
         size_t binSize = 10;
-        Program *pProgram = Program::createFromGenBinary(pContext, &binary[0], binSize, false, &retVal);
+        Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, &binary[0], binSize, false, &retVal);
         ASSERT_NE(nullptr, pProgram);
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -2299,7 +2299,7 @@ TEST_F(ProgramTests, givenGenBinaryWithGtpinInfoWhenProcessGenBinaryCalledThenGt
     char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
 
-    std::unique_ptr<Program> pProgram(Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal));
+    std::unique_ptr<Program> pProgram(Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal));
     EXPECT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());

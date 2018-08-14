@@ -20,6 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/program/program.h"
 
@@ -27,13 +28,15 @@ namespace OCLRT {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     return BuiltIns::getInstance().getSipKernel(type, device);
 }
-Program *createProgramForSip(Context *context,
+Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
+                             Context *context,
                              std::vector<char> &binary,
                              size_t size,
                              cl_int *errcodeRet) {
 
     cl_int retVal = 0;
-    auto program = Program::createFromGenBinary(nullptr,
+    auto program = Program::createFromGenBinary(executionEnvironment,
+                                                nullptr,
                                                 binary.data(),
                                                 size,
                                                 true,

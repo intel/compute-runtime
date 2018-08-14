@@ -86,7 +86,8 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
 
         auto src = getInstance().builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
 
-        auto program = Program::createFromGenBinary(&context,
+        auto program = Program::createFromGenBinary(*context.getDevice(0)->getExecutionEnvironment(),
+                                                    &context,
                                                     src.resource.data(),
                                                     src.resource.size(),
                                                     true,
@@ -131,7 +132,8 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
 
         UNRECOVERABLE_IF(ret != CL_SUCCESS);
         UNRECOVERABLE_IF(sipBinary.size() == 0);
-        auto program = createProgramForSip(nullptr,
+        auto program = createProgramForSip(*device.getExecutionEnvironment(),
+                                           nullptr,
                                            sipBinary,
                                            sipBinary.size(),
                                            &retVal);

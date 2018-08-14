@@ -122,6 +122,7 @@ T *Program::create(
 
 template <typename T>
 T *Program::createFromGenBinary(
+    ExecutionEnvironment &executionEnvironment,
     Context *context,
     const void *binary,
     size_t size,

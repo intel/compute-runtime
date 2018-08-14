@@ -82,6 +82,7 @@ class Program : public BaseObject<_cl_program> {
 
     template <typename T = Program>
     static T *createFromGenBinary(
+        ExecutionEnvironment &executionEnvironment,
         Context *context,
         const void *binary,
         size_t size,

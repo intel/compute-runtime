@@ -21,6 +21,7 @@
  */
 
 #include "gtest/gtest.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/create.inl"
 #include "runtime/program/program.h"
 
@@ -50,10 +51,12 @@ struct MockProgramRecordUnhandledTokens : OCLRT::Program {
 
 inline cl_int GetDecodeErrorCode(const std::vector<char> &binary, bool allowUnhandledTokens,
                                  int defaultUnhandledTokenId, int &foundUnhandledTokenId) {
+    OCLRT::ExecutionEnvironment executionEnvironment;
     using PT = MockProgramRecordUnhandledTokens;
     std::unique_ptr<PT> prog;
     cl_int errorCode = CL_INVALID_BINARY;
-    prog.reset(OCLRT::Program::createFromGenBinary<PT>(nullptr,
+    prog.reset(OCLRT::Program::createFromGenBinary<PT>(executionEnvironment,
+                                                       nullptr,
                                                        binary.data(),
                                                        binary.size(),
                                                        false, &errorCode));

@@ -1719,7 +1719,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
     mockCompilerInterface.overrideGlobalCompilerInterface();
     mockCompilerInterface.sipKernelBinaryOverride = mockCompilerInterface.getDummyGenBinary();
     cl_int errCode = CL_BUILD_PROGRAM_FAILURE;
-    auto p = Program::createFromGenBinary(pContext, mockCompilerInterface.sipKernelBinaryOverride.data(), mockCompilerInterface.sipKernelBinaryOverride.size(),
+    auto p = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, mockCompilerInterface.sipKernelBinaryOverride.data(), mockCompilerInterface.sipKernelBinaryOverride.size(),
                                           false, &errCode);
     ASSERT_EQ(CL_SUCCESS, errCode);
     errCode = p->processGenBinary();

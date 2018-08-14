@@ -1582,7 +1582,8 @@ TEST(ProgramFromBinaryTests, givenBinaryWithInvalidICBEThenErrorIsReturned) {
 
     {
         // whatever method we choose CL_INVALID_BINARY is always returned
-        std::unique_ptr<Program> pProgram(Program::createFromGenBinary(nullptr, &binHeader, binSize, false, &retVal));
+        ExecutionEnvironment executionEnvironment;
+        std::unique_ptr<Program> pProgram(Program::createFromGenBinary(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
         ASSERT_NE(nullptr, pProgram.get());
         EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1622,7 +1623,8 @@ TEST(ProgramFromBinaryTests, CreateWithBinary_FailRecompile) {
     binHeader.PatchListSize = 0;
     size_t binSize = sizeof(SProgramBinaryHeader);
 
-    std::unique_ptr<FailProgram> pProgram(FailProgram::createFromGenBinary<FailProgram>(nullptr, &binHeader, binSize, false, &retVal));
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<FailProgram> pProgram(FailProgram::createFromGenBinary<FailProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1657,7 +1659,8 @@ TEST(ProgramFromBinaryTests, givenEmptyProgramThenErrorIsReturned) {
     binHeader.PatchListSize = 0;
     size_t binSize = sizeof(SProgramBinaryHeader);
 
-    std::unique_ptr<TestedProgram> pProgram(TestedProgram::createFromGenBinary<TestedProgram>(nullptr, &binHeader, binSize, false, &retVal));
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TestedProgram> pProgram(TestedProgram::createFromGenBinary<TestedProgram>(executionEnvironment, nullptr, &binHeader, binSize, false, &retVal));
     ASSERT_NE(nullptr, pProgram.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1927,7 +1930,7 @@ TEST_F(ProgramTests, ProgramCreateT3Success) {
 
 TEST_F(ProgramTests, ProgramFromGenBinaryWithNullBinary) {
     cl_int retVal = CL_SUCCESS;
-    Program *pProgram = Program::createFromGenBinary(pContext, nullptr, 0, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, nullptr, 0, false, &retVal);
     EXPECT_EQ(nullptr, pProgram);
     EXPECT_NE(CL_SUCCESS, retVal);
 }
@@ -1937,7 +1940,7 @@ TEST_F(ProgramTests, ProgramFromGenBinary) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, binary, size, false, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1958,7 +1961,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithBuiltInFlagSet) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, true, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, binary, size, true, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -1971,7 +1974,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithoutRetVal) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(pContext, binary, size, false, nullptr);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), pContext, binary, size, false, nullptr);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
 
@@ -1989,7 +1992,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithNullcontext) {
     char binary[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t size = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, binary, size, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), nullptr, binary, size, false, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
@@ -2008,7 +2011,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GLOBAL_MEMORY_OBJECT_KE
     char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());
@@ -2073,7 +2076,7 @@ TEST_F(ProgramTests, ProgramFromGenBinaryWithPATCH_TOKEN_GTPIN_FREE_GRF_INFO) {
     char genBin[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
     size_t binSize = 10;
 
-    Program *pProgram = Program::createFromGenBinary(nullptr, &genBin[0], binSize, false, &retVal);
+    Program *pProgram = Program::createFromGenBinary(*pDevice->getExecutionEnvironment(), nullptr, &genBin[0], binSize, false, &retVal);
     EXPECT_NE(nullptr, pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ((uint32_t)CL_PROGRAM_BINARY_TYPE_EXECUTABLE, (uint32_t)pProgram->getProgramBinaryType());

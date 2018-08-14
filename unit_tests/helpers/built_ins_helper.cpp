@@ -20,6 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_program.h"
@@ -31,7 +32,8 @@ const SipKernel &initSipKernel(SipKernelType type, Device &device) {
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
     return BuiltIns::getInstance().getSipKernel(type, device);
 }
-Program *createProgramForSip(Context *context,
+Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
+                             Context *context,
                              std::vector<char> &binary,
                              size_t size,
                              cl_int *errcodeRet) {

@@ -161,6 +161,7 @@ class GlobalMockSipProgram : public Program {
 
   protected:
     void *sipAllocationStorage;
+    static ExecutionEnvironment executionEnvironment;
 };
 
 } // namespace OCLRT

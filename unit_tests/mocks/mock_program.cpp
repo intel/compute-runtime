@@ -28,6 +28,7 @@
 
 namespace OCLRT {
 GlobalMockSipProgram *GlobalMockSipProgram::sipProgram;
+ExecutionEnvironment GlobalMockSipProgram::executionEnvironment;
 std::string MockProgram::getCachedFileName() const {
     auto hwInfo = this->context->getDevice(0)->getHardwareInfo();
     auto input = ArrayRef<const char>(this->sourceCode.c_str(), this->sourceCode.size());
@@ -52,7 +53,8 @@ void GlobalMockSipProgram::resetAllocationState() {
 void GlobalMockSipProgram::initSipProgram() {
     cl_int retVal = 0;
     std::vector<char> binary = MockCompilerInterface::getDummyGenBinary();
-    sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(nullptr,
+    sipProgram = Program::createFromGenBinary<GlobalMockSipProgram>(executionEnvironment,
+                                                                    nullptr,
                                                                     binary.data(),
                                                                     binary.size(),
                                                                     true,
@@ -126,7 +128,7 @@ Program *GlobalMockSipProgram::getSipProgramWithCustomBinary() {
     pKHdr->CheckSum = static_cast<uint32_t>(hashValue & 0xFFFFFFFF);
 
     auto errCode = CL_SUCCESS;
-    auto program = Program::createFromGenBinary(nullptr, binary, totalSize, false, &errCode);
+    auto program = Program::createFromGenBinary(executionEnvironment, nullptr, binary, totalSize, false, &errCode);
     UNRECOVERABLE_IF(errCode != CL_SUCCESS);
     errCode = program->processGenBinary();
     UNRECOVERABLE_IF(errCode != CL_SUCCESS);
