@@ -106,10 +106,7 @@ else()
 endif()
 
 if(NOT GTPIN_HEADERS_DIR)
-    if ((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_ocl_interface.h") AND (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../internal/gtpin/gtpin_driver_common.h"))
-	    get_filename_component(GTPIN_HEADERS_DIR "../internal/gtpin/" ABSOLUTE)
-        message(STATUS "GT-Pin headers dir: ${GTPIN_HEADERS_DIR}")
-    endif()
+    set(GTPIN_HEADERS_DIR TRUE)
 endif(NOT GTPIN_HEADERS_DIR)
 
 if(NOT KMDAF_HEADERS_DIR)

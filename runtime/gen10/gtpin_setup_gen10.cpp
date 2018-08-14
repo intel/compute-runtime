@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtpin_ocl_interface.h"
+#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 #include "runtime/gtpin/gtpin_hw_helper.h"
 #include "runtime/gtpin/gtpin_hw_helper.inl"
 

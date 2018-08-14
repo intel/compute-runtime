@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "gtpin_ocl_interface.h"
+#include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 
 #ifdef __cplusplus
 extern "C" {
