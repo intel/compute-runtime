@@ -357,7 +357,7 @@ int main(int argc, char **argv) {
     if (useDefaultListener == false) {
         auto defaultListener = listeners.default_result_printer();
 
-        auto customEventListener = new CCustomEventListener(defaultListener);
+        auto customEventListener = new CCustomEventListener(defaultListener, hardwarePrefix[productFamily]);
 
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
