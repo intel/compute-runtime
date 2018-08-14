@@ -28,9 +28,6 @@ bool OCLRT::WddmInterface20::createHwQueue(PreemptionMode preemptionMode) {
     return false;
 }
 
-void OCLRT::WddmInterface20::destroyHwQueue() {
-}
-
 bool OCLRT::WddmInterface20::createMonitoredFence() {
     NTSTATUS Status;
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};

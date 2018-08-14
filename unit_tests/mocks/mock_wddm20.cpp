@@ -246,6 +246,13 @@ bool WddmMock::initializeWithoutConfiguringAddressSpace() {
         if (!queryAdapterInfo()) {
             return false;
         }
+
+        if (featureTable->ftrWddmHwQueues) {
+            wddmInterface = std::make_unique<WddmInterface23>(*this);
+        } else {
+            wddmInterface = std::make_unique<WddmInterface20>(*this);
+        }
+
         if (!createDevice()) {
             return false;
         }

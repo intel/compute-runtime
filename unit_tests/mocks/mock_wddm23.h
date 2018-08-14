@@ -27,6 +27,7 @@
 namespace OCLRT {
 class WddmMock23 : public Wddm23 {
   public:
+    using Wddm::featureTable;
     using Wddm::preemptionMode;
     using Wddm::wddmInterface;
     using Wddm23::context;

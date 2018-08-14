@@ -647,6 +647,7 @@ HWTEST_F(Wddm20Tests, getMaxApplicationAddress) {
 }
 
 HWTEST_F(Wddm20Tests, dontCallCreateContextBeforeConfigureDeviceAddressSpace) {
+    wddm->wddmInterface = std::make_unique<WddmInterface20>(*wddm);
     wddm->createContext();
     EXPECT_EQ(1u, wddm->createContextResult.called); // dont care about the result
 
@@ -680,7 +681,8 @@ HWTEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues
     EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
-TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
+HWTEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
+    wddm->init<FamilyType>();
     EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode));
 }
 

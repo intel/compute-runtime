@@ -34,7 +34,9 @@ struct Wddm23Tests : public ::testing::Test, GdiDllFixture, public GmmEnvironmen
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
+
         wddm.reset(static_cast<WddmMock23 *>(Wddm::createWddm(WddmInterfaceVersion::Wddm23)));
+        wddm->featureTable->ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
         wddm->registryReader.reset(new RegistryReaderMock());
@@ -94,11 +96,11 @@ TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutI
 HWTEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
     wddm->init<FamilyType>();
     wddmMockInterface->hwQueueHandle = 123;
-    wddm->wddmInterface->destroyHwQueue();
+    wddmMockInterface->destroyHwQueue();
     EXPECT_EQ(wddmMockInterface->hwQueueHandle, getDestroyHwQueueDataFcn()->hHwQueue);
 
     wddmMockInterface->hwQueueHandle = 0;
-    wddm->wddmInterface->destroyHwQueue();
+    wddmMockInterface->destroyHwQueue();
     EXPECT_NE(wddmMockInterface->hwQueueHandle, getDestroyHwQueueDataFcn()->hHwQueue); // gdi not called when 0
 }
 

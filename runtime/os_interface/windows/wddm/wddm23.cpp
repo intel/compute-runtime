@@ -25,6 +25,5 @@
 
 namespace OCLRT {
 Wddm23::Wddm23() : Wddm20() {
-    wddmInterface = std::make_unique<WddmInterface23>(*this);
 }
 } // namespace OCLRT

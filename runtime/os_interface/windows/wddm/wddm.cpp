@@ -80,11 +80,9 @@ Wddm::Wddm() : initialized(false),
     minAddress = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     gdi = std::unique_ptr<Gdi>(new Gdi());
-    wddmInterface = std::make_unique<WddmInterface20>(*this);
 }
 
 Wddm::~Wddm() {
-    wddmInterface->destroyHwQueue();
     resetPageTableManager(nullptr);
     destroyContext(context);
     destroyPagingQueue();

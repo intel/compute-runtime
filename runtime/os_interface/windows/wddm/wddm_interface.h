@@ -29,9 +29,9 @@ class Wddm;
 class WddmInterface {
   public:
     WddmInterface(Wddm &wddm) : wddm(wddm){};
+    virtual ~WddmInterface() = default;
     WddmInterface() = delete;
     virtual bool createHwQueue(PreemptionMode preemptionMode) = 0;
-    virtual void destroyHwQueue() = 0;
     virtual bool createMonitoredFence() = 0;
     virtual const bool hwQueuesSupported() = 0;
     virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) = 0;
@@ -42,7 +42,6 @@ class WddmInterface20 : public WddmInterface {
   public:
     using WddmInterface::WddmInterface;
     bool createHwQueue(PreemptionMode preemptionMode) override;
-    void destroyHwQueue() override;
     bool createMonitoredFence() override;
     const bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
@@ -50,9 +49,10 @@ class WddmInterface20 : public WddmInterface {
 
 class WddmInterface23 : public WddmInterface {
   public:
+    ~WddmInterface23() override { destroyHwQueue(); }
     using WddmInterface::WddmInterface;
     bool createHwQueue(PreemptionMode preemptionMode) override;
-    void destroyHwQueue() override;
+    void destroyHwQueue();
     bool createMonitoredFence() override;
     const bool hwQueuesSupported() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
