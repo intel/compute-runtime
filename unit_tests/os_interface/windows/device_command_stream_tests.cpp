@@ -45,7 +45,7 @@
 #include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
-#include "unit_tests/mocks/mock_wddm23.h"
+#include "unit_tests/mocks/mock_wddm_interface23.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
@@ -67,7 +67,7 @@ class WddmCommandStreamFixture {
     virtual void SetUp() {
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
         ASSERT_NE(nullptr, device);
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
         ASSERT_NE(wddm, nullptr);
 
         DebugManager.flags.CsrDispatchMode.set(static_cast<uint32_t>(DispatchMode::ImmediateDispatch));
@@ -128,7 +128,7 @@ class WddmCommandStreamWithMockGdiFixture {
     virtual void SetUp() {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->initGmm(*platformDevices);
-        wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         ASSERT_NE(wddm, nullptr);
@@ -242,7 +242,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
 }
 
 TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOffWhenWorkloadIsSubmittedThenHeaderDoesntHavePreemptionFieldSet) {
-    auto wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+    auto wddm = static_cast<WddmMock *>(Wddm::createWddm());
     auto localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     ExecutionEnvironment executionEnvironment;
@@ -264,7 +264,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
 }
 
 TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOnWhenWorkloadIsSubmittedThenHeaderDoesHavePreemptionFieldSet) {
-    auto wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+    auto wddm = static_cast<WddmMock *>(Wddm::createWddm());
     auto localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     ExecutionEnvironment executionEnvironment;
@@ -285,7 +285,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
 }
 
 TEST(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStreamReceiverIsCreatedThenHeaderContainsPreemptionFieldSet) {
-    auto wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+    auto wddm = static_cast<WddmMock *>(Wddm::createWddm());
     auto localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     ExecutionEnvironment executionEnvironment;
@@ -296,7 +296,7 @@ TEST(WddmPreemptionHeaderTests, givenDeviceSupportingPreemptionWhenCommandStream
 }
 
 TEST(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStreamReceiverIsCreatedThenHeaderPreemptionFieldIsNotSet) {
-    auto wddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+    auto wddm = static_cast<WddmMock *>(Wddm::createWddm());
     auto localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     ExecutionEnvironment executionEnvironment;
@@ -780,7 +780,7 @@ using WddmSimpleTest = ::testing::Test;
 HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {
     DebugManager.flags.CsrDispatchMode.set(0);
     ExecutionEnvironment executionEnvironment;
-    auto wddm = Wddm::createWddm(WddmInterfaceVersion::Wddm20);
+    auto wddm = Wddm::createWddm();
     std::unique_ptr<MockWddmCsr<FamilyType>> mockCsr(new MockWddmCsr<FamilyType>(*platformDevices[0], wddm, executionEnvironment));
     EXPECT_EQ(DispatchMode::BatchedDispatch, mockCsr->dispatchMode);
 }
@@ -790,21 +790,9 @@ HWTEST_F(WddmDefaultTest, givenFtrWddmHwQueuesFlagWhenCreatingCsrThenPickWddmVer
     FeatureTable myFtrTable = *myHwInfo.pSkuTable;
     myHwInfo.pSkuTable = &myFtrTable;
 
-    myFtrTable.ftrWddmHwQueues = false;
-    EXPECT_TRUE(WddmInterfaceVersion::Wddm20 == Wddm::pickWddmInterfaceVersion(myHwInfo));
-    {
-        WddmCommandStreamReceiver<FamilyType> wddmCsr20(myHwInfo, nullptr, *device->executionEnvironment);
-        auto wddm20 = wddmCsr20.peekWddm();
-        EXPECT_EQ(typeid(*wddm20), typeid(WddmMock20));
-    }
-
-    myFtrTable.ftrWddmHwQueues = true;
-    EXPECT_TRUE(WddmInterfaceVersion::Wddm23 == Wddm::pickWddmInterfaceVersion(myHwInfo));
-    {
-        WddmCommandStreamReceiver<FamilyType> wddmCsr23(myHwInfo, nullptr, *device->executionEnvironment);
-        auto wddm23 = wddmCsr23.peekWddm();
-        EXPECT_EQ(typeid(*wddm23), typeid(WddmMock23));
-    }
+    WddmCommandStreamReceiver<FamilyType> wddmCsr(myHwInfo, nullptr, *device->executionEnvironment);
+    auto wddm = wddmCsr.peekWddm();
+    EXPECT_EQ(typeid(*wddm), typeid(WddmMock));
 }
 
 struct WddmCsrCompressionTests : ::testing::Test {
@@ -821,7 +809,7 @@ struct WddmCsrCompressionTests : ::testing::Test {
     }
 
     void createMockWddm() {
-        myMockWddm = static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
+        myMockWddm = static_cast<WddmMock *>(Wddm::createWddm());
     }
 
     HardwareInfo hwInfo = {};

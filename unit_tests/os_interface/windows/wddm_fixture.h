@@ -24,7 +24,7 @@
 
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
-#include "unit_tests/mocks/mock_wddm20.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "mock_gmm_memory.h"
@@ -34,7 +34,7 @@ namespace OCLRT {
 struct WddmFixture : public GmmEnvironmentFixture {
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
     }
@@ -51,7 +51,7 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
     }
 
     void TearDown() override {
@@ -65,7 +65,7 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
 struct WddmInstrumentationGmmFixture : public GmmEnvironmentFixture {
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         gmmMem = new ::testing::NiceMock<GmockGmmMemory>();
         wddm->gmmMemory.reset(gmmMem);
     }

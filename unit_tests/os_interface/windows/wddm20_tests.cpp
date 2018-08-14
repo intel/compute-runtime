@@ -102,7 +102,7 @@ TEST(Wddm20EnumAdaptersTest, expectTrue) {
     const HardwareInfo hwInfo = *platformDevices[0];
     OsLibrary *mockGdiDll = setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo);
 
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
 
     EXPECT_TRUE(success);
@@ -125,7 +125,7 @@ TEST(Wddm20EnumAdaptersTest, givenEmptyHardwareInfoWhenEnumAdapterIsCalledThenCa
     auto hwInfo = *platformDevices[0];
     std::unique_ptr<OsLibrary> mockGdiDll(setAdapterInfo(hwInfo.pPlatform, hwInfo.pSysInfo));
 
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     bool success = wddm->enumAdapters(outHwInfo);
     EXPECT_TRUE(success);
 
@@ -167,7 +167,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
             fSetAdpaterInfo(&platform, hwInfo.pSysInfo);
             delete ptr;
         });
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     auto ret = wddm->enumAdapters(outHwInfo);
     EXPECT_FALSE(ret);
     EXPECT_EQ(nullptr, outHwInfo.pPlatform);

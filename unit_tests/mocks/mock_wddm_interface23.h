@@ -22,33 +22,9 @@
 
 #pragma once
 
-#include "runtime/os_interface/windows/wddm/wddm23.h"
+#include "runtime/os_interface/windows/wddm/wddm.h"
 
 namespace OCLRT {
-class WddmMock23 : public Wddm23 {
-  public:
-    using Wddm::featureTable;
-    using Wddm::preemptionMode;
-    using Wddm::wddmInterface;
-    using Wddm23::context;
-    using Wddm23::currentPagingFenceValue;
-    using Wddm23::gdi;
-    using Wddm23::hwQueueHandle;
-    using Wddm23::pagingFenceAddress;
-    using Wddm23::submit;
-
-    WddmMock23() : Wddm23(){};
-
-    bool waitOnGPU() override {
-        waitOnGPUCalled++;
-        return true;
-    }
-
-    uint32_t waitOnGPUCalled = 0;
-    uint32_t createHwQueueCalled = 0;
-    bool createHwQueueResult = false;
-};
-
 class WddmMockInterface23 : public WddmInterface23 {
   public:
     using WddmInterface23::WddmInterface23;

@@ -44,7 +44,7 @@ void HwInfoConfigTestWindows::SetUp() {
 
     osInterface.reset(new OSInterface());
 
-    std::unique_ptr<Wddm> wddm(Wddm::createWddm(Wddm::pickWddmInterfaceVersion(outHwInfo)));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
     wddm->enumAdapters(outHwInfo);
     testHwInfo = outHwInfo;
 }

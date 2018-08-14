@@ -22,7 +22,7 @@
 
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
-#include "unit_tests/mocks/mock_wddm20.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_performance_counters_win.h"
 #include "gtest/gtest.h"
 

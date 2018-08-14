@@ -20,18 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/mocks/mock_wddm20.h"
-#include "unit_tests/mocks/mock_wddm23.h"
+#include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm_interface23.h"
 
 namespace OCLRT {
-Wddm *Wddm::createWddm(WddmInterfaceVersion interfaceVersion) {
-    switch (interfaceVersion) {
-    case WddmInterfaceVersion::Wddm20:
-        return new WddmMock20();
-    case WddmInterfaceVersion::Wddm23:
-        return new WddmMock23();
-    default:
-        return nullptr;
-    }
+Wddm *Wddm::createWddm() {
+    return new WddmMock();
 }
 } // namespace OCLRT

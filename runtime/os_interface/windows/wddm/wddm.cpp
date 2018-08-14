@@ -909,13 +909,4 @@ void Wddm::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress
     monitoredFence.cpuAddress = cpuAddress;
     monitoredFence.gpuAddress = gpuAddress;
 }
-
-WddmInterfaceVersion Wddm::pickWddmInterfaceVersion(const HardwareInfo &hwInfo) {
-    if (hwInfo.pSkuTable && hwInfo.pSkuTable->ftrWddmHwQueues) {
-        return WddmInterfaceVersion::Wddm23;
-    }
-    // Use default version when hwInfo is not yet populated (eg. during enumAdapter call)
-    return WddmInterfaceVersion::Wddm20;
-}
-
 } // namespace OCLRT

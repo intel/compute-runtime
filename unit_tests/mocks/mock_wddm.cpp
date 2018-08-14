@@ -23,7 +23,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
-#include "unit_tests/mocks/mock_wddm20.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/mock_gdi/mock_gdi.h"
 
 #include "gtest/gtest.h"
@@ -236,39 +236,4 @@ bool WddmMock::reserveValidAddressRange(size_t size, void *&reservedMem) {
 
 GmmMemory *WddmMock::getGmmMemory() const {
     return gmmMemory.get();
-}
-
-bool WddmMock::initializeWithoutConfiguringAddressSpace() {
-    if (gdi != nullptr && gdi->isInitialized() && !initialized) {
-        if (!openAdapter()) {
-            return false;
-        }
-        if (!queryAdapterInfo()) {
-            return false;
-        }
-
-        if (featureTable->ftrWddmHwQueues) {
-            wddmInterface = std::make_unique<WddmInterface23>(*this);
-        } else {
-            wddmInterface = std::make_unique<WddmInterface20>(*this);
-        }
-
-        if (!createDevice()) {
-            return false;
-        }
-        if (!createPagingQueue()) {
-            return false;
-        }
-        if (!createContext()) {
-            return false;
-        }
-        if (wddmInterface->hwQueuesSupported() && !wddmInterface->createHwQueue(preemptionMode)) {
-            return false;
-        }
-        if (!wddmInterface->createMonitoredFence()) {
-            return false;
-        }
-        initialized = true;
-    }
-    return initialized;
 }

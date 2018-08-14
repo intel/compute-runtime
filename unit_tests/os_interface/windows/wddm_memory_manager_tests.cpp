@@ -38,7 +38,7 @@ using namespace ::testing;
 void WddmMemoryManagerFixture::SetUp() {
     GmmEnvironmentFixture::SetUp();
     GdiDllFixture::SetUp();
-    wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+    wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
     ASSERT_NE(nullptr, wddm);
     if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
         GMM_DEVICE_CALLBACKS_INT dummyDeviceCallbacks = {};
@@ -58,7 +58,7 @@ TEST(WddmMemoryManager, NonAssignable) {
 }
 
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
-    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+    std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm()));
     uint64_t base = 0x56000;
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);

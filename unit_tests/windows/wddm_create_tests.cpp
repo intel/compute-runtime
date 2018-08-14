@@ -22,7 +22,6 @@
 
 #include "runtime/helpers/hw_info.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm/wddm23.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
 
@@ -31,21 +30,6 @@
 using namespace OCLRT;
 
 TEST(wddmCreateTests, givenInputVersionWhenCreatingThenCreateRequestedObject) {
-    std::unique_ptr<Wddm> wddm20(Wddm::createWddm(WddmInterfaceVersion::Wddm20));
-    std::unique_ptr<Wddm> wddm23(Wddm::createWddm(WddmInterfaceVersion::Wddm23));
-
-    EXPECT_EQ(typeid(*wddm20.get()), typeid(Wddm20));
-    EXPECT_EQ(typeid(*wddm23.get()), typeid(Wddm23));
-}
-
-TEST(wddmCreateTests, givenInvalidInputVersionWhenCreatingThenThrowException) {
-    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(0)), std::exception);
-    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(21)), std::exception);
-    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(22)), std::exception);
-    EXPECT_THROW(Wddm::createWddm(static_cast<WddmInterfaceVersion>(24)), std::exception);
-}
-
-TEST(wddmCreateTests, givenNotPopulatedHwInfoWhenAskingForWddmVersionThenReturn20) {
-    HardwareInfo hwInfo = {};
-    EXPECT_TRUE(WddmInterfaceVersion::Wddm20 == Wddm::pickWddmInterfaceVersion(hwInfo));
+    std::unique_ptr<Wddm> wddm(Wddm::createWddm());
+    EXPECT_EQ(typeid(*wddm.get()), typeid(Wddm));
 }

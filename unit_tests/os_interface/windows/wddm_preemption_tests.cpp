@@ -43,7 +43,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
 
     template <typename GfxFamily>
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         auto regReader = new RegistryReaderMock();
         wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;

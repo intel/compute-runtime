@@ -79,6 +79,9 @@ if(WIN32)
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_memory${BRANCH_DIR_SUFFIX}/mock_gmm_memory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_page_table_mngr.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm_interface23.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_wddm.cpp
     ${IGDRCL_SRC_tests_mock_wddm}
   )
 else()

@@ -70,7 +70,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
   public:
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm(WddmInterfaceVersion::Wddm20)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
     }
@@ -197,7 +197,7 @@ class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public 
   public:
     void SetUp() override {
         MockWddmMemoryManagerFixture::SetUp();
-        wddm->initializeWithoutConfiguringAddressSpace();
+        wddm->init<DEFAULT_TEST_FAMILY_NAME>();
     }
     void TearDown() override {
         MockWddmMemoryManagerFixture::TearDown();

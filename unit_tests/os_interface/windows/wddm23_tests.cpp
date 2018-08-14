@@ -21,10 +21,10 @@
  */
 
 #include "runtime/os_interface/windows/gdi_interface.h"
-#include "runtime/os_interface/windows/wddm/wddm23.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
-#include "unit_tests/mocks/mock_wddm23.h"
+#include "unit_tests/mocks/mock_wddm.h"
+#include "unit_tests/mocks/mock_wddm_interface23.h"
 #include "unit_tests/os_interface/windows/gdi_dll_fixture.h"
 #include "test.h"
 
@@ -35,7 +35,7 @@ struct Wddm23Tests : public ::testing::Test, GdiDllFixture, public GmmEnvironmen
         GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
 
-        wddm.reset(static_cast<WddmMock23 *>(Wddm::createWddm(WddmInterfaceVersion::Wddm23)));
+        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         wddm->featureTable->ftrWddmHwQueues = true;
         wddmMockInterface = new WddmMockInterface23(*wddm);
         wddm->wddmInterface.reset(wddmMockInterface);
@@ -47,7 +47,7 @@ struct Wddm23Tests : public ::testing::Test, GdiDllFixture, public GmmEnvironmen
         GmmEnvironmentFixture::TearDown();
     }
 
-    std::unique_ptr<WddmMock23> wddm;
+    std::unique_ptr<WddmMock> wddm;
     WddmMockInterface23 *wddmMockInterface = nullptr;
 };
 
@@ -67,7 +67,7 @@ HWTEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
 }
 
 TEST_F(Wddm23Tests, whenCreateHwQueueIsCalledThenSetAllRequiredFieldsAndMonitoredFence) {
-    EXPECT_EQ(0u, wddm->hwQueueHandle);
+    EXPECT_EQ(0u, wddmMockInterface->hwQueueHandle);
     wddm->context = 1;
 
     wddm->wddmInterface->createHwQueue(wddm->preemptionMode);
@@ -145,11 +145,11 @@ HWTEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueW
     *wddm->pagingFenceAddress = 1;
     wddm->currentPagingFenceValue = 1;
     wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader);
-    EXPECT_EQ(0u, wddm->waitOnGPUCalled);
+    EXPECT_EQ(0u, wddm->waitOnGPUResult.called);
 
     wddm->currentPagingFenceValue = 2;
     wddm->submit(cmdBufferAddress, cmdSize, &cmdBufferHeader);
-    EXPECT_EQ(1u, wddm->waitOnGPUCalled);
+    EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
 HWTEST_F(Wddm23Tests, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {

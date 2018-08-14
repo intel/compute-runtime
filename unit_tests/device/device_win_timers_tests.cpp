@@ -23,7 +23,7 @@
 #include "unit_tests/mocks/mock_ostime.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_ostime_win.h"
-#include "unit_tests/mocks/mock_wddm20.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "test.h"
 
 using namespace OCLRT;

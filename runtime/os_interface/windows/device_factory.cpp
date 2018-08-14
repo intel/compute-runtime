@@ -45,7 +45,7 @@ bool DeviceFactory::getDevices(HardwareInfo **pHWInfos, size_t &numDevices, Exec
     numDevices = 0;
 
     while (numDevices < totalDeviceCount) {
-        std::unique_ptr<Wddm> wddm(Wddm ::createWddm(Wddm::pickWddmInterfaceVersion(tempHwInfos[numDevices])));
+        std::unique_ptr<Wddm> wddm(Wddm ::createWddm());
         if (!wddm->enumAdapters(tempHwInfos[numDevices])) {
             return false;
         }

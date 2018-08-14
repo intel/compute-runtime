@@ -47,19 +47,22 @@ struct KmDafLockCall : public CallResult {
 };
 } // namespace WddmMockHelpers
 
-class WddmMock : public Wddm20 {
+class WddmMock : public Wddm {
   public:
     using Wddm::adapter;
     using Wddm::context;
+    using Wddm::currentPagingFenceValue;
     using Wddm::device;
+    using Wddm::featureTable;
     using Wddm::gdi;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
+    using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::preemptionMode;
     using Wddm::wddmInterface;
 
-    WddmMock() : Wddm20(){};
+    WddmMock() : Wddm(){};
     ~WddmMock();
 
     bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) override;
@@ -103,8 +106,6 @@ class WddmMock : public Wddm20 {
         }
     }
 
-    bool initializeWithoutConfiguringAddressSpace();
-
     WddmMockHelpers::MakeResidentCall makeResidentResult;
     WddmMockHelpers::CallResult makeNonResidentResult;
     WddmMockHelpers::CallResult mapGpuVirtualAddressResult;
@@ -133,6 +134,4 @@ class WddmMock : public Wddm20 {
     uintptr_t virtualAllocAddress = OCLRT::windowsMinAddress;
     bool kmDafEnabled = false;
 };
-
-using WddmMock20 = WddmMock;
 } // namespace OCLRT

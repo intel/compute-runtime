@@ -63,8 +63,7 @@ class Wddm {
 
     virtual ~Wddm();
 
-    static Wddm *createWddm(WddmInterfaceVersion interfaceVersion);
-    static WddmInterfaceVersion pickWddmInterfaceVersion(const HardwareInfo &hwInfo);
+    static Wddm *createWddm();
     bool enumAdapters(HardwareInfo &outHardwareInfo);
 
     MOCKABLE_VIRTUAL bool evict(D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
@@ -223,7 +222,4 @@ class Wddm {
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
 };
-
-using Wddm20 = Wddm;
-
 } // namespace OCLRT

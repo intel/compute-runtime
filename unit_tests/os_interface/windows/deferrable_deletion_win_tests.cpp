@@ -21,7 +21,7 @@
  */
 
 #include "runtime/os_interface/windows/deferrable_deletion_win.h"
-#include "unit_tests/mocks/mock_wddm20.h"
+#include "unit_tests/mocks/mock_wddm.h"
 #include "gtest/gtest.h"
 #include <type_traits>
 
