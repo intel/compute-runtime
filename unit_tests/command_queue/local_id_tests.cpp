@@ -362,7 +362,7 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS4x4x2WhenGenerateLocalIdsWithKernelWithOnl
     uint8_t rowWidth = simd == 32 ? 32 : 16;
     uint16_t xDelta = simd == 8u ? 2u : 4u;
     uint16_t zDelta = simd == 32u ? 2u : 1u;
-    std::array<uint16_t, 3> localWorkSize{4u, 4u, 2u};
+    std::array<uint16_t, 3> localWorkSize{{4u, 4u, 2u}};
     auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
     auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
     if (simd == 8u) {
@@ -408,7 +408,7 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x2WhenGenerateLocalIdsWithKernelWithOnl
     uint16_t simd = GetParam();
     uint8_t rowWidth = simd == 32 ? 32 : 16;
     uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{8u, 4u, 2u};
+    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 2u}};
     auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
     auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
     if (simd == 8u) {
@@ -458,7 +458,7 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x1WhenGenerateLocalIdsWithKernelWithOnl
     uint16_t simd = GetParam();
     uint8_t rowWidth = simd == 32 ? 32 : 16;
     uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{8u, 4u, 1u};
+    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 1u}};
     auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
     auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
     if (simd == 8u) {
@@ -508,7 +508,7 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x8x2WhenGenerateLocalIdsWithKernelWithOnl
     uint16_t simd = GetParam();
     uint8_t rowWidth = simd == 32 ? 32 : 16;
     uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{8u, 8u, 2u};
+    std::array<uint16_t, 3> localWorkSize{{8u, 8u, 2u}};
     auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
     auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
     if (simd == 8u) {
