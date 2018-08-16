@@ -203,21 +203,6 @@ class GpgpuWalkerHelper {
         bool blockQueue,
         uint32_t commandType = 0);
 
-    static void dispatchWalker(
-        CommandQueue &commandQueue,
-        const Kernel &kernel,
-        cl_uint workDim,
-        const size_t globalOffsets[3],
-        const size_t workItems[3],
-        const size_t *localWorkSizesIn,
-        cl_uint numEventsInWaitList,
-        const cl_event *eventWaitList,
-        KernelOperation **blockedCommandsData,
-        HwTimeStamps *hwTimeStamps,
-        HwPerfCounter *hwPerfCounter,
-        PreemptionMode preemptionMode,
-        bool blockQueue);
-
     static void dispatchScheduler(
         CommandQueue &commandQueue,
         DeviceQueueHw<GfxFamily> &devQueueHw,
@@ -246,11 +231,11 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
 template <typename GfxFamily, uint32_t eventType>
 LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
-    Kernel *parentKernel = multiDispatchInfo.size() > 0 ? multiDispatchInfo.begin()->getKernel() : nullptr;
+    Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, dispatchInfo.getKernel());
     }
-    if (parentKernel && parentKernel->isParentKernel) {
+    if (parentKernel) {
         SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
     }
@@ -270,9 +255,9 @@ IndirectHeap &getIndirectHeap(CommandQueue &commandQueue, const MultiDispatchInf
     }
     // clang-format on
 
-    if (multiDispatchInfo.begin()->getKernel()->isParentKernel) {
+    if (Kernel *parentKernel = multiDispatchInfo.peekParentKernel()) {
         if (heapType == IndirectHeap::SURFACE_STATE) {
-            expectedSize += KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(const_cast<const Kernel &>(*(multiDispatchInfo.begin()->getKernel())));
+            expectedSize += KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<heapType>(const_cast<const Kernel &>(*parentKernel));
         } else //if (heapType == IndirectHeap::DYNAMIC_STATE || heapType == IndirectHeap::INDIRECT_OBJECT)
         {
             DeviceQueueHw<GfxFamily> *pDevQueue = castToObject<DeviceQueueHw<GfxFamily>>(commandQueue.getContext().getDefaultDeviceQueue());

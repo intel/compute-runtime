@@ -218,8 +218,8 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 
 HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenActivateAubSubCaptureIsCalledThenBaseCsrCommandStreamReceiverIsCalled) {
     const DispatchInfo dispatchInfo;
-    const MultiDispatchInfo multiDispatchInfo(dispatchInfo);
-
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     csrWithAubDump->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_TRUE(csrWithAubDump->activateAubSubCaptureParameterization.wasCalled);

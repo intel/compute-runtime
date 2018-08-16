@@ -35,4 +35,15 @@ bool DispatchInfo::usesStatelessPrintfSurface() const {
 uint32_t DispatchInfo::getRequiredScratchSize() const {
     return (kernel == nullptr) ? 0 : kernel->getScratchSize();
 }
+
+Kernel *MultiDispatchInfo::peekMainKernel() const {
+    if (dispatchInfos.size() == 0) {
+        return nullptr;
+    }
+    return mainKernel ? mainKernel : dispatchInfos.begin()->getKernel();
+}
+
+Kernel *MultiDispatchInfo::peekParentKernel() const {
+    return (mainKernel && mainKernel->isParentKernel) ? mainKernel : nullptr;
+}
 } // namespace OCLRT

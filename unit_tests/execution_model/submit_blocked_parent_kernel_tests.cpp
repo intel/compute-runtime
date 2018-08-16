@@ -438,19 +438,19 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
         const size_t globalOffsets[3] = {0, 0, 0};
         const size_t workItems[3] = {1, 1, 1};
 
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ,
-                                                      *parentKernel,
-                                                      1,
-                                                      globalOffsets,
-                                                      workItems,
-                                                      nullptr,
-                                                      0,
-                                                      nullptr,
-                                                      &blockedCommandsData,
-                                                      nullptr,
-                                                      nullptr,
-                                                      device->getPreemptionMode(),
-                                                      true);
+        DispatchInfo dispatchInfo(parentKernel.get(), 1, workItems, nullptr, globalOffsets);
+        MultiDispatchInfo multiDispatchInfo(parentKernel.get());
+        multiDispatchInfo.push(dispatchInfo);
+        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+            *pCmdQ,
+            multiDispatchInfo,
+            0,
+            nullptr,
+            &blockedCommandsData,
+            nullptr,
+            nullptr,
+            device->getPreemptionMode(),
+            true);
 
         EXPECT_NE(nullptr, blockedCommandsData);
         EXPECT_EQ(blockedCommandsData->dsh->getMaxAvailableSpace(), mockDevQueue.getDshBuffer()->getUnderlyingBufferSize());

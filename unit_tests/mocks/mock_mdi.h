@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -28,7 +28,7 @@ using namespace OCLRT;
 
 class MockMultiDispatchInfo : public MultiDispatchInfo {
   public:
-    MockMultiDispatchInfo(Kernel *kernel) {
+    MockMultiDispatchInfo(Kernel *kernel) : MultiDispatchInfo(kernel) {
         DispatchInfo di(kernel, 1, {100, 1, 1}, {10, 1, 1}, {0, 0, 0});
         dispatchInfos.push_back(di);
     }

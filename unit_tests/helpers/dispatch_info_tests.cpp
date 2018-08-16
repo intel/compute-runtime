@@ -189,7 +189,8 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithRedescribedSurfaces) {
 TEST_F(DispatchInfoTest, MultiDispatchInfoWithNoGeometry) {
     DispatchInfo dispatchInfo;
 
-    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     EXPECT_FALSE(multiDispatchInfo.empty());
     EXPECT_EQ(0u, multiDispatchInfo.getRequiredScratchSize());
     EXPECT_FALSE(multiDispatchInfo.usesSlm());
@@ -203,7 +204,8 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithUserGeometry) {
 
     DispatchInfo dispatchInfo(pKernel, 3, gws, elws, offset);
 
-    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     EXPECT_FALSE(multiDispatchInfo.empty());
     EXPECT_EQ(1024u, multiDispatchInfo.getRequiredScratchSize());
     EXPECT_TRUE(multiDispatchInfo.usesSlm());
@@ -235,7 +237,8 @@ TEST_F(DispatchInfoTest, MultiDispatchInfoWithFullGeometry) {
 
     DispatchInfo dispatchInfo(pKernel, 3, gws, elws, offset, agws, lws, twgs, nwgs, swgs);
 
-    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     EXPECT_FALSE(multiDispatchInfo.empty());
     EXPECT_EQ(1024u, multiDispatchInfo.getRequiredScratchSize());
     EXPECT_TRUE(multiDispatchInfo.usesSlm());
@@ -282,4 +285,42 @@ TEST_F(DispatchInfoTest, WorkGroupSetGet) {
     EXPECT_EQ(twgs, dispatchInfo.getTotalNumberOfWorkgroups());
     EXPECT_EQ(nwgs, dispatchInfo.getNumberOfWorkgroups());
     EXPECT_EQ(swgs, dispatchInfo.getStartOfWorkgroups());
+}
+
+TEST_F(DispatchInfoTest, givenKernelWhenMultiDispatchInfoIsCreatedThenQueryParentAndMainKernel) {
+    std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*pContext));
+    std::unique_ptr<MockKernel> baseKernel(MockKernel::create(*pDevice, pProgram));
+    std::unique_ptr<MockKernel> builtInKernel(MockKernel::create(*pDevice, pProgram));
+    builtInKernel->isBuiltIn = true;
+    DispatchInfo parentKernelDispatchInfo(parentKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo baseDispatchInfo(baseKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo builtInDispatchInfo(builtInKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+
+    {
+        MultiDispatchInfo multiDispatchInfo(parentKernel.get());
+        multiDispatchInfo.push(parentKernelDispatchInfo);
+        EXPECT_EQ(parentKernel.get(), multiDispatchInfo.peekParentKernel());
+        EXPECT_EQ(parentKernel.get(), multiDispatchInfo.peekMainKernel());
+    }
+
+    {
+        MultiDispatchInfo multiDispatchInfo(baseKernel.get());
+        multiDispatchInfo.push(builtInDispatchInfo);
+        EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
+        EXPECT_EQ(baseKernel.get(), multiDispatchInfo.peekMainKernel()); // dont pick bultin kernel
+
+        multiDispatchInfo.push(baseDispatchInfo);
+        EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
+        EXPECT_EQ(baseKernel.get(), multiDispatchInfo.peekMainKernel());
+    }
+
+    {
+        MultiDispatchInfo multiDispatchInfo;
+        EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
+        EXPECT_EQ(nullptr, multiDispatchInfo.peekMainKernel());
+
+        multiDispatchInfo.push(builtInDispatchInfo);
+        EXPECT_EQ(nullptr, multiDispatchInfo.peekParentKernel());
+        EXPECT_EQ(builtInKernel.get(), multiDispatchInfo.peekMainKernel());
+    }
 }

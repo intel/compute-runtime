@@ -446,7 +446,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
 
     OCLRT::LinearStream *commandStream = nullptr;
     OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    bool executionModelKernel = multiDispatchInfo.begin()->getKernel()->isParentKernel;
+    Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes
@@ -460,7 +460,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
         commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize), MemoryConstants::pageSize);
-        if (executionModelKernel) {
+        if (parentKernel) {
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
 
             commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE,
@@ -470,7 +470,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
             dsh->getSpace(colorCalcSize);
             ioh = dsh;
             commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE,
-                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*(multiDispatchInfo.begin()->getKernel())) +
+                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel) +
                                                 KCH::getTotalSizeRequiredSSH(multiDispatchInfo),
                                             ssh);
         } else {
@@ -482,12 +482,12 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         using UniqueIH = std::unique_ptr<IndirectHeap>;
         *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh), UniqueIH(ssh),
                                                    *commandQueue.getDevice().getMemoryManager());
-        if (executionModelKernel) {
+        if (parentKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
     } else {
         commandStream = &commandQueue.getCS(0);
-        if (executionModelKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
+        if (parentKernel && (commandQueue.getIndirectHeap(IndirectHeap::SURFACE_STATE, 0).getUsed() > 0)) {
             commandQueue.releaseIndirectHeap(IndirectHeap::SURFACE_STATE);
         }
         dsh = &getIndirectHeap<GfxFamily, IndirectHeap::DYNAMIC_STATE>(commandQueue, multiDispatchInfo);
@@ -505,7 +505,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     size_t numDispatches = multiDispatchInfo.size();
     totalInterfaceDescriptorTableSize *= numDispatches;
 
-    if (!executionModelKernel) {
+    if (!parentKernel) {
         dsh->getSpace(totalInterfaceDescriptorTableSize);
     } else {
         dsh->getSpace(commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset() - dsh->getUsed());
@@ -654,27 +654,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
     }
-}
-
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
-    CommandQueue &commandQueue,
-    const Kernel &kernel,
-    cl_uint workDim,
-    const size_t globalOffsets[3],
-    const size_t workItems[3],
-    const size_t *localWorkSizesIn,
-    cl_uint numEventsInWaitList,
-    const cl_event *eventWaitList,
-    KernelOperation **blockedCommandsData,
-    HwTimeStamps *hwTimeStamps,
-    HwPerfCounter *hwPerfCounter,
-    PreemptionMode preemptionMode,
-    bool blockQueue) {
-
-    DispatchInfo dispatchInfo(const_cast<Kernel *>(&kernel), workDim, workItems, localWorkSizesIn, globalOffsets);
-    GpgpuWalkerHelper<GfxFamily>::dispatchWalker(commandQueue, dispatchInfo, numEventsInWaitList, eventWaitList,
-                                                 blockedCommandsData, hwTimeStamps, hwPerfCounter, preemptionMode, blockQueue);
 }
 
 template <typename GfxFamily>

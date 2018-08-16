@@ -140,13 +140,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, shouldntChangeCommandStreamMemor
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     cl_uint dimensions = 1;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -188,13 +187,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, noLocalIdsShouldntCrash) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {1, 1, 1};
     cl_uint dimensions = 1;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -217,13 +215,13 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
     size_t workItems[3] = {1, 1, 1};
     for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
         workItems[dimension - 1] = 256;
+
+        DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.push(dispatchInfo);
         GpgpuWalkerHelper<FamilyType>::dispatchWalker(
             *pCmdQ,
-            kernel,
-            dimension,
-            globalOffsets,
-            workItems,
-            nullptr,
+            multiDispatchInfo,
             0,
             nullptr,
             nullptr,
@@ -231,6 +229,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
             nullptr,
             pDevice->getPreemptionMode(),
             false);
+
         EXPECT_EQ(dimension, *kernel.workDim);
     }
 }
@@ -247,13 +246,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
     size_t workItems[3] = {1, 1, 1};
     for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
         workItems[dimension - 1] = 256;
+        DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.push(dispatchInfo);
         GpgpuWalkerHelper<FamilyType>::dispatchWalker(
             *pCmdQ,
-            kernel,
-            dimension,
-            globalOffsets,
-            workItems,
-            nullptr,
+            multiDispatchInfo,
             0,
             nullptr,
             nullptr,
@@ -276,13 +274,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
     size_t workItems[3] = {1, 1, 1};
     for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
         workItems[dimension - 1] = 256;
+        DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.push(dispatchInfo);
         GpgpuWalkerHelper<FamilyType>::dispatchWalker(
             *pCmdQ,
-            kernel,
-            dimension,
-            globalOffsets,
-            workItems,
-            nullptr,
+            multiDispatchInfo,
             0,
             nullptr,
             nullptr,
@@ -306,13 +303,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
     size_t workItems[3] = {1, 1, 1};
     for (uint32_t dimension = 1; dimension <= 3; ++dimension) {
         workItems[dimension - 1] = 256;
+        DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
+        MultiDispatchInfo multiDispatchInfo;
+        multiDispatchInfo.push(dispatchInfo);
         GpgpuWalkerHelper<FamilyType>::dispatchWalker(
             *pCmdQ,
-            kernel,
-            dimension,
-            globalOffsets,
-            workItems,
-            nullptr,
+            multiDispatchInfo,
             0,
             nullptr,
             nullptr,
@@ -335,13 +331,13 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
     size_t workItems[3] = {2, 5, 10};
     size_t workGroupSize[3] = {1, 1, 1};
     cl_uint dimensions = 3;
+
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        workGroupSize,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -349,6 +345,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
         nullptr,
         pDevice->getPreemptionMode(),
         false);
+
     EXPECT_EQ(2u, *kernel.numWorkGroupsX);
     EXPECT_EQ(5u, *kernel.numWorkGroupsY);
     EXPECT_EQ(10u, *kernel.numWorkGroupsZ);
@@ -366,13 +363,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {2, 5, 10};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -397,13 +393,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {2, 5, 10};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -429,13 +424,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {2, 5, 10};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -461,13 +455,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workItems[3] = {2, 5, 10};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        nullptr,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -491,13 +484,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
     size_t workItems[3] = {2, 5, 10};
     size_t workGroupSize[3] = {1, 2, 3};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        workGroupSize,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -524,13 +516,12 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
     size_t workItems[3] = {2, 5, 10};
     size_t workGroupSize[3] = {1, 2, 3};
     cl_uint dimensions = 3;
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        workGroupSize,
+        multiDispatchInfo,
         0,
         nullptr,
         nullptr,
@@ -649,13 +640,12 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
 
     KernelOperation *blockedCommandsData = nullptr;
 
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        workGroupSize,
+        multiDispatchInfo,
         0,
         nullptr,
         &blockedCommandsData,
@@ -689,13 +679,12 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
 
     KernelOperation *blockedCommandsData = nullptr;
 
+    DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
-        kernel,
-        dimensions,
-        globalOffsets,
-        workItems,
-        workGroupSize,
+        multiDispatchInfo,
         0,
         nullptr,
         &blockedCommandsData,

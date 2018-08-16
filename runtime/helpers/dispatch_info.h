@@ -79,18 +79,14 @@ class DispatchInfo {
 };
 
 struct MultiDispatchInfo {
-    MultiDispatchInfo(const DispatchInfo &dispatchInfo) {
-        dispatchInfos.push_back(dispatchInfo);
-    }
-
     ~MultiDispatchInfo() {
         for (MemObj *redescribedSurface : redescribedSurfaces) {
             redescribedSurface->release();
         }
     }
 
-    MultiDispatchInfo() {
-    }
+    MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
+    MultiDispatchInfo() = default;
 
     MultiDispatchInfo &operator=(const MultiDispatchInfo &) = delete;
     MultiDispatchInfo(const MultiDispatchInfo &) = delete;
@@ -149,8 +145,12 @@ struct MultiDispatchInfo {
         redescribedSurfaces.push_back(memObj.release());
     }
 
+    Kernel *peekParentKernel() const;
+    Kernel *peekMainKernel() const;
+
   protected:
     StackVec<DispatchInfo, 9> dispatchInfos;
     StackVec<MemObj *, 2> redescribedSurfaces;
+    Kernel *mainKernel = nullptr;
 };
 } // namespace OCLRT

@@ -452,10 +452,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     const DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubSubCaptureManagerMock->activateSubCapture(dispatchInfo);
+    aubSubCaptureManagerMock->activateSubCapture(multiDispatchInfo);
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
@@ -572,10 +574,12 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     LinearStream cs(commandBuffer);
 
     const DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     auto aubSubCaptureManagerMock = new AubSubCaptureManagerMock("");
     aubSubCaptureManagerMock->subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
     aubSubCaptureManagerMock->setSubCaptureToggleActive(true);
-    aubSubCaptureManagerMock->activateSubCapture(dispatchInfo);
+    aubSubCaptureManagerMock->activateSubCapture(multiDispatchInfo);
     aubCsr->subCaptureManager.reset(aubSubCaptureManagerMock);
     ASSERT_TRUE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 
@@ -913,7 +917,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->subCaptureManager.reset(subCaptureManagerMock);
 
     const DispatchInfo dispatchInfo;
-    aubCsr->activateAubSubCapture(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
+    aubCsr->activateAubSubCapture(multiDispatchInfo);
 
     EXPECT_FALSE(aubCsr->subCaptureManager->isSubCaptureEnabled());
 }

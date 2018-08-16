@@ -336,6 +336,7 @@ class MockParentKernel : public Kernel {
         info->patchInfo.threadPayload = threadPayload;
 
         SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
+        *executionEnvironment = {};
         executionEnvironment->HasDeviceEnqueue = 1;
         info->patchInfo.executionEnvironment = executionEnvironment;
 

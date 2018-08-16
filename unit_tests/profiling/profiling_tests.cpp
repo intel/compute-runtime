@@ -134,7 +134,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GIVENCommandQueueWithProfilingAndFor
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
     auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, false, nullptr);
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(true, false, *pCmdQ, multiDispatchInfo);
@@ -547,7 +548,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GIVENCommandQueueWit
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     DispatchInfo dispatchInfo;
     dispatchInfo.setKernel(&kernel);
-    MultiDispatchInfo multiDispatchInfo(dispatchInfo);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.push(dispatchInfo);
     multiDispatchInfo.push(dispatchInfo);
     auto &commandStreamTask = getCommandStream<FamilyType, CL_COMMAND_TASK>(*pCmdQ, true, true, nullptr);
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(true, true, *pCmdQ, multiDispatchInfo);
