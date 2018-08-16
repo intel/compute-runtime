@@ -88,14 +88,14 @@ inline void CommandStreamReceiverHw<GfxFamily>::alignToCacheLine(LinearStream &c
 }
 
 template <typename GfxFamily>
-inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble() const {
+inline size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdSizeForPreamble(Device &device) const {
     size_t size = 0;
 
     if (mediaVfeStateDirty) {
         size += sizeof(typename GfxFamily::PIPE_CONTROL) + sizeof(typename GfxFamily::MEDIA_VFE_STATE);
     }
     if (!this->isPreambleSent) {
-        size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(*memoryManager->device);
+        size += PreambleHelper<GfxFamily>::getAdditionalCommandsSize(device);
     }
     if (!this->isPreambleSent || this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
         size += PreambleHelper<GfxFamily>::getThreadArbitrationCommandsSize();
@@ -254,11 +254,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     initPageTableManagerRegisters(commandStreamCSR);
-    programPreemption(commandStreamCSR, dispatchFlags);
+    programPreemption(commandStreamCSR, device, dispatchFlags);
     programCoherency(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags);
-    programPreamble(commandStreamCSR, dispatchFlags, newL3Config);
+    programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
 
     if (this->lastSentThreadArbitrationPolicy != this->requiredThreadArbitrationPolicy) {
@@ -428,7 +428,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(nullptr);
         } else {
-            auto commandBuffer = new CommandBuffer;
+            auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;
             commandBuffer->surfaces.swap(getMemoryManager()->getResidencyAllocations());
             commandBuffer->batchBufferEndLocation = bbEndLocation;
@@ -480,12 +480,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
     }
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
-    Device *device = this->getMemoryManager()->device;
     std::unique_lock<MutexType> lockGuard(ownershipMutex);
-    EngineType engineType = device->getEngineType();
 
     auto &commandBufferList = this->submissionAggregator->peekCmdBufferList();
     if (!commandBufferList.peekIsEmpty()) {
+        auto &device = commandBufferList.peekHead()->device;
+        EngineType engineType = device.getEngineType();
+
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
         auto pipeControlLocationSize = getRequiredPipeControlSize();
@@ -494,7 +495,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         while (!commandBufferList.peekIsEmpty()) {
             size_t totalUsedSize = 0u;
-            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, (size_t)device->getDeviceInfo().globalMemSize * 5 / 10);
+            this->submissionAggregator->aggregateCommandBuffers(resourcePackage, totalUsedSize, (size_t)device.getDeviceInfo().globalMemSize * 5 / 10);
             auto primaryCmdBuffer = commandBufferList.removeFrontOne();
             auto nextCommandBuffer = commandBufferList.peekHead();
             auto currentBBendLocation = primaryCmdBuffer->batchBufferEndLocation;
@@ -609,7 +610,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
-    size_t size = getRequiredCmdSizeForPreamble();
+    size_t size = getRequiredCmdSizeForPreamble(device);
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size += getRequiredPipeControlSize();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
@@ -658,9 +659,8 @@ inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFal
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags) {
-    PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionCsrAllocation,
-                                                  *memoryManager->device);
+inline void CommandStreamReceiverHw<GfxFamily>::programPreemption(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags) {
+    PreemptionHelper::programCmdStream<GfxFamily>(csr, dispatchFlags.preemptionMode, this->lastPreemptionMode, preemptionCsrAllocation, device);
     this->lastPreemptionMode = dispatchFlags.preemptionMode;
 }
 
@@ -696,9 +696,9 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const 
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
+inline void CommandStreamReceiverHw<GfxFamily>::programPreamble(LinearStream &csr, Device &device, DispatchFlags &dispatchFlags, uint32_t &newL3Config) {
     if (!this->isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPreamble(&csr, *memoryManager->device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionCsrAllocation);
+        PreambleHelper<GfxFamily>::programPreamble(&csr, device, newL3Config, this->requiredThreadArbitrationPolicy, this->preemptionCsrAllocation);
         this->isPreambleSent = true;
         this->lastSentL3Config = newL3Config;
         this->lastSentThreadArbitrationPolicy = this->requiredThreadArbitrationPolicy;

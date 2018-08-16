@@ -181,7 +181,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType,
                      ResidencyContainer *allocationsForResidency) override {
         flushCalledCount++;
-        recordedCommandBuffer.batchBuffer = batchBuffer;
+        recordedCommandBuffer->batchBuffer = batchBuffer;
         copyOfAllocations.clear();
 
         if (allocationsForResidency) {
@@ -197,12 +197,13 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
                               const IndirectHeap &dsh, const IndirectHeap &ioh,
                               const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
+        recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
         return CommandStreamReceiverHw<GfxFamily>::flushTask(commandStream, commandStreamStart,
                                                              dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
 
     int flushCalledCount = 0;
-    CommandBuffer recordedCommandBuffer;
+    std::unique_ptr<CommandBuffer> recordedCommandBuffer = nullptr;
     ResidencyContainer copyOfAllocations;
     DispatchFlags passedDispatchFlags = {};
 };

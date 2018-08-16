@@ -1056,7 +1056,6 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     DebugManager.flags.Force32bitAddressing.set(true);
     memoryManager->setForce32BitAllocations(true);
     std::unique_ptr<Device> pDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    memoryManager->device = pDevice.get();
 
     auto allocator = memoryManager->getDrmInternal32BitAllocator();
     size_t size = getSizeToMap();
@@ -1066,7 +1065,7 @@ TEST_F(DrmMemoryManagerTest, Given32BitDeviceWithMemoryManagerWhenInternalHeapIs
     size_t allocationSize = 4096 * 3;
     auto graphicsAllocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     EXPECT_EQ(nullptr, graphicsAllocation);
-    EXPECT_TRUE(memoryManager->device->getDeviceInfo().force32BitAddressess);
+    EXPECT_TRUE(pDevice->getDeviceInfo().force32BitAddressess);
 }
 
 TEST_F(DrmMemoryManagerTest, GivenMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenProperIoctlsAreCalledAndUnmapSizeIsNonZero) {

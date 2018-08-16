@@ -41,7 +41,6 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     int redundancyRatio = 1;
     void setCommandStreamReceiver(CommandStreamReceiver *csr);
-    void setDevice(Device *device);
     bool isAllocationListEmpty();
     GraphicsAllocation *peekAllocationListHead();
 

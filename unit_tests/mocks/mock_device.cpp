@@ -68,7 +68,6 @@ void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
     memoryManager->setCommandStreamReceiver(executionEnvironment->commandStreamReceiver.get());
     executionEnvironment->commandStreamReceiver->setMemoryManager(memoryManager);
     setMemoryManager(memoryManager);
-    memoryManager->setDevice(this);
 }
 
 void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {

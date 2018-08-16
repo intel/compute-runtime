@@ -174,7 +174,6 @@ TEST(MemObj, givenNotReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThe
     MockContext context;
 
     context.setMemoryManager(&memoryManager);
-    memoryManager.setDevice(context.getDevice(0));
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 2;
@@ -194,11 +193,10 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     MockContext context;
 
     context.setMemoryManager(&memoryManager);
-    memoryManager.setDevice(context.getDevice(0));
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 1;
-    *memoryManager.device->getTagAddress() = 1;
+    *context.getDevice(0)->getTagAddress() = 1;
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
@@ -213,7 +211,6 @@ TEST(MemObj, givenNotUsedGraphicsAllocationWhenMemObjDestroysAllocationAsyncThen
     MockContext context;
 
     context.setMemoryManager(&memoryManager);
-    memoryManager.setDevice(context.getDevice(0));
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = ObjectNotUsed;
@@ -252,13 +249,9 @@ TEST(MemObj, givenMemObjWhenItDoesntHaveGraphicsAllocationThenWaitForCsrCompleti
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);
 
-    EXPECT_EQ(nullptr, memoryManager.device);
     EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
     memObj.waitForCsrCompletion();
 
-    memoryManager.setDevice(context.getDevice(0));
-
-    EXPECT_NE(nullptr, memoryManager.device);
     EXPECT_EQ(nullptr, memObj.getGraphicsAllocation());
     memObj.waitForCsrCompletion();
 }

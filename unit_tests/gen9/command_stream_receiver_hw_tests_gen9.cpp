@@ -58,12 +58,12 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
     uint32_t newL3Config;
     DispatchFlags dispatchFlags;
 
-    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
     auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
-    commandStreamReceiver.programPreamble(preambleStream, dispatchFlags, newL3Config);
+    commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());
@@ -88,7 +88,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     uint32_t newL3Config;
     DispatchFlags dispatchFlags;
 
-    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto cmdSizePreambleMidThread = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
@@ -99,7 +99,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     ASSERT_NE(dbgLocalSipAllocation, nullptr);
     ASSERT_NE(sipAllocation, nullptr);
 
-    commandStreamReceiver.programPreamble(preambleStream, dispatchFlags, newL3Config);
+    commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
     auto itorStateSip = find<STATE_SIP *>(this->cmdList.begin(), this->cmdList.end());

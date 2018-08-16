@@ -99,11 +99,6 @@ TEST_F(DeviceTest, retainAndRelease) {
     ASSERT_EQ(1, pDevice->getReference());
 }
 
-TEST_F(DeviceTest, givenMemoryManagerWhenDeviceIsCreatedThenItHasAccessToDevice) {
-    auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_EQ(memoryManager->device, pDevice);
-}
-
 TEST_F(DeviceTest, getEngineTypeDefault) {
     auto pTestDevice = std::unique_ptr<Device>(createWithUsDeviceId(0));
 

@@ -62,7 +62,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenPreambleSentAndTh
     commandStreamReceiver.isPreambleSent = true;
     commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
     auto expectedCmdSize = sizeof(typename FamilyType::PIPE_CONTROL) + sizeof(typename FamilyType::MEDIA_VFE_STATE);
-    EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble());
+    EXPECT_EQ(expectedCmdSize, commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice));
 }
 
 HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPolicyChangedWhenEstimatingPreambleCmdSizeThenResultDependsOnPolicyProgrammingCmdSize) {
@@ -70,10 +70,10 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
     commandStreamReceiver.isPreambleSent = true;
 
     commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
-    auto policyNotChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto policyNotChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy + 1;
-    auto policyChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto policyChanged = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     auto actualDifference = policyChanged - policyNotChanged;
     auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize();
@@ -85,10 +85,10 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentWhenEstimatingPreambleCm
     commandStreamReceiver.requiredThreadArbitrationPolicy = commandStreamReceiver.lastSentThreadArbitrationPolicy;
 
     commandStreamReceiver.isPreambleSent = false;
-    auto preambleNotSent = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto preambleNotSent = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     commandStreamReceiver.isPreambleSent = true;
-    auto preambleSent = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto preambleSent = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     auto actualDifference = preambleNotSent - preambleSent;
     auto expectedDifference = PreambleHelper<FamilyType>::getThreadArbitrationCommandsSize() + PreambleHelper<FamilyType>::getAdditionalCommandsSize(*pDevice);
@@ -102,10 +102,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenMediaVfeStateDirt
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     commandStreamReceiver.overrideMediaVFEStateDirty(false);
-    auto notDirty = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto notDirty = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     commandStreamReceiver.overrideMediaVFEStateDirty(true);
-    auto dirty = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    auto dirty = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
 
     auto actualDifference = dirty - notDirty;
     auto expectedDifference = sizeof(PIPE_CONTROL) + sizeof(MEDIA_VFE_STATE);

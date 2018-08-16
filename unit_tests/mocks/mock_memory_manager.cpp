@@ -52,10 +52,6 @@ void MockMemoryManager::setCommandStreamReceiver(CommandStreamReceiver *csr) {
     this->csr = csr;
 }
 
-void MockMemoryManager::setDevice(Device *device) {
-    this->device = device;
-}
-
 bool MockMemoryManager::isAllocationListEmpty() {
     return graphicsAllocations.peekIsEmpty();
 }

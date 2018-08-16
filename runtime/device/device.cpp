@@ -166,7 +166,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     }
 
     outDevice.executionEnvironment->memoryManager->setForce32BitAllocations(pDevice->getDeviceInfo().force32BitAddressess);
-    outDevice.executionEnvironment->memoryManager->device = pDevice;
 
     if (pDevice->preemptionMode == PreemptionMode::MidThread || pDevice->isSourceLevelDebuggerActive()) {
         size_t requiredSize = pHwInfo->capabilityTable.requiredPreemptionSurfaceSize;

@@ -27,6 +27,7 @@
 #include "runtime/memory_manager/residency_container.h"
 #include <vector>
 namespace OCLRT {
+class Device;
 class Event;
 class FlushStampTracker;
 class GraphicsAllocation;
@@ -56,7 +57,7 @@ struct BatchBuffer {
 };
 
 struct CommandBuffer : public IDNode<CommandBuffer> {
-    CommandBuffer();
+    CommandBuffer(Device &);
     ResidencyContainer surfaces;
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
@@ -65,6 +66,7 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     void *pipeControlThatMayBeErasedLocation = nullptr;
     void *epiloguePipeControlLocation = nullptr;
     std::unique_ptr<FlushStampTracker> flushStamp;
+    Device &device;
 };
 
 struct CommandBufferList : public IDList<CommandBuffer, false, true, false> {};

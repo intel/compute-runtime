@@ -687,7 +687,6 @@ class DrmCommandStreamEnhancedFixture
         executionEnvironment->memoryManager.reset(mm);
         device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
         ASSERT_NE(nullptr, device);
-        mm->device = device;
     }
 
     void TearDown() {
@@ -993,8 +992,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
 
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    tCsr->getMemoryManager()->device = device.get();
-
     tCsr->setTagAllocation(tagAllocation);
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     DispatchFlags dispatchFlags;
@@ -1007,7 +1004,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenCsrWhenDispatchPolicyIsSetToBatchingT
     EXPECT_NE(nullptr, cmdBuffers.peekHead());
 
     //preemption allocation
-    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     //preemption allocation + sipKernel
     int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;
@@ -1048,7 +1045,6 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     IndirectHeap cs(commandBuffer);
     std::unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    tCsr->getMemoryManager()->device = device.get();
     tCsr->setTagAllocation(tagAllocation);
     tCsr->setPreemptionCsrAllocation(preemptionAllocation);
     auto &submittedCommandBuffer = tCsr->getCS(1024);
@@ -1074,7 +1070,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     EXPECT_FALSE(commandBufferGraphicsAllocation->isResident());
 
     //preemption allocation
-    size_t csrSurfaceCount = (tCsr->getMemoryManager()->device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
+    size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
 
     //preemption allocation +sip Kernel
     int ioctlExtraCnt = (PreemptionHelper::getDefaultPreemptionMode(*platformDevices[0]) == PreemptionMode::MidThread) ? 2 : 0;

@@ -673,7 +673,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
     sizeNeeded += sizeof(MI_BATCH_BUFFER_END);   // no task to submit, add BBE to CSR stream
@@ -704,7 +704,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, flushTaskWithOnlyEnoughMemoryForPr
     commandStreamReceiver.lastSentL3Config = l3Config;
 
     auto &csrCS = commandStreamReceiver.getCS();
-    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble();
+    size_t sizeNeededForPreamble = commandStreamReceiver.getRequiredCmdSizeForPreamble(*pDevice);
     size_t sizeNeededForStateBaseAddress = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     size_t sizeNeeded = commandStreamReceiver.getRequiredCmdStreamSize(flushTaskFlags, *pDevice);
     sizeNeeded -= sizeof(MI_BATCH_BUFFER_START); // no task to submit
@@ -2136,7 +2136,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndThreeReco
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto memorySize = (size_t)mockCsr->getMemoryManager()->device->getDeviceInfo().globalMemSize;
+    auto memorySize = (size_t)pDevice->getDeviceInfo().globalMemSize;
     GraphicsAllocation largeAllocation(nullptr, memorySize);
 
     DispatchFlags dispatchFlags;
@@ -2319,10 +2319,10 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
 
     mockCsr->flushBatchedSubmissions();
 
-    EXPECT_FALSE(mockCsr->recordedCommandBuffer.batchBuffer.low_priority);
-    EXPECT_TRUE(mockCsr->recordedCommandBuffer.batchBuffer.requiresCoherency);
-    EXPECT_EQ(mockCsr->recordedCommandBuffer.batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
-    EXPECT_EQ(4u, mockCsr->recordedCommandBuffer.batchBuffer.startOffset);
+    EXPECT_FALSE(mockCsr->recordedCommandBuffer->batchBuffer.low_priority);
+    EXPECT_TRUE(mockCsr->recordedCommandBuffer->batchBuffer.requiresCoherency);
+    EXPECT_EQ(mockCsr->recordedCommandBuffer->batchBuffer.commandBufferAllocation, commandStream.getGraphicsAllocation());
+    EXPECT_EQ(4u, mockCsr->recordedCommandBuffer->batchBuffer.startOffset);
     EXPECT_EQ(1, mockCsr->flushCalledCount);
 
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCommandBuffers().peekIsEmpty());
@@ -2594,7 +2594,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     std::unique_ptr<MockedMemoryManager> mockedMemoryManager(new MockedMemoryManager());
     std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment));
 
-    mockedMemoryManager->device = pDevice;
     mockCsr->setMemoryManager(mockedMemoryManager.get());
     mockCsr->initializeTagAllocation();
     mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
@@ -2627,7 +2626,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
 
     EXPECT_EQ(expectedUsed, mockCsr->peekTotalMemoryUsed());
 
-    auto budgetSize = (size_t)mockCsr->getMemoryManager()->device->getDeviceInfo().globalMemSize;
+    auto budgetSize = (size_t)pDevice->getDeviceInfo().globalMemSize;
     GraphicsAllocation hugeAllocation(nullptr, budgetSize / 4);
     mockCsr->makeResident(hugeAllocation);
 

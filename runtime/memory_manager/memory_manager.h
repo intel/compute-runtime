@@ -202,7 +202,6 @@ class MemoryManager {
     AllocationsList allocationsForReuse;
 
     CommandStreamReceiver *csr = nullptr;
-    Device *device = nullptr;
     HostPtrManager hostPtrManager;
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
