@@ -72,13 +72,12 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
 }
 
 bool isCompatibleWith4x4Layout(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd) {
-    uint8_t rowWidth = simd == 32u ? 32u : 16u;
-    uint8_t xDelta = simd == 8u ? 2u : 4u;
-    uint8_t yDelta = simd == 8u || localWorkgroupSize.at(1) == 4u ? 4u : rowWidth / xDelta;
+    //limit support to 8x4x1 and 8x8x1 LWS
     return dimensionsOrder.at(0) == 0 &&
            dimensionsOrder.at(1) == 1 &&
-           (localWorkgroupSize.at(0) & (xDelta - 1)) == 0 &&
-           (localWorkgroupSize.at(1) & (yDelta - 1)) == 0;
+           localWorkgroupSize[2] == 1 &&
+           localWorkgroupSize[0] == 8 &&
+           (localWorkgroupSize[1] == 4 || localWorkgroupSize[1] == 8);
 }
 
 inline void generateLocalIDsWith4x4Layout(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd) {

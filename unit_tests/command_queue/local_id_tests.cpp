@@ -298,8 +298,14 @@ TEST_P(LocalIDFixture, sizeCalculationLocalIDs) {
 
 using LocalIds4x4LayoutTest = ::testing::TestWithParam<uint8_t>;
 
-TEST(LocalIds4x4LayoutTest, given4x4x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnTrue) {
-    std::array<uint16_t, 3> localWorkSize{{4u, 4u, 1u}};
+TEST(LocalIds4x4LayoutTest, given8x4x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnTrue) {
+    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 1u}};
+    std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
+    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, 16));
+}
+
+TEST(LocalIds4x4LayoutTest, given8x8x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnTrue) {
+    std::array<uint16_t, 3> localWorkSize{{8u, 8u, 1u}};
     std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
     EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, 16));
 }
@@ -366,32 +372,34 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS4x4x2WhenGenerateLocalIdsWithKernelWithOnl
     auto alignedMemory = allocateAlignedMemory(size, 32);
     auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
     memset(buffer, 0xff, size);
-    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-    generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
+        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
 
-    auto numRows = elemsInBuffer / rowWidth;
-    auto numGrfs = numRows / 3u;
+        auto numRows = elemsInBuffer / rowWidth;
+        auto numGrfs = numRows / 3u;
 
-    for (auto i = 0u; i < numGrfs; i++) {
+        for (auto i = 0u; i < numGrfs; i++) {
 
-        // validate X row
-        uint16_t baseX = buffer[i * 3 * rowWidth];
-        uint16_t currentX = baseX;
-        for (int j = 1; j < simd; j++) {
-            currentX = baseX + ((currentX + 1) & (xDelta - 1));
-            EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-        }
+            // validate X row
+            uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t currentX = baseX;
+            for (int j = 1; j < simd; j++) {
+                currentX = baseX + ((currentX + 1) & (xDelta - 1));
+                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
+            }
 
-        // validate Y row
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedY = ((j / xDelta) & 0b11);
-            EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-        }
+            // validate Y row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedY = ((j / xDelta) & 0b11);
+                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
+            }
 
-        // validate Z row
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedZ = 2 * i / numGrfs + j / (simd / zDelta); //early grow Z
-            EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            // validate Z row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedZ = 2 * i / numGrfs + j / (simd / zDelta); //early grow Z
+                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            }
         }
     }
 }
@@ -410,36 +418,88 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x2WhenGenerateLocalIdsWithKernelWithOnl
     auto alignedMemory = allocateAlignedMemory(size, 32);
     auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
     memset(buffer, 0xff, size);
-    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-    generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
+        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
 
-    auto numRows = elemsInBuffer / rowWidth;
-    auto numGrfs = numRows / 3u;
+        auto numRows = elemsInBuffer / rowWidth;
+        auto numGrfs = numRows / 3u;
 
-    for (auto i = 0u; i < numGrfs; i++) {
+        for (auto i = 0u; i < numGrfs; i++) {
 
-        // validate X row
-        uint16_t baseX = buffer[i * 3 * rowWidth];
-        uint16_t currentX = baseX;
-        for (int j = 1; j < simd; j++) {
-            if (j == 16) {
-                //early grow X
-                baseX += xDelta;
+            // validate X row
+            uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t currentX = baseX;
+            for (int j = 1; j < simd; j++) {
+                if (j == 16) {
+                    //early grow X
+                    baseX += xDelta;
+                }
+                currentX = baseX + ((currentX + 1) & (xDelta - 1));
+                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
             }
-            currentX = baseX + ((currentX + 1) & (xDelta - 1));
-            EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-        }
 
-        // validate Y row
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedY = ((j / xDelta) & 0b11);
-            EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-        }
+            // validate Y row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedY = ((j / xDelta) & 0b11);
+                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
+            }
 
-        // validate Z row
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedZ = 2 * i / numGrfs;
-            EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            // validate Z row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedZ = 2 * i / numGrfs;
+                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            }
+        }
+    }
+}
+
+TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x1WhenGenerateLocalIdsWithKernelWithOnlyImagesThenApplies4x4Layout) {
+    uint16_t simd = GetParam();
+    uint8_t rowWidth = simd == 32 ? 32 : 16;
+    uint16_t xDelta = simd == 8u ? 2u : 4u;
+    std::array<uint16_t, 3> localWorkSize{8u, 4u, 1u};
+    auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
+    auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
+    if (simd == 8u) {
+        elemsInBuffer *= 2;
+    }
+    auto size = elemsInBuffer * sizeof(uint16_t);
+    auto alignedMemory = allocateAlignedMemory(size, 32);
+    auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
+    memset(buffer, 0xff, size);
+    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
+        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+
+        auto numRows = elemsInBuffer / rowWidth;
+        auto numGrfs = numRows / 3u;
+
+        for (auto i = 0u; i < numGrfs; i++) {
+
+            // validate X row
+            uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t currentX = baseX;
+            for (int j = 1; j < simd; j++) {
+                if (j == 16) {
+                    //early grow X
+                    baseX += xDelta;
+                }
+                currentX = baseX + ((currentX + 1) & (xDelta - 1));
+                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
+            }
+
+            // validate Y row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedY = ((j / xDelta) & 0b11);
+                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
+            }
+
+            // validate Z row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedZ = 0;
+                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            }
         }
     }
 }
@@ -458,33 +518,35 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x8x2WhenGenerateLocalIdsWithKernelWithOnl
     auto alignedMemory = allocateAlignedMemory(size, 32);
     auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
     memset(buffer, 0xff, size);
-    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-    generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
+        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
 
-    auto numRows = elemsInBuffer / rowWidth;
-    auto numGrfs = numRows / 3u;
+        auto numRows = elemsInBuffer / rowWidth;
+        auto numGrfs = numRows / 3u;
 
-    for (auto i = 0u; i < numGrfs; i++) {
+        for (auto i = 0u; i < numGrfs; i++) {
 
-        // validate X row
-        uint16_t baseX = buffer[i * 3 * rowWidth];
-        uint16_t currentX = baseX;
-        for (int j = 1; j < simd; j++) {
-            currentX = baseX + ((currentX + 1) & (xDelta - 1));
-            EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-        }
+            // validate X row
+            uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t currentX = baseX;
+            for (int j = 1; j < simd; j++) {
+                currentX = baseX + ((currentX + 1) & (xDelta - 1));
+                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
+            }
 
-        // validate Y row
-        uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
-            EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-        }
+            // validate Y row
+            uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
+                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
+            }
 
-        // validate Z row
-        for (int j = 0; j < simd; j++) {
-            uint16_t expectedZ = 2 * i / numGrfs;
-            EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            // validate Z row
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedZ = 2 * i / numGrfs;
+                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
+            }
         }
     }
 }
