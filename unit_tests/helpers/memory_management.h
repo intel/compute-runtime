@@ -85,6 +85,7 @@ extern std::atomic<size_t> indexDeallocation;
 extern size_t breakOnAllocationEvent;
 extern size_t breakOnDeallocationEvent;
 extern bool logTraces;
+extern bool detailedAllocationLoggingActive;
 extern int fastLeakDetectionMode;
 extern void (*deleteCallback)(void *);
 

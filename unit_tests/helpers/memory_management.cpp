@@ -57,6 +57,8 @@ std::atomic<int> fastLeaksDetectionMode(LeakDetectionMode::STANDARD);
 size_t breakOnAllocationEvent = -1;
 size_t breakOnDeallocationEvent = -1;
 
+bool detailedAllocationLoggingActive = false;
+
 // limit size of single allocation in ULT
 const size_t maxAllowedAllocationSize = 128 * 1024 * 1024 + 4096;
 
@@ -99,31 +101,37 @@ static void *allocate(size_t size) {
         return malloc(size);
     }
 
-    auto indexAllocation = MemoryManagement::indexAllocation.fetch_add(1);
-    indexAllocation %= maxEvents;
-
-    auto &eventAllocation = eventsAllocated[indexAllocation];
-    eventAllocation.size = size;
-
     void *p;
-    while ((p = malloc(size)) == nullptr) {
+
+    if (detailedAllocationLoggingActive) {
+
+        auto indexAllocation = MemoryManagement::indexAllocation.fetch_add(1);
+        indexAllocation %= maxEvents;
+
+        auto &eventAllocation = eventsAllocated[indexAllocation];
+        eventAllocation.size = size;
+
+        while ((p = malloc(size)) == nullptr) {
+            eventAllocation.address = p;
+            eventAllocation.event = typeFail;
+            throw std::bad_alloc();
+        }
+
         eventAllocation.address = p;
-        eventAllocation.event = typeFail;
-        throw std::bad_alloc();
-    }
-
-    eventAllocation.address = p;
-    eventAllocation.event = typeValid;
+        eventAllocation.event = typeValid;
 #if defined(__linux__)
-    eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
+        eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
 #elif defined(_WIN32)
-    eventAllocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventAllocation.callstack, NULL) : 0;
+        eventAllocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventAllocation.callstack, NULL) : 0;
 #else
-    eventAllocation.frames = 0;
+        eventAllocation.frames = 0;
 #endif
-    eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
+        eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
 
-    numAllocations++;
+        numAllocations++;
+    } else {
+        p = malloc(size);
+    }
 
     if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
@@ -147,28 +155,35 @@ static void *allocate(size_t size, const std::nothrow_t &) {
         return malloc(size);
     }
 
-    auto indexAllocation = MemoryManagement::indexAllocation.fetch_add(1);
-    indexAllocation %= maxEvents;
+    void *p;
 
-    auto p = indexAllocation == failingAllocation
-                 ? nullptr
-                 : malloc(size);
+    if (detailedAllocationLoggingActive) {
 
-    auto &eventAllocation = eventsAllocated[indexAllocation];
-    eventAllocation.event = p
-                                ? typeValid
-                                : typeFail;
-    eventAllocation.address = p;
-    eventAllocation.size = size;
+        auto indexAllocation = MemoryManagement::indexAllocation.fetch_add(1);
+        indexAllocation %= maxEvents;
+
+        p = indexAllocation == failingAllocation
+                ? nullptr
+                : malloc(size);
+
+        auto &eventAllocation = eventsAllocated[indexAllocation];
+        eventAllocation.event = p
+                                    ? typeValid
+                                    : typeFail;
+        eventAllocation.address = p;
+        eventAllocation.size = size;
 #if defined(__linux__)
-    eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
+        eventAllocation.frames = logTraces ? backtrace(eventAllocation.callstack, AllocationEvent::CallStackSize) : 0;
 #elif defined(_WIN32)
-    eventAllocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventAllocation.callstack, NULL) : 0;
+        eventAllocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventAllocation.callstack, NULL) : 0;
 #else
-    eventAllocation.frames = 0;
+        eventAllocation.frames = 0;
 #endif
-    eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
-    numAllocations += p ? 1 : 0;
+        eventAllocation.fastLeakDetectionMode = fastLeakDetectionMode;
+        numAllocations += p ? 1 : 0;
+    } else {
+        p = malloc(size);
+    }
 
     if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {
         auto currentIndex = fastEventsAllocatedCount++;
@@ -191,23 +206,26 @@ static void deallocate(void *p) {
     }
 
     if (p) {
-        auto indexDeallocation = MemoryManagement::indexDeallocation.fetch_add(1);
-        indexDeallocation %= maxEvents;
+        if (detailedAllocationLoggingActive) {
 
-        --numAllocations;
+            auto indexDeallocation = MemoryManagement::indexDeallocation.fetch_add(1);
+            indexDeallocation %= maxEvents;
 
-        auto &eventDeallocation = eventsDeallocated[indexDeallocation];
-        eventDeallocation.event = typeValid;
-        eventDeallocation.address = p;
-        eventDeallocation.size = -1;
+            --numAllocations;
+
+            auto &eventDeallocation = eventsDeallocated[indexDeallocation];
+            eventDeallocation.event = typeValid;
+            eventDeallocation.address = p;
+            eventDeallocation.size = -1;
 #if defined(__linux__)
-        eventDeallocation.frames = logTraces ? backtrace(eventDeallocation.callstack, AllocationEvent::CallStackSize) : 0;
+            eventDeallocation.frames = logTraces ? backtrace(eventDeallocation.callstack, AllocationEvent::CallStackSize) : 0;
 #elif defined(_WIN32)
-        eventDeallocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventDeallocation.callstack, NULL) : 0;
+            eventDeallocation.frames = logTraces ? CaptureStackBackTrace(0, AllocationEvent::CallStackSize, eventDeallocation.callstack, NULL) : 0;
 #else
-        eventDeallocation.frames = 0;
+            eventDeallocation.frames = 0;
 #endif
-        eventDeallocation.fastLeakDetectionMode = fastLeakDetectionMode;
+            eventDeallocation.fastLeakDetectionMode = fastLeakDetectionMode;
+        }
         free(p);
 
         if (fastLeakDetectionMode && p && fastLeaksDetectionMode == LeakDetectionMode::STANDARD) {

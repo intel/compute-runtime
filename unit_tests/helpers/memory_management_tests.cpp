@@ -40,6 +40,7 @@ TEST(allocation, nothrow_defaultShouldPass) {
 }
 
 TEST(allocation, nothrow_injectingAFailure) {
+    MemoryManagement::detailedAllocationLoggingActive = true;
     ASSERT_EQ(static_cast<size_t>(-1), failingAllocation);
     auto previousAllocations = numAllocations.load();
     MemoryManagement::indexAllocation = 0;
@@ -55,6 +56,7 @@ TEST(allocation, nothrow_injectingAFailure) {
     EXPECT_NE(nullptr, ptr1);
     EXPECT_EQ(nullptr, ptr2);
     EXPECT_EQ(previousAllocations, currentAllocations);
+    MemoryManagement::detailedAllocationLoggingActive = false;
 }
 
 struct MemoryManagementTest : public MemoryManagementFixture,

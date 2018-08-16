@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -26,10 +26,13 @@
 #include <functional>
 
 struct MemoryManagementFixture {
+    MemoryManagementFixture() {
+        MemoryManagement::detailedAllocationLoggingActive = true;
+    };
     static const auto nonfailingAllocation = static_cast<size_t>(-1);
     static const auto invalidLeakIndex = static_cast<size_t>(-1);
 
-    virtual ~MemoryManagementFixture(){};
+    virtual ~MemoryManagementFixture() { MemoryManagement::detailedAllocationLoggingActive = false; };
 
     // Typical Fixture methods
     virtual void SetUp(void);
