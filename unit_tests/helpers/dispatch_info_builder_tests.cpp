@@ -45,7 +45,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture {
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         pMediaVFEstate = new SPatchMediaVFEState();
         pMediaVFEstate->PerThreadScratchSpace = 1024;
@@ -96,13 +96,12 @@ class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture {
         delete pExecutionEnvironment;
         delete pMediaVFEstate;
         delete pProgram;
-        delete pKernelInfo;
 
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
     }
 
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchMediaVFEState *pMediaVFEstate = nullptr;
     SPatchExecutionEnvironment *pExecutionEnvironment;
     SPatchAllocateStatelessPrintfSurface *pPrintfSurface = nullptr;

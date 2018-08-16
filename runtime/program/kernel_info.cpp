@@ -209,10 +209,6 @@ void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
     }
 }
 
-KernelInfo *KernelInfo::create() {
-    return new KernelInfo();
-}
-
 KernelInfo::~KernelInfo() {
     kernelArgInfo.clear();
 

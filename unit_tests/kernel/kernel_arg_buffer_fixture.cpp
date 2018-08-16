@@ -43,7 +43,7 @@ void KernelArgBufferFixture::SetUp() {
     ContextFixture::SetUp(1, &device);
 
     // define kernel info
-    pKernelInfo = KernelInfo::create();
+    pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup kernel arg offsets
     KernelArgPatchInfo kernelArgPatchInfo;
@@ -71,7 +71,7 @@ void KernelArgBufferFixture::SetUp() {
 
 void KernelArgBufferFixture::TearDown() {
     delete pKernel;
-    delete pKernelInfo;
+
     delete pProgram;
     ContextFixture::TearDown();
     DeviceFixture::TearDown();

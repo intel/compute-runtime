@@ -31,7 +31,7 @@ class KernelExecInfoFixture : public api_fixture {
     void SetUp() override {
         api_fixture::SetUp();
 
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         pMockKernel = new MockKernel(pProgram, *pKernelInfo, *pPlatform->getDevice(0));
         ASSERT_EQ(CL_SUCCESS, pMockKernel->initialize());
@@ -48,14 +48,13 @@ class KernelExecInfoFixture : public api_fixture {
         }
 
         delete pMockKernel;
-        delete pKernelInfo;
 
         api_fixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     MockKernel *pMockKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     void *ptrSvm = nullptr;
     cl_device_svm_capabilities svmCapabilities = 0;
 };

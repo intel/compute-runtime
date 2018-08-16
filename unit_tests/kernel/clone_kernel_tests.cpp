@@ -57,7 +57,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
@@ -110,7 +110,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
     void TearDown() override {
         delete pSourceKernel;
         delete pClonedKernel;
-        delete pKernelInfo;
+
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
@@ -120,7 +120,7 @@ class CloneKernelFixture : public ContextFixture, public DeviceFixture {
     MockProgram *pProgram = nullptr;
     MockKernel *pSourceKernel = nullptr;
     MockKernel *pClonedKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[128];
 };

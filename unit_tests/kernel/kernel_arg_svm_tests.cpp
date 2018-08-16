@@ -51,7 +51,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
         ContextFixture::SetUp(1, &device);
 
         // define kernel info
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
@@ -77,7 +77,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
@@ -86,7 +86,7 @@ class KernelArgSvmFixture_ : public ContextFixture, public DeviceFixture {
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     char pSshLocal[64];
     char pCrossThreadData[64];

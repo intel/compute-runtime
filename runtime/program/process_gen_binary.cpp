@@ -80,7 +80,7 @@ size_t Program::processKernel(
     size_t sizeProcessed = 0;
 
     do {
-        auto pKernelInfo = KernelInfo::create();
+        auto pKernelInfo = new KernelInfo();
         if (!pKernelInfo) {
             retVal = CL_OUT_OF_HOST_MEMORY;
             break;
@@ -113,7 +113,6 @@ size_t Program::processKernel(
         retVal = parsePatchList(*pKernelInfo);
         if (retVal != CL_SUCCESS) {
             delete pKernelInfo;
-
             sizeProcessed = ptrDiff(pCurKernelPtr, pKernelBlob);
             break;
         }

@@ -59,7 +59,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
 
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->kernelArgInfo.resize(1);
@@ -91,7 +91,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
@@ -100,7 +100,7 @@ class KernelArgAcceleratorFixture : public ContextFixture, public DeviceFixture 
     cl_motion_estimation_desc_intel desc;
     MockProgram *pProgram = nullptr;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     char pCrossThreadData[64];
 };
 

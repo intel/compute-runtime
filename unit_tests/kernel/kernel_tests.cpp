@@ -473,7 +473,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     ASSERT_NE(nullptr, pDevice);
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup private memory
     SPatchAllocateStatelessPrivateSurface tokenSPS;
@@ -513,11 +513,10 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     EXPECT_EQ(0u, csr->residency.size());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenKernelWithPrivateSurfaceThatIsInUseByGpuWhenKernelIsBeingDestroyedThenAllocationIsAddedToDefferedFreeList) {
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     SPatchAllocateStatelessPrivateSurface tokenSPS;
     tokenSPS.SurfaceStateHeapOffset = 64;
     tokenSPS.DataParamOffset = 40;
@@ -556,7 +555,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurfaceAllocationFailure) {
     ASSERT_NE(nullptr, pDevice);
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup private memory
     SPatchAllocateStatelessPrivateSurface tokenSPS;
@@ -594,8 +593,6 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurfaceAllocationFailure) {
     f->injectFailures(method);
     f->TearDown();
     delete f;
-
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateSurfaceIs32BitAllocation) {
@@ -603,7 +600,7 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
         pDevice->getMemoryManager()->setForce32BitAllocations(true);
 
         // define kernel info
-        KernelInfo *pKernelInfo = KernelInfo::create();
+        auto pKernelInfo = std::make_unique<KernelInfo>();
 
         // setup private memory
         SPatchAllocateStatelessPrivateSurface tokenSPS;
@@ -633,14 +630,13 @@ TEST_F(KernelPrivateSurfaceTest, given32BitDeviceWhenKernelIsCreatedThenPrivateS
         EXPECT_TRUE(pKernel->getPrivateSurface()->is32BitAllocation);
 
         delete pKernel;
-        delete pKernelInfo;
     }
 }
 
 HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPrivateMemorySurfaceStateIsPatchedWithCpuAddress) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -690,13 +686,12 @@ HWTEST_F(KernelPrivateSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenPri
     EXPECT_EQ(bufferAddress, surfaceAddress);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPrivateMemorySurfaceStateIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -725,27 +720,22 @@ TEST_F(KernelPrivateSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenPriv
 
     program.setConstantSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenNullDataParameterStreamGetConstantBufferSizeReturnsZero) {
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     EXPECT_EQ(0u, pKernelInfo->getConstantBufferSize());
-
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, givenNonNullDataParameterStreamGetConstantBufferSizeReturnsCorrectSize) {
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchDataParameterStream tokenDPS;
     tokenDPS.DataParameterStreamSize = 64;
     pKernelInfo->patchInfo.dataParameterStream = &tokenDPS;
 
     EXPECT_EQ(64u, pKernelInfo->getConstantBufferSize());
-
-    delete pKernelInfo;
 }
 
 TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointerSize4ThenReturnOutOfResources) {
@@ -753,7 +743,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
     auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
     executionEnvironment->CompiledSIMD32 = 32;
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
@@ -771,7 +761,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
     auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
     executionEnvironment->CompiledSIMD32 = 32;
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
@@ -789,7 +779,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
     pAllocateStatelessPrivateSurface->PerThreadPrivateMemorySize = std::numeric_limits<uint32_t>::max();
     auto executionEnvironment = std::unique_ptr<SPatchExecutionEnvironment>(new SPatchExecutionEnvironment());
     executionEnvironment->CompiledSIMD32 = 32;
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrivateSurface = pAllocateStatelessPrivateSurface.get();
     pKernelInfo->patchInfo.executionEnvironment = executionEnvironment.get();
     MockContext context;
@@ -805,7 +795,7 @@ TEST_F(KernelPrivateSurfaceTest, GivenKernelWhenPrivateSurfaceTooBigAndGpuPointe
 TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalSurfaceIsPatchedWithCpuAddress) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup global memory
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
@@ -843,13 +833,12 @@ TEST_F(KernelGlobalSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenGlobalS
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalSurfaceIsPatchedWithBaseAddressOffset) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup global memory
     SPatchAllocateStatelessGlobalMemorySurfaceWithInitialization AllocateStatelessGlobalMemorySurfaceWithInitialization;
@@ -885,13 +874,12 @@ TEST_F(KernelGlobalSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenGlobalS
     program.setGlobalSurface(nullptr);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlobalMemorySurfaceStateIsPatchedWithCpuAddress) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -944,13 +932,12 @@ HWTEST_F(KernelGlobalSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenGlob
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGlobalMemorySurfaceStateIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -978,13 +965,12 @@ TEST_F(KernelGlobalSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenGloba
 
     program.setGlobalSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConstantSurfaceIsPatchedWithCpuAddress) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup constant memory
     SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
@@ -1021,13 +1007,12 @@ TEST_F(KernelConstantSurfaceTest, givenBuiltInKernelWhenKernelIsCreatedThenConst
 
     program.setConstantSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConstantSurfaceIsPatchedWithBaseAddressOffset) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // setup constant memory
     SPatchAllocateStatelessConstantMemorySurfaceWithInitialization AllocateStatelessConstantMemorySurfaceWithInitialization;
@@ -1063,13 +1048,12 @@ TEST_F(KernelConstantSurfaceTest, givenNDRangeKernelWhenKernelIsCreatedThenConst
     program.setConstantSurface(nullptr);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenConstantMemorySurfaceStateIsPatchedWithCpuAddress) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1122,13 +1106,12 @@ HWTEST_F(KernelConstantSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenCo
 
     program.setConstantSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenConstantMemorySurfaceStateIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1156,13 +1139,12 @@ TEST_F(KernelConstantSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenCon
 
     program.setConstantSurface(nullptr);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsPatchedWithNullSurface) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1209,13 +1191,12 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenE
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfaceType);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedThenEventPoolSurfaceStateIsProgrammed) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1262,13 +1243,12 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenStatefulKernelWhenEventPoolIsPatchedTh
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceType);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelEventPoolSurfaceTest, givenKernelWithNullEventPoolInKernelInfoWhenEventPoolIsPatchedThenAddressIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1295,13 +1275,12 @@ HWTEST_F(KernelEventPoolSurfaceTest, givenKernelWithNullEventPoolInKernelInfoWhe
     EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEventPoolSurfaceStateIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1332,13 +1311,12 @@ TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenEv
     }
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThenCrossThreadDataIsPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1371,13 +1349,12 @@ TEST_F(KernelEventPoolSurfaceTest, givenStatelessKernelWhenEventPoolIsPatchedThe
     EXPECT_EQ(pDevQueue->getEventPoolBuffer()->getGpuAddress(), *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsPatchedWithNullSurface) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1424,13 +1401,12 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenKernelIsCre
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_NULL, surfaceType);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDeviceQueueIsPatchedThenSurfaceStateIsCorrectlyProgrammed) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1479,13 +1455,12 @@ HWTEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatefulKernelWhenDefaultDevi
     EXPECT_EQ(RENDER_SURFACE_STATE::SURFACE_TYPE_SURFTYPE_BUFFER, surfaceType);
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenKernelIsCreatedThenDefaultDeviceQueueSurfaceStateIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1514,13 +1489,12 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenKernelIsCrea
     EXPECT_EQ(0u, pKernel->getSurfaceStateHeapSize());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenKernelWithNullDeviceQueueKernelInfoWhenDefaultDeviceQueueIsPatchedThenAddressIsNotPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1547,13 +1521,12 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenKernelWithNullDeviceQueueKernel
     EXPECT_EQ(123u, *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenDefaultDeviceQueueIsPatchedThenCrossThreadDataIsPatched) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -1586,7 +1559,6 @@ TEST_F(KernelDefaultDeviceQueueSurfaceTest, givenStatelessKernelWhenDefaultDevic
     EXPECT_EQ(pDevQueue->getQueueBuffer()->getGpuAddress(), *(uint64_t *)pKernel->getCrossThreadData());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 typedef Test<DeviceFixture> KernelResidencyTest;
@@ -1596,7 +1568,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
     char pCrossThreadData[64];
 
     // define kernel info
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
 
@@ -1630,7 +1602,7 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenMakeResidentIsCalledThenKernelIsaIs
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasImagesOnlyThenTrueIsReturned) {
     auto device = std::make_unique<MockDevice>(*platformDevices[0]);
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
@@ -1646,7 +1618,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesOnlyWhenItIsAskedIfItHasIma
 
 TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
     auto device = std::make_unique<MockDevice>(*platformDevices[0]);
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     pKernelInfo->kernelArgInfo.resize(3);
     pKernelInfo->kernelArgInfo[2].isImage = true;
@@ -1662,7 +1634,7 @@ TEST(KernelImageDetectionTests, givenKernelWithImagesAndBuffersWhenItIsAskedIfIt
 
 TEST(KernelImageDetectionTests, givenKernelWithNoImagesWhenItIsAskedIfItHasImagesOnlyThenFalseIsReturned) {
     auto device = std::make_unique<MockDevice>(*platformDevices[0]);
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     pKernelInfo->kernelArgInfo.resize(1);
     pKernelInfo->kernelArgInfo[0].isBuffer = true;
@@ -1708,7 +1680,7 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
     std::unique_ptr<OCLRT::Image> imageY(Image::create(&context, flags, surfaceFormat, &imageDesc, nullptr, retVal));
     EXPECT_EQ(imageY->getMediaPlaneType(), 0u);
 
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     KernelArgInfo kernelArgInfo;
     kernelArgInfo.isImage = true;
 
@@ -1731,8 +1703,9 @@ HWTEST_F(KernelResidencyTest, test_MakeArgsResidentCheckImageFromImage) {
 struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
     void SetUp() override {
         DeviceFixture::SetUp();
+
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
 
         pKernel = new MockKernel(program.get(), *pKernelInfo, *pDevice);
@@ -1741,13 +1714,13 @@ struct KernelExecutionEnvironmentTest : public Test<DeviceFixture> {
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         DeviceFixture::TearDown();
     }
 
     MockKernel *pKernel;
     std::unique_ptr<MockProgram> program;
-    KernelInfo *pKernelInfo;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchExecutionEnvironment executionEnvironment;
 };
 
@@ -1860,19 +1833,19 @@ struct KernelCrossThreadTests : Test<DeviceFixture> {
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
         patchDataParameterStream.DataParameterStreamSize = 64 * sizeof(uint8_t);
 
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
         pKernelInfo->patchInfo.dataParameterStream = &patchDataParameterStream;
         pKernelInfo->patchInfo.executionEnvironment = &executionEnvironment;
     }
 
     void TearDown() override {
-        delete pKernelInfo;
+
         DeviceFixture::TearDown();
     }
 
     std::unique_ptr<MockProgram> program;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SPatchDataParameterStream patchDataParameterStream;
     SPatchExecutionEnvironment executionEnvironment;
 };
@@ -2079,7 +2052,7 @@ TEST_F(KernelCrossThreadTests, patchBlocksSimdSize) {
     kernel->kernelInfo.childrenKernelsIdOffset.push_back({0, crossThreadOffset});
 
     // add a new block kernel to program
-    KernelInfo *infoBlock = new KernelInfo();
+    auto infoBlock = new KernelInfo();
     kernel->executionEnvironmentBlock.CompiledSIMD8 = 0;
     kernel->executionEnvironmentBlock.CompiledSIMD16 = 1;
     kernel->executionEnvironmentBlock.CompiledSIMD32 = 0;

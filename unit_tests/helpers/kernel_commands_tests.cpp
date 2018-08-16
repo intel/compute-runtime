@@ -183,8 +183,10 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
     MockContext context;
+
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
-    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    auto kernelInfo = std::make_unique<KernelInfo>();
+
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -238,8 +240,10 @@ HWTEST_F(KernelCommandsTest, givenSendCrossThreadDataWhenWhenAddPatchInfoComment
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
     MockContext context;
+
     MockProgram program(*pDevice->getExecutionEnvironment(), &context, false);
-    std::unique_ptr<KernelInfo> kernelInfo(KernelInfo::create());
+    auto kernelInfo = std::make_unique<KernelInfo>();
+
     std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *kernelInfo, *pDevice));
 
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
@@ -588,7 +592,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     SPatchExecutionEnvironment tokenEE;
     tokenEE.CompiledSIMD8 = false;
@@ -748,13 +752,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
     }
     alignedFree(surfaceStateHeap);
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiringSSHDoesNotTouchSSH) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // create program with valid context
     MockContext context;
@@ -807,13 +810,12 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForKernelWithBuffersNotRequiri
     EXPECT_EQ(usedAfter, ssh.getUsed());
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelCommandsTest, setBindingTableStatesForNoSurfaces) {
 
     // define kernel info
-    KernelInfo *pKernelInfo = KernelInfo::create();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
 
     // create program with valid context
     MockContext context;
@@ -863,7 +865,6 @@ HWTEST_F(KernelCommandsTest, setBindingTableStatesForNoSurfaces) {
     pKernelInfo->patchInfo.bindingTableState = nullptr;
 
     delete pKernel;
-    delete pKernelInfo;
 }
 
 HWTEST_F(KernelCommandsTest, slmValueScenarios) {

@@ -52,7 +52,7 @@ class KernelArgBufferFixture : public ContextFixture, public DeviceFixture {
     cl_int retVal;
     MockProgram *pProgram;
     MockKernel *pKernel;
-    KernelInfo *pKernelInfo;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     char pSshLocal[64];
     char pCrossThreadData[64];

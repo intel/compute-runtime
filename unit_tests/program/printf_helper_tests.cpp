@@ -45,7 +45,7 @@ class PrintFormatterTest : public testing::Test {
     MockGraphicsAllocation *data;
     MockKernel *kernel;
     std::unique_ptr<MockProgram> program;
-    KernelInfo *kernelInfo;
+    std::unique_ptr<KernelInfo> kernelInfo;
     Device *device;
 
     uint8_t underlyingBuffer[PrintFormatter::maxPrintfOutputLength];
@@ -59,7 +59,7 @@ class PrintFormatterTest : public testing::Test {
         maxStringIndex = 0;
         data = new MockGraphicsAllocation(underlyingBuffer, PrintFormatter::maxPrintfOutputLength);
 
-        kernelInfo = KernelInfo::create();
+        kernelInfo = std::make_unique<KernelInfo>();
         device = MockDevice::createWithNewExecutionEnvironment<Device>(nullptr);
         program = std::make_unique<MockProgram>(*device->getExecutionEnvironment());
         kernel = new MockKernel(program.get(), *kernelInfo, *device);
@@ -76,7 +76,6 @@ class PrintFormatterTest : public testing::Test {
         delete printFormatter;
         delete data;
         delete kernel;
-        delete kernelInfo;
         delete device;
     }
 

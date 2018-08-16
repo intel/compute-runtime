@@ -44,7 +44,7 @@ class KernelArgImmediateTest : public Test<DeviceFixture> {
         program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 
         // define kernel info
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // setup kernel arg offsets
         KernelArgPatchInfo kernelArgPatchInfo;
@@ -83,14 +83,14 @@ class KernelArgImmediateTest : public Test<DeviceFixture> {
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         DeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     char pCrossThreadData[0x60];
 };
 

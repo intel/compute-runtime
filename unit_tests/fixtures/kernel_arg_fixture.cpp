@@ -21,6 +21,7 @@
  */
 
 #include "unit_tests/fixtures/kernel_arg_fixture.h"
+#include "runtime/program/kernel_info.h"
 
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -31,7 +32,7 @@
 KernelImageArgTest::~KernelImageArgTest() = default;
 
 void KernelImageArgTest::SetUp() {
-    pKernelInfo.reset(OCLRT::KernelInfo::create());
+    pKernelInfo = std::make_unique<OCLRT::KernelInfo>();
     KernelArgPatchInfo kernelArgPatchInfo;
     kernelHeader.reset(new iOpenCL::SKernelBinaryHeaderCommon{});
 

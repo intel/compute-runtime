@@ -79,7 +79,7 @@ class ImageSetArgTest : public DeviceFixture,
 
     void SetUp() override {
         DeviceFixture::SetUp();
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
         kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
@@ -114,7 +114,7 @@ class ImageSetArgTest : public DeviceFixture,
     void TearDown() override {
         delete srcImage;
         delete pKernel;
-        delete pKernelInfo;
+
         delete context;
         DeviceFixture::TearDown();
     }
@@ -124,7 +124,7 @@ class ImageSetArgTest : public DeviceFixture,
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     SKernelBinaryHeaderCommon kernelHeader;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     char surfaceStateHeap[0x80];
     Image *srcImage = nullptr;
     int expectedChannelRed;
@@ -754,7 +754,7 @@ class ImageMediaBlockSetArgTest : public ImageSetArgTest {
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
         kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);

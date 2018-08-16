@@ -2257,7 +2257,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOnKernelSubitIsCalledThenCo
     std::unique_ptr<MockContext> context(new MockContext(pDevice));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-    std::unique_ptr<KernelInfo> pKernelInfo(KernelInfo::create());
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);
     pKernelInfo->heapInfo.pSsh = surfaceStateHeap;
     pKernelInfo->heapInfo.pKernelHeader = &kernelHeader;

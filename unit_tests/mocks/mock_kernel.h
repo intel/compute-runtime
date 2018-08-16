@@ -109,7 +109,7 @@ class MockKernel : public Kernel {
 
     template <typename KernelType = MockKernel>
     static KernelType *create(Device &device, Program *program) {
-        KernelInfo *info = new KernelInfo();
+        auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
 
         SKernelBinaryHeaderCommon *header = new SKernelBinaryHeaderCommon;
@@ -313,7 +313,7 @@ class MockParentKernel : public Kernel {
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         Device &device = *context.getDevice(0);
 
-        KernelInfo *info = new KernelInfo();
+        auto info = new KernelInfo();
         const size_t crossThreadSize = 160;
         uint32_t crossThreadOffset = 0;
         uint32_t crossThreadOffsetBlock = 0;
@@ -390,7 +390,7 @@ class MockParentKernel : public Kernel {
         parent->crossThreadDataSize = crossThreadSize;
         parent->mockKernelInfo = info;
 
-        KernelInfo *infoBlock = new KernelInfo();
+        auto infoBlock = new KernelInfo();
         SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
         allocateDeviceQueueBlock->DataParamOffset = crossThreadOffsetBlock;
         allocateDeviceQueueBlock->DataParamSize = 8;

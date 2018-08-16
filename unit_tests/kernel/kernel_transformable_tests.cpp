@@ -36,7 +36,7 @@ using namespace OCLRT;
 class KernelTransformableTest : public ::testing::Test {
   public:
     void SetUp() override {
-        pKernelInfo.reset(KernelInfo::create());
+        pKernelInfo = std::make_unique<KernelInfo>();
         KernelArgPatchInfo kernelArgPatchInfo;
 
         kernelHeader.SurfaceStateHeapSize = sizeof(surfaceStateHeap);

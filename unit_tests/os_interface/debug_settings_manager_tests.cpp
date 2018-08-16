@@ -425,7 +425,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDontDumpKernelArgsForNullMdi) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsForMdi) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -467,7 +468,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelNullKernel) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityAndEmptyKernelDontDumpKernelArgs) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -481,7 +483,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityAndEmptyKernelDontDumpKernelArg
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsImmediate) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -512,7 +515,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsImmediate) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsImmediateZeroSize) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -540,7 +544,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsImmediateZeroSize
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsLocalBuffer) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -561,7 +566,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsLocalBuffer) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsBufferNotSet) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -592,7 +598,7 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsBuffer) {
     auto buffer = BufferHelper<>::create(&context);
     cl_mem clObj = buffer;
 
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment(), &context, false);
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -626,7 +632,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsBuffer) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsSampler) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));
@@ -649,7 +656,8 @@ TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsSampler) {
 }
 
 TEST(DebugSettingsManager, WithDebugFunctionalityDumpKernelArgsImageNotSet) {
-    auto kernelInfo = unique_ptr<KernelInfo>(KernelInfo::create());
+
+    auto kernelInfo = std::make_unique<KernelInfo>();
     auto device = unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     MockProgram program(*device->getExecutionEnvironment());
     auto kernel = unique_ptr<MockKernel>(new MockKernel(&program, *kernelInfo, *device));

@@ -38,9 +38,9 @@ TEST_F(ProgramTests, GivenProgramWithDebugDataForTwoKernelsWhenPorcessedThenDebu
     size_t debugDataSize = sizeof(SProgramDebugDataHeaderIGC) + 2 * (sizeof(SKernelDebugDataHeaderIGC) + kernelNameSize + genIsaSize + visaSize);
     std::unique_ptr<char[]> debugData(new char[debugDataSize]);
 
-    KernelInfo *kernelInfo1 = new KernelInfo();
+    auto kernelInfo1 = new KernelInfo();
     kernelInfo1->name = kernelName1;
-    KernelInfo *kernelInfo2 = new KernelInfo();
+    auto kernelInfo2 = new KernelInfo();
     kernelInfo2->name = kernelName2;
     auto program = std::make_unique<MockProgram>(*pDevice->getExecutionEnvironment());
 

@@ -2693,11 +2693,11 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenNoParentAndSubgroupKernelsThen
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNoneKernel) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    auto pRegularKernel1Info = KernelInfo::create();
+    auto pRegularKernel1Info = new KernelInfo();
     pRegularKernel1Info->name = "regular_kernel_1";
     program.getKernelInfoArray().push_back(pRegularKernel1Info);
 
-    auto pRegularKernel2Info = KernelInfo::create();
+    auto pRegularKernel2Info = new KernelInfo();
     pRegularKernel2Info->name = "regular_kernel_2";
     program.getKernelInfoArray().push_back(pRegularKernel2Info);
 
@@ -2715,12 +2715,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenRegularKernelsThenSeparateNone
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKernelThenSeparateNoneKernel) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    auto pParentKernelInfo = KernelInfo::create();
+    auto pParentKernelInfo = new KernelInfo();
     pParentKernelInfo->name = "another_parent_kernel";
     program.getKernelInfoArray().push_back(pParentKernelInfo);
     program.getParentKernelInfoArray().push_back(pParentKernelInfo);
 
-    auto pChildKernelInfo = KernelInfo::create();
+    auto pChildKernelInfo = new KernelInfo();
     pChildKernelInfo->name = "childlike_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
@@ -2739,12 +2739,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutParentKe
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroupKernelThenSeparateNoneKernel) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    auto pSubgroupKernelInfo = KernelInfo::create();
+    auto pSubgroupKernelInfo = new KernelInfo();
     pSubgroupKernelInfo->name = "another_subgroup_kernel";
     program.getKernelInfoArray().push_back(pSubgroupKernelInfo);
     program.getSubgroupKernelInfoArray().push_back(pSubgroupKernelInfo);
 
-    auto pChildKernelInfo = KernelInfo::create();
+    auto pChildKernelInfo = new KernelInfo();
     pChildKernelInfo->name = "childlike_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
@@ -2763,12 +2763,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenChildLikeKernelWithoutSubgroup
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThenSeparateChildKernel) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    auto pParentKernelInfo = KernelInfo::create();
+    auto pParentKernelInfo = new KernelInfo();
     pParentKernelInfo->name = "parent_kernel";
     program.getKernelInfoArray().push_back(pParentKernelInfo);
     program.getParentKernelInfoArray().push_back(pParentKernelInfo);
 
-    auto pChildKernelInfo = KernelInfo::create();
+    auto pChildKernelInfo = new KernelInfo();
     pChildKernelInfo->name = "parent_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 
@@ -2787,12 +2787,12 @@ TEST_F(ProgramTests, givenSeparateBlockKernelsWhenParentKernelWithChildKernelThe
 TEST_F(ProgramTests, givenSeparateBlockKernelsWhenSubgroupKernelWithChildKernelThenSeparateChildKernel) {
     MockProgram program(*pDevice->getExecutionEnvironment(), pContext, false);
 
-    auto pSubgroupKernelInfo = KernelInfo::create();
+    auto pSubgroupKernelInfo = new KernelInfo();
     pSubgroupKernelInfo->name = "subgroup_kernel";
     program.getKernelInfoArray().push_back(pSubgroupKernelInfo);
     program.getSubgroupKernelInfoArray().push_back(pSubgroupKernelInfo);
 
-    auto pChildKernelInfo = KernelInfo::create();
+    auto pChildKernelInfo = new KernelInfo();
     pChildKernelInfo->name = "subgroup_kernel_dispatch_0";
     program.getKernelInfoArray().push_back(pChildKernelInfo);
 

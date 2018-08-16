@@ -36,7 +36,7 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         KernelArgPatchInfo kernelArgPatchInfo;
 
         pKernelInfo->kernelArgInfo.resize(3);
@@ -67,14 +67,14 @@ class KernelSlmArgTest : public Test<DeviceFixture> {
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         DeviceFixture::TearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo;
+    std::unique_ptr<KernelInfo> pKernelInfo;
 
     static const size_t slmSize0 = 0x200;
     static const size_t slmSize2 = 0x30;

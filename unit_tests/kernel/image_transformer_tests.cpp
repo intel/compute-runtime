@@ -31,7 +31,7 @@ class ImageTransformerTest : public ::testing::Test {
   public:
     void SetUp() override {
         using SimpleKernelArgInfo = Kernel::SimpleKernelArgInfo;
-        pKernelInfo.reset(KernelInfo::create());
+        pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelArgInfo.resize(2);
         pKernelInfo->kernelArgInfo[0].isTransformable = true;
         pKernelInfo->kernelArgInfo[0].offsetHeap = firstImageOffset;

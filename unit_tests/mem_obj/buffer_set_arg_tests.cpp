@@ -53,7 +53,7 @@ class BufferSetArgTest : public ContextFixture,
         DeviceFixture::SetUp();
         cl_device_id device = pDevice;
         ContextFixture::SetUp(1, &device);
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         ASSERT_NE(nullptr, pKernelInfo);
 
         // define kernel info
@@ -99,7 +99,7 @@ class BufferSetArgTest : public ContextFixture,
         delete buffer;
         delete BufferDefaults::context;
         delete pKernel;
-        delete pKernelInfo;
+
         delete pProgram;
         ContextFixture::TearDown();
         DeviceFixture::TearDown();
@@ -108,7 +108,7 @@ class BufferSetArgTest : public ContextFixture,
     cl_int retVal = CL_SUCCESS;
     MockProgram *pProgram;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     SKernelBinaryHeaderCommon kernelHeader;
     char surfaceStateHeap[0x80];
     char pCrossThreadData[64];

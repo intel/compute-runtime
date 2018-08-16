@@ -39,7 +39,7 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     pPrintfSurface->DataParamOffset = 0;
     pPrintfSurface->DataParamSize = 8;
 
-    KernelInfo *pKernelInfo = new KernelInfo();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
 
     MockProgram *pProgram = new MockProgram(*device->getExecutionEnvironment(), &context, false);
@@ -53,7 +53,7 @@ TEST(PrintfHandlerTest, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledThenR
     delete printfHandler;
     delete pPrintfSurface;
     delete pKernel;
-    delete pKernelInfo;
+
     delete pProgram;
     delete device;
 }
@@ -65,7 +65,7 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
     pPrintfSurface->DataParamOffset = 0;
     pPrintfSurface->DataParamSize = 8;
 
-    KernelInfo *pKernelInfo = new KernelInfo();
+    auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = pPrintfSurface;
 
     MockProgram *pProgram = new MockProgram(*device->getExecutionEnvironment(), &context, false);
@@ -82,7 +82,7 @@ TEST(PrintfHandlerTest, givenPreparedPrintfHandlerWhenGetSurfaceIsCalledThenResu
     delete printfHandler;
     delete pPrintfSurface;
     delete pKernel;
-    delete pKernelInfo;
+
     delete pProgram;
     delete device;
 }

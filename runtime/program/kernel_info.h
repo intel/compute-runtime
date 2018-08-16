@@ -128,7 +128,6 @@ struct DebugData {
 
 struct KernelInfo {
   public:
-    static KernelInfo *create();
     KernelInfo() {
         heapInfo = {};
         patchInfo = {};

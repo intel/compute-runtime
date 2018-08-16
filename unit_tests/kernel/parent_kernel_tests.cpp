@@ -130,7 +130,7 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
 
     uint32_t crossThreadOffsetBlock = 0;
 
-    KernelInfo *infoBlock = new KernelInfo();
+    auto infoBlock = new KernelInfo();
     SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
     allocateDeviceQueueBlock->DataParamOffset = crossThreadOffsetBlock;
     allocateDeviceQueueBlock->DataParamSize = 8;

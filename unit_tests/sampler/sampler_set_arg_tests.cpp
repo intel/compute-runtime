@@ -50,7 +50,7 @@ class SamplerSetArgFixture : public DeviceFixture {
   protected:
     void SetUp() {
         DeviceFixture::SetUp();
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
 
         // define kernel info
         kernelHeader.DynamicStateHeapSize = sizeof(samplerStateHeap);
@@ -86,7 +86,7 @@ class SamplerSetArgFixture : public DeviceFixture {
 
     void TearDown() {
         delete pKernel;
-        delete pKernelInfo;
+
         delete sampler;
         delete context;
         DeviceFixture::TearDown();
@@ -117,7 +117,7 @@ class SamplerSetArgFixture : public DeviceFixture {
     std::unique_ptr<MockProgram> program;
     MockKernel *pKernel = nullptr;
     SKernelBinaryHeaderCommon kernelHeader;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     char samplerStateHeap[0x80];
     MockContext *context;
     Sampler *sampler = nullptr;

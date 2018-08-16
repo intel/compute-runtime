@@ -49,7 +49,7 @@ void DevicePreemptionTests::SetUp() {
         dbgRestore.reset(new DebugManagerStateRestore());
     }
     const cl_queue_properties properties[3] = {CL_QUEUE_PROPERTIES, 0, 0};
-    kernelInfo.reset(KernelInfo::create());
+    kernelInfo = std::make_unique<KernelInfo>();
     device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     context.reset(new MockContext(device.get()));
     cmdQ.reset(new MockCommandQueue(context.get(), device.get(), properties));

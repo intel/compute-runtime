@@ -38,7 +38,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
 
         pDeviceQueue = createQueueObject();
 
-        pKernelInfo = KernelInfo::create();
+        pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelArgInfo.resize(1);
         pKernelInfo->kernelArgInfo[0].isDeviceQueue = true;
 
@@ -59,7 +59,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
 
     void TearDown() override {
         delete pKernel;
-        delete pKernelInfo;
+
         delete pDeviceQueue;
 
         DeviceHostQueueFixture<DeviceQueue>::TearDown();
@@ -82,7 +82,7 @@ struct KernelArgDevQueueTest : public DeviceFixture,
     std::unique_ptr<MockProgram> program;
     DeviceQueue *pDeviceQueue = nullptr;
     MockKernel *pKernel = nullptr;
-    KernelInfo *pKernelInfo = nullptr;
+    std::unique_ptr<KernelInfo> pKernelInfo;
     KernelArgPatchInfo kernelArgPatchInfo;
 };
 
