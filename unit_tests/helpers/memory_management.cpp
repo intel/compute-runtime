@@ -44,7 +44,6 @@ std::atomic<size_t> indexAllocation(0);
 std::atomic<size_t> indexDeallocation(0);
 bool logTraces = false;
 int fastLeakDetectionMode = 0;
-bool memsetNewAllocations = false;
 
 AllocationEvent eventsAllocated[maxEvents];
 AllocationEvent eventsDeallocated[maxEvents];
@@ -246,40 +245,23 @@ using MemoryManagement::allocate;
 using MemoryManagement::AllocationEvent;
 using MemoryManagement::deallocate;
 
-NO_SANITIZE
-inline void initMemory(void *p, size_t size) {
-    if ((p == nullptr) || (false == MemoryManagement::memsetNewAllocations)) {
-        return;
-    }
-
-    memset(p, 0, size);
-}
-
 #if defined(_WIN32)
 #pragma warning(disable : 4290)
 #endif
 void *operator new(size_t size) {
-    void *p = allocate<AllocationEvent::EVENT_NEW, AllocationEvent::EVENT_NEW_FAIL>(size);
-    initMemory(p, size);
-    return p;
+    return allocate<AllocationEvent::EVENT_NEW, AllocationEvent::EVENT_NEW_FAIL>(size);
 }
 
 void *operator new(size_t size, const std::nothrow_t &) noexcept {
-    void *p = allocate<AllocationEvent::EVENT_NEW_NOTHROW, AllocationEvent::EVENT_NEW_NOTHROW_FAIL>(size, std::nothrow);
-    initMemory(p, size);
-    return p;
+    return allocate<AllocationEvent::EVENT_NEW_NOTHROW, AllocationEvent::EVENT_NEW_NOTHROW_FAIL>(size, std::nothrow);
 }
 
 void *operator new[](size_t size) {
-    void *p = allocate<AllocationEvent::EVENT_NEW_ARRAY, AllocationEvent::EVENT_NEW_ARRAY_FAIL>(size);
-    initMemory(p, size);
-    return p;
+    return allocate<AllocationEvent::EVENT_NEW_ARRAY, AllocationEvent::EVENT_NEW_ARRAY_FAIL>(size);
 }
 
 void *operator new[](size_t size, const std::nothrow_t &t) noexcept {
-    void *p = allocate<AllocationEvent::EVENT_NEW_ARRAY_NOTHROW, AllocationEvent::EVENT_NEW_ARRAY_NOTHROW_FAIL>(size, std::nothrow);
-    initMemory(p, size);
-    return p;
+    return allocate<AllocationEvent::EVENT_NEW_ARRAY_NOTHROW, AllocationEvent::EVENT_NEW_ARRAY_NOTHROW_FAIL>(size, std::nothrow);
 }
 
 void operator delete(void *p) noexcept {
