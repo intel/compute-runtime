@@ -83,22 +83,35 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         KernelFixture::SetUp(pDevice, kernelFilename, kernelName);
         ASSERT_NE(nullptr, pKernel);
 
-        pDestMemory = alignedMalloc(sizeUserMemory, 4096);
-        ASSERT_NE(nullptr, pDestMemory);
-        pSrcMemory = alignedMalloc(sizeUserMemory, 4096);
-        ASSERT_NE(nullptr, pSrcMemory);
-
-        pKernel->setArgSvm(0, sizeUserMemory, pSrcMemory);
-        pKernel->setArgSvm(1, sizeUserMemory, pDestMemory);
-
+        auto retVal = CL_INVALID_VALUE;
         BufferDefaults::context = new MockContext(pDevice);
+
+        destBuffer = Buffer::create(
+            BufferDefaults::context,
+            CL_MEM_READ_WRITE,
+            sizeUserMemory,
+            nullptr,
+            retVal);
+
+        srcBuffer = Buffer::create(
+            BufferDefaults::context,
+            CL_MEM_READ_WRITE,
+            sizeUserMemory,
+            nullptr,
+            retVal);
+
+        pDestMemory = destBuffer->getCpuAddressForMapping();
+        pSrcMemory = srcBuffer->getCpuAddressForMapping();
+
+        pKernel->setArg(0, srcBuffer);
+        pKernel->setArg(1, destBuffer);
     }
 
     virtual void TearDown() {
         pCmdQ->flush();
 
-        alignedFree(pSrcMemory);
-        alignedFree(pDestMemory);
+        delete srcBuffer;
+        delete destBuffer;
 
         KernelFixture::TearDown();
         IndirectHeapFixture::TearDown();
@@ -107,7 +120,8 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         delete BufferDefaults::context;
         DeviceFixture::TearDown();
     }
-
+    Buffer *srcBuffer;
+    Buffer *destBuffer;
     void *pSrcMemory;
     void *pDestMemory;
     size_t sizeUserMemory;

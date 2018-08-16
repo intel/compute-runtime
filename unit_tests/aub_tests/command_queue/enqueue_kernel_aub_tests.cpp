@@ -174,13 +174,17 @@ HWTEST_P(AUBHelloWorldIntegrateTest, simple) {
     // Compute our memory expecations based on kernel execution
     auto globalWorkItems = globalWorkSize[0] * globalWorkSize[1] * globalWorkSize[2];
     auto sizeWritten = globalWorkItems * sizeof(float);
-    AUBCommandStreamFixture::expectMemory<FamilyType>(this->pDestMemory, this->pSrcMemory, sizeWritten);
+
+    auto pDestGpuAddress = reinterpret_cast<void *>((destBuffer->getGraphicsAllocation()->getGpuAddress()));
+
+    AUBCommandStreamFixture::expectMemory<FamilyType>(pDestGpuAddress, this->pSrcMemory, sizeWritten);
 
     // If the copykernel wasn't max sized, ensure we didn't overwrite existing memory
     if (sizeWritten < this->sizeUserMemory) {
         auto sizeRemaining = this->sizeUserMemory - sizeWritten;
+        auto pDestUnwrittenMemory = ptrOffset(pDestGpuAddress, sizeWritten);
         auto pUnwrittenMemory = ptrOffset(this->pDestMemory, sizeWritten);
-        AUBCommandStreamFixture::expectMemory<FamilyType>(pUnwrittenMemory, pUnwrittenMemory, sizeRemaining);
+        AUBCommandStreamFixture::expectMemory<FamilyType>(pDestUnwrittenMemory, pUnwrittenMemory, sizeRemaining);
     }
 }
 
