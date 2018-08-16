@@ -106,7 +106,9 @@ else()
 endif()
 
 if(NOT GTPIN_HEADERS_DIR)
-    set(GTPIN_HEADERS_DIR TRUE)
+	if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../igc")
+	    set(GTPIN_HEADERS_DIR TRUE)
+    endif()
 endif(NOT GTPIN_HEADERS_DIR)
 
 if(NOT KMDAF_HEADERS_DIR)
