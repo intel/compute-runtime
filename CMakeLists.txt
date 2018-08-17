@@ -106,9 +106,9 @@ else()
 endif()
 
 if(NOT GTPIN_HEADERS_DIR)
-	if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../igc")
-	    set(GTPIN_HEADERS_DIR TRUE)
-    endif()
+	if((EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../igc/inc/ocl_igc_shared/gtpin") OR (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/../igc/include/igc/ocl_igc_shared/gtpin"))
+		set(GTPIN_HEADERS_DIR TRUE)
+	endif()
 endif(NOT GTPIN_HEADERS_DIR)
 
 if(NOT KMDAF_HEADERS_DIR)
