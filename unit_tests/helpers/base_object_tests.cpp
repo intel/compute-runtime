@@ -61,64 +61,42 @@ template <typename TypeParam>
 struct BaseObjectTests : public ::testing::Test {
 };
 
+template <typename OclObject>
+class MockObjectBase : public OclObject {
+  public:
+    using OclObject::OclObject;
+
+    void setInvalidMagic() {
+        validMagic = this->magic;
+        this->magic = 0x0101010101010101LL;
+    }
+    void setValidMagic() {
+        this->magic = validMagic;
+    }
+
+    bool isObjectValid() const {
+        return this->isValid();
+    }
+
+    cl_ulong validMagic;
+};
+
 template <typename BaseType>
-class MockObject : public BaseType {
+class MockObject : public MockObjectBase<BaseType> {};
+
+template <>
+class MockObject<Buffer> : public MockObjectBase<Buffer> {
   public:
-    void setInvalidMagic() {
-        validMagic = this->magic;
-        this->magic = 0x0101010101010101LL;
-    }
-    void setValidMagic() {
-        this->magic = validMagic;
-    }
-
-    bool isObjectValid() const {
-        return this->isValid();
-    }
-
-    cl_ulong validMagic;
+    void setArgStateful(void *memory, bool forceNonAuxMode) override {}
 };
 
 template <>
-class MockObject<Buffer> : public Buffer {
+class MockObject<Program> : public MockObjectBase<Program> {
   public:
-    void setInvalidMagic() {
-        validMagic = this->magic;
-        this->magic = 0x0101010101010101LL;
-    }
-    void setValidMagic() {
-        this->magic = validMagic;
-    }
-
-    bool isObjectValid() const {
-        return this->isValid();
-    }
-
-    void setArgStateful(void *memory, bool forceNonAuxMode) override {
-    }
-
-    cl_ulong validMagic;
-};
-
-template <>
-class MockObject<Program> : public Program {
-  public:
-    MockObject() : Program(*new ExecutionEnvironment()),
+    MockObject() : MockObjectBase<Program>(*new ExecutionEnvironment()),
                    executionEnvironment(&this->peekExecutionEnvironment()) {}
 
-    void setInvalidMagic() {
-        validMagic = this->magic;
-        this->magic = 0x0101010101010101LL;
-    }
-    void setValidMagic() {
-        this->magic = validMagic;
-    }
-
-    bool isObjectValid() const {
-        return this->isValid();
-    }
-
-    cl_ulong validMagic;
+  private:
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
 };
 
