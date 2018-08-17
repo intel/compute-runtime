@@ -92,6 +92,8 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
         this->executionEnvironment->initSourceLevelDebugger(hwInfo);
     }
     this->executionEnvironment->incRefInternal();
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
+    hwHelper.setupHardwareCapabilities(&this->hardwareCapabilities);
 }
 
 Device::~Device() {

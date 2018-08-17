@@ -130,6 +130,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
+    const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
 
   protected:
     Device() = delete;
@@ -153,6 +154,7 @@ class Device : public BaseObject<_cl_device_id> {
     unsigned int enabledClVersion;
 
     const HardwareInfo &hwInfo;
+    HardwareCapabilities hardwareCapabilities = {};
     DeviceInfo deviceInfo;
 
     volatile uint32_t *tagAddress;

@@ -31,4 +31,5 @@ void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper) {
     EXPECT_EQ(16384u, hwCaps.image3DMaxHeight);
     EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);
     EXPECT_TRUE(hwCaps.isStatelesToStatefullWithOffsetSupported);
+    EXPECT_FALSE(hwCaps.localMemorySupported);
 }

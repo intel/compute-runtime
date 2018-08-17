@@ -42,6 +42,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
     caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
     caps->isStatelesToStatefullWithOffsetSupported = true;
+    caps->localMemorySupported = false;
 }
 
 template <typename Family>

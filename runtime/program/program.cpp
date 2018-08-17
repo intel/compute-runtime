@@ -90,9 +90,7 @@ Program::Program(ExecutionEnvironment &executionEnvironment, Context *context, b
         }
         kernelDebugEnabled = pDevice->isSourceLevelDebuggerActive();
 
-        HardwareCapabilities hwCaps = {0};
-        HwHelper::get(pDevice->getHardwareInfo().pPlatform->eRenderCoreFamily).setupHardwareCapabilities(&hwCaps);
-        auto enableStatelessToStatefullWithOffset = hwCaps.isStatelesToStatefullWithOffsetSupported;
+        auto enableStatelessToStatefullWithOffset = pDevice->getHardwareCapabilities().isStatelesToStatefullWithOffsetSupported;
         if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
             enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
         }

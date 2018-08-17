@@ -85,6 +85,7 @@ struct HardwareCapabilities {
     size_t image3DMaxHeight;
     uint64_t maxMemAllocSize;
     bool isStatelesToStatefullWithOffsetSupported;
+    bool localMemorySupported;
 };
 
 struct HardwareInfo {

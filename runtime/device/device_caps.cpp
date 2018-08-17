@@ -110,9 +110,7 @@ void Device::initializeCaps() {
         driverVersion.assign(driverInfo.get()->getVersion(driverVersion).c_str());
     }
 
-    HardwareCapabilities hwCaps = {0};
     auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
-    hwHelper.setupHardwareCapabilities(&hwCaps);
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
@@ -256,7 +254,7 @@ void Device::initializeCaps() {
 
     // OpenCL 1.2 requires 128MB minimum
     auto maxMemAllocSize = std::max((uint64_t)(deviceInfo.globalMemSize / 2), (uint64_t)(128 * MB));
-    deviceInfo.maxMemAllocSize = std::min(maxMemAllocSize, hwCaps.maxMemAllocSize);
+    deviceInfo.maxMemAllocSize = std::min(maxMemAllocSize, this->hardwareCapabilities.maxMemAllocSize);
 
     deviceInfo.maxConstantBufferSize = deviceInfo.maxMemAllocSize;
 
@@ -312,8 +310,8 @@ void Device::initializeCaps() {
     deviceInfo.imageSupport = CL_TRUE;
     deviceInfo.image2DMaxWidth = 16384;
     deviceInfo.image2DMaxHeight = 16384;
-    deviceInfo.image3DMaxWidth = hwCaps.image3DMaxWidth;
-    deviceInfo.image3DMaxHeight = hwCaps.image3DMaxHeight;
+    deviceInfo.image3DMaxWidth = this->hardwareCapabilities.image3DMaxWidth;
+    deviceInfo.image3DMaxHeight = this->hardwareCapabilities.image3DMaxHeight;
     deviceInfo.image3DMaxDepth = 2048;
     deviceInfo.imageMaxArraySize = 2048;
 
