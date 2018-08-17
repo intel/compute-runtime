@@ -178,3 +178,26 @@ TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseThe
     EXPECT_EQ(&commandStreamReceiver, &device->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
+
+typedef ::testing::Test ExecutionEnvironmentHw;
+
+HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamReceiverIsInitializedForCompressedBuffersThenCreatePageTableManagerIsCalled) {
+    ExecutionEnvironment executionEnvironment;
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceiver.get());
+    ASSERT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->createPageTableManagerCalled);
+}
+
+HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamReceiverIsInitializedForCompressedImagesThenCreatePageTableManagerIsCalled) {
+    ExecutionEnvironment executionEnvironment;
+    HardwareInfo localHwInfo = *platformDevices[0];
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo);
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceiver);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceiver.get());
+    ASSERT_NE(nullptr, csr);
+    EXPECT_TRUE(csr->createPageTableManagerCalled);
+}

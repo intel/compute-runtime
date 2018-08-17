@@ -20,16 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
-#include <cstdint>
+#include "hw_cmds.h"
+#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/gmm_callbacks.inl"
 
-namespace OCLRT {
+using namespace OCLRT;
 
-template <typename GfxFamily>
-struct TTCallbacks {
-    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-
-    static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
-};
-
-} // namespace OCLRT
+template struct DeviceCallbacks<CNLFamily>;
+template struct TTCallbacks<CNLFamily>;

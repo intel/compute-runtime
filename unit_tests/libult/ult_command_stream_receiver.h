@@ -28,6 +28,8 @@
 
 namespace OCLRT {
 
+class GmmPageTableMngr;
+
 template <typename GfxFamily>
 class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass = CommandStreamReceiverHw<GfxFamily>;
@@ -78,6 +80,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     virtual MemoryManager *createMemoryManager(bool enable64kbPages) override {
         memoryManager = new OsAgnosticMemoryManager(enable64kbPages);
         return memoryManager;
+    }
+
+    virtual GmmPageTableMngr *createPageTableManager() override {
+        createPageTableManagerCalled = true;
+        return nullptr;
     }
 
     void overrideCsrSizeReqFlags(CsrSizeRequestFlags &flags) { this->csrSizeRequestFlags = flags; }
@@ -133,6 +140,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
         initProgrammingFlagsCalled = true;
     }
 
+    bool createPageTableManagerCalled = false;
     bool activateAubSubCaptureCalled = false;
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;

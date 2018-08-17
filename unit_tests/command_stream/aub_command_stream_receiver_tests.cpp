@@ -764,6 +764,23 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGraphic
     EXPECT_FALSE(aubCsr->writeMemory(gfxAllocation));
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocationDataIsPassedInAllocationViewThenWriteMemoryIsAllowed) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    size_t size = 100;
+    auto ptr = std::make_unique<char[]>(size);
+    auto addr = reinterpret_cast<uint64_t>(ptr.get());
+    AllocationView allocationView(addr, size);
+
+    EXPECT_TRUE(aubCsr->writeMemory(allocationView));
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocationSizeInAllocationViewIsZeroThenWriteMemoryIsNotAllowed) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    AllocationView allocationView(0x1234, 0);
+
+    EXPECT_FALSE(aubCsr->writeMemory(allocationView));
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenFileIsOpened) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));
@@ -1774,6 +1791,97 @@ HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCal
     EXPECT_EQ(entry.pageConfig.PhysicalAddress, address / 4096);
     EXPECT_TRUE(entry.pageConfig.Present);
     EXPECT_FALSE(entry.pageConfig.LocalMemory);
+}
+
+template <typename GfxFamily>
+struct MockAubCsrToTestExternalAllocations : public AUBCommandStreamReceiverHw<GfxFamily> {
+    using AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw;
+    using AUBCommandStreamReceiverHw<GfxFamily>::externalAllocations;
+
+    bool writeMemory(AllocationView &allocationView) override {
+        writeMemoryParametrization.wasCalled = true;
+        writeMemoryParametrization.receivedAllocationView = allocationView;
+        writeMemoryParametrization.statusToReturn = (0 != allocationView.second) ? true : false;
+        return writeMemoryParametrization.statusToReturn;
+    }
+    struct WriteMemoryParametrization {
+        bool wasCalled = false;
+        AllocationView receivedAllocationView = {};
+        bool statusToReturn = false;
+    } writeMemoryParametrization;
+};
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMakeResidentExternalIsCalledThenGivenAllocationViewShouldBeAddedToExternalAllocations) {
+    auto aubCsr = std::make_unique<MockAubCsrToTestExternalAllocations<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    size_t size = 100;
+    auto ptr = std::make_unique<char[]>(size);
+    auto addr = reinterpret_cast<uint64_t>(ptr.get());
+    AllocationView externalAllocation(addr, size);
+
+    ASSERT_EQ(0u, aubCsr->externalAllocations.size());
+    aubCsr->makeResidentExternal(externalAllocation);
+    EXPECT_EQ(1u, aubCsr->externalAllocations.size());
+    EXPECT_EQ(addr, aubCsr->externalAllocations[0].first);
+    EXPECT_EQ(size, aubCsr->externalAllocations[0].second);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMakeNonResidentExternalIsCalledThenMatchingAllocationViewShouldBeRemovedFromExternalAllocations) {
+    auto aubCsr = std::make_unique<MockAubCsrToTestExternalAllocations<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    size_t size = 100;
+    auto ptr = std::make_unique<char[]>(size);
+    auto addr = reinterpret_cast<uint64_t>(ptr.get());
+    AllocationView externalAllocation(addr, size);
+    aubCsr->makeResidentExternal(externalAllocation);
+
+    ASSERT_EQ(1u, aubCsr->externalAllocations.size());
+    aubCsr->makeNonResidentExternal(addr);
+    EXPECT_EQ(0u, aubCsr->externalAllocations.size());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMakeNonResidentExternalIsCalledThenNonMatchingAllocationViewShouldNotBeRemovedFromExternalAllocations) {
+    auto aubCsr = std::make_unique<MockAubCsrToTestExternalAllocations<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    size_t size = 100;
+    auto ptr = std::make_unique<char[]>(size);
+    auto addr = reinterpret_cast<uint64_t>(ptr.get());
+    AllocationView externalAllocation(addr, size);
+    aubCsr->makeResidentExternal(externalAllocation);
+
+    ASSERT_EQ(1u, aubCsr->externalAllocations.size());
+    aubCsr->makeNonResidentExternal(0);
+    EXPECT_EQ(1u, aubCsr->externalAllocations.size());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledThenExternalAllocationsShouldBeMadeResident) {
+    auto aubCsr = std::make_unique<MockAubCsrToTestExternalAllocations<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    size_t size = 100;
+    auto ptr = std::make_unique<char[]>(size);
+    auto addr = reinterpret_cast<uint64_t>(ptr.get());
+    AllocationView externalAllocation(addr, size);
+    aubCsr->makeResidentExternal(externalAllocation);
+
+    ASSERT_EQ(1u, aubCsr->externalAllocations.size());
+    ResidencyContainer allocationsForResidency;
+    aubCsr->processResidency(&allocationsForResidency);
+
+    EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
+    EXPECT_EQ(addr, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
+    EXPECT_EQ(size, aubCsr->writeMemoryParametrization.receivedAllocationView.second);
+    EXPECT_TRUE(aubCsr->writeMemoryParametrization.statusToReturn);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcessResidencyIsCalledThenExternalAllocationWithZeroSizeShouldNotBeMadeResident) {
+    auto aubCsr = std::make_unique<MockAubCsrToTestExternalAllocations<FamilyType>>(*platformDevices[0], "", true, *pDevice->executionEnvironment);
+    AllocationView externalAllocation(0, 0);
+    aubCsr->makeResidentExternal(externalAllocation);
+
+    ASSERT_EQ(1u, aubCsr->externalAllocations.size());
+    ResidencyContainer allocationsForResidency;
+    aubCsr->processResidency(&allocationsForResidency);
+
+    EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
+    EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
+    EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.second);
+    EXPECT_FALSE(aubCsr->writeMemoryParametrization.statusToReturn);
 }
 
 #if defined(__clang__)

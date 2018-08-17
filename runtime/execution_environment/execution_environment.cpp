@@ -47,6 +47,9 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     if (!commandStreamReceiver) {
         return false;
     }
+    if (pHwInfo->capabilityTable.ftrRenderCompressedBuffers || pHwInfo->capabilityTable.ftrRenderCompressedImages) {
+        commandStreamReceiver->createPageTableManager();
+    }
     this->commandStreamReceiver.reset(commandStreamReceiver);
     return true;
 }

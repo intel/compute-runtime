@@ -20,13 +20,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/translationtable_callbacks.h"
-#include "test.h"
+#pragma once
+#include <cstdint>
 
-using namespace OCLRT;
+namespace OCLRT {
 
-typedef ::testing::Test Gen10TTCallbacksTests;
+template <typename GfxFamily>
+struct DeviceCallbacks {
+    static long __stdcall notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate);
+};
 
-GEN10TEST_F(Gen10TTCallbacksTests, notSupported) {
-    EXPECT_EQ(0, TTCallbacks<FamilyType>::writeL3Address(nullptr, 1, 2));
-}
+template <typename GfxFamily>
+struct TTCallbacks {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    static int __stdcall writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset);
+};
+
+} // namespace OCLRT

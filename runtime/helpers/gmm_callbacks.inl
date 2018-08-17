@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,21 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/helpers/translationtable_callbacks.inl"
+#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/command_stream/linear_stream.h"
+#include "runtime/helpers/hw_helper.h"
+#include <cstdint>
 
-using namespace OCLRT;
+namespace OCLRT {
 
-template struct TTCallbacks<CNLFamily>;
+template <typename GfxFamily>
+long __stdcall DeviceCallbacks<GfxFamily>::notifyAubCapture(void *csrHandle, uint64_t gfxAddress, size_t gfxSize, bool allocate) {
+    return 0;
+}
+
+template <typename GfxFamily>
+int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset) {
+    return 0;
+}
+
+} // namespace OCLRT

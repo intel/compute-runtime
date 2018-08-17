@@ -29,8 +29,8 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
 #include "runtime/gmm_helper/page_table_mngr.h"
+#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/helpers/translationtable_callbacks.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
@@ -77,10 +77,6 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
 
     bool success = this->wddm->init<GfxFamily>();
     DEBUG_BREAK_IF(!success);
-
-    if (hwInfoIn.capabilityTable.ftrRenderCompressedBuffers || hwInfoIn.capabilityTable.ftrRenderCompressedImages) {
-        this->wddm->resetPageTableManager(createPageTableManager());
-    }
 }
 
 template <typename GfxFamily>
@@ -184,6 +180,7 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     // clang-format off
     deviceCallbacks.Adapter.KmtHandle         = wddm->getAdapter();
     deviceCallbacks.hDevice.KmtHandle         = wddm->getDevice();
+    deviceCallbacks.hCsr            = static_cast<CommandStreamReceiverHw<GfxFamily> *>(this);
     deviceCallbacks.PagingQueue     = wddm->getPagingQueue();
     deviceCallbacks.PagingFence     = wddm->getPagingQueueSyncObject();
 
@@ -198,11 +195,14 @@ GmmPageTableMngr *WddmCommandStreamReceiver<GfxFamily>::createPageTableManager()
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnLock         = gdi->lock2;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnUnLock       = gdi->unlock2;
     deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnEscape       = gdi->escape;
+    deviceCallbacks.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = DeviceCallbacks<GfxFamily>::notifyAubCapture;
 
     ttCallbacks.pfWriteL3Adr        = TTCallbacks<GfxFamily>::writeL3Address;
     // clang-format on
 
-    return GmmPageTableMngr::create(&deviceCallbacks, TT_TYPE::TRTT | TT_TYPE::AUXTT, &ttCallbacks);
+    GmmPageTableMngr *gmmPageTableMngr = GmmPageTableMngr::create(&deviceCallbacks, TT_TYPE::TRTT | TT_TYPE::AUXTT, &ttCallbacks);
+    this->wddm->resetPageTableManager(gmmPageTableMngr);
+    return gmmPageTableMngr;
 }
 
 template <typename GfxFamily>

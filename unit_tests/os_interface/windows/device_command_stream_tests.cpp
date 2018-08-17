@@ -28,8 +28,8 @@
 #include "runtime/command_stream/preemption.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/built_ins_helper.h"
+#include "runtime/helpers/gmm_callbacks.h"
 #include "runtime/helpers/options.h"
-#include "runtime/helpers/translationtable_callbacks.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
@@ -830,6 +830,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
         createMockWddm();
         EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
         MockWddmCsr<FamilyType> mockWddmCsr(hwInfo, myMockWddm, *executionEnvironment);
+        mockWddmCsr.createPageTableManager();
         ASSERT_NE(nullptr, myMockWddm->getPageTableManager());
 
         auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
@@ -841,6 +842,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
         // clang-format off
         expectedDeviceCb.Adapter.KmtHandle = myMockWddm->getAdapter();
         expectedDeviceCb.hDevice.KmtHandle = myMockWddm->getDevice();
+        expectedDeviceCb.hCsr = &mockWddmCsr;
         expectedDeviceCb.PagingQueue = myMockWddm->getPagingQueue();
         expectedDeviceCb.PagingFence = myMockWddm->getPagingQueueSyncObject();
 
@@ -855,6 +857,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
         expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnLock = myGdi->lock2;
         expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnUnLock = myGdi->unlock2;
         expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnEscape = myGdi->escape;
+        expectedDeviceCb.DevCbPtrs.KmtCbPtrs.pfnNotifyAubCapture = DeviceCallbacks<FamilyType>::notifyAubCapture;
 
         expectedTTCallbacks.pfWriteL3Adr = TTCallbacks<FamilyType>::writeL3Address;
         // clang-format on
@@ -883,8 +886,8 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
         setCompressionEnabled(compressionEnabled[i][0], compressionEnabled[i][1]);
         createMockWddm();
-
         auto mockWddmCsr = new MockWddmCsr<FamilyType>(hwInfo, myMockWddm, *executionEnvironment);
+        mockWddmCsr->createPageTableManager();
         mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
         executionEnvironment->commandStreamReceiver.reset(mockWddmCsr);

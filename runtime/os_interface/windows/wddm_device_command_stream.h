@@ -51,11 +51,11 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     Wddm *peekWddm() {
         return wddm;
     }
+    GmmPageTableMngr *createPageTableManager() override;
 
   protected:
     void initPageTableManagerRegisters(LinearStream &csr) override;
     void kmDafLockAllocations(ResidencyContainer *allocationsForResidency);
-    GmmPageTableMngr *createPageTableManager();
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;

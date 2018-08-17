@@ -519,6 +519,21 @@ void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfx
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::makeResidentExternal(AllocationView &allocationView) {
+    externalAllocations.push_back(allocationView);
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResidentExternal(uint64_t gpuAddress) {
+    for (auto it = externalAllocations.begin(); it != externalAllocations.end(); it++) {
+        if (it->first == gpuAddress) {
+            externalAllocations.erase(it);
+            break;
+        }
+    }
+}
+
+template <typename GfxFamily>
 bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxAllocation) {
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
     auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
@@ -556,10 +571,22 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocationView) {
+    GraphicsAllocation gfxAllocation(reinterpret_cast<void *>(allocationView.first), allocationView.second);
+    return writeMemory(gfxAllocation);
+}
+
+template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             return;
+        }
+    }
+
+    for (auto &externalAllocation : externalAllocations) {
+        if (!writeMemory(externalAllocation)) {
+            DEBUG_BREAK_IF(externalAllocation.second != 0);
         }
     }
 

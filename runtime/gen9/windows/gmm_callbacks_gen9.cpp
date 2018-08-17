@@ -21,9 +21,10 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/helpers/translationtable_callbacks.inl"
+#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/gmm_callbacks.inl"
 
 using namespace OCLRT;
 
-template struct TTCallbacks<BDWFamily>;
+template struct DeviceCallbacks<SKLFamily>;
+template struct TTCallbacks<SKLFamily>;

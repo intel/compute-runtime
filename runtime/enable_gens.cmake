@@ -20,7 +20,7 @@
 
 set(RUNTIME_SRCS_GENX_CPP_WINDOWS
   windows/command_stream_receiver
-  windows/translationtable_callbacks
+  windows/gmm_callbacks
   windows/wddm
 )
 

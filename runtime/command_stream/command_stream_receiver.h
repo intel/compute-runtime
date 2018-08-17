@@ -42,6 +42,7 @@ class GraphicsAllocation;
 class IndirectHeap;
 class LinearStream;
 class MemoryManager;
+class GmmPageTableMngr;
 class OSInterface;
 class ExecutionEnvironment;
 
@@ -86,6 +87,8 @@ class CommandStreamReceiver {
     MemoryManager *getMemoryManager();
     virtual MemoryManager *createMemoryManager(bool enable64kbPages) { return nullptr; }
     void setMemoryManager(MemoryManager *mm);
+
+    virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 
     GraphicsAllocation *createAllocationAndHandleResidency(const void *address, size_t size, bool addToDefferFreeList = true);
     void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType);

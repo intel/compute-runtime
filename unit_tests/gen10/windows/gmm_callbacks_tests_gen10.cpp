@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,10 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "hw_cmds.h"
-#include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/helpers/translationtable_callbacks.inl"
+#include "runtime/helpers/gmm_callbacks.h"
+#include "test.h"
 
 using namespace OCLRT;
 
-template struct TTCallbacks<SKLFamily>;
+typedef ::testing::Test Gen10GmmCallbacksTests;
+
+GEN10TEST_F(Gen10GmmCallbacksTests, notSupportedDeviceCallback) {
+    EXPECT_EQ(0, DeviceCallbacks<FamilyType>::notifyAubCapture(nullptr, 0, 0, false));
+}
+
+GEN10TEST_F(Gen10GmmCallbacksTests, notSupportedTTCallback) {
+    EXPECT_EQ(0, TTCallbacks<FamilyType>::writeL3Address(nullptr, 1, 2));
+}

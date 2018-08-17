@@ -1366,6 +1366,8 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
 
     MemoryManager *mm = csrHw->createMemoryManager(false);
     EXPECT_EQ(nullptr, mm);
+    GmmPageTableMngr *ptm = csrHw->createPageTableManager();
+    EXPECT_EQ(nullptr, ptm);
     delete csrHw;
 
     DebugManager.flags.SetCommandStreamReceiver.set(0);

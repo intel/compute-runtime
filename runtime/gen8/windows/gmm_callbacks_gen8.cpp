@@ -20,15 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/helpers/translationtable_callbacks.h"
-#include "runtime/command_stream/linear_stream.h"
-#include "runtime/helpers/hw_helper.h"
-#include <cstdint>
+#include "hw_cmds.h"
+#include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/gmm_callbacks.inl"
 
-namespace OCLRT {
-template <typename GfxFamily>
-int __stdcall TTCallbacks<GfxFamily>::writeL3Address(void *queueHandle, uint64_t l3GfxAddress, uint64_t regOffset) {
-    return 0;
-};
+using namespace OCLRT;
 
-} // namespace OCLRT
+template struct DeviceCallbacks<BDWFamily>;
+template struct TTCallbacks<BDWFamily>;
