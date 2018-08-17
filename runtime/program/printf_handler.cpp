@@ -40,7 +40,7 @@ PrintfHandler::~PrintfHandler() {
 
 PrintfHandler *PrintfHandler::create(const MultiDispatchInfo &multiDispatchInfo, Device &device) {
     if (multiDispatchInfo.usesStatelessPrintfSurface() ||
-        (multiDispatchInfo.begin()->getKernel()->checkIfIsParentKernelAndBlocksUsesPrintf())) {
+        (multiDispatchInfo.peekMainKernel()->checkIfIsParentKernelAndBlocksUsesPrintf())) {
         return new PrintfHandler(device);
     }
     return nullptr;
@@ -51,7 +51,7 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     if (printfSurfaceSize == 0) {
         return;
     }
-    kernel = multiDispatchInfo.begin()->getKernel();
+    kernel = multiDispatchInfo.peekMainKernel();
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, nullptr, printfSurfaceSize, GraphicsAllocation::AllocationType::PRINTF_SURFACE);
 
     *reinterpret_cast<uint32_t *>(printfSurface->getUnderlyingBuffer()) = printfSurfaceInitialDataSize;

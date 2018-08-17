@@ -123,3 +123,38 @@ TEST(PrintfHandlerTest, givenParentKernelWithPrintfAndBlockKernelWithoutPrintfWh
 
     ASSERT_NE(nullptr, printfHandler);
 }
+
+TEST(PrintfHandlerTest, givenMultiDispatchInfoWithMultipleKernelsWhenCreatingAndDispatchingPrintfHandlerThenPickMainKernel) {
+    MockContext context;
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto program = std::make_unique<MockProgram>(*device->getExecutionEnvironment(), &context, false);
+    auto mainKernelInfo = std::make_unique<KernelInfo>();
+    auto kernelInfo = std::make_unique<KernelInfo>();
+
+    auto printfSurface = std::make_unique<SPatchAllocateStatelessPrintfSurface>();
+    printfSurface->DataParamOffset = 0;
+    printfSurface->DataParamSize = 8;
+
+    mainKernelInfo->patchInfo.pAllocateStatelessPrintfSurface = printfSurface.get();
+
+    uint64_t crossThread[8];
+    auto mainKernel = std::make_unique<MockKernel>(program.get(), *mainKernelInfo, *device);
+    auto kernel1 = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+    auto kernel2 = std::make_unique<MockKernel>(program.get(), *kernelInfo, *device);
+    mainKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
+
+    DispatchInfo mainDispatchInfo(mainKernel.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo dispatchInfo1(kernel1.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo dispatchInfo2(kernel2.get(), 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+
+    MultiDispatchInfo multiDispatchInfo(mainKernel.get());
+    multiDispatchInfo.push(dispatchInfo1);
+    multiDispatchInfo.push(mainDispatchInfo);
+    multiDispatchInfo.push(dispatchInfo2);
+
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    ASSERT_NE(nullptr, printfHandler.get());
+
+    printfHandler->prepareDispatch(multiDispatchInfo);
+    EXPECT_NE(nullptr, printfHandler->getSurface());
+}

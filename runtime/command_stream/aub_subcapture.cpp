@@ -115,7 +115,7 @@ std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo
     std::string toggleFileName = baseFileName + "_toggle";
     toggleFileName += "_from_" + std::to_string(kernelCurrentIdx - 1);
     if (!dispatchInfo.empty()) {
-        toggleFileName += "_" + dispatchInfo.begin()->getKernel()->getKernelInfo().name;
+        toggleFileName += "_" + dispatchInfo.peekMainKernel()->getKernelInfo().name;
     }
     toggleFileName += ".aub";
     return toggleFileName;
@@ -123,7 +123,7 @@ std::string AubSubCaptureManager::generateToggleFileName(const MultiDispatchInfo
 
 bool AubSubCaptureManager::isSubCaptureFilterActive(const MultiDispatchInfo &dispatchInfo, uint32_t kernelIdx) const {
     DEBUG_BREAK_IF(dispatchInfo.size() > 1);
-    auto kernelName = dispatchInfo.begin()->getKernel()->getKernelInfo().name;
+    auto kernelName = dispatchInfo.peekMainKernel()->getKernelInfo().name;
     auto subCaptureIsActive = false;
 
     if (isKernelIndexInSubCaptureRange(kernelIdx)) {

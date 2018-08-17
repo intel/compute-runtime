@@ -477,3 +477,30 @@ TEST_F(AubSubCaptureTest, givenSubCaptureManagerInToggleModeWhenGenerateToggleFi
     std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(dispatchInfo);
     EXPECT_EQ(std::string::npos, toggleFileName.find(kernelName));
 }
+
+TEST_F(AubSubCaptureTest, givenMultiDispatchInfoWithMultipleKernelsWhenGenerateToggleFileNameThenPickMainKernel) {
+    AubSubCaptureManagerMock aubSubCaptureManager("aubfile.aub");
+    KernelInfo mainKernelInfo = {};
+    mainKernelInfo.name = "main_kernel";
+
+    MockKernel mainKernel(program.get(), mainKernelInfo, *pDevice);
+    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel2(program.get(), kernelInfo, *pDevice);
+
+    DispatchInfo mainDispatchInfo(&mainKernel, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo dispatchInfo1(&kernel1, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+    DispatchInfo dispatchInfo2(&kernel2, 1, {1, 1, 1}, {1, 1, 1}, {1, 1, 1});
+
+    MultiDispatchInfo multiDispatchInfo(&mainKernel);
+    multiDispatchInfo.push(dispatchInfo1);
+    multiDispatchInfo.push(mainDispatchInfo);
+    multiDispatchInfo.push(dispatchInfo2);
+
+    std::string externalFileName = "";
+    aubSubCaptureManager.setExternalFileName(externalFileName);
+
+    aubSubCaptureManager.subCaptureMode = AubSubCaptureManager::SubCaptureMode::Toggle;
+    std::string toggleFileName = aubSubCaptureManager.generateToggleFileName(multiDispatchInfo);
+    EXPECT_NE(std::string::npos, toggleFileName.find(mainKernelInfo.name));
+    EXPECT_STREQ(toggleFileName.c_str(), aubSubCaptureManager.getSubCaptureFileName(multiDispatchInfo).c_str());
+}
