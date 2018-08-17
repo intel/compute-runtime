@@ -225,10 +225,12 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
     auto alignedHostPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
     auto unalignedHostPtr = ptrOffset(alignedHostPtr, 1);
     auto smallBufferPtr = alignedMalloc(1 * MB, MemoryConstants::cacheLineSize);
-    auto largeBufferPtr = alignedMalloc(100 * MB, MemoryConstants::cacheLineSize);
+    size_t largeBufferSize = 11u * MemoryConstants::megaByte;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));
+    auto memoryManager = static_cast<OsAgnosticMemoryManager *>(mockDevice->getMemoryManager());
+    memoryManager->turnOnFakingBigAllocations();
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_USE_HOST_PTR, size, alignedBufferPtr, retVal));
     EXPECT_EQ(retVal, CL_SUCCESS);
@@ -255,13 +257,12 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaMet) {
     mockDevice->getDeviceInfoToModify()->platformLP = false;
     EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, smallBufferPtr, 1 * MB));
 
-    buffer.reset(Buffer::create(mockContext.get(), CL_MEM_USE_HOST_PTR, 100 * MB, largeBufferPtr, retVal));
+    buffer.reset(Buffer::create(mockContext.get(), CL_MEM_ALLOC_HOST_PTR, largeBufferSize, nullptr, retVal));
 
     // platform LP == false && size > 10 MB
     mockDevice->getDeviceInfoToModify()->platformLP = false;
-    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, largeBufferPtr, 100 * MB));
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, buffer->getCpuAddress(), largeBufferSize));
 
-    alignedFree(largeBufferPtr);
     alignedFree(smallBufferPtr);
     alignedFree(alignedHostPtr);
     alignedFree(alignedBufferPtr);
@@ -274,7 +275,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
     auto unalignedBufferPtr = ptrOffset(alignedBufferPtr, 1);
     auto alignedHostPtr = alignedMalloc(MemoryConstants::cacheLineSize + 1, MemoryConstants::cacheLineSize);
     auto unalignedHostPtr = ptrOffset(alignedHostPtr, 1);
-    size_t largeBufferSize = 100u * MemoryConstants::megaByte;
+    size_t largeBufferSize = 11u * MemoryConstants::megaByte;
 
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto mockContext = std::unique_ptr<MockContext>(new MockContext(mockDevice.get()));

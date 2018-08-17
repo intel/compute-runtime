@@ -213,7 +213,7 @@ TEST_F(EnqueueKernelTest, clEnqueueNDRangeKernel_invalidWorkGroupSize) {
 
 struct TestParam2 {
     cl_uint ScratchSize;
-} TestParamTable2[] = {{1024}, {2048}, {4096}, {8192}, {16384}, {32768}, {65536}, {131072}};
+} TestParamTable2[] = {{1024}, {2048}, {4096}, {8192}, {16384}};
 
 struct TestParam {
     cl_uint globalWorkSizeX;
