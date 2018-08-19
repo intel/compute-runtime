@@ -10,8 +10,8 @@ Summary: Intel(R) Graphics Compute Runtime for OpenCL(TM)
 Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/compute-runtime
-Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}/neo.tar.gz
-Source1: https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}/gmmlib.tar.gz
+Source0: https://github.com/intel/compute-runtime/archive/%{neo_commit_id}.tar.gz
+Source1: https://github.com/intel/gmmlib/archive/%{gmmlib_commit_id}.tar.gz
 
 %if 0%{?el7}
 BuildRequires: centos-release-scl epel-release
@@ -35,8 +35,8 @@ echo "==== BUILD ===="
 rm -rf *
 
 mkdir neo gmmlib
-tar xzf $RPM_SOURCE_DIR/neo.tar.gz -C neo --strip-components=1
-tar xzf $RPM_SOURCE_DIR/gmmlib.tar.gz -C gmmlib --strip-components=1
+tar xzf $RPM_SOURCE_DIR/%{neo_commit_id}.tar.gz -C neo --strip-components=1
+tar xzf $RPM_SOURCE_DIR/%{gmmlib_commit_id}.tar.gz -C gmmlib --strip-components=1
 
 mkdir build
 cd build
