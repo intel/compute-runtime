@@ -34,6 +34,7 @@
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
 #include "runtime/helpers/hw_info.h"
@@ -1688,4 +1689,52 @@ HWTEST_F(EnqueueAuxKernelTests, givenKernelWithRequiredAuxTranslationWhenEnqueue
     auto kernelAfter = std::get<Kernel *>(cmdQ.dispatchAuxTranslationInputs.at(1));
     EXPECT_EQ("fullCopy", kernelAfter->getKernelInfo().name);
     EXPECT_TRUE(kernelAfter->isBuiltIn);
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenDontTranslateFromNonAuxToAux) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        MyCmdQ<FamilyType> cmdQ(context, pDevice);
+        size_t gws[3] = {1, 0, 0};
+        MockBuffer buffer0, buffer1, buffer2;
+        cl_mem clMem0 = &buffer0;
+        cl_mem clMem1 = &buffer1;
+        cl_mem clMem2 = &buffer2;
+        buffer0.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+        buffer1.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+        buffer2.getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
+
+        cl_queue_properties queueProperties = {};
+        auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pDevice, queueProperties);
+        context->setDefaultDeviceQueue(mockDevQueue.get());
+        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context));
+
+        parentKernel->auxTranslationRequired = true;
+        parentKernel->mockKernelInfo->kernelArgInfo.resize(3);
+        for (auto &kernelInfo : parentKernel->mockKernelInfo->kernelArgInfo) {
+            kernelInfo.kernelArgPatchInfoVector.resize(1);
+        }
+
+        parentKernel->initialize();
+        parentKernel->mockKernelInfo->kernelArgInfo.at(0).pureStatefulBufferAccess = false;
+        parentKernel->mockKernelInfo->kernelArgInfo.at(1).pureStatefulBufferAccess = true;
+        parentKernel->mockKernelInfo->kernelArgInfo.at(2).pureStatefulBufferAccess = false;
+
+        parentKernel->setArgBuffer(0, sizeof(cl_mem *), &clMem0); // stateless on BUFFER_COMPRESSED - insert
+        parentKernel->setArgBuffer(1, sizeof(cl_mem *), &clMem1); // stateful on BUFFER_COMPRESSED - dont insert
+        parentKernel->setArgBuffer(2, sizeof(cl_mem *), &clMem2); // stateless on BUFFER_COMPRESSED - insert
+
+        cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(1u, cmdQ.dispatchAuxTranslationInputs.size());
+        EXPECT_EQ(2u, std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0)).size()); // before kernel
+
+        auto &dispatchedBuffers = std::get<BuffersForAuxTranslation>(cmdQ.dispatchAuxTranslationInputs.at(0));
+
+        EXPECT_NE(dispatchedBuffers.end(), dispatchedBuffers.find(&buffer0));
+        EXPECT_EQ(dispatchedBuffers.end(), dispatchedBuffers.find(&buffer1));
+        EXPECT_NE(dispatchedBuffers.end(), dispatchedBuffers.find(&buffer2));
+
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer0.getGraphicsAllocation()->getAllocationType());
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, buffer1.getGraphicsAllocation()->getAllocationType());
+        EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer2.getGraphicsAllocation()->getAllocationType());
+    }
 }

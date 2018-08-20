@@ -106,7 +106,13 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
                 }
             }
             if (kernel->isAuxTranslationRequired()) {
-                dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                if (kernel->isParentKernel) {
+                    for (auto &buffer : buffersForAuxTranslation) {
+                        buffer->getGraphicsAllocation()->setAllocationType(GraphicsAllocation::AllocationType::BUFFER);
+                    }
+                } else {
+                    dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::NonAuxToAux);
+                }
             }
         }
 

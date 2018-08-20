@@ -308,6 +308,7 @@ class MockKernelWithInternals {
 
 class MockParentKernel : public Kernel {
   public:
+    using Kernel::auxTranslationRequired;
     using Kernel::patchBlocksCurbeWithConstantValues;
     static MockParentKernel *create(Context &context, bool addChildSimdSize = false, bool addChildGlobalMemory = false, bool addChildConstantMemory = false, bool addPrintfForParent = true, bool addPrintfForBlock = true) {
         Device &device = *context.getDevice(0);
@@ -387,6 +388,7 @@ class MockParentKernel : public Kernel {
         parent->crossThreadData = new char[crossThreadSize];
         memset(parent->crossThreadData, 0, crossThreadSize);
         parent->crossThreadDataSize = crossThreadSize;
+        parent->mockKernelInfo = info;
 
         KernelInfo *infoBlock = new KernelInfo();
         SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueueBlock = new SPatchAllocateStatelessDefaultDeviceQueueSurface;
@@ -537,6 +539,7 @@ class MockParentKernel : public Kernel {
     }
 
     MockProgram *mockProgram;
+    KernelInfo *mockKernelInfo = nullptr;
 };
 
 class MockSchedulerKernel : public SchedulerKernel {
