@@ -1,4 +1,4 @@
 #!groovy
 neoDependenciesRev='790647-1082'
 strategy='EQUAL'
-allowedCD=286
+allowedCD=273

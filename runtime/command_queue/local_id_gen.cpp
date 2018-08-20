@@ -57,11 +57,11 @@ LocalIDHelper::LocalIDHelper() {
 LocalIDHelper LocalIDHelper::initializer;
 
 //traditional function to generate local IDs
-void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool hasKernelOnlyImages) {
+void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel) {
     auto threadsPerWorkGroup = static_cast<uint16_t>(getThreadsPerWG(simd, localWorkgroupSize[0] * localWorkgroupSize[1] * localWorkgroupSize[2]));
-    bool use4x4Layout = hasKernelOnlyImages && isCompatibleWith4x4Layout(localWorkgroupSize, dimensionsOrder, simd);
-    if (use4x4Layout) {
-        generateLocalIDsWith4x4Layout(buffer, localWorkgroupSize, simd);
+    bool useLayoutForImages = isImageOnlyKernel && isCompatibleWithLayoutForImages(localWorkgroupSize, dimensionsOrder, simd);
+    if (useLayoutForImages) {
+        generateLocalIDsWithLayoutForImages(buffer, localWorkgroupSize, simd);
     } else if (simd == 32) {
         LocalIDHelper::generateSimd32(buffer, localWorkgroupSize, threadsPerWorkGroup, dimensionsOrder);
     } else if (simd == 16) {
@@ -71,55 +71,55 @@ void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3>
     }
 }
 
-bool isCompatibleWith4x4Layout(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd) {
-    //limit support to 8x4x1 and 8x8x1 LWS
+bool isCompatibleWithLayoutForImages(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd) {
+    uint8_t xMask = simd == 8u ? 0b1 : 0b11;
+    uint8_t yMask = 0b11;
     return dimensionsOrder.at(0) == 0 &&
            dimensionsOrder.at(1) == 1 &&
-           localWorkgroupSize[2] == 1 &&
-           localWorkgroupSize[0] == 8 &&
-           (localWorkgroupSize[1] == 4 || localWorkgroupSize[1] == 8);
+           (localWorkgroupSize.at(0) & xMask) == 0 &&
+           (localWorkgroupSize.at(1) & yMask) == 0 &&
+           localWorkgroupSize.at(2) == 1u;
 }
 
-inline void generateLocalIDsWith4x4Layout(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd) {
+inline void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd) {
     uint8_t rowWidth = simd == 32u ? 32u : 16u;
-    uint8_t xDelta = simd == 8u ? 2u : 4u;                                                  // difference between corresponding values in consecutive X rows
-    uint8_t yDelta = simd == 8u || localWorkgroupSize.at(1) == 4u ? 4u : rowWidth / xDelta; // difference between corresponding values in consecutive Y rows
-    std::array<uint16_t, 3> replicationFactors{{static_cast<uint16_t>(localWorkgroupSize.at(0) / xDelta),
-                                                static_cast<uint16_t>(localWorkgroupSize.at(1) / yDelta),
-                                                static_cast<uint16_t>(localWorkgroupSize.at(2))}};
-    bool earlyGrowX = replicationFactors.at(1) == 1 && simd == 32u && replicationFactors.at(0) > 1;
-    bool earlyGrowZ = replicationFactors.at(1) == 1 && simd == 32u && !earlyGrowX && replicationFactors.at(2) > 1;
+    uint8_t xDelta = simd == 8u ? 2u : 4u;                                                    // difference between corresponding values in consecutive X rows
+    uint8_t yDelta = (simd == 8u || localWorkgroupSize.at(1) == 4u) ? 4u : rowWidth / xDelta; // difference between corresponding values in consecutive Y rows
+
+    bool earlyGrowX = localWorkgroupSize.at(1) == yDelta &&
+                      simd == 32u &&
+                      localWorkgroupSize.at(0) > xDelta;
+
     auto buffer = reinterpret_cast<uint16_t *>(b);
     uint16_t offset = 0u;
-    for (uint16_t z = 0u; z < replicationFactors.at(2); z++) {
-        for (uint16_t y = 0u; y < replicationFactors.at(1); y++) {
-            for (uint16_t x = 0u; x < replicationFactors.at(0); x++) {
-                // row for X
-                for (uint8_t i = 0u; i < simd; i++) {
-                    if (earlyGrowX && i == yDelta * xDelta) {
-                        x++;
-                    }
-                    auto xValue = xDelta * x + (i & (xDelta - 1));
-                    buffer[offset + i] = xValue & (localWorkgroupSize.at(0) - 1);
-                }
-                offset += rowWidth;
-                // row for Y
-                for (uint8_t i = 0u; i < simd; i++) {
-                    auto yValue = yDelta * y + i / xDelta;
-                    buffer[offset + i] = yValue & (localWorkgroupSize.at(1) - 1);
-                }
-                offset += rowWidth;
-                // row for Z
-                for (uint8_t i = 0u; i < simd; i++) {
-                    if (earlyGrowZ && i == yDelta * xDelta) {
-                        z++;
-                    }
-                    auto zValue = z;
-                    buffer[offset + i] = zValue & (localWorkgroupSize.at(2) - 1);
-                }
-                offset += rowWidth;
+    auto numGrfs = (localWorkgroupSize.at(0) * localWorkgroupSize.at(1) * localWorkgroupSize.at(2) + (simd - 1)) / simd;
+    uint16_t x = 0u;
+    uint16_t y = 0u;
+    for (auto grfId = 0; grfId < numGrfs; grfId++) {
+        auto rowX = buffer + offset;
+        auto rowY = buffer + offset + rowWidth;
+        auto rowZ = buffer + offset + 2 * rowWidth;
+
+        for (uint8_t i = 0u; i < simd; i++) {
+            if (i == yDelta * xDelta && earlyGrowX) {
+                x += xDelta;
             }
+            if (x == localWorkgroupSize.at(0)) {
+                x = 0u;
+                y += yDelta;
+                if (y == localWorkgroupSize.at(1)) {
+                    y = 0u;
+                }
+            }
+            rowX[i] = (x + (i & (xDelta - 1)));
+            rowY[i] = (y + i / xDelta);
+            if (rowY[i] >= localWorkgroupSize.at(1)) {
+                rowY[i] -= localWorkgroupSize.at(1);
+            }
+            rowZ[i] = 0u;
         }
+        x += xDelta;
+        offset += 3 * rowWidth;
     }
 }
 } // namespace OCLRT

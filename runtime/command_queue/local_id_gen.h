@@ -79,8 +79,8 @@ void generateLocalIDsSimd(void *b, const std::array<uint16_t, 3> &localWorkgroup
                           const std::array<uint8_t, 3> &dimensionsOrder);
 
 void generateLocalIDs(void *buffer, uint16_t simd, const std::array<uint16_t, 3> &localWorkgroupSize,
-                      const std::array<uint8_t, 3> &dimensionsOrder, bool hasKernelOnlyImages);
-void generateLocalIDsWith4x4Layout(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd);
+                      const std::array<uint8_t, 3> &dimensionsOrder, bool isImageOnlyKernel);
+void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16_t, 3> &localWorkgroupSize, uint16_t simd);
 
-bool isCompatibleWith4x4Layout(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd);
+bool isCompatibleWithLayoutForImages(const std::array<uint16_t, 3> &localWorkgroupSize, const std::array<uint8_t, 3> &dimensionsOrder, uint16_t simd);
 } // namespace OCLRT

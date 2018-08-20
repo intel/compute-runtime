@@ -296,35 +296,100 @@ TEST_P(LocalIDFixture, sizeCalculationLocalIDs) {
     EXPECT_EQ(numGRFsExpected * sizeGRF, sizeTotalPerThreadData);
 }
 
-using LocalIds4x4LayoutTest = ::testing::TestWithParam<uint8_t>;
+struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_t, uint16_t, uint16_t>> {
+    void SetUp() override {
+        simd = std::get<0>(GetParam());
+        localWorkSize = {{std::get<1>(GetParam()),
+                          std::get<2>(GetParam()),
+                          1u}};
+        rowWidth = simd == 32u ? 32u : 16u;
+        xDelta = simd == 8u ? 2u : 4u;
+    }
+    void generateLocalIds() {
 
-TEST(LocalIds4x4LayoutTest, given8x4x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnTrue) {
-    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 1u}};
+        auto numGrfs = (localWorkSize.at(0) * localWorkSize.at(1) + (simd - 1)) / simd;
+        elemsInBuffer = 3u * simd * numGrfs;
+        if (simd == 8u) {
+            elemsInBuffer *= 2;
+        }
+        size = elemsInBuffer * sizeof(uint16_t);
+        memory = allocateAlignedMemory(size, 32);
+        memset(memory.get(), 0xff, size);
+        buffer = reinterpret_cast<uint16_t *>(memory.get());
+        EXPECT_TRUE(isCompatibleWithLayoutForImages(localWorkSize, dimensionsOrder, simd));
+        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
+    }
+    void validateGRF() {
+        auto numRows = elemsInBuffer / rowWidth;
+        auto numGrfs = numRows / 3u;
+        for (auto i = 0u; i < numGrfs; i++) {
+
+            // validate X row
+            uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t currentX = baseX;
+            for (int j = 1; j < simd; j++) {
+                if (simd == 32u && localWorkSize.at(1) == 4u && j == 16u) {
+                    baseX += xDelta;
+                    if (baseX == localWorkSize.at(0)) {
+                        baseX = 0;
+                    }
+                }
+                currentX = baseX + ((currentX + 1) & (xDelta - 1));
+                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
+            }
+
+            // validate Y row
+            uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
+            for (int j = 0; j < simd; j++) {
+                uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
+                if (expectedY >= localWorkSize.at(1)) {
+                    expectedY -= localWorkSize.at(1);
+                }
+                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
+            }
+
+            // validate Z row
+            for (int j = 0; j < simd; j++) {
+                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], 0u);
+            }
+        }
+    }
+    uint16_t simd;
+    uint8_t rowWidth;
+    uint16_t xDelta;
+    std::array<uint16_t, 3> localWorkSize;
     std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
-    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, 16));
+    uint32_t elemsInBuffer;
+    uint32_t size;
+    std::unique_ptr<void, std::function<decltype(alignedFree)>> memory;
+    uint16_t *buffer;
+};
+
+TEST(LocalIdsLayoutForImagesTest, givenLocalWorkSizeCompatibleWithLayoutForImagesWithDefaultDimensionsOrderWhenCheckLayoutForImagesCompatibilityThenReturnTrue) {
+    std::array<uint16_t, 3> localWorkSize{{4u, 4u, 1u}};
+    std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
+    EXPECT_TRUE(isCompatibleWithLayoutForImages(localWorkSize, dimensionsOrder, 16u));
+    EXPECT_TRUE(isCompatibleWithLayoutForImages({{4u, 12u, 1u}}, dimensionsOrder, 32u));
 }
 
-TEST(LocalIds4x4LayoutTest, given8x8x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnTrue) {
-    std::array<uint16_t, 3> localWorkSize{{8u, 8u, 1u}};
+TEST(LocalIdsLayoutForImagesTest, givenLocalWorkSizeNotCompatibleWithLayoutForImagesWithDefaultDimensionsOrderWhenCheckLayoutForImagesCompatibilityThenReturnFalse) {
     std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
-    EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, 16));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages({{4u, 4u, 2u}}, dimensionsOrder, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages({{2u, 5u, 1u}}, dimensionsOrder, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages({{1u, 4u, 1u}}, dimensionsOrder, 8u));
 }
-
-TEST(LocalIds4x4LayoutTest, givenNonCompatible4x4x1LocalWorkSizeWithDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnFalse) {
-    std::array<uint8_t, 3> dimensionsOrder = {{0u, 1u, 2u}};
-    EXPECT_FALSE(isCompatibleWith4x4Layout({{2u, 5u, 1u}}, dimensionsOrder, 8));
-    EXPECT_FALSE(isCompatibleWith4x4Layout({{1u, 4u, 1u}}, dimensionsOrder, 8));
-}
-TEST(LocalIds4x4LayoutTest, given4x4x1LocalWorkSizeWithNonDefaultDimensionsOrderWhenCheck2x4CompatibilityThenReturnFalse) {
+TEST(LocalIdsLayoutForImagesTest, given4x4x1LocalWorkSizeWithNonDefaultDimensionsOrderWhenCheckLayoutForImagesCompatibilityThenReturnFalse) {
     std::array<uint16_t, 3> localWorkSize{{2u, 4u, 1u}};
-    EXPECT_FALSE(isCompatibleWith4x4Layout(localWorkSize, {{0, 2, 1}}, 8));
-    EXPECT_FALSE(isCompatibleWith4x4Layout(localWorkSize, {{1, 0, 2}}, 8));
-    EXPECT_FALSE(isCompatibleWith4x4Layout(localWorkSize, {{1, 2, 0}}, 8));
-    EXPECT_FALSE(isCompatibleWith4x4Layout(localWorkSize, {{2, 0, 1}}, 8));
-    EXPECT_FALSE(isCompatibleWith4x4Layout(localWorkSize, {{2, 1, 0}}, 8));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{0, 2, 1}}, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{1, 0, 2}}, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{1, 2, 0}}, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{2, 0, 1}}, 8u));
+    EXPECT_FALSE(isCompatibleWithLayoutForImages(localWorkSize, {{2, 1, 0}}, 8u));
 }
 
-TEST_P(LocalIds4x4LayoutTest, givenLWS4x4x1WhenGenerateLocalIdsThenHasKernelImagesOnlyFlagDoesntMatter) {
+using LocalIdsLayoutTest = ::testing::TestWithParam<uint16_t>;
+
+TEST_P(LocalIdsLayoutTest, givenLocalWorkgroupSize4x4x1WhenGenerateLocalIdsThenHasKernelImagesOnlyFlagDoesntMatter) {
     uint16_t simd = GetParam();
     uint8_t rowWidth = simd == 32 ? 32 : 16;
     uint16_t xDelta = simd == 8u ? 2u : 4u;
@@ -357,198 +422,9 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS4x4x1WhenGenerateLocalIdsThenHasKernelImag
     }
 }
 
-TEST_P(LocalIds4x4LayoutTest, givenLWS4x4x2WhenGenerateLocalIdsWithKernelWithOnlyImagesThenApplies4x4Layout) {
-    uint16_t simd = GetParam();
-    uint8_t rowWidth = simd == 32 ? 32 : 16;
-    uint16_t xDelta = simd == 8u ? 2u : 4u;
-    uint16_t zDelta = simd == 32u ? 2u : 1u;
-    std::array<uint16_t, 3> localWorkSize{{4u, 4u, 2u}};
-    auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
-    auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
-    if (simd == 8u) {
-        elemsInBuffer *= 2;
-    }
-    auto size = elemsInBuffer * sizeof(uint16_t);
-    auto alignedMemory = allocateAlignedMemory(size, 32);
-    auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
-    memset(buffer, 0xff, size);
-    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
-        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
-
-        auto numRows = elemsInBuffer / rowWidth;
-        auto numGrfs = numRows / 3u;
-
-        for (auto i = 0u; i < numGrfs; i++) {
-
-            // validate X row
-            uint16_t baseX = buffer[i * 3 * rowWidth];
-            uint16_t currentX = baseX;
-            for (int j = 1; j < simd; j++) {
-                currentX = baseX + ((currentX + 1) & (xDelta - 1));
-                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-            }
-
-            // validate Y row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedY = ((j / xDelta) & 0b11);
-                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-            }
-
-            // validate Z row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedZ = 2 * i / numGrfs + j / (simd / zDelta); //early grow Z
-                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
-            }
-        }
-    }
-}
-
-TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x2WhenGenerateLocalIdsWithKernelWithOnlyImagesThenApplies4x4Layout) {
-    uint16_t simd = GetParam();
-    uint8_t rowWidth = simd == 32 ? 32 : 16;
-    uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 2u}};
-    auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
-    auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
-    if (simd == 8u) {
-        elemsInBuffer *= 2;
-    }
-    auto size = elemsInBuffer * sizeof(uint16_t);
-    auto alignedMemory = allocateAlignedMemory(size, 32);
-    auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
-    memset(buffer, 0xff, size);
-    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
-        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
-
-        auto numRows = elemsInBuffer / rowWidth;
-        auto numGrfs = numRows / 3u;
-
-        for (auto i = 0u; i < numGrfs; i++) {
-
-            // validate X row
-            uint16_t baseX = buffer[i * 3 * rowWidth];
-            uint16_t currentX = baseX;
-            for (int j = 1; j < simd; j++) {
-                if (j == 16) {
-                    //early grow X
-                    baseX += xDelta;
-                }
-                currentX = baseX + ((currentX + 1) & (xDelta - 1));
-                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-            }
-
-            // validate Y row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedY = ((j / xDelta) & 0b11);
-                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-            }
-
-            // validate Z row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedZ = 2 * i / numGrfs;
-                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
-            }
-        }
-    }
-}
-
-TEST_P(LocalIds4x4LayoutTest, givenLWS8x4x1WhenGenerateLocalIdsWithKernelWithOnlyImagesThenApplies4x4Layout) {
-    uint16_t simd = GetParam();
-    uint8_t rowWidth = simd == 32 ? 32 : 16;
-    uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{{8u, 4u, 1u}};
-    auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
-    auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
-    if (simd == 8u) {
-        elemsInBuffer *= 2;
-    }
-    auto size = elemsInBuffer * sizeof(uint16_t);
-    auto alignedMemory = allocateAlignedMemory(size, 32);
-    auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
-    memset(buffer, 0xff, size);
-    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
-        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
-
-        auto numRows = elemsInBuffer / rowWidth;
-        auto numGrfs = numRows / 3u;
-
-        for (auto i = 0u; i < numGrfs; i++) {
-
-            // validate X row
-            uint16_t baseX = buffer[i * 3 * rowWidth];
-            uint16_t currentX = baseX;
-            for (int j = 1; j < simd; j++) {
-                if (j == 16) {
-                    //early grow X
-                    baseX += xDelta;
-                }
-                currentX = baseX + ((currentX + 1) & (xDelta - 1));
-                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-            }
-
-            // validate Y row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedY = ((j / xDelta) & 0b11);
-                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-            }
-
-            // validate Z row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedZ = 0;
-                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
-            }
-        }
-    }
-}
-
-TEST_P(LocalIds4x4LayoutTest, givenLWS8x8x2WhenGenerateLocalIdsWithKernelWithOnlyImagesThenApplies4x4Layout) {
-    uint16_t simd = GetParam();
-    uint8_t rowWidth = simd == 32 ? 32 : 16;
-    uint16_t xDelta = simd == 8u ? 2u : 4u;
-    std::array<uint16_t, 3> localWorkSize{{8u, 8u, 2u}};
-    auto dimensionsOrder = std::array<uint8_t, 3>{{0u, 1u, 2u}};
-    auto elemsInBuffer = 3u * localWorkSize.at(0) * localWorkSize.at(1) * localWorkSize.at(2);
-    if (simd == 8u) {
-        elemsInBuffer *= 2;
-    }
-    auto size = elemsInBuffer * sizeof(uint16_t);
-    auto alignedMemory = allocateAlignedMemory(size, 32);
-    auto buffer = reinterpret_cast<uint16_t *>(alignedMemory.get());
-    memset(buffer, 0xff, size);
-    if (isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd)) {
-        EXPECT_TRUE(isCompatibleWith4x4Layout(localWorkSize, dimensionsOrder, simd));
-        generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
-
-        auto numRows = elemsInBuffer / rowWidth;
-        auto numGrfs = numRows / 3u;
-
-        for (auto i = 0u; i < numGrfs; i++) {
-
-            // validate X row
-            uint16_t baseX = buffer[i * 3 * rowWidth];
-            uint16_t currentX = baseX;
-            for (int j = 1; j < simd; j++) {
-                currentX = baseX + ((currentX + 1) & (xDelta - 1));
-                EXPECT_EQ(buffer[i * 3 * rowWidth + j], currentX);
-            }
-
-            // validate Y row
-            uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
-                EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
-            }
-
-            // validate Z row
-            for (int j = 0; j < simd; j++) {
-                uint16_t expectedZ = 2 * i / numGrfs;
-                EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], expectedZ);
-            }
-        }
-    }
+TEST_P(LocalIdsLayoutForImagesTest, givenLocalWorkgroupSizeCompatibleWithLayoutForImagesWhenGenerateLocalIdsWithKernelWithOnlyImagesThenAppliesLayoutForImages) {
+    generateLocalIds();
+    validateGRF();
 }
 
 #define SIMDParams ::testing::Values(8, 16, 32)
@@ -563,7 +439,8 @@ TEST_P(LocalIds4x4LayoutTest, givenLWS8x8x2WhenGenerateLocalIdsWithKernelWithOnl
 #endif
 
 INSTANTIATE_TEST_CASE_P(AllCombinations, LocalIDFixture, ::testing::Combine(SIMDParams, LWSXParams, LWSYParams, LWSZParams));
-INSTANTIATE_TEST_CASE_P(4x4LWSLayoutTests, LocalIds4x4LayoutTest, SIMDParams);
+INSTANTIATE_TEST_CASE_P(LayoutTests, LocalIdsLayoutTest, SIMDParams);
+INSTANTIATE_TEST_CASE_P(LayoutForImagesTests, LocalIdsLayoutForImagesTest, ::testing::Combine(SIMDParams, ::testing::Values(4, 8, 12, 20), ::testing::Values(4, 8, 12, 20)));
 
 // To debug a specific configuration replace the list of Values with specific values.
 // NOTE: You'll need a unique test prefix
