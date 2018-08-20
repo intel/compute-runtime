@@ -935,6 +935,7 @@ cl_int Image::writeNV12Planes(const void *hostPtr, size_t hostPtrRowPitch) {
 
 const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, const cl_image_format *imageFormat) {
     if (!imageFormat) {
+        DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
     const SurfaceFormatInfo *surfaceFormatTable = nullptr;
@@ -978,6 +979,7 @@ const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, co
     }
 
     if (indexSurfaceFormat >= numSurfaceFormats) {
+        DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
 
