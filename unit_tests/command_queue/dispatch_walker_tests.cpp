@@ -584,19 +584,26 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
 }
 
 HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
-    MockKernel kernel(program.get(), kernelInfo, *pDevice);
+    MockKernel kernel1(program.get(), kernelInfo, *pDevice);
+    MockKernel mainKernel(program.get(), kernelInfo, *pDevice);
     kernelInfo.workloadInfo.localWorkSizeOffsets[0] = 0;
     kernelInfo.workloadInfo.localWorkSizeOffsets[1] = 4;
     kernelInfo.workloadInfo.localWorkSizeOffsets[2] = 8;
     kernelInfo.workloadInfo.localWorkSizeOffsets2[0] = 12;
     kernelInfo.workloadInfo.localWorkSizeOffsets2[1] = 16;
     kernelInfo.workloadInfo.localWorkSizeOffsets2[2] = 20;
-    ASSERT_EQ(CL_SUCCESS, kernel.initialize());
+    kernelInfo.workloadInfo.numWorkGroupsOffset[0] = 24;
+    kernelInfo.workloadInfo.numWorkGroupsOffset[1] = 28;
+    kernelInfo.workloadInfo.numWorkGroupsOffset[2] = 32;
+    ASSERT_EQ(CL_SUCCESS, kernel1.initialize());
+    ASSERT_EQ(CL_SUCCESS, mainKernel.initialize());
 
-    DispatchInfo di1(&kernel, 3, {10, 10, 10}, {1, 2, 3}, {0, 0, 0});
-    DispatchInfo di2(&kernel, 3, {10, 10, 10}, {4, 5, 6}, {0, 0, 0});
+    DispatchInfo di1(&kernel1, 3, {10, 10, 10}, {1, 2, 3}, {0, 0, 0});
+    DispatchInfo di2(&mainKernel, 3, {10, 10, 10}, {4, 5, 6}, {0, 0, 0});
 
-    MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
+    MultiDispatchInfo multiDispatchInfo(&mainKernel);
+    multiDispatchInfo.push(di1);
+    multiDispatchInfo.push(di2);
 
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
         *pCmdQ,
@@ -609,20 +616,29 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
         pDevice->getPreemptionMode(),
         false);
 
-    auto dispatchId = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
         auto &kernel = *dispatchInfo.getKernel();
-        if (dispatchId == 0) {
-            EXPECT_EQ(1u, *kernel.localWorkSizeX);
-            EXPECT_EQ(2u, *kernel.localWorkSizeY);
-            EXPECT_EQ(3u, *kernel.localWorkSizeZ);
-        }
-        if (dispatchId == 1) {
+        if (&kernel == &mainKernel) {
+            EXPECT_EQ(4u, *kernel.localWorkSizeX);
+            EXPECT_EQ(5u, *kernel.localWorkSizeY);
+            EXPECT_EQ(6u, *kernel.localWorkSizeZ);
             EXPECT_EQ(4u, *kernel.localWorkSizeX2);
             EXPECT_EQ(5u, *kernel.localWorkSizeY2);
             EXPECT_EQ(6u, *kernel.localWorkSizeZ2);
+            EXPECT_EQ(3u, *kernel.numWorkGroupsX);
+            EXPECT_EQ(2u, *kernel.numWorkGroupsY);
+            EXPECT_EQ(2u, *kernel.numWorkGroupsZ);
+        } else {
+            EXPECT_EQ(0u, *kernel.localWorkSizeX);
+            EXPECT_EQ(0u, *kernel.localWorkSizeY);
+            EXPECT_EQ(0u, *kernel.localWorkSizeZ);
+            EXPECT_EQ(1u, *kernel.localWorkSizeX2);
+            EXPECT_EQ(2u, *kernel.localWorkSizeY2);
+            EXPECT_EQ(3u, *kernel.localWorkSizeZ2);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsX);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsY);
+            EXPECT_EQ(0u, *kernel.numWorkGroupsZ);
         }
-        dispatchId++;
     }
 }
 

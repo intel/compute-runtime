@@ -560,7 +560,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         *kernel.globalWorkSizeY = static_cast<uint32_t>(gws.y);
         *kernel.globalWorkSizeZ = static_cast<uint32_t>(gws.z);
 
-        if ((&dispatchInfo == &*multiDispatchInfo.begin()) || (kernel.localWorkSizeX2 == &Kernel::dummyPatchLocation)) {
+        if ((&kernel == multiDispatchInfo.peekMainKernel()) || (kernel.localWorkSizeX2 == &Kernel::dummyPatchLocation)) {
             *kernel.localWorkSizeX = static_cast<uint32_t>(lws.x);
             *kernel.localWorkSizeY = static_cast<uint32_t>(lws.y);
             *kernel.localWorkSizeZ = static_cast<uint32_t>(lws.z);
@@ -574,7 +574,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         *kernel.enqueuedLocalWorkSizeY = static_cast<uint32_t>(elws.y);
         *kernel.enqueuedLocalWorkSizeZ = static_cast<uint32_t>(elws.z);
 
-        if (&dispatchInfo == &*multiDispatchInfo.begin()) {
+        if (&kernel == multiDispatchInfo.peekMainKernel()) {
             *kernel.numWorkGroupsX = static_cast<uint32_t>(twgs.x);
             *kernel.numWorkGroupsY = static_cast<uint32_t>(twgs.y);
             *kernel.numWorkGroupsZ = static_cast<uint32_t>(twgs.z);
