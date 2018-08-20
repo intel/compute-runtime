@@ -21,6 +21,7 @@
  */
 
 #include "aub_mem_dump.h"
+#include "runtime/aub/aub_helper.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/memory_constants.h"
@@ -135,9 +136,11 @@ void AubDump<Traits>::reserveAddressGGTTAndWriteMmeory(typename Traits::Stream &
 
     AubDump<Traits>::reserveAddressPPGTT(stream, vmAddr, MemoryConstants::pageSize, pAddr, additionalBits);
 
+    int hint = OCLRT::AubHelper::getMemTrace(additionalBits);
+
     AubDump<Traits>::addMemoryWrite(stream, physAddress,
                                     reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(memory) + offset),
-                                    size, AubMemDump::AddressSpaceValues::TraceNonlocal);
+                                    size, hint);
 }
 
 template <typename Traits>

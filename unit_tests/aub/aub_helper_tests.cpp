@@ -20,23 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/memory_manager/graphics_allocation.h"
+#include "gtest/gtest.h"
+#include "runtime/aub/aub_helper.h"
+#include "runtime/aub_mem_dump/aub_mem_dump.h"
 
-namespace OCLRT {
+using namespace OCLRT;
 
-class AubHelper {
-  public:
-    static bool isOneTimeAubWritableAllocationType(const GraphicsAllocation::AllocationType &type) {
-        switch (type) {
-        case GraphicsAllocation::AllocationType::BUFFER:
-        case GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY:
-        case GraphicsAllocation::AllocationType::BUFFER_COMPRESSED:
-        case GraphicsAllocation::AllocationType::IMAGE:
-            return true;
-        default:
-            return false;
-        }
-    }
-    static int getMemTrace(uint64_t pdEntryBits);
-};
-} // namespace OCLRT
+TEST(AubHelper, WhenGetMemTraceIsCalledWithZeroPDEntryBitsThenTraceNonLocalIsReturned) {
+    int hint = AubHelper::getMemTrace(0u);
+    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, hint);
+}
