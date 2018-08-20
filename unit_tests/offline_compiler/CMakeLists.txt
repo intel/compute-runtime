@@ -7,15 +7,21 @@
 project(cloc_tests)
 
 set(IGDRCL_SRCS_cloc
-  ${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
+${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_decoder.cpp
+${IGDRCL_SOURCE_DIR}/offline_compiler/decoder/binary_encoder.cpp
+${IGDRCL_SOURCE_DIR}/offline_compiler/offline_compiler.cpp
 )
 
 set(IGDRCL_SRCS_offline_compiler_mock
-  ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
+${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
+${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
+${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_offline_compiler.h
 )
 
 set(IGDRCL_SRCS_offline_compiler_tests
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/decoder/decoder_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
   ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/offline_compiler_tests.cpp
@@ -71,7 +77,7 @@ macro(macro_for_each_platform)
       if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
         get_family_name_with_type(${GEN_TYPE} ${PLATFORM_TYPE})
         add_dependencies(run_cloc_tests test_kernels_${family_name_with_type})
-        neo_copy_test_files(copy_test_files_${family_name_with_type} ${family_name_with_type})
+        neo_copy_test_files(copy_test_files_${family_name_with_type} ${family_name_with_type})	
         add_dependencies(run_cloc_tests copy_test_files_${family_name_with_type})
         set(run_tests_cmd cloc_tests --device ${CLOC_DEFAULT_DEVICE} --family_type ${family_name_with_type})
       endif()
@@ -81,7 +87,6 @@ endmacro()
 macro(macro_for_each_gen)
   apply_macro_for_each_platform()
 endmacro()
-
 apply_macro_for_each_gen("TESTED")
 
 set_property(TARGET run_cloc_tests PROPERTY FOLDER ${CLOC_FOLDER})
