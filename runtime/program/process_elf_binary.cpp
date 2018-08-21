@@ -33,7 +33,6 @@ cl_int Program::processElfBinary(
     size_t binarySize,
     uint32_t &binaryVersion) {
     const CLElfLib::SElf64Header *pElfHeader = nullptr;
-    char *pSectionData = nullptr;
 
     binaryVersion = iOpenCL::CURRENT_ICBE_VERSION;
 
@@ -79,7 +78,7 @@ cl_int Program::processElfBinary(
                     storeGenBinary(elfReader.getSectionData(sectionHeader.DataOffset), static_cast<size_t>(sectionHeader.DataSize));
                     isCreatedFromBinary = true;
                 } else {
-                    getProgramCompilerVersion((SProgramBinaryHeader *)pSectionData, binaryVersion);
+                    getProgramCompilerVersion(reinterpret_cast<SProgramBinaryHeader *>(elfReader.getSectionData(sectionHeader.DataOffset)), binaryVersion);
                     return CL_INVALID_BINARY;
                 }
                 break;

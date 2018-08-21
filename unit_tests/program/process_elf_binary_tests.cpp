@@ -240,3 +240,30 @@ TEST_F(ProcessElfBinaryTests, BuildOptionsNotEmpty) {
     EXPECT_NE(0u, binaryVersion);
     deleteDataReadFromFile(pBinary);
 }
+
+TEST_F(ProcessElfBinaryTests, GivenBinaryWhenInvalidCURRENT_ICBE_VERSIONThenInvalidCURRENT_ICBE_VERSIONTIsReturned) {
+    uint32_t binaryVersion;
+    CLElfLib::ElfBinaryStorage elfBinary;
+
+    CLElfLib::CElfWriter elfWriter(CLElfLib::E_EH_TYPE::EH_TYPE_OPENCL_EXECUTABLE, CLElfLib::E_EH_MACHINE::EH_MACHINE_NONE, 0);
+
+    char *genBinary;
+    size_t genBinarySize = sizeof(SProgramBinaryHeader);
+    SProgramBinaryHeader genBinaryHeader = {0};
+    genBinaryHeader.Magic = iOpenCL::MAGIC_CL;
+    genBinaryHeader.Version = iOpenCL::CURRENT_ICBE_VERSION - 3u;
+    genBinary = reinterpret_cast<char *>(&genBinaryHeader);
+
+    if (genBinary) {
+        std::string genBinaryTemp = genBinary ? std::string(genBinary, genBinarySize) : "";
+        elfWriter.addSection(CLElfLib::SSectionNode(CLElfLib::E_SH_TYPE::SH_TYPE_OPENCL_DEV_BINARY, CLElfLib::E_SH_FLAG::SH_FLAG_NONE, "Intel(R) OpenCL Device Binary", std::move(genBinaryTemp), static_cast<uint32_t>(genBinarySize)));
+    }
+
+    elfBinary.resize(elfWriter.getTotalBinarySize());
+    elfWriter.resolveBinary(elfBinary);
+
+    cl_int retVal = program->processElfBinary(elfBinary.data(), elfBinary.size(), binaryVersion);
+
+    EXPECT_EQ(CL_INVALID_BINARY, retVal);
+    EXPECT_EQ(binaryVersion, iOpenCL::CURRENT_ICBE_VERSION - 3u);
+}
