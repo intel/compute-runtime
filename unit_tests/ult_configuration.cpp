@@ -23,4 +23,5 @@
 namespace OCLRT {
 unsigned int ultIterationMaxTime = 45;
 bool useMockGmm = true;
+const char *executionDirectorySuffix = "";
 } // namespace OCLRT

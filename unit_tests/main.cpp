@@ -55,6 +55,7 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
 extern const unsigned int ultIterationMaxTime;
 extern bool useMockGmm;
+extern const char *executionDirectorySuffix;
 
 std::thread::id tempThreadID;
 } // namespace OCLRT
@@ -333,15 +334,18 @@ int main(int argc, char **argv) {
     nClFiles.append(clFiles);
     clFiles = nClFiles;
 
+    std::string executionDirectory(hardwarePrefix[productFamily]);
+    executionDirectory += OCLRT::executionDirectorySuffix; // _aub for aub_tests, empty otherwise
+
 #ifdef WIN32
 #include <direct.h>
-    if (_chdir(hardwarePrefix[productFamily])) {
-        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
+    if (_chdir(executionDirectory.c_str())) {
+        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #elif defined(__linux__)
 #include <unistd.h>
-    if (chdir(hardwarePrefix[productFamily]) != 0) {
-        std::cout << "chdir into " << hardwarePrefix[productFamily] << " directory failed.\nThis might cause test failures." << std::endl;
+    if (chdir(executionDirectory.c_str()) != 0) {
+        std::cout << "chdir into " << executionDirectory << " directory failed.\nThis might cause test failures." << std::endl;
     }
 #endif
 

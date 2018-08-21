@@ -33,6 +33,12 @@ add_executable(igdrcl_aub_tests
 
 set_target_properties(igdrcl_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
+if(WIN32)
+  set_target_properties(igdrcl_aub_tests PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY ${TargetDir}
+  )
+endif()
+
 add_custom_target(run_aub_tests)
 set_target_properties(run_aub_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
@@ -87,6 +93,13 @@ macro(macro_for_each_platform)
   add_dependencies(run_aub_tests run_${PLATFORM_IT_LOWER}_aub_tests)
   set_target_properties(${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
   set_target_properties(run_${PLATFORM_IT_LOWER}_aub_tests PROPERTIES FOLDER "${PLATFORM_SPECIFIC_TARGETS_FOLDER}/${PLATFORM_IT_LOWER}")
+  add_custom_command(
+    TARGET ${PLATFORM_IT_LOWER}_aub_tests
+    POST_BUILD
+    COMMAND WORKING_DIRECTORY ${TargetDir}
+    COMMAND echo Creating output directory for ${PLATFORM_IT_LOWER} AUBs generation...
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${TargetDir}/${PLATFORM_IT_LOWER}_aub/aub_out"
+  )
   if(WIN32)
     add_dependencies(${PLATFORM_IT_LOWER}_aub_tests mock_gdi)
   endif()

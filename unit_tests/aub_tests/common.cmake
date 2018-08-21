@@ -22,7 +22,7 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss)
         add_custom_command(
             TARGET run_${gen}_aub_tests
             POST_BUILD
-            COMMAND WORKING_DIRECTORY ${TargetDir}/${gen}
+            COMMAND WORKING_DIRECTORY ${TargetDir}
             COMMAND echo re-creating working directory for ${gen_name} AUBs generation...
             COMMAND ${CMAKE_COMMAND} -E remove_directory ${TargetDir}/${gen}_aub
             COMMAND ${CMAKE_COMMAND} -E make_directory ${TargetDir}/${gen}_aub
@@ -33,7 +33,7 @@ function(neo_run_aub_target gen gen_name product slices subslices eu_per_ss)
         add_custom_command(
             TARGET run_${gen}_aub_tests
             POST_BUILD
-            COMMAND WORKING_DIRECTORY ${TargetDir}/${gen}_aub
+            COMMAND WORKING_DIRECTORY ${TargetDir}
             COMMAND echo Running AUB generation for ${gen_name} in ${TargetDir}/${gen}_aub
             COMMAND igdrcl_aub_tests --product ${product} --slices ${slices} --subslices ${subslices} --eu_per_ss ${eu_per_ss} --gtest_repeat=1 ${IGDRCL_TESTS_LISTENER_OPTION}
         )
