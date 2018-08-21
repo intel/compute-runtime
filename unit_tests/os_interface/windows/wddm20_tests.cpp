@@ -30,6 +30,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/os_library.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
 
@@ -176,14 +177,12 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
     EXPECT_EQ(nullptr, outHwInfo.pWaTable);
 }
 
-HWTEST_F(Wddm20Tests, context) {
-    EXPECT_TRUE(wddm->getOsDeviceContext() == static_cast<D3DKMT_HANDLE>(0));
+HWTEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
+    EXPECT_TRUE(wddm->osContext == nullptr);
     wddm->init<FamilyType>();
     ASSERT_TRUE(wddm->isInitialized());
 
-    EXPECT_TRUE(wddm->createContext());
-
-    auto context = wddm->getOsDeviceContext();
+    auto context = wddm->osContext->getContext();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
 
     EXPECT_TRUE(wddm->destroyContext(context));
@@ -648,7 +647,8 @@ HWTEST_F(Wddm20Tests, getMaxApplicationAddress) {
 
 HWTEST_F(Wddm20Tests, dontCallCreateContextBeforeConfigureDeviceAddressSpace) {
     wddm->wddmInterface = std::make_unique<WddmInterface20>(*wddm);
-    wddm->createContext();
+    D3DKMT_HANDLE context;
+    wddm->createContext(context);
     EXPECT_EQ(1u, wddm->createContextResult.called); // dont care about the result
 
     wddm->configureDeviceAddressSpace<FamilyType>();
@@ -683,7 +683,7 @@ HWTEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues
 
 HWTEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
     wddm->init<FamilyType>();
-    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode));
+    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *wddm->osContext));
 }
 
 HWTEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
@@ -895,7 +895,7 @@ HWTEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurr
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
-    wddm->wddmInterface->createMonitoredFence();
+    wddm->wddmInterface->createMonitoredFence(*wddm->osContext);
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
     EXPECT_EQ(1u, wddm->getMonitoredFence().currentFenceValue);
@@ -945,10 +945,4 @@ HWTEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMem
     EXPECT_EQ(STATUS_GRAPHICS_NO_VIDEO_MEMORY, result);
 
     delete handleStorage.fragmentStorageData[0].osHandleStorage->gmm;
-}
-
-HWTEST_F(Wddm20Tests, whenGetOsDeviceContextIsCalledThenWddmOsDeviceContextIsReturned) {
-    D3DKMT_HANDLE ctx = 0xc1;
-    wddm->context = ctx;
-    EXPECT_EQ(ctx, wddm->getOsDeviceContext());
 }

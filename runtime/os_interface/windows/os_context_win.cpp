@@ -20,23 +20,31 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/wddm/wddm_interface.h"
 
 namespace OCLRT {
-class WddmMockInterface23 : public WddmInterface23 {
-  public:
-    using WddmInterface23::WddmInterface23;
-
-    bool createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) override {
-        createHwQueueCalled++;
-        createHwQueueResult = forceCreateHwQueueFail ? false : WddmInterface23::createHwQueue(preemptionMode, osContext);
-        return createHwQueueResult;
+OsContextWin::OsContextWin(Wddm &wddm) : wddm(wddm) {
+    auto wddmInterface = wddm.getWddmInterface();
+    if (!wddm.createContext(context))
+        return;
+    if (wddmInterface->hwQueuesSupported()) {
+        if (!wddmInterface->createHwQueue(wddm.getPreemptionMode(), *this))
+            return;
     }
-
-    uint32_t createHwQueueCalled = 0;
-    bool forceCreateHwQueueFail = false;
-    bool createHwQueueResult = false;
+    initialized = wddmInterface->createMonitoredFence(*this);
 };
+OsContextWin::~OsContextWin() {
+    wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
+    wddm.destroyContext(context);
+}
+
+void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
+    monitoredFence.lastSubmittedFence = 0;
+    monitoredFence.currentFenceValue = 1;
+    monitoredFence.fenceHandle = handle;
+    monitoredFence.cpuAddress = cpuAddress;
+    monitoredFence.gpuAddress = gpuAddress;
+}
 } // namespace OCLRT

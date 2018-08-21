@@ -121,9 +121,9 @@ bool WddmMock::openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) {
     }
 }
 
-bool WddmMock::createContext() {
+bool WddmMock::createContext(D3DKMT_HANDLE &context) {
     createContextResult.called++;
-    return createContextResult.success = Wddm::createContext();
+    return createContextResult.success = Wddm::createContext(context);
 }
 
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
@@ -143,9 +143,9 @@ bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader) 
     return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader);
 }
 
-bool WddmMock::waitOnGPU() {
+bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {
     waitOnGPUResult.called++;
-    return waitOnGPUResult.success = Wddm::waitOnGPU();
+    return waitOnGPUResult.success = Wddm::waitOnGPU(context);
 }
 
 void *WddmMock::lockResource(WddmAllocation *allocation) {

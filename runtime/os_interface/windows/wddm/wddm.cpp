@@ -30,6 +30,7 @@
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/registry_reader.h"
 #include "runtime/helpers/debug_helpers.h"
@@ -54,16 +55,7 @@ Wddm::GetSystemInfoFcn Wddm::getSystemInfo = getGetSystemInfo();
 Wddm::VirtualAllocFcn Wddm::virtualAllocFnc = getVirtualAlloc();
 Wddm::VirtualFreeFcn Wddm::virtualFreeFnc = getVirtualFree();
 
-Wddm::Wddm() : initialized(false),
-               adapter(0),
-               context(0),
-               device(0),
-               pagingQueue(0),
-               pagingQueueSyncObject(0),
-               pagingFenceAddress(nullptr),
-               currentPagingFenceValue(0),
-               hwContextId(0),
-               trimCallbackHandle(nullptr) {
+Wddm::Wddm() {
     featureTable.reset(new FeatureTable());
     waTable.reset(new WorkaroundTable());
     gtSystemInfo.reset(new GT_SYSTEM_INFO);
@@ -74,17 +66,12 @@ Wddm::Wddm() : initialized(false),
     registryReader.reset(new RegistryReader("System\\CurrentControlSet\\Control\\GraphicsDrivers\\Scheduler"));
     adapterLuid.HighPart = 0;
     adapterLuid.LowPart = 0;
-    maximumApplicationAddress = 0;
-    node = GPUNODE_3D;
-    preemptionMode = PreemptionMode::Disabled;
-    minAddress = 0;
     kmDafListener = std::unique_ptr<KmDafListener>(new KmDafListener);
     gdi = std::unique_ptr<Gdi>(new Gdi());
 }
 
 Wddm::~Wddm() {
     resetPageTableManager(nullptr);
-    destroyContext(context);
     destroyPagingQueue();
     destroyDevice();
     closeAdapter();
@@ -684,7 +671,7 @@ void Wddm::kmDafLock(WddmAllocation *wddmAllocation) {
     kmDafListener->notifyLock(featureTable->ftrKmdDaf, adapter, device, wddmAllocation->handle, 0, gdi->escape);
 }
 
-bool Wddm::createContext() {
+bool Wddm::createContext(D3DKMT_HANDLE &context) {
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     D3DKMT_CREATECONTEXTVIRTUAL CreateContext = {0};
     CREATECONTEXT_PVTDATA PrivateData = {{0}};
@@ -730,15 +717,15 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
 
 bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
     bool status = false;
-    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU()) {
+    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext->getContext())) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", monitoredFence.currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext->getMonitoredFence().currentFenceValue);
 
-    status = wddmInterface->submit(commandBuffer, size, commandHeader);
+    status = wddmInterface->submit(commandBuffer, size, commandHeader, *osContext);
     if (status) {
-        monitoredFence.lastSubmittedFence = monitoredFence.currentFenceValue;
-        monitoredFence.currentFenceValue++;
+        osContext->getMonitoredFence().lastSubmittedFence = osContext->getMonitoredFence().currentFenceValue;
+        osContext->getMonitoredFence().currentFenceValue++;
     }
     getDeviceState();
     UNRECOVERABLE_IF(!status);
@@ -764,9 +751,9 @@ void Wddm::getDeviceState() {
 }
 
 void Wddm::handleCompletion() {
-    if (monitoredFence.cpuAddress) {
-        auto *currentTag = monitoredFence.cpuAddress;
-        while (*currentTag < monitoredFence.currentFenceValue - 1)
+    if (osContext->getMonitoredFence().cpuAddress) {
+        auto *currentTag = osContext->getMonitoredFence().cpuAddress;
+        while (*currentTag < osContext->getMonitoredFence().currentFenceValue - 1)
             ;
     }
 }
@@ -775,7 +762,7 @@ unsigned int Wddm::readEnablePreemptionRegKey() {
     return static_cast<unsigned int>(registryReader->getSetting("EnablePreemption", 1));
 }
 
-bool Wddm::waitOnGPU() {
+bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU WaitOnGPU = {0};
 
     WaitOnGPU.hContext = context;
@@ -792,10 +779,10 @@ bool Wddm::waitOnGPU() {
 bool Wddm::waitFromCpu(uint64_t lastFenceValue) {
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (lastFenceValue > *monitoredFence.cpuAddress) {
+    if (lastFenceValue > *osContext->getMonitoredFence().cpuAddress) {
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {0};
         waitFromCpu.ObjectCount = 1;
-        waitFromCpu.ObjectHandleArray = &monitoredFence.fenceHandle;
+        waitFromCpu.ObjectHandleArray = &osContext->getMonitoredFence().fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
         waitFromCpu.hAsyncEvent = NULL;
@@ -901,12 +888,9 @@ void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned
 int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
     return virtualFreeFnc(ptr, size, flags);
 }
+MonitoredFence &Wddm::getMonitoredFence() { return osContext->getMonitoredFence(); }
 
-void Wddm::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress) {
-    monitoredFence.lastSubmittedFence = 0;
-    monitoredFence.currentFenceValue = 1;
-    monitoredFence.fenceHandle = handle;
-    monitoredFence.cpuAddress = cpuAddress;
-    monitoredFence.gpuAddress = gpuAddress;
+D3DKMT_HANDLE Wddm::getOsDeviceContext() const {
+    return osContext->getContext();
 }
 } // namespace OCLRT

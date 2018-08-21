@@ -45,6 +45,7 @@ class Gdi;
 class Gmm;
 class LinearStream;
 class GmmPageTableMngr;
+class OsContextWin;
 struct FeatureTable;
 struct WorkaroundTable;
 struct KmDafListener;
@@ -70,7 +71,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool makeResident(D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim);
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
-    MOCKABLE_VIRTUAL bool createContext();
+    MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);
@@ -86,8 +87,7 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
-    virtual bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
-    MOCKABLE_VIRTUAL bool waitOnGPU();
+    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
     MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue);
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
@@ -121,7 +121,7 @@ class Wddm {
         return deviceRegistryPath;
     }
 
-    MonitoredFence &getMonitoredFence() { return monitoredFence; }
+    MonitoredFence &getMonitoredFence();
 
     uint64_t getSystemSharedMemory() const;
 
@@ -159,27 +159,26 @@ class Wddm {
     uintptr_t getWddmMinAddress() const {
         return this->minAddress;
     }
-
-    D3DKMT_HANDLE getOsDeviceContext() {
-        return context;
+    WddmInterface *getWddmInterface() const {
+        return wddmInterface.get();
     }
+    PreemptionMode getPreemptionMode() const {
+        return preemptionMode;
+    }
+    D3DKMT_HANDLE getOsDeviceContext() const;
 
     unsigned int readEnablePreemptionRegKey();
-    void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
 
   protected:
-    bool initialized;
+    bool initialized = false;
     std::unique_ptr<Gdi> gdi;
-    D3DKMT_HANDLE adapter;
-    D3DKMT_HANDLE context;
-    D3DKMT_HANDLE device;
-    D3DKMT_HANDLE pagingQueue;
-    D3DKMT_HANDLE pagingQueueSyncObject;
+    D3DKMT_HANDLE adapter = 0;
+    D3DKMT_HANDLE device = 0;
+    D3DKMT_HANDLE pagingQueue = 0;
+    D3DKMT_HANDLE pagingQueueSyncObject = 0;
 
-    uint64_t *pagingFenceAddress;
-    std::atomic<std::uint64_t> currentPagingFenceValue;
-
-    MonitoredFence monitoredFence;
+    uint64_t *pagingFenceAddress = nullptr;
+    std::atomic<std::uint64_t> currentPagingFenceValue{0};
 
     // Adapter information
     std::unique_ptr<PLATFORM> gfxPlatform;
@@ -192,18 +191,19 @@ class Wddm {
     bool instrumentationEnabled = false;
     std::string deviceRegistryPath;
 
-    unsigned long hwContextId;
+    unsigned long hwContextId = 0;
     LUID adapterLuid;
-    void *trimCallbackHandle;
-    uintptr_t maximumApplicationAddress;
-    GPUNODE_ORDINAL node;
-    PreemptionMode preemptionMode;
+    void *trimCallbackHandle = nullptr;
+    uintptr_t maximumApplicationAddress = 0;
+    GPUNODE_ORDINAL node = GPUNODE_3D;
+    PreemptionMode preemptionMode = PreemptionMode::Disabled;
     std::unique_ptr<GmmMemory> gmmMemory;
-    uintptr_t minAddress;
+    uintptr_t minAddress = 0;
 
     Wddm();
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr, D3DGPU_VIRTUAL_ADDRESS &gpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     MOCKABLE_VIRTUAL bool openAdapter();
+    MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
     bool createDevice();
     bool createPagingQueue();
     bool destroyPagingQueue();
@@ -221,5 +221,6 @@ class Wddm {
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
+    std::unique_ptr<OsContextWin> osContext;
 };
 } // namespace OCLRT

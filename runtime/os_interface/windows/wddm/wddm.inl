@@ -22,6 +22,7 @@
 
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 
 namespace OCLRT {
 
@@ -67,16 +68,8 @@ bool Wddm::init() {
         if (!configureDeviceAddressSpace<GfxFamily>()) {
             return false;
         }
-        if (!createContext()) {
-            return false;
-        }
-        if (wddmInterface->hwQueuesSupported() && !wddmInterface->createHwQueue(preemptionMode)) {
-            return false;
-        }
-        if (!wddmInterface->createMonitoredFence()) {
-            return false;
-        }
-        initialized = true;
+        osContext = std::make_unique<OsContextWin>(*this);
+        initialized = osContext->isInitialized();
     }
     return initialized;
 }

@@ -23,12 +23,14 @@
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 
-bool OCLRT::WddmInterface20::createHwQueue(PreemptionMode preemptionMode) {
+bool OCLRT::WddmInterface20::createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) {
     return false;
 }
+void OCLRT::WddmInterface20::destroyHwQueue(D3DKMT_HANDLE hwQueue) {}
 
-bool OCLRT::WddmInterface20::createMonitoredFence() {
+bool OCLRT::WddmInterface20::createMonitoredFence(OsContextWin &osContext) {
     NTSTATUS Status;
     D3DKMT_CREATESYNCHRONIZATIONOBJECT2 CreateSynchronizationObject = {0};
     CreateSynchronizationObject.hDevice = wddm.getDevice();
@@ -39,9 +41,9 @@ bool OCLRT::WddmInterface20::createMonitoredFence() {
 
     DEBUG_BREAK_IF(STATUS_SUCCESS != Status);
 
-    wddm.resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
-                                   reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
-                                   CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
+    osContext.resetMonitoredFenceParams(CreateSynchronizationObject.hSyncObject,
+                                        reinterpret_cast<uint64_t *>(CreateSynchronizationObject.Info.MonitoredFence.FenceValueCPUVirtualAddress),
+                                        CreateSynchronizationObject.Info.MonitoredFence.FenceValueGPUVirtualAddress);
 
     return Status == STATUS_SUCCESS;
 }
@@ -50,7 +52,7 @@ const bool OCLRT::WddmInterface20::hwQueuesSupported() {
     return false;
 }
 
-bool OCLRT::WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
+bool OCLRT::WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
     D3DKMT_SUBMITCOMMAND SubmitCommand = {0};
     NTSTATUS status = STATUS_SUCCESS;
 
@@ -58,7 +60,7 @@ bool OCLRT::WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *c
     SubmitCommand.Commands = commandBuffer;
     SubmitCommand.CommandLength = static_cast<UINT>(size);
     SubmitCommand.BroadcastContextCount = 1;
-    SubmitCommand.BroadcastContext[0] = wddm.getOsDeviceContext();
+    SubmitCommand.BroadcastContext[0] = osContext.getContext();
     SubmitCommand.Flags.NullRendering = (UINT)DebugManager.flags.EnableNullHardware.get();
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -75,40 +77,40 @@ bool OCLRT::WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *c
     return STATUS_SUCCESS == status;
 }
 
-bool OCLRT::WddmInterface23::createHwQueue(PreemptionMode preemptionMode) {
+bool OCLRT::WddmInterface23::createHwQueue(PreemptionMode preemptionMode, OsContextWin &osContext) {
     D3DKMT_CREATEHWQUEUE createHwQueue = {};
 
     if (!wddm.getGdi()->setupHwQueueProcAddresses()) {
         return false;
     }
 
-    createHwQueue.hHwContext = wddm.getOsDeviceContext();
+    createHwQueue.hHwContext = osContext.getContext();
     if (preemptionMode >= PreemptionMode::MidBatch) {
         createHwQueue.Flags.DisableGpuTimeout = wddm.readEnablePreemptionRegKey();
     }
 
     auto status = wddm.getGdi()->createHwQueue(&createHwQueue);
     UNRECOVERABLE_IF(status != STATUS_SUCCESS);
-    hwQueueHandle = createHwQueue.hHwQueue;
+    osContext.setHwQueue(createHwQueue.hHwQueue);
 
-    wddm.resetMonitoredFenceParams(createHwQueue.hHwQueueProgressFence,
-                                   reinterpret_cast<uint64_t *>(createHwQueue.HwQueueProgressFenceCPUVirtualAddress),
-                                   createHwQueue.HwQueueProgressFenceGPUVirtualAddress);
+    osContext.resetMonitoredFenceParams(createHwQueue.hHwQueueProgressFence,
+                                        reinterpret_cast<uint64_t *>(createHwQueue.HwQueueProgressFenceCPUVirtualAddress),
+                                        createHwQueue.HwQueueProgressFenceGPUVirtualAddress);
 
     return status == STATUS_SUCCESS;
 }
 
-void OCLRT::WddmInterface23::destroyHwQueue() {
-    if (hwQueueHandle) {
+void OCLRT::WddmInterface23::destroyHwQueue(D3DKMT_HANDLE hwQueue) {
+    if (hwQueue) {
         D3DKMT_DESTROYHWQUEUE destroyHwQueue = {};
-        destroyHwQueue.hHwQueue = hwQueueHandle;
+        destroyHwQueue.hHwQueue = hwQueue;
 
         auto status = wddm.getGdi()->destroyHwQueue(&destroyHwQueue);
         DEBUG_BREAK_IF(status != STATUS_SUCCESS);
     }
 }
 
-bool OCLRT::WddmInterface23::createMonitoredFence() {
+bool OCLRT::WddmInterface23::createMonitoredFence(OsContextWin &osContext) {
     return true;
 }
 
@@ -116,11 +118,11 @@ const bool OCLRT::WddmInterface23::hwQueuesSupported() {
     return true;
 }
 
-bool OCLRT::WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
+bool OCLRT::WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
     auto monitoredFence = wddm.getMonitoredFence();
 
     D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommand = {};
-    submitCommand.hHwQueue = hwQueueHandle;
+    submitCommand.hHwQueue = osContext.getHwQueue();
     submitCommand.HwQueueProgressFenceId = monitoredFence.fenceHandle;
     submitCommand.CommandBuffer = commandBuffer;
     submitCommand.CommandLength = static_cast<UINT>(size);
