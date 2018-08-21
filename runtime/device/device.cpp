@@ -97,7 +97,6 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
 }
 
 Device::~Device() {
-    BuiltIns::shutDown();
     CompilerInterface::shutdown();
     DEBUG_BREAK_IF(nullptr == executionEnvironment->memoryManager.get());
     if (performanceCounters) {

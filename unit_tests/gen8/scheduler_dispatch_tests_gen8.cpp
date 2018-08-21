@@ -43,7 +43,7 @@ BDWTEST_F(BdwSchedulerTest, givenCallToDispatchSchedulerWhenPipeControlWithCSSta
 
     if (pDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
-        SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*context);
+        SchedulerKernel &scheduler = pDevice->getBuiltIns().getSchedulerKernel(*context);
 
         size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
 

@@ -80,8 +80,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programInterfaceDescriptorDataRe
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                         cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -152,8 +152,8 @@ HWTEST_F(KernelCommandsTest, sendCrossThreadDataResourceUsage) {
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                         cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -280,8 +280,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                         cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -459,8 +459,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKern
     std::unique_ptr<Image> img(Image2dHelper<>::create(pContext));
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
+    auto &builder = cmdQ.getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyImageToImage3d,
+                                                                                 cmdQ.getContext(), cmdQ.getDevice());
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
     dc.srcMemObj = img.get();
@@ -528,8 +528,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
     ASSERT_NE(nullptr, dstImage.get());
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
-                                                                          cmdQ.getContext(), cmdQ.getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToImage3d,
+                                                                         cmdQ.getContext(), cmdQ.getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -1038,7 +1038,7 @@ HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelFor
 
         totalSize += maxBindingTableCount * sizeof(BINDING_TABLE_STATE) * DeviceQueue::interfaceDescriptorEntries;
 
-        BuiltIns &builtIns = BuiltIns::getInstance();
+        BuiltIns &builtIns = pDevice->getBuiltIns();
         auto &scheduler = builtIns.getSchedulerKernel(*pContext);
         auto schedulerSshSize = scheduler.getSurfaceStateHeapSize();
         totalSize += schedulerSshSize + ((schedulerSshSize != 0) ? BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE : 0);
@@ -1055,7 +1055,7 @@ HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelFor
     if (std::string(pPlatform->getDevice(0)->getDeviceInfo().clVersion).find("OpenCL 2.") != std::string::npos) {
         EXPECT_TRUE(pKernel->isParentKernel);
 
-        BuiltIns &builtIns = BuiltIns::getInstance();
+        BuiltIns &builtIns = pDevice->getBuiltIns();
         auto &scheduler = builtIns.getSchedulerKernel(*pContext);
         size_t totalSize = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(scheduler);
 

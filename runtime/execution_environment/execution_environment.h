@@ -31,8 +31,10 @@ class CommandStreamReceiver;
 class MemoryManager;
 class SourceLevelDebugger;
 class CompilerInterface;
+class BuiltIns;
 struct HardwareInfo;
 class OSInterface;
+
 class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment> {
   private:
     std::mutex mtx;
@@ -52,10 +54,12 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     GmmHelper *getGmmHelper() const;
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
+    BuiltIns *getBuiltIns();
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
     std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
+    std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;
 };

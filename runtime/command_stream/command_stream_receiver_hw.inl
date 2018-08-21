@@ -366,7 +366,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (dispatchFlags.preemptionMode == PreemptionMode::MidThread || device.isSourceLevelDebuggerActive()) {
         auto sipType = SipKernel::getSipKernelType(device.getHardwareInfo().pPlatform->eRenderCoreFamily, device.isSourceLevelDebuggerActive());
-        makeResident(*BuiltIns::getInstance().getSipKernel(sipType, device).getSipAllocation());
+        makeResident(*device.getBuiltIns().getSipKernel(sipType, device).getSipAllocation());
     }
 
     if (experimentalCmdBuffer.get() != nullptr) {

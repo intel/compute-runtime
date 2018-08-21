@@ -114,7 +114,6 @@ struct ParentKernelCommandQueueFixture : public CommandQueueHwFixture,
     }
     void TearDown() override {
         CommandQueueHwFixture::TearDown();
-        BuiltIns::shutDown();
         delete device;
     }
     MockDevice *device;

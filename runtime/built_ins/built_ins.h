@@ -193,9 +193,9 @@ class BuiltIns {
     BuiltinDispatchInfoBuilder &getBuiltinDispatchInfoBuilder(EBuiltInOps op, Context &context, Device &device);
     std::unique_ptr<BuiltinDispatchInfoBuilder> setBuiltinDispatchInfoBuilder(EBuiltInOps op, Context &context, Device &device,
                                                                               std::unique_ptr<BuiltinDispatchInfoBuilder> newBuilder);
+    BuiltIns();
+    virtual ~BuiltIns();
 
-    static BuiltIns &getInstance();
-    static void shutDown();
     Program *createBuiltInProgram(
         Context &context,
         Device &device,
@@ -220,12 +220,6 @@ class BuiltIns {
     }
 
   protected:
-    BuiltIns();
-    virtual ~BuiltIns();
-
-    // singleton
-    static BuiltIns *pInstance;
-
     // scheduler kernel
     BuiltInKernel schedulerBuiltIn;
 

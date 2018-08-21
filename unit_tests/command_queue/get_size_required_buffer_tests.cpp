@@ -91,8 +91,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueFillBuffer) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -143,8 +143,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -196,8 +196,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferNonBlock
         CL_FALSE);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -249,8 +249,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferBlocking
         CL_TRUE);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -302,8 +302,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueWriteBufferNonBloc
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -352,8 +352,8 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pCmdQ->getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                   pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;

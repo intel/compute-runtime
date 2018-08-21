@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/device/device.h"
 #include "runtime/built_ins/built_ins.h"
 #include "unit_tests/fixtures/built_in_fixture.h"
 #include "unit_tests/helpers/kernel_binary_helper.h"
@@ -33,7 +34,7 @@ BuiltInFixture::BuiltInFixture() : pBuiltIns(nullptr) {
 
 void BuiltInFixture::SetUp(Device *pDevice) {
     // create an instance of the builtins
-    pBuiltIns = &BuiltIns::getInstance();
+    pBuiltIns = &pDevice->getBuiltIns();
     pBuiltIns->setCacheingEnableState(false);
 
     // set mock compiler to return expected kernel...
@@ -52,5 +53,4 @@ void BuiltInFixture::TearDown() {
     gEnvironment->fclPopDebugVars();
 
     CompilerInterface::shutdown();
-    BuiltIns::shutDown();
 }

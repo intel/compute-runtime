@@ -144,8 +144,8 @@ HWTEST_F(EnqueueCopyBufferTest, addsIndirectData) {
     enqueueCopyBuffer();
 
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                         pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -237,8 +237,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentZeroShouldMatchSource
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                         pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;
@@ -264,8 +264,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentOneShouldMatchDestAdd
 
     // Extract the kernel used
     MultiDispatchInfo multiDispatchInfo;
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          pCmdQ->getContext(), pCmdQ->getDevice());
+    auto &builder = pDevice->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                         pCmdQ->getContext(), pCmdQ->getDevice());
     ASSERT_NE(nullptr, &builder);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;

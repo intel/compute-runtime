@@ -59,7 +59,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchScheduler) {
 
     if (pDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
-        SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*context);
+        SchedulerKernel &scheduler = pDevice->getBuiltIns().getSchedulerKernel(*context);
 
         auto *executionModelDshAllocation = pDevQueueHw->getDshBuffer();
         auto *dshHeap = pDevQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE);
@@ -183,7 +183,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ExecutionModelSchedulerFixture, dispatchSchedulerDoe
 
     if (pDevice->getSupportedClVersion() >= 20) {
         DeviceQueueHw<FamilyType> *pDevQueueHw = castToObject<DeviceQueueHw<FamilyType>>(pDevQueue);
-        SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*context);
+        SchedulerKernel &scheduler = pDevice->getBuiltIns().getSchedulerKernel(*context);
 
         size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel);
         // Setup heaps in pCmdQ
@@ -216,7 +216,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, dispatchSchedulerWi
         ASSERT_NE(nullptr, igilQueue);
         igilQueue->m_controls.m_SchedulerEarlyReturn = 1;
 
-        SchedulerKernel &scheduler = BuiltIns::getInstance().getSchedulerKernel(*context);
+        SchedulerKernel &scheduler = device->getBuiltIns().getSchedulerKernel(*context);
 
         size_t minRequiredSizeForSchedulerSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(scheduler);
         // Setup heaps in pCmdQ

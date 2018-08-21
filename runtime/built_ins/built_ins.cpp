@@ -38,7 +38,6 @@
 #include <sstream>
 
 namespace OCLRT {
-BuiltIns *BuiltIns::pInstance = nullptr;
 
 const char *mediaKernelsBuildOptions = {
     "-D cl_intel_device_side_advanced_vme_enable "
@@ -58,24 +57,6 @@ BuiltIns::~BuiltIns() {
     schedulerBuiltIn.pProgram = nullptr;
 }
 
-BuiltIns &BuiltIns::getInstance() {
-    static std::mutex initMutex;
-    std::lock_guard<std::mutex> autolock(initMutex);
-
-    if (pInstance == nullptr) {
-        pInstance = new BuiltIns();
-    }
-    return *pInstance;
-}
-
-void BuiltIns::shutDown() {
-    if (pInstance) {
-        auto inst = pInstance;
-        pInstance = nullptr;
-        delete inst;
-    }
-}
-
 SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     if (schedulerBuiltIn.pKernel) {
         return *static_cast<SchedulerKernel *>(schedulerBuiltIn.pKernel);
@@ -84,7 +65,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     auto initializeSchedulerProgramAndKernel = [&] {
         cl_int retVal = CL_SUCCESS;
 
-        auto src = getInstance().builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
+        auto src = context.getDevice(0)->getBuiltIns().builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
 
         auto program = Program::createFromGenBinary(*context.getDevice(0)->getExecutionEnvironment(),
                                                     &context,
@@ -209,11 +190,11 @@ Program *BuiltIns::createBuiltInProgram(
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
         builtinsBuilders["block_motion_estimate_intel"] =
-            &BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, context, device);
+            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, context, device);
         builtinsBuilders["block_advanced_motion_estimate_check_intel"] =
-            &BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
+            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
-            &BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
+            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
         const cl_device_id clDevice = &device;
         errcodeRet = pBuiltInProgram->build(
             clDevice,

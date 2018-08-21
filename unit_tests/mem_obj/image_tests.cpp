@@ -85,7 +85,6 @@ class CreateImageTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        BuiltIns::shutDown();
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
     }

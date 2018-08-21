@@ -76,19 +76,21 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         size_t patternSize;
     };
 
+    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+
     // retrieve original builder
-    auto &origBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
-    auto oldBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = builtIns.setBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
-        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(BuiltIns::getInstance(), &origBuilder, pattern, patternSize)));
+        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockFillBufferBuilder(builtIns, &origBuilder, pattern, patternSize)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -104,7 +106,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+    auto newBuilder = builtIns.setBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
@@ -112,7 +114,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         EBuiltInOps::FillBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice());

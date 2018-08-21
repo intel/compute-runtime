@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -44,7 +44,7 @@ GEN9TEST_F(AUBParentKernelFixture, EnqueueParentKernel) {
             properties[0],
             retVal);
 
-        BuiltIns &builtIns = BuiltIns::getInstance();
+        BuiltIns &builtIns = pDevice->getBuiltIns();
         SchedulerKernel &scheduler = builtIns.getSchedulerKernel(pCmdQ->getContext());
         // Aub execution takes huge time for bigger GWS
         scheduler.setGws(24);

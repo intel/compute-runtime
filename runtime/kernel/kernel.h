@@ -202,7 +202,7 @@ class Kernel : public BaseObject<_cl_kernel> {
         return kernelInfo;
     }
 
-    const Device &getDevice() {
+    const Device &getDevice() const {
         return device;
     }
 

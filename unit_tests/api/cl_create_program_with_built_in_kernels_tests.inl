@@ -162,7 +162,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCo
     auto pDev = castToObject<Device>(*devices);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pContext, *pDev);
+    pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, *pContext, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -188,10 +188,9 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockMotionEstimateKernelHasCo
     EXPECT_EQ(6U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = OCLRT::BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockMotionEstimateIntel, *ctxNeo, *ctxNeo->getDevice(0));
+    auto &vmeBuilder = pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockMotionEstimateIntel, *ctxNeo, *ctxNeo->getDevice(0));
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
-    OCLRT::BuiltIns::shutDown();
     clReleaseKernel(kernel);
     clReleaseProgram(program);
 
@@ -204,7 +203,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateChe
     auto pDev = castToObject<Device>(*devices);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pContext, *pDev);
+    pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *pContext, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -230,10 +229,9 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateChe
     EXPECT_EQ(15U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = OCLRT::BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *ctxNeo, *ctxNeo->getDevice(0));
+    auto &vmeBuilder = pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, *ctxNeo, *ctxNeo->getDevice(0));
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
-    OCLRT::BuiltIns::shutDown();
     clReleaseKernel(kernel);
     clReleaseProgram(program);
 
@@ -246,7 +244,7 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateBid
     auto pDev = castToObject<Device>(*devices);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_backend");
-    BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pContext, *pDev);
+    pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *pContext, *pDev);
     restoreBuiltInBinaryName(pDev);
 
     overwriteBuiltInBinaryName(pDev, "media_kernels_frontend");
@@ -272,10 +270,9 @@ TEST_F(clCreateProgramWithBuiltInKernelsTests, vmeBlockAdvancedMotionEstimateBid
     EXPECT_EQ(20U, kernNeo->getKernelArgsNumber());
 
     auto ctxNeo = castToObject<Context>(pContext);
-    auto &vmeBuilder = OCLRT::BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *ctxNeo, *ctxNeo->getDevice(0));
+    auto &vmeBuilder = pDev->getBuiltIns().getBuiltinDispatchInfoBuilder(OCLRT::EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, *ctxNeo, *ctxNeo->getDevice(0));
     EXPECT_EQ(&vmeBuilder, kernNeo->getKernelInfo().builtinDispatchBuilder);
 
-    OCLRT::BuiltIns::shutDown();
     clReleaseKernel(kernel);
     clReleaseProgram(program);
 

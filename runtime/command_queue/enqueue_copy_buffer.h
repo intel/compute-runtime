@@ -46,8 +46,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBuffer(
 
     MultiDispatchInfo dispatchInfo;
 
-    auto &builder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                          this->getContext(), this->getDevice());
+    auto &builder = getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                            this->getContext(), this->getDevice());
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
     BuiltinDispatchInfoBuilder::BuiltinOpParams dc;

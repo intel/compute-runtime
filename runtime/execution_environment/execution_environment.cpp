@@ -29,6 +29,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_interface.h"
+#include "runtime/built_ins/built_ins.h"
 
 namespace OCLRT {
 ExecutionEnvironment::ExecutionEnvironment() = default;
@@ -85,5 +86,14 @@ CompilerInterface *ExecutionEnvironment::getCompilerInterface() {
         }
     }
     return this->compilerInterface.get();
+}
+BuiltIns *ExecutionEnvironment::getBuiltIns() {
+    if (this->builtins.get() == nullptr) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        if (this->builtins.get() == nullptr) {
+            this->builtins = std::make_unique<BuiltIns>();
+        }
+    }
+    return this->builtins.get();
 }
 } // namespace OCLRT

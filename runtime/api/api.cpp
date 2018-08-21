@@ -1254,7 +1254,7 @@ cl_program CL_API_CALL clCreateProgramWithBuiltInKernels(cl_context context,
             auto pDev = castToObject<Device>(*deviceList);
             validateObject(pDev);
 
-            program = BuiltIns::getInstance().createBuiltInProgram(
+            program = pDev->getBuiltIns().createBuiltInProgram(
                 *pContext,
                 *pDev,
                 kernelNames,

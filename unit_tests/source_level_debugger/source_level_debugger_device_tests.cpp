@@ -52,52 +52,39 @@ class MockDeviceWithDebuggerActive : public MockDevice {
 };
 
 TEST(DeviceCreation, givenDeviceWithMidThreadPreemptionAndDebuggingActiveWhenDeviceIsCreatedThenCorrectSipKernelIsCreated) {
-
     DebugManagerStateRestore dbgRestorer;
     {
-        BuiltIns::shutDown();
-
-        std::unique_ptr<MockBuiltins> mockBuiltins(new MockBuiltins);
-        EXPECT_EQ(nullptr, mockBuiltins->peekCurrentInstance());
-        mockBuiltins->overrideGlobalBuiltins();
-        EXPECT_EQ(mockBuiltins.get(), mockBuiltins->peekCurrentInstance());
-        EXPECT_FALSE(mockBuiltins->getSipKernelCalled);
+        auto builtIns = new MockBuiltins();
+        ASSERT_FALSE(builtIns->getSipKernelCalled);
 
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::MidThread);
         auto exeEnv = new ExecutionEnvironment;
         exeEnv->sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
+        exeEnv->builtins.reset(builtIns);
         auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv));
 
-        EXPECT_TRUE(mockBuiltins->getSipKernelCalled);
-        EXPECT_LE(SipKernelType::DbgCsr, mockBuiltins->getSipKernelType);
-        mockBuiltins->restoreGlobalBuiltins();
-        //make sure to release builtins prior to device as they use device
-        mockBuiltins.reset();
+        ASSERT_EQ(builtIns, &device->getBuiltIns());
+        EXPECT_TRUE(builtIns->getSipKernelCalled);
+        EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
     }
 }
 
 TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDeviceIsCreatedThenCorrectSipKernelIsCreated) {
-
     DebugManagerStateRestore dbgRestorer;
     {
-        BuiltIns::shutDown();
-
-        std::unique_ptr<MockBuiltins> mockBuiltins(new MockBuiltins);
-        EXPECT_EQ(nullptr, mockBuiltins->peekCurrentInstance());
-        mockBuiltins->overrideGlobalBuiltins();
-        EXPECT_EQ(mockBuiltins.get(), mockBuiltins->peekCurrentInstance());
-        EXPECT_FALSE(mockBuiltins->getSipKernelCalled);
+        auto builtIns = new MockBuiltins();
+        ASSERT_FALSE(builtIns->getSipKernelCalled);
 
         DebugManager.flags.ForcePreemptionMode.set((int32_t)PreemptionMode::Disabled);
+
         auto exeEnv = new ExecutionEnvironment;
         exeEnv->sourceLevelDebugger.reset(new SourceLevelDebugger(new MockOsLibrary));
+        exeEnv->builtins.reset(builtIns);
         auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv));
 
-        EXPECT_TRUE(mockBuiltins->getSipKernelCalled);
-        EXPECT_LE(SipKernelType::DbgCsr, mockBuiltins->getSipKernelType);
-        mockBuiltins->restoreGlobalBuiltins();
-        //make sure to release builtins prior to device as they use device
-        mockBuiltins.reset();
+        ASSERT_EQ(builtIns, &device->getBuiltIns());
+        EXPECT_TRUE(builtIns->getSipKernelCalled);
+        EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
     }
 }
 

@@ -49,7 +49,7 @@ GEN9TEST_F(gen9SipTests, DISABLED_givenDebugCsrSipKernelWithLocalMemoryWhenAsked
     igcDebugVars.fileName = builtInGenFile;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
-    auto &builtins = BuiltIns::getInstance();
+    auto &builtins = mockDevice->getBuiltIns();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsrLocal, *mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);

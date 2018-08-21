@@ -64,7 +64,6 @@ class ProgramFromBinaryTest : public DeviceFixture,
     }
 
     void TearDown() override {
-        BuiltIns::shutDown();
         deleteDataReadFromFile(knownSource);
         ProgramFixture::TearDown();
         ContextFixture::TearDown();

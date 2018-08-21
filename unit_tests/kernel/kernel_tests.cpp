@@ -2157,12 +2157,12 @@ TEST(KernelTest, setKernelArgUsesBuiltinDispatchInfoBuilderIfAvailable) {
         mutable std::vector<std::tuple<uint32_t, size_t, const void *>> receivedArgs;
     };
 
-    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel(*device);
     kernel.kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
     kernel.mockKernel->initialize();
 
-    MockBuiltinDispatchBuilder mockBuilder(BuiltIns::getInstance());
+    MockBuiltinDispatchBuilder mockBuilder(device->getBuiltIns());
     kernel.kernelInfo.builtinDispatchBuilder = &mockBuilder;
 
     mockBuilder.valueToReturn = false;
@@ -2207,8 +2207,6 @@ TEST(KernelTest, setKernelArgUsesBuiltinDispatchInfoBuilderIfAvailable) {
     EXPECT_EQ(29U, std::get<0>(mockBuilder.receivedArgs[3]));
     EXPECT_EQ(31U, std::get<1>(mockBuilder.receivedArgs[3]));
     EXPECT_EQ(reinterpret_cast<const void *>(37), std::get<2>(mockBuilder.receivedArgs[3]));
-
-    BuiltIns::shutDown();
 }
 TEST(KernelTest, givenKernelWhenDebugFlagToUseMaxSimdForCalculationsIsUsedThenMaxWorkgroupSizeIsSimdSizeDependant) {
     DebugManagerStateRestore dbgStateRestore;

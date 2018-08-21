@@ -62,7 +62,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
-    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto sipAllocation = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
     commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
@@ -76,6 +76,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
 
 GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingActiveWhenPreambleIsProgrammedThenCorrectSipKernelGpuAddressIsProgrammed) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
+    auto &builtIns = pDevice->getBuiltIns();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
     size_t minCsrSize = pDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;
@@ -92,10 +93,10 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingA
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
-    auto dbgLocalSipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getSipAllocation();
-    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto dbgLocalSipAllocation = builtIns.getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getSipAllocation();
+    auto sipAllocation = builtIns.getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
 
-    ASSERT_NE(BuiltIns::getInstance().getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getType(), BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getType());
+    ASSERT_NE(builtIns.getSipKernel(SipKernelType::DbgCsrLocal, *pDevice).getType(), builtIns.getSipKernel(SipKernelType::Csr, *pDevice).getType());
     ASSERT_NE(dbgLocalSipAllocation, nullptr);
     ASSERT_NE(sipAllocation, nullptr);
 

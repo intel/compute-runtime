@@ -203,7 +203,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndMidThread
                       *pDevice);
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
-    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto sipAllocation = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
     bool found = false;
     for (auto allocation : cmdBuffer->surfaces) {
         if (allocation == sipAllocation) {
@@ -233,7 +233,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInDefaultModeAndMidThreadP
                        dispatchFlags,
                        *pDevice);
 
-    auto sipAllocation = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto sipAllocation = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {
@@ -995,7 +995,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
     EXPECT_EQ(true, pCmdWA->getDcFlushEnable());
 
     buffer->release();
-    BuiltIns::shutDown();
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFlushWhenUnblockedThenDCFlushIsNotAdded) {
@@ -1035,7 +1034,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     EXPECT_TRUE(pCmdWA->getDcFlushEnable());
 
     buffer->release();
-    BuiltIns::shutDown();
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommandStreamParam) {
@@ -1220,8 +1218,6 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEventIsQueried) {
 
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    BuiltIns::shutDown();
-
     retVal = clReleaseEvent(pEvent);
     retVal = clReleaseMemObject(buffer);
 }
@@ -1319,7 +1315,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenFlushedCal
         EXPECT_TRUE(cmdPC->getDcFlushEnable());
     }
 
-    BuiltIns::shutDown();
     retVal = clReleaseEvent(event);
     retVal = clReleaseMemObject(buffer);
 }

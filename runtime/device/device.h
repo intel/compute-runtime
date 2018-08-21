@@ -85,6 +85,8 @@ class Device : public BaseObject<_cl_device_id> {
         deviceInfo.force32BitAddressess = value;
     }
 
+    BuiltIns &getBuiltIns() const;
+
     CommandStreamReceiver &getCommandStreamReceiver();
     CommandStreamReceiver *peekCommandStreamReceiver();
 
@@ -195,7 +197,13 @@ inline volatile uint32_t *Device::getTagAddress() const {
 inline MemoryManager *Device::getMemoryManager() const {
     return executionEnvironment->memoryManager.get();
 }
+
 inline GmmHelper *Device::getGmmHelper() const {
     return executionEnvironment->getGmmHelper();
 }
+
+inline BuiltIns &Device::getBuiltIns() const {
+    return *executionEnvironment->getBuiltIns();
+}
+
 } // namespace OCLRT

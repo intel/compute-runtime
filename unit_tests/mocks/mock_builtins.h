@@ -30,29 +30,6 @@
 
 class MockBuiltins : public OCLRT::BuiltIns {
   public:
-    MockBuiltins() {
-        originalGlobalBuiltins = this;
-    }
-
-    ~MockBuiltins() override {
-        if (originalGlobalBuiltins != this) {
-            BuiltIns::pInstance = originalGlobalBuiltins;
-        }
-    }
-
-    void overrideGlobalBuiltins() {
-        originalGlobalBuiltins = BuiltIns::pInstance;
-        BuiltIns::pInstance = this;
-    }
-
-    void restoreGlobalBuiltins() {
-        BuiltIns::pInstance = originalGlobalBuiltins;
-    }
-
-    static BuiltIns *peekCurrentInstance() {
-        return BuiltIns::pInstance;
-    }
-
     const OCLRT::SipKernel &getSipKernel(OCLRT::SipKernelType type, OCLRT::Device &device) override {
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];

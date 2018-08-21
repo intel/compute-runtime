@@ -45,6 +45,7 @@
 #include "unit_tests/mocks/mock_builtins.h"
 #include "unit_tests/mocks/mock_compilers.h"
 #include "unit_tests/mocks/mock_kernel.h"
+#include "unit_tests/utilities/base_object_utils.h"
 #include "os_inc.h"
 
 #include <string>
@@ -454,12 +455,12 @@ HWTEST_F(BuiltInTests, givenkAuxBuiltInWhenResizeIsCalledThenCloneAllNewInstance
 }
 
 HWTEST_F(BuiltInTests, givenKernelWithAuxTranslationRequiredWhenEnqueueCalledThenLockOnBuiltin) {
-    BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
+    pBuiltIns->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, *pContext, *pDevice);
     auto mockAuxBuiltInOp = new MockAuxBuilInOp<FamilyType>(*pBuiltIns, *pContext, *pDevice);
     pBuiltIns->BuiltinOpsBuilders[static_cast<uint32_t>(EBuiltInOps::AuxTranslation)].first.reset(mockAuxBuiltInOp);
 
-    MockProgram mockProgram(*pDevice->getExecutionEnvironment());
-    auto mockBuiltinKernel = MockKernel::create(*pDevice, &mockProgram);
+    auto mockProgram = wrapReleasableObjectWithUniquePtr(new MockProgram(*pDevice->getExecutionEnvironment()));
+    auto mockBuiltinKernel = MockKernel::create(*pDevice, mockProgram.get());
     mockAuxBuiltInOp->usedKernels.at(0).reset(mockBuiltinKernel);
 
     MockKernelWithInternals mockKernel(*pDevice, pContext);
@@ -654,7 +655,7 @@ HWTEST_F(BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType) {
-    auto &bs = BuiltIns::getInstance();
+    auto &bs = pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams params;
@@ -666,20 +667,17 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType
     ret = bdib.buildDispatchInfos(multiDispatchInfo, nullptr, 0, OCLRT::Vec3<size_t>{0, 0, 0}, OCLRT::Vec3<size_t>{0, 0, 0}, OCLRT::Vec3<size_t>{0, 0, 0});
     EXPECT_FALSE(ret);
     EXPECT_EQ(0U, multiDispatchInfo.size());
-
-    bs.shutDown();
 }
 
 TEST_F(BuiltInTests, GeivenDefaultBuiltinDispatchInfoBuilderWhendValidateDispatchIsCalledThenClSuccessIsReturned) {
-    auto &bs = BuiltIns::getInstance();
+    auto &bs = pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     auto ret = bdib.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_EQ(CL_SUCCESS, ret);
-    bs.shutDown();
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotTakenCareOfInBuiltinDispatchBInfoBuilder) {
-    auto &bs = BuiltIns::getInstance();
+    auto &bs = pDevice->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams params;
@@ -1703,7 +1701,7 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
     const char *kernelNames = "invalid_kernel";
     cl_int retVal = CL_SUCCESS;
 
-    cl_program program = BuiltIns::getInstance().createBuiltInProgram(
+    cl_program program = pDevice->getBuiltIns().createBuiltInProgram(
         *pContext,
         *pDevice,
         kernelNames,
@@ -1740,7 +1738,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
 }
 
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
-    const SipKernel &sipKern = BuiltIns::getInstance().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    const SipKernel &sipKern = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
     auto sipAllocation = sipKern.getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
 }

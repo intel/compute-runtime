@@ -122,12 +122,12 @@ Program::~Program() {
     delete blockKernelManager;
 
     if (constantSurface) {
-        pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface);
+        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(constantSurface);
         constantSurface = nullptr;
     }
 
     if (globalSurface) {
-        pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
+        this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(globalSurface);
         globalSurface = nullptr;
     }
     if (context && !isBuiltIn) {
@@ -389,7 +389,7 @@ void Program::allocateBlockPrivateSurfaces() {
 
             if (privateSize > 0 && blockKernelManager->getPrivateSurface(i) == nullptr) {
                 privateSize *= getDevice(0).getDeviceInfo().computeUnitsUsedForScratch * info->getMaxSimdSize();
-                auto *privateSurface = getDevice(0).getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(privateSize), GraphicsAllocation::AllocationType::PRIVATE_SURFACE);
+                auto *privateSurface = this->executionEnvironment.memoryManager->allocateGraphicsMemoryInPreferredPool(true, nullptr, static_cast<size_t>(privateSize), GraphicsAllocation::AllocationType::PRIVATE_SURFACE);
                 blockKernelManager->pushPrivateSurface(privateSurface, i);
             }
         }
@@ -405,12 +405,12 @@ void Program::freeBlockResources() {
 
         if (privateSurface != nullptr) {
             blockKernelManager->pushPrivateSurface(nullptr, i);
-            getDevice(0).getMemoryManager()->freeGraphicsMemory(privateSurface);
+            this->executionEnvironment.memoryManager->freeGraphicsMemory(privateSurface);
         }
         auto kernelInfo = blockKernelManager->getBlockKernelInfo(i);
         DEBUG_BREAK_IF(!kernelInfo->kernelAllocation);
         if (kernelInfo->kernelAllocation) {
-            getDevice(0).getMemoryManager()->freeGraphicsMemory(kernelInfo->kernelAllocation);
+            this->executionEnvironment.memoryManager->freeGraphicsMemory(kernelInfo->kernelAllocation);
         }
     }
 }
@@ -418,7 +418,7 @@ void Program::freeBlockResources() {
 void Program::cleanCurrentKernelInfo() {
     for (auto &kernelInfo : kernelInfoArray) {
         if (kernelInfo->kernelAllocation) {
-            this->pDevice->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
+            this->executionEnvironment.memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(kernelInfo->kernelAllocation);
         }
         delete kernelInfo;
     }

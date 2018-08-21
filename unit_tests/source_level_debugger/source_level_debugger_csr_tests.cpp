@@ -61,7 +61,7 @@ HWTEST_F(CommandStreamReceiverWithActiveDebuggerTest, givenCsrWithActiveDebugger
                        *device);
 
     auto sipType = SipKernel::getSipKernelType(device->getHardwareInfo().pPlatform->eRenderCoreFamily, true);
-    auto sipAllocation = BuiltIns::getInstance().getSipKernel(sipType, *device.get()).getSipAllocation();
+    auto sipAllocation = device->getBuiltIns().getSipKernel(sipType, *device.get()).getSipAllocation();
     bool found = false;
     for (auto allocation : mockCsr->copyOfAllocations) {
         if (allocation == sipAllocation) {

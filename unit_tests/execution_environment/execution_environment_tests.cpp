@@ -30,6 +30,7 @@
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "runtime/compiler_interface/compiler_interface.h"
+#include "runtime/built_ins/built_ins.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 
 using namespace OCLRT;
@@ -114,7 +115,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
 }
 
 auto destructorId = 0u;
-static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) + (is64bit ? 72 : 40), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) + (is64bit ? 80 : 44), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     destructorId = 0u;
@@ -122,37 +123,44 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct GmmHelperMock : public GmmHelper {
         using GmmHelper::GmmHelper;
         ~GmmHelperMock() override {
-            EXPECT_EQ(destructorId, 5u);
+            EXPECT_EQ(destructorId, 6u);
             destructorId++;
         }
     };
 
     struct OsInterfaceMock : public OSInterface {
         ~OsInterfaceMock() override {
-            EXPECT_EQ(destructorId, 4u);
+            EXPECT_EQ(destructorId, 5u);
             destructorId++;
         }
     };
 
     struct MemoryMangerMock : public OsAgnosticMemoryManager {
         ~MemoryMangerMock() override {
-            EXPECT_EQ(destructorId, 3u);
+            EXPECT_EQ(destructorId, 4u);
             destructorId++;
         }
     };
 
     struct CommandStreamReceiverMock : public MockCommandStreamReceiver {
         ~CommandStreamReceiverMock() override {
-            EXPECT_EQ(destructorId, 2u);
+            EXPECT_EQ(destructorId, 3u);
             destructorId++;
         };
+    };
+
+    struct BuiltinsMock : public BuiltIns {
+        ~BuiltinsMock() override {
+            EXPECT_EQ(destructorId, 2u);
+            destructorId++;
+        }
     };
 
     struct CompilerInterfaceMock : public CompilerInterface {
         ~CompilerInterfaceMock() override {
             EXPECT_EQ(destructorId, 1u);
             destructorId++;
-        };
+        }
     };
 
     struct SourceLevelDebuggerMock : public SourceLevelDebugger {
@@ -169,14 +177,15 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
     std::unique_ptr<MockExecutionEnvironment> executionEnvironment(new MockExecutionEnvironment);
     executionEnvironment->gmmHelper.reset(new GmmHelperMock(platformDevices[0]));
+    executionEnvironment->osInterface.reset(new OsInterfaceMock);
     executionEnvironment->memoryManager.reset(new MemoryMangerMock);
     executionEnvironment->commandStreamReceiver.reset(new CommandStreamReceiverMock);
+    executionEnvironment->builtins.reset(new BuiltinsMock());
     executionEnvironment->compilerInterface.reset(new CompilerInterfaceMock());
     executionEnvironment->sourceLevelDebugger.reset(new SourceLevelDebuggerMock);
-    executionEnvironment->osInterface.reset(new OsInterfaceMock);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(6u, destructorId);
+    EXPECT_EQ(7u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

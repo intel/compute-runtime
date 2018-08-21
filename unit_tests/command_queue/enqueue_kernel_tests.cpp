@@ -902,7 +902,7 @@ TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDisp
         mutable bool wasValidateDispatchCalled = false;
     };
 
-    MockBuiltinDispatchBuilder mockNuiltinDispatchBuilder(BuiltIns::getInstance());
+    MockBuiltinDispatchBuilder mockNuiltinDispatchBuilder(pCmdQ->getDevice().getBuiltIns());
 
     MockKernelWithInternals mockKernel(*pDevice);
     mockKernel.kernelInfo.builtinDispatchBuilder = &mockNuiltinDispatchBuilder;
@@ -938,8 +938,6 @@ TEST_F(EnqueueKernelTest, GivenKernelWithBuiltinDispatchInfoBuilderWhenBeingDisp
     EXPECT_EQ(lws[0], mockNuiltinDispatchBuilder.receivedElws.x);
     EXPECT_EQ(off[0], mockNuiltinDispatchBuilder.receivedOffset.x);
     EXPECT_EQ(dim, mockNuiltinDispatchBuilder.receivedWorkDim);
-
-    BuiltIns::shutDown();
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueKernelTest, givenSecondEnqueueWithTheSameScratchRequirementWhenPreemptionIsEnabledThenDontProgramMVSAgain) {

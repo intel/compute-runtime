@@ -48,7 +48,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDebu
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
     auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
-    EXPECT_EQ(BuiltIns::getInstance().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(mockDevice->getBuiltIns().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -77,7 +77,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenMidThreadPreemptionAndDisa
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
     auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
-    EXPECT_EQ(BuiltIns::getInstance().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(mockDevice->getBuiltIns().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>
@@ -106,7 +106,7 @@ void SourceLevelDebuggerPreambleTest<GfxFamily>::givenPreemptionDisabledAndDebug
     auto sipAddress = stateSipCmd->getSystemInstructionPointer();
 
     auto sipType = SipKernel::getSipKernelType(mockDevice->getHardwareInfo().pPlatform->eRenderCoreFamily, mockDevice->isSourceLevelDebuggerActive());
-    EXPECT_EQ(BuiltIns::getInstance().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
+    EXPECT_EQ(mockDevice->getBuiltIns().getSipKernel(sipType, *mockDevice).getSipAllocation()->getGpuAddressToPatch(), sipAddress);
 }
 
 template <typename GfxFamily>

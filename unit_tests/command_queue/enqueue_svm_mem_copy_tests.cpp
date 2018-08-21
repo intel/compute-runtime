@@ -64,19 +64,21 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
+    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+
     // retrieve original builder
-    auto &origBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+    auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice());
     ASSERT_NE(nullptr, &origBuilder);
 
     // substitute original builder with mock builder
-    auto oldBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+    auto oldBuilder = builtIns.setBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
-        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(BuiltIns::getInstance(), &origBuilder)));
+        std::unique_ptr<OCLRT::BuiltinDispatchInfoBuilder>(new MockBuiltinDispatchInfoBuilder(builtIns, &origBuilder)));
     EXPECT_EQ(&origBuilder, oldBuilder.get());
 
     // call enqueue on mock builder
@@ -92,7 +94,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // restore original builder and retrieve mock builder
-    auto newBuilder = BuiltIns::getInstance().setBuiltinDispatchInfoBuilder(
+    auto newBuilder = builtIns.setBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice(),
@@ -100,7 +102,7 @@ HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBuffer
     EXPECT_NE(nullptr, newBuilder);
 
     // check if original builder is restored correctly
-    auto &restoredBuilder = BuiltIns::getInstance().getBuiltinDispatchInfoBuilder(
+    auto &restoredBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyBufferToBuffer,
         pCmdQ->getContext(),
         pCmdQ->getDevice());
