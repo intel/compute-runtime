@@ -26,4 +26,12 @@ template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
     return true;
 };
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, Kernel *kernel) {
+    if (sizeBeforeEnqueue != sizeAfterEnqueue) {
+        return true;
+    }
+    return false;
+}
 } // namespace OCLRT

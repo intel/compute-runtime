@@ -25,6 +25,7 @@
 #include "reg_configs_common.h"
 #include "unit_tests/command_queue/enqueue_copy_image_to_buffer_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
 #include "test.h"
 
@@ -93,7 +94,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, addsIndirectData) {
     auto sshBefore = pSSH->getUsed();
 
     enqueueCopyImageToBuffer<FamilyType>();
-    EXPECT_NE(dshBefore, pDSH->getUsed());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), nullptr));
     EXPECT_NE(iohBefore, pIOH->getUsed());
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }

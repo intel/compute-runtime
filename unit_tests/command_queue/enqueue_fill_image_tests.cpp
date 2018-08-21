@@ -22,9 +22,10 @@
 
 #include <algorithm>
 #include "reg_configs_common.h"
+#include "runtime/helpers/convert_color.h"
 #include "unit_tests/command_queue/enqueue_fill_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
-#include "runtime/helpers/convert_color.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -102,7 +103,7 @@ HWTEST_F(EnqueueFillImageTest, addsIndirectData) {
     auto sshBefore = pSSH->getUsed();
 
     EnqueueFillImageHelper<>::enqueueFillImage(pCmdQ, image);
-    EXPECT_NE(dshBefore, pDSH->getUsed());
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), nullptr));
     EXPECT_NE(iohBefore, pIOH->getUsed());
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
