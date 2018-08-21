@@ -26,7 +26,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "unit_tests/gen_common/gen_cmd_parse.h"
-#include "unit_tests/helpers/l3_helper.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 #include "test.h"
 
 namespace OCLRT {
@@ -80,7 +80,7 @@ void validateL3Programming(GenCmdList &cmdList, GenCmdList::iterator &itorWalker
     typedef typename PARSE::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
 
     auto itorCmd = findMmio<FamilyType>(cmdList.begin(), itorWalker, L3CNTLRegisterOffset<FamilyType>::registerOffset);
-    if (L3Helper<FamilyType>::isL3ConfigProgrammable()) {
+    if (UnitTestHelper<FamilyType>::isL3ConfigProgrammable()) {
         // All state should be programmed before walker
         ASSERT_NE(itorWalker, itorCmd);
 

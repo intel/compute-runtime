@@ -20,10 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#pragma once
+
 namespace OCLRT {
 
 template <typename GfxFamily>
-bool L3Helper<GfxFamily>::isL3ConfigProgrammable() {
-    return true;
+struct UnitTestHelper {
+    static bool isL3ConfigProgrammable();
 };
 } // namespace OCLRT

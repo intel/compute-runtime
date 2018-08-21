@@ -21,10 +21,10 @@
  */
 
 #include "runtime/gen8/hw_info.h"
-#include "unit_tests/helpers/l3_helper.h"
-#include "unit_tests/helpers/l3_helper.inl"
+#include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/unit_test_helper.inl"
 
 namespace OCLRT {
 
-template struct L3Helper<BDWFamily>;
+template struct UnitTestHelper<BDWFamily>;
 } // namespace OCLRT
