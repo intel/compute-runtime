@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,25 +20,16 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "test.h"
-#include "unit_tests/mocks/mock_mdi.h"
-
-using namespace OCLRT;
-
-struct MultiDispatchInfoTest : public ::testing::Test {
-
-    void SetUp() override {
-    }
-
-    void TearDown() override {
-    }
-};
-
-TEST_F(MultiDispatchInfoTest, MultiDispatchInfoWithNullKernel) {
-
-    MockMultiDispatchInfo multiDispatchInfo(nullptr);
-
-    EXPECT_FALSE(multiDispatchInfo.begin()->usesSlm());
-    EXPECT_FALSE(multiDispatchInfo.begin()->usesStatelessPrintfSurface());
-    EXPECT_EQ(0u, multiDispatchInfo.begin()->getRequiredScratchSize());
-}
+#include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
+#include "unit_tests/command_queue/command_queue_tests.inl"
+#include "unit_tests/command_queue/dispatch_walker_tests.inl"
+#include "unit_tests/command_queue/drm_requirements_tests.inl"
+#include "unit_tests/command_queue/enqueue_barrier_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_event_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_rect_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_to_image_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_image_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_image_to_buffer_tests.inl"
+#include "unit_tests/command_queue/enqueue_debug_kernel_tests.inl"
+#include "unit_tests/command_queue/enqueue_fill_buffer_event_tests.inl"

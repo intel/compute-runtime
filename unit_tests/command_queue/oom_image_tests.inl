@@ -26,50 +26,36 @@
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
-#include "unit_tests/fixtures/hello_world_kernel_fixture.h"
-#include "unit_tests/fixtures/memory_management_fixture.h"
-#include "unit_tests/fixtures/simple_arg_kernel_fixture.h"
 #include "test.h"
-#include "unit_tests/fixtures/buffer_fixture.h"
 
 using namespace OCLRT;
 
-struct OOMSetting {
+struct OOMSetting1 {
     bool oomCS;
     bool oomISH;
 };
 
-static OOMSetting oomSettings[] = {
+static OOMSetting1 oomSettings1[] = {
     {true, false},
     {false, true},
     {true, true}};
 
-struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
-                                   public DeviceFixture,
-                                   public CommandQueueFixture,
-                                   public SimpleArgKernelFixture,
-                                   public HelloWorldKernelFixture,
-                                   public ::testing::TestWithParam<OOMSetting> {
+struct OOMCommandQueueImageTest : public DeviceFixture,
+                                  public CommandQueueFixture,
+                                  public ::testing::TestWithParam<OOMSetting1> {
 
     using CommandQueueFixture::SetUp;
-    using HelloWorldKernelFixture::SetUp;
-    using SimpleArgKernelFixture::SetUp;
 
-    OOMCommandQueueBufferTest() {
+    OOMCommandQueueImageTest() {
     }
 
     void SetUp() override {
-        MemoryManagement::breakOnAllocationEvent = 77;
-        MemoryManagementFixture::SetUp();
         DeviceFixture::SetUp();
         context = new MockContext(pDevice);
-        BufferDefaults::context = context;
         CommandQueueFixture::SetUp(context, pDevice, 0);
-        SimpleArgKernelFixture::SetUp(pDevice);
-        HelloWorldKernelFixture::SetUp(pDevice, "CopyBuffer_simd", "CopyBuffer");
 
-        srcBuffer = BufferHelper<>::create();
-        dstBuffer = BufferHelper<>::create();
+        srcImage = Image2dHelper<>::create(context);
+        dstImage = Image2dHelper<>::create(context);
 
         const auto &oomSetting = GetParam();
         auto oomSize = 10u;
@@ -91,22 +77,20 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
     }
 
     void TearDown() override {
-        delete dstBuffer;
-        delete srcBuffer;
+        delete dstImage;
+        delete srcImage;
         context->release();
-        HelloWorldKernelFixture::TearDown();
-        SimpleArgKernelFixture::TearDown();
+
         CommandQueueFixture::TearDown();
         DeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
     }
 
     MockContext *context;
-    Buffer *srcBuffer = nullptr;
-    Buffer *dstBuffer = nullptr;
+    Image *srcImage = nullptr;
+    Image *dstImage = nullptr;
 };
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
+HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
     auto &commandStream = pCmdQ->getCS();
@@ -114,134 +98,8 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal1 = EnqueueCopyBufferHelper<>::enqueue(pCmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal1);
-
-    auto retVal2 = EnqueueCopyBufferHelper<>::enqueue(&cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal2);
-
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    if (usedAfterISH > usedBeforeISH) {
-        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
-    }
-}
-
-HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
-
-    auto &commandStream = pCmdQ->getCS();
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
-
-    auto retVal1 = EnqueueFillBufferHelper<>::enqueue(pCmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal1);
-
-    auto retVal2 = EnqueueFillBufferHelper<>::enqueue(&cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal2);
-
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    if (usedAfterISH > usedBeforeISH) {
-        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
-    }
-}
-
-HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
-
-    auto &commandStream = pCmdQ->getCS();
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
-
-    auto retVal1 = EnqueueReadBufferHelper<>::enqueue(pCmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal1);
-
-    auto retVal2 = EnqueueReadBufferHelper<>::enqueue(&cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal2);
-
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    if (usedAfterISH > usedBeforeISH) {
-        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
-    }
-}
-
-HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
-
-    auto &commandStream = pCmdQ->getCS();
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
-
-    auto retVal1 = EnqueueWriteBufferHelper<>::enqueue(pCmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal1);
-
-    auto retVal2 = EnqueueWriteBufferHelper<>::enqueue(&cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal2);
-
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    if (usedAfterISH > usedBeforeISH) {
-        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
-    }
-}
-
-HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
-
-    auto &commandStream = pCmdQ->getCS();
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
-
-    auto retVal1 = EnqueueWriteBufferRectHelper<>::enqueue(pCmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal1);
-
-    auto retVal2 = EnqueueWriteBufferRectHelper<>::enqueue(&cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal2);
-
-    auto usedAfterCS = commandStream.getUsed();
-    auto usedAfterISH = indirectHeap.getUsed();
-    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
-    if (usedAfterISH > usedBeforeISH) {
-        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
-    } else {
-        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
-    }
-}
-
-HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
-    typedef HelloWorldKernelFixture KernelFixture;
-    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
-
-    auto &commandStream = pCmdQ->getCS();
-    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
-    auto usedBeforeCS = commandStream.getUsed();
-    auto usedBeforeISH = indirectHeap.getUsed();
-
-    auto retVal1 = EnqueueKernelHelper<>::enqueueKernel(
-        pCmdQ,
-        KernelFixture::pKernel);
-
-    auto retVal2 = EnqueueKernelHelper<>::enqueueKernel(
-        &cmdQ,
-        KernelFixture::pKernel);
+    auto retVal1 = EnqueueCopyImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueCopyImageHelper<>::enqueue(&cmdQ);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
@@ -256,8 +114,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
     EXPECT_EQ(CL_SUCCESS, retVal2);
 }
 
-HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
-    typedef SimpleArgKernelFixture KernelFixture;
+HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
     auto &commandStream = pCmdQ->getCS();
@@ -265,13 +122,56 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
 
-    auto retVal1 = EnqueueKernelHelper<>::enqueueKernel(
-        pCmdQ,
-        KernelFixture::pKernel);
+    auto retVal1 = EnqueueFillImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueFillImageHelper<>::enqueue(&cmdQ);
 
-    auto retVal2 = EnqueueKernelHelper<>::enqueueKernel(
-        &cmdQ,
-        KernelFixture::pKernel);
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueReadImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueReadImageHelper<>::enqueue(&cmdQ);
+
+    auto usedAfterCS = commandStream.getUsed();
+    auto usedAfterISH = indirectHeap.getUsed();
+    EXPECT_LE(usedAfterCS - usedBeforeCS, commandStream.getMaxAvailableSpace());
+    if (usedAfterISH > usedBeforeISH) {
+        EXPECT_LE(usedAfterISH - usedBeforeISH, indirectHeap.getMaxAvailableSpace());
+    } else {
+        EXPECT_LE(usedAfterISH, indirectHeap.getMaxAvailableSpace());
+    }
+
+    EXPECT_EQ(CL_SUCCESS, retVal1);
+    EXPECT_EQ(CL_SUCCESS, retVal2);
+}
+
+HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
+    CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
+
+    auto &commandStream = pCmdQ->getCS();
+    auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
+    auto usedBeforeCS = commandStream.getUsed();
+    auto usedBeforeISH = indirectHeap.getUsed();
+
+    auto retVal1 = EnqueueWriteImageHelper<>::enqueue(pCmdQ);
+    auto retVal2 = EnqueueWriteImageHelper<>::enqueue(&cmdQ);
 
     auto usedAfterCS = commandStream.getUsed();
     auto usedAfterISH = indirectHeap.getUsed();
@@ -288,5 +188,5 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
 
 INSTANTIATE_TEST_CASE_P(
     OOM,
-    OOMCommandQueueBufferTest,
-    testing::ValuesIn(oomSettings));
+    OOMCommandQueueImageTest,
+    testing::ValuesIn(oomSettings1));

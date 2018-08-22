@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -22,16 +22,18 @@
 
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/event/event.h"
-#include "unit_tests/command_queue/buffer_operations_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/buffer_fixture.h"
 #include "gtest/gtest.h"
 #include <memory>
 
 using namespace OCLRT;
 
-TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
-    cl_bool blockingWrite = CL_TRUE;
+typedef HelloWorldTest<HelloWorldFixtureFactory> EnqueueReadBuffer;
+
+TEST_F(EnqueueReadBuffer, eventShouldBeReturned) {
+    cl_bool blockingRead = CL_TRUE;
     size_t offset = 0;
     size_t size = sizeof(cl_float);
     cl_float pDestMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -39,12 +41,10 @@ TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
     cl_event *eventWaitList = nullptr;
     cl_event event = nullptr;
 
-    auto retVal = CL_INVALID_VALUE;
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
-
-    retVal = pCmdQ->enqueueWriteBuffer(
+    auto retVal = pCmdQ->enqueueReadBuffer(
         srcBuffer.get(),
-        blockingWrite,
+        blockingRead,
         offset,
         size,
         pDestMemory,
@@ -63,14 +63,14 @@ TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
         size_t sizeReturned = 0;
         auto result = clGetEventInfo(pEvent, CL_EVENT_COMMAND_TYPE, sizeof(cmdType), &cmdType, &sizeReturned);
         ASSERT_EQ(CL_SUCCESS, result);
-        EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_WRITE_BUFFER), cmdType);
+        EXPECT_EQ(static_cast<cl_command_type>(CL_COMMAND_READ_BUFFER), cmdType);
         EXPECT_EQ(sizeof(cl_command_type), sizeReturned);
     }
 
     delete pEvent;
 }
 
-TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
+TEST_F(EnqueueReadBuffer, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
@@ -79,7 +79,7 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
     Event event1(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(nullptr, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
-    cl_bool blockingWrite = CL_TRUE;
+    cl_bool blockingRead = CL_TRUE;
     size_t offset = 0;
     size_t size = sizeof(cl_float);
     cl_float pDestMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
@@ -92,9 +92,9 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
 
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
 
-    auto retVal = pCmdQ->enqueueWriteBuffer(
+    auto retVal = pCmdQ->enqueueReadBuffer(
         srcBuffer.get(),
-        blockingWrite,
+        blockingRead,
         offset,
         size,
         pDestMemory,
@@ -105,14 +105,13 @@ TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQP
     ASSERT_NE(nullptr, event);
 
     auto pEvent = (Event *)event;
-    EXPECT_LE(19u, pEvent->taskLevel);
+    EXPECT_EQ(19u + 1u, pEvent->taskLevel);
 
     delete pEvent;
 }
-
-TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenInOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
@@ -132,14 +131,14 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAn
     cl_event event = nullptr;
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
-    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
-                                       blockingRead,
-                                       0,
-                                       size,
-                                       ptr,
-                                       numEventsInWaitList,
-                                       eventWaitList,
-                                       &event);
+    retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                      blockingRead,
+                                      0,
+                                      size,
+                                      ptr,
+                                      numEventsInWaitList,
+                                      eventWaitList,
+                                      &event);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
@@ -150,9 +149,9 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesAn
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndEnabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(true);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -173,14 +172,14 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndEnabledSupportCpuCopie
     cl_event event = nullptr;
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
-    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer.get(),
-                                         blockingRead,
-                                         0,
-                                         size,
-                                         ptr,
-                                         numEventsInWaitList,
-                                         eventWaitList,
-                                         &event);
+    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer.get(),
+                                        blockingRead,
+                                        0,
+                                        size,
+                                        ptr,
+                                        numEventsInWaitList,
+                                        eventWaitList,
+                                        &event);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
@@ -191,9 +190,9 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndEnabledSupportCpuCopie
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenInOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
@@ -213,14 +212,14 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesA
     cl_event event = nullptr;
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
-    retVal = pCmdQ->enqueueWriteBuffer(srcBuffer.get(),
-                                       blockingRead,
-                                       0,
-                                       size,
-                                       ptr,
-                                       numEventsInWaitList,
-                                       eventWaitList,
-                                       &event);
+    retVal = pCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                      blockingRead,
+                                      0,
+                                      size,
+                                      ptr,
+                                      numEventsInWaitList,
+                                      eventWaitList,
+                                      &event);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);
@@ -231,9 +230,9 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesA
 
     pEvent->release();
 }
-TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenWriteBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
+TEST_F(EnqueueReadBuffer, givenOutOfOrderQueueAndDisabledSupportCpuCopiesAndDstPtrEqualSrcPtrWithEventsWhenReadBufferIsExecutedThenTaskLevelShouldNotBeIncreased) {
     DebugManagerStateRestore dbgRestore;
-    DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
+    DebugManager.flags.DoCpuCopyOnReadBuffer.set(false);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;
     uint32_t taskLevelCmdQ = 17;
@@ -254,14 +253,14 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopi
     cl_event event = nullptr;
     auto srcBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     void *ptr = srcBuffer->getCpuAddressForMemoryTransfer();
-    retVal = pCmdOOQ->enqueueWriteBuffer(srcBuffer.get(),
-                                         blockingRead,
-                                         0,
-                                         size,
-                                         ptr,
-                                         numEventsInWaitList,
-                                         eventWaitList,
-                                         &event);
+    retVal = pCmdOOQ->enqueueReadBuffer(srcBuffer.get(),
+                                        blockingRead,
+                                        0,
+                                        size,
+                                        ptr,
+                                        numEventsInWaitList,
+                                        eventWaitList,
+                                        &event);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, event);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,26 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/command_queue/command_queue.h"
-#include "unit_tests/fixtures/hello_world_fixture.h"
-#include "gtest/gtest.h"
+#include "test.h"
+#include "unit_tests/mocks/mock_mdi.h"
 
 using namespace OCLRT;
 
-typedef HelloWorldTest<HelloWorldFixtureFactory> GlobalWorkOffset;
-TEST_F(GlobalWorkOffset, nullPointer) {
-    size_t globalWorkSize[3] = {1, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
+struct MultiDispatchInfoTest : public ::testing::Test {
 
-    auto retVal = pCmdQ->enqueueKernel(
-        pKernel,
-        1,
-        nullptr,
-        globalWorkSize,
-        localWorkSize,
-        0,
-        nullptr,
-        nullptr);
+    void SetUp() override {
+    }
 
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    void TearDown() override {
+    }
+};
+
+TEST_F(MultiDispatchInfoTest, MultiDispatchInfoWithNullKernel) {
+
+    MockMultiDispatchInfo multiDispatchInfo(nullptr);
+
+    EXPECT_FALSE(multiDispatchInfo.begin()->usesSlm());
+    EXPECT_FALSE(multiDispatchInfo.begin()->usesStatelessPrintfSurface());
+    EXPECT_EQ(0u, multiDispatchInfo.begin()->getRequiredScratchSize());
 }

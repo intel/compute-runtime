@@ -37,7 +37,7 @@
 
 using namespace OCLRT;
 
-typedef Test<EnqueueFillBufferFixture> EnqueueFillBufferCmdTests;
+typedef ::Test<EnqueueFillBufferFixture> EnqueueFillBufferCmdTests;
 
 HWTEST_F(EnqueueFillBufferCmdTests, alignsToCSR) {
     //this test case assumes IOQ
