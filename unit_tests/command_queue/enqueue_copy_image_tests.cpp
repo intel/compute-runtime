@@ -212,7 +212,7 @@ typedef EnqueueCopyImageMipMapTest MipMapCopyImageTest;
 HWTEST_P(MipMapCopyImageTest, GivenImagesWithNonZeroMipLevelsWhenCopyImageIsCalledThenProperMipLevelsAreSet) {
     cl_mem_object_type srcImageType, dstImageType;
     std::tie(srcImageType, dstImageType) = GetParam();
-    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
     auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(
         EBuiltInOps::CopyImageToImage3d,
         pCmdQ->getContext(),

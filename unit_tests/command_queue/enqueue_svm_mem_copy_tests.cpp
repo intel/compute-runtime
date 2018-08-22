@@ -64,7 +64,7 @@ struct EnqueueSvmMemCopyTest : public DeviceFixture,
 };
 
 HWTEST_F(EnqueueSvmMemCopyTest, givenEnqueueSVMMemcpyWhenUsingCopyBufferToBufferBuilderThenItConfiguredWithBuiltinOpsAndProducesDispatchInfo) {
-    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
 
     // retrieve original builder
     auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(

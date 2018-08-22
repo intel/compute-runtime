@@ -236,7 +236,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, dispatchInfo.getKernel());
     }
     if (parentKernel) {
-        SchedulerKernel &scheduler = commandQueue.getDevice().getBuiltIns().getSchedulerKernel(parentKernel->getContext());
+        SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
     }
     return commandQueue.getCS(expectedSizeCS);

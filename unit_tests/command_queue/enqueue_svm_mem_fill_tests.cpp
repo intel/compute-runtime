@@ -76,7 +76,7 @@ HWTEST_P(EnqueueSvmMemFillTest, givenEnqueueSVMMemFillWhenUsingFillBufferBuilder
         size_t patternSize;
     };
 
-    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
 
     // retrieve original builder
     auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(

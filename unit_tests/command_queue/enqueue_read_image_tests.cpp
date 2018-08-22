@@ -536,7 +536,7 @@ HWTEST_F(EnqueueReadImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorag
 typedef EnqueueReadImageMipMapTest MipMapReadImageTest;
 
 HWTEST_P(MipMapReadImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalledThenProperMipLevelIsSet) {
-    auto &builtIns = pCmdQ->getDevice().getBuiltIns();
+    auto &builtIns = *pCmdQ->getDevice().getExecutionEnvironment()->getBuiltIns();
 
     auto image_type = (cl_mem_object_type)GetParam();
     auto &origBuilder = builtIns.getBuiltinDispatchInfoBuilder(

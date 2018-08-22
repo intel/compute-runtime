@@ -762,7 +762,7 @@ HWTEST_F(CommandQueueHwTest, GivenBuiltinKernelWhenBuiltinDispatchInfoBuilderIsP
     CommandQueueHw<FamilyType> *cmdQHw = static_cast<CommandQueueHw<FamilyType> *>(this->pCmdQ);
 
     MockKernelWithInternals mockKernelToUse(*pDevice);
-    MockBuilder builder(pDevice->getBuiltIns());
+    MockBuilder builder(*pDevice->getExecutionEnvironment()->getBuiltIns());
     builder.paramsToUse.gws.x = 11;
     builder.paramsToUse.elws.x = 13;
     builder.paramsToUse.offset.x = 17;

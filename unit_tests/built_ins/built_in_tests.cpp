@@ -655,7 +655,7 @@ HWTEST_F(BuiltInTests, getSchedulerKernelForSecondTimeDoesNotCreateNewKernel) {
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType) {
-    auto &bs = pDevice->getBuiltIns();
+    auto &bs = *pDevice->getExecutionEnvironment()->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams params;
@@ -670,14 +670,14 @@ TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnFalseIfUnsupportedBuildType
 }
 
 TEST_F(BuiltInTests, GeivenDefaultBuiltinDispatchInfoBuilderWhendValidateDispatchIsCalledThenClSuccessIsReturned) {
-    auto &bs = pDevice->getBuiltIns();
+    auto &bs = *pDevice->getExecutionEnvironment()->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     auto ret = bdib.validateDispatch(nullptr, 1, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0}, Vec3<size_t>{0, 0, 0});
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
 TEST_F(BuiltInTests, BuiltinDispatchInfoBuilderReturnTrueIfExplicitKernelArgNotTakenCareOfInBuiltinDispatchBInfoBuilder) {
-    auto &bs = pDevice->getBuiltIns();
+    auto &bs = *pDevice->getExecutionEnvironment()->getBuiltIns();
     BuiltinDispatchInfoBuilder bdib{bs};
     MultiDispatchInfo multiDispatchInfo;
     BuiltinDispatchInfoBuilder::BuiltinOpParams params;
@@ -1701,7 +1701,7 @@ TEST_F(BuiltInTests, createBuiltInProgramForInvalidBuiltinKernelName) {
     const char *kernelNames = "invalid_kernel";
     cl_int retVal = CL_SUCCESS;
 
-    cl_program program = pDevice->getBuiltIns().createBuiltInProgram(
+    cl_program program = pDevice->getExecutionEnvironment()->getBuiltIns()->createBuiltInProgram(
         *pContext,
         *pDevice,
         kernelNames,
@@ -1738,7 +1738,7 @@ TEST_F(BuiltInTests, getSipKernelReturnsProgramCreatedOutOfIsaAcquiredFromCompil
 }
 
 TEST_F(BuiltInTests, givenSipKernelWhenItIsCreatedThenItHasGraphicsAllocationForKernel) {
-    const SipKernel &sipKern = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
+    const SipKernel &sipKern = pDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(SipKernelType::Csr, *pContext->getDevice(0));
     auto sipAllocation = sipKern.getSipAllocation();
     EXPECT_NE(nullptr, sipAllocation);
 }

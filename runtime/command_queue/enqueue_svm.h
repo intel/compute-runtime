@@ -191,8 +191,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemcpy(cl_bool blockingCopy,
 
     MultiDispatchInfo dispatchInfo;
 
-    auto &builder = getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
-                                                                            this->getContext(), this->getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::CopyBufferToBuffer,
+                                                                                                        this->getContext(), this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 
@@ -259,8 +259,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueSVMMemFill(void *svmPtr,
 
     MultiDispatchInfo dispatchInfo;
 
-    auto &builder = getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
-                                                                            this->getContext(), this->getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::FillBuffer,
+                                                                                                        this->getContext(), this->getDevice());
 
     BuiltInOwnershipWrapper builtInLock(builder, this->context);
 

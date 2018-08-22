@@ -145,7 +145,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         }
 
         if (heapType == IndirectHeap::INDIRECT_OBJECT || heapType == IndirectHeap::SURFACE_STATE) {
-            BuiltIns &builtIns = kernel.getDevice().getBuiltIns();
+            BuiltIns &builtIns = *kernel.getDevice().getExecutionEnvironment()->getBuiltIns();
             SchedulerKernel &scheduler = builtIns.getSchedulerKernel(kernel.getContext());
 
             if (heapType == IndirectHeap::INDIRECT_OBJECT) {

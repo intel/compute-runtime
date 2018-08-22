@@ -223,7 +223,7 @@ HWTEST_F(ParentKernelCommandStreamFixture, GivenDispatchInfoWithParentKernelWhen
 
         size_t rest = MemoryConstants::pageSize - (numOfKernels * size);
 
-        SchedulerKernel &scheduler = device->getBuiltIns().getSchedulerKernel(*mockParentKernel->getContext());
+        SchedulerKernel &scheduler = device->getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(*mockParentKernel->getContext());
         size_t schedulerSize = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, &scheduler);
 
         while (rest >= schedulerSize) {

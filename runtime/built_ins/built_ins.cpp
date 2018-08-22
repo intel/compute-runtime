@@ -65,7 +65,7 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
     auto initializeSchedulerProgramAndKernel = [&] {
         cl_int retVal = CL_SUCCESS;
 
-        auto src = context.getDevice(0)->getBuiltIns().builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
+        auto src = context.getDevice(0)->getExecutionEnvironment()->getBuiltIns()->builtinsLib->getBuiltinCode(EBuiltInOps::Scheduler, BuiltinCode::ECodeType::Any, *context.getDevice(0));
 
         auto program = Program::createFromGenBinary(*context.getDevice(0)->getExecutionEnvironment(),
                                                     &context,
@@ -190,11 +190,11 @@ Program *BuiltIns::createBuiltInProgram(
     if (pBuiltInProgram) {
         std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> builtinsBuilders;
         builtinsBuilders["block_motion_estimate_intel"] =
-            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockMotionEstimateIntel, context, device);
         builtinsBuilders["block_advanced_motion_estimate_check_intel"] =
-            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateCheckIntel, context, device);
         builtinsBuilders["block_advanced_motion_estimate_bidirectional_check_intel"] =
-            &device.getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
+            &device.getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::VmeBlockAdvancedMotionEstimateBidirectionalCheckIntel, context, device);
         const cl_device_id clDevice = &device;
         errcodeRet = pBuiltInProgram->build(
             clDevice,

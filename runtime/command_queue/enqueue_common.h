@@ -86,7 +86,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
         } else {
             BuffersForAuxTranslation buffersForAuxTranslation;
             if (kernel->isAuxTranslationRequired()) {
-                auto &builder = getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+                auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
                 builtInLock.takeOwnership(builder, this->context);
                 kernel->fillWithBuffersForAuxTranslation(buffersForAuxTranslation);
                 dispatchAuxTranslation(multiDispatchInfo, buffersForAuxTranslation, AuxTranslationDirection::AuxToNonAux);
@@ -122,7 +122,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface *(&surfaces)[surfaceCount
 
 template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::forceDispatchScheduler(OCLRT::MultiDispatchInfo &multiDispatchInfo) {
-    BuiltIns &builtIns = getDevice().getBuiltIns();
+    BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
     SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
     DispatchInfo dispatchInfo(&scheduler, 1, Vec3<size_t>(scheduler.getGws(), 1, 1), Vec3<size_t>(scheduler.getLws(), 1, 1), Vec3<size_t>(0, 0, 0));
 
@@ -299,7 +299,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                     taskCount,
                                                     hwTimeStamps);
 
-            BuiltIns &builtIns = getDevice().getBuiltIns();
+            BuiltIns &builtIns = *getDevice().getExecutionEnvironment()->getBuiltIns();
             SchedulerKernel &scheduler = builtIns.getSchedulerKernel(this->getContext());
 
             scheduler.setArgs(devQueueHw->getQueueBuffer(),

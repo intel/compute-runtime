@@ -26,7 +26,7 @@
 
 namespace OCLRT {
 const SipKernel &initSipKernel(SipKernelType type, Device &device) {
-    return device.getBuiltIns().getSipKernel(type, device);
+    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device);
 }
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,

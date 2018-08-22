@@ -62,7 +62,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
     StackVec<char, 4096> preemptionBuffer;
     preemptionBuffer.resize(cmdSizePreambleMidThread);
     LinearStream preambleStream(&*preemptionBuffer.begin(), preemptionBuffer.size());
-    auto sipAllocation = pDevice->getBuiltIns().getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
+    auto sipAllocation = pDevice->getExecutionEnvironment()->getBuiltIns()->getSipKernel(SipKernelType::Csr, *pDevice).getSipAllocation();
     commandStreamReceiver.programPreamble(preambleStream, *pDevice, dispatchFlags, newL3Config);
 
     this->parseCommands<FamilyType>(preambleStream);
@@ -76,7 +76,7 @@ GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndMidThreadPreempt
 
 GEN9TEST_F(UltCommandStreamReceiverTest, givenNotSentPreambleAndKernelDebuggingActiveWhenPreambleIsProgrammedThenCorrectSipKernelGpuAddressIsProgrammed) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
-    auto &builtIns = pDevice->getBuiltIns();
+    auto &builtIns = *pDevice->getExecutionEnvironment()->getBuiltIns();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = false;
     size_t minCsrSize = pDevice->getHardwareInfo().pSysInfo->CsrSizeInMb * MemoryConstants::megaByte;

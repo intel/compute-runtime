@@ -63,7 +63,7 @@ TEST(DeviceCreation, givenDeviceWithMidThreadPreemptionAndDebuggingActiveWhenDev
         exeEnv->builtins.reset(builtIns);
         auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv));
 
-        ASSERT_EQ(builtIns, &device->getBuiltIns());
+        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
         EXPECT_TRUE(builtIns->getSipKernelCalled);
         EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
     }
@@ -82,7 +82,7 @@ TEST(DeviceCreation, givenDeviceWithDisabledPreemptionAndDebuggingActiveWhenDevi
         exeEnv->builtins.reset(builtIns);
         auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDeviceWithDebuggerActive>(nullptr, exeEnv));
 
-        ASSERT_EQ(builtIns, &device->getBuiltIns());
+        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
         EXPECT_TRUE(builtIns->getSipKernelCalled);
         EXPECT_LE(SipKernelType::DbgCsr, builtIns->getSipKernelType);
     }

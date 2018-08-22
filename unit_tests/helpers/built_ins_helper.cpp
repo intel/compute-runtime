@@ -33,7 +33,7 @@ const SipKernel &initSipKernel(SipKernelType type, Device &device) {
 
     device.getExecutionEnvironment()->compilerInterface.reset(mockCompilerInterface);
     mockCompilerInterface->sipKernelBinaryOverride = mockCompilerInterface->getDummyGenBinary();
-    return device.getBuiltIns().getSipKernel(type, device);
+    return device.getExecutionEnvironment()->getBuiltIns()->getSipKernel(type, device);
 }
 Program *createProgramForSip(ExecutionEnvironment &executionEnvironment,
                              Context *context,

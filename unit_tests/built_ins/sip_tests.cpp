@@ -150,7 +150,7 @@ TEST(DebugSip, DISABLED_givenBuiltInsWhenDbgCsrSipIsRequestedThanCorrectSipKerne
     igcDebugVars.fileName = builtInGenFile;
     gEnvironment->igcPushDebugVars(igcDebugVars);
 
-    auto &builtins = mockDevice->getBuiltIns();
+    auto &builtins = *mockDevice->getExecutionEnvironment()->getBuiltIns();
     auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
 
     EXPECT_NE(nullptr, &sipKernel);

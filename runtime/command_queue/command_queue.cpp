@@ -596,7 +596,7 @@ void CommandQueue::releaseIndirectHeap(IndirectHeap::Type heapType) {
 
 void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
                                           AuxTranslationDirection auxTranslationDirection) {
-    auto &builder = getDevice().getBuiltIns().getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
+    auto &builder = getDevice().getExecutionEnvironment()->getBuiltIns()->getBuiltinDispatchInfoBuilder(EBuiltInOps::AuxTranslation, getContext(), getDevice());
     BuiltinDispatchInfoBuilder::BuiltinOpParams dispatchParams;
 
     dispatchParams.buffersForAuxTranslation = &buffersForAuxTranslation;

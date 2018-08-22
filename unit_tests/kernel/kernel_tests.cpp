@@ -2162,7 +2162,7 @@ TEST(KernelTest, setKernelArgUsesBuiltinDispatchInfoBuilderIfAvailable) {
     kernel.kernelInfo.resizeKernelArgInfoAndRegisterParameter(1);
     kernel.mockKernel->initialize();
 
-    MockBuiltinDispatchBuilder mockBuilder(device->getBuiltIns());
+    MockBuiltinDispatchBuilder mockBuilder(*device->getExecutionEnvironment()->getBuiltIns());
     kernel.kernelInfo.builtinDispatchBuilder = &mockBuilder;
 
     mockBuilder.valueToReturn = false;

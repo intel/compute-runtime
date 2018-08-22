@@ -46,7 +46,7 @@ GEN10TEST_F(GEN10AUBParentKernelFixture, DISABLED_EnqueueParentKernel) {
             properties[0],
             retVal);
 
-        auto &builtIns = pDevice->getBuiltIns();
+        auto &builtIns = *pDevice->getExecutionEnvironment()->getBuiltIns();
         SchedulerKernel &scheduler = builtIns.getSchedulerKernel(pCmdQ->getContext());
         // Aub execution takes huge time for bigger GWS
         scheduler.setGws(24);

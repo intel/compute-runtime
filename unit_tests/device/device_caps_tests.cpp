@@ -249,7 +249,7 @@ TEST(Device_GetCaps, givenDeviceWithMidThreadPreemptionWhenDeviceIsCreatedThenSi
         auto executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->builtins.reset(builtIns);
         auto device = std::unique_ptr<Device>(MockDevice::createWithExecutionEnvironment<MockDevice>(platformDevices[0], executionEnvironment));
-        ASSERT_EQ(builtIns, &device->getBuiltIns());
+        ASSERT_EQ(builtIns, device->getExecutionEnvironment()->getBuiltIns());
         EXPECT_TRUE(builtIns->getSipKernelCalled);
     }
 }
