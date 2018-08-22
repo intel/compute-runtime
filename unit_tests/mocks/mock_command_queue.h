@@ -114,11 +114,20 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
         }
     }
 
+    void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) override {
+        notifyEnqueueReadBufferCalled = true;
+    }
+    void notifyEnqueueReadImage(Image *image, bool blockingRead) override {
+        notifyEnqueueReadImageCalled = true;
+    }
+
     unsigned int lastCommandType;
     std::vector<Kernel *> lastEnqueuedKernels;
     size_t EnqueueWriteImageCounter = 0;
     size_t EnqueueWriteBufferCounter = 0;
     bool blockingWriteBuffer = false;
+    bool notifyEnqueueReadBufferCalled = false;
+    bool notifyEnqueueReadImageCalled = false;
 
     LinearStream *peekCommandStream() {
         return this->commandStream;

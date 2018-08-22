@@ -41,3 +41,12 @@
 #include "runtime/command_queue/enqueue_write_image.h"
 #include "runtime/command_queue/finish.h"
 #include "runtime/command_queue/flush.h"
+
+namespace OCLRT {
+template <typename Family>
+void CommandQueueHw<Family>::notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead) {
+}
+template <typename Family>
+void CommandQueueHw<Family>::notifyEnqueueReadImage(Image *image, bool blockingRead) {
+}
+} // namespace OCLRT

@@ -30,6 +30,7 @@
 #include "unit_tests/command_queue/enqueue_read_buffer_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -449,6 +450,22 @@ HWTEST_F(EnqueueReadBufferTypeTest, givenInOrderQueueAndEnabledSupportCpuCopiesA
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 1u);
+}
+
+HWTEST_F(EnqueueReadBufferTypeTest, givenCommandQueueWhenEnqueueReadBufferIsCalledThenItCallsNotifyFunction) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    void *ptr = nonZeroCopyBuffer->getCpuAddressForMemoryTransfer();
+    auto retVal = mockCmdQ->enqueueReadBuffer(srcBuffer.get(),
+                                              CL_TRUE,
+                                              0,
+                                              MemoryConstants::cacheLineSize,
+                                              ptr,
+                                              0,
+                                              nullptr,
+                                              nullptr);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(mockCmdQ->notifyEnqueueReadBufferCalled);
 }
 
 using NegativeFailAllocationTest = Test<NegativeFailAllocationCommandEnqueueBaseFixture>;

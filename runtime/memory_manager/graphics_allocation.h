@@ -136,6 +136,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     void setAubWritable(bool writable) { aubWritable = writable; }
     bool isAubWritable() const { return aubWritable; }
+    void setAllocDumpable(bool dumpable) { allocDumpable = dumpable; }
+    bool isAllocDumpable() const { return allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return memObjectsAllocationWithWritableFlags; }
     void setMemObjectsAllocationWithWritableFlags(bool newValue) { memObjectsAllocationWithWritableFlags = newValue; }
 
@@ -160,6 +162,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint32_t inspectionId = 0;
     AllocationType allocationType = AllocationType::UNKNOWN;
     bool aubWritable = true;
+    bool allocDumpable = false;
     bool memObjectsAllocationWithWritableFlags = false;
 };
 } // namespace OCLRT

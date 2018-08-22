@@ -481,3 +481,10 @@ TEST(MemObj, givenNotSharedMemObjectWhenChangingGfxAllocationThenOldAllocationIs
 
     EXPECT_EQ(newGfxAllocation, memObj.getGraphicsAllocation());
 }
+
+TEST(MemObj, givenGraphicsAllocationWhenCallingIsAllocDumpableThenItReturnsTheCorrectValue) {
+    GraphicsAllocation gfxAllocation(nullptr, 0);
+    EXPECT_FALSE(gfxAllocation.isAllocDumpable());
+    gfxAllocation.setAllocDumpable(true);
+    EXPECT_TRUE(gfxAllocation.isAllocDumpable());
+}

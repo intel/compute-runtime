@@ -25,7 +25,9 @@
 #include "unit_tests/command_queue/enqueue_read_image_fixture.h"
 #include "unit_tests/gen_common/gen_commands_common_validation.h"
 #include "unit_tests/helpers/unit_test_helper.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_builtin_dispatch_info_builder.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "test.h"
 
 using namespace OCLRT;
@@ -531,6 +533,18 @@ HWTEST_F(EnqueueReadImageTest, GivenNonZeroCopyImage2DAndImageShareTheSameStorag
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(pCmdQ->taskLevel, 2u);
+}
+
+HWTEST_F(EnqueueReadImageTest, givenCommandQueueWhenEnqueueReadImageIsCalledThenItCallsNotifyFunction) {
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+    std::unique_ptr<Image> srcImage(Image2dArrayHelper<>::create(context));
+    auto imageDesc = srcImage->getImageDesc();
+    size_t origin[] = {0, 0, 0};
+    size_t region[] = {imageDesc.image_width, imageDesc.image_height, imageDesc.image_array_size};
+
+    EnqueueReadImageHelper<>::enqueueReadImage(mockCmdQ.get(), srcImage.get(), CL_TRUE, origin, region);
+
+    EXPECT_TRUE(mockCmdQ->notifyEnqueueReadImageCalled);
 }
 
 typedef EnqueueReadImageMipMapTest MipMapReadImageTest;

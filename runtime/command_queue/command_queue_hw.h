@@ -76,6 +76,9 @@ class CommandQueueHw : public CommandQueue {
         return new CommandQueueHw<GfxFamily>(context, device, properties);
     }
 
+    MOCKABLE_VIRTUAL void notifyEnqueueReadBuffer(Buffer *buffer, bool blockingRead);
+    MOCKABLE_VIRTUAL void notifyEnqueueReadImage(Image *image, bool blockingRead);
+
     cl_int enqueueBarrierWithWaitList(cl_uint numEventsInWaitList,
                                       const cl_event *eventWaitList,
                                       cl_event *event) override;
