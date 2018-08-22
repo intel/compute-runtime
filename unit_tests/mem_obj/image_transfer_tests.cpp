@@ -21,6 +21,7 @@
  */
 
 #include "unit_tests/fixtures/image_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "gtest/gtest.h"
@@ -72,7 +73,10 @@ class ImageHostPtrTransferTests : public testing::Test {
     size_t hostPtrSlicePitch, hostPtrRowPitch, imageSlicePitch, imageRowPitch, pixelSize;
 };
 
-TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
     createImageAndSetTestParams<Image3dDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
@@ -93,7 +97,10 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferToHostPtrCalledThenCop
     EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_depth) == 0);
 }
 
-TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+TEST_F(ImageHostPtrTransferTests, given3dImageWithoutTilingWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
     createImageAndSetTestParams<Image3dDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
@@ -114,7 +121,10 @@ TEST_F(ImageHostPtrTransferTests, given3dImageWhenTransferFromHostPtrCalledThenC
     EXPECT_TRUE(memcmp(image->getCpuAddress(), expectedImageData.get(), imageSlicePitch * imgDesc->image_depth) == 0);
 }
 
-TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferToHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
     createImageAndSetTestParams<Image2dArrayDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);
@@ -135,7 +145,10 @@ TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferToHostPtrCalledTh
     EXPECT_TRUE(memcmp(image->getHostPtr(), expectedHostPtr.get(), hostPtrSlicePitch * imgDesc->image_array_size) == 0);
 }
 
-TEST_F(ImageHostPtrTransferTests, given2dArrayImageWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+TEST_F(ImageHostPtrTransferTests, given2dArrayImageWithoutTilingWhenTransferFromHostPtrCalledThenCopyRequestedRegionAndOriginOnly) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ForceLinearImages.set(true);
+
     createImageAndSetTestParams<Image2dArrayDefaults>();
     EXPECT_NE(hostPtrSlicePitch, imageSlicePitch);
     EXPECT_NE(hostPtrRowPitch, imageRowPitch);

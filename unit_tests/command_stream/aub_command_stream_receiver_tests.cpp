@@ -1699,18 +1699,20 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
         return imageAllocation;
     };
     void freeGraphicsMemoryImpl(GraphicsAllocation *imageAllocation) override {
-        imageAllocation->setCpuPtrAndGpuAddress(lockResourceParam.retCpuPtr, imageAllocation->getGpuAddress());
+        imageAllocation->setCpuPtrAndGpuAddress(cpuPtr, imageAllocation->getGpuAddress());
         OsAgnosticMemoryManager::freeGraphicsMemoryImpl(imageAllocation);
     };
     void *lockResource(GraphicsAllocation *imageAllocation) override {
         lockResourceParam.wasCalled = true;
         lockResourceParam.inImageAllocation = imageAllocation;
-        lockResourceParam.retCpuPtr = cpuPtr;
+        lockCpuPtr = alignedMalloc(imageAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
+        lockResourceParam.retCpuPtr = lockCpuPtr;
         return lockResourceParam.retCpuPtr;
     };
     void unlockResource(GraphicsAllocation *imageAllocation) override {
         unlockResourceParam.wasCalled = true;
         unlockResourceParam.inImageAllocation = imageAllocation;
+        alignedFree(lockCpuPtr);
     };
 
     struct LockResourceParam {
@@ -1725,6 +1727,7 @@ class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryMan
 
   protected:
     void *cpuPtr = nullptr;
+    void *lockCpuPtr = nullptr;
 };
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledOnImageWithNoHostPtrThenResourceShouldBeLockedToGetCpuAddress) {

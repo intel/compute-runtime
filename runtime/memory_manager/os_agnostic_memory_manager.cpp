@@ -209,7 +209,16 @@ void OsAgnosticMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     }
 }
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) {
-    auto alloc = allocateGraphicsMemory(imgInfo.size);
+    GraphicsAllocation *alloc = nullptr;
+    if (!GmmHelper::allowTiling(*imgInfo.imgDesc) && imgInfo.mipCount == 0) {
+        alloc = allocateGraphicsMemory(imgInfo.size);
+    } else {
+        auto ptr = allocateSystemMemory(alignUp(imgInfo.size, MemoryConstants::pageSize), MemoryConstants::pageSize);
+        if (ptr != nullptr) {
+            alloc = new MemoryAllocation(true, ptr, reinterpret_cast<uint64_t>(ptr), imgInfo.size, counter, MemoryPool::SystemCpuInaccessible);
+            counter++;
+        }
+    }
     if (alloc) {
         alloc->gmm = gmm;
     }

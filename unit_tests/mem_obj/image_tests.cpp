@@ -352,6 +352,7 @@ TEST(TestCreateImage, UseSharedContextToCreateImage) {
 
     EXPECT_EQ((width + 1) * elementSize, image->getHostPtrRowPitch());
     EXPECT_EQ(0u, image->getHostPtrSlicePitch());
+    EXPECT_TRUE(image->isMemObjZeroCopy());
 
     delete image;
 
@@ -424,9 +425,6 @@ TEST_P(CreateImageNoHostPtr, validFlags) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
-    ASSERT_EQ(true, image->isMemObjZeroCopy());
-    auto address = image->getCpuAddress();
-    EXPECT_NE(nullptr, address);
 
     delete image;
 }
@@ -535,7 +533,7 @@ TEST_P(CreateImageHostPtr, getAddress) {
     image = createImage(retVal);
     ASSERT_NE(nullptr, image);
 
-    auto address = image->getCpuAddress();
+    auto address = image->getBasePtrForMap();
     EXPECT_NE(nullptr, address);
 
     if (!(flags & CL_MEM_USE_HOST_PTR)) {
@@ -557,18 +555,13 @@ TEST_P(CreateImageHostPtr, getAddress) {
 
         bool copyRequired = (alignedRequiredSize > alignedPtrSize) | (requiredRowPitch != rowPitch) | (slicePitch != requiredSlicePitch);
 
+        EXPECT_EQ(pHostPtr, address);
+        EXPECT_EQ(pHostPtr, image->getHostPtr());
+
         if (copyRequired) {
-            // Buffer should use host ptr
-            EXPECT_NE(pHostPtr, address);
-            EXPECT_EQ(pHostPtr, image->getHostPtr());
             EXPECT_FALSE(image->isMemObjZeroCopy());
-        } else {
-            // Buffer should use host ptr
-            EXPECT_EQ(pHostPtr, address);
-            EXPECT_TRUE(image->isMemObjZeroCopy());
         }
     } else {
-        // Buffer should have a different ptr
         EXPECT_NE(pHostPtr, address);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -96,9 +96,15 @@ HWTEST_P(CreateImageArraySize, arrayTypes) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
-    ASSERT_EQ(true, image->isMemObjZeroCopy());
-    auto address = image->getCpuAddress();
-    EXPECT_NE(nullptr, address);
+
+    if (types == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+        EXPECT_TRUE(image->isMemObjZeroCopy());
+        auto address = image->getCpuAddress();
+        EXPECT_NE(nullptr, address);
+
+    } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
+        EXPECT_FALSE(image->isMemObjZeroCopy());
+    }
     ASSERT_EQ(10u, image->getImageDesc().image_array_size);
 
     delete image;
@@ -129,9 +135,13 @@ HWTEST_P(CreateImageNonArraySize, NonArrayTypes) {
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
-    ASSERT_EQ(true, image->isMemObjZeroCopy());
-    auto address = image->getCpuAddress();
-    EXPECT_NE(nullptr, address);
+    if (types == CL_MEM_OBJECT_IMAGE2D || types == CL_MEM_OBJECT_IMAGE3D) {
+        EXPECT_FALSE(image->isMemObjZeroCopy());
+    } else {
+        EXPECT_TRUE(image->isMemObjZeroCopy());
+        auto address = image->getCpuAddress();
+        EXPECT_NE(nullptr, address);
+    }
     ASSERT_EQ(0u, image->getImageDesc().image_array_size);
 
     delete image;

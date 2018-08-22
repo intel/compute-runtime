@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -89,10 +89,7 @@ HWTEST_F(CreateImage3DTest, validTypes) {
     EXPECT_NE(0u, imgDesc.image_row_pitch);
 
     EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
-
-    ASSERT_EQ(true, image->isMemObjZeroCopy());
-    auto address = image->getCpuAddress();
-    EXPECT_NE(nullptr, address);
+    EXPECT_FALSE(image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image);

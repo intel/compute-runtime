@@ -250,7 +250,9 @@ Image *Image::create(Context *context,
                 }
             } else {
                 memory = memoryManager->allocateGraphicsMemoryForImage(imgInfo, gmm);
-                zeroCopy = true;
+                if (memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
+                    zeroCopy = true;
+                }
             }
         }
         transferNeeded |= !!(flags & CL_MEM_COPY_HOST_PTR);
