@@ -8,6 +8,8 @@ File to cover guidelines for NEO project.
 * avoid defines for constants, use constexpr
 * prefer forward declarations in headers
 * avoid includes in headers unless absolutely necessary
+* use of exceptions in driver code needs strong justification
+* prefer static create methods returning std::unique_ptr instead of throwing from constructor
 
 # Naming conventions
 
