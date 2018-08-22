@@ -86,36 +86,42 @@ inline void generateLocalIDsWithLayoutForImages(void *b, const std::array<uint16
     uint8_t xDelta = simd == 8u ? 2u : 4u;                                                    // difference between corresponding values in consecutive X rows
     uint8_t yDelta = (simd == 8u || localWorkgroupSize.at(1) == 4u) ? 4u : rowWidth / xDelta; // difference between corresponding values in consecutive Y rows
 
-    bool earlyGrowX = localWorkgroupSize.at(1) == yDelta &&
-                      simd == 32u &&
-                      localWorkgroupSize.at(0) > xDelta;
-
     auto buffer = reinterpret_cast<uint16_t *>(b);
     uint16_t offset = 0u;
     auto numGrfs = (localWorkgroupSize.at(0) * localWorkgroupSize.at(1) * localWorkgroupSize.at(2) + (simd - 1)) / simd;
+    uint8_t xMask = simd == 8u ? 0b1 : 0b11;
     uint16_t x = 0u;
     uint16_t y = 0u;
     for (auto grfId = 0; grfId < numGrfs; grfId++) {
         auto rowX = buffer + offset;
         auto rowY = buffer + offset + rowWidth;
         auto rowZ = buffer + offset + 2 * rowWidth;
+        uint16_t extraX = 0u;
+        uint16_t extraY = 0u;
 
         for (uint8_t i = 0u; i < simd; i++) {
-            if (i == yDelta * xDelta && earlyGrowX) {
-                x += xDelta;
+            if (i > 0) {
+                extraX++;
+                if (extraX == xDelta) {
+                    extraX = 0u;
+                }
+                if ((i & xMask) == 0) {
+                    extraY++;
+                    if (y + extraY == localWorkgroupSize.at(1)) {
+                        extraY = 0;
+                        x += xDelta;
+                    }
+                }
             }
             if (x == localWorkgroupSize.at(0)) {
                 x = 0u;
                 y += yDelta;
-                if (y == localWorkgroupSize.at(1)) {
+                if (y >= localWorkgroupSize.at(1)) {
                     y = 0u;
                 }
             }
-            rowX[i] = (x + (i & (xDelta - 1)));
-            rowY[i] = (y + i / xDelta);
-            if (rowY[i] >= localWorkgroupSize.at(1)) {
-                rowY[i] -= localWorkgroupSize.at(1);
-            }
+            rowX[i] = x + extraX;
+            rowY[i] = y + extraY;
             rowZ[i] = 0u;
         }
         x += xDelta;

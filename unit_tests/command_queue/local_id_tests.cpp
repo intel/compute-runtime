@@ -320,15 +320,19 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
         generateLocalIDs(buffer, simd, localWorkSize, dimensionsOrder, true);
     }
     void validateGRF() {
+        uint32_t totalLocalIds = localWorkSize.at(0) * localWorkSize.at(1);
         auto numRows = elemsInBuffer / rowWidth;
         auto numGrfs = numRows / 3u;
         for (auto i = 0u; i < numGrfs; i++) {
 
             // validate X row
             uint16_t baseX = buffer[i * 3 * rowWidth];
+            uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
             uint16_t currentX = baseX;
             for (int j = 1; j < simd; j++) {
-                if (simd == 32u && localWorkSize.at(1) == 4u && j == 16u) {
+                if (simd * i + j == totalLocalIds)
+                    break;
+                if (simd == 32u && baseY + 8u > localWorkSize.at(1) && j == 16u) {
                     baseX += xDelta;
                     if (baseX == localWorkSize.at(0)) {
                         baseX = 0;
@@ -339,17 +343,20 @@ struct LocalIdsLayoutForImagesTest : ::testing::TestWithParam<std::tuple<uint16_
             }
 
             // validate Y row
-            uint16_t baseY = buffer[i * 3 * rowWidth + rowWidth];
             for (int j = 0; j < simd; j++) {
+                if (simd * i + j == totalLocalIds)
+                    break;
                 uint16_t expectedY = baseY + ((j / xDelta) & 0b111);
                 if (expectedY >= localWorkSize.at(1)) {
-                    expectedY -= localWorkSize.at(1);
+                    expectedY -= (localWorkSize.at(1) - baseY);
                 }
                 EXPECT_EQ(buffer[i * 3 * rowWidth + rowWidth + j], expectedY);
             }
 
             // validate Z row
             for (int j = 0; j < simd; j++) {
+                if (simd * i + j == totalLocalIds)
+                    break;
                 EXPECT_EQ(buffer[i * 3 * rowWidth + 2 * rowWidth + j], 0u);
             }
         }
