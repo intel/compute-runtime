@@ -61,7 +61,7 @@ GEN8TEST_F(HwHelperTestBdw, adjustDefaultEngineType) {
 GEN8TEST_F(HwHelperTestBdw, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCalledThenSpecificImplementationIsUsed) {
     auto &helper = HwHelper::get(renderCoreFamily);
     HardwareCapabilities hwCaps = {0};
-    helper.setupHardwareCapabilities(&hwCaps);
+    helper.setupHardwareCapabilities(&hwCaps, hwInfo);
 
     EXPECT_EQ(2048u, hwCaps.image3DMaxHeight);
     EXPECT_EQ(2048u, hwCaps.image3DMaxWidth);

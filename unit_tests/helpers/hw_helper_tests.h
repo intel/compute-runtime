@@ -40,4 +40,4 @@ class HwHelperTest : public testing::Test {
     HardwareInfo hwInfo;
 };
 
-void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper);
+void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo);

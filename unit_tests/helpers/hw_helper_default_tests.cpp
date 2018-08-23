@@ -23,10 +23,10 @@
 #include "runtime/helpers/hw_info.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
 
-void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper) {
+void testDefaultImplementationOfSetupHardwareCapabilities(HwHelper &hwHelper, const HardwareInfo &hwInfo) {
     HardwareCapabilities hwCaps = {0};
 
-    hwHelper.setupHardwareCapabilities(&hwCaps);
+    hwHelper.setupHardwareCapabilities(&hwCaps, hwInfo);
 
     EXPECT_EQ(16384u, hwCaps.image3DMaxHeight);
     EXPECT_EQ(16384u, hwCaps.image3DMaxWidth);

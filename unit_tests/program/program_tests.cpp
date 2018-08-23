@@ -2535,7 +2535,7 @@ TEST_F(ProgramTests, givenNewProgramTheStatelessToStatefulBufferOffsetOtimizatio
     auto it = internalOpts.find("-cl-intel-has-buffer-offset-arg ");
 
     HardwareCapabilities hwCaps = {0};
-    HwHelper::get(prog.getDevice(0).getHardwareInfo().pPlatform->eRenderCoreFamily).setupHardwareCapabilities(&hwCaps);
+    HwHelper::get(prog.getDevice(0).getHardwareInfo().pPlatform->eRenderCoreFamily).setupHardwareCapabilities(&hwCaps, prog.getDevice(0).getHardwareInfo());
     if (hwCaps.isStatelesToStatefullWithOffsetSupported) {
         EXPECT_NE(std::string::npos, it);
     } else {

@@ -35,7 +35,7 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename Family>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
     caps->image3DMaxHeight = 16384;
     caps->image3DMaxWidth = 16384;
     //With statefull messages we have an allocation cap of 4GB

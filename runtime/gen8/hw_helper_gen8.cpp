@@ -38,7 +38,7 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
 }
 
 template <>
-void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps) {
+void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
     caps->image3DMaxHeight = 2048;
     caps->image3DMaxWidth = 2048;
     caps->maxMemAllocSize = 2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte;
