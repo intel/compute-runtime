@@ -26,6 +26,7 @@ set(RUNTIME_SRCS_OS_INTERFACE_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_settings_manager.h
   ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_context.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/os_library.h

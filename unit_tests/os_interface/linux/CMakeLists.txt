@@ -40,6 +40,7 @@ set(IGDRCL_SRCS_tests_os_interface_linux
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_os_time_linux.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mock_performance_counters_linux.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/os_context_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_interface_linux_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/os_time_test.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters_linux_tests.cpp

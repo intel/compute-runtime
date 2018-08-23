@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +20,25 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "runtime/os_interface/os_interface.h"
-#include "gtest/gtest.h"
+#include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/os_interface.h"
 
-namespace OCLRT {
-
-TEST(OsInterfaceTest, GivenLinuxWhenare64kbPagesEnabledThenFalse) {
-    EXPECT_FALSE(OSInterface::are64kbPagesEnabled());
-}
-
-TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsReturned) {
+TEST(OsContextTest, givenWddmWhenCreateOsContextBeforeInitWddmThenOsContextIsNotInitialized) {
+    auto wddm = new WddmMock;
     OSInterface osInterface;
-    EXPECT_EQ(0u, osInterface.getDeviceHandle());
+    osInterface.get()->setWddm(wddm);
+    auto osContext = std::make_unique<OsContext>(osInterface);
+    EXPECT_NE(nullptr, osContext->get());
+    EXPECT_FALSE(osContext->get()->isInitialized());
 }
-} // namespace OCLRT
+
+TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitialized) {
+    auto wddm = new WddmMock;
+    OSInterface osInterface;
+    osInterface.get()->setWddm(wddm);
+    wddm->init();
+    auto osContext = std::make_unique<OsContext>(osInterface);
+    EXPECT_NE(nullptr, osContext->get());
+    EXPECT_TRUE(osContext->get()->isInitialized());
+}

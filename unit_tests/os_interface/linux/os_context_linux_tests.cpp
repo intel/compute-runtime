@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,17 +20,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "gtest/gtest.h"
 
 namespace OCLRT {
 
-TEST(OsInterfaceTest, GivenLinuxWhenare64kbPagesEnabledThenFalse) {
-    EXPECT_FALSE(OSInterface::are64kbPagesEnabled());
-}
-
-TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsReturned) {
+TEST(OsContextTest, WhenOsContextIsCreatedThenImplIsAvailable) {
     OSInterface osInterface;
-    EXPECT_EQ(0u, osInterface.getDeviceHandle());
+    auto osContext2 = std::make_unique<OsContext>(osInterface);
+    EXPECT_NE(nullptr, osContext2->get());
 }
 } // namespace OCLRT

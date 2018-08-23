@@ -23,20 +23,29 @@
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
+#include "runtime/os_interface/windows/os_interface.h"
 
 namespace OCLRT {
-OsContextWin::OsContextWin(Wddm &wddm) : wddm(wddm) {
+
+OsContextWin::OsContextImpl(Wddm &wddm) : wddm(wddm) {
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddm.createContext(context))
+    if (!wddmInterface) {
         return;
+    }
+    if (!wddm.createContext(context)) {
+        return;
+    }
     if (wddmInterface->hwQueuesSupported()) {
-        if (!wddmInterface->createHwQueue(wddm.getPreemptionMode(), *this))
+        if (!wddmInterface->createHwQueue(wddm.getPreemptionMode(), *this)) {
             return;
+        }
     }
     initialized = wddmInterface->createMonitoredFence(*this);
 };
-OsContextWin::~OsContextWin() {
-    wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
+OsContextWin::~OsContextImpl() {
+    if (wddm.getWddmInterface()) {
+        wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
+    }
     wddm.destroyContext(context);
 }
 
@@ -47,4 +56,10 @@ void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cp
     monitoredFence.cpuAddress = cpuAddress;
     monitoredFence.gpuAddress = gpuAddress;
 }
+
+OsContext::OsContext(OSInterface &osInterface) {
+    osContextImpl = std::make_unique<OsContextWin>(*osInterface.get()->getWddm());
+}
+OsContext::~OsContext() = default;
+
 } // namespace OCLRT

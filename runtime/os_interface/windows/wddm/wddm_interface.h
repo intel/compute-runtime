@@ -20,6 +20,7 @@
 * OTHER DEALINGS IN THE SOFTWARE.
 */
 #pragma once
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include <d3dkmthk.h>
 #include <cstdint>
@@ -27,8 +28,10 @@
 
 namespace OCLRT {
 class Gdi;
-class OsContextWin;
 class Wddm;
+
+using OsContextWin = OsContext::OsContextImpl;
+
 class WddmInterface {
   public:
     WddmInterface(Wddm &wddm) : wddm(wddm){};

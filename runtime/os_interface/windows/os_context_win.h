@@ -21,18 +21,20 @@
  */
 
 #pragma once
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/os_interface/windows/windows_defs.h"
 #include <d3dkmthk.h>
 
 namespace OCLRT {
-class Wddm;
 
-class OsContextWin {
+class Wddm;
+using OsContextWin = OsContext::OsContextImpl;
+class OsContext::OsContextImpl {
   public:
-    OsContextWin() = delete;
-    OsContextWin(Wddm &wddm);
-    ~OsContextWin();
+    OsContextImpl() = delete;
+    OsContextImpl(Wddm &wddm);
+    ~OsContextImpl();
     D3DKMT_HANDLE getContext() const {
         return context;
     }

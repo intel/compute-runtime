@@ -21,6 +21,7 @@
  */
 
 #pragma once
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include "runtime/os_interface/windows/windows_defs.h"
 #include "runtime/os_interface/windows/wddm/wddm_interface.h"
@@ -45,10 +46,11 @@ class Gdi;
 class Gmm;
 class LinearStream;
 class GmmPageTableMngr;
-class OsContextWin;
 struct FeatureTable;
 struct WorkaroundTable;
 struct KmDafListener;
+
+using OsContextWin = OsContext::OsContextImpl;
 
 enum class WddmInterfaceVersion {
     Wddm20 = 20,
