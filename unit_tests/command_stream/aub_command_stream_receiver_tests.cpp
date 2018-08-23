@@ -781,6 +781,17 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAllocat
     EXPECT_FALSE(aubCsr->writeMemory(allocationView));
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAUBDumpCaptureFileNameHasBeenSpecifiedThenItShouldBeUsedToOpenTheFileWithAubCapture) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.AUBDumpCaptureFileName.set("file_name.aub");
+
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(static_cast<MockAubCsr<FamilyType> *>(AUBCommandStreamReceiver::create(*platformDevices[0], "", true, *pDevice->executionEnvironment)));
+    EXPECT_NE(nullptr, aubCsr);
+
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STREQ(DebugManager.flags.AUBDumpCaptureFileName.get().c_str(), aubCsr->getFileName().c_str());
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenAubSubCaptureIsActivatedThenFileIsOpened) {
     DebugManagerStateRestore stateRestore;
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(*platformDevices[0], "", false, *pDevice->executionEnvironment));

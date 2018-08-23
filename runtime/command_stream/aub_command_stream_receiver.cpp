@@ -51,6 +51,10 @@ CommandStreamReceiver *AUBCommandStreamReceiver::create(const HardwareInfo &hwIn
     filePath.append(Os::fileSeparator);
     filePath.append(fileName);
 
+    if (DebugManager.flags.AUBDumpCaptureFileName.get() != "unk") {
+        filePath.assign(DebugManager.flags.AUBDumpCaptureFileName.get());
+    }
+
     if (hwInfo.pPlatform->eRenderCoreFamily >= IGFX_MAX_CORE) {
         DEBUG_BREAK_IF(!false);
         return nullptr;
