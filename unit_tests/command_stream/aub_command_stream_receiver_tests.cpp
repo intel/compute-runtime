@@ -1303,6 +1303,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddPatc
     ResidencyContainer allocationsForResidency;
 
     EXPECT_CALL(*aubCsr, addPatchInfoComments()).Times(0);
+
     aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
 }
 

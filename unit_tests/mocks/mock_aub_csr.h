@@ -43,8 +43,12 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     void initProgrammingFlags() override {
         initProgrammingFlagsCalled = true;
     }
+    void pollForCompletion(EngineType engineType) override {
+        pollForCompletionCalled = true;
+    }
     bool flushBatchedSubmissionsCalled = false;
     bool initProgrammingFlagsCalled = false;
+    bool pollForCompletionCalled = false;
 
     void initFile(const std::string &fileName) override {
         fileIsOpen = true;

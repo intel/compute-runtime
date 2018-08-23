@@ -477,8 +477,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         submitLRCA(engineType, contextDescriptor);
     }
 
+    pollForCompletion(engineType);
     if (this->standalone) {
-        pollForCompletion(engineType);
         *this->tagAddress = this->peekLatestSentTaskCount();
     }
 

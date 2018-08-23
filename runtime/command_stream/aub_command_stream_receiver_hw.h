@@ -44,7 +44,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
     // Family specific version
     void submitLRCA(EngineType engineType, const MiContextDescriptorReg &contextDescriptor);
-    void pollForCompletion(EngineType engineType);
+    MOCKABLE_VIRTUAL void pollForCompletion(EngineType engineType);
     void initGlobalMMIO();
     void initEngineMMIO(EngineType engineType);
 
