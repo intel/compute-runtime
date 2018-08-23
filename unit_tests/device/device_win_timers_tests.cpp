@@ -32,11 +32,11 @@ namespace ULT {
 
 typedef ::testing::Test MockOSTimeWinTest;
 
-HWTEST_F(MockOSTimeWinTest, DynamicResolution) {
+TEST_F(MockOSTimeWinTest, DynamicResolution) {
     auto wddmMock = std::unique_ptr<WddmMock>(new WddmMock());
     auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
-    bool error = wddmMock->init<FamilyType>();
+    bool error = wddmMock->init();
     EXPECT_EQ(1u, wddmMock->createContextResult.called);
 
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));

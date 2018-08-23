@@ -68,3 +68,8 @@ GEN8TEST_F(HwHelperTestBdw, givenGen8PlatformWhenSetupHardwareCapabilitiesIsCall
     EXPECT_EQ(2 * MemoryConstants::gigaByte - 8 * MemoryConstants::megaByte, hwCaps.maxMemAllocSize);
     EXPECT_FALSE(hwCaps.isStatelesToStatefullWithOffsetSupported);
 }
+
+GEN8TEST_F(HwHelperTestBdw, whenGetConfigureAddressSpaceModeThenReturnZero) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getConfigureAddressSpaceMode());
+}

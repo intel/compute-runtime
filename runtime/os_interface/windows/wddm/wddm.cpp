@@ -30,6 +30,7 @@
 #include "runtime/gmm_helper/page_table_mngr.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/hw_info_config.h"
+#include "runtime/os_interface/windows/gdi_interface.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/windows/registry_reader.h"
@@ -892,5 +893,51 @@ MonitoredFence &Wddm::getMonitoredFence() { return osContext->getMonitoredFence(
 
 D3DKMT_HANDLE Wddm::getOsDeviceContext() const {
     return osContext->getContext();
+}
+
+bool Wddm::configureDeviceAddressSpace() {
+    SYSTEM_INFO sysInfo;
+    Wddm::getSystemInfo(&sysInfo);
+    maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
+
+    return gmmMemory->configureDevice(adapter, device, gdi->escape,
+                                      maximumApplicationAddress + 1u,
+                                      featureTable->ftrL3IACoherency,
+                                      gfxPartition, minAddress);
+}
+
+bool Wddm::init() {
+    if (gdi != nullptr && gdi->isInitialized() && !initialized) {
+        if (!openAdapter()) {
+            return false;
+        }
+        if (!queryAdapterInfo()) {
+            return false;
+        }
+
+        if (!wddmInterface) {
+            if (featureTable->ftrWddmHwQueues) {
+                wddmInterface = std::make_unique<WddmInterface23>(*this);
+            } else {
+                wddmInterface = std::make_unique<WddmInterface20>(*this);
+            }
+        }
+
+        if (!createDevice()) {
+            return false;
+        }
+        if (!createPagingQueue()) {
+            return false;
+        }
+        if (!gmmMemory) {
+            gmmMemory.reset(GmmMemory::create());
+        }
+        if (!configureDeviceAddressSpace()) {
+            return false;
+        }
+        osContext = std::make_unique<OsContextWin>(*this);
+        initialized = osContext->isInitialized();
+    }
+    return initialized;
 }
 } // namespace OCLRT

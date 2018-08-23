@@ -74,17 +74,13 @@ set(RUNTIME_SRCS_OS_INTERFACE_WINDOWS
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm_interface.cpp
 )
 
 if(WIN32)
-  file(GLOB RUNTIME_SRCS_WDDM_INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/wddm/wddm2[0-9]\.*")
-
   target_sources(${NEO_STATIC_LIB_NAME} PRIVATE
     ${RUNTIME_SRCS_OS_INTERFACE_WINDOWS}
-    ${RUNTIME_SRCS_WDDM_INTERFACE}
   )
 endif()
 

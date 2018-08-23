@@ -98,10 +98,8 @@ class Wddm {
     MOCKABLE_VIRTUAL void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type);
     MOCKABLE_VIRTUAL int virtualFree(void *ptr, size_t size, unsigned long flags);
 
-    template <typename GfxFamily>
     bool configureDeviceAddressSpace();
 
-    template <typename GfxFamily>
     bool init();
 
     bool isInitialized() const {

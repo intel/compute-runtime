@@ -47,9 +47,8 @@ class WddmMemoryManagerFixture : public GmmEnvironmentFixture, public GdiDllFixt
         GmmEnvironmentFixture::TearDown();
     }
 
-    template <typename FamiltyType>
     void SetUpMm() {
-        EXPECT_TRUE(wddm->init<FamiltyType>());
+        EXPECT_TRUE(wddm->init());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
@@ -75,9 +74,8 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         wddm->gdi.reset(gdi);
     }
 
-    template <typename FamiltyType>
     void SetUpMm() {
-        EXPECT_TRUE(wddm->init<FamiltyType>());
+        EXPECT_TRUE(wddm->init());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
@@ -138,9 +136,8 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         ASSERT_NE(nullptr, wddm);
     }
 
-    template <typename FamiltyType>
     void SetUpMm() {
-        wddm->init<FamiltyType>();
+        wddm->init();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm.get());
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
@@ -167,9 +164,8 @@ class BufferWithWddmMemory : public ::testing::Test,
         tmp = context.getMemoryManager();
     }
 
-    template <typename FamiltyType>
     void SetUpMm() {
-        EXPECT_TRUE(wddm->init<FamiltyType>());
+        EXPECT_TRUE(wddm->init());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
@@ -197,7 +193,7 @@ class WddmMemoryManagerSimpleTest : public MockWddmMemoryManagerFixture, public 
   public:
     void SetUp() override {
         MockWddmMemoryManagerFixture::SetUp();
-        wddm->init<DEFAULT_TEST_FAMILY_NAME>();
+        wddm->init();
     }
     void TearDown() override {
         MockWddmMemoryManagerFixture::TearDown();

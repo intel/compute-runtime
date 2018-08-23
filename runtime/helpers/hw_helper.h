@@ -45,6 +45,7 @@ class HwHelper {
     virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
+    virtual uint32_t getConfigureAddressSpaceMode() = 0;
 
   protected:
     HwHelper(){};
@@ -93,6 +94,8 @@ class HwHelperHw : public HwHelper {
     void setupHardwareCapabilities(HardwareCapabilities *caps) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) override;
+
+    uint32_t getConfigureAddressSpaceMode() override;
 
   private:
     HwHelperHw(){};

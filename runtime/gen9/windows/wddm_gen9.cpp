@@ -21,18 +21,12 @@
  */
 
 #include "hw_cmds.h"
-#include "runtime/os_interface/windows/wddm/wddm.h"
-#include "runtime/os_interface/windows/wddm/wddm.inl"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.inl"
 
 namespace OCLRT {
 
 typedef SKLFamily Family;
-
-template bool Wddm::configureDeviceAddressSpace<Family>();
-
-template bool Wddm::init<Family>();
 
 template class WddmEngineMapper<SKLFamily>;
 } // namespace OCLRT

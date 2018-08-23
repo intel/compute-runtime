@@ -41,7 +41,6 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         WddmFixtureWithMockGdiDll::TearDown();
     }
 
-    template <typename GfxFamily>
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         auto regReader = new RegistryReaderMock();
@@ -49,63 +48,63 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->setPreemptionMode(preemptionMode);
-        wddm->init<GfxFamily>();
+        wddm->init();
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;
     HardwareInfo hwInfoTest;
 };
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 1u;
-    createAndInitWddm<FamilyType>(1u);
+    createAndInitWddm(1u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOff) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOff) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(1u);
+    createAndInitWddm(1u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionEnabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
     unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
+    createAndInitWddm(0u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagDontForceWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
     DebugManager.flags.ForcePreemptionMode.set(-1); // dont force
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
+    createAndInitWddm(0u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeySetThenSetGpuTimeoutFlagOn) {
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 1u;
-    createAndInitWddm<FamilyType>(1u);
+    createAndInitWddm(1u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }
 
-HWTEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
+TEST_F(WddmPreemptionTests, givenDevicePreemptionDisabledDebugFlagForcePreemptionWhenPreemptionRegKeyNotSetThenSetGpuTimeoutFlagOff) {
     DebugManager.flags.ForcePreemptionMode.set(static_cast<int32_t>(PreemptionMode::MidThread)); // force preemption
     hwInfoTest.capabilityTable.defaultPreemptionMode = PreemptionMode::Disabled;
     unsigned int expectedVal = 0u;
-    createAndInitWddm<FamilyType>(0u);
+    createAndInitWddm(0u);
     EXPECT_EQ(expectedVal, getMockCreateDeviceParamsFcn().Flags.DisableGpuTimeout);
     EXPECT_EQ(expectedVal, getCreateContextDataFcn()->Flags.DisableGpuTimeout);
 }

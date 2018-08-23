@@ -59,4 +59,8 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     return SipKernelType::DbgCsr;
 }
 
+template <typename Family>
+uint32_t HwHelperHw<Family>::getConfigureAddressSpaceMode() {
+    return 0u;
+}
 } // namespace OCLRT

@@ -80,3 +80,8 @@ GEN10TEST_F(HwHelperTestCnl, givenGen10PlatformWhenSetupHardwareCapabilitiesIsCa
     // Test default method implementation
     testDefaultImplementationOfSetupHardwareCapabilities(helper);
 }
+
+GEN10TEST_F(HwHelperTestCnl, whenGetConfigureAddressSpaceModeThenReturnZero) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(0u, helper.getConfigureAddressSpaceMode());
+}

@@ -95,14 +95,13 @@ class WddmMock : public Wddm {
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
 
-    template <typename GfxFamily>
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
         //create context cant be called before configureDeviceAddressSpace
         if (createContextResult.called > 0) {
             return configureDeviceAddressSpaceResult.success = false;
         } else {
-            return configureDeviceAddressSpaceResult.success = Wddm::configureDeviceAddressSpace<GfxFamily>();
+            return configureDeviceAddressSpaceResult.success = Wddm::configureDeviceAddressSpace();
         }
     }
 

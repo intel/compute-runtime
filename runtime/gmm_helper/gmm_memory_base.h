@@ -33,11 +33,15 @@ class GmmMemoryBase {
                                                       GMM_ESCAPE_HANDLE hDevice,
                                                       GMM_ESCAPE_FUNC_TYPE pfnEscape,
                                                       GMM_GFX_SIZE_T SvmSize,
-                                                      BOOLEAN FaultableSvm,
-                                                      BOOLEAN SparseReady,
-                                                      BOOLEAN BDWL3Coherency,
-                                                      GMM_GFX_SIZE_T SizeOverride,
-                                                      GMM_GFX_SIZE_T SlmGfxSpaceReserve);
+                                                      BOOLEAN BDWL3Coherency);
+
+    virtual bool configureDevice(GMM_ESCAPE_HANDLE hAdapter,
+                                 GMM_ESCAPE_HANDLE hDevice,
+                                 GMM_ESCAPE_FUNC_TYPE pfnEscape,
+                                 GMM_GFX_SIZE_T SvmSize,
+                                 BOOLEAN BDWL3Coherency,
+                                 GMM_GFX_PARTITIONING &gfxPartition,
+                                 uintptr_t &minAddress);
 
   protected:
     GmmMemoryBase();

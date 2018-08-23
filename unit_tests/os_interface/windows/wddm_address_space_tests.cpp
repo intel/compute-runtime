@@ -70,12 +70,12 @@ class WddmMockReserveAddress : public WddmMock {
 
 using WddmReserveAddressTest = Test<GmmEnvironmentFixture>;
 
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
+TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserveAddress) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init<FamilyType>();
+    bool ret = wddm->init();
     EXPECT_TRUE(ret);
 
     wddm->returnGood = 1;
@@ -87,12 +87,12 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsSuccessfulThenReturnReserve
     wddm->releaseReservedAddress(reserve);
 }
 
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
+TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init<FamilyType>();
+    bool ret = wddm->init();
     EXPECT_TRUE(ret);
     uintptr_t expectedReserve = 0;
     ret = wddm->reserveValidAddressRange(size, reserve);
@@ -100,12 +100,12 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsNullThenReturnNull) {
     EXPECT_EQ(expectedReserve, reinterpret_cast<uintptr_t>(reserve));
 }
 
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
+TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThenReturnSecond) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init<FamilyType>();
+    bool ret = wddm->init();
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 1;
@@ -117,12 +117,12 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondSuccessfulThen
     wddm->releaseReservedAddress(reserve);
 }
 
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
+TEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThenReturnThird) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init<FamilyType>();
+    bool ret = wddm->init();
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 2;
@@ -134,12 +134,12 @@ HWTEST_F(WddmReserveAddressTest, givenWddmWhenSecondIsInvalidThirdSuccessfulThen
     wddm->releaseReservedAddress(reserve);
 }
 
-HWTEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
+TEST_F(WddmReserveAddressTest, givenWddmWhenFirstIsInvalidSecondNullThenReturnSecondNull) {
     std::unique_ptr<WddmMockReserveAddress> wddm(new WddmMockReserveAddress());
     size_t size = 0x1000;
     void *reserve = nullptr;
 
-    bool ret = wddm->init<FamilyType>();
+    bool ret = wddm->init();
     EXPECT_TRUE(ret);
 
     wddm->returnInvalidCount = 2;

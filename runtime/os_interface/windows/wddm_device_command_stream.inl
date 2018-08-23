@@ -75,7 +75,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
 
-    bool success = this->wddm->init<GfxFamily>();
+    bool success = this->wddm->init();
     DEBUG_BREAK_IF(!success);
 }
 
