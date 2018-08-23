@@ -33,6 +33,9 @@ extern unsigned int numBaseObjects;
 void MemoryLeakListener::OnTestStart(const TestInfo &testInfo) {
     numInitialBaseObjects = numBaseObjects;
     MemoryManagement::logTraces = OCLRT::captureCallStacks;
+    if (OCLRT::captureCallStacks) {
+        MemoryManagement::detailedAllocationLoggingActive = true;
+    }
     MemoryManagement::fastLeakDetectionMode = 1;
 }
 
