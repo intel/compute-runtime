@@ -117,4 +117,5 @@ returnType getCmdQueueProperties(const cl_queue_properties *properties,
     }
     return retVal;
 }
+bool processExtraTokens(Device *&device, const cl_queue_properties *property);
 } // namespace OCLRT

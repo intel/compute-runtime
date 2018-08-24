@@ -3879,7 +3879,8 @@ cl_command_queue CL_API_CALL clCreateCommandQueueWithProperties(cl_context conte
         if (tokenValue != CL_QUEUE_PROPERTIES &&
             tokenValue != CL_QUEUE_SIZE &&
             tokenValue != CL_QUEUE_PRIORITY_KHR &&
-            tokenValue != CL_QUEUE_THROTTLE_KHR) {
+            tokenValue != CL_QUEUE_THROTTLE_KHR &&
+            !processExtraTokens(pDevice, propertiesAddress)) {
             err.set(CL_INVALID_VALUE);
             return commandQueue;
         }
