@@ -36,6 +36,7 @@ class Device;
 class DeferredDeleter;
 class GraphicsAllocation;
 class CommandStreamReceiver;
+class TimestampPacket;
 
 struct HwPerfCounter;
 struct HwTimeStamps;
@@ -192,6 +193,7 @@ class MemoryManager {
 
     TagAllocator<HwTimeStamps> *getEventTsAllocator();
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
+    TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
 
     std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
 
@@ -255,6 +257,7 @@ class MemoryManager {
     std::recursive_mutex mtx;
     std::unique_ptr<TagAllocator<HwTimeStamps>> profilingTimeStampAllocator;
     std::unique_ptr<TagAllocator<HwPerfCounter>> perfCounterAllocator;
+    std::unique_ptr<TagAllocator<TimestampPacket>> timestampPacketAllocator;
     bool force32bitAllocations = false;
     bool virtualPaddingAvailable = false;
     GraphicsAllocation *paddingAllocation = nullptr;

@@ -33,6 +33,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/program/kernel_info.h"
@@ -124,6 +125,8 @@ inline cl_uint computeDimensions(const size_t workItems[3]) {
 template <typename GfxFamily>
 class GpgpuWalkerHelper {
   public:
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
     static void addAluReadModifyWriteRegister(
         LinearStream *pCommandStream,
         uint32_t aluRegister,
@@ -199,9 +202,16 @@ class GpgpuWalkerHelper {
         KernelOperation **blockedCommandsData,
         HwTimeStamps *hwTimeStamps,
         OCLRT::HwPerfCounter *hwPerfCounter,
+        TimestampPacket *timestampPacket,
         PreemptionMode preemptionMode,
         bool blockQueue,
         uint32_t commandType = 0);
+
+    static void setupTimestampPacket(
+        LinearStream *cmdStream,
+        WALKER_HANDLE walkerHandle,
+        TimestampPacket *timestampPacket,
+        TimestampPacket::WriteOperationType writeOperationType);
 
     static void dispatchScheduler(
         CommandQueue &commandQueue,
@@ -214,6 +224,7 @@ class GpgpuWalkerHelper {
 
 template <typename GfxFamily>
 struct EnqueueOperation {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
     static size_t getTotalSizeRequiredCS(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo);
     static size_t getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel);
 
@@ -238,6 +249,9 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
     if (parentKernel) {
         SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
+    }
+    if (DebugManager.flags.EnableTimestampPacket.get()) {
+        expectedSizeCS += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
     }
     return commandQueue.getCS(expectedSizeCS);
 }

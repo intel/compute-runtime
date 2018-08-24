@@ -867,7 +867,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, blockingFlushTaskWithOnlyPipeContr
 
     // Force a PIPE_CONTROL through a blocking flag
     auto blocking = true;
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
     auto &commandStreamCSR = commandStreamReceiver->getCS();
     commandStreamReceiver->lastSentCoherencyRequest = 0;
 
@@ -914,7 +914,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskBlockingHasPipeControlWit
 
     size_t pipeControlCount = static_cast<CommandStreamReceiverHw<FamilyType> &>(commandStreamReceiver).getRequiredPipeControlSize() / sizeof(PIPE_CONTROL);
 
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = true;
@@ -973,7 +973,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelRequiringDCFlush
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
 
     commandQueue.enqueueReadBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 1, &blockingEvent, 0);
 
@@ -1012,7 +1012,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenBlockedKernelNotRequiringDCFl
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
 
     auto &commandStreamCSR = commandStreamReceiver.getCS();
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
 
     commandQueue.enqueueWriteBuffer(buffer, CL_FALSE, 0, sizeof(tempBuffer), dstBuffer, 1, &blockingEvent, 0);
 
@@ -1040,7 +1040,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, FlushTaskWithTaskCSPassedAsCommand
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
     auto deviceEngineType = pDevice->getEngineType();
 
     DispatchFlags dispatchFlags;
@@ -1174,7 +1174,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenPowerOfTwo
     size_t GWS = 1024;
     CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
     commandQueue.enqueueKernel(kernel, 1, nullptr, &GWS, nullptr, 0, nullptr, nullptr);
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
     parseCommands<FamilyType>(commandStreamTask, 0);
     auto itorCmd = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(itorCmd, cmdList.end());
@@ -1251,7 +1251,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapWhenFinishIsCal
 
     EXPECT_EQ(0u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
     parseCommands<FamilyType>(commandStreamTask, 0);
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -1266,7 +1266,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenFlushedCal
     cl_event event = nullptr;
 
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-    auto &commandStreamTask = commandQueue.getCS();
+    auto &commandStreamTask = commandQueue.getCS(1024);
 
     size_t tempBuffer[] = {0, 1, 2};
     size_t dstBuffer[] = {5, 5, 5};

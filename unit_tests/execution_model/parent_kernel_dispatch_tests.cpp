@@ -64,6 +64,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
             &blockedCommandsData,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -119,6 +120,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
             &blockedCommandsData,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -142,6 +144,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
@@ -177,6 +180,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
@@ -276,6 +280,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
             &blockedCommandsData,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             true);
 
@@ -307,6 +312,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),
@@ -365,6 +371,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
             &blockedCommandsData,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -398,6 +405,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             pDevice->getPreemptionMode(),

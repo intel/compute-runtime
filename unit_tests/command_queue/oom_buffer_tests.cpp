@@ -109,7 +109,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
 HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -133,7 +133,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueCopyBuffer) {
 HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -157,7 +157,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueFillBuffer) {
 HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -181,7 +181,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueReadBuffer) {
 HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -205,7 +205,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBuffer) {
 HWTEST_P(OOMCommandQueueBufferTest, enqueueWriteBufferRect) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -230,7 +230,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelHelloWorld) {
     typedef HelloWorldKernelFixture KernelFixture;
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -260,7 +260,7 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
     typedef SimpleArgKernelFixture KernelFixture;
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();

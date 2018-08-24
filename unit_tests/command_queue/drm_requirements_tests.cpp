@@ -198,7 +198,7 @@ HWTEST_F(DrmRequirementsTests, csrNewCSSized) {
 
 TEST_F(DrmRequirementsTests, cqNewCS) {
     {
-        auto &cs = pCmdQ->getCS();
+        auto &cs = pCmdQ->getCS(1024);
         auto memoryManager = pDevice->getMemoryManager();
         EXPECT_NE(nullptr, cs.getCpuBase());
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());
@@ -208,7 +208,7 @@ TEST_F(DrmRequirementsTests, cqNewCS) {
         cs.replaceGraphicsAllocation(nullptr);
     }
     {
-        auto &cs = pCmdQ->getCS();
+        auto &cs = pCmdQ->getCS(1024);
         EXPECT_NE(nullptr, cs.getCpuBase());
         EXPECT_GT(cs.getMaxAvailableSpace(), 0u);
         ASSERT_NE(nullptr, cs.getGraphicsAllocation());

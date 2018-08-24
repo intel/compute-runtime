@@ -93,7 +93,7 @@ struct OOMCommandQueueImageTest : public DeviceFixture,
 HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -117,7 +117,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueCopyImage) {
 HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -141,7 +141,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueFillImage) {
 HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -165,7 +165,7 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueReadImage) {
 HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
     CommandQueueHw<FamilyType> cmdQ(context, pDevice, 0);
 
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();

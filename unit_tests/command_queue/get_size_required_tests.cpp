@@ -61,7 +61,7 @@ struct GetSizeRequiredTest : public CommandEnqueueFixture,
 };
 
 HWTEST_F(GetSizeRequiredTest, finish) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
     auto retVal = pCmdQ->finish(false);
@@ -74,7 +74,7 @@ HWTEST_F(GetSizeRequiredTest, finish) {
 }
 
 HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);
@@ -95,7 +95,7 @@ HWTEST_F(GetSizeRequiredTest, enqueueMarker) {
 }
 
 HWTEST_F(GetSizeRequiredTest, enqueueBarrierDoesntConsumeAnySpace) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
 
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 5, 15);

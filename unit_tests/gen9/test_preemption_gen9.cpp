@@ -124,13 +124,13 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     HardwareParse hwParserCmdQ;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwParserCsr.parseCommands<FamilyType>(csr.commandStream);
-    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS(1024));
     auto offsetCsr = csr.commandStream.getUsed();
-    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+    auto offsetCmdQ = pCmdQ->getCS(1024).getUsed();
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     pCmdQ->flush();
     hwParserCsr.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
-    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwParserCmdQ.parseCommands<FamilyType>(pCmdQ->getCS(1024), offsetCmdQ);
 
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end(), 0x2580u));
     EXPECT_EQ(0U, countMmio<FamilyType>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end(), 0x2600u));
@@ -159,10 +159,10 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
     hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024));
     hwCmdQParser.findHardwareCommands<FamilyType>();
     auto offsetCsr = csr.commandStream.getUsed();
-    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+    auto offsetCmdQ = pCmdQ->getCS(1024).getUsed();
 
     bool foundOne = false;
     for (auto it : hwCsrParser.lriList) {
@@ -201,7 +201,7 @@ GEN9TEST_F(Gen9ThreadGroupPreemptionEnqueueKernelTest, givenSecondEnqueueWithThe
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
     hwCsrParser.findHardwareCommands<FamilyType>();
 
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024), offsetCmdQ);
     hwCmdQParser.findHardwareCommands<FamilyType>();
 
     for (auto it : hwCsrParser.lriList) {
@@ -296,10 +296,10 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
     hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024));
     hwCmdQParser.findHardwareCommands<FamilyType>();
     auto offsetCsr = csr.commandStream.getUsed();
-    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+    auto offsetCmdQ = pCmdQ->getCS(1024).getUsed();
 
     bool foundOneLri = false;
     for (auto it : hwCsrParser.lriList) {
@@ -376,10 +376,10 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream);
     hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS());
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024));
     hwCmdQParser.findHardwareCommands<FamilyType>();
     auto offsetCsr = csr.commandStream.getUsed();
-    auto offsetCmdQ = pCmdQ->getCS().getUsed();
+    auto offsetCmdQ = pCmdQ->getCS(1024).getUsed();
 
     bool foundOneLri = false;
     for (auto it : hwCsrParser.lriList) {
@@ -425,7 +425,7 @@ GEN9TEST_F(Gen9MidThreadPreemptionEnqueueKernelTest, givenSecondEnqueueWithTheSa
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, off, gws, nullptr, 0, nullptr, nullptr);
     hwCsrParser.parseCommands<FamilyType>(csr.commandStream, offsetCsr);
     hwCsrParser.findHardwareCommands<FamilyType>();
-    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(), offsetCmdQ);
+    hwCmdQParser.parseCommands<FamilyType>(pCmdQ->getCS(1024), offsetCmdQ);
     hwCmdQParser.findHardwareCommands<FamilyType>();
 
     for (auto it : hwCsrParser.lriList) {

@@ -291,7 +291,7 @@ TEST_F(CommandQueueCommandStreamTest, GetCommandStreamReturnsValidObject) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue commandQueue(context.get(), pDevice, props);
 
-    auto &cs = commandQueue.getCS();
+    auto &cs = commandQueue.getCS(1024);
     EXPECT_NE(nullptr, &cs);
 }
 
@@ -326,7 +326,7 @@ TEST_F(CommandQueueCommandStreamTest, getCommandStreamCanRecycle) {
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, 0, 0};
     CommandQueue commandQueue(context.get(), pDevice, props);
 
-    auto &commandStreamInitial = commandQueue.getCS();
+    auto &commandStreamInitial = commandQueue.getCS(1024);
     size_t requiredSize = commandStreamInitial.getMaxAvailableSpace() + 42;
 
     const auto &commandStream = commandQueue.getCS(requiredSize);

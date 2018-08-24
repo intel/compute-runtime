@@ -269,6 +269,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
+            nullptr,
             preemption,
             blockQueue,
             commandType);

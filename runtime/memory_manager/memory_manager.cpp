@@ -30,6 +30,7 @@
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
 #include "runtime/helpers/options.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -37,8 +38,7 @@
 #include <algorithm>
 
 namespace OCLRT {
-constexpr size_t ProfilingTagCount = 512;
-constexpr size_t PerfCounterTagCount = 512;
+constexpr size_t TagCount = 512;
 
 struct ReusableAllocationRequirements {
     size_t requiredMinimalSize;
@@ -226,11 +226,16 @@ void MemoryManager::applyCommonCleanup() {
     if (this->paddingAllocation) {
         this->freeGraphicsMemory(this->paddingAllocation);
     }
-    if (profilingTimeStampAllocator)
+    if (profilingTimeStampAllocator) {
         profilingTimeStampAllocator->cleanUpResources();
-
-    if (perfCounterAllocator)
+    }
+    if (perfCounterAllocator) {
         perfCounterAllocator->cleanUpResources();
+    }
+
+    if (timestampPacketAllocator) {
+        timestampPacketAllocator->cleanUpResources();
+    }
 
     cleanAllocationList(-1, TEMPORARY_ALLOCATION);
     cleanAllocationList(-1, REUSABLE_ALLOCATION);
@@ -263,16 +268,23 @@ void MemoryManager::freeAllocationsList(uint32_t waitTaskCount, AllocationsList 
 
 TagAllocator<HwTimeStamps> *MemoryManager::getEventTsAllocator() {
     if (profilingTimeStampAllocator.get() == nullptr) {
-        profilingTimeStampAllocator.reset(new TagAllocator<HwTimeStamps>(this, ProfilingTagCount, MemoryConstants::cacheLineSize));
+        profilingTimeStampAllocator = std::make_unique<TagAllocator<HwTimeStamps>>(this, TagCount, MemoryConstants::cacheLineSize);
     }
     return profilingTimeStampAllocator.get();
 }
 
 TagAllocator<HwPerfCounter> *MemoryManager::getEventPerfCountAllocator() {
     if (perfCounterAllocator.get() == nullptr) {
-        perfCounterAllocator.reset(new TagAllocator<HwPerfCounter>(this, PerfCounterTagCount, MemoryConstants::cacheLineSize));
+        perfCounterAllocator = std::make_unique<TagAllocator<HwPerfCounter>>(this, TagCount, MemoryConstants::cacheLineSize);
     }
     return perfCounterAllocator.get();
+}
+
+TagAllocator<TimestampPacket> *MemoryManager::getTimestampPacketAllocator() {
+    if (timestampPacketAllocator.get() == nullptr) {
+        timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(this, TagCount, MemoryConstants::cacheLineSize);
+    }
+    return timestampPacketAllocator.get();
 }
 
 void MemoryManager::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {

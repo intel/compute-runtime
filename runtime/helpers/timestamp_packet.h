@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (c) 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -21,26 +21,39 @@
  */
 
 #pragma once
-#include "runtime/command_queue/command_queue.h"
+
 #include <cstdint>
+#include <array>
 
 namespace OCLRT {
+class TimestampPacket {
+  public:
+    enum class DataIndex : uint32_t {
+        ContextStart,
+        GlobalStart,
+        ContextEnd,
+        GlobalEnd,
+        Max
+    };
 
-struct CommandStreamFixture {
-    CommandStreamFixture(void)
-        : pCS(nullptr),
-          pCmdBuffer(nullptr) {
+    enum class WriteOperationType : uint32_t {
+        Start,
+        End
+    };
+
+    const uint32_t *pickDataPtr() const { return &(data[0]); }
+
+    uint64_t pickAddressForPipeControlWrite(WriteOperationType operationType) const {
+        auto index = WriteOperationType::Start == operationType
+                         ? static_cast<uint32_t>(DataIndex::ContextStart)
+                         : static_cast<uint32_t>(DataIndex::ContextEnd);
+
+        return reinterpret_cast<uint64_t>(&data[index]);
     }
 
-    void SetUp(CommandQueue *pCmdQ) {
-        pCS = &pCmdQ->getCS(1024);
-        pCmdBuffer = pCS->getCpuBase();
-    }
+    uint32_t pickDataValue(DataIndex index) const { return data[static_cast<uint32_t>(index)]; }
 
-    virtual void TearDown(void) {
-    }
-
-    LinearStream *pCS;
-    void *pCmdBuffer;
+  protected:
+    std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max)> data = {{1, 1, 1, 1}};
 };
 } // namespace OCLRT

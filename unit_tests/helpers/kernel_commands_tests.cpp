@@ -116,7 +116,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programMediaInterfaceDescriptorL
     typedef typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename FamilyType::MEDIA_STATE_FLUSH MEDIA_STATE_FLUSH;
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto usedBefore = commandStream.getUsed();
 
     KernelCommandsHelper<FamilyType>::sendMediaInterfaceDescriptorLoad(commandStream,
@@ -133,7 +133,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, programMediaStateFlushResourceUs
     typedef typename FamilyType::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename FamilyType::MEDIA_STATE_FLUSH MEDIA_STATE_FLUSH;
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto usedBefore = commandStream.getUsed();
 
     KernelCommandsHelper<FamilyType>::sendMediaStateFlush(commandStream,
@@ -303,7 +303,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
     const size_t localWorkSize = 256;
     const size_t localWorkSizes[3]{localWorkSize, 1, 1};
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
@@ -355,7 +355,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWithFourBindingTableE
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
 
     MockKernelWithInternals mockKernel(*pDevice, pContext);
 
@@ -389,7 +389,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelThatIsSchedulerWhenIn
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
 
     MockKernelWithInternals mockKernel(*pDevice, pContext);
 
@@ -425,7 +425,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWith100BindingTableEn
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     CommandQueueHw<FamilyType> cmdQ(pContext, pDevice, 0);
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
 
     MockKernelWithInternals mockKernel(*pDevice, pContext);
 
@@ -481,7 +481,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKern
     const size_t localWorkSizeZ = 4;
     const size_t localWorkSizes[3]{localWorkSizeX, localWorkSizeY, localWorkSizeZ};
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
@@ -551,7 +551,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
 
     const size_t localWorkSizes[3]{256, 1, 1};
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
@@ -707,7 +707,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
     for (uint32_t ssbaOffset : {0U, (uint32_t)sizeof(typename FamilyType::RENDER_SURFACE_STATE)}) {
         CommandQueueHw<FamilyType> cmdQ(nullptr, pDevice, 0);
 
-        auto &commandStream = cmdQ.getCS();
+        auto &commandStream = cmdQ.getCS(1024);
         auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
         auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
         auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);
@@ -917,7 +917,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, GivenKernelWithSamplersWhenIndir
     MockKernelWithInternals kernelInternals(*pDevice);
     const size_t localWorkSizes[3]{1, 1, 1};
 
-    auto &commandStream = cmdQ.getCS();
+    auto &commandStream = cmdQ.getCS(1024);
     auto &dsh = cmdQ.getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 8192);
     auto &ioh = cmdQ.getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 8192);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::SURFACE_STATE, 8192);

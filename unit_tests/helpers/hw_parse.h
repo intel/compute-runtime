@@ -97,7 +97,7 @@ struct HardwareParse {
         parseCommands<FamilyType>(commandStreamCSR, startCSRCS);
         startCSRCS = commandStreamCSR.getUsed();
 
-        auto &commandStream = commandQueue.getCS();
+        auto &commandStream = commandQueue.getCS(1024);
         if (previousCS != &commandStream) {
             startCS = 0;
         }

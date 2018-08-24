@@ -40,6 +40,11 @@ class MockCommandQueue : public CommandQueue {
         : CommandQueue(context, device, props) {
     }
 
+    LinearStream &getCS(size_t minRequiredSize) override {
+        requestedCmdStreamSize = minRequiredSize;
+        return CommandQueue::getCS(minRequiredSize);
+    }
+
     void releaseIndirectHeap(IndirectHeap::Type heap) override {
         releaseIndirectHeapCalled = true;
         CommandQueue::releaseIndirectHeap(heap);
@@ -63,6 +68,7 @@ class MockCommandQueue : public CommandQueue {
     size_t writeBufferOffset = 0;
     size_t writeBufferSize = 0;
     void *writeBufferPtr = nullptr;
+    size_t requestedCmdStreamSize = 0;
 };
 
 template <typename GfxFamily>

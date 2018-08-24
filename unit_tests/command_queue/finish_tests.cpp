@@ -95,7 +95,7 @@ HWTEST_F(FinishTest, doesntAddAPipecontrolToCQCommandStream) {
     ASSERT_EQ(CL_SUCCESS, retVal);
 
     // Check for PIPE_CONTROL
-    parseCommands<FamilyType>(pCmdQ->getCS());
+    parseCommands<FamilyType>(pCmdQ->getCS(1024));
     auto itorCmd = reverse_find<PIPE_CONTROL *>(cmdList.rbegin(), cmdList.rend());
     EXPECT_EQ(cmdList.rend(), itorCmd);
 }

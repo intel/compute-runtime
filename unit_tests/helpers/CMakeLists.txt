@@ -54,6 +54,7 @@ set(IGDRCL_SRCS_tests_helpers
   ${CMAKE_CURRENT_SOURCE_DIR}/string_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/TestDebugVariables.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/unit_test_helper.inl

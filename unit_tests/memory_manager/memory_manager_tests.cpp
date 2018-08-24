@@ -22,6 +22,7 @@
 
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/printf_handler.h"
@@ -576,6 +577,29 @@ TEST_F(MemoryAllocatorTest, getEventPerfCountAllocator) {
     EXPECT_NE(nullptr, allocator);
     TagAllocator<HwPerfCounter> *allocator2 = memoryManager->getEventPerfCountAllocator();
     EXPECT_EQ(allocator2, allocator);
+}
+
+TEST_F(MemoryAllocatorTest, givenTimestampPacketAllocatorWhenAskingForTagThenReturnValidObject) {
+    class MyMockMemoryManager : public OsAgnosticMemoryManager {
+      public:
+        using OsAgnosticMemoryManager::timestampPacketAllocator;
+        MyMockMemoryManager() : OsAgnosticMemoryManager(false){};
+    } myMockMemoryManager;
+
+    EXPECT_EQ(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
+
+    TagAllocator<TimestampPacket> *allocator = myMockMemoryManager.getTimestampPacketAllocator();
+    EXPECT_NE(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
+    EXPECT_EQ(allocator, myMockMemoryManager.timestampPacketAllocator.get());
+
+    TagAllocator<TimestampPacket> *allocator2 = myMockMemoryManager.getTimestampPacketAllocator();
+    EXPECT_EQ(allocator, allocator2);
+
+    auto node1 = allocator->getTag();
+    auto node2 = allocator->getTag();
+    EXPECT_NE(nullptr, node1);
+    EXPECT_NE(nullptr, node2);
+    EXPECT_NE(node1, node2);
 }
 
 TEST_F(MemoryAllocatorTest, givenMemoryManagerWhensetForce32BitAllocationsIsCalledWithTrueMutlipleTimesThenAllocatorIsReused) {

@@ -69,7 +69,7 @@ struct GetSizeRequiredImageTest : public CommandEnqueueFixture,
 };
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -119,7 +119,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyImage) {
 }
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -169,7 +169,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueCopyReadAndWriteImage) {
 }
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -223,7 +223,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageNonBlocking) {
 }
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -277,7 +277,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueReadImageBlocking) {
 }
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -331,7 +331,7 @@ HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageNonBlocking) {
 }
 
 HWTEST_F(GetSizeRequiredImageTest, enqueueWriteImageBlocking) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);

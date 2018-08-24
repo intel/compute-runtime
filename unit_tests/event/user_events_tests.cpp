@@ -741,7 +741,7 @@ TEST_F(EventTests, userEventsDoesntChangeCommandStreamWhileEnqueueButDoesAfterSi
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
 
-    auto &cs = pCmdQ->getCS();
+    auto &cs = pCmdQ->getCS(1024);
     auto used = cs.getSpace(0);
 
     //call NDR

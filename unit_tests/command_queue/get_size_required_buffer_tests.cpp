@@ -78,7 +78,7 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueFillBuffer) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -130,7 +130,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueFillBuffer) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -181,7 +181,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueCopyBuffer) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -233,7 +233,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferNonBlock
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -286,7 +286,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferBlocking
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -335,7 +335,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueWriteBufferNonBloc
 }
 
 HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
     auto &ioh = pCmdQ->getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
@@ -386,7 +386,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferBlocking) {
 
 HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     typedef HelloWorldKernelFixture KernelFixture;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
@@ -425,7 +425,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
 HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
     typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
     typedef SimpleArgKernelFixture KernelFixture;
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();

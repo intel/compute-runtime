@@ -331,7 +331,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     Context &getContext() { return *context; }
     Context *getContextPtr() { return context; }
 
-    LinearStream &getCS(size_t minRequiredSize = 1024u);
+    MOCKABLE_VIRTUAL LinearStream &getCS(size_t minRequiredSize);
     IndirectHeap &getIndirectHeap(IndirectHeap::Type heapType,
                                   size_t minRequiredSize);
 

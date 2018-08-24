@@ -83,7 +83,7 @@ struct OOMCommandQueueTest : public DeviceFixture,
 };
 
 HWTEST_P(OOMCommandQueueTest, finish) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -99,7 +99,7 @@ HWTEST_P(OOMCommandQueueTest, finish) {
 }
 
 HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
@@ -122,7 +122,7 @@ HWTEST_P(OOMCommandQueueTest, enqueueMarker) {
 }
 
 HWTEST_P(OOMCommandQueueTest, enqueueBarrier) {
-    auto &commandStream = pCmdQ->getCS();
+    auto &commandStream = pCmdQ->getCS(1024);
     auto &indirectHeap = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 10);
     auto usedBeforeCS = commandStream.getUsed();
     auto usedBeforeISH = indirectHeap.getUsed();
