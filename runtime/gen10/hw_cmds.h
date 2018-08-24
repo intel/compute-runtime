@@ -37,6 +37,7 @@ struct GEN10 {
 struct CNLFamily : public GEN10 {
     typedef CnlParse PARSE;
     typedef CNLFamily GfxFamily;
+    typedef GPGPU_WALKER WALKER_TYPE;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

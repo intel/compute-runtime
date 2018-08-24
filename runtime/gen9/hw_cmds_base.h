@@ -39,7 +39,7 @@ struct GEN9 {
 struct SKLFamily : public GEN9 {
     typedef SklParse PARSE;
     typedef SKLFamily GfxFamily;
-
+    typedef GPGPU_WALKER WALKER_TYPE;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

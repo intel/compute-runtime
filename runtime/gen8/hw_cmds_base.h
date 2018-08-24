@@ -37,6 +37,7 @@ struct GEN8 {
 struct BDWFamily : public GEN8 {
     typedef BdwParse PARSE;
     typedef BDWFamily GfxFamily;
+    typedef GPGPU_WALKER WALKER_TYPE;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

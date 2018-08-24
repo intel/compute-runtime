@@ -343,6 +343,7 @@ struct GENX {
         }
     } STATE_SIP;
 
+    typedef GPGPU_WALKER WALKER_TYPE;
     static GPGPU_WALKER cmdInitGpgpuWalker;
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static MEDIA_STATE_FLUSH cmdInitMediaStateFlush;

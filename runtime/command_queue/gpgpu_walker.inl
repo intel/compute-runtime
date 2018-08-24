@@ -121,32 +121,32 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     const size_t numWorkGroups[3],
     const size_t localWorkSizesIn[3],
     uint32_t simd) {
-    using GPGPU_WALKER = typename GfxFamily::GPGPU_WALKER;
-    GPGPU_WALKER *pCmd = static_cast<GPGPU_WALKER *>(pCmdData);
+    WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
 
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 
     auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
-    pCmd->setThreadWidthCounterMaximum((uint32_t)threadsPerWorkGroup);
+    pCmd->setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
 
-    pCmd->setThreadGroupIdXDimension((uint32_t)numWorkGroups[0]);
-    pCmd->setThreadGroupIdYDimension((uint32_t)numWorkGroups[1]);
-    pCmd->setThreadGroupIdZDimension((uint32_t)numWorkGroups[2]);
+    pCmd->setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
+    pCmd->setThreadGroupIdYDimension(static_cast<uint32_t>(numWorkGroups[1]));
+    pCmd->setThreadGroupIdZDimension(static_cast<uint32_t>(numWorkGroups[2]));
 
-    // compute RightExecutionMask
+    // compute executionMask - to tell which SIMD lines are active within thread
     auto remainderSimdLanes = localWorkSize & (simd - 1);
     uint64_t executionMask = (1ull << remainderSimdLanes) - 1;
     if (!executionMask)
         executionMask = ~executionMask;
 
-    pCmd->setRightExecutionMask((uint32_t)executionMask);
+    using SIMD_SIZE = typename WALKER_TYPE<GfxFamily>::SIMD_SIZE;
 
-    pCmd->setBottomExecutionMask((uint32_t)0xffffffff);
-    pCmd->setSimdSize((typename GPGPU_WALKER::SIMD_SIZE)(simd >> 4));
+    pCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
+    pCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
+    pCmd->setSimdSize(static_cast<SIMD_SIZE>(simd >> 4));
 
-    pCmd->setThreadGroupIdStartingX((uint32_t)startWorkGroups[0]);
-    pCmd->setThreadGroupIdStartingY((uint32_t)startWorkGroups[1]);
-    pCmd->setThreadGroupIdStartingResumeZ((uint32_t)startWorkGroups[2]);
+    pCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
+    pCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
+    pCmd->setThreadGroupIdStartingResumeZ(static_cast<uint32_t>(startWorkGroups[2]));
 
     return localWorkSize;
 }
@@ -442,7 +442,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
 
     OCLRT::LinearStream *commandStream = nullptr;
     OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
-    Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
+    auto parentKernel = multiDispatchInfo.peekParentKernel();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes
@@ -455,18 +455,21 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     // Allocate command stream and indirect heaps
     if (blockQueue) {
         using KCH = KernelCommandsHelper<GfxFamily>;
-        commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize), MemoryConstants::pageSize);
+        commandStream = new LinearStream(alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize),
+                                         MemoryConstants::pageSize);
         if (parentKernel) {
             uint32_t colorCalcSize = commandQueue.getContext().getDefaultDeviceQueue()->colorCalcStateSize;
 
-            commandQueue.allocateHeapMemory(IndirectHeap::DYNAMIC_STATE,
-                                            commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize(),
-                                            dsh);
+            commandQueue.allocateHeapMemory(
+                IndirectHeap::DYNAMIC_STATE,
+                commandQueue.getContext().getDefaultDeviceQueue()->getDshBuffer()->getUnderlyingBufferSize(),
+                dsh);
 
             dsh->getSpace(colorCalcSize);
             ioh = dsh;
             commandQueue.allocateHeapMemory(IndirectHeap::SURFACE_STATE,
-                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<IndirectHeap::SURFACE_STATE>(*parentKernel) +
+                                            KernelCommandsHelper<GfxFamily>::template getSizeRequiredForExecutionModel<
+                                                IndirectHeap::SURFACE_STATE>(*parentKernel) +
                                                 KCH::getTotalSizeRequiredSSH(multiDispatchInfo),
                                             ssh);
         } else {
@@ -476,8 +479,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         }
 
         using UniqueIH = std::unique_ptr<IndirectHeap>;
-        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh), UniqueIH(ssh),
-                                                   *commandQueue.getDevice().getMemoryManager());
+        *blockedCommandsData = new KernelOperation(std::unique_ptr<LinearStream>(commandStream), UniqueIH(dsh), UniqueIH(ioh),
+                                                   UniqueIH(ssh), *commandQueue.getDevice().getMemoryManager());
         if (parentKernel) {
             (*blockedCommandsData)->doNotFreeISH = true;
         }
@@ -491,21 +494,15 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
-    using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
-
     dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
 
-    const size_t offsetInterfaceDescriptorTable = dsh->getUsed();
     uint32_t interfaceDescriptorIndex = 0;
-    size_t totalInterfaceDescriptorTableSize = sizeof(INTERFACE_DESCRIPTOR_DATA);
-    size_t numDispatches = multiDispatchInfo.size();
-    totalInterfaceDescriptorTableSize *= numDispatches;
+    const size_t offsetInterfaceDescriptorTable = dsh->getUsed();
 
-    if (!parentKernel) {
-        dsh->getSpace(totalInterfaceDescriptorTableSize);
-    } else {
-        dsh->getSpace(commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset() - dsh->getUsed());
-    }
+    size_t totalInterfaceDescriptorTableSize = sizeof(INTERFACE_DESCRIPTOR_DATA);
+
+    getDefaultDshSpace(offsetInterfaceDescriptorTable, commandQueue, multiDispatchInfo, totalInterfaceDescriptorTableSize,
+                       parentKernel, dsh, commandStream);
 
     // Program media interface descriptor load
     KernelCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
@@ -545,7 +542,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         Vec3<size_t> elws = (dispatchInfo.getEnqueuedWorkgroupSize().x > 0) ? dispatchInfo.getEnqueuedWorkgroupSize() : lws;
 
         // Compute number of work groups
-        Vec3<size_t> twgs = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups() : generateWorkgroupsNumber(gws, lws);
+        Vec3<size_t> twgs = (dispatchInfo.getTotalNumberOfWorkgroups().x > 0) ? dispatchInfo.getTotalNumberOfWorkgroups()
+                                                                              : generateWorkgroupsNumber(gws, lws);
         Vec3<size_t> nwgs = (dispatchInfo.getNumberOfWorkgroups().x > 0) ? dispatchInfo.getNumberOfWorkgroups() : twgs;
 
         // Patch our kernel constants
@@ -582,6 +580,28 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         // Send our indirect object data
         size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};
 
+        dispatchProfilingPerfStartCommands(dispatchInfo, multiDispatchInfo, hwTimeStamps,
+                                           hwPerfCounter, commandStream, commandQueue);
+
+        dispatchWorkarounds(commandStream, commandQueue, kernel, true);
+
+        bool setupTimestampPacket = timestampPacket && (currentDispatchIndex == multiDispatchInfo.size() - 1);
+        if (setupTimestampPacket) {
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket,
+                                                               TimestampPacket::WriteOperationType::Start);
+        }
+
+        // Program the walker.  Invokes execution so all state should already be programmed
+        auto pWalkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream->getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
+        *pWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
+
+        if (setupTimestampPacket) {
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pWalkerCmd, timestampPacket,
+                                                               TimestampPacket::WriteOperationType::End);
+        }
+
+        auto idd = obtainInterfaceDescriptorData(pWalkerCmd);
+
         auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
             *commandStream,
             *dsh,
@@ -593,45 +613,16 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
             offsetInterfaceDescriptorTable,
             interfaceDescriptorIndex,
             preemptionMode,
-            nullptr);
-
-        if (&dispatchInfo == &*multiDispatchInfo.begin()) {
-            // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
-            if (hwTimeStamps != nullptr) {
-                GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
-            }
-            if (hwPerfCounter != nullptr) {
-                GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
-            }
-        }
-
-        PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
-
-        // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, true);
-
-        bool setupTimestampPacket = (timestampPacket && (currentDispatchIndex == numDispatches - 1));
-        if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::Start);
-        }
-
-        // Program the walker.  Invokes execution so all state should already be programmed
-        typedef typename GfxFamily::GPGPU_WALKER GPGPU_WALKER;
-        auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
-        *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
-
-        if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pGpGpuWalkerCmd, timestampPacket, TimestampPacket::WriteOperationType::End);
-        }
+            idd);
 
         size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
-        auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, startWorkGroups, numWorkGroups, localWorkSizes, simd);
+        auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pWalkerCmd, globalOffsets, startWorkGroups,
+                                                                                    numWorkGroups, localWorkSizes, simd);
 
-        pGpGpuWalkerCmd->setIndirectDataStartAddress((uint32_t)offsetCrossThreadData);
         DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
-        pGpGpuWalkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
+        setOffsetCrossThreadData(pWalkerCmd, offsetCrossThreadData, interfaceDescriptorIndex);
 
         auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
         DEBUG_BREAK_IF(nullptr == threadPayload);
@@ -644,15 +635,98 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
 
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
-        auto IndirectDataLength = alignUp((uint32_t)(sizeCrossThreadData + sizePerThreadDataTotal), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-        pGpGpuWalkerCmd->setIndirectDataLength(IndirectDataLength);
+        auto IndirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
+                                          WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+        pWalkerCmd->setIndirectDataLength(IndirectDataLength);
 
-        // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, false);
-
-        PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
+        dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;
     }
+    dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::getDefaultDshSpace(
+    const size_t &offsetInterfaceDescriptorTable,
+    CommandQueue &commandQueue,
+    const MultiDispatchInfo &multiDispatchInfo,
+    size_t &totalInterfaceDescriptorTableSize,
+    OCLRT::Kernel *parentKernel,
+    OCLRT::IndirectHeap *dsh,
+    OCLRT::LinearStream *commandStream) {
+
+    size_t numDispatches = multiDispatchInfo.size();
+    totalInterfaceDescriptorTableSize *= numDispatches;
+
+    if (!parentKernel) {
+        dsh->getSpace(totalInterfaceDescriptorTableSize);
+    } else {
+        dsh->getSpace(commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset() - dsh->getUsed());
+    }
+}
+
+template <typename GfxFamily>
+inline typename GpgpuWalkerHelper<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *GpgpuWalkerHelper<GfxFamily>::obtainInterfaceDescriptorData(
+    WALKER_HANDLE pCmdData) {
+
+    return nullptr;
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::setOffsetCrossThreadData(
+    WALKER_HANDLE pCmdData,
+    size_t &offsetCrossThreadData,
+    uint32_t &interfaceDescriptorIndex) {
+
+    WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
+    pCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
+    pCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::dispatchWorkarounds(
+    OCLRT::LinearStream *commandStream,
+    CommandQueue &commandQueue,
+    OCLRT::Kernel &kernel,
+    const bool &enable) {
+
+    if (enable) {
+        PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
+        // Implement enabling special WA DisableLSQCROPERFforOCL if needed
+        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
+    } else {
+        // Implement disabling special WA DisableLSQCROPERFforOCL if needed
+        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
+        PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
+    }
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingPerfStartCommands(
+    const OCLRT::DispatchInfo &dispatchInfo,
+    const MultiDispatchInfo &multiDispatchInfo,
+    HwTimeStamps *hwTimeStamps,
+    OCLRT::HwPerfCounter *hwPerfCounter,
+    OCLRT::LinearStream *commandStream,
+    CommandQueue &commandQueue) {
+
+    if (&dispatchInfo == &*multiDispatchInfo.begin()) {
+        // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
+        if (hwTimeStamps != nullptr) {
+            GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
+        }
+        if (hwPerfCounter != nullptr) {
+            GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
+        }
+    }
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingPerfEndCommands(
+    HwTimeStamps *hwTimeStamps,
+    OCLRT::HwPerfCounter *hwPerfCounter,
+    OCLRT::LinearStream *commandStream,
+    CommandQueue &commandQueue) {
 
     // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
