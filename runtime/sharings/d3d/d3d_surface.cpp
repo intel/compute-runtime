@@ -182,133 +182,78 @@ void D3DSurface::releaseResource(MemObj *memObject) {
     }
 }
 
+const std::map<const D3DFORMAT, const cl_image_format> D3DSurface::D3DFMTCLImageFormat = {
+    {D3DFMT_R32F, {CL_R, CL_FLOAT}},
+    {D3DFMT_R16F, {CL_R, CL_HALF_FLOAT}},
+    {D3DFMT_L16, {CL_R, CL_UNORM_INT16}},
+    {D3DFMT_A8, {CL_A, CL_UNORM_INT8}},
+    {D3DFMT_L8, {CL_R, CL_UNORM_INT8}},
+    {D3DFMT_G32R32F, {CL_RG, CL_FLOAT}},
+    {D3DFMT_G16R16F, {CL_RG, CL_HALF_FLOAT}},
+    {D3DFMT_G16R16, {CL_RG, CL_UNORM_INT16}},
+    {D3DFMT_A8L8, {CL_RG, CL_UNORM_INT8}},
+    {D3DFMT_A32B32G32R32F, {CL_RGBA, CL_FLOAT}},
+    {D3DFMT_A16B16G16R16F, {CL_RGBA, CL_HALF_FLOAT}},
+    {D3DFMT_A16B16G16R16, {CL_RGBA, CL_UNORM_INT16}},
+    {D3DFMT_X8B8G8R8, {CL_RGBA, CL_UNORM_INT8}},
+    {D3DFMT_A8B8G8R8, {CL_RGBA, CL_UNORM_INT8}},
+    {D3DFMT_A8R8G8B8, {CL_BGRA, CL_UNORM_INT8}},
+    {D3DFMT_X8R8G8B8, {CL_BGRA, CL_UNORM_INT8}},
+    {D3DFMT_YUY2, {CL_YUYV_INTEL, CL_UNORM_INT8}},
+    {D3DFMT_UYVY, {CL_UYVY_INTEL, CL_UNORM_INT8}},
+
+    // The specific channel_order for NV12 is selected in findImgFormat
+    {static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')), {CL_R | CL_RG, CL_UNORM_INT8}},
+    {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')), {CL_R, CL_UNORM_INT8}},
+    {static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', 'Y', 'U')), {CL_YVYU_INTEL, CL_UNORM_INT8}},
+    {static_cast<D3DFORMAT>(MAKEFOURCC('V', 'Y', 'U', 'Y')), {CL_VYUY_INTEL, CL_UNORM_INT8}}};
+
 cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, OCLPlane &oclPlane) {
     oclPlane = OCLPlane::NO_PLANE;
-    bool noPlaneRequired = true;
-    switch (d3dFormat) {
-    case D3DFMT_R32F:
-        imgFormat.image_channel_order = CL_R;
-        imgFormat.image_channel_data_type = CL_FLOAT;
-        break;
-    case D3DFMT_R16F:
-        imgFormat.image_channel_order = CL_R;
-        imgFormat.image_channel_data_type = CL_HALF_FLOAT;
-        break;
-    case D3DFMT_L16:
-        imgFormat.image_channel_order = CL_R;
-        imgFormat.image_channel_data_type = CL_UNORM_INT16;
-        break;
-    case D3DFMT_A8:
-        imgFormat.image_channel_order = CL_A;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case D3DFMT_L8:
-        imgFormat.image_channel_order = CL_R;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case D3DFMT_G32R32F:
-        imgFormat.image_channel_order = CL_RG;
-        imgFormat.image_channel_data_type = CL_FLOAT;
-        break;
-    case D3DFMT_G16R16F:
-        imgFormat.image_channel_order = CL_RG;
-        imgFormat.image_channel_data_type = CL_HALF_FLOAT;
-        break;
-    case D3DFMT_G16R16:
-        imgFormat.image_channel_order = CL_RG;
-        imgFormat.image_channel_data_type = CL_UNORM_INT16;
-        break;
-    case D3DFMT_A8L8:
-        imgFormat.image_channel_order = CL_RG;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case D3DFMT_A32B32G32R32F:
-        imgFormat.image_channel_order = CL_RGBA;
-        imgFormat.image_channel_data_type = CL_FLOAT;
-        break;
-    case D3DFMT_A16B16G16R16F:
-        imgFormat.image_channel_order = CL_RGBA;
-        imgFormat.image_channel_data_type = CL_HALF_FLOAT;
-        break;
-    case D3DFMT_A16B16G16R16:
-        imgFormat.image_channel_order = CL_RGBA;
-        imgFormat.image_channel_data_type = CL_UNORM_INT16;
-        break;
-    case D3DFMT_A8B8G8R8:
-    case D3DFMT_X8B8G8R8:
-        imgFormat.image_channel_order = CL_RGBA;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case D3DFMT_A8R8G8B8:
-    case D3DFMT_X8R8G8B8:
-        imgFormat.image_channel_order = CL_BGRA;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case (D3DFORMAT)MAKEFOURCC('N', 'V', '1', '2'):
-        switch (plane) {
-        case 0:
-            imgFormat.image_channel_order = CL_R;
-            imgFormat.image_channel_data_type = CL_UNORM_INT8;
-            oclPlane = OCLPlane::PLANE_Y;
-            break;
-        case 1:
-            imgFormat.image_channel_order = CL_RG;
-            imgFormat.image_channel_data_type = CL_UNORM_INT8;
-            oclPlane = OCLPlane::PLANE_UV;
-            break;
-        default:
-            imgFormat.image_channel_order = 0;
-            imgFormat.image_channel_data_type = 0;
-            return CL_INVALID_VALUE;
+    static const cl_image_format unknown_format = {0, 0};
+    try {
+        imgFormat = D3DFMTCLImageFormat.at(d3dFormat);
+        switch (d3dFormat) {
+        case static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')):
+            switch (plane) {
+            case 0:
+                imgFormat.image_channel_order = CL_R;
+                oclPlane = OCLPlane::PLANE_Y;
+                return CL_SUCCESS;
+            case 1:
+                imgFormat.image_channel_order = CL_RG;
+                oclPlane = OCLPlane::PLANE_UV;
+                return CL_SUCCESS;
+            default:
+                imgFormat = unknown_format;
+                return CL_INVALID_VALUE;
+            }
+
+        case static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')):
+            switch (plane) {
+            case 0:
+                oclPlane = OCLPlane::PLANE_Y;
+                return CL_SUCCESS;
+
+            case 1:
+                oclPlane = OCLPlane::PLANE_V;
+                return CL_SUCCESS;
+
+            case 2:
+                oclPlane = OCLPlane::PLANE_U;
+                return CL_SUCCESS;
+
+            default:
+                imgFormat = unknown_format;
+                return CL_INVALID_VALUE;
+            }
         }
-        noPlaneRequired = false;
-        break;
-    case (D3DFORMAT)MAKEFOURCC('Y', 'V', '1', '2'):
-        switch (plane) {
-        case 0:
-            imgFormat.image_channel_order = CL_R;
-            imgFormat.image_channel_data_type = CL_UNORM_INT8;
-            oclPlane = OCLPlane::PLANE_Y;
-            break;
-        case 1:
-            imgFormat.image_channel_order = CL_R;
-            imgFormat.image_channel_data_type = CL_UNORM_INT8;
-            oclPlane = OCLPlane::PLANE_V;
-            break;
-        case 2:
-            imgFormat.image_channel_order = CL_R;
-            imgFormat.image_channel_data_type = CL_UNORM_INT8;
-            oclPlane = OCLPlane::PLANE_U;
-            break;
-        default:
-            imgFormat.image_channel_order = 0;
-            imgFormat.image_channel_data_type = 0;
-            return CL_INVALID_VALUE;
-        }
-        noPlaneRequired = false;
-        break;
-    case D3DFMT_YUY2:
-        imgFormat.image_channel_order = CL_YUYV_INTEL;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case D3DFMT_UYVY:
-        imgFormat.image_channel_order = CL_UYVY_INTEL;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case (D3DFORMAT)MAKEFOURCC('Y', 'V', 'Y', 'U'):
-        imgFormat.image_channel_order = CL_YVYU_INTEL;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    case (D3DFORMAT)MAKEFOURCC('V', 'Y', 'U', 'Y'):
-        imgFormat.image_channel_order = CL_VYUY_INTEL;
-        imgFormat.image_channel_data_type = CL_UNORM_INT8;
-        break;
-    default:
-        imgFormat.image_channel_order = 0;
-        imgFormat.image_channel_data_type = 0;
+    } catch (const std::out_of_range &) {
+        imgFormat = unknown_format;
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
     }
-    if (noPlaneRequired && plane > 0) {
+
+    if (plane > 0) {
         return CL_INVALID_VALUE;
     }
     return CL_SUCCESS;

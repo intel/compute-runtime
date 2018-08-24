@@ -709,3 +709,31 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
     }
     return retVal;
 }
+
+cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType,
+                                                             cl_uint numEntries, D3DFORMAT *dx9Formats, cl_uint *numImageFormats) {
+
+    if (validateObject(context) != CL_SUCCESS) {
+        return CL_INVALID_CONTEXT;
+    }
+
+    if ((imageType != CL_MEM_OBJECT_BUFFER) && (imageType != CL_MEM_OBJECT_IMAGE2D) && (imageType != CL_MEM_OBJECT_IMAGE3D)) {
+        return CL_INVALID_VALUE;
+    }
+
+    if (((flags & CL_MEM_READ_WRITE) == 0) && ((flags & CL_MEM_WRITE_ONLY) == 0) && ((flags & CL_MEM_READ_ONLY) == 0)) {
+        return CL_INVALID_VALUE;
+    }
+
+    cl_uint i = 0;
+    for (auto format : D3DSurface::D3DFMTCLImageFormat) {
+        if (i >= numEntries) {
+            break;
+        }
+        dx9Formats[i++] = format.first;
+    }
+
+    *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DFMTCLImageFormat.size());
+
+    return CL_SUCCESS;
+}

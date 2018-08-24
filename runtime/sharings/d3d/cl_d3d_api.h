@@ -192,3 +192,7 @@ extern CL_API_ENTRY cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(
     cl_uint numEventsInWaitList,
     const cl_event *eventWaitList,
     cl_event *event) CL_API_SUFFIX__VERSION_1_2;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context, cl_mem_flags flags, cl_mem_object_type imageType, cl_uint numEntries,
+                                          D3DFORMAT *dx9Formats, cl_uint *numImageFormats) CL_API_SUFFIX__VERSION_1_2;
