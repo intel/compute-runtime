@@ -45,6 +45,15 @@ void WddmMemoryManagerFixture::SetUp() {
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
     }
+    EXPECT_TRUE(wddm->init());
+    uint64_t heap32Base = (uint64_t)(0x800000000000);
+    if (sizeof(uintptr_t) == 4) {
+        heap32Base = 0x1000;
+    }
+    wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+    memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
+    //assert we have memory manager
+    ASSERT_NE(nullptr, memoryManager);
 }
 
 TEST(WddmMemoryManager, NonCopyable) {
@@ -176,14 +185,12 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
 }
 
 TEST_F(WddmMemoryManagerTest, AllocateAndFree) {
-    SetUpMm();
     auto *ptr = memoryManager->allocateGraphicsMemory(0x1000);
     EXPECT_NE(nullptr, ptr);
     memoryManager->freeGraphicsMemory(ptr);
 }
 
 TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPaddingSupportThenFalseIsReturned) {
-    SetUpMm();
     EXPECT_FALSE(memoryManager->peekVirtualPaddingSupport());
 }
 
@@ -228,7 +235,6 @@ TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationT
 }
 
 TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
-    SetUpMm();
     // three pages
     void *ptr = alignedMalloc(3 * 4096, 4096);
     ASSERT_NE(nullptr, ptr);
@@ -242,7 +248,6 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtr) {
 }
 
 TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCalledThenResourceHandleIsZero) {
-    SetUpMm();
     auto *gpuAllocation = memoryManager->allocateGraphicsMemory(0x1000);
 
     auto wddmAllocation = static_cast<WddmAllocation *>(gpuAllocation);
@@ -253,7 +258,6 @@ TEST_F(WddmMemoryManagerTest, givenDefaultMemoryManagerWhenAllocateWithSizeIsCal
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -271,7 +275,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleIs
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCalledThenNonNullGraphicsAllocationIsReturned) {
-    SetUpMm();
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
@@ -288,7 +291,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromNTHandleIsCall
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenReturnPtr) {
-    SetUpMm();
     auto alloc = memoryManager->allocateGraphicsMemory(1);
 
     auto ptr = memoryManager->lockResource(alloc);
@@ -304,7 +306,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenLockUnlockIsCalledThenRe
 }
 
 TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsTrue) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -327,7 +328,6 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleReturns32BitAllocW
 }
 
 TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32BitAllocWhenForce32bitAddressingIsSetAndRequireSpecificBitnessIsFalse) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -350,7 +350,6 @@ TEST_F(WddmMemoryManagerTest, createAllocationFromSharedHandleDoesNotReturn32Bit
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandleIsCalledThenDestroyResourceHandle) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -372,7 +371,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenFreeAllocFromSharedHandl
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromSharedHandleIsCalledThenUpdateSize) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -387,7 +385,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerSizeZeroWhenCreateFromShared
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFailsThenReturnNull) {
-    SetUpMm();
     auto osHandle = 1u;
     auto size = 4096u;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
@@ -402,7 +399,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
-    SetUpMm();
     MockContext context;
     context.setMemoryManager(memoryManager.get());
 
@@ -430,7 +426,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountZe
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
-    SetUpMm();
     MockContext context;
     context.setMemoryManager(memoryManager.get());
 
@@ -460,7 +455,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNo
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
-    SetUpMm();
     MockContext context;
     context.setMemoryManager(memoryManager.get());
 
@@ -490,7 +484,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreated
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZeroisBeingCreatedThenAllocateGraphicsMemoryIsUsed) {
-    SetUpMm();
     MockContext context;
     context.setMemoryManager(memoryManager.get());
 
@@ -519,7 +512,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountZ
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountNonZeroisBeingCreatedThenAllocateGraphicsMemoryForImageIsUsed) {
-    SetUpMm();
     MockContext context;
     context.setMemoryManager(memoryManager.get());
 
@@ -548,7 +540,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenNonTiledImgWithMipCountN
 }
 
 TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
-    SetUpMm();
     MockWddmAllocation alloc, allocOffseted;
     bool success = false;
     // three pages
@@ -603,7 +594,6 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemHostPtrOffseted) {
 }
 
 TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
-    SetUpMm();
     MockWddmAllocation allocation;
     bool success = false;
     // three pages
@@ -625,7 +615,7 @@ TEST_F(WddmMemoryManagerTest, AllocateGpuMemCheckGmm) {
 }
 
 TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
-    SetUpMm();
+
     MockWddmAllocation allocation;
     bool success = false;
     uint32_t size = 4096;
@@ -637,7 +627,6 @@ TEST_F(WddmMemoryManagerTest, GivenAlignedPointerWhenAllocate32BitMemoryThenGmmC
 }
 
 TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemoryThenGmmCalledWithCorrectPointerAndSize) {
-    SetUpMm();
     MockWddmAllocation allocation;
     bool success = false;
     uint32_t size = 0x1001;
@@ -649,13 +638,11 @@ TEST_F(WddmMemoryManagerTest, GivenUnAlignedPointerAndSizeWhenAllocate32BitMemor
 }
 
 TEST_F(WddmMemoryManagerTest, getSystemSharedMemory) {
-    SetUpMm();
     int64_t mem = memoryManager->getSystemSharedMemory();
     EXPECT_EQ(mem, 4249540608);
 }
 
 TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
-    SetUpMm();
     uint64_t maxAddr = memoryManager->getMaxApplicationAddress();
     if (is32bit) {
         EXPECT_EQ(maxAddr, MemoryConstants::max32BitAppAddress);
@@ -665,7 +652,6 @@ TEST_F(WddmMemoryManagerTest, getMaxApplicationAddress) {
 }
 
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
-    SetUpMm();
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
@@ -677,7 +663,6 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithNullptr) {
 }
 
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoTripleAlloc) {
-    SetUpMm();
     size_t misalignedSize = 0x2500;
     void *misalignedPtr = reinterpret_cast<void *>(0x12500);
 
@@ -700,7 +685,6 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemoryWithMisalignedHostPtrDoesNotDoT
 }
 
 TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
-    SetUpMm();
     auto *gpuAllocation = memoryManager->allocate32BitGraphicsMemory(3 * MemoryConstants::pageSize, nullptr, AllocationOrigin::EXTERNAL_ALLOCATION);
 
     ASSERT_NE(nullptr, gpuAllocation);
@@ -712,7 +696,6 @@ TEST_F(WddmMemoryManagerTest, Allocate32BitMemorySetsCannonizedGpuBaseAddress) {
 }
 
 TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
-    SetUpMm();
     OsHandleStorage storage;
     void *pSysMem = reinterpret_cast<void *>(0x1000);
 
@@ -752,19 +735,16 @@ TEST_F(WddmMemoryManagerTest, GivenThreeOsHandlesWhenAskedForDestroyAllocationsT
 }
 
 TEST_F(WddmMemoryManagerTest, freeNullAllocationNoCrash) {
-    SetUpMm();
-    memoryManager->freeGraphicsMemory(nullptr);
+    EXPECT_NO_THROW(memoryManager->freeGraphicsMemory(nullptr));
 }
 
 TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForAlignedMallocRestrictionsThenValueIsReturned) {
-    SetUpMm();
     AlignedMallocRestrictions *mallocRestrictions = memoryManager->getAlignedMallocRestrictions();
     ASSERT_NE(nullptr, mallocRestrictions);
     EXPECT_EQ(OCLRT::windowsMinAddress, mallocRestrictions->minAddress);
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestrictionsThenReserveMemRangeForMap) {
-    SetUpMm();
     void *cpuPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     size_t size = 0x1000;
 
@@ -779,7 +759,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestriction
 }
 
 TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuVaFailThenFailToCreateAllocation) {
-    SetUpMm();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
@@ -794,7 +773,6 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithDisabledDeferredDeleterWhenMapGpuV
 }
 
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMapGpuVaFailSecondAfterDrainSuccessThenCreateAllocation) {
-    SetUpMm();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
@@ -812,7 +790,6 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
 }
 
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAndMapGpuVaFailSecondAfterDrainFailThenFailToCreateAllocation) {
-    SetUpMm();
     void *ptr = reinterpret_cast<void *>(0x1000);
     size_t size = 0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(ptr, size, false));
@@ -829,7 +806,6 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAnd
 }
 
 TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
-    SetUpMm();
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
     EXPECT_EQ(wddmAllocation->gpuBaseAddress, GmmHelper::canonize(this->wddm->getGfxPartition().Heap32[1].Base));
@@ -848,7 +824,6 @@ TEST_F(WddmMemoryManagerTest, givenNullPtrAndSizePassedToCreateInternalAllocatio
 }
 
 TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhenCallIsMadeThenAllocationIsCreatedIn32BitHeap1) {
-    SetUpMm();
     auto ptr = reinterpret_cast<void *>(0x1000000);
     auto wddmAllocation = static_cast<WddmAllocation *>(memoryManager->allocate32BitGraphicsMemory(MemoryConstants::pageSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION));
     ASSERT_NE(nullptr, wddmAllocation);
@@ -868,7 +843,6 @@ TEST_F(WddmMemoryManagerTest, givenPtrAndSizePassedToCreateInternalAllocationWhe
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInContainerAndAssignsPosition) {
-    SetUpMm();
     MockWddmAllocation allocation;
 
     memoryManager->addToTrimCandidateList(&allocation);
@@ -883,7 +857,6 @@ TEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListPlacesAllocationInC
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListDoesNotInsertAllocationAlreadyOnTheList) {
-    SetUpMm();
     MockWddmAllocation allocation;
 
     memoryManager->trimCandidateList.resize(0);
@@ -905,7 +878,6 @@ TEST_F(WddmMemoryManagerResidencyTest, addToTrimCandidateListDoesNotInsertAlloca
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListAssignsUnusedPosition) {
-    SetUpMm();
     MockWddmAllocation allocation;
 
     memoryManager->addToTrimCandidateList(&allocation);
@@ -915,7 +887,6 @@ TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListAssignsUnusedP
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesAllocationInAssignedPosition) {
-    SetUpMm();
     MockWddmAllocation allocation;
 
     memoryManager->addToTrimCandidateList(&allocation);
@@ -929,7 +900,6 @@ TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesAllocat
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastAllocation) {
-    SetUpMm();
     MockWddmAllocation allocation;
 
     memoryManager->trimCandidateList.resize(0);
@@ -942,7 +912,6 @@ TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastAll
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastAllocationAndAllPreviousEmptyEntries) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2;
 
     memoryManager->trimCandidateList.resize(0);
@@ -963,7 +932,6 @@ TEST_F(WddmMemoryManagerResidencyTest, removeFromTrimCandidateListRemovesLastAll
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, successiveAddingToTrimCandidateListAssignsNewPositions) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     memoryManager->addToTrimCandidateList(&allocation1);
@@ -976,7 +944,6 @@ TEST_F(WddmMemoryManagerResidencyTest, successiveAddingToTrimCandidateListAssign
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, DISABLED_removingNotLastAllocationFromTrimCandidateListSubstituesLastPositionAllocation) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     memoryManager->addToTrimCandidateList(&allocation1);
@@ -992,7 +959,6 @@ TEST_F(WddmMemoryManagerResidencyTest, DISABLED_removingNotLastAllocationFromTri
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, removingNotLastAllocationFromTrimCandidateListPutsNullEntry) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3;
 
     memoryManager->addToTrimCandidateList(&allocation1);
@@ -1009,7 +975,6 @@ TEST_F(WddmMemoryManagerResidencyTest, removingNotLastAllocationFromTrimCandidat
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListRemovesInitialNullEntriesAndUpdatesPositions) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     memoryManager->addToTrimCandidateList(&allocation1);
@@ -1037,7 +1002,6 @@ TEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListRemovesInitialNul
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListWithNonNullEntries) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     memoryManager->addToTrimCandidateList(&allocation1);
@@ -1053,7 +1017,6 @@ TEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListWithNonNullEntrie
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllocationsResident) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     memoryManager->pushAllocationForResidency(&allocation1);
@@ -1070,7 +1033,6 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllo
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdatesLastFence) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     memoryManager->pushAllocationForResidency(&allocation1);
@@ -1089,7 +1051,6 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdatesLa
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTripleAllocationsResident) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
 
@@ -1111,7 +1072,6 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTrip
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastFencePLusOneForTripleAllocations) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2;
 
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, reinterpret_cast<void *>(0x1500));
@@ -1132,14 +1092,12 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastF
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimCallbackIsRegisteredInWddmMemoryManagerCtor) {
-    SetUpMm();
     EXPECT_EQ((PFND3DKMT_TRIMNOTIFICATIONCALLBACK)memoryManager->trimCallback, gdi->getRegisterTrimNotificationArg().Callback);
     EXPECT_EQ(reinterpret_cast<void *>(memoryManager.get()), gdi->getRegisterTrimNotificationArg().Context);
     EXPECT_EQ(wddm->getDevice(), gdi->getRegisterTrimNotificationArg().hDevice);
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenAllocationsAreEvictedMarkedAndRemovedFromTrimCandidateList) {
-    SetUpMm();
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
@@ -1173,7 +1131,6 @@ TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriod
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodicTrimWhenTrimResidencyPeriodicTrimIsCalledThenOneAllocationIsTrimmed) {
-    SetUpMm();
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
@@ -1211,7 +1168,6 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFragmentsSincePreviousTrimWhenTrimResidencyPeriodicTrimIsCalledThenProperFragmentsAreEvictedAndMarked) {
-    SetUpMm();
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
@@ -1254,7 +1210,6 @@ TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFra
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
-    SetUpMm();
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.PeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
@@ -1271,7 +1226,6 @@ TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledTh
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
-    SetUpMm();
     D3DKMT_TRIMNOTIFICATION trimNotification = {0};
     trimNotification.Flags.RestartPeriodicTrim = 1;
     trimNotification.NumBytesToTrim = 0;
@@ -1288,14 +1242,12 @@ TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackC
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
-    SetUpMm();
     bool status = memoryManager->trimResidencyToBudget(0);
 
     EXPECT_TRUE(status);
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1, allocation2, allocation3;
@@ -1334,7 +1286,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTrimIsNotZero) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1;
@@ -1358,7 +1309,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTri
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesToTrimIsZero) {
-    SetUpMm();
     WddmAllocation allocation1(reinterpret_cast<void *>(0x1000), 0x1000, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull),
         allocation2(reinterpret_cast<void *>(0x1000), 0x3000, reinterpret_cast<void *>(0x1000), 0x3000, nullptr, MemoryPool::MemoryNull),
         allocation3(reinterpret_cast<void *>(0x1000), 0x1000, reinterpret_cast<void *>(0x1000), 0x1000, nullptr, MemoryPool::MemoryNull);
@@ -1396,7 +1346,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesToTr
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResident) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1, allocation2, allocation3;
@@ -1429,7 +1378,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResi
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGreaterThanMonitored) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
 
     MockWddmAllocation allocation1;
@@ -1458,7 +1406,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGr
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     WddmAllocation allocation1(ptr, 0x1000, ptr, 0x1000, nullptr, MemoryPool::MemoryNull);
@@ -1509,7 +1456,6 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
-    SetUpMm();
     memoryManager->trimCandidatesCount = 10;
     memoryManager->trimCandidateList.resize(20);
 
@@ -1533,7 +1479,6 @@ TEST_F(WddmMemoryManagerResidencyTest, checkTrimCandidateListCompaction) {
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerThanAllocSizeWhenBudgetEqualTwoAlignedAllocationThenEvictOnlyTwo) {
-    SetUpMm();
     gdi->setNonZeroNumBytesToTrimInEvict();
     size_t underlyingSize = 0xF00;
     size_t alignedSize = 0x1000;
@@ -1580,7 +1525,6 @@ TEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerTha
 }
 
 TEST_F(BufferWithWddmMemory, ValidHostPtr) {
-    SetUpMm();
     flags = CL_MEM_USE_HOST_PTR;
 
     auto ptr = alignedMalloc(MemoryConstants::preferredAlignment, MemoryConstants::preferredAlignment);
@@ -1605,7 +1549,6 @@ TEST_F(BufferWithWddmMemory, ValidHostPtr) {
 }
 
 TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledPointer) {
-    SetUpMm();
     OsHandleStorage storage;
     storage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
     storage.fragmentStorageData[0].fragmentSize = MemoryConstants::pageSize;
@@ -1619,7 +1562,6 @@ TEST_F(BufferWithWddmMemory, NullOsHandleStorageAskedForPopulationReturnsFilledP
 }
 
 TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAskedForGraphicsAllcoationThenItContainsAllFragmentsWithProperGpuAdrresses) {
-    SetUpMm();
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1001);
     auto size = MemoryConstants::pageSize * 10;
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(size, ptr);
@@ -1648,7 +1590,6 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 }
 
 TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocationThenGraphicsAllocationIsCreated) {
-    SetUpMm();
     OsHandleStorage handleStorage;
 
     auto ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
@@ -1681,7 +1622,6 @@ TEST_F(BufferWithWddmMemory, GivenPointerAndSizeWhenAskedToCreateGrahicsAllocati
 }
 
 TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedThenGraphicsAddressIsPopulatedFromProperFragment) {
-    SetUpMm();
     memoryManager->setForce32bitAllocations(true);
     OsHandleStorage handleStorage = {};
     D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
@@ -1713,7 +1653,6 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 }
 
 TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocationIsBeingCreatedNotAllignedToPageThenGraphicsAddressIsPopulatedFromProperFragmentAndOffsetisAssigned) {
-    SetUpMm();
     memoryManager->setForce32bitAllocations(true);
     OsHandleStorage handleStorage = {};
     D3DGPU_VIRTUAL_ADDRESS gpuAdress = MemoryConstants::pageSize * 1;
@@ -1748,7 +1687,6 @@ TEST_F(BufferWithWddmMemory, givenFragmentsThatAreNotInOrderWhenGraphicsAllocati
 }
 
 TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAllocationsResidentWhenMakeResidentFails) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
@@ -1772,7 +1710,6 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAlloca
 }
 
 TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTripleAllocationsResidentWhenMakeResidentFails) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2;
     void *ptr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1500);
     WddmAllocation *allocationTriple = static_cast<WddmAllocation *>(memoryManager->allocateGraphicsMemory(8196, ptr));
@@ -1799,7 +1736,6 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTriple
 }
 
 TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsFailsWhenMakeResidentFailsAndCantTrimFurther) {
-    SetUpMm();
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
@@ -1823,7 +1759,6 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsFailsWhenMakeResi
 }
 
 TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsCallsMakeResidentWithCantTrimFurtherSetToTrueWhenTrimToBudgetReturnsFalse) {
-    SetUpMm();
     MockWddmAllocation allocation1;
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { *numberOfBytesToTrim = 4 * 4096;  return false; };
@@ -1840,7 +1775,6 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsCallsMakeResident
 }
 
 TEST_F(WddmMemoryManagerTest2, givenAllocationPackWhenTheyArePassedToMakeResidentThenTheyAreUsedInsteadOfMemoryManagerMembers) {
-    SetUpMm();
     MockWddmAllocation allocation1;
     MockWddmAllocation allocation2;
     MockWddmAllocation allocation3;
@@ -1866,7 +1800,6 @@ TEST_F(WddmMemoryManagerTest2, givenAllocationPackWhenTheyArePassedToMakeResiden
 }
 
 TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeResidentFailsAndTrimToBudgetSucceeds) {
-    SetUpMm();
     MockWddmAllocation allocation1;
     void *cpuPtr = reinterpret_cast<void *>(wddm->getWddmMinAddress() + 0x1000);
     size_t allocationSize = 0x1000;
@@ -1890,7 +1823,6 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
 }
 
 TEST_F(WddmMemoryManagerTest2, givenMemoryManagerWhenMakeResidentFailsThenMemoryBudgetExhaustedIsReturnedAsTrue) {
-    SetUpMm();
     MockWddmAllocation allocation1;
 
     auto makeResidentThatFails = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return false; };
@@ -2234,7 +2166,6 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
 }
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenPopulateOsHandlesReturnsInvalidPointer) {
-    SetUpMm();
     OsHandleStorage handleStorage;
     handleStorage.fragmentCount = 1;
     handleStorage.fragmentStorageData[0].cpuPtr = reinterpret_cast<void *>(0x1000);
@@ -2251,7 +2182,6 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryWhenCreateAllocationFailsThenP
 }
 
 TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenCreateAllocationFailsThenAllocatedFragmentsAreNotStored) {
-    SetUpMm();
     OsHandleStorage handleStorage;
     OsHandle handle;
     handleStorage.fragmentCount = 2;

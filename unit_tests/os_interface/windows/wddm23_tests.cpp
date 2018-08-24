@@ -31,7 +31,7 @@
 
 using namespace OCLRT;
 
-struct Wddm23Tests : public ::testing::Test, GdiDllFixture, public GmmEnvironmentFixture {
+struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, public GmmEnvironmentFixture {
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
@@ -52,16 +52,20 @@ struct Wddm23Tests : public ::testing::Test, GdiDllFixture, public GmmEnvironmen
     WddmMockInterface23 *wddmMockInterface = nullptr;
 };
 
+struct Wddm23Tests : public Wddm23TestsWithoutWddmInit {
+    using Wddm23TestsWithoutWddmInit::TearDown;
+    void SetUp() override {
+        Wddm23TestsWithoutWddmInit::SetUp();
+        EXPECT_TRUE(wddm->init());
+    }
+};
+
 TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
-    wddm->init();
     EXPECT_TRUE(wddm->wddmInterface->hwQueuesSupported());
     EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
 TEST_F(Wddm23Tests, whenCreateHwQueueIsCalledThenSetAllRequiredFieldsAndMonitoredFence) {
-    EXPECT_EQ(nullptr, wddm->osContext);
-    wddm->init();
-
     EXPECT_EQ(wddm->osContext->getContext(), getCreateHwQueueDataFcn()->hHwContext);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->PrivateDriverDataSize);
     EXPECT_EQ(nullptr, getCreateHwQueueDataFcn()->pPrivateDriverData);
@@ -74,7 +78,6 @@ TEST_F(Wddm23Tests, whenCreateHwQueueIsCalledThenSetAllRequiredFieldsAndMonitore
 }
 
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
-    wddm->init();
     wddm->setPreemptionMode(PreemptionMode::Disabled);
     wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *wddm->osContext);
     EXPECT_EQ(0u, getCreateHwQueueDataFcn()->Flags.DisableGpuTimeout);
@@ -85,7 +88,6 @@ TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutI
 }
 
 TEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
-    wddm->init();
     D3DKMT_HANDLE hwQueue = 123;
     wddm->osContext->setHwQueue(hwQueue);
     wddmMockInterface->destroyHwQueue(wddm->osContext->getHwQueue());
@@ -98,7 +100,6 @@ TEST_F(Wddm23Tests, whenDestroyHwQueueCalledThenPassExistingHandle) {
 }
 
 TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
-    wddm->init();
     D3DKMT_HANDLE hwQueue = 123;
     wddm->osContext->setHwQueue(hwQueue);
     wddm.reset(nullptr);
@@ -106,7 +107,6 @@ TEST_F(Wddm23Tests, whenObjectIsDestructedThenDestroyHwQueue) {
 }
 
 TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpdateMonitoredFence) {
-    wddm->init();
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
     auto hwQueue = wddm->osContext->getHwQueue();
@@ -131,7 +131,6 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
 }
 
 TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
-    wddm->init();
     uint64_t cmdBufferAddress = 123;
     size_t cmdSize = 456;
     COMMAND_BUFFER_HEADER cmdBufferHeader = {};
@@ -146,7 +145,7 @@ TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhe
     EXPECT_EQ(1u, wddm->waitOnGPUResult.called);
 }
 
-TEST_F(Wddm23Tests, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
+TEST_F(Wddm23TestsWithoutWddmInit, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue) {
     EXPECT_EQ(nullptr, wddm->gdi->createHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->gdi->destroyHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
@@ -159,12 +158,12 @@ TEST_F(Wddm23Tests, whenInitCalledThenInitializeNewGdiDDIsAndCallToCreateHwQueue
     EXPECT_NE(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
 }
 
-TEST_F(Wddm23Tests, whenCreateHwQueueFailedThenReturnFalseFromInit) {
+TEST_F(Wddm23TestsWithoutWddmInit, whenCreateHwQueueFailedThenReturnFalseFromInit) {
     wddmMockInterface->forceCreateHwQueueFail = true;
     EXPECT_FALSE(wddm->init());
 }
 
-TEST_F(Wddm23Tests, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
+TEST_F(Wddm23TestsWithoutWddmInit, givenFailureOnGdiInitializationWhenCreatingHwQueueThenReturnFailure) {
     struct MyMockGdi : public Gdi {
         bool setupHwQueueProcAddresses() override {
             return false;

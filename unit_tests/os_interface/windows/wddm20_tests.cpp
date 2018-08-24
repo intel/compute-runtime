@@ -57,29 +57,26 @@ Gmm *getGmm(void *ptr, size_t size) {
 } // namespace GmmHelperFunctions
 
 using Wddm20Tests = WddmTest;
-using Wddm20WithMockGdiDllTests = WddmTestWithMockGdiDll;
+using Wddm20WithMockGdiDllTestsWithoutWddmInit = WddmTestWithMockGdiDll;
 using Wddm20InstrumentationTest = WddmInstrumentationTest;
+
+struct Wddm20WithMockGdiDllTests : public Wddm20WithMockGdiDllTestsWithoutWddmInit {
+    using Wddm20WithMockGdiDllTestsWithoutWddmInit::TearDown;
+    void SetUp() override {
+        Wddm20WithMockGdiDllTestsWithoutWddmInit::SetUp();
+        EXPECT_TRUE(wddm->init());
+    }
+};
 
 TEST_F(Wddm20Tests, givenMinWindowsAddressWhenWddmIsInitializedThenWddmUseThisAddress) {
     uintptr_t expectedAddress = 0x200000;
     EXPECT_EQ(expectedAddress, OCLRT::windowsMinAddress);
-
-    bool status = wddm->init();
-    EXPECT_TRUE(status);
-    EXPECT_TRUE(wddm->isInitialized());
     EXPECT_EQ(expectedAddress, wddm->getWddmMinAddress());
 }
 
-TEST_F(Wddm20Tests, creation) {
-    bool error = wddm->init();
-    EXPECT_TRUE(error);
-    EXPECT_TRUE(wddm->isInitialized());
-}
-
 TEST_F(Wddm20Tests, doubleCreation) {
-    bool error = wddm->init();
     EXPECT_EQ(1u, wddm->createContextResult.called);
-    error |= wddm->init();
+    auto error = wddm->init();
     EXPECT_EQ(1u, wddm->createContextResult.called);
 
     EXPECT_TRUE(error);
@@ -178,19 +175,11 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
-    EXPECT_TRUE(wddm->osContext == nullptr);
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     auto context = wddm->osContext->getContext();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
-
-    EXPECT_TRUE(wddm->destroyContext(context));
 }
 
 TEST_F(Wddm20Tests, allocation) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -209,9 +198,6 @@ TEST_F(Wddm20Tests, allocation) {
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSizeWhenCreatedThenWddmUseAligned) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1000);
     size_t underlyingSize = 0x2100;
     size_t alignedSize = 0x3000;
@@ -241,8 +227,6 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmSize) {
-    wddm->init();
-
     void *fakePtr = reinterpret_cast<void *>(0x123);
     WddmAllocation allocation(fakePtr, 100, fakePtr, 200, nullptr, MemoryPool::MemoryNull);
     std::unique_ptr<Gmm> gmm(GmmHelperFunctions::getGmm(allocation.getAlignedCpuPtr(), allocation.getAlignedSize()));
@@ -260,9 +244,6 @@ TEST_F(Wddm20WithMockGdiDllTests, givenWddmAllocationWhenMappingGpuVaThenUseGmmS
 }
 
 TEST_F(Wddm20Tests, createAllocation32bit) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     uint64_t heap32baseAddress = 0x40000;
     uint64_t heap32Size = 0x40000;
     wddm->setHeap32(heap32baseAddress, heap32Size);
@@ -296,7 +277,6 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
 }
 
 TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddressWithingHeap1Limits) {
-    wddm->init();
     void *alignedPtr = (void *)0x12000;
     size_t alignedSize = 0x2000;
     WddmAllocation allocation(alignedPtr, alignedSize, nullptr, MemoryPool::MemoryNull);
@@ -316,7 +296,6 @@ TEST_F(Wddm20Tests, givenGraphicsAllocationWhenItIsMappedInHeap1ThenItHasGpuAddr
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocationsThenAllMarkedAllocationsAreDestroyed) {
-    EXPECT_TRUE(wddm->init());
     OsHandleStorage storage;
     OsHandle osHandle1 = {0};
     OsHandle osHandle2 = {0};
@@ -349,9 +328,6 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
 }
 
 TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     OsAgnosticMemoryManager mm(false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -377,8 +353,6 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
 }
 
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
     OsAgnosticMemoryManager mm(false);
 
     WddmAllocation allocation(nullptr, 100, nullptr, MemoryPool::MemoryNull);
@@ -399,9 +373,6 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 }
 
 TEST_F(Wddm20Tests, makeResidentNonResident) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     OsAgnosticMemoryManager mm(false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -435,48 +406,12 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
 }
 
-TEST_F(Wddm20Tests, GetCpuTime) {
-    uint64_t time = 0;
-    std::unique_ptr<OSTime> osTime(OSTime::create(nullptr).release());
-    auto error = osTime->getCpuTime(&time);
-    EXPECT_TRUE(error);
-    EXPECT_NE(0, time);
-}
-
-TEST_F(Wddm20Tests, GivenNoOSInterfaceGetCpuGpuTimeReturnsError) {
-    TimeStampData CPUGPUTime = {0};
-    std::unique_ptr<OSTime> osTime(OSTime::create(nullptr).release());
-    auto success = osTime->getCpuGpuTime(&CPUGPUTime);
-    EXPECT_FALSE(success);
-    EXPECT_EQ(0, CPUGPUTime.CPUTimeinNS);
-    EXPECT_EQ(0, CPUGPUTime.GPUTimeStamp);
-}
-
-TEST_F(Wddm20Tests, GetCpuGpuTime) {
-    TimeStampData CPUGPUTime01 = {0};
-    TimeStampData CPUGPUTime02 = {0};
-    std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->get()->setWddm(wddm.release());
-    std::unique_ptr<OSTime> osTime(OSTime::create(osInterface.get()).release());
-    auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
-    EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime01.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime01.GPUTimeStamp);
-    success = osTime->getCpuGpuTime(&CPUGPUTime02);
-    EXPECT_TRUE(success);
-    EXPECT_NE(0, CPUGPUTime02.CPUTimeinNS);
-    EXPECT_NE(0, CPUGPUTime02.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
-    EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
-}
-
 TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationFromSharedHandleIsCalledThenGraphicsAllocationWithSharedPropertiesIsCreated) {
     void *pSysMem = (void *)0x1000;
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096u, false));
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    wddm->init();
     WddmMemoryManager mm(false, wddm.get());
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
@@ -515,7 +450,6 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     EXPECT_EQ(0u, status);
 
     auto mockWddm = wddm.get();
-    mockWddm->init();
     WddmMemoryManager mm(false, mockWddm);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
@@ -531,16 +465,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     mm.freeGraphicsMemory(graphicsAllocation);
 }
 
-TEST_F(Wddm20Tests, givenWddmCreatedWhenNotInitedThenMinAddressZero) {
-    uintptr_t expected = 0;
-    uintptr_t actual = wddm->getWddmMinAddress();
-    EXPECT_EQ(expected, actual);
-}
-
 TEST_F(Wddm20Tests, givenWddmCreatedWhenInitedThenMinAddressValid) {
-    bool ret = wddm->init();
-    EXPECT_TRUE(ret);
-
     uintptr_t expected = windowsMinAddress;
     uintptr_t actual = wddm->getWddmMinAddress();
     EXPECT_EQ(expected, actual);
@@ -618,9 +543,6 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoEscFunc) {
 }
 
 TEST_F(Wddm20Tests, getMaxApplicationAddress) {
-    wddm->init();
-    EXPECT_TRUE(wddm->isInitialized());
-
     uint64_t maxAddr = wddm->getMaxApplicationAddress();
     if (is32bit) {
         EXPECT_EQ(maxAddr, MemoryConstants::max32BitAppAddress);
@@ -629,19 +551,7 @@ TEST_F(Wddm20Tests, getMaxApplicationAddress) {
     }
 }
 
-TEST_F(Wddm20Tests, dontCallCreateContextBeforeConfigureDeviceAddressSpace) {
-    wddm->wddmInterface = std::make_unique<WddmInterface20>(*wddm);
-    D3DKMT_HANDLE context;
-    wddm->createContext(context);
-    EXPECT_EQ(1u, wddm->createContextResult.called); // dont care about the result
-
-    wddm->configureDeviceAddressSpace();
-
-    EXPECT_EQ(1u, wddm->configureDeviceAddressSpaceResult.called);
-    EXPECT_FALSE(wddm->configureDeviceAddressSpaceResult.success);
-}
-
-TEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToFalseWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToFalse) {
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToFalseWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToFalse) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseNoRingFlushesKmdMode.set(false);
     wddm->init();
@@ -650,7 +560,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToFalseWh
     EXPECT_FALSE(!!privateData->NoRingFlushes);
 }
 
-TEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToTrue) {
+TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToTrue) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseNoRingFlushesKmdMode.set(true);
     wddm->init();
@@ -660,31 +570,25 @@ TEST_F(Wddm20WithMockGdiDllTests, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhe
 }
 
 TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) {
-    wddm->init();
     EXPECT_FALSE(wddm->wddmInterface->hwQueuesSupported());
     EXPECT_EQ(0u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
 TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
-    wddm->init();
     EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *wddm->osContext));
 }
 
 TEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
-    wddm->init();
     EXPECT_EQ(nullptr, wddm->gdi->createHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->gdi->destroyHwQueue.mFunc);
     EXPECT_EQ(nullptr, wddm->gdi->submitCommandToHwQueue.mFunc);
 }
 
-TEST_F(Wddm20Tests, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {
+TEST(DebugFlagTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledThenTrueIsReturned) {
     EXPECT_TRUE(DebugManager.flags.UseNoRingFlushesKmdMode.get());
 }
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     OsAgnosticMemoryManager mm(false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
@@ -707,9 +611,6 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
 }
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
-    wddm->init();
-    ASSERT_TRUE(wddm->isInitialized());
-
     OsAgnosticMemoryManager mm(false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
@@ -733,8 +634,6 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
 }
 
 TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
-    wddm->init();
-
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
     gdi->getEvictArg().AllocationList = nullptr;
@@ -753,8 +652,6 @@ TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
 }
 
 TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCallsWaitFromCpu) {
-    wddm->init();
-
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 20;
     allocation.handle = ALLOCATION_HANDLE;
@@ -788,8 +685,6 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCa
 }
 
 TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoesNotCallWaitFromCpu) {
-    wddm->init();
-
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
@@ -823,8 +718,6 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDo
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
-    wddm->init();
-
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
@@ -848,8 +741,6 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
 }
 
 TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
-    wddm->init();
-
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
@@ -873,8 +764,6 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
 }
 
 TEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurrentFenceValueIsSetToOne) {
-    wddm->init();
-
     gdi->createSynchronizationObject2 = gdi->createSynchronizationObject2Mock;
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
@@ -891,8 +780,6 @@ NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {
 }
 
 TEST_F(Wddm20Tests, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
-    wddm->init();
-
     D3DKMT_HANDLE handle = 0;
     WddmAllocation *alloc = nullptr;
 
@@ -910,7 +797,6 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
         };
     };
     gdi->createAllocation = MockCreateAllocation::mockCreateAllocation;
-    wddm->init();
 
     OsHandleStorage handleStorage;
     OsHandle handle = {0};

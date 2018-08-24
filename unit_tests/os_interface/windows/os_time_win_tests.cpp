@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2017, Intel Corporation
+* Copyright (c) 2017 - 2018, Intel Corporation
 *
 * Permission is hereby granted, free of charge, to any person obtaining a
 * copy of this software and associated documentation files (the "Software"),
@@ -22,6 +22,8 @@
 
 #include "gtest/gtest.h"
 #include "mock_os_time_win.h"
+#include "runtime/os_interface/windows/os_interface.h"
+#include "unit_tests/os_interface/windows/wddm_fixture.h"
 #include <memory>
 
 using namespace OCLRT;
@@ -76,4 +78,41 @@ TEST_F(OSTimeWinTest, givenHighValueOfCpuTimestampWhenItIsObtainedThenItHasPrope
     uint64_t expectedTimestamp = static_cast<uint64_t>((static_cast<double>(valueToSet.QuadPart) * static_cast<double>(NSEC_PER_SEC) / static_cast<double>(frequency.QuadPart)));
     osTime->getCpuTime(&timeStamp);
     EXPECT_EQ(expectedTimestamp, timeStamp);
+}
+
+TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
+    uint64_t time = 0;
+    auto osTime(OSTime::create(nullptr));
+    auto error = osTime->getCpuTime(&time);
+    EXPECT_TRUE(error);
+    EXPECT_NE(0, time);
+}
+
+TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
+    TimeStampData CPUGPUTime = {0};
+    auto osTime(OSTime::create(nullptr));
+    auto success = osTime->getCpuGpuTime(&CPUGPUTime);
+    EXPECT_FALSE(success);
+    EXPECT_EQ(0, CPUGPUTime.CPUTimeinNS);
+    EXPECT_EQ(0, CPUGPUTime.GPUTimeStamp);
+}
+
+TEST(OSTimeWinTests, givenOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
+    auto wddm = new WddmMock;
+    wddm->init();
+    TimeStampData CPUGPUTime01 = {0};
+    TimeStampData CPUGPUTime02 = {0};
+    std::unique_ptr<OSInterface> osInterface(new OSInterface());
+    osInterface->get()->setWddm(wddm);
+    auto osTime = OSTime::create(osInterface.get());
+    auto success = osTime->getCpuGpuTime(&CPUGPUTime01);
+    EXPECT_TRUE(success);
+    EXPECT_NE(0, CPUGPUTime01.CPUTimeinNS);
+    EXPECT_NE(0, CPUGPUTime01.GPUTimeStamp);
+    success = osTime->getCpuGpuTime(&CPUGPUTime02);
+    EXPECT_TRUE(success);
+    EXPECT_NE(0, CPUGPUTime02.CPUTimeinNS);
+    EXPECT_NE(0, CPUGPUTime02.GPUTimeStamp);
+    EXPECT_GT(CPUGPUTime02.GPUTimeStamp, CPUGPUTime01.GPUTimeStamp);
+    EXPECT_GT(CPUGPUTime02.CPUTimeinNS, CPUGPUTime01.CPUTimeinNS);
 }

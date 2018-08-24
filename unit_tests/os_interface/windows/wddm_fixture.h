@@ -37,6 +37,9 @@ struct WddmFixture : public GmmEnvironmentFixture {
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
+        EXPECT_TRUE(wddm->osContext == nullptr);
+        wddm->init();
+        ASSERT_TRUE(wddm->isInitialized());
     }
 
     void TearDown() override {

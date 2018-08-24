@@ -47,18 +47,6 @@ class WddmMemoryManagerFixture : public GmmEnvironmentFixture, public GdiDllFixt
         GmmEnvironmentFixture::TearDown();
     }
 
-    void SetUpMm() {
-        EXPECT_TRUE(wddm->init());
-        uint64_t heap32Base = (uint64_t)(0x800000000000);
-        if (sizeof(uintptr_t) == 4) {
-            heap32Base = 0x1000;
-        }
-        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
-        //assert we have memory manager
-        ASSERT_NE(nullptr, memoryManager);
-    }
-
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     std::unique_ptr<WddmMock> wddm;
 };
@@ -72,9 +60,6 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
-    }
-
-    void SetUpMm() {
         EXPECT_TRUE(wddm->init());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
@@ -134,9 +119,6 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         // wddm is deleted by memory manager
         wddm.reset(new NiceMock<GmockWddm>);
         ASSERT_NE(nullptr, wddm);
-    }
-
-    void SetUpMm() {
         wddm->init();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm.get());
         //assert we have memory manager
@@ -144,6 +126,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
 
         ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm.get(), &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
+
     void TearDown() {
         delete memoryManager;
         wddm = nullptr;
@@ -162,9 +145,6 @@ class BufferWithWddmMemory : public ::testing::Test,
     void SetUp() {
         WddmMemoryManagerFixture::SetUp();
         tmp = context.getMemoryManager();
-    }
-
-    void SetUpMm() {
         EXPECT_TRUE(wddm->init());
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
