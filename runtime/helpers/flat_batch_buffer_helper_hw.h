@@ -30,7 +30,7 @@ template <typename GfxFamily>
 class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
   public:
     FlatBatchBufferHelperHw(MemoryManager *memoryManager) : FlatBatchBufferHelper(memoryManager) {}
-    void *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
+    GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
     char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) override;
     void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;
     static void sdiSetAddress(typename GfxFamily::MI_STORE_DATA_IMM *sdiCommand, uint64_t address);

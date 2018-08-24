@@ -48,10 +48,10 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     pCmd->setIndirectObjectBaseAddressModifyEnable(true);
     pCmd->setInstructionBaseAddressModifyEnable(true);
 
-    pCmd->setDynamicStateBaseAddress(reinterpret_cast<uintptr_t>(dsh.getCpuBase()));
+    pCmd->setDynamicStateBaseAddress(dsh.getHeapGpuBase());
     // GSH must be set to 0 for stateless
     pCmd->setGeneralStateBaseAddress(generalStateBase);
-    pCmd->setSurfaceStateBaseAddress(reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
+    pCmd->setSurfaceStateBaseAddress(ssh.getHeapGpuBase());
     pCmd->setInstructionBaseAddress(internalHeapBase);
 
     pCmd->setDynamicStateBufferSizeModifyEnable(true);
@@ -89,7 +89,7 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
                                                                        size_t stateBaseAddressCmdOffset, GmmHelper *gmmHelper) {
 
     auto sbaCommand = static_cast<STATE_BASE_ADDRESS *>(ptrOffset(commandStream.getCpuBase(), stateBaseAddressCmdOffset));
-    UNRECOVERABLE_IF(sbaCommand->getSurfaceStateBaseAddress() != reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
+    UNRECOVERABLE_IF(sbaCommand->getSurfaceStateBaseAddress() != ssh.getGraphicsAllocation()->getGpuAddress());
 }
 
 } // namespace OCLRT

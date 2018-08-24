@@ -63,6 +63,20 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory(size_t size,
     return memoryAllocation;
 }
 
+GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) {
+    MemoryAllocation *memoryAllocation = nullptr;
+    auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
+    auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
+
+    memoryAllocation = new MemoryAllocation(false, cpuPtr, reinterpret_cast<uint64_t>(alignedPtr), size, counter, MemoryPool::System4KBPages);
+
+    memoryAllocation->allocationOffset = offsetInPage;
+    memoryAllocation->uncacheable = false;
+
+    counter++;
+    return memoryAllocation;
+}
+
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {
     auto memoryAllocation = allocateGraphicsMemory(alignUp(size, MemoryConstants::pageSize64k), MemoryConstants::pageSize64k, forcePin, false);
     if (memoryAllocation) {

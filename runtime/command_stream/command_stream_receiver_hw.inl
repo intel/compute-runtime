@@ -200,7 +200,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             pCmd->setStateCacheInvalidationEnable(true);
         }
 
-        auto address = reinterpret_cast<uint64_t>(getTagAddress());
+        auto address = getTagAllocation()->getGpuAddress();
         pCmd->setAddressHigh(address >> 32);
         pCmd->setAddress(address & (0xffffffff));
         pCmd->setImmediateData(taskCount + 1);
@@ -534,7 +534,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                 epiloguePipeControlLocation = nextCommandBuffer->epiloguePipeControlLocation;
 
                 flushStampUpdateHelper.insert(nextCommandBuffer->flushStamp->getStampReference());
-                auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getUnderlyingBuffer();
+                auto nextCommandBufferAddress = nextCommandBuffer->batchBuffer.commandBufferAllocation->getGpuAddress();
                 auto offsetedCommandBuffer = (uint64_t)ptrOffset(nextCommandBufferAddress, nextCommandBuffer->batchBuffer.startOffset);
                 addBatchBufferStart((MI_BATCH_BUFFER_START *)currentBBendLocation, offsetedCommandBuffer, false);
                 if (DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {

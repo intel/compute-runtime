@@ -336,6 +336,9 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
     MapGPUVA.SizeInPages = size / MemoryConstants::pageSize;
     MapGPUVA.OffsetInPages = 0;
 
+    auto productFamily = gfxPlatform->eProductFamily;
+    UNRECOVERABLE_IF(!hardwareInfoTable[productFamily]);
+
     if (useHeap1) {
         MapGPUVA.MinimumAddress = gfxPartition.Heap32[1].Base;
         MapGPUVA.MaximumAddress = gfxPartition.Heap32[1].Limit;
@@ -344,14 +347,21 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         MapGPUVA.MinimumAddress = gfxPartition.Standard64KB.Base;
         MapGPUVA.MaximumAddress = gfxPartition.Standard64KB.Limit;
     } else {
-        MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
-        MapGPUVA.MinimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
-        MapGPUVA.MaximumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7fffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
-
-        if (!cpuPtr) {
-            MapGPUVA.MinimumAddress = gfxPartition.Standard.Base;
-            MapGPUVA.MaximumAddress = gfxPartition.Standard.Limit;
+        if (hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress) {
+            MapGPUVA.BaseAddress = reinterpret_cast<D3DGPU_VIRTUAL_ADDRESS>(cpuPtr);
+            MapGPUVA.MinimumAddress = static_cast<D3DGPU_VIRTUAL_ADDRESS>(0x0);
+            MapGPUVA.MaximumAddress =
+                static_cast<D3DGPU_VIRTUAL_ADDRESS>((sizeof(size_t) == 8) ? 0x7fffffffffff : (D3DGPU_VIRTUAL_ADDRESS)0xffffffff);
+            if (!cpuPtr) {
+                MapGPUVA.MinimumAddress = gfxPartition.Standard.Base;
+                MapGPUVA.MaximumAddress = gfxPartition.Standard.Limit;
+            }
+        } else {
+            MapGPUVA.BaseAddress = 0;
+            MapGPUVA.MinimumAddress = 0x0;
+            MapGPUVA.MaximumAddress = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace;
         }
+
         if (allocation32bit) {
             MapGPUVA.MinimumAddress = gfxPartition.Heap32[0].Base;
             MapGPUVA.MaximumAddress = gfxPartition.Heap32[0].Limit;
@@ -891,11 +901,15 @@ bool Wddm::configureDeviceAddressSpace() {
     SYSTEM_INFO sysInfo;
     Wddm::getSystemInfo(&sysInfo);
     maximumApplicationAddress = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress);
+    auto productFamily = gfxPlatform->eProductFamily;
+    if (!hardwareInfoTable[productFamily]) {
+        return false;
+    }
+    auto svmSize = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress
+                       ? maximumApplicationAddress + 1u
+                       : 0u;
 
-    return gmmMemory->configureDevice(adapter, device, gdi->escape,
-                                      maximumApplicationAddress + 1u,
-                                      featureTable->ftrL3IACoherency,
-                                      gfxPartition, minAddress);
+    return gmmMemory->configureDevice(adapter, device, gdi->escape, svmSize, featureTable->ftrL3IACoherency, gfxPartition, minAddress);
 }
 
 bool Wddm::init() {

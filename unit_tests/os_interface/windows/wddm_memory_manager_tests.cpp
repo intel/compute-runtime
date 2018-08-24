@@ -186,6 +186,30 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(WddmMemoryManagerSimpleTest,
+       givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
+    memoryManager.reset(new MockWddmMemoryManager(false, wddm));
+    void *hostPtr = reinterpret_cast<void *>(0x5001);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(reinterpret_cast<void *>(0x5001), allocation->getUnderlyingBuffer());
+    EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->allocationOffset);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(WddmMemoryManagerTest,
+       givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhencreateWddmAllocationFailsThenGraphicsAllocationIsNotCreated) {
+    char hostPtr[64];
+    memoryManager->setDeferredDeleter(nullptr);
+    setMapGpuVaFailConfigFcn(0, 1);
+
+    auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(64, hostPtr);
+    EXPECT_EQ(nullptr, allocation);
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(WddmMemoryManagerTest, AllocateAndFree) {
     auto *ptr = memoryManager->allocateGraphicsMemory(0x1000);
     EXPECT_NE(nullptr, ptr);
@@ -756,7 +780,6 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCpuMemNotMeetRestriction
 
     ASSERT_NE(nullptr, allocation);
     EXPECT_EQ(expectReserve, allocation->getReservedAddress());
-    EXPECT_EQ(expectReserve, reinterpret_cast<void *>(allocation->gpuPtr));
     memoryManager->freeGraphicsMemory(allocation);
 }
 
@@ -788,7 +811,6 @@ TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstMap
     allocation.gmm = gmm.get();
     bool ret = memoryManager->createWddmAllocation(&allocation, AllocationOrigin::EXTERNAL_ALLOCATION);
     EXPECT_TRUE(ret);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(ptr), allocation.getGpuAddress());
 }
 
 TEST_F(WddmMemoryManagerTest, givenManagerWithEnabledDeferredDeleterWhenFirstAndMapGpuVaFailSecondAfterDrainFailThenFailToCreateAllocation) {
@@ -1616,7 +1638,6 @@ TEST_F(BufferWithWddmMemory, GivenMisalignedHostPtrAndMultiplePagesSizeWhenAsked
 
         uintptr_t GpuPtr = (uintptr_t)(graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gpuPtr);
         uintptr_t CpuPtr = (uintptr_t)(reqs.AllocationFragments[i].allocationPtr);
-        EXPECT_EQ(CpuPtr, GpuPtr);
         EXPECT_NE((D3DKMT_HANDLE) nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->handle);
 
         EXPECT_NE(nullptr, graphicsAllocation->fragmentsStorage.fragmentStorageData[i].osHandleStorage->gmm);
@@ -2007,8 +2028,6 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
     EXPECT_EQ(MemoryConstants::pageSize64k, graphicsAllocation->getUnderlyingBufferSize());
     EXPECT_NE(0llu, graphicsAllocation->getGpuAddress());
     EXPECT_NE(nullptr, graphicsAllocation->getUnderlyingBuffer());
-    EXPECT_EQ(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), graphicsAllocation->getUnderlyingBuffer());
-
     EXPECT_EQ(1u, graphicsAllocation->gmm->resourceParams.Flags.Info.Cacheable);
 
     memoryManager.freeGraphicsMemory(graphicsAllocation);
@@ -2108,8 +2127,17 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 
     auto result = wddm.mapGpuVirtualAddressImpl(gmm.get(), ALLOCATION_HANDLE, nullptr, gpuVa, false, false, false);
     ASSERT_TRUE(result);
-    EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
 
+    auto productFamily = wddm.getGfxPlatform()->eProductFamily;
+    UNRECOVERABLE_IF(!hardwareInfoTable[productFamily]);
+    auto gpuAddressRange = hardwareInfoTable[productFamily]->capabilityTable.gpuAddressSpace;
+    if (gpuAddressRange == MemoryConstants::max48BitAddress) {
+        EXPECT_EQ(GmmHelper::canonize(wddm.getGfxPartition().Standard.Base), gpuVa);
+    } else {
+        EXPECT_GE(gpuAddressRange, gpuVa);
+        EXPECT_LE(0u, gpuVa);
+        expectedDdiUpdateAuxTable.BaseGpuVA = MemoryConstants::pageSize64k;
+    }
     EXPECT_TRUE(memcmp(&expectedDdiUpdateAuxTable, &givenDdiUpdateAuxTable, sizeof(GMM_DDI_UPDATEAUXTABLE)) == 0);
 }
 

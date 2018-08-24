@@ -102,13 +102,13 @@ struct MultipleMapImageTest : public DeviceFixture, public ::testing::Test {
 
     template <typename Traits, typename FamilyType>
     std::unique_ptr<MockImage<FamilyType>> createMockImage() {
-        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemory(1024);
+        auto allocationSize = Traits::imageDesc.image_width * 4 * Traits::imageDesc.image_height * Traits::imageDesc.image_depth;
+        auto mockAlloc = pDevice->getMemoryManager()->allocateGraphicsMemory(allocationSize);
         auto tiledImage = GmmHelper::allowTiling(Traits::imageDesc);
 
         auto surfaceFormat = Image::getSurfaceFormatFromTable(Traits::flags, &Traits::imageFormat);
-        auto img = new MockImage<FamilyType>(context, Traits::flags, 1024, Traits::hostPtr,
-                                             Traits::imageFormat, Traits::imageDesc, false, mockAlloc, false,
-                                             tiledImage, 0, 0, *surfaceFormat);
+        auto img = new MockImage<FamilyType>(context, Traits::flags, allocationSize, Traits::hostPtr, Traits::imageFormat,
+                                             Traits::imageDesc, false, mockAlloc, false, tiledImage, 0, 0, *surfaceFormat);
         return std::unique_ptr<MockImage<FamilyType>>(img);
     }
 
@@ -320,10 +320,9 @@ HWTEST_F(MultipleMapImageTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrectP
     auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
 
-    MapInfo mappedPtrs[3] = {
-        {nullptr, 1, {{1, 1, 1}}, {{1, 1, 1}}, 0},
-        {nullptr, 1, {{4, 4, 2}}, {{4, 4, 4}}, 0},
-        {nullptr, 1, {{10, 10, 10}}, {{10, 10, 10}}, 0}};
+    MapInfo mappedPtrs[3] = {{nullptr, 1, {{1, 1, 1}}, {{1, 1, 1}}, 0},
+                             {nullptr, 1, {{2, 2, 2}}, {{2, 2, 2}}, 0},
+                             {nullptr, 1, {{3, 5, 7}}, {{4, 4, 4}}, 0}};
 
     for (size_t i = 0; i < 3; i++) {
         mappedPtrs[i].ptr = clEnqueueMapImage(cmdQ.get(), image.get(), CL_TRUE, CL_MAP_WRITE, &mappedPtrs[i].offset[0], &mappedPtrs[i].size[0],

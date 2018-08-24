@@ -24,16 +24,18 @@
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/memory_manager/graphics_allocation.h"
 
 namespace OCLRT {
 
 template <typename GfxFamily>
-void *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) {
+GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer,
+                                                                           DispatchMode dispatchMode) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GfxFamily::MI_BATCH_BUFFER_END MI_BATCH_BUFFER_END;
     typedef typename GfxFamily::MI_USER_INTERRUPT MI_USER_INTERRUPT;
 
-    void *flatBatchBuffer = nullptr;
+    GraphicsAllocation *flatBatchBuffer = nullptr;
 
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
@@ -45,14 +47,20 @@ void *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchB
             auto sizeMainBatchBuffer = batchBuffer.chainedBatchBufferStartOffset - batchBuffer.startOffset;
 
             auto flatBatchBufferSize = alignUp(sizeMainBatchBuffer + indirectPatchCommandsSize + batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), MemoryConstants::pageSize);
-            flatBatchBuffer = this->memoryManager->alignedMallocWrapper(flatBatchBufferSize, MemoryConstants::pageSize);
+            flatBatchBuffer =
+                this->memoryManager->allocateGraphicsMemory(flatBatchBufferSize, MemoryConstants::pageSize, false, false);
             UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
             // Copy main batchbuffer
-            memcpy_s(flatBatchBuffer, sizeMainBatchBuffer, ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset), sizeMainBatchBuffer);
+            memcpy_s(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer,
+                     ptrOffset(batchBuffer.commandBufferAllocation->getUnderlyingBuffer(), batchBuffer.startOffset),
+                     sizeMainBatchBuffer);
             // Copy indirect patch commands
-            memcpy_s(ptrOffset(flatBatchBuffer, sizeMainBatchBuffer), indirectPatchCommandsSize, indirectPatchCommands.get(), indirectPatchCommandsSize);
+            memcpy_s(ptrOffset(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer), indirectPatchCommandsSize,
+                     indirectPatchCommands.get(), indirectPatchCommandsSize);
             // Copy chained batchbuffer
-            memcpy_s(ptrOffset(flatBatchBuffer, sizeMainBatchBuffer + indirectPatchCommandsSize), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), batchBuffer.chainedBatchBuffer->getUnderlyingBuffer(), batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize());
+            memcpy_s(ptrOffset(flatBatchBuffer->getUnderlyingBuffer(), sizeMainBatchBuffer + indirectPatchCommandsSize),
+                     batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize(), batchBuffer.chainedBatchBuffer->getUnderlyingBuffer(),
+                     batchBuffer.chainedBatchBuffer->getUnderlyingBufferSize());
             sizeBatchBuffer = flatBatchBufferSize;
             patchInfoCollection.insert(std::end(patchInfoCollection), std::begin(indirectPatchInfo), std::end(indirectPatchInfo));
         }
@@ -115,9 +123,11 @@ void *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(BatchBuffer &batchB
 
         flatBatchBufferSize = alignUp(flatBatchBufferSize, MemoryConstants::pageSize);
         flatBatchBufferSize += CSRequirements::csOverfetchSize;
-        flatBatchBuffer = this->memoryManager->alignedMallocWrapper(static_cast<size_t>(flatBatchBufferSize), MemoryConstants::pageSize);
+        flatBatchBuffer = this->memoryManager->allocateGraphicsMemory(static_cast<size_t>(flatBatchBufferSize),
+                                                                      MemoryConstants::pageSize, false, false);
+        UNRECOVERABLE_IF(flatBatchBuffer == nullptr);
 
-        char *ptr = reinterpret_cast<char *>(flatBatchBuffer);
+        char *ptr = reinterpret_cast<char *>(flatBatchBuffer->getUnderlyingBuffer());
         memcpy_s(ptr, indirectPatchCommandsSize, indirectPatchCommands.get(), indirectPatchCommandsSize);
         ptr += indirectPatchCommandsSize;
         for (auto &chunk : orderedChunks) {

@@ -227,7 +227,7 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     csr->flush(batchBuffer, EngineType::ENGINE_RCS, nullptr, *device->getOsContext());
     EXPECT_EQ(1u, wddm->submitResult.called);
     EXPECT_TRUE(wddm->submitResult.success);
-    EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, reinterpret_cast<uint64_t>(commandBuffer->getUnderlyingBuffer()) + offset);
+    EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, commandBuffer->getGpuAddress() + offset);
 
     memManager->freeGraphicsMemory(commandBuffer);
 }
@@ -612,7 +612,6 @@ TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAlloc
 
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedReserve, gfxAllocation->getReservedAddress());
-    EXPECT_EQ(reinterpret_cast<uint64_t>(expectedReserve), gfxAllocation->getGpuAddress());
 }
 
 TEST_F(WddmCommandStreamTest, killAllTemporaryAllocation) {
@@ -748,7 +747,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
 
     EXPECT_EQ(1u, wddm->submitResult.called);
     auto csrCommandStream = csr->commandStream.getGraphicsAllocation();
-    EXPECT_EQ(reinterpret_cast<uint64_t>(csrCommandStream->getUnderlyingBuffer()), wddm->submitResult.commandBufferSubmitted);
+    EXPECT_EQ(csrCommandStream->getGpuAddress(), wddm->submitResult.commandBufferSubmitted);
     EXPECT_TRUE(((COMMAND_BUFFER_HEADER *)wddm->submitResult.commandHeaderSubmitted)->RequiresCoherency);
     EXPECT_EQ(6u + csrSurfaceCount, wddm->makeResidentResult.handleCount);
 

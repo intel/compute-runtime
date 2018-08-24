@@ -1307,6 +1307,17 @@ TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueried
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 
+TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsCreated) {
+    OsAgnosticMemoryManager memoryManager;
+    auto hostPtr = reinterpret_cast<void *>(0x5001);
+    auto allocation = memoryManager.allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(13u, allocation->getUnderlyingBufferSize());
+    EXPECT_EQ(1u, allocation->allocationOffset);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
     Gmm *gmm = new Gmm(nullptr, 65536, false);
     EXPECT_NE(nullptr, gmm);

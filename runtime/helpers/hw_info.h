@@ -78,6 +78,7 @@ struct RuntimeCapabilityTable {
     uint32_t aubDeviceId;
 
     uint32_t extraQuantityThreadsPerEU;
+    uint64_t gpuAddressSpace;
 };
 
 struct HardwareCapabilities {

@@ -133,7 +133,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
 TEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMemoryPtrIsNotOverridden) {
     cl_int retVal;
     size_t origin[] = {0, 0, 0};
-    size_t region[] = {0, 0, 0};
+    size_t region[] = {1, 1, 1};
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     std::unique_ptr<CommandQueue> commandQueue(CommandQueue::create(&context, device.get(), nullptr, retVal));
     commandQueue->enqueueMapImage(image.get(), CL_FALSE, 0, origin, region, nullptr, nullptr, 0, nullptr, nullptr, retVal);

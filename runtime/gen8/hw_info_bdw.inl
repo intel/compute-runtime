@@ -54,31 +54,31 @@ const PLATFORM BDW::platform = {
     0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable BDW::capabilityTable{
-    0,
-    80,
-    21,
-    true,
-    true,
-    true,
-    true,
-    false, // ftrSupportsVmeAvcTextureSampler
-    false, // ftrSupportsVmeAvcPreemption
-    false, // ftrRenderCompressedBuffers
-    false, // ftrRenderCompressedImages
-    PreemptionMode::Disabled,
-    {false, false},
-    &isSimulationBDW,
-    true,
-    true,                                    // forceStatelessCompilationFor32Bit
-    {true, 50000, true, 5000, true, 200000}, // KmdNotifyProperties
-    false,                                   // ftr64KBpages
-    EngineType::ENGINE_RCS,                  // defaultEngineType
-    MemoryConstants::pageSize,               //requiredPreemptionSurfaceSize
-    true,                                    // isCore
-    false,                                   // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Bdw,
-    0}; // extraQuantityThreadsPerEU
+const RuntimeCapabilityTable BDW::capabilityTable{0,
+                                                  80,
+                                                  21,
+                                                  true,
+                                                  true,
+                                                  true,
+                                                  true,
+                                                  false, // ftrSupportsVmeAvcTextureSampler
+                                                  false, // ftrSupportsVmeAvcPreemption
+                                                  false, // ftrRenderCompressedBuffers
+                                                  false, // ftrRenderCompressedImages
+                                                  PreemptionMode::Disabled,
+                                                  {false, false},
+                                                  &isSimulationBDW,
+                                                  true,
+                                                  true,                                    // forceStatelessCompilationFor32Bit
+                                                  {true, 50000, true, 5000, true, 200000}, // KmdNotifyProperties
+                                                  false,                                   // ftr64KBpages
+                                                  EngineType::ENGINE_RCS,                  // defaultEngineType
+                                                  MemoryConstants::pageSize,               // requiredPreemptionSurfaceSize
+                                                  true,                                    // isCore
+                                                  false,                                   // sourceLevelDebuggerSupported
+                                                  CmdServicesMemTraceVersion::DeviceValues::Bdw,
+                                                  0,                                 // extraQuantityThreadsPerEU
+                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo BDW_1x2x6::hwInfo = {
     &BDW::platform,

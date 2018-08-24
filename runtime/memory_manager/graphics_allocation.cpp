@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,8 +24,8 @@
 #include "runtime/helpers/aligned_memory.h"
 
 bool OCLRT::GraphicsAllocation::isL3Capable() {
-    if (alignUp(this->cpuPtr, MemoryConstants::cacheLineSize) == this->cpuPtr &&
-        alignUp(this->size, MemoryConstants::cacheLineSize) == this->size) {
+    auto ptr = ptrOffset(cpuPtr, static_cast<size_t>(this->allocationOffset));
+    if (alignUp(ptr, MemoryConstants::cacheLineSize) == ptr && alignUp(this->size, MemoryConstants::cacheLineSize) == this->size) {
         return true;
     }
     return false;

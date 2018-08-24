@@ -728,7 +728,13 @@ void CommandQueueHw<GfxFamily>::computeOffsetsValueForRectCommands(size_t *buffe
 template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &surface) {
     auto memoryManager = device->getCommandStreamReceiver().getMemoryManager();
-    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), surface.getMemoryPointer());
+    GraphicsAllocation *allocation = nullptr;
+
+    if (!isFullRangeSvm()) {
+        allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer());
+    } else {
+        allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), surface.getMemoryPointer());
+    }
 
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy

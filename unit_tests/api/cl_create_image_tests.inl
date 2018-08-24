@@ -320,7 +320,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
 
 TEST_P(clCreateImageValidFlags, validFlags) {
 
-    char ptr[10];
+    char ptr[128 * 32];
     imageDesc.image_row_pitch = 128;
     cl_mem_flags flags = GetParam();
 

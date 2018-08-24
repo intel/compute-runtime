@@ -221,10 +221,10 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
 
     EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
 
-    EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage, CL_FALSE, origin, region);
+    EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, dstImage2, CL_FALSE, origin, region);
     auto temporaryAllocation2 = temporaryAllocation1->next;
     ASSERT_NE(nullptr, temporaryAllocation2);
-    EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
+    EXPECT_EQ(temporaryAllocation2->getUnderlyingBufferSize(), imageSize);
 
     delete dstImage2;
 }
@@ -430,7 +430,10 @@ HWTEST_P(MipMapWriteImageTest, GivenImageWithMipLevelNonZeroWhenReadImageIsCalle
     }
     EXPECT_NE(nullptr, image.get());
 
-    std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[3]);
+    auto hostPtrSize = Image::calculateHostPtrSize(region, image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(),
+                                                   image->getSurfaceFormatInfo().ImageElementSizeInBytes, image_type);
+    std::unique_ptr<uint32_t[]> ptr = std::unique_ptr<uint32_t[]>(new uint32_t[hostPtrSize]);
+
     retVal = pCmdQ->enqueueWriteImage(image.get(),
                                       CL_FALSE,
                                       origin,

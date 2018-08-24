@@ -216,7 +216,8 @@ class MockFlatBatchBufferHelper : public FlatBatchBufferHelperHw<GfxFamily> {
     MOCK_METHOD1(removePatchInfoData, bool(uint64_t));
     MOCK_METHOD1(registerCommandChunk, bool(CommandChunk &));
     MOCK_METHOD2(registerBatchBufferStartAddress, bool(uint64_t, uint64_t));
-    MOCK_METHOD3(flattenBatchBuffer, void *(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode));
+    MOCK_METHOD3(flattenBatchBuffer,
+                 GraphicsAllocation *(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode));
 };
 
 class MockCommandStreamReceiver : public CommandStreamReceiver {

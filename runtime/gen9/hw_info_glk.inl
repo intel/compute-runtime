@@ -46,31 +46,31 @@ const PLATFORM GLK::platform = {
     0,               // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable GLK::capabilityTable{
-    0,
-    52.083,
-    12,
-    true,
-    true,
-    false, // ftrSvm
-    true,
-    true,  // ftrSupportsVmeAvcTextureSampler
-    false, // ftrSupportsVmeAvcPreemption
-    false, // ftrRenderCompressedBuffers
-    false, // ftrRenderCompressedImages
-    PreemptionMode::MidThread,
-    {true, false},
-    &isSimulationGLK,
-    true,
-    false,                             // forceStatelessCompilationFor32Bit
-    {true, 30000, false, 0, false, 0}, // KmdNotifyProperties
-    false,                             // ftr64KBpages
-    EngineType::ENGINE_RCS,            // defaultEngineType
-    MemoryConstants::pageSize,         //requiredPreemptionSurfaceSize
-    false,                             // isCore
-    true,                              // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Glk,
-    0}; // extraQuantityThreadsPerEU
+const RuntimeCapabilityTable GLK::capabilityTable{0,
+                                                  52.083,
+                                                  12,
+                                                  true,
+                                                  true,
+                                                  false, // ftrSvm
+                                                  true,
+                                                  true,  // ftrSupportsVmeAvcTextureSampler
+                                                  false, // ftrSupportsVmeAvcPreemption
+                                                  false, // ftrRenderCompressedBuffers
+                                                  false, // ftrRenderCompressedImages
+                                                  PreemptionMode::MidThread,
+                                                  {true, false},
+                                                  &isSimulationGLK,
+                                                  true,
+                                                  false,                             // forceStatelessCompilationFor32Bit
+                                                  {true, 30000, false, 0, false, 0}, // KmdNotifyProperties
+                                                  false,                             // ftr64KBpages
+                                                  EngineType::ENGINE_RCS,            // defaultEngineType
+                                                  MemoryConstants::pageSize,         // requiredPreemptionSurfaceSize
+                                                  false,                             // isCore
+                                                  true,                              // sourceLevelDebuggerSupported
+                                                  CmdServicesMemTraceVersion::DeviceValues::Glk,
+                                                  0,                                 // extraQuantityThreadsPerEU
+                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo GLK_1x3x6::hwInfo = {
     &GLK::platform,

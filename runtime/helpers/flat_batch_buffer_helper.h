@@ -42,7 +42,7 @@ class FlatBatchBufferHelper {
     MOCKABLE_VIRTUAL bool registerCommandChunk(CommandChunk &commandChunk);
     MOCKABLE_VIRTUAL bool registerCommandChunk(BatchBuffer &batchBuffer, size_t batchBufferStartCommandSize);
     MOCKABLE_VIRTUAL bool registerBatchBufferStartAddress(uint64_t commandAddress, uint64_t startAddress);
-    virtual void *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) = 0;
+    virtual GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) = 0;
     virtual char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) = 0;
     virtual void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) = 0;
     void setMemoryManager(MemoryManager *memoryManager) { this->memoryManager = memoryManager; }

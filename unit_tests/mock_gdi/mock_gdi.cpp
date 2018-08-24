@@ -21,6 +21,7 @@
  */
 
 #include "runtime/os_interface/windows/os_time_win.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "mock_gdi.h"
 
 ADAPTER_INFO gAdapterInfo = {0};
@@ -251,7 +252,11 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
         }
     }
     if (mapGpuVA->BaseAddress == 0) {
-        mapGpuVA->VirtualAddress = mapGpuVA->MinimumAddress;
+        if (mapGpuVA->MinimumAddress) {
+            mapGpuVA->VirtualAddress = mapGpuVA->MinimumAddress;
+        } else {
+            mapGpuVA->VirtualAddress = MemoryConstants::pageSize64k;
+        }
     } else {
         if (maxSvmAddress != mapGpuVA->MaximumAddress) {
             return STATUS_INVALID_PARAMETER;

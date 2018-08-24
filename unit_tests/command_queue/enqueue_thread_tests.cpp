@@ -388,7 +388,8 @@ HWTEST_F(EnqueueThreading, enqueueWriteBufferRect) {
     size_t hostOrigin[3] = {1024u, 1, 0};
     size_t region[3] = {1024u, 1, 1};
 
-    void *ptr = ::alignedMalloc(1024u, 4096);
+    auto hostPtrSize = Buffer::calculateHostPtrSize(hostOrigin, region, 0, 0);
+    void *ptr = ::alignedMalloc(hostPtrSize, MemoryConstants::pageSize);
     ASSERT_NE(nullptr, ptr);
 
     pCmdQ->enqueueWriteBufferRect(buffer.get(), CL_TRUE, bufferOrigin, hostOrigin, region, 0, 0, 0, 0, ptr, 0, nullptr, nullptr);

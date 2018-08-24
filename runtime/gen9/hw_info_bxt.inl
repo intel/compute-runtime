@@ -51,31 +51,31 @@ const PLATFORM BXT::platform = {
     0,               // usRevId_PCH
     GTTYPE_UNDEFINED};
 
-const RuntimeCapabilityTable BXT::capabilityTable{
-    0,
-    52.083,
-    12,
-    true,
-    true,
-    false, // ftrSvm
-    true,
-    true,  // ftrSupportsVmeAvcTextureSampler
-    false, // ftrSupportsVmeAvcPreemption
-    false, // ftrRenderCompressedBuffers
-    false, // ftrRenderCompressedImages
-    PreemptionMode::MidThread,
-    {true, false},
-    &isSimulationBXT,
-    true,
-    false,                          // forceStatelessCompilationFor32Bit
-    {false, 0, false, 0, false, 0}, // KmdNotifyProperties
-    false,                          // ftr64KBpages
-    EngineType::ENGINE_RCS,         // defaultEngineType
-    MemoryConstants::pageSize,      //requiredPreemptionSurfaceSize
-    false,                          // isCore
-    true,                           // sourceLevelDebuggerSupported
-    CmdServicesMemTraceVersion::DeviceValues::Bxt,
-    0}; // extraQuantityThreadsPerEU
+const RuntimeCapabilityTable BXT::capabilityTable{0,
+                                                  52.083,
+                                                  12,
+                                                  true,
+                                                  true,
+                                                  false, // ftrSvm
+                                                  true,
+                                                  true,  // ftrSupportsVmeAvcTextureSampler
+                                                  false, // ftrSupportsVmeAvcPreemption
+                                                  false, // ftrRenderCompressedBuffers
+                                                  false, // ftrRenderCompressedImages
+                                                  PreemptionMode::MidThread,
+                                                  {true, false},
+                                                  &isSimulationBXT,
+                                                  true,
+                                                  false,                          // forceStatelessCompilationFor32Bit
+                                                  {false, 0, false, 0, false, 0}, // KmdNotifyProperties
+                                                  false,                          // ftr64KBpages
+                                                  EngineType::ENGINE_RCS,         // defaultEngineType
+                                                  MemoryConstants::pageSize,      // requiredPreemptionSurfaceSize
+                                                  false,                          // isCore
+                                                  true,                           // sourceLevelDebuggerSupported
+                                                  CmdServicesMemTraceVersion::DeviceValues::Bxt,
+                                                  0,                                 // extraQuantityThreadsPerEU
+                                                  MemoryConstants::max48BitAddress}; // gpuAddressSpace
 
 const HardwareInfo BXT_1x2x6::hwInfo = {
     &BXT::platform,

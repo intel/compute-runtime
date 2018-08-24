@@ -129,6 +129,26 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
     return wddmAllocation;
 }
 
+GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) {
+    auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
+    auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
+    auto alignedSize = alignSizeWholePage(cpuPtr, size);
+
+    auto wddmAllocation = new WddmAllocation(cpuPtr, size, alignedPtr, alignedSize, nullptr, MemoryPool::System4KBPages);
+    wddmAllocation->allocationOffset = offsetInPage;
+
+    auto gmm = new Gmm(alignedPtr, alignedSize, false);
+
+    wddmAllocation->gmm = gmm;
+
+    if (!createWddmAllocation(wddmAllocation, AllocationOrigin::EXTERNAL_ALLOCATION)) {
+        delete gmm;
+        delete wddmAllocation;
+        return nullptr;
+    }
+    return wddmAllocation;
+}
+
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, const void *ptrArg) {
     void *ptr = const_cast<void *>(ptrArg);
 

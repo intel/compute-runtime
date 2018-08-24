@@ -1065,8 +1065,10 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     size_t sizeBatchBuffer = 0xffffu;
 
-    std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch), [&](void *ptr) { memoryManager->alignedFreeWrapper(ptr); });
-    EXPECT_NE(nullptr, flatBatchBuffer.get());
+    std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch),
+        [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
+    EXPECT_NE(nullptr, flatBatchBuffer->getUnderlyingBuffer());
     EXPECT_EQ(alignUp(128u + 128u, 0x1000), sizeBatchBuffer);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
@@ -1089,7 +1091,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     size_t sizeBatchBuffer = 0xffffu;
 
-    std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch), [&](void *ptr) { memoryManager->alignedFreeWrapper(ptr); });
+    std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::ImmediateDispatch),
+        [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_EQ(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(0xffffu, sizeBatchBuffer);
 
@@ -1115,7 +1119,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     size_t sizeBatchBuffer = 0xffffu;
 
-    std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::AdaptiveDispatch), [&](void *ptr) { memoryManager->alignedFreeWrapper(ptr); });
+    std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::AdaptiveDispatch),
+        [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
     EXPECT_EQ(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(0xffffu, sizeBatchBuffer);
 
@@ -1232,7 +1238,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     size_t sizeBatchBuffer = 0u;
 
-    std::unique_ptr<void, std::function<void(void *)>> flatBatchBuffer(aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::BatchedDispatch), [&](void *ptr) { memoryManager->alignedFreeWrapper(ptr); });
+    std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> flatBatchBuffer(
+        aubCsr->getFlatBatchBufferHelper().flattenBatchBuffer(batchBuffer, sizeBatchBuffer, DispatchMode::BatchedDispatch),
+        [&](GraphicsAllocation *ptr) { memoryManager->freeGraphicsMemory(ptr); });
 
     EXPECT_NE(nullptr, flatBatchBuffer.get());
     EXPECT_EQ(alignUp(0x50u + 0x40u + 0x40u + CSRequirements::csOverfetchSize, 0x1000u), sizeBatchBuffer);
@@ -1242,9 +1250,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedB
 
     EXPECT_EQ(0u, aubCsr->getFlatBatchBufferHelper().getCommandChunkList().size());
 
-    EXPECT_EQ(0x3, static_cast<char *>(flatBatchBuffer.get())[0]);
-    EXPECT_EQ(0x2, static_cast<char *>(flatBatchBuffer.get())[0x40]);
-    EXPECT_EQ(0x1, static_cast<char *>(flatBatchBuffer.get())[0x40 + 0x40]);
+    EXPECT_EQ(0x3, static_cast<char *>(flatBatchBuffer->getUnderlyingBuffer())[0]);
+    EXPECT_EQ(0x2, static_cast<char *>(flatBatchBuffer->getUnderlyingBuffer())[0x40]);
+    EXPECT_EQ(0x1, static_cast<char *>(flatBatchBuffer->getUnderlyingBuffer())[0x40 + 0x40]);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenDefaultDebugConfigThenExpectFlattenBatchBufferIsNotCalled) {
@@ -1283,7 +1291,9 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     aubCsr->makeResident(*chainedBatchBuffer);
 
-    std::unique_ptr<void, decltype(alignedFree) *> ptr(alignedMalloc(4096, 4096), alignedFree);
+    std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>> ptr(
+        aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemory(4096, 4096, false, false),
+        [&](GraphicsAllocation *ptr) { aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(ptr); });
 
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(ptr.release()));
     aubCsr->flush(batchBuffer, engineType, nullptr, *pDevice->getOsContext());

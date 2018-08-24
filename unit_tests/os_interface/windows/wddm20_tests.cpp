@@ -470,10 +470,9 @@ TEST_F(Wddm20Tests, givenWddmCreatedWhenInitedThenMinAddressValid) {
     EXPECT_EQ(expected, actual);
 }
 
-TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
+HWTEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     SYSTEM_INFO sysInfo = {};
     WddmMock::getSystemInfo(&sysInfo);
-    uintptr_t maxAddr = reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1;
 
     D3DKMT_HANDLE adapterHandle = ADAPTER_HANDLE;
     D3DKMT_HANDLE deviceHandle = DEVICE_HANDLE;
@@ -481,6 +480,9 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceOnInit) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(&hwInfo);
     BOOLEAN FtrL3IACoherency = hwInfo.pSkuTable->ftrL3IACoherency ? 1 : 0;
+    uintptr_t maxAddr = hwInfo.capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress
+                            ? reinterpret_cast<uintptr_t>(sysInfo.lpMaximumApplicationAddress) + 1
+                            : 0;
     EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(adapterHandle,
                                                      deviceHandle,
                                                      wddm->gdi->escape.mFunc,
@@ -497,13 +499,9 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoAdapter) {
     wddm->adapter = static_cast<D3DKMT_HANDLE>(0);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0),
-                                                     ::testing::_,
-                                                     ::testing::_,
-                                                     ::testing::_,
-                                                     ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(false));
+    EXPECT_CALL(*gmmMem,
+                configureDeviceAddressSpace(static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .Times(0);
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);
@@ -513,13 +511,9 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoDevice) {
     wddm->device = static_cast<D3DKMT_HANDLE>(0);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_,
-                                                     static_cast<D3DKMT_HANDLE>(0),
-                                                     ::testing::_,
-                                                     ::testing::_,
-                                                     ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(false));
+    EXPECT_CALL(*gmmMem,
+                configureDeviceAddressSpace(::testing::_, static_cast<D3DKMT_HANDLE>(0), ::testing::_, ::testing::_, ::testing::_))
+        .Times(0);
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);
@@ -529,13 +523,9 @@ TEST_F(Wddm20InstrumentationTest, configureDeviceAddressSpaceNoEscFunc) {
     wddm->gdi->escape = static_cast<PFND3DKMT_ESCAPE>(nullptr);
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
-    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_,
-                                                     ::testing::_,
-                                                     static_cast<PFND3DKMT_ESCAPE>(nullptr),
-                                                     ::testing::_,
+    EXPECT_CALL(*gmmMem, configureDeviceAddressSpace(::testing::_, ::testing::_, static_cast<PFND3DKMT_ESCAPE>(nullptr), ::testing::_,
                                                      ::testing::_))
-        .Times(1)
-        .WillRepeatedly(::testing::Return(false));
+        .Times(0);
     auto ret = wddm->configureDeviceAddressSpace();
 
     EXPECT_FALSE(ret);

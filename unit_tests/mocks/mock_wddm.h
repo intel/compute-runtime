@@ -93,6 +93,7 @@ class WddmMock : public Wddm {
     void releaseReservedAddress(void *reservedAddress) override;
     bool reserveValidAddressRange(size_t size, void *&reservedMem);
     GmmMemory *getGmmMemory() const;
+    PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
