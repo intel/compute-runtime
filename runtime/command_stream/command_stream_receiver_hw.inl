@@ -49,7 +49,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
+FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
     return flushStamp->peekStamp();
 }
 
@@ -434,7 +434,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, engineType, nullptr));
+            flushStamp->setStamp(this->flush(batchBuffer, engineType, nullptr, *device.getOsContext()));
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(nullptr);
         } else {
@@ -555,7 +555,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             if (epiloguePipeControlLocation) {
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
             }
-            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit);
+            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit, *device.getOsContext());
 
             //after flush task level is closed
             this->taskLevel++;
@@ -656,13 +656,13 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, OsContext &osContext) {
     int64_t waitTimeout = 0;
     bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait);
 
     auto status = waitForCompletionWithTimeout(enableTimeout, waitTimeout, taskCountToWait);
     if (!status) {
-        waitForFlushStamp(flushStampToWait);
+        waitForFlushStamp(flushStampToWait, osContext);
         //now call blocking wait, this is to ensure that task count is reached
         waitForCompletionWithTimeout(false, 0, taskCountToWait);
     }

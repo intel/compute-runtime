@@ -23,11 +23,13 @@
 #pragma once
 #include <cstdlib>
 #include <cinttypes>
+#include "runtime/os_interface/os_context.h"
 
 namespace OCLRT {
 
 struct OsHandle;
-typedef OsHandle OsGraphicsHandle;
+
+using OsGraphicsHandle = OsHandle;
 
 const int max_fragments_count = 3;
 
@@ -54,8 +56,21 @@ enum RequirementsStatus {
 struct ResidencyData {
     ResidencyData() {
     }
+    void addOsContext(OsContext *osContext) {
+        if (!this->osContext) {
+            osContext->incRefInternal();
+            this->osContext = osContext;
+        }
+        DEBUG_BREAK_IF(this->osContext != osContext);
+    }
+    ~ResidencyData() {
+        if (osContext) {
+            osContext->decRefInternal();
+        }
+    }
     bool resident = false;
     uint64_t lastFence = 0;
+    OsContext *osContext = nullptr;
 };
 
 struct PartialAllocation {

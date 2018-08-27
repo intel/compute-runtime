@@ -42,13 +42,17 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
     }
 
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        osInterface = std::make_unique<OSInterface>();
+        osInterface->get()->setWddm(wddm);
         auto regReader = new RegistryReaderMock();
         wddm->registryReader.reset(regReader);
         regReader->forceRetValue = forceReturnPreemptionRegKeyValue;
         PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->setPreemptionMode(preemptionMode);
         wddm->init();
+        osContext = std::make_unique<OsContext>(osInterface.get());
+        osContextWin = osContext->get();
     }
 
     DebugManagerStateRestore *dbgRestorer = nullptr;

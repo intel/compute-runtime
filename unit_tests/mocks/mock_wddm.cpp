@@ -83,16 +83,16 @@ bool WddmMock::createAllocation64k(WddmAllocation *alloc) {
     return createAllocationResult.success = Wddm::createAllocation64k(alloc);
 }
 
-bool WddmMock::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle) {
+bool WddmMock::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) {
     destroyAllocationResult.called++;
     if (callBaseDestroyAllocations) {
-        return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle);
+        return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle, osContext);
     } else {
         return true;
     }
 }
 
-bool WddmMock::destroyAllocation(WddmAllocation *alloc) {
+bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext) {
     D3DKMT_HANDLE *allocationHandles = nullptr;
     uint32_t allocationCount = 0;
     D3DKMT_HANDLE resourceHandle = 0;
@@ -107,7 +107,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc) {
             cpuPtr = alloc->getAlignedCpuPtr();
         }
     }
-    auto success = destroyAllocations(allocationHandles, allocationCount, alloc->getResidencyData().lastFence, resourceHandle);
+    auto success = destroyAllocations(allocationHandles, allocationCount, alloc->getResidencyData().lastFence, resourceHandle, osContext);
     ::alignedFree(cpuPtr);
     releaseReservedAddress(reserveAddress);
     return success;
@@ -136,11 +136,11 @@ bool WddmMock::queryAdapterInfo() {
     return queryAdapterInfoResult.success = Wddm::queryAdapterInfo();
 }
 
-bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
+bool WddmMock::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
     submitResult.called++;
     submitResult.commandBufferSubmitted = commandBuffer;
     submitResult.commandHeaderSubmitted = commandHeader;
-    return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader);
+    return submitResult.success = Wddm::submit(commandBuffer, size, commandHeader, osContext);
 }
 
 bool WddmMock::waitOnGPU(D3DKMT_HANDLE context) {
@@ -194,10 +194,10 @@ GMM_GFX_PARTITIONING *WddmMock::getGfxPartitionPtr() {
     return &gfxPartition;
 }
 
-bool WddmMock::waitFromCpu(uint64_t lastFenceValue) {
+bool WddmMock::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) {
     waitFromCpuResult.called++;
     waitFromCpuResult.uint64ParamPassed = lastFenceValue;
-    return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue);
+    return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, osContext);
 }
 
 void *WddmMock::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) {

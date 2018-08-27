@@ -57,7 +57,9 @@ CommandStreamReceiver *createMockCommandStreamReceiver(const HardwareInfo &hwInf
     auto csr = new MockCommandStreamReceiver();
     OSInterface *osInterface = new OSInterface();
     executionEnvironment.osInterface.reset(osInterface);
-    osInterface->get()->setWddm(new WddmMock());
+    auto wddm = new WddmMock();
+    wddm->init();
+    osInterface->get()->setWddm(wddm);
     csr->setOSInterface(osInterface);
     return csr;
 }

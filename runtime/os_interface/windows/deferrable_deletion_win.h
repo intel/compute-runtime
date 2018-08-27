@@ -22,6 +22,7 @@
 
 #pragma once
 #include "runtime/memory_manager/deferrable_deletion.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/windows/windows_wrapper.h"
 #include <d3dkmthk.h>
 
@@ -29,10 +30,12 @@ namespace OCLRT {
 
 class Wddm;
 
+using OsContextWin = OsContext::OsContextImpl;
+
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
     DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                           D3DKMT_HANDLE resourceHandle);
+                           D3DKMT_HANDLE resourceHandle, OsContextWin *osContext);
     void apply() override;
     ~DeferrableDeletionImpl();
 
@@ -45,5 +48,6 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
     uint32_t allocationCount;
     uint64_t lastFenceValue;
     D3DKMT_HANDLE resourceHandle;
+    OsContextWin *osContext = nullptr;
 };
 } // namespace OCLRT

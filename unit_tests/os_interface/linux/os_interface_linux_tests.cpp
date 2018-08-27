@@ -37,7 +37,7 @@ TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsRetu
 
 TEST(OsContextTest, WhenOsContextIsCreatedThenImplIsAvailable) {
     OSInterface osInterface;
-    auto osContext = std::make_unique<OsContext>(osInterface);
+    auto osContext = std::make_unique<OsContext>(&osInterface);
     EXPECT_NE(nullptr, osContext->get());
 }
 } // namespace OCLRT

@@ -1789,3 +1789,26 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
     GraphicsAllocation graphicsAllocation(addressWithTrailingBitSet, 1u, sharedHandle);
     EXPECT_EQ(expectedGpuAddress, graphicsAllocation.getGpuAddress());
 }
+
+TEST(ResidencyDataTest, givenResidencyDataWithOsContextWhenDestructorIsCalledThenDecrementRefCount) {
+    OsContext *osContext = new OsContext(nullptr);
+    osContext->incRefInternal();
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+    {
+        ResidencyData residencyData;
+        residencyData.addOsContext(osContext);
+        EXPECT_EQ(2, osContext->getRefInternalCount());
+    }
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+    osContext->decRefInternal();
+}
+
+TEST(ResidencyDataTest, givenResidencyDataWhenAddTheSameOsContextTwiceThenIncrementRefCounterOnlyOnce) {
+    OsContext *osContext = new OsContext(nullptr);
+    ResidencyData residencyData;
+    EXPECT_EQ(0, osContext->getRefInternalCount());
+    residencyData.addOsContext(osContext);
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+    residencyData.addOsContext(osContext);
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+}

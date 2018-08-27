@@ -255,7 +255,7 @@ TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerRes
 
 TEST_F(CommandStreamReceiverTest, makeResidentWithoutParametersDoesNothing) {
     auto *memoryManager = commandStreamReceiver->getMemoryManager();
-    commandStreamReceiver->processResidency(nullptr);
+    commandStreamReceiver->processResidency(nullptr, *pDevice->getOsContext());
     auto &residencyAllocations = memoryManager->getResidencyAllocations();
     EXPECT_EQ(0u, residencyAllocations.size());
 }

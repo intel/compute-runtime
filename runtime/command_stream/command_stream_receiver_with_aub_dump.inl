@@ -39,19 +39,19 @@ CommandStreamReceiverWithAUBDump<BaseCSR>::~CommandStreamReceiverWithAUBDump() {
 }
 
 template <typename BaseCSR>
-FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency) {
-    FlushStamp flushStamp = BaseCSR::flush(batchBuffer, engineOrdinal, allocationsForResidency);
+FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+    FlushStamp flushStamp = BaseCSR::flush(batchBuffer, engineOrdinal, allocationsForResidency, osContext);
     if (aubCSR) {
-        aubCSR->flush(batchBuffer, engineOrdinal, allocationsForResidency);
+        aubCSR->flush(batchBuffer, engineOrdinal, allocationsForResidency, osContext);
     }
     return flushStamp;
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContainer *allocationsForResidency) {
-    BaseCSR::processResidency(allocationsForResidency);
+void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+    BaseCSR::processResidency(allocationsForResidency, osContext);
     if (aubCSR) {
-        aubCSR->processResidency(allocationsForResidency);
+        aubCSR->processResidency(allocationsForResidency, osContext);
     }
 }
 

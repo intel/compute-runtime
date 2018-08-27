@@ -45,6 +45,7 @@ class MemoryManager;
 class GmmPageTableMngr;
 class OSInterface;
 class ExecutionEnvironment;
+class OsContext;
 
 enum class DispatchMode {
     DeviceDefault = 0,          //default for given device
@@ -65,7 +66,7 @@ class CommandStreamReceiver {
     CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, size_t defaultSshSize);
     virtual ~CommandStreamReceiver();
 
-    virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
+    virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) = 0;
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
@@ -77,7 +78,7 @@ class CommandStreamReceiver {
     virtual void makeResident(GraphicsAllocation &gfxAllocation);
     virtual void makeNonResident(GraphicsAllocation &gfxAllocation);
     void makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency);
-    virtual void processResidency(ResidencyContainer *allocationsForResidency) {}
+    virtual void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {}
     virtual void processEviction();
     void makeResidentHostPtrAllocation(GraphicsAllocation *gfxAllocation);
     virtual void waitBeforeMakingNonResidentWhenRequired() {}
@@ -102,7 +103,7 @@ class CommandStreamReceiver {
     }
     volatile uint32_t *getTagAddress() const { return tagAddress; }
 
-    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
+    virtual bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) { return true; };
 
     uint32_t peekTaskCount() const { return taskCount; }
 
@@ -129,7 +130,7 @@ class CommandStreamReceiver {
 
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
 
-    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) = 0;
+    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, OsContext &osContext) = 0;
     MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }

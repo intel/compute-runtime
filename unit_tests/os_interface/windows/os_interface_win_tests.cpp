@@ -44,9 +44,7 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextBeforeInitWddmThenOsContextIsNot
     auto wddm = new WddmMock;
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
-    auto osContext = std::make_unique<OsContext>(osInterface);
-    EXPECT_NE(nullptr, osContext->get());
-    EXPECT_FALSE(osContext->get()->isInitialized());
+    EXPECT_THROW(auto osContext = std::make_unique<OsContext>(&osInterface), std::exception);
 }
 
 TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInitialized) {
@@ -54,7 +52,13 @@ TEST(OsContextTest, givenWddmWhenCreateOsContextAfterInitWddmThenOsContextIsInit
     OSInterface osInterface;
     osInterface.get()->setWddm(wddm);
     wddm->init();
-    auto osContext = std::make_unique<OsContext>(osInterface);
+    auto osContext = std::make_unique<OsContext>(&osInterface);
     EXPECT_NE(nullptr, osContext->get());
     EXPECT_TRUE(osContext->get()->isInitialized());
+    EXPECT_EQ(osContext->get()->getWddm(), wddm);
+}
+
+TEST(OsContextTest, whenCreateOsContextWithoutOsInterfaceThenOsContextImplIsNotAvailable) {
+    auto osContext = std::make_unique<OsContext>(nullptr);
+    EXPECT_EQ(nullptr, osContext->get());
 }

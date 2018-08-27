@@ -37,8 +37,6 @@ TEST_F(MockOSTimeWinTest, DynamicResolution) {
     auto mDev = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     bool error = wddmMock->init();
-    EXPECT_EQ(1u, wddmMock->createContextResult.called);
-
     std::unique_ptr<MockOSTimeWin> timeWin(new MockOSTimeWin(wddmMock.get()));
 
     double res = 0.0;

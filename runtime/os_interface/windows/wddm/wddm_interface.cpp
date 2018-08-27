@@ -56,7 +56,7 @@ bool OCLRT::WddmInterface20::submit(uint64_t commandBuffer, size_t size, void *c
     D3DKMT_SUBMITCOMMAND SubmitCommand = {0};
     NTSTATUS status = STATUS_SUCCESS;
 
-    auto monitoredFence = wddm.getMonitoredFence();
+    auto monitoredFence = osContext.getMonitoredFence();
     SubmitCommand.Commands = commandBuffer;
     SubmitCommand.CommandLength = static_cast<UINT>(size);
     SubmitCommand.BroadcastContextCount = 1;
@@ -119,7 +119,7 @@ const bool OCLRT::WddmInterface23::hwQueuesSupported() {
 }
 
 bool OCLRT::WddmInterface23::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
-    auto monitoredFence = wddm.getMonitoredFence();
+    auto monitoredFence = osContext.getMonitoredFence();
 
     D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommand = {};
     submitCommand.hHwQueue = osContext.getHwQueue();

@@ -539,11 +539,13 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     return status;
 }
 
-bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle) {
+bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_DESTROYALLOCATION2 DestroyAllocation = {0};
     DEBUG_BREAK_IF(!(allocationCount <= 1 || resourceHandle == 0));
-    waitFromCpu(lastFenceValue);
+    if (lastFenceValue > 0) {
+        waitFromCpu(lastFenceValue, *osContext);
+    }
 
     DestroyAllocation.hDevice = device;
     DestroyAllocation.hResource = resourceHandle;
@@ -711,17 +713,17 @@ bool Wddm::destroyContext(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader) {
+bool Wddm::submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) {
     bool status = false;
-    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext->getContext())) {
+    if (currentPagingFenceValue > *pagingFenceAddress && !waitOnGPU(osContext.getContext())) {
         return false;
     }
-    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext->getMonitoredFence().currentFenceValue);
+    DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.getMonitoredFence().currentFenceValue);
 
-    status = wddmInterface->submit(commandBuffer, size, commandHeader, *osContext);
+    status = wddmInterface->submit(commandBuffer, size, commandHeader, osContext);
     if (status) {
-        osContext->getMonitoredFence().lastSubmittedFence = osContext->getMonitoredFence().currentFenceValue;
-        osContext->getMonitoredFence().currentFenceValue++;
+        osContext.getMonitoredFence().lastSubmittedFence = osContext.getMonitoredFence().currentFenceValue;
+        osContext.getMonitoredFence().currentFenceValue++;
     }
     getDeviceState();
     UNRECOVERABLE_IF(!status);
@@ -746,10 +748,10 @@ void Wddm::getDeviceState() {
 #endif
 }
 
-void Wddm::handleCompletion() {
-    if (osContext->getMonitoredFence().cpuAddress) {
-        auto *currentTag = osContext->getMonitoredFence().cpuAddress;
-        while (*currentTag < osContext->getMonitoredFence().currentFenceValue - 1)
+void Wddm::handleCompletion(OsContextWin &osContext) {
+    if (osContext.getMonitoredFence().cpuAddress) {
+        auto *currentTag = osContext.getMonitoredFence().cpuAddress;
+        while (*currentTag < osContext.getMonitoredFence().currentFenceValue - 1)
             ;
     }
 }
@@ -772,13 +774,13 @@ bool Wddm::waitOnGPU(D3DKMT_HANDLE context) {
     return status == STATUS_SUCCESS;
 }
 
-bool Wddm::waitFromCpu(uint64_t lastFenceValue) {
+bool Wddm::waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) {
     NTSTATUS status = STATUS_SUCCESS;
 
-    if (lastFenceValue > *osContext->getMonitoredFence().cpuAddress) {
+    if (lastFenceValue > *osContext.getMonitoredFence().cpuAddress) {
         D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU waitFromCpu = {0};
         waitFromCpu.ObjectCount = 1;
-        waitFromCpu.ObjectHandleArray = &osContext->getMonitoredFence().fenceHandle;
+        waitFromCpu.ObjectHandleArray = &osContext.getMonitoredFence().fenceHandle;
         waitFromCpu.FenceValueArray = &lastFenceValue;
         waitFromCpu.hDevice = device;
         waitFromCpu.hAsyncEvent = NULL;
@@ -884,11 +886,6 @@ void *Wddm::virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned
 int Wddm::virtualFree(void *ptr, size_t size, unsigned long flags) {
     return virtualFreeFnc(ptr, size, flags);
 }
-MonitoredFence &Wddm::getMonitoredFence() { return osContext->getMonitoredFence(); }
-
-D3DKMT_HANDLE Wddm::getOsDeviceContext() const {
-    return osContext->getContext();
-}
 
 bool Wddm::configureDeviceAddressSpace() {
     SYSTEM_INFO sysInfo;
@@ -927,11 +924,7 @@ bool Wddm::init() {
         if (!gmmMemory) {
             gmmMemory.reset(GmmMemory::create());
         }
-        if (!configureDeviceAddressSpace()) {
-            return false;
-        }
-        osContext = std::make_unique<OsContextWin>(*this);
-        initialized = osContext->isInitialized();
+        initialized = configureDeviceAddressSpace();
     }
     return initialized;
 }

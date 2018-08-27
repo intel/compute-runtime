@@ -40,11 +40,11 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Wddm *wddm, ExecutionEnvironment &executionEnvironment);
     virtual ~WddmCommandStreamReceiver();
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
-    void processResidency(ResidencyContainer *allocationsForResidency) override;
+    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void processEviction() override;
-    bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
+    bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) override;
 
     WddmMemoryManager *getMemoryManager();
     MemoryManager *createMemoryManager(bool enable64kbPages);

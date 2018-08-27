@@ -245,7 +245,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 
 template <typename GfxFamily>
 FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                        EngineType engineType, ResidencyContainer *allocationsForResidency) {
+                                                        EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
@@ -305,7 +305,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
             batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
         }
-        processResidency(allocationsForResidency);
+        processResidency(allocationsForResidency, osContext);
     }
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(pBatchBuffer)), engineType);
@@ -577,7 +577,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
+void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             return;

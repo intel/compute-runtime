@@ -56,7 +56,6 @@ class WddmMock : public Wddm {
     using Wddm::gdi;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
-    using Wddm::osContext;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::preemptionMode;
@@ -71,13 +70,13 @@ class WddmMock : public Wddm {
     bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(WddmAllocation *alloc) override;
     bool createAllocation64k(WddmAllocation *alloc) override;
-    bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle) override;
-    bool destroyAllocation(WddmAllocation *alloc);
+    bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) override;
+    bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext(D3DKMT_HANDLE &context) override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;
-    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader) override;
+    bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
     bool waitOnGPU(D3DKMT_HANDLE context) override;
     void *lockResource(WddmAllocation *allocation) override;
     void unlockResource(WddmAllocation *allocation) override;
@@ -88,7 +87,7 @@ class WddmMock : public Wddm {
     bool openAdapter() override;
     void setHeap32(uint64_t base, uint64_t size);
     GMM_GFX_PARTITIONING *getGfxPartitionPtr();
-    bool waitFromCpu(uint64_t lastFenceValue) override;
+    bool waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext) override;
     void *virtualAlloc(void *inPtr, size_t size, unsigned long flags, unsigned long type) override;
     int virtualFree(void *ptr, size_t size, unsigned long flags) override;
     void releaseReservedAddress(void *reservedAddress) override;

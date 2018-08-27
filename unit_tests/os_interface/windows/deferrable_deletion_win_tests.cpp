@@ -39,13 +39,13 @@ TEST(DeferrableDeletionImpl, NonAssignable) {
 
 class MockDeferrableDeletion : public DeferrableDeletionImpl {
   public:
-    MockDeferrableDeletion(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                           D3DKMT_HANDLE resourceHandle) : DeferrableDeletionImpl(wddm, handles, allocationCount, lastFenceValue, resourceHandle){};
-    Wddm *getWddm() { return wddm; }
-    D3DKMT_HANDLE *getHandles() { return handles; }
-    uint32_t getAllocationCount() { return allocationCount; }
-    uint64_t getLastFenceValue() { return lastFenceValue; }
-    D3DKMT_HANDLE getResourceHandle() { return resourceHandle; }
+    using DeferrableDeletionImpl::allocationCount;
+    using DeferrableDeletionImpl::DeferrableDeletionImpl;
+    using DeferrableDeletionImpl::handles;
+    using DeferrableDeletionImpl::lastFenceValue;
+    using DeferrableDeletionImpl::osContext;
+    using DeferrableDeletionImpl::resourceHandle;
+    using DeferrableDeletionImpl::wddm;
 };
 
 class DeferrableDeletionTest : public ::testing::Test {
@@ -55,22 +55,24 @@ class DeferrableDeletionTest : public ::testing::Test {
     uint32_t allocationCount = 1;
     uint64_t lastFenceValue = 0;
     D3DKMT_HANDLE resourceHandle = 0;
+    OsContextWin *osContext = nullptr;
 };
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenIsCreatedThenObjectMembersAreSetProperly) {
-    MockDeferrableDeletion deletion(&wddm, &handle, allocationCount, lastFenceValue, resourceHandle);
-    EXPECT_EQ(&wddm, deletion.getWddm());
-    EXPECT_NE(nullptr, deletion.getHandles());
-    EXPECT_EQ(handle, *deletion.getHandles());
-    EXPECT_NE(&handle, deletion.getHandles());
-    EXPECT_EQ(allocationCount, deletion.getAllocationCount());
-    EXPECT_EQ(lastFenceValue, deletion.getLastFenceValue());
-    EXPECT_EQ(resourceHandle, deletion.getResourceHandle());
+    MockDeferrableDeletion deletion(&wddm, &handle, allocationCount, lastFenceValue, resourceHandle, osContext);
+    EXPECT_EQ(&wddm, deletion.wddm);
+    EXPECT_NE(nullptr, deletion.handles);
+    EXPECT_EQ(handle, *deletion.handles);
+    EXPECT_NE(&handle, deletion.handles);
+    EXPECT_EQ(allocationCount, deletion.allocationCount);
+    EXPECT_EQ(lastFenceValue, deletion.lastFenceValue);
+    EXPECT_EQ(resourceHandle, deletion.resourceHandle);
+    EXPECT_EQ(osContext, deletion.osContext);
 }
 
 TEST_F(DeferrableDeletionTest, givenDeferrableDeletionWhenApplyIsCalledThenDeletionIsApplied) {
     wddm.callBaseDestroyAllocations = false;
-    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)&wddm, &handle, allocationCount, lastFenceValue, resourceHandle));
+    std::unique_ptr<DeferrableDeletion> deletion(DeferrableDeletion::create((Wddm *)&wddm, &handle, allocationCount, lastFenceValue, resourceHandle, osContext));
     EXPECT_EQ(0, wddm.destroyAllocationResult.called);
     deletion->apply();
     EXPECT_EQ(1, wddm.destroyAllocationResult.called);

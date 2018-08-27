@@ -21,14 +21,16 @@
  */
 
 #pragma once
+#include "runtime/utilities/reference_tracked_object.h"
 #include <memory>
+
 namespace OCLRT {
 class OSInterface;
-class OsContext {
+class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     class OsContextImpl;
-    OsContext(OSInterface &osInterface);
-    ~OsContext();
+    OsContext(OSInterface *osInterface);
+    ~OsContext() override;
     OsContextImpl *get() const {
         return osContextImpl.get();
     };

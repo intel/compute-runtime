@@ -39,6 +39,7 @@ class OSTime;
 class DriverInfo;
 struct HardwareInfo;
 class SourceLevelDebugger;
+class OsContext;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -131,6 +132,7 @@ class Device : public BaseObject<_cl_device_id> {
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
+    OsContext *getOsContext() const { return osContext; }
 
   protected:
     Device() = delete;
@@ -151,19 +153,21 @@ class Device : public BaseObject<_cl_device_id> {
     void setupFp64Flags();
     void appendOSExtensions(std::string &deviceExtensions);
 
-    unsigned int enabledClVersion;
+    unsigned int enabledClVersion = 0u;
 
     const HardwareInfo &hwInfo;
     HardwareCapabilities hardwareCapabilities = {};
     DeviceInfo deviceInfo;
 
-    volatile uint32_t *tagAddress;
-    GraphicsAllocation *preemptionAllocation;
+    volatile uint32_t *tagAddress = nullptr;
+    GraphicsAllocation *preemptionAllocation = nullptr;
     std::unique_ptr<OSTime> osTime;
     std::unique_ptr<DriverInfo> driverInfo;
     std::unique_ptr<PerformanceCounters> performanceCounters;
 
-    void *slmWindowStartAddress;
+    OsContext *osContext = nullptr;
+
+    void *slmWindowStartAddress = nullptr;
 
     std::string exposedBuiltinKernels = "";
 

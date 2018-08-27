@@ -23,6 +23,7 @@
 #pragma once
 
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "runtime/os_interface/windows/os_interface.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/mocks/mock_wddm.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
@@ -34,11 +35,14 @@ namespace OCLRT {
 struct WddmFixture : public GmmEnvironmentFixture {
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        osInterface = std::make_unique<OSInterface>();
+        osInterface->get()->setWddm(wddm);
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
-        EXPECT_TRUE(wddm->osContext == nullptr);
         wddm->init();
+        osContext = std::make_unique<OsContext>(osInterface.get());
+        osContextWin = osContext->get();
         ASSERT_TRUE(wddm->isInitialized());
     }
 
@@ -46,7 +50,11 @@ struct WddmFixture : public GmmEnvironmentFixture {
         GmmEnvironmentFixture::TearDown();
     };
 
-    std::unique_ptr<WddmMock> wddm;
+    WddmMock *wddm = nullptr;
+    std::unique_ptr<OSInterface> osInterface;
+    std::unique_ptr<OsContext> osContext;
+    OsContextWin *osContextWin = nullptr;
+
     MockGdi *gdi = nullptr;
 };
 
@@ -54,7 +62,16 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
     void SetUp() override {
         GmmEnvironmentFixture::SetUp();
         GdiDllFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        osInterface = std::make_unique<OSInterface>();
+        osInterface->get()->setWddm(wddm);
+    }
+
+    void init() {
+        EXPECT_TRUE(wddm->init());
+        osContext = std::make_unique<OsContext>(osInterface.get());
+        osContextWin = osContext->get();
+        ASSERT_TRUE(wddm->isInitialized());
     }
 
     void TearDown() override {
@@ -62,7 +79,10 @@ struct WddmFixtureWithMockGdiDll : public GmmEnvironmentFixture, public GdiDllFi
         GmmEnvironmentFixture::TearDown();
     }
 
-    std::unique_ptr<WddmMock> wddm;
+    WddmMock *wddm = nullptr;
+    std::unique_ptr<OSInterface> osInterface;
+    std::unique_ptr<OsContext> osContext;
+    OsContextWin *osContextWin = nullptr;
 };
 
 struct WddmInstrumentationGmmFixture : public GmmEnvironmentFixture {

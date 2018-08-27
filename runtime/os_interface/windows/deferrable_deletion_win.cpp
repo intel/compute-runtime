@@ -30,10 +30,10 @@ DeferrableDeletion *DeferrableDeletion::create(Args... args) {
     return new DeferrableDeletionImpl(std::forward<Args>(args)...);
 }
 template DeferrableDeletion *DeferrableDeletion::create(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                                                        D3DKMT_HANDLE resourceHandle);
+                                                        D3DKMT_HANDLE resourceHandle, OsContextWin *osContext);
 
 DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                                               D3DKMT_HANDLE resourceHandle) {
+                                               D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) : osContext(osContext) {
     this->wddm = wddm;
     if (handles) {
         this->handles = new D3DKMT_HANDLE[allocationCount];
@@ -46,7 +46,7 @@ DeferrableDeletionImpl::DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handle
     this->resourceHandle = resourceHandle;
 }
 void DeferrableDeletionImpl::apply() {
-    bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle);
+    bool destroyStatus = wddm->destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle, osContext);
     DEBUG_BREAK_IF(!destroyStatus);
 }
 DeferrableDeletionImpl::~DeferrableDeletionImpl() {

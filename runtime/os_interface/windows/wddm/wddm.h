@@ -78,7 +78,7 @@ class Wddm {
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles);
-    MOCKABLE_VIRTUAL bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle);
+    MOCKABLE_VIRTUAL bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext);
     MOCKABLE_VIRTUAL bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc);
     bool openNTHandle(HANDLE handle, WddmAllocation *alloc);
     MOCKABLE_VIRTUAL void *lockResource(WddmAllocation *wddmAllocation);
@@ -89,8 +89,8 @@ class Wddm {
     MOCKABLE_VIRTUAL bool destroyContext(D3DKMT_HANDLE context);
     MOCKABLE_VIRTUAL bool queryAdapterInfo();
 
-    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader);
-    MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue);
+    MOCKABLE_VIRTUAL bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext);
+    MOCKABLE_VIRTUAL bool waitFromCpu(uint64_t lastFenceValue, OsContextWin &osContext);
 
     NTSTATUS escape(D3DKMT_ESCAPE &escapeCommand);
     void registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager);
@@ -120,8 +120,6 @@ class Wddm {
     const std::string &getDeviceRegistryPath() const {
         return deviceRegistryPath;
     }
-
-    MonitoredFence &getMonitoredFence();
 
     uint64_t getSystemSharedMemory() const;
 
@@ -165,7 +163,6 @@ class Wddm {
     PreemptionMode getPreemptionMode() const {
         return preemptionMode;
     }
-    D3DKMT_HANDLE getOsDeviceContext() const;
 
     unsigned int readEnablePreemptionRegKey();
 
@@ -210,7 +207,7 @@ class Wddm {
     bool destroyDevice();
     bool closeAdapter();
     void getDeviceState();
-    void handleCompletion();
+    void handleCompletion(OsContextWin &osContext);
 
     static CreateDXGIFactoryFcn createDxgiFactory;
     static GetSystemInfoFcn getSystemInfo;
@@ -221,6 +218,5 @@ class Wddm {
 
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
-    std::unique_ptr<OsContextWin> osContext;
 };
 } // namespace OCLRT

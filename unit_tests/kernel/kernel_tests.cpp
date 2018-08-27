@@ -436,14 +436,14 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         CommandStreamReceiver::makeNonResident(graphicsAllocation);
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
         return flushStamp->peekStamp();
     }
 
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override {
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, OsContext &osContext) override {
     }
 
     CompletionStamp flushTask(

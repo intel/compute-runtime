@@ -39,6 +39,7 @@
 #undef max
 
 #include "runtime/os_interface/windows/gdi_interface.h"
+#include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_engine_mapper.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
@@ -59,6 +60,7 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
     this->wddm->setNode(nodeOrdinal);
     PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoIn);
     this->wddm->setPreemptionMode(preemptionMode);
+
     executionEnvironment.osInterface.reset(new OSInterface());
     this->osInterface = executionEnvironment.osInterface.get();
     this->osInterface->get()->setWddm(this->wddm);
@@ -89,7 +91,7 @@ WddmCommandStreamReceiver<GfxFamily>::~WddmCommandStreamReceiver() {
 
 template <typename GfxFamily>
 FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                       EngineType engineType, ResidencyContainer *allocationsForResidency) {
+                                                       EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
     auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
 
     if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
@@ -99,7 +101,7 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
     }
 
-    this->processResidency(allocationsForResidency);
+    this->processResidency(allocationsForResidency, osContext);
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
@@ -124,9 +126,9 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         this->kmDafLockAllocations(allocationsForResidency);
     }
 
-    wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader);
+    wddm->submit(commandStreamAddress, batchBuffer.usedSize - batchBuffer.startOffset, commandBufferHeader, *osContext.get());
 
-    return wddm->getMonitoredFence().lastSubmittedFence;
+    return osContext.get()->getMonitoredFence().lastSubmittedFence;
 }
 
 template <typename GfxFamily>
@@ -145,8 +147,8 @@ void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency) {
-    bool success = getMemoryManager()->makeResidentResidencyAllocations(allocationsForResidency);
+void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+    bool success = getMemoryManager()->makeResidentResidencyAllocations(allocationsForResidency, osContext);
     DEBUG_BREAK_IF(!success);
 }
 
@@ -167,8 +169,8 @@ MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool en
 }
 
 template <typename GfxFamily>
-bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait) {
-    return wddm->waitFromCpu(flushStampToWait);
+bool WddmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) {
+    return wddm->waitFromCpu(flushStampToWait, *osContext.get());
 }
 
 template <typename GfxFamily>

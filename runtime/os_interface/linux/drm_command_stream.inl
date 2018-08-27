@@ -56,7 +56,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 }
 
 template <typename GfxFamily>
-FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) {
+FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
     unsigned int engineFlag = 0xFF;
     bool ret = DrmEngineMapper<GfxFamily>::engineNodeMap(engineType, engineFlag);
     UNRECOVERABLE_IF(!(ret));
@@ -70,7 +70,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
 
     if (bb) {
         flushStamp = bb->peekHandle();
-        this->processResidency(allocationsForResidency);
+        this->processResidency(allocationsForResidency, osContext);
         // Residency hold all allocation except command buffer, hence + 1
         auto requiredSize = this->residency.size() + 1;
         if (requiredSize > this->execObjectsStorage.size()) {
@@ -118,7 +118,7 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *inputAllocationsForResidency) {
+void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *inputAllocationsForResidency, OsContext &osContext) {
     auto &allocationsForResidency = inputAllocationsForResidency ? *inputAllocationsForResidency : getMemoryManager()->getResidencyAllocations();
     for (uint32_t a = 0; a < allocationsForResidency.size(); a++) {
         DrmAllocation *drmAlloc = reinterpret_cast<DrmAllocation *>(allocationsForResidency[a]);
@@ -168,7 +168,7 @@ MemoryManager *DrmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool ena
 }
 
 template <typename GfxFamily>
-bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp) {
+bool DrmCommandStreamReceiver<GfxFamily>::waitForFlushStamp(FlushStamp &flushStamp, OsContext &osContext) {
     drm_i915_gem_wait wait = {};
     wait.bo_handle = static_cast<uint32_t>(flushStamp);
     wait.timeout_ns = -1;

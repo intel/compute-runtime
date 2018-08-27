@@ -28,10 +28,8 @@
 namespace OCLRT {
 
 OsContextWin::OsContextImpl(Wddm &wddm) : wddm(wddm) {
+    UNRECOVERABLE_IF(!wddm.isInitialized());
     auto wddmInterface = wddm.getWddmInterface();
-    if (!wddmInterface) {
-        return;
-    }
     if (!wddm.createContext(context)) {
         return;
     }
@@ -43,9 +41,7 @@ OsContextWin::OsContextImpl(Wddm &wddm) : wddm(wddm) {
     initialized = wddmInterface->createMonitoredFence(*this);
 };
 OsContextWin::~OsContextImpl() {
-    if (wddm.getWddmInterface()) {
-        wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
-    }
+    wddm.getWddmInterface()->destroyHwQueue(hwQueueHandle);
     wddm.destroyContext(context);
 }
 
@@ -57,8 +53,10 @@ void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cp
     monitoredFence.gpuAddress = gpuAddress;
 }
 
-OsContext::OsContext(OSInterface &osInterface) {
-    osContextImpl = std::make_unique<OsContextWin>(*osInterface.get()->getWddm());
+OsContext::OsContext(OSInterface *osInterface) {
+    if (osInterface) {
+        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm());
+    }
 }
 OsContext::~OsContext() = default;
 

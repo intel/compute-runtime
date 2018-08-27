@@ -64,7 +64,7 @@ struct Wddm20WithMockGdiDllTests : public Wddm20WithMockGdiDllTestsWithoutWddmIn
     using Wddm20WithMockGdiDllTestsWithoutWddmInit::TearDown;
     void SetUp() override {
         Wddm20WithMockGdiDllTestsWithoutWddmInit::SetUp();
-        EXPECT_TRUE(wddm->init());
+        init();
     }
 };
 
@@ -175,7 +175,7 @@ TEST(Wddm20EnumAdaptersTest, givenUnknownPlatformWhenEnumAdapterIsCalledThenFals
 }
 
 TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
-    auto context = wddm->osContext->getContext();
+    auto context = osContextWin->getContext();
     EXPECT_TRUE(context != static_cast<D3DKMT_HANDLE>(0));
 }
 
@@ -190,7 +190,7 @@ TEST_F(Wddm20Tests, allocation) {
     EXPECT_EQ(STATUS_SUCCESS, status);
     EXPECT_TRUE(allocation.handle != 0);
 
-    auto error = wddm->destroyAllocation(&allocation);
+    auto error = wddm->destroyAllocation(&allocation, osContextWin);
     EXPECT_TRUE(error);
 
     delete gmm;
@@ -220,7 +220,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
     EXPECT_EQ(alignedPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
     EXPECT_NE(underlyingPages, getLastCallMapGpuVaArgFcn()->SizeInPages);
 
-    ret = wddm->destroyAllocation(&allocation);
+    ret = wddm->destroyAllocation(&allocation, osContextWin);
     EXPECT_TRUE(ret);
 
     delete gmm;
@@ -270,7 +270,7 @@ TEST_F(Wddm20Tests, createAllocation32bit) {
     EXPECT_LE(heap32baseAddress, allocation.gpuPtr);
     EXPECT_GT(heap32baseAddress + heap32Size, allocation.gpuPtr);
 
-    auto success = wddm->destroyAllocation(&allocation);
+    auto success = wddm->destroyAllocation(&allocation, osContextWin);
     EXPECT_TRUE(success);
 
     delete gmm;
@@ -315,7 +315,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
     storage.fragmentStorageData[2].freeTheFragment = true;
 
     D3DKMT_HANDLE handles[3] = {ALLOCATION_HANDLE, ALLOCATION_HANDLE, ALLOCATION_HANDLE};
-    bool retVal = wddm->destroyAllocations(handles, 3, 0, 0);
+    bool retVal = wddm->destroyAllocations(handles, 3, 0, 0, osContextWin);
     EXPECT_TRUE(retVal);
 
     auto destroyWithResourceHandleCalled = 0u;
@@ -346,7 +346,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
     EXPECT_TRUE(error);
     EXPECT_TRUE(allocation.gpuPtr == 0);
 
-    error = wddm->destroyAllocation(&allocation);
+    error = wddm->destroyAllocation(&allocation, osContextWin);
     EXPECT_TRUE(error);
     delete gmm;
     mm.freeSystemMemory(allocation.getUnderlyingBuffer());
@@ -394,12 +394,12 @@ TEST_F(Wddm20Tests, makeResidentNonResident) {
     error = wddm->evict(&allocation.handle, 1, sizeToTrim);
     EXPECT_TRUE(error);
 
-    auto monitoredFence = wddm->getMonitoredFence();
+    auto monitoredFence = osContextWin->getMonitoredFence();
     UINT64 fenceValue = 100;
     monitoredFence.cpuAddress = &fenceValue;
     monitoredFence.currentFenceValue = 101;
 
-    error = wddm->destroyAllocation(&allocation);
+    error = wddm->destroyAllocation(&allocation, osContextWin);
 
     EXPECT_TRUE(error);
     delete gmm;
@@ -412,7 +412,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    WddmMemoryManager mm(false, wddm.get());
+    WddmMemoryManager mm(false, wddm);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -449,17 +449,16 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    auto mockWddm = wddm.get();
-    WddmMemoryManager mm(false, mockWddm);
+    WddmMemoryManager mm(false, wddm);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
     if (is32bit) {
-        EXPECT_NE(mockWddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
+        EXPECT_NE(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
     } else {
-        EXPECT_EQ(mockWddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
+        EXPECT_EQ(wddm->mapGpuVirtualAddressResult.cpuPtrPassed, nullptr);
     }
 
     mm.freeGraphicsMemory(graphicsAllocation);
@@ -554,7 +553,7 @@ TEST_F(Wddm20Tests, getMaxApplicationAddress) {
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToFalseWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToFalse) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseNoRingFlushesKmdMode.set(false);
-    wddm->init();
+    init();
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
     EXPECT_FALSE(!!privateData->NoRingFlushes);
@@ -563,7 +562,7 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDebugFlagToTrueWhenCreateContextIsCalledThenNoRingFlushesKmdModeIsSetToTrue) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseNoRingFlushesKmdMode.set(true);
-    wddm->init();
+    init();
     auto createContextParams = this->getCreateContextDataFcn();
     auto privateData = (CREATECONTEXT_PVTDATA *)createContextParams->pPrivateDriverData;
     EXPECT_TRUE(!!privateData->NoRingFlushes);
@@ -575,7 +574,7 @@ TEST_F(Wddm20WithMockGdiDllTests, whenCreateContextIsCalledThenDisableHwQueues) 
 }
 
 TEST_F(Wddm20Tests, whenCreateHwQueueIsCalledThenAlwaysReturnFalse) {
-    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *wddm->osContext));
+    EXPECT_FALSE(wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *osContextWin));
 }
 
 TEST_F(Wddm20Tests, whenWddmIsInitializedThenGdiDoesntHaveHwQueueDDIs) {
@@ -656,7 +655,7 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCa
     allocation.getResidencyData().lastFence = 20;
     allocation.handle = ALLOCATION_HANDLE;
 
-    *wddm->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getMonitoredFence().cpuAddress = 10;
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
@@ -672,12 +671,12 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCa
     gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
     gdi->getDestroyArg().phAllocationList = nullptr;
 
-    wddm->destroyAllocation(&allocation);
+    wddm->destroyAllocation(&allocation, osContextWin);
 
     EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
     EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
     EXPECT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(&wddm->getMonitoredFence().fenceHandle, gdi->getWaitFromCpuArg().ObjectHandleArray);
+    EXPECT_EQ(&osContextWin->getMonitoredFence().fenceHandle, gdi->getWaitFromCpuArg().ObjectHandleArray);
 
     EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
     EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
@@ -689,7 +688,7 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDo
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
-    *wddm->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getMonitoredFence().cpuAddress = 10;
 
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
@@ -705,7 +704,7 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDo
     gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
     gdi->getDestroyArg().phAllocationList = nullptr;
 
-    wddm->destroyAllocation(&allocation);
+    wddm->destroyAllocation(&allocation, osContextWin);
 
     EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
     EXPECT_EQ((D3DKMT_HANDLE)0, gdi->getWaitFromCpuArg().hDevice);
@@ -722,7 +721,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
-    *wddm->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -730,7 +729,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(10);
+    auto status = wddm->waitFromCpu(10, *osContextWin);
 
     EXPECT_TRUE(status);
 
@@ -745,7 +744,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
 
-    *wddm->getMonitoredFence().cpuAddress = 10;
+    *osContextWin->getMonitoredFence().cpuAddress = 10;
 
     gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
     gdi->getWaitFromCpuArg().Flags.Value = 0;
@@ -753,7 +752,7 @@ TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     gdi->getWaitFromCpuArg().ObjectCount = 0;
     gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
 
-    auto status = wddm->waitFromCpu(20);
+    auto status = wddm->waitFromCpu(20, *osContextWin);
 
     EXPECT_TRUE(status);
 
@@ -768,10 +767,10 @@ TEST_F(Wddm20Tests, createMonitoredFenceIsInitializedWithFenceValueZeroAndCurren
 
     gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue = 300;
 
-    wddm->wddmInterface->createMonitoredFence(*wddm->osContext);
+    wddm->wddmInterface->createMonitoredFence(*osContextWin);
 
     EXPECT_EQ(0u, gdi->getCreateSynchronizationObject2Arg().Info.MonitoredFence.InitialFenceValue);
-    EXPECT_EQ(1u, wddm->getMonitoredFence().currentFenceValue);
+    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
 }
 
 NTSTATUS APIENTRY queryResourceInfoMock(D3DKMT_QUERYRESOURCEINFO *pData) {

@@ -24,7 +24,7 @@
 
 namespace OCLRT {
 class OsContext::OsContextImpl {};
-OsContext::OsContext(OSInterface &osInterface) {
+OsContext::OsContext(OSInterface *osInterface) {
     osContextImpl = std::make_unique<OsContext::OsContextImpl>();
 }
 

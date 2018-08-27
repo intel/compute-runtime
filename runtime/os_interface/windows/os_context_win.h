@@ -49,6 +49,7 @@ class OsContext::OsContextImpl {
     }
     MonitoredFence &getMonitoredFence() { return monitoredFence; }
     void resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cpuAddress, D3DGPU_VIRTUAL_ADDRESS &gpuAddress);
+    Wddm *getWddm() const { return &wddm; }
 
   protected:
     bool initialized = false;

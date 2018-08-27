@@ -36,6 +36,7 @@
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/options.h"
 #include "runtime/memory_manager/memory_manager.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -79,8 +80,7 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : enabledClVersion(false), hwInfo(hwInfo), tagAddress(nullptr), preemptionAllocation(nullptr),
-      osTime(nullptr), slmWindowStartAddress(nullptr), executionEnvironment(executionEnvironment) {
+    : hwInfo(hwInfo), executionEnvironment(executionEnvironment) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
@@ -120,6 +120,9 @@ Device::~Device() {
 
         alignedFree(this->slmWindowStartAddress);
     }
+    if (osContext) {
+        osContext->decRefInternal();
+    }
     executionEnvironment->decRefInternal();
 }
 
@@ -129,7 +132,8 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo)) {
         return false;
     }
-
+    outDevice.osContext = new OsContext(executionEnvironment->osInterface.get());
+    outDevice.osContext->incRefInternal();
     executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages());
 
     CommandStreamReceiver *commandStreamReceiver = executionEnvironment->commandStreamReceiver.get();

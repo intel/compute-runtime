@@ -50,11 +50,11 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     // When drm is passed, DCSR will not free it at destruction
     DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Drm *drm, ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode = gemCloseWorkerMode::gemCloseWorkerActive);
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
-    void processResidency(ResidencyContainer *allocationsForResidency) override;
+    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
-    bool waitForFlushStamp(FlushStamp &flushStampToWait) override;
+    bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) override;
     void overrideMediaVFEStateDirty(bool dirty) override;
 
     DrmMemoryManager *getMemoryManager();

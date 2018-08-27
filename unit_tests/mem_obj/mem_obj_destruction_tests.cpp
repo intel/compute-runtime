@@ -33,7 +33,6 @@ template <typename Family>
 class MyCsr : public UltCommandStreamReceiver<Family> {
   public:
     MyCsr(const HardwareInfo &hwInfo, const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(hwInfo, const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
-    MOCK_METHOD1(waitForFlushStamp, bool(FlushStamp &flushStampToWait));
     MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
 };
 

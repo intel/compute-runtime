@@ -31,6 +31,7 @@
 #include "unit_tests/mocks/mock_gmm_page_table_mngr.h"
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/os_interface/windows/wddm_fixture.h"
+#include "runtime/os_interface/windows/os_interface.h"
 #include "unit_tests/os_interface/windows/mock_gdi_interface.h"
 #include "unit_tests/os_interface/windows/mock_wddm_memory_manager.h"
 #include <type_traits>
@@ -57,25 +58,32 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
   public:
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
-        wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
+        wddm = (static_cast<WddmMock *>(Wddm::createWddm()));
+        osInterface = std::make_unique<OSInterface>();
+        osInterface->get()->setWddm(wddm);
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         EXPECT_TRUE(wddm->init());
+        osContext = new OsContext(osInterface.get());
+        osContext->incRefInternal();
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x1000;
         }
         wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
+        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
     void TearDown() {
+        osContext->decRefInternal();
         GmmEnvironmentFixture::TearDown();
     }
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    std::unique_ptr<WddmMock> wddm;
+    WddmMock *wddm = nullptr;
+    std::unique_ptr<OSInterface> osInterface;
+    OsContext *osContext;
     MockGdi *gdi = nullptr;
 };
 
@@ -117,23 +125,30 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
         // wddm is deleted by memory manager
-        wddm.reset(new NiceMock<GmockWddm>);
+        wddm = new NiceMock<GmockWddm>;
+        osInterface = std::make_unique<OSInterface>();
         ASSERT_NE(nullptr, wddm);
+        EXPECT_TRUE(wddm->init());
+        osInterface->get()->setWddm(wddm);
+        osContext = new OsContext(osInterface.get());
+        osContext->incRefInternal();
         wddm->init();
-        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm.get());
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
 
-        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm.get(), &GmockWddm::baseCreateAllocationAndMapGpuVa));
+        ON_CALL(*wddm, createAllocationsAndMapGpuVa(::testing::_)).WillByDefault(::testing::Invoke(wddm, &GmockWddm::baseCreateAllocationAndMapGpuVa));
     }
 
     void TearDown() {
+        osContext->decRefInternal();
         delete memoryManager;
-        wddm = nullptr;
         GmmEnvironmentFixture::TearDown();
     }
 
-    std::unique_ptr<NiceMock<GmockWddm>> wddm;
+    NiceMock<GmockWddm> *wddm = nullptr;
+    std::unique_ptr<OSInterface> osInterface;
+    OsContext *osContext;
 };
 
 typedef ::Test<WddmMemoryManagerFixtureWithGmockWddm> WddmMemoryManagerTest2;

@@ -112,7 +112,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : BaseClass(execStamp, executionEnvironment) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
         return 0;
     }
 
@@ -179,7 +179,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType,
-                     ResidencyContainer *allocationsForResidency) override {
+                     ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
         flushCalledCount++;
         recordedCommandBuffer->batchBuffer = batchBuffer;
         copyOfAllocations.clear();
@@ -237,7 +237,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     ~MockCommandStreamReceiver() {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
 
     CompletionStamp flushTask(
         LinearStream &commandStream,
@@ -255,7 +255,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep) override {
+    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, OsContext &osContext) override {
     }
 
     void addPipeControl(LinearStream &commandStream, bool dcFlush) override {
