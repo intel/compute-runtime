@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "gtest/gtest.h"
 
@@ -32,5 +33,11 @@ TEST(OsInterfaceTest, GivenLinuxWhenare64kbPagesEnabledThenFalse) {
 TEST(OsInterfaceTest, GivenLinuxOsInterfaceWhenDeviceHandleQueriedthenZeroIsReturned) {
     OSInterface osInterface;
     EXPECT_EQ(0u, osInterface.getDeviceHandle());
+}
+
+TEST(OsContextTest, WhenOsContextIsCreatedThenImplIsAvailable) {
+    OSInterface osInterface;
+    auto osContext = std::make_unique<OsContext>(osInterface);
+    EXPECT_NE(nullptr, osContext->get());
 }
 } // namespace OCLRT
