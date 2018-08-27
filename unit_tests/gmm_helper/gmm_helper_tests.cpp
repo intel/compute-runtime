@@ -33,6 +33,9 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "runtime/platform/platform.h"
 
+#include "GL/gl.h"
+#include "GL/glext.h"
+
 using namespace ::testing;
 
 namespace OCLRT {
@@ -42,6 +45,23 @@ class GmmTests : public ::testing::Test {
     }
     ExecutionEnvironment executionEnvironment;
 };
+
+TEST(GmmGlTests, givenGmmWhenAskedforCubeFaceIndexThenProperValueIsReturned) {
+    std::vector<std::pair<GMM_CUBE_FACE_ENUM, uint32_t>> v = {{__GMM_CUBE_FACE_NEG_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_X},
+                                                              {__GMM_CUBE_FACE_POS_X, GL_TEXTURE_CUBE_MAP_POSITIVE_X},
+                                                              {__GMM_CUBE_FACE_NEG_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y},
+                                                              {__GMM_CUBE_FACE_POS_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y},
+                                                              {__GMM_CUBE_FACE_NEG_Z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z},
+                                                              {__GMM_CUBE_FACE_POS_Z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z}};
+
+    uint32_t maxVal = 0;
+    for (auto p : v) {
+        EXPECT_TRUE(p.first == OCLRT::GmmHelper::getCubeFaceIndex(p.second));
+        maxVal = std::max(maxVal, p.second);
+    }
+    maxVal++;
+    EXPECT_TRUE(__GMM_NO_CUBE_MAP == OCLRT::GmmHelper::getCubeFaceIndex(maxVal));
+}
 
 TEST_F(GmmTests, resourceCreation) {
     std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false));

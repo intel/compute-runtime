@@ -113,6 +113,7 @@ endif()
 
 target_include_directories(igdrcl_tests PRIVATE
   ${IGDRCL_SOURCE_DIR}/unit_tests/mocks${BRANCH_DIR_SUFFIX}
+  ${KHRONOS_GL_HEADERS_DIR}
 )
 
 target_link_libraries(igdrcl_tests gmock-gtest ${IGDRCL_EXTRA_LIBS})

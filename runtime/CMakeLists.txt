@@ -70,6 +70,7 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PRIVATE
 
 target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
   ${KHRONOS_HEADERS_DIR}
+  ${KHRONOS_GL_HEADERS_DIR}
   ${CIF_BASE_DIR}
   ${GMM_INCLUDE_PATHS}
   ${HW_SRC_INCLUDE_PATH}

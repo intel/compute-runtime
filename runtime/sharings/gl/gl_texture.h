@@ -1,0 +1,60 @@
+/*
+ * Copyright (c) 2018, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#pragma once
+#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "CL/cl_gl.h"
+#include "CLGLShr.h"
+
+namespace OCLRT {
+class Context;
+class Image;
+class GlTexture : GlSharing {
+  public:
+    static Image *createSharedGlTexture(Context *context, cl_mem_flags flags, cl_GLenum target, cl_GLint miplevel, cl_GLuint texture,
+                                        cl_int *errcodeRet);
+    void synchronizeObject(UpdateData &updateData) override;
+    cl_int getGlTextureInfo(cl_gl_texture_info paramName, size_t paramValueSize, void *paramValue, size_t *paramValueSizeRet) const;
+    cl_GLint getMiplevel() const { return miplevel; }
+    CL_GL_RESOURCE_INFO *getTextureInfo() { return &textureInfo; }
+    cl_GLenum getTarget() const { return target; }
+
+    static bool setClImageFormat(int glFormat, cl_image_format &clImgFormat);
+    static cl_mem_object_type getClMemObjectType(cl_GLenum glType);
+    static cl_gl_object_type getClGlObjectType(cl_GLenum glType);
+    static cl_GLenum getBaseTargetType(cl_GLenum target);
+
+  protected:
+    GlTexture(GLSharingFunctions *sharingFunctions, unsigned int glObjectType, unsigned int glObjectId, CL_GL_RESOURCE_INFO texInfo,
+              cl_GLenum target, cl_GLint miplevel)
+        : GlSharing(sharingFunctions, glObjectType, glObjectId), target(target), miplevel(miplevel), textureInfo(texInfo){};
+
+    static uint32_t getClObjectType(cl_GLenum glType, bool returnClGlObjectType);
+
+    void releaseResource(MemObj *memObject) override;
+
+    cl_GLenum target;
+    cl_GLint miplevel;
+    CL_GL_RESOURCE_INFO textureInfo;
+};
+} // namespace OCLRT

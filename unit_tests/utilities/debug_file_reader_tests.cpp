@@ -20,7 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "debug_file_reader_tests.inl"
+#include "unit_tests/utilities/debug_file_reader_tests.inl"
 
 using namespace OCLRT;
 using namespace std;
@@ -28,14 +28,16 @@ using namespace std;
 TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDefaultValuesMatch) {
 
     // Use test settings file
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+    std::unique_ptr<TestSettingsFileReader> reader =
+        unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+
     ASSERT_NE(nullptr, reader);
 
     size_t debugVariableCount = 0;
     bool compareSuccessful = false;
-#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)        \
-    compareSuccessful = defaultValue == reader->getSetting(#variableName, defaultValue); \
-    EXPECT_TRUE(compareSuccessful) << #variableName;                                     \
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)          \
+    compareSuccessful = (defaultValue == reader->getSetting(#variableName, defaultValue)); \
+    EXPECT_TRUE(compareSuccessful) << #variableName;                                       \
     debugVariableCount++;
 #include "DebugVariables.inl"
 #undef DECLARE_DEBUG_VARIABLE
@@ -47,13 +49,15 @@ TEST(SettingsFileReader, givenTestFileWithDefaultValuesWhenTheyAreQueriedThenDef
 TEST(SettingsFileReader, GetSetting) {
 
     // Use test settings file
-    std::unique_ptr<TestSettingsFileReader> reader = unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+    std::unique_ptr<TestSettingsFileReader> reader =
+        unique_ptr<TestSettingsFileReader>(new TestSettingsFileReader(TestSettingsFileReader::testPath));
     ASSERT_NE(nullptr, reader);
 
 #define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
     {                                                                             \
         dataType defaultData = defaultValue;                                      \
         dataType tempData = reader->getSetting(#variableName, defaultData);       \
+                                                                                  \
         if (tempData == defaultData) {                                            \
             EXPECT_TRUE(true);                                                    \
         }                                                                         \

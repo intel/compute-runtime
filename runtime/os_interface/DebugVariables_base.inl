@@ -19,6 +19,7 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
+// clang-format off
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
@@ -105,12 +106,14 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableQuickKmdSleepForSporadicWaits, -1,
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds, -1, "-1: dont override, >0: timeout in microseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, CsrDispatchMode, 0, "Chooses DispatchMode for Csr")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont override, 0: disable, 1: enable.")
+DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
-DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 - threadGroup, 4 - midThread")
+DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 " "- threadGroup, 4 - midThread")
 DECLARE_DEBUG_VARIABLE(int32_t, NodeOrdinal, -1, "-1: default do not override, 0: ENGINE_RCS")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideThreadArbitrationPolicy, -1, "-1 (dont override) or any valid config (0: Age Based, 1: Round Robin)")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideAubDeviceId, -1, "-1 dont override, any other: use this value for AUB generation device id")
-DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size to be 4 times bigger")
+DECLARE_DEBUG_VARIABLE(bool, UseMaxSimdSizeToDeduceMaxWorkgroupSize, false, "With this flag on, max workgroup size is deduced using SIMD32 instead of SIMD8, this causes the max wkg size " "to be 4 times bigger")
 DECLARE_DEBUG_VARIABLE(bool, EnableTimestampPacket, false, "Write Timestamp Packet for each set of gpu walkers")
 DECLARE_DEBUG_VARIABLE(bool, ReturnRawGpuTimestamps, false, "Driver returns raw GPU tiemstamps instead of calculated ones.")
+// clang-format on

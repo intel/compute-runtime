@@ -1,0 +1,155 @@
+/*
+ * Copyright (c) 2018, Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#include "runtime/sharings/gl/gl_arb_sync_event.h"
+
+#include <GL/gl.h>
+#include "runtime/sharings/gl/gl_sharing.h"
+#include "runtime/command_queue/command_queue.h"
+#include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/context/context.h"
+#include "runtime/device/device.h"
+#include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/base_object.h"
+
+#include "CLGLShr.h"
+
+namespace OCLRT {
+GlArbSyncEvent::GlArbSyncEvent(Context &context)
+    : Event(&context, nullptr, CL_COMMAND_GL_FENCE_SYNC_OBJECT_KHR, eventNotReady, eventNotReady),
+      glSyncInfo(new CL_GL_SYNC_INFO{}) {
+}
+
+bool GlArbSyncEvent::setBaseEvent(Event &ev) {
+    UNRECOVERABLE_IF(this->baseEvent != nullptr);
+    UNRECOVERABLE_IF(ev.getContext() == nullptr);
+    UNRECOVERABLE_IF(ev.getCommandQueue() == nullptr);
+    auto cmdQueue = ev.getCommandQueue();
+    auto osInterface = cmdQueue->getDevice().getCommandStreamReceiver().getOSInterface();
+    UNRECOVERABLE_IF(osInterface == nullptr);
+    if (false == ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSetup(*osInterface, *glSyncInfo)) {
+        return false;
+    }
+
+    this->baseEvent = &ev;
+    this->cmdQueue = cmdQueue;
+    this->cmdQueue->incRefInternal();
+    this->baseEvent->incRefInternal();
+    this->osInterface = osInterface;
+    ev.addChild(*this);
+    return true;
+}
+
+GlArbSyncEvent::~GlArbSyncEvent() {
+    if (baseEvent != nullptr) {
+        ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectCleanup(*osInterface, glSyncInfo.get());
+        baseEvent->decRefInternal();
+    }
+}
+
+GlArbSyncEvent *GlArbSyncEvent::create(Event &baseEvent) {
+    if (baseEvent.getContext() == nullptr) {
+        return nullptr;
+    }
+    auto arbSyncEvent = new GlArbSyncEvent(*baseEvent.getContext());
+    if (false == arbSyncEvent->setBaseEvent(baseEvent)) {
+        delete arbSyncEvent;
+        arbSyncEvent = nullptr;
+    }
+
+    return arbSyncEvent;
+}
+
+void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) {
+    DEBUG_BREAK_IF(&event != this->baseEvent);
+    if ((transitionStatus > CL_SUBMITTED) || (transitionStatus < 0)) {
+        return;
+    }
+
+    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectSignal(*event.getCommandQueue()->getDevice().getOsContext(), *glSyncInfo);
+    ctx->getSharing<OCLRT::GLSharingFunctions>()->glArbSyncObjectWaitServer(*osInterface, *glSyncInfo);
+}
+} // namespace OCLRT
+
+extern "C" CL_API_ENTRY cl_int CL_API_CALL
+clEnqueueMarkerWithSyncObjectINTEL(cl_command_queue commandQueue,
+                                   cl_event *event,
+                                   cl_context *context) {
+    return CL_INVALID_OPERATION;
+}
+
+extern "C" CL_API_ENTRY cl_int CL_API_CALL
+clGetCLObjectInfoINTEL(cl_mem memObj,
+                       void *pResourceInfo) {
+    return CL_INVALID_OPERATION;
+}
+
+extern "C" CL_API_ENTRY cl_int CL_API_CALL
+clGetCLEventInfoINTEL(cl_event event, PCL_GL_SYNC_INFO *pSyncInfoHandleRet, cl_context *pClContextRet) {
+    if ((nullptr == pSyncInfoHandleRet) || (nullptr == pClContextRet)) {
+        return CL_INVALID_ARG_VALUE;
+    }
+
+    auto neoEvent = OCLRT::castToObject<OCLRT::Event>(event);
+    if (nullptr == neoEvent) {
+        return CL_INVALID_EVENT;
+    }
+
+    if (neoEvent->getCommandType() != CL_COMMAND_RELEASE_GL_OBJECTS) {
+        *pSyncInfoHandleRet = nullptr;
+        *pClContextRet = static_cast<cl_context>(neoEvent->getContext());
+        return CL_SUCCESS;
+    }
+
+    auto sharing = neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>();
+    if (sharing == nullptr) {
+        return CL_INVALID_OPERATION;
+    }
+
+    OCLRT::GlArbSyncEvent *arbSyncEvent = sharing->getOrCreateGlArbSyncEvent(*neoEvent);
+    if (nullptr == arbSyncEvent) {
+        return CL_OUT_OF_RESOURCES;
+    }
+
+    neoEvent->updateExecutionStatus();
+    CL_GL_SYNC_INFO *syncInfo = arbSyncEvent->getSyncInfo();
+    *pSyncInfoHandleRet = syncInfo;
+    *pClContextRet = static_cast<cl_context>(neoEvent->getContext());
+
+    return CL_SUCCESS;
+}
+
+extern "C" CL_API_ENTRY cl_int CL_API_CALL
+clReleaseGlSharedEventINTEL(cl_event event) {
+    auto neoEvent = OCLRT::castToObject<OCLRT::Event>(event);
+    if (nullptr == neoEvent) {
+        return CL_INVALID_EVENT;
+    }
+    auto arbSyncEvent = neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>()->getGlArbSyncEvent(*neoEvent);
+    neoEvent->getContext()->getSharing<OCLRT::GLSharingFunctions>()->removeGlArbSyncEventMapping(*neoEvent);
+    if (nullptr != arbSyncEvent) {
+        arbSyncEvent->release();
+    }
+    neoEvent->release();
+
+    return CL_SUCCESS;
+}

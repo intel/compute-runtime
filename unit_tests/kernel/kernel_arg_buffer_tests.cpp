@@ -91,8 +91,7 @@ HWTEST_F(KernelArgBufferTest, SetKernelArgValidSvmPtrStateful) {
 
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     auto surfaceState = reinterpret_cast<const RENDER_SURFACE_STATE *>(
-        ptrOffset(pKernel->getSurfaceStateHeap(),
-                  pKernelInfo->kernelArgInfo[0].offsetHeap));
+        ptrOffset(pKernel->getSurfaceStateHeap(), pKernelInfo->kernelArgInfo[0].offsetHeap));
 
     void *surfaceAddress = reinterpret_cast<void *>(surfaceState->getSurfaceBaseAddress());
     EXPECT_EQ(buffer->getCpuAddress(), surfaceAddress);
