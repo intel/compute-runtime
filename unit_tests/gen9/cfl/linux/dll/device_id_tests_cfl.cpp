@@ -30,27 +30,27 @@ using namespace OCLRT;
 
 TEST(CflDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 14> expectedDescriptors = {{
-        {ICFL_GT1_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
-        {ICFL_GT1_S41_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
-        {ICFL_GT1_S61_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupGtSystemInfo, GTTYPE_GT1},
+        {ICFL_GT1_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_S41_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
+        {ICFL_GT1_S61_DT_DEVICE_F0_ID, &CFL_1x2x6::hwInfo, &CFL_1x2x6::setupHardwareInfo, GTTYPE_GT1},
 
-        {ICFL_GT2_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
-        {ICFL_GT2_HALO_WS_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
-        {ICFL_GT2_S42_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
-        {ICFL_GT2_S62_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
-        {ICFL_GT2_SERV_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupGtSystemInfo, GTTYPE_GT2},
+        {ICFL_GT2_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_HALO_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_HALO_WS_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_S42_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_S62_DT_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
+        {ICFL_GT2_SERV_DEVICE_F0_ID, &CFL_1x3x6::hwInfo, &CFL_1x3x6::setupHardwareInfo, GTTYPE_GT2},
 
-        {ICFL_HALO_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_15W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_15W_42EU_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_28W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICFL_GT3_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupGtSystemInfo, GTTYPE_GT3},
+        {ICFL_HALO_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICFL_GT3_ULT_15W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICFL_GT3_ULT_15W_42EU_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICFL_GT3_ULT_28W_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICFL_GT3_ULT_DEVICE_F0_ID, &CFL_2x3x8::hwInfo, &CFL_2x3x8::setupHardwareInfo, GTTYPE_GT3},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
         return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupGtSystemInfo == second->setupGtSystemInfo && first->eGtType == second->eGtType;
+               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
     };
 
     size_t startIndex = 0;

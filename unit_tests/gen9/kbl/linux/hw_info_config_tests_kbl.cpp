@@ -286,8 +286,9 @@ typedef ::testing::Types<KBL_1x2x6, KBL_1x3x6, KBL_1x3x8, KBL_2x3x8, KBL_3x3x8> 
 TYPED_TEST_CASE(KblHwInfoTests, kblTestTypes);
 TYPED_TEST(KblHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
+    FeatureTable featureTable;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupGtSystemInfo(&gtSystemInfo);
+    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

@@ -88,7 +88,7 @@ const HardwareInfo BDW_1x2x6::hwInfo = {
     BDW::capabilityTable,
 };
 GT_SYSTEM_INFO BDW_1x2x6::gtSystemInfo = {0};
-void BDW_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BDW_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -117,7 +117,7 @@ const HardwareInfo BDW_1x3x6::hwInfo = {
     BDW::capabilityTable,
 };
 GT_SYSTEM_INFO BDW_1x3x6::gtSystemInfo = {0};
-void BDW_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BDW_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -146,7 +146,7 @@ const HardwareInfo BDW_1x3x8::hwInfo = {
     BDW::capabilityTable,
 };
 GT_SYSTEM_INFO BDW_1x3x8::gtSystemInfo = {0};
-void BDW_1x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BDW_1x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -175,7 +175,7 @@ const HardwareInfo BDW_2x3x8::hwInfo = {
     BDW::capabilityTable,
 };
 GT_SYSTEM_INFO BDW_2x3x8::gtSystemInfo = {0};
-void BDW_2x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BDW_2x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * BDW::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -197,5 +197,5 @@ void BDW_2x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
 };
 
 const HardwareInfo BDW::hwInfo = BDW_1x3x8::hwInfo;
-void (*BDW::setupGtSystemInfo)(GT_SYSTEM_INFO *) = BDW_1x3x8::setupGtSystemInfo;
+void (*BDW::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = BDW_1x3x8::setupHardwareInfo;
 } // namespace OCLRT

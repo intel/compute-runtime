@@ -80,7 +80,7 @@ const HardwareInfo GLK_1x3x6::hwInfo = {
     GLK::capabilityTable,
 };
 GT_SYSTEM_INFO GLK_1x3x6::gtSystemInfo = {0};
-void GLK_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void GLK_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -109,7 +109,7 @@ const HardwareInfo GLK_1x2x6::hwInfo = {
     GLK::capabilityTable,
 };
 GT_SYSTEM_INFO GLK_1x2x6::gtSystemInfo = {0};
-void GLK_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void GLK_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * GLK::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -131,5 +131,5 @@ void GLK_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
 };
 
 const HardwareInfo GLK::hwInfo = GLK_1x3x6::hwInfo;
-void (*GLK::setupGtSystemInfo)(GT_SYSTEM_INFO *) = GLK_1x3x6::setupGtSystemInfo;
+void (*GLK::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = GLK_1x3x6::setupHardwareInfo;
 } // namespace OCLRT

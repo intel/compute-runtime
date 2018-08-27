@@ -30,33 +30,33 @@ using namespace OCLRT;
 
 TEST(CnlDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 20> expectedDescriptors = {{
-        {ICNL_5x8_DESK_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_5x8_DESKTOP_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_5x8_HALO_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_5x8_SUPERSKU_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_5x8_ULX_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
+        {ICNL_5x8_DESK_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_5x8_DESKTOP_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_5x8_HALO_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_5x8_SUPERSKU_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_5x8_ULX_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
 
-        {ICNL_5x8_ULT_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_4x8_ULT_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_4x8_ULX_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupGtSystemInfo, GTTYPE_GT2},
-        {ICNL_4x8_HALO_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupGtSystemInfo, GTTYPE_GT2},
+        {ICNL_5x8_ULT_DEVICE_F0_ID, &CNL_2x5x8::hwInfo, &CNL_2x5x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_4x8_ULT_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_4x8_ULX_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupHardwareInfo, GTTYPE_GT2},
+        {ICNL_4x8_HALO_DEVICE_F0_ID, &CNL_2x4x8::hwInfo, &CNL_2x4x8::setupHardwareInfo, GTTYPE_GT2},
 
-        {ICNL_3x8_DESK_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_3x8_ULT_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_2x8_ULT_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_3x8_HALO_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_3x8_DESKTOP_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_3x8_ULX_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_2x8_ULX_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_2x8_HALO_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupGtSystemInfo, GTTYPE_GT1},
-        {ICNL_9x8_DESK_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICNL_9x8_ULT_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupGtSystemInfo, GTTYPE_GT3},
-        {ICNL_9x8_SUPERSKU_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupGtSystemInfo, GTTYPE_GT3},
+        {ICNL_3x8_DESK_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_3x8_ULT_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_2x8_ULT_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_3x8_HALO_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_3x8_DESKTOP_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_3x8_ULX_DEVICE_F0_ID, &CNL_1x3x8::hwInfo, &CNL_1x3x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_2x8_ULX_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_2x8_HALO_DEVICE_F0_ID, &CNL_1x2x8::hwInfo, &CNL_1x2x8::setupHardwareInfo, GTTYPE_GT1},
+        {ICNL_9x8_DESK_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICNL_9x8_ULT_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupHardwareInfo, GTTYPE_GT3},
+        {ICNL_9x8_SUPERSKU_DEVICE_F0_ID, &CNL_4x9x8::hwInfo, &CNL_4x9x8::setupHardwareInfo, GTTYPE_GT3},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
         return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupGtSystemInfo == second->setupGtSystemInfo && first->eGtType == second->eGtType;
+               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
     };
 
     size_t startIndex = 0;

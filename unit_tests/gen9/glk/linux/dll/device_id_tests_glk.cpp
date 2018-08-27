@@ -30,12 +30,12 @@ using namespace OCLRT;
 
 TEST(GlkDeviceIdTest, supportedDeviceId) {
     std::array<DeviceDescriptor, 1> expectedDescriptors = {{
-        {IGLK_GT2_ULT_18EU_DEVICE_F0_ID, &GLK_1x3x6::hwInfo, &GLK_1x3x6::setupGtSystemInfo, GTTYPE_GTA},
+        {IGLK_GT2_ULT_18EU_DEVICE_F0_ID, &GLK_1x3x6::hwInfo, &GLK_1x3x6::setupHardwareInfo, GTTYPE_GTA},
     }};
 
     auto compareStructs = [](const DeviceDescriptor *first, const DeviceDescriptor *second) {
         return first->deviceId == second->deviceId && first->pHwInfo == second->pHwInfo &&
-               first->setupGtSystemInfo == second->setupGtSystemInfo && first->eGtType == second->eGtType;
+               first->setupHardwareInfo == second->setupHardwareInfo && first->eGtType == second->eGtType;
     };
 
     size_t startIndex = 0;

@@ -58,11 +58,11 @@ struct CNL : public CNLFamily {
     static const uint32_t maxSlicesSupported = 4;
     static const uint32_t maxSubslicesSupported = 9;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupGtSystemInfo)(GT_SYSTEM_INFO *gtSysInfo);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
 };
 class CNL_2x5x8 : public CNL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -70,7 +70,7 @@ class CNL_2x5x8 : public CNL {
 };
 class CNL_2x4x8 : public CNL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -78,7 +78,7 @@ class CNL_2x4x8 : public CNL {
 };
 class CNL_1x3x8 : public CNL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -86,7 +86,7 @@ class CNL_1x3x8 : public CNL {
 };
 class CNL_1x2x8 : public CNL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -94,7 +94,7 @@ class CNL_1x2x8 : public CNL {
 };
 class CNL_4x9x8 : public CNL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:

@@ -28,6 +28,7 @@ add_custom_target(run_unit_tests ALL)
 
 set(IGDRCL_SRCS_tests_local
   ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+  ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
   ${CMAKE_CURRENT_SOURCE_DIR}/ult_configuration.cpp
 )
 

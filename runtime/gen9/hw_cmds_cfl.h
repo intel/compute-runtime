@@ -35,12 +35,12 @@ struct CFL : public SKLFamily {
     static const uint32_t maxSubslicesSupported = 9;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupGtSystemInfo)(GT_SYSTEM_INFO *gtSysInfo);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
 };
 
 class CFL_1x2x6 : public CFL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -49,7 +49,7 @@ class CFL_1x2x6 : public CFL {
 
 class CFL_1x3x6 : public CFL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -58,7 +58,7 @@ class CFL_1x3x6 : public CFL {
 
 class CFL_1x3x8 : public CFL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -67,7 +67,7 @@ class CFL_1x3x8 : public CFL {
 
 class CFL_2x3x8 : public CFL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -76,7 +76,7 @@ class CFL_2x3x8 : public CFL {
 
 class CFL_3x3x8 : public CFL {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:

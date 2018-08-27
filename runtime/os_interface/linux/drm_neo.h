@@ -37,11 +37,12 @@ namespace OCLRT {
 
 class DeviceFactory;
 struct HardwareInfo;
+struct FeatureTable;
 
 struct DeviceDescriptor {
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
-    void (*setupGtSystemInfo)(GT_SYSTEM_INFO *);
+    void (*setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool);
     GTTYPE eGtType;
 };
 

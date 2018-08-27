@@ -33,11 +33,11 @@ struct BDW : public BDWFamily {
     static const uint32_t maxSlicesSupported = 2;
     static const uint32_t maxSubslicesSupported = 6;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupGtSystemInfo)(GT_SYSTEM_INFO *gtSysInfo);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
 };
 class BDW_1x2x6 : public BDW {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -45,7 +45,7 @@ class BDW_1x2x6 : public BDW {
 };
 class BDW_1x3x6 : public BDW {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -53,7 +53,7 @@ class BDW_1x3x6 : public BDW {
 };
 class BDW_1x3x8 : public BDW {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:
@@ -61,7 +61,7 @@ class BDW_1x3x8 : public BDW {
 };
 class BDW_2x3x8 : public BDW {
   public:
-    static void setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo);
+    static void setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
     static const HardwareInfo hwInfo;
 
   private:

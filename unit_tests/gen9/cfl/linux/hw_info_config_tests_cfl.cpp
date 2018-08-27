@@ -219,8 +219,9 @@ typedef ::testing::Types<CFL_1x2x6, CFL_1x3x6, CFL_1x3x8, CFL_2x3x8, CFL_3x3x8> 
 TYPED_TEST_CASE(CflHwInfoTests, cflTestTypes);
 TYPED_TEST(CflHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
+    FeatureTable featureTable;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupGtSystemInfo(&gtSystemInfo);
+    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

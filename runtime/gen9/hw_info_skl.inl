@@ -88,7 +88,7 @@ const HardwareInfo SKL_1x2x6::hwInfo = {
     SKL::capabilityTable,
 };
 GT_SYSTEM_INFO SKL_1x2x6::gtSystemInfo = {0};
-void SKL_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void SKL_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 11;
     gtSysInfo->ThreadCount = 11 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -117,7 +117,7 @@ const HardwareInfo SKL_1x3x6::hwInfo = {
     SKL::capabilityTable,
 };
 GT_SYSTEM_INFO SKL_1x3x6::gtSystemInfo = {0};
-void SKL_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void SKL_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 17;
     gtSysInfo->ThreadCount = 17 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -146,7 +146,7 @@ const HardwareInfo SKL_1x3x8::hwInfo = {
     SKL::capabilityTable,
 };
 GT_SYSTEM_INFO SKL_1x3x8::gtSystemInfo = {0};
-void SKL_1x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void SKL_1x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -175,7 +175,7 @@ const HardwareInfo SKL_2x3x8::hwInfo = {
     SKL::capabilityTable,
 };
 GT_SYSTEM_INFO SKL_2x3x8::gtSystemInfo = {0};
-void SKL_2x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void SKL_2x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 47;
     gtSysInfo->ThreadCount = 47 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -204,7 +204,7 @@ const HardwareInfo SKL_3x3x8::hwInfo = {
     SKL::capabilityTable,
 };
 GT_SYSTEM_INFO SKL_3x3x8::gtSystemInfo = {0};
-void SKL_3x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void SKL_3x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 71;
     gtSysInfo->ThreadCount = 71 * SKL::threadsPerEu;
     gtSysInfo->SliceCount = 3;
@@ -226,5 +226,5 @@ void SKL_3x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
 };
 
 const HardwareInfo SKL::hwInfo = SKL_1x3x8::hwInfo;
-void (*SKL::setupGtSystemInfo)(GT_SYSTEM_INFO *) = SKL_1x3x8::setupGtSystemInfo;
+void (*SKL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = SKL_1x3x8::setupHardwareInfo;
 } // namespace OCLRT

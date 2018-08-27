@@ -30,6 +30,7 @@
 #include "unit_tests/mocks/mock_gmm.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_sip.h"
+#include "unit_tests/tests_configuration.h"
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "External/Common/GmmLibDllName.h"
@@ -55,6 +56,7 @@ extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
 
 extern const unsigned int ultIterationMaxTime;
 extern bool useMockGmm;
+extern TestMode testMode;
 extern const char *executionDirectorySuffix;
 
 std::thread::id tempThreadID;
@@ -181,6 +183,7 @@ int main(int argc, char **argv) {
     bool enable_alarm = true;
     bool enable_segv = true;
     bool enable_abrt = true;
+    bool setupFeatureTable = testMode == TestMode::AubTests ? true : false;
 
     applyWorkarounds();
 
@@ -201,7 +204,8 @@ int main(int argc, char **argv) {
     auto numDevices = numPlatformDevices;
     HardwareInfo device = DEFAULT_TEST_PLATFORM::hwInfo;
     GT_SYSTEM_INFO gtSystemInfo = *device.pSysInfo;
-    hardwareInfoSetupGt[device.pPlatform->eProductFamily](&gtSystemInfo);
+    FeatureTable featureTable = *device.pSkuTable;
+
     size_t revisionId = device.pPlatform->usRevId;
     uint32_t euPerSubSlice = 0;
     uint32_t sliceCount = 0;
@@ -293,8 +297,8 @@ int main(int argc, char **argv) {
 
     platform.usRevId = (uint16_t)revisionId;
 
-    // set Gt to initial state
-    hardwareInfoSetupGt[productFamily](&gtSystemInfo);
+    // set Gt and FeatureTable to initial state
+    hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable);
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
     subSliceCount = subSliceCount > 0 ? subSliceCount : gtSystemInfo.SubSliceCount;
@@ -315,6 +319,7 @@ int main(int argc, char **argv) {
 
     device.pPlatform = &platform;
     device.pSysInfo = &gtSystemInfo;
+    device.pSkuTable = &featureTable;
     device.capabilityTable = hardwareInfo->capabilityTable;
 
     binaryNameSuffix.append(familyName[device.pPlatform->eRenderCoreFamily]);

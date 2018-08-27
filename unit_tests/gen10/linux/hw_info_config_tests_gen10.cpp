@@ -212,8 +212,9 @@ typedef ::testing::Types<CNL_2x5x8, CNL_2x4x8, CNL_1x3x8, CNL_1x2x8, CNL_4x9x8> 
 TYPED_TEST_CASE(CnlHwInfoTests, cnlTestTypes);
 TYPED_TEST(CnlHwInfoTests, gtSetupIsCorrect) {
     GT_SYSTEM_INFO gtSystemInfo;
+    FeatureTable featureTable;
     memset(&gtSystemInfo, 0, sizeof(gtSystemInfo));
-    TypeParam::setupGtSystemInfo(&gtSystemInfo);
+    TypeParam::setupHardwareInfo(&gtSystemInfo, &featureTable, false);
     EXPECT_GT(gtSystemInfo.EUCount, 0u);
     EXPECT_GT(gtSystemInfo.ThreadCount, 0u);
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);

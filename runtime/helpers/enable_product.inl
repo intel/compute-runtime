@@ -33,7 +33,7 @@ struct EnableGfxProductHw {
 
         hardwarePrefix[gfxProduct] = HwMapper<gfxProduct>::abbreviation;
         hardwareInfoTable[gfxProduct] = &GfxProduct::hwInfo;
-        hardwareInfoSetupGt[gfxProduct] = GfxProduct::setupGtSystemInfo;
+        hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
     }
 };
 } // namespace OCLRT

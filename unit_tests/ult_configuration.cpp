@@ -20,8 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "unit_tests/tests_configuration.h"
+
 namespace OCLRT {
 unsigned int ultIterationMaxTime = 45;
 bool useMockGmm = true;
 const char *executionDirectorySuffix = "";
+TestMode testMode = TestMode::UnitTests;
 } // namespace OCLRT

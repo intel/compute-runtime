@@ -35,7 +35,7 @@
 namespace OCLRT {
 
 const DeviceDescriptor deviceDescriptorTable[] = {
-#define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupGtSystemInfo, gtType},
+#define DEVICE(devId, gt, gtType) {devId, &gt::hwInfo, &gt::setupHardwareInfo, gtType},
 #include "devices.m"
 #undef DEVICE
     {0, nullptr, nullptr, GTTYPE_UNDEFINED}};
@@ -133,7 +133,7 @@ int Drm::openDevice() {
 }
 
 Drm *Drm::create(int32_t deviceOrdinal) {
-    //right now we support only one device
+    // right now we support only one device
     if (deviceOrdinal != 0)
         return nullptr;
 
@@ -181,11 +181,12 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     }
     if (device) {
         platformDevices[0] = device->pHwInfo;
-        device->setupGtSystemInfo(const_cast<GT_SYSTEM_INFO *>(platformDevices[0]->pSysInfo));
+        device->setupHardwareInfo(const_cast<GT_SYSTEM_INFO *>(platformDevices[0]->pSysInfo),
+                                  const_cast<FeatureTable *>(platformDevices[0]->pSkuTable), true);
         drmObject->setGtType(eGtType);
     } else {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n",
-                         drmObject->deviceId, drmObject->revisionId);
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                         "FATAL: Unknown device: deviceId: %04x, revisionId: %04x\n", drmObject->deviceId, drmObject->revisionId);
         delete drmObject;
         return nullptr;
     }
@@ -200,7 +201,8 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     }
 
     if (!hasExecSoftPin) {
-        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "FATAL: Device doesn't support Soft-Pin but this is required.\n");
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
+                         "FATAL: Device doesn't support Soft-Pin but this is required.\n");
         delete drmObject;
         return nullptr;
     }
@@ -208,8 +210,8 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     // Activate the Turbo Boost Frequency feature
     ret = drmObject->enableTurboBoost();
     if (ret != 0) {
-        //turbo patch not present, we are not on custom Kernel, switch to simplified Mocs selection
-        //do this only for GEN9+
+        // turbo patch not present, we are not on custom Kernel, switch to simplified Mocs selection
+        // do this only for GEN9+
         if (device->pHwInfo->pPlatform->eRenderCoreFamily >= IGFX_GEN9_CORE) {
             drmObject->setSimplifiedMocsTableUsage(true);
         }

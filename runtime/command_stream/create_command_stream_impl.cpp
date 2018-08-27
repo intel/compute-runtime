@@ -73,7 +73,8 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, Execution
             auto hwInfoConst = *platformDevices;
             getHwInfoForPlatformString(productFamily.c_str(), hwInfoConst);
             *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
-            hardwareInfoSetupGt[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo));
+            hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo),
+                                                                      const_cast<FeatureTable *>(hwInfo[0]->pSkuTable), true);
             numDevicesReturned = 1;
             return true;
         }

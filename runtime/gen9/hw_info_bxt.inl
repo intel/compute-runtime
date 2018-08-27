@@ -85,7 +85,7 @@ const HardwareInfo BXT_1x2x6::hwInfo = {
     BXT::capabilityTable,
 };
 GT_SYSTEM_INFO BXT_1x2x6::gtSystemInfo = {0};
-void BXT_1x2x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BXT_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 12;
     gtSysInfo->ThreadCount = 12 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -114,7 +114,7 @@ const HardwareInfo BXT_1x3x6::hwInfo = {
     BXT::capabilityTable,
 };
 GT_SYSTEM_INFO BXT_1x3x6::gtSystemInfo = {0};
-void BXT_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void BXT_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 18;
     gtSysInfo->ThreadCount = 18 * BXT::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -136,5 +136,5 @@ void BXT_1x3x6::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
 };
 
 const HardwareInfo BXT::hwInfo = BXT_1x3x6::hwInfo;
-void (*BXT::setupGtSystemInfo)(GT_SYSTEM_INFO *) = BXT_1x3x6::setupGtSystemInfo;
+void (*BXT::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = BXT_1x3x6::setupHardwareInfo;
 } // namespace OCLRT

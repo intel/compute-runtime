@@ -47,24 +47,16 @@ class DrmMockDefault : public DrmMock {
 };
 
 struct static_init : public DrmMockDefault {
-    static_init() : DrmMockDefault() {
-        drmMockStack.push_back(this);
-    }
+    static_init() : DrmMockDefault() { drmMockStack.push_back(this); }
 };
 
 static static_init s;
 
-void pushDrmMock(Drm *mock) {
-    drmMockStack.push_back(mock);
-}
+void pushDrmMock(Drm *mock) { drmMockStack.push_back(mock); }
 
-void popDrmMock() {
-    drmMockStack.pop_back();
-}
+void popDrmMock() { drmMockStack.pop_back(); }
 
-Drm::~Drm() {
-    fd = -1;
-}
+Drm::~Drm() { fd = -1; }
 
 Drm *Drm::get(int32_t deviceOrdinal) {
     // We silently skip deviceOrdinal
@@ -79,7 +71,5 @@ Drm *Drm::create(int32_t deviceOrdinal) {
     return drmMockStack[drmMockStack.size() - 1];
 }
 
-void Drm::closeDevice(int32_t deviceOrdinal) {
-    drmMockStack[drmMockStack.size() - 1]->fd = -1;
-}
+void Drm::closeDevice(int32_t deviceOrdinal) { drmMockStack[drmMockStack.size() - 1]->fd = -1; }
 } // namespace OCLRT

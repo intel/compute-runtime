@@ -87,7 +87,7 @@ const HardwareInfo CNL_2x5x8::hwInfo = {
     CNL::capabilityTable,
 };
 GT_SYSTEM_INFO CNL_2x5x8::gtSystemInfo = {0};
-void CNL_2x5x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void CNL_2x5x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 39;
     gtSysInfo->ThreadCount = 39 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -115,7 +115,7 @@ const HardwareInfo CNL_2x4x8::hwInfo = {
     CNL::capabilityTable,
 };
 GT_SYSTEM_INFO CNL_2x4x8::gtSystemInfo = {0};
-void CNL_2x4x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void CNL_2x4x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 31;
     gtSysInfo->ThreadCount = 31 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 2;
@@ -143,7 +143,7 @@ const HardwareInfo CNL_1x3x8::hwInfo = {
     CNL::capabilityTable,
 };
 GT_SYSTEM_INFO CNL_1x3x8::gtSystemInfo = {0};
-void CNL_1x3x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void CNL_1x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 23;
     gtSysInfo->ThreadCount = 23 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -171,7 +171,7 @@ const HardwareInfo CNL_1x2x8::hwInfo = {
     CNL::capabilityTable,
 };
 GT_SYSTEM_INFO CNL_1x2x8::gtSystemInfo = {0};
-void CNL_1x2x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void CNL_1x2x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 15;
     gtSysInfo->ThreadCount = 15 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 1;
@@ -199,7 +199,7 @@ const HardwareInfo CNL_4x9x8::hwInfo = {
     CNL::capabilityTable,
 };
 GT_SYSTEM_INFO CNL_4x9x8::gtSystemInfo = {0};
-void CNL_4x9x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
+void CNL_4x9x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable) {
     gtSysInfo->EUCount = 71;
     gtSysInfo->ThreadCount = 71 * CNL::threadsPerEu;
     gtSysInfo->SliceCount = 4;
@@ -220,5 +220,5 @@ void CNL_4x9x8::setupGtSystemInfo(GT_SYSTEM_INFO *gtSysInfo) {
     gtSysInfo->IsDynamicallyPopulated = false;
 };
 const HardwareInfo CNL::hwInfo = CNL_2x5x8::hwInfo;
-void (*CNL::setupGtSystemInfo)(GT_SYSTEM_INFO *) = CNL_2x5x8::setupGtSystemInfo;
+void (*CNL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = CNL_2x5x8::setupHardwareInfo;
 } // namespace OCLRT
