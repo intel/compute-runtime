@@ -429,6 +429,7 @@ void DrmMemoryManager::addAllocationToHostPtrManager(GraphicsAllocation *gfxAllo
     fragment.fragmentCpuPointer = gfxAllocation->getUnderlyingBuffer();
     fragment.fragmentSize = alignUp(gfxAllocation->getUnderlyingBufferSize(), MemoryConstants::pageSize);
     fragment.osInternalStorage = new OsHandle();
+    fragment.residency = new ResidencyData();
     fragment.osInternalStorage->bo = drmMemory->getBO();
     hostPtrManager.storeFragment(fragment);
 }
@@ -438,8 +439,10 @@ void DrmMemoryManager::removeAllocationFromHostPtrManager(GraphicsAllocation *gf
     auto fragment = hostPtrManager.getFragment(buffer);
     if (fragment && fragment->driverAllocation) {
         OsHandle *osStorageToRelease = fragment->osInternalStorage;
+        ResidencyData *residencyDataToRelease = fragment->residency;
         if (hostPtrManager.releaseHostPtr(buffer)) {
             delete osStorageToRelease;
+            delete residencyDataToRelease;
         }
     }
 }

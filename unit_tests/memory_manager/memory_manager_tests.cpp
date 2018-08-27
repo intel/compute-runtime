@@ -161,6 +161,7 @@ TEST_F(MemoryAllocatorTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToH
     EXPECT_EQ(fragment->fragmentCpuPointer, cpuPtr);
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
+    EXPECT_NE(fragment->residency, nullptr);
 
     FragmentStorage fragmentStorage = {};
     fragmentStorage.fragmentCpuPointer = cpuPtr;

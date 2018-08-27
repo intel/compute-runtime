@@ -135,6 +135,7 @@ TEST_F(DrmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationTo
     EXPECT_EQ(fragment->fragmentSize, size);
     EXPECT_NE(fragment->osInternalStorage, nullptr);
     EXPECT_EQ(fragment->osInternalStorage->bo, gfxAllocation.getBO());
+    EXPECT_NE(fragment->residency, nullptr);
 
     FragmentStorage fragmentStorage = {};
     fragmentStorage.fragmentCpuPointer = cpuPtr;
