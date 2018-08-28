@@ -36,6 +36,7 @@
 #include "runtime/helpers/mipmap.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/helpers/surface_formats.h"
@@ -43,6 +44,7 @@
 #include "runtime/helpers/string.h"
 #include "CL/cl_ext.h"
 #include "runtime/utilities/api_intercept.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "runtime/helpers/convert_color.h"
 #include "runtime/helpers/queue_helpers.h"
 #include <map>
@@ -101,6 +103,10 @@ CommandQueue::~CommandQueue() {
     if (device) {
         auto memoryManager = device->getMemoryManager();
         DEBUG_BREAK_IF(nullptr == memoryManager);
+
+        if (timestampPacketNode) {
+            memoryManager->getTimestampPacketAllocator()->returnTag(timestampPacketNode);
+        }
 
         if (commandStream && commandStream->getGraphicsAllocation()) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
@@ -603,5 +609,14 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
     dispatchParams.auxTranslationDirection = auxTranslationDirection;
 
     builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
+}
+
+void CommandQueue::obtainNewTimestampPacketNode() {
+    auto allocator = device->getMemoryManager()->getTimestampPacketAllocator();
+
+    if (timestampPacketNode) {
+        allocator->returnTag(timestampPacketNode);
+    }
+    timestampPacketNode = allocator->getTag();
 }
 } // namespace OCLRT

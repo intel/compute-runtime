@@ -240,13 +240,22 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        if ((this->isProfilingEnabled() && (eventBuilder.getEvent() != nullptr))) {
-            // Get allocation for timestamps
-            hwTimeStamps = eventBuilder.getEvent()->getHwTimeStamp();
-            if (this->isPerfCountersEnabled()) {
-                hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounter();
-                //PERF COUNTER: copy current configuration from queue to event
-                eventBuilder.getEvent()->copyPerfCounters(this->getPerfCountersConfigData());
+        if (DebugManager.flags.EnableTimestampPacket.get()) {
+            obtainNewTimestampPacketNode();
+        }
+
+        if (eventBuilder.getEvent()) {
+            if (timestampPacketNode) {
+                eventBuilder.getEvent()->setTimestampPacketNode(timestampPacketNode);
+            }
+            if (this->isProfilingEnabled()) {
+                // Get allocation for timestamps
+                hwTimeStamps = eventBuilder.getEvent()->getHwTimeStamp();
+                if (this->isPerfCountersEnabled()) {
+                    hwPerfCounter = eventBuilder.getEvent()->getHwPerfCounter();
+                    // PERF COUNTER: copy current configuration from queue to event
+                    eventBuilder.getEvent()->copyPerfCounters(this->getPerfCountersConfigData());
+                }
             }
         }
 

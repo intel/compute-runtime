@@ -26,6 +26,7 @@
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/utilities/idlist.h"
 
+#include <atomic>
 #include <cstdint>
 #include <mutex>
 #include <vector>
@@ -41,9 +42,12 @@ struct TagNode : public IDNode<TagNode<TagType>> {
         return gfxAllocation;
     }
 
+    void incRefCount() { refCount++; }
+
   protected:
     TagNode() = default;
     GraphicsAllocation *gfxAllocation;
+    std::atomic<uint32_t> refCount{0};
 
     template <typename TagType2>
     friend class TagAllocator;
@@ -86,14 +90,14 @@ class TagAllocator {
             node = freeTags.removeFrontOne().release();
         }
         usedTags.pushFrontOne(*node);
+        node->incRefCount();
         return node;
     }
 
-    void returnTag(NodeType *node) {
-        NodeType *usedNode = usedTags.removeOne(*node).release();
-        DEBUG_BREAK_IF(usedNode == nullptr);
-        ((void)(usedNode));
-        freeTags.pushFrontOne(*node);
+    MOCKABLE_VIRTUAL void returnTag(NodeType *node) {
+        if (node->refCount.fetch_sub(1) == 1) {
+            return returnTagToPool(node);
+        }
     }
 
   protected:
@@ -107,6 +111,13 @@ class TagAllocator {
     size_t tagAlignment;
 
     std::mutex allocationsMutex;
+
+    MOCKABLE_VIRTUAL void returnTagToPool(NodeType *node) {
+        NodeType *usedNode = usedTags.removeOne(*node).release();
+        DEBUG_BREAK_IF(usedNode == nullptr);
+        ((void)(usedNode));
+        freeTags.pushFrontOne(*node);
+    }
 
     void populateFreeTags() {
 

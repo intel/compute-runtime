@@ -32,6 +32,7 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::getAllocationData;
+    using MemoryManager::timestampPacketAllocator;
 
     MockMemoryManager() = default;
     MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages) {}

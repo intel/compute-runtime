@@ -43,6 +43,7 @@ struct TagNode;
 class CommandQueue;
 class Context;
 class Device;
+class TimestampPacket;
 
 template <>
 struct OpenCLObjectMapper<_cl_event> {
@@ -124,6 +125,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     HwTimeStamps *getHwTimeStamp();
     GraphicsAllocation *getHwTimeStampAllocation();
+
+    void setTimestampPacketNode(TagNode<TimestampPacket> *node);
 
     bool isPerfCountersEnabled() {
         return perfCountersEnabled;
@@ -371,10 +374,11 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     uint64_t startTimeStamp;
     uint64_t endTimeStamp;
     uint64_t completeTimeStamp;
-    TagNode<HwTimeStamps> *timeStampNode;
     bool perfCountersEnabled;
-    TagNode<HwPerfCounter> *perfCounterNode;
-    InstrPmRegsCfg *perfConfigurationData;
+    TagNode<HwTimeStamps> *timeStampNode = nullptr;
+    TagNode<HwPerfCounter> *perfCounterNode = nullptr;
+    TagNode<TimestampPacket> *timestampPacketNode = nullptr;
+    InstrPmRegsCfg *perfConfigurationData = nullptr;
     //number of events this event depends on
     std::atomic<int> parentCount;
     //event parents

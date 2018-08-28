@@ -610,7 +610,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         // Implement enabling special WA DisableLSQCROPERFforOCL if needed
         GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, true);
 
-        bool setupTimestampPacket = (DebugManager.flags.EnableTimestampPacket.get()) && (currentDispatchIndex == numDispatches - 1);
+        bool setupTimestampPacket = (timestampPacket && (currentDispatchIndex == numDispatches - 1));
         if (setupTimestampPacket) {
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::Start);
         }

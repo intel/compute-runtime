@@ -30,6 +30,7 @@
 #include "runtime/event/event_tracker.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/api/cl_types.h"
 #include "runtime/mem_obj/mem_obj.h"
 #include "runtime/utilities/range.h"
@@ -56,9 +57,6 @@ Event::Event(
       cmdQueue(cmdQueue),
       cmdType(cmdType),
       dataCalculated(false),
-      timeStampNode(nullptr),
-      perfCounterNode(nullptr),
-      perfConfigurationData(nullptr),
       taskCount(taskCount) {
     if (OCLRT::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyCreation(this);
@@ -147,6 +145,10 @@ Event::~Event() {
         if (perfCounterNode != nullptr) {
             TagAllocator<HwPerfCounter> *allocator = ctx->getDevice(0)->getMemoryManager()->getEventPerfCountAllocator();
             allocator->returnTag(perfCounterNode);
+        }
+        if (timestampPacketNode != nullptr) {
+            auto allocator = ctx->getDevice(0)->getMemoryManager()->getTimestampPacketAllocator();
+            allocator->returnTag(timestampPacketNode);
         }
         ctx->decRefInternal();
     }
@@ -719,6 +721,11 @@ GraphicsAllocation *Event::getHwPerfCounterAllocation() {
 void Event::copyPerfCounters(InstrPmRegsCfg *config) {
     perfConfigurationData = new InstrPmRegsCfg;
     memcpy_s(perfConfigurationData, sizeof(InstrPmRegsCfg), config, sizeof(InstrPmRegsCfg));
+}
+
+void Event::setTimestampPacketNode(TagNode<TimestampPacket> *node) {
+    node->incRefCount();
+    timestampPacketNode = node;
 }
 
 } // namespace OCLRT

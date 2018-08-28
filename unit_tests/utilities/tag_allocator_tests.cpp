@@ -251,3 +251,21 @@ TEST_F(TagAllocatorTest, CleanupResources) {
     EXPECT_EQ(0u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(0u, tagAllocator.getTagPoolCount());
 }
+
+TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {
+    MockTagAllocator tagAllocator(memoryManager, 2, 1);
+
+    auto tag = tagAllocator.getTag();
+    EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead());
+    tagAllocator.returnTag(tag);
+    EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead()); // only 1 reference
+
+    tag = tagAllocator.getTag();
+    tag->incRefCount();
+    EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead());
+
+    tagAllocator.returnTag(tag);
+    EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead()); // 1 reference left
+    tagAllocator.returnTag(tag);
+    EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
+}

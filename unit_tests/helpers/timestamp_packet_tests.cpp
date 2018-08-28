@@ -23,6 +23,7 @@
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -30,17 +31,37 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 
 #include "test.h"
 
 using namespace OCLRT;
 
-class MockTimestampPacket : public TimestampPacket {
-  public:
-    using TimestampPacket::data;
-};
+struct TimestampPacketTests : public ::testing::Test {
+    class MockTimestampPacket : public TimestampPacket {
+      public:
+        using TimestampPacket::data;
+    };
 
-using TimestampPacketTests = ::testing::Test;
+    class MockTagAllocator : public TagAllocator<TimestampPacket> {
+      public:
+        using TagAllocator<TimestampPacket>::usedTags;
+        MockTagAllocator(MemoryManager *memoryManager) : TagAllocator<TimestampPacket>(memoryManager, 10, 10) {}
+
+        void returnTag(NodeType *node) override {
+            releaseReferenceNodes.push_back(node);
+            TagAllocator<TimestampPacket>::returnTag(node);
+        }
+
+        void returnTagToPool(NodeType *node) override {
+            returnToPoolTagNodes.push_back(node);
+            TagAllocator<TimestampPacket>::returnTagToPool(node);
+        }
+
+        std::vector<NodeType *> releaseReferenceNodes;
+        std::vector<NodeType *> returnToPoolTagNodes;
+    };
+};
 
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPacket timestampPacket;
@@ -91,12 +112,10 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEstimatingStreamSize
     EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + 2 * sizeof(typename FamilyType::PIPE_CONTROL));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenEnabledDebugVariableWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockTimestampPacket timestampPacket;
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(true);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockKernelWithInternals kernel1(*device);
@@ -152,4 +171,61 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenEnabledDebugVariableWhenD
         }
     }
     EXPECT_EQ(2u, walkersFound);
+}
+
+HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(false);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto mockMemoryManager = new MockMemoryManager();
+    device->injectMemoryManager(mockMemoryManager);
+    auto mockTagAllocator = new MockTagAllocator(mockMemoryManager);
+    mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
+    MockContext context(device.get());
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
+    MockKernelWithInternals kernel(*device, &context);
+
+    size_t gws[] = {1, 1, 1};
+
+    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(nullptr, cmdQ->timestampPacketNode);
+    EXPECT_EQ(nullptr, mockTagAllocator->usedTags.peekHead());
+
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    cl_event event1, event2;
+
+    // obtain first node for cmdQ and event1
+    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    auto node1 = cmdQ->timestampPacketNode;
+    EXPECT_NE(nullptr, node1);
+    EXPECT_EQ(node1, cmdQ->timestampPacketNode);
+
+    // obtain new node for cmdQ and event2
+    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
+    auto node2 = cmdQ->timestampPacketNode;
+    EXPECT_NE(nullptr, node2);
+    EXPECT_EQ(node2, cmdQ->timestampPacketNode);
+    EXPECT_EQ(0u, mockTagAllocator->returnToPoolTagNodes.size());  // nothing returned. event1 owns previous node
+    EXPECT_EQ(1u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released first node
+    EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(0));
+
+    EXPECT_NE(node1, node2);
+
+    clReleaseEvent(event2);
+    EXPECT_EQ(0u, mockTagAllocator->returnToPoolTagNodes.size());  // nothing returned. cmdQ owns node2
+    EXPECT_EQ(2u, mockTagAllocator->releaseReferenceNodes.size()); // event2 released  node2
+    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(1));
+
+    clReleaseEvent(event1);
+    EXPECT_EQ(1u, mockTagAllocator->returnToPoolTagNodes.size()); // removed last reference on node1
+    EXPECT_EQ(node1, mockTagAllocator->returnToPoolTagNodes.at(0));
+    EXPECT_EQ(3u, mockTagAllocator->releaseReferenceNodes.size()); // event1 released node1
+    EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(2));
+
+    cmdQ.reset(nullptr);
+    EXPECT_EQ(2u, mockTagAllocator->returnToPoolTagNodes.size()); // removed last reference on node2
+    EXPECT_EQ(node2, mockTagAllocator->returnToPoolTagNodes.at(1));
+    EXPECT_EQ(4u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released node2
+    EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
 }

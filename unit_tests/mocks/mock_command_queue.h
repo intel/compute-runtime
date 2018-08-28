@@ -77,6 +77,7 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::createAllocationForHostSurface;
+    using BaseClass::timestampPacketNode;
 
     MockCommandQueueHw(Context *context,
                        Device *device,
