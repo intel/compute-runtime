@@ -789,6 +789,22 @@ TEST_F(Wddm20Tests, givenOpenSharedHandleWhenZeroAllocationsThenReturnNull) {
     EXPECT_EQ(false, ret);
 }
 
+TEST_F(Wddm20Tests, whenCreateAllocation64kFailsThenReturnFalse) {
+    struct FailingCreateAllocation {
+        static NTSTATUS APIENTRY mockCreateAllocation(D3DKMT_CREATEALLOCATION *param) {
+            return STATUS_GRAPHICS_NO_VIDEO_MEMORY;
+        };
+    };
+    gdi->createAllocation = FailingCreateAllocation::mockCreateAllocation;
+
+    void *fakePtr = reinterpret_cast<void *>(0x123);
+    auto gmm = std::make_unique<Gmm>(fakePtr, 100, false);
+    WddmAllocation allocation(fakePtr, 100, fakePtr, 200, nullptr, MemoryPool::MemoryNull);
+    allocation.gmm = gmm.get();
+
+    EXPECT_FALSE(wddm->createAllocation64k(&allocation));
+}
+
 TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemoryThenCorrectStatusIsReturned) {
     class MockCreateAllocation {
       public:

@@ -443,7 +443,6 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DDDI_ALLOCATIONINFO AllocationInfo = {0};
     D3DKMT_CREATEALLOCATION CreateAllocation = {0};
-    bool success = false;
 
     AllocationInfo.pSystemMem = 0;
     AllocationInfo.pPrivateDriverData = alloc->gmm->gmmResourceInfo->peekHandle();
@@ -457,20 +456,16 @@ bool Wddm::createAllocation64k(WddmAllocation *alloc) {
     CreateAllocation.pAllocationInfo = &AllocationInfo;
     CreateAllocation.hDevice = device;
 
-    while (!success) {
-        status = gdi->createAllocation(&CreateAllocation);
+    status = gdi->createAllocation(&CreateAllocation);
 
-        if (status != STATUS_SUCCESS) {
-            DEBUG_BREAK_IF(true);
-            break;
-        }
-
-        alloc->handle = AllocationInfo.hAllocation;
-
-        kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
-
-        success = true;
+    if (status != STATUS_SUCCESS) {
+        DEBUG_BREAK_IF(true);
+        return false;
     }
+
+    alloc->handle = AllocationInfo.hAllocation;
+
+    kmDafListener->notifyWriteTarget(featureTable->ftrKmdDaf, adapter, device, alloc->handle, gdi->escape);
     return true;
 }
 
