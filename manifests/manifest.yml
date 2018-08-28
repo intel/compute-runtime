@@ -28,7 +28,7 @@ components:
     branch: kmdaf
     clean_on_sync: true
     dest_dir: kmdaf
-    revision: 99402337f2b42a058a1b20cb0dc130033fdbd65f
+    revision: 2938d33ffa670c98cb4333c192e23a46e54cbcb0
     type: git
   wdk:
     branch: wdk
@@ -36,5 +36,5 @@ components:
     dest_dir: wdk
     revision: 790647-1082
     type: git
-converter: M-1082
+converter: M-1087
 version: '1'
