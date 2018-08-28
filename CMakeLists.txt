@@ -607,10 +607,12 @@ if(DONT_CARE_OF_VIRTUALS)
     set(NEO_MOCKABLE_LIB_NAME ${NEO_RELEASE_LIB_NAME})
     generate_runtime_lib(${NEO_RELEASE_LIB_NAME} TRUE TRUE)
 else()
-    set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
     set(NEO_RELEASE_LIB_NAME "igdrcl_lib_release") # Used by dll/so
     generate_runtime_lib(${NEO_RELEASE_LIB_NAME} FALSE TRUE)
-    generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
+    if(NOT SKIP_UNIT_TESTS)
+        set(NEO_MOCKABLE_LIB_NAME "igdrcl_lib_mockable") # Used by ULTS
+        generate_runtime_lib(${NEO_MOCKABLE_LIB_NAME} TRUE FALSE)
+    endif()
 endif()
 
 if(DEFAULT_TESTED_PLATFORM)
