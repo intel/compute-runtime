@@ -72,7 +72,7 @@ Image *VASurface::createSharedVaSurface(Context *context, VASharingFunctions *sh
 
     sharingFunctions->extGetSurfaceHandle(surface, &sharedHandle);
 
-    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false, true);
+    auto alloc = memoryManager->createGraphicsAllocationFromSharedHandle(sharedHandle, false);
 
     Gmm *gmm = new Gmm(imgInfo);
     DEBUG_BREAK_IF(alloc->gmm != nullptr);

@@ -55,15 +55,15 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
 
     class MockMM : public OsAgnosticMemoryManager {
       public:
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool /*reuseBO*/) override {
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness, false);
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             alloc->gmm = forceGmm;
             gmmOwnershipPassed = true;
             return alloc;
         }
         GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imginfo, Gmm *gmm) override {
             delete gmm;
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false, false);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, false);
             alloc->gmm = forceGmm;
             gmmOwnershipPassed = true;
             return alloc;

@@ -107,7 +107,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness, bool reuseBO) {
+GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) {
     auto graphicsAllocation = new MemoryAllocation(false, reinterpret_cast<void *>(1), 1, 4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible);
     graphicsAllocation->setSharedHandle(handle);
     graphicsAllocation->is32BitAllocation = requireSpecificBitness;
