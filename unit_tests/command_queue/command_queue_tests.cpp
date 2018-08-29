@@ -437,7 +437,7 @@ TEST_P(CommandQueueIndirectHeapTest, IndirectHeapContainsAtLeast64KB) {
 
     auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), sizeof(uint32_t));
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        EXPECT_EQ(64 * KB - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
+        EXPECT_EQ(pDevice->getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize, indirectHeap.getAvailableSpace());
     } else {
         EXPECT_EQ(64 * KB, indirectHeap.getAvailableSpace());
     }
@@ -464,9 +464,10 @@ TEST_P(CommandQueueIndirectHeapTest, getIndirectHeapCanRecycle) {
     ASSERT_NE(nullptr, &indirectHeap);
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
         //no matter what SSH is always capped
-        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), maxSshSize);
+        EXPECT_EQ(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
+                  indirectHeap.getMaxAvailableSpace());
     } else {
-        EXPECT_GE(indirectHeap.getMaxAvailableSpace(), requiredSize);
+        EXPECT_LE(requiredSize, indirectHeap.getMaxAvailableSpace());
     }
 }
 
@@ -492,6 +493,7 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
     CommandQueue cmdQ(context.get(), pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
+
     auto allocationSize = defaultHeapSize * 2;
 
     GraphicsAllocation *allocation = nullptr;
@@ -500,6 +502,9 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
         allocation = memoryManager->allocate32BitGraphicsMemory(allocationSize, nullptr, AllocationOrigin::INTERNAL_ALLOCATION);
     } else {
         allocation = memoryManager->allocateGraphicsMemory(allocationSize);
+    }
+    if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
+        allocation->setSize(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize * 2);
     }
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
@@ -511,12 +516,13 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
 
     EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
 
-    //if we obtain heap from reusable pool, we need to keep the size of allocation
-    //surface state heap is an exception, it is capped at ~60KB
+    // if we obtain heap from reusable pool, we need to keep the size of allocation
+    // surface state heap is an exception, it is capped at (max_ssh_size_for_HW - page_size)
     if (this->GetParam() == IndirectHeap::SURFACE_STATE) {
-        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), 64 * KB - MemoryConstants::pageSize);
+        EXPECT_EQ(cmdQ.getDevice().getCommandStreamReceiver().defaultSshSize - MemoryConstants::pageSize,
+                  indirectHeap.getMaxAvailableSpace());
     } else {
-        EXPECT_EQ(indirectHeap.getMaxAvailableSpace(), allocationSize);
+        EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
     }
 
     EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());

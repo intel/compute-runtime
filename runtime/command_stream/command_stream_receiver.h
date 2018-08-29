@@ -62,7 +62,7 @@ class CommandStreamReceiver {
         samplerCacheFlushAfter   //add sampler cache flush after Walker with redescribed image
     };
     using MutexType = std::recursive_mutex;
-    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment);
+    CommandStreamReceiver(ExecutionEnvironment &executionEnvironment, size_t defaultSshSize);
     virtual ~CommandStreamReceiver();
 
     virtual FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency) = 0;
@@ -153,6 +153,8 @@ class CommandStreamReceiver {
     KmdNotifyHelper *peekKmdNotifyHelper() {
         return kmdNotifyHelper.get();
     }
+
+    const size_t defaultSshSize;
 
   protected:
     void setDisableL3Cache(bool val) {

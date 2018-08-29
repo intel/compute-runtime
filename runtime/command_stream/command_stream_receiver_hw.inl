@@ -31,6 +31,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/state_base_address.h"
 #include "runtime/helpers/options.h"
+#include "runtime/indirect_heap/indirect_heap.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/command_stream/preemption.h"
@@ -40,7 +41,8 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
+CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
+    : CommandStreamReceiver(executionEnvironment, defaultHeapSize), hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));
@@ -312,6 +314,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             requiredL3Index,
             memoryManager->getInternalHeapBaseAddress(),
             device.getGmmHelper());
+
+        if (sshDirty) {
+            StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(commandStreamCSR, ssh, stateBaseAddressCmdOffset,
+                                                                              device.getGmmHelper());
+        }
 
         latestSentStatelessMocsConfig = requiredL3Index;
 
@@ -608,10 +615,14 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
 
+template <typename GfxFamily> size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
+    return sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+}
+
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device) {
     size_t size = getRequiredCmdSizeForPreamble(device);
-    size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
+    size += getRequiredStateBaseAddressSize();
     size += getRequiredPipeControlSize();
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 

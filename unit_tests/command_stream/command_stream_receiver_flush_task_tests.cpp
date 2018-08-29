@@ -820,7 +820,7 @@ HWTEST_F(CommandStreamReceiverCQFlushTaskTests, getCSShouldReturnACSWithEnoughSi
     EXPECT_GE(commandStream.getAvailableSpace(), sizeRequested);
     commandStream.getSpace(sizeRequested - sizeCQReserves);
 
-    GraphicsAllocation allocation((void *)0x1234, 1);
+    GraphicsAllocation allocation((void *)MemoryConstants::pageSize, 1);
     IndirectHeap linear(&allocation);
 
     auto blocking = true;

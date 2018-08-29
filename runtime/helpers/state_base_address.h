@@ -21,7 +21,8 @@
  */
 
 #pragma once
-#include "stdint.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace OCLRT {
 
@@ -50,5 +51,8 @@ struct StateBaseAddressHelper {
         const IndirectHeap &ssh,
         uint64_t generalStateBase,
         uint64_t internalHeapBase);
+
+    static void programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh, size_t stateBaseAddressCmdOffset,
+                                               GmmHelper *gmmHelper);
 };
 } // namespace OCLRT

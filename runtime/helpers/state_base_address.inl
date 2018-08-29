@@ -83,4 +83,13 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     uint64_t generalStateBase,
     uint64_t internalHeapBase) {
 }
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStream &commandStream, const IndirectHeap &ssh,
+                                                                       size_t stateBaseAddressCmdOffset, GmmHelper *gmmHelper) {
+
+    auto sbaCommand = static_cast<STATE_BASE_ADDRESS *>(ptrOffset(commandStream.getCpuBase(), stateBaseAddressCmdOffset));
+    UNRECOVERABLE_IF(sbaCommand->getSurfaceStateBaseAddress() != reinterpret_cast<uintptr_t>(ssh.getCpuBase()));
+}
+
 } // namespace OCLRT

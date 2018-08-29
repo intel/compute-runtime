@@ -230,7 +230,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 
-    MockCommandStreamReceiver() : CommandStreamReceiver(*(new ExecutionEnvironment)) {
+    MockCommandStreamReceiver() : CommandStreamReceiver(*(new ExecutionEnvironment), defaultHeapSize) {
         mockExecutionEnvironment.reset(&this->executionEnvironment);
     }
 

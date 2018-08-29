@@ -58,6 +58,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void addBatchBufferStart(MI_BATCH_BUFFER_START *commandBufferMemory, uint64_t startAddress, bool secondary);
     static void alignToCacheLine(LinearStream &commandStream);
 
+    size_t getRequiredStateBaseAddressSize() const;
     size_t getRequiredCmdStreamSize(const DispatchFlags &dispatchFlags, Device &device);
     size_t getRequiredCmdStreamSizeAligned(const DispatchFlags &dispatchFlags, Device &device);
     size_t getRequiredCmdSizeForPreamble(Device &device) const;

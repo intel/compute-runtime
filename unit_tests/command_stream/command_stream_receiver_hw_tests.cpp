@@ -152,3 +152,8 @@ HWTEST_F(CommandStreamReceiverHwTest, givenCsrHwWhenTypeIsCheckedThenCsrHwIsRetu
 
     EXPECT_EQ(CommandStreamReceiverType::CSR_HW, csr->getType());
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverHwTest, WhenCommandStreamReceiverHwIsCreatedThenDefaultSshSizeIs64KB) {
+    auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
+    EXPECT_EQ(64 * KB, commandStreamReceiver.defaultSshSize);
+}
