@@ -38,7 +38,7 @@ BreakBeforeTernaryOperators: true
 BreakConstructorInitializersBeforeComma: false
 # clang-format > v3.8.0: BreakAfterJavaFieldAnnotations: false
 # clang-format > v3.8.0: BreakStringLiterals: true
-ColumnLimit:     135
+ColumnLimit:     0
 CommentPragmas:  '^ IWYU pragma:'
 ConstructorInitializerAllOnOneLineOrOnePerLine: false
 ConstructorInitializerIndentWidth: 4
