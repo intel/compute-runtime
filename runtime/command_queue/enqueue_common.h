@@ -336,6 +336,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             slmUsed |= scheduler.slmTotalSize > 0;
 
             parentKernel->getProgram()->getBlockKernelManager()->makeInternalAllocationsResident(commandStreamReceiver);
+            if (parentKernel->isAuxTranslationRequired()) {
+                blocking = true;
+            }
         }
 
         auto submissionRequired = isCommandWithoutKernel(commandType) ? false : true;

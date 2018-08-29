@@ -1589,7 +1589,13 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), buffersForAuxTranslation, auxTranslationDirection);
         }
 
+        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+            waitCalled++;
+            CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
+        }
+
         std::vector<std::tuple<Kernel *, size_t, BuffersForAuxTranslation, AuxTranslationDirection>> dispatchAuxTranslationInputs;
+        uint32_t waitCalled = 0;
     };
 };
 
@@ -1735,5 +1741,27 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTrans
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer0.getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER_COMPRESSED, buffer1.getGraphicsAllocation()->getAllocationType());
         EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, buffer2.getGraphicsAllocation()->getAllocationType());
+    }
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueAuxKernelTests, givenParentKernelWhenAuxTranslationIsRequiredThenMakeEnqueueBlocking) {
+    if (pDevice->getSupportedClVersion() >= 20) {
+        MyCmdQ<FamilyType> cmdQ(context, pDevice);
+        size_t gws[3] = {1, 0, 0};
+
+        cl_queue_properties queueProperties = {};
+        auto mockDevQueue = std::make_unique<MockDeviceQueueHw<FamilyType>>(context, pDevice, queueProperties);
+        context->setDefaultDeviceQueue(mockDevQueue.get());
+        std::unique_ptr<MockParentKernel> parentKernel(MockParentKernel::create(*context, false, false, false, false, false));
+        parentKernel->initialize();
+
+        parentKernel->auxTranslationRequired = false;
+        cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(0u, cmdQ.waitCalled);
+        mockDevQueue->getIgilQueue()->m_controls.m_CriticalSection = 0;
+
+        parentKernel->auxTranslationRequired = true;
+        cmdQ.enqueueKernel(parentKernel.get(), 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+        EXPECT_EQ(1u, cmdQ.waitCalled);
     }
 }
