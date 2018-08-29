@@ -19,10 +19,9 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-IGC_VER=18.30.707-2
+IGC_VER=18.33.809-1
 
 cd /root
-mkdir /root/igc
 
 install_libs() {
     wget https://launchpad.net/~intel-opencl/+archive/ubuntu/intel-opencl/+files/$1
