@@ -175,7 +175,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
-        if (dispatchFlags.outOfOrderExecutionAllowed && !dispatchFlags.dcFlush) {
+        if ((dispatchFlags.outOfOrderExecutionAllowed || DebugManager.flags.EnableTimestampPacket.get()) &&
+            !dispatchFlags.dcFlush) {
             currentPipeControlForNooping = epiloguePipeControlLocation;
         }
 
@@ -348,7 +349,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
-        addPipeControl(commandStreamCSR, false);
+        if (!DebugManager.flags.EnableTimestampPacket.get()) {
+            addPipeControl(commandStreamCSR, false);
+        }
         this->taskLevel = taskLevel;
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskCount", this->taskCount);
     }
@@ -615,7 +618,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSizeAligned(const
     return alignUp(size, MemoryConstants::cacheLineSize);
 }
 
-template <typename GfxFamily> size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
+template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize() const {
     return sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
 }
 

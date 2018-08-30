@@ -297,6 +297,23 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeCont
     EXPECT_NE(cmdList.end(), itorPC);
 }
 
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenDebugVariableIsEnabledThenDontAddPipeControl) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.isPreambleSent = true;
+    configureCSRtoNonDirtyState<FamilyType>();
+    commandStreamReceiver.taskLevel = taskLevel;
+    taskLevel++; // submit with higher taskLevel
+
+    flushTask(commandStreamReceiver);
+
+    parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+
+    auto itorPC = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(cmdList.end(), itorPC);
+}
+
 HWTEST_F(CommandStreamReceiverFlushTaskTests, whenSamplerCacheFlushNotRequiredThenDontSendPipecontrol) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     OCLRT::WorkaroundTable *waTable = nullptr;
@@ -2900,6 +2917,46 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
 
     auto itorPipeControl = find<typename FamilyType::PIPE_CONTROL *>(itorBatchBufferStartFirst, itorBatchBufferStartSecond);
     EXPECT_NE(itorPipeControl, itorBatchBufferStartSecond);
+}
+
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSetToFalseWhenDebugVariableIsSetThenNoopPipeControl) {
+    DebugManagerStateRestore restore;
+    CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
+    auto &commandStream = commandQueue.getCS(4096u);
+
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment);
+    pDevice->resetCommandStreamReceiver(mockCsr);
+
+    mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+
+    auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
+    mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
+
+    DispatchFlags dispatchFlags;
+    dispatchFlags.guardCommandBufferWithPipeControl = true;
+    dispatchFlags.outOfOrderExecutionAllowed = false;
+
+    auto taskLevelPriorToSubmission = mockCsr->peekTaskLevel();
+
+    DebugManager.flags.EnableTimestampPacket.set(false);
+    mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
+    mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
+
+    auto firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    EXPECT_EQ(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
+    auto secondCmdBuffer = firstCmdBuffer->next;
+    EXPECT_EQ(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
+
+    mockCsr->flushBatchedSubmissions();
+
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
+    mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
+
+    firstCmdBuffer = mockedSubmissionsAggregator->peekCommandBuffers().peekHead();
+    EXPECT_NE(nullptr, firstCmdBuffer->pipeControlThatMayBeErasedLocation);
+    secondCmdBuffer = firstCmdBuffer->next;
+    EXPECT_NE(nullptr, secondCmdBuffer->pipeControlThatMayBeErasedLocation);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenPipeControlForNoopAddressIsNullThenPipeControlIsNotNooped) {
