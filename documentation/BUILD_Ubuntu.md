@@ -69,7 +69,7 @@ To install OpenCL driver please use deb package generated during build
 Example:
 
 ```shell
-sudo dpkg -i intel-opencl-1.0-0.x86_64-igdrcl.deb
+sudo dpkg -i intel-opencl-*.x86_64-igdrcl.deb
 ```
 
 ___(*) Other names and brands my be claimed as property of others.___
