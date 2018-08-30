@@ -53,6 +53,8 @@ class TimestampPacket {
 
     uint32_t pickDataValue(DataIndex index) const { return data[static_cast<uint32_t>(index)]; }
 
+    void initialize() { data = {{1, 1, 1, 1}}; }
+
   protected:
     std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max)> data = {{1, 1, 1, 1}};
 };

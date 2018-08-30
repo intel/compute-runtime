@@ -32,6 +32,10 @@ using namespace OCLRT;
 typedef Test<MemoryAllocatorFixture> TagAllocatorTest;
 
 struct timeStamps {
+    void initialize() {
+        start = 1;
+        end = 2;
+    }
     uint64_t start;
     uint64_t end;
 };
@@ -250,6 +254,16 @@ TEST_F(TagAllocatorTest, CleanupResources) {
 
     EXPECT_EQ(0u, tagAllocator.getGraphicsAllocationsCount());
     EXPECT_EQ(0u, tagAllocator.getTagPoolCount());
+}
+
+TEST_F(TagAllocatorTest, whenNewTagIsTakenThenInitialize) {
+    MockTagAllocator tagAllocator(memoryManager, 1, 2);
+    tagAllocator.getFreeTagsHead()->tag->start = 3;
+    tagAllocator.getFreeTagsHead()->tag->end = 4;
+
+    auto node = tagAllocator.getTag();
+    EXPECT_EQ(1u, node->tag->start);
+    EXPECT_EQ(2u, node->tag->end);
 }
 
 TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhenAllRefCountsAreReleased) {

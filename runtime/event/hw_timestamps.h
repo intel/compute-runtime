@@ -27,6 +27,14 @@
 namespace OCLRT {
 
 struct HwTimeStamps {
+    void initialize() {
+        GlobalStartTS = 0;
+        ContextStartTS = 0;
+        GlobalEndTS = 0;
+        ContextEndTS = 0;
+        GlobalCompleteTS = 0;
+        ContextCompleteTS = 0;
+    }
     uint64_t GlobalStartTS;
     uint64_t ContextStartTS;
     uint64_t GlobalEndTS;

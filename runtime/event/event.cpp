@@ -674,12 +674,6 @@ HwTimeStamps *Event::getHwTimeStamp() {
     if (!timeStampNode) {
         TagAllocator<HwTimeStamps> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventTsAllocator();
         timeStampNode = allocator->getTag();
-        timeStampNode->tag->GlobalStartTS = 0;
-        timeStampNode->tag->ContextStartTS = 0;
-        timeStampNode->tag->GlobalEndTS = 0;
-        timeStampNode->tag->ContextEndTS = 0;
-        timeStampNode->tag->GlobalCompleteTS = 0;
-        timeStampNode->tag->ContextCompleteTS = 0;
     }
     node = timeStampNode;
     return node->tag;
@@ -701,7 +695,6 @@ HwPerfCounter *Event::getHwPerfCounter() {
     if (!perfCounterNode) {
         TagAllocator<HwPerfCounter> *allocator = getCommandQueue()->getDevice().getMemoryManager()->getEventPerfCountAllocator();
         perfCounterNode = allocator->getTag();
-        memset(perfCounterNode->tag, 0, sizeof(HwPerfCounter));
     }
     node = perfCounterNode;
     return node->tag;

@@ -91,6 +91,7 @@ class TagAllocator {
         }
         usedTags.pushFrontOne(*node);
         node->incRefCount();
+        node->tag->initialize();
         return node;
     }
 

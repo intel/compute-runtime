@@ -43,25 +43,46 @@ struct TimestampPacketTests : public ::testing::Test {
         using TimestampPacket::data;
     };
 
-    class MockTagAllocator : public TagAllocator<TimestampPacket> {
+    template <typename TagType = TimestampPacket>
+    class MockTagAllocator : public TagAllocator<TagType> {
       public:
-        using TagAllocator<TimestampPacket>::usedTags;
-        MockTagAllocator(MemoryManager *memoryManager) : TagAllocator<TimestampPacket>(memoryManager, 10, 10) {}
+        using BaseClass = TagAllocator<TagType>;
+        using BaseClass::usedTags;
+        using NodeType = typename BaseClass::NodeType;
+
+        MockTagAllocator(MemoryManager *memoryManager, size_t tagCount = 10) : BaseClass(memoryManager, tagCount, 10) {}
 
         void returnTag(NodeType *node) override {
             releaseReferenceNodes.push_back(node);
-            TagAllocator<TimestampPacket>::returnTag(node);
+            BaseClass::returnTag(node);
         }
 
         void returnTagToPool(NodeType *node) override {
             returnToPoolTagNodes.push_back(node);
-            TagAllocator<TimestampPacket>::returnTagToPool(node);
+            BaseClass::returnTagToPool(node);
         }
 
         std::vector<NodeType *> releaseReferenceNodes;
         std::vector<NodeType *> returnToPoolTagNodes;
     };
 };
+
+TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
+    MockMemoryManager memoryManager;
+    MockTagAllocator<MockTimestampPacket> allocator(&memoryManager, 1);
+
+    auto firstNode = allocator.getTag();
+    firstNode->tag->data = {{5, 6, 7, 8}};
+
+    allocator.returnTag(firstNode);
+
+    auto secondNode = allocator.getTag();
+    EXPECT_EQ(secondNode, firstNode);
+
+    for (uint32_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max); i++) {
+        EXPECT_EQ(1u, secondNode->tag->data[i]);
+    }
+}
 
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPacket timestampPacket;
@@ -180,7 +201,7 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     auto mockMemoryManager = new MockMemoryManager();
     device->injectMemoryManager(mockMemoryManager);
-    auto mockTagAllocator = new MockTagAllocator(mockMemoryManager);
+    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager);
     mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
     MockContext context(device.get());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
