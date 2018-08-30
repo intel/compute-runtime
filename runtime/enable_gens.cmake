@@ -122,7 +122,7 @@ macro(macro_for_each_gen)
   if(UNIX)
     list(APPEND HW_SRC_LINK ${${GEN_TYPE}_SRC_LINK_LINUX})
   endif()
-  if(GTPIN_HEADERS_DIR)
+  if(NOT DISABLED_GTPIN_SUPPORT)
     list(APPEND ${GEN_TYPE}_SRC_LINK_BASE ${GENX_PREFIX}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
   endif()
 

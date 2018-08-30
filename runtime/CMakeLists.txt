@@ -72,7 +72,6 @@ target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
   ${KHRONOS_HEADERS_DIR}
   ${CIF_BASE_DIR}
   ${GMM_INCLUDE_PATHS}
-  ${GTPIN_HEADERS_DIR}
   ${HW_SRC_INCLUDE_PATH}
   ${IGC_OCL_ADAPTOR_DIR}
   ${IGDRCL__IGC_INCLUDE_DIR}
@@ -142,7 +141,7 @@ if(${GENERATE_EXECUTABLE})
     add_dependencies(${NEO_DYNAMIC_LIB_NAME} ${GMMUMD_LIB_NAME})
   endif()
 
-  if(GTPIN_HEADERS_DIR)
+  if(NOT DISABLED_GTPIN_SUPPORT)
     macro(macro_for_each_gen)
       target_sources(${NEO_DYNAMIC_LIB_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/${GEN_TYPE_LOWER}/gtpin_setup_${GEN_TYPE_LOWER}.cpp)
     endmacro()
