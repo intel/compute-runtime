@@ -27,6 +27,7 @@
 #include "runtime/helpers/preamble.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_constants.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "unit_tests/command_queue/enqueue_fixture.h"
 #include "unit_tests/fixtures/hello_world_fixture.h"
 #include "unit_tests/fixtures/memory_management_fixture.h"
@@ -35,6 +36,7 @@
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/unit_test_helper.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_device_queue.h"
 #include "unit_tests/mocks/mock_buffer.h"
 #include "unit_tests/mocks/mock_submissions_aggregator.h"
@@ -1572,6 +1574,43 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
     mockKernel.kernelInfo.isVmeWorkload = false;
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.mediaSamplerRequired);
+}
+
+HWTEST_F(EnqueueKernelTest, givenTimestampPacketWhenEnqueueingNonBlockedThenMakeItResident) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+
+    csr.storeMakeResidentAllocations = true;
+    size_t gws[] = {1, 0, 0};
+
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    auto timestampPacketNode = mockCmdQ->timestampPacketNode;
+
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getGraphicsAllocation()));
+}
+
+HWTEST_F(EnqueueKernelTest, givenTimestampPacketWhenEnqueueingBlockedThenMakeItResidentOnSubmit) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    MockKernelWithInternals mockKernel(*pDevice, context);
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
+
+    csr.storeMakeResidentAllocations = true;
+    size_t gws[] = {1, 0, 0};
+
+    UserEvent userEvent;
+    cl_event clEvent = &userEvent;
+
+    mockCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
+    auto timestampPacketNode = mockCmdQ->timestampPacketNode;
+
+    EXPECT_FALSE(csr.isMadeResident(timestampPacketNode->getGraphicsAllocation()));
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_TRUE(csr.isMadeResident(timestampPacketNode->getGraphicsAllocation()));
 }
 
 struct EnqueueAuxKernelTests : public EnqueueKernelTest {

@@ -128,6 +128,10 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandSt
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
+    if (timestampPacketNode) {
+        auto allocator = commandStreamReceiver.getMemoryManager()->getTimestampPacketAllocator();
+        allocator->returnTag(timestampPacketNode);
+    }
     for (auto surface : surfaces) {
         delete surface;
     }
@@ -176,6 +180,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     if (printfHandler) {
         printfHandler.get()->makeResident(commandStreamReceiver);
+    }
+    if (timestampPacketNode) {
+        commandStreamReceiver.makeResident(*timestampPacketNode->getGraphicsAllocation());
     }
 
     if (executionModelKernel) {
@@ -240,6 +247,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     return completionStamp;
+}
+
+void CommandComputeKernel::setTimestampPacketNode(TagNode<TimestampPacket> *node) {
+    node->incRefCount();
+    timestampPacketNode = node;
 }
 
 CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {

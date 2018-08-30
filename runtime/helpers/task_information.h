@@ -40,6 +40,9 @@ class Surface;
 class PrintfHandler;
 struct HwTimeStamps;
 class MemoryManager;
+class TimestampPacket;
+template <typename TagType>
+struct TagNode;
 
 enum MapOperationType {
     MAP,
@@ -108,9 +111,9 @@ class CommandComputeKernel : public Command {
 
     CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
 
-    LinearStream *getCommandStream() override {
-        return kernelOperation->commandStream.get();
-    }
+    LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
+
+    void setTimestampPacketNode(TagNode<TimestampPacket> *node);
 
   private:
     CommandQueue &commandQueue;
@@ -124,6 +127,7 @@ class CommandComputeKernel : public Command {
     Kernel *kernel;
     uint32_t kernelCount;
     PreemptionMode preemptionMode;
+    TagNode<TimestampPacket> *timestampPacketNode = nullptr;
 };
 
 class CommandMarker : public Command {

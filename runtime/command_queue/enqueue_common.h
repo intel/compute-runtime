@@ -42,6 +42,7 @@
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/block_kernel_manager.h"
 #include "runtime/utilities/range.h"
+#include "runtime/utilities/tag_allocator.h"
 #include <memory>
 #include <new>
 
@@ -518,6 +519,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         blocking = true;
         printfHandler->makeResident(commandStreamReceiver);
     }
+    if (timestampPacketNode) {
+        device->getCommandStreamReceiver().makeResident(*timestampPacketNode->getGraphicsAllocation());
+    }
 
     auto requiresCoherency = false;
     for (auto surface : CreateRange(surfaces, surfaceCount)) {
@@ -670,7 +674,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
         }
         PreemptionMode preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
         auto kernelOperation = std::unique_ptr<KernelOperation>(blockedCommandsData); // marking ownership
-        auto cmd = std::unique_ptr<Command>(new CommandComputeKernel(
+        auto cmd = std::make_unique<CommandComputeKernel>(
             *this,
             commandStreamReceiver,
             std::move(kernelOperation),
@@ -681,7 +685,11 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             std::move(printfHandler),
             preemptionMode,
             multiDispatchInfo.peekMainKernel(),
-            (uint32_t)multiDispatchInfo.size()));
+            (uint32_t)multiDispatchInfo.size());
+
+        if (timestampPacketNode) {
+            cmd->setTimestampPacketNode(timestampPacketNode);
+        }
         eventBuilder->getEvent()->setCommand(std::move(cmd));
     }
 
