@@ -32,7 +32,8 @@
 using namespace OCLRT;
 
 struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
-    MyMockCsr(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver(hwInfoIn, executionEnvironment) {
+    MyMockCsr(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
+        : UltCommandStreamReceiver(hwInfoIn, executionEnvironment) {
     }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
@@ -101,7 +102,7 @@ struct MyMockCsrWithAubDump : CommandStreamReceiverWithAUBDump<BaseCSR> {
         }
         if (createAubCSR) {
             // overwrite with mock
-            this->aubCSR = new MyMockCsr(hwInfoIn, nullptr, executionEnvironment);
+            this->aubCSR = new MyMockCsr(hwInfoIn, executionEnvironment);
         }
     }
 

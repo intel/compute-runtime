@@ -41,14 +41,19 @@ namespace OCLRT {
 
 template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn,
-                                                              Drm *drm, ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
+                                                              ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
     : BaseClass(hwInfoIn, executionEnvironment), gemCloseWorkerOperationMode(mode) {
-    this->drm = drm ? drm : Drm::get(0);
-    residency.reserve(512);
-    execObjectsStorage.reserve(512);
     if (!executionEnvironment.osInterface) {
         executionEnvironment.osInterface = std::make_unique<OSInterface>();
+        this->drm = Drm::get(0);
+    } else {
+        this->drm = executionEnvironment.osInterface->get()->getDrm()
+                        ? executionEnvironment.osInterface->get()->getDrm()
+                        : Drm::get(0);
     }
+    residency.reserve(512);
+    execObjectsStorage.reserve(512);
+
     executionEnvironment.osInterface->get()->setDrm(this->drm);
     CommandStreamReceiver::osInterface = executionEnvironment.osInterface.get();
     auto gmmHelper = platform()->peekExecutionEnvironment()->getGmmHelper();

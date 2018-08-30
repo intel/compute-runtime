@@ -29,7 +29,7 @@ extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX
 
 template <typename BaseCSR>
 CommandStreamReceiverWithAUBDump<BaseCSR>::CommandStreamReceiverWithAUBDump(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-    : BaseCSR(hwInfoIn, nullptr, executionEnvironment) {
+    : BaseCSR(hwInfoIn, executionEnvironment) {
     aubCSR = AUBCommandStreamReceiver::create(hwInfoIn, "aubfile", false, executionEnvironment);
 }
 

@@ -33,7 +33,7 @@ CommandStreamReceiver *DeviceCommandStreamReceiver<GfxFamily>::create(const Hard
     if (withAubDump) {
         return new CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<GfxFamily>>(hwInfo, executionEnvironment);
     } else {
-        return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, nullptr, executionEnvironment);
+        return new DrmCommandStreamReceiver<GfxFamily>(hwInfo, executionEnvironment);
     }
 };
 } // namespace OCLRT

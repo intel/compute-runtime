@@ -37,7 +37,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::memoryManager;
 
   public:
-    WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, Wddm *wddm, ExecutionEnvironment &executionEnvironment);
+    WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     virtual ~WddmCommandStreamReceiver();
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;

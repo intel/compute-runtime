@@ -60,7 +60,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
     static CommandStreamReceiver *create(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);
 
-    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment);
+    TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     ~TbxCommandStreamReceiverHw() override;
 
     void initializeEngine(EngineType engineType);

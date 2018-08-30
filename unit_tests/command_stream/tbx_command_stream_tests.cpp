@@ -58,7 +58,8 @@ template <typename GfxFamily>
 class MockTbxCsr : public TbxCommandStreamReceiverHw<GfxFamily> {
   public:
     using CommandStreamReceiver::latestFlushedTaskCount;
-    MockTbxCsr(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment) : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, ptr, executionEnvironment) {}
+    MockTbxCsr(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
+        : TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
 
     void makeCoherent(GraphicsAllocation &gfxAllocation) override {
         auto tagAddress = reinterpret_cast<uint32_t *>(gfxAllocation.getUnderlyingBuffer());
@@ -318,7 +319,7 @@ HWTEST_F(TbxCommandStreamTests, givenDbgDeviceIdFlagIsSetWhenTbxCsrIsCreatedThen
 
 HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhenRequiredIsCalledWithBlockingFlagTrueThenFunctionStallsUntilMakeCoherentUpdatesTagAddress) {
     uint32_t tag = 0;
-    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], &tag, *pDevice->executionEnvironment);
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
     GraphicsAllocation graphicsAllocation(&tag, sizeof(tag));
     tbxCsr.setTagAllocation(&graphicsAllocation);
 

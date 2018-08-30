@@ -32,7 +32,8 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
-TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, void *ptr, ExecutionEnvironment &executionEnvironment)
+TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn,
+                                                                  ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment) {
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
@@ -175,7 +176,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     if (withAubDump) {
         csr = new CommandStreamReceiverWithAUBDump<TbxCommandStreamReceiverHw<GfxFamily>>(hwInfoIn, executionEnvironment);
     } else {
-        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, nullptr, executionEnvironment);
+        csr = new TbxCommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment);
     }
 
     // Open our stream
