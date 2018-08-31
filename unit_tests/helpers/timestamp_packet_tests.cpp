@@ -250,3 +250,33 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     EXPECT_EQ(4u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released node2
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
 }
+
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
+    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableTimestampPacket.set(true);
+
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockContext context(device.get());
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
+    MockKernelWithInternals kernel(*device, &context);
+
+    size_t gws[] = {1, 1, 1};
+    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_NE(nullptr, cmdQ->timestampPacketNode);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdQ->getCS(0), 0);
+
+    bool walkerFound = false;
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        if (genCmdCast<GPGPU_WALKER *>(*it)) {
+            walkerFound = true;
+            auto pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
+            ASSERT_NE(nullptr, pipeControl);
+            EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControl->getPostSyncOperation());
+        }
+    }
+    EXPECT_TRUE(walkerFound);
+}

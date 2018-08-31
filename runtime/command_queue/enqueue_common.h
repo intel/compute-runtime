@@ -241,8 +241,10 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
+        TimestampPacket *timestampPacket = nullptr;
         if (DebugManager.flags.EnableTimestampPacket.get()) {
             obtainNewTimestampPacketNode();
+            timestampPacket = timestampPacketNode->tag;
         }
 
         if (eventBuilder.getEvent()) {
@@ -279,7 +281,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
-            nullptr,
+            timestampPacket,
             preemption,
             blockQueue,
             commandType);
