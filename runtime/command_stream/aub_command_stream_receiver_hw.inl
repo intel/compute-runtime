@@ -302,7 +302,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     if (this->standalone) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             if (!DebugManager.flags.FlattenBatchBufferForAUBDump.get()) {
-                makeResident(*batchBuffer.commandBufferAllocation);
+                CommandStreamReceiver::makeResident(*batchBuffer.commandBufferAllocation);
             }
         } else {
             allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
@@ -510,15 +510,6 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletion(EngineType engineT
         0x100,
         pollNotEqual,
         CmdServicesMemTraceRegisterPoll::TimeoutActionValues::Abort);
-}
-
-template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::makeResident(GraphicsAllocation &gfxAllocation) {
-    auto submissionTaskCount = this->taskCount + 1;
-    if (gfxAllocation.residencyTaskCount < (int)submissionTaskCount) {
-        this->getMemoryManager()->pushAllocationForResidency(&gfxAllocation);
-    }
-    gfxAllocation.residencyTaskCount = submissionTaskCount;
 }
 
 template <typename GfxFamily>

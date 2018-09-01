@@ -273,12 +273,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     // First makeResident marks the allocation resident
     aubCsr->makeResident(*gfxAllocation);
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
 
     // Second makeResident should have no impact
     aubCsr->makeResident(*gfxAllocation);
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
 
