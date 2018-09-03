@@ -81,7 +81,7 @@ if(UNIX)
   endif()
 
   set(CPACK_SET_DESTDIR TRUE)
-  set(CPACK_PACKAGE_RELOCATABLE TRUE)
+  set(CPACK_PACKAGE_RELOCATABLE FALSE)
   set(CPACK_PACKAGE_NAME "intel-opencl")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Intel OpenCL GPU driver")
   set(CPACK_PACKAGE_VENDOR "Intel")
@@ -107,7 +107,11 @@ if(UNIX)
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
   set(CPACK_COMPONENTS_ALL igdrcl)
-
+  set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
+    /etc/ld.so.conf.d
+    /usr/local
+    /usr/local/lib64
+  )
   include(CPack)
 
 endif(UNIX)
