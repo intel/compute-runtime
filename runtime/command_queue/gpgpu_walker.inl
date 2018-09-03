@@ -588,7 +588,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         bool setupTimestampPacket = timestampPacket && (currentDispatchIndex == multiDispatchInfo.size() - 1);
         if (setupTimestampPacket) {
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket,
-                                                               TimestampPacket::WriteOperationType::Start);
+                                                               TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
         // Program the walker.  Invokes execution so all state should already be programmed
@@ -597,7 +597,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
 
         if (setupTimestampPacket) {
             GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pWalkerCmd, timestampPacket,
-                                                               TimestampPacket::WriteOperationType::End);
+                                                               TimestampPacket::WriteOperationType::AfterWalker);
         }
 
         auto idd = obtainInterfaceDescriptorData(pWalkerCmd);
@@ -744,7 +744,12 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     TimestampPacket *timestampPacket,
     TimestampPacket::WriteOperationType writeOperationType) {
 
-    uint64_t address = timestampPacket->pickAddressForPipeControlWrite(writeOperationType);
+    uint64_t address;
+    if (TimestampPacket::WriteOperationType::BeforeWalker == writeOperationType) {
+        address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::Submit);
+    } else {
+        address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+    }
 
     auto pipeControlCmd = cmdStream->getSpaceForCmd<PIPE_CONTROL>();
     *pipeControlCmd = PIPE_CONTROL::sInit();

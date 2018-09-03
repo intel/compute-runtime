@@ -94,7 +94,7 @@ TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
     MockTagAllocator<MockTimestampPacket> allocator(&memoryManager, 1);
 
     auto firstNode = allocator.getTag();
-    firstNode->tag->data = {{5, 6, 7, 8}};
+    firstNode->tag->data = {{5, 6, 7, 8, 9}};
 
     allocator.returnTag(firstNode);
 
@@ -109,12 +109,11 @@ TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
 TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPacket timestampPacket;
     auto maxElements = static_cast<uint32_t>(TimestampPacket::DataIndex::Max);
-    EXPECT_EQ(4u, maxElements);
+    EXPECT_EQ(5u, maxElements);
 
     EXPECT_EQ(maxElements, timestampPacket.data.size());
 
     for (uint32_t i = 0; i < maxElements; i++) {
-        EXPECT_EQ(1u, timestampPacket.pickDataValue(static_cast<TimestampPacket::DataIndex>(i)));
         EXPECT_EQ(1u, timestampPacket.data[i]);
     }
 }
@@ -122,17 +121,10 @@ TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
 TEST_F(TimestampPacketTests, whenAskedForStampAddressThenReturnWithValidOffset) {
     MockTimestampPacket timestampPacket;
 
-    EXPECT_EQ(&timestampPacket.data[0], timestampPacket.pickDataPtr());
-
-    auto startAddress = timestampPacket.pickAddressForPipeControlWrite(TimestampPacket::WriteOperationType::Start);
-    auto expectedStartAddress = &timestampPacket.data[static_cast<uint32_t>(TimestampPacket::DataIndex::ContextStart)];
-    EXPECT_EQ(expectedStartAddress, &timestampPacket.data[0]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(expectedStartAddress), startAddress);
-
-    auto endAddress = timestampPacket.pickAddressForPipeControlWrite(TimestampPacket::WriteOperationType::End);
-    auto expectedEndAddress = &timestampPacket.data[static_cast<uint32_t>(TimestampPacket::DataIndex::ContextEnd)];
-    EXPECT_EQ(expectedEndAddress, &timestampPacket.data[2]);
-    EXPECT_EQ(reinterpret_cast<uint64_t>(expectedEndAddress), endAddress);
+    for (size_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max); i++) {
+        auto address = timestampPacket.pickAddressForDataWrite(static_cast<TimestampPacket::DataIndex>(i));
+        EXPECT_EQ(address, reinterpret_cast<uint64_t>(&timestampPacket.data[i]));
+    }
 }
 
 HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
@@ -152,7 +144,7 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEstimatingStreamSize
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, false, false, multiDispatchInfo);
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
-    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + 2 * sizeof(typename FamilyType::PIPE_CONTROL));
+    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
@@ -204,11 +196,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
             } else if (walkersFound == 2) {
                 auto pipeControl = genCmdCast<PIPE_CONTROL *>(*--it);
                 EXPECT_NE(nullptr, pipeControl);
-                verifyPipeControl(pipeControl, timestampPacket.pickAddressForPipeControlWrite(TimestampPacket::WriteOperationType::Start));
+                verifyPipeControl(pipeControl, timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::Submit));
                 it++;
                 pipeControl = genCmdCast<PIPE_CONTROL *>(*++it);
                 EXPECT_NE(nullptr, pipeControl);
-                verifyPipeControl(pipeControl, timestampPacket.pickAddressForPipeControlWrite(TimestampPacket::WriteOperationType::End));
+                verifyPipeControl(pipeControl, timestampPacket.pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
                 it--;
             }
         }
@@ -256,8 +248,8 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     EXPECT_NE(node1, node2);
     size_t dataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
     // mark nodes as ready
-    memset(const_cast<uint32_t *>(node1->tag->pickDataPtr()), 0, dataSize);
-    memset(const_cast<uint32_t *>(node2->tag->pickDataPtr()), 0, dataSize);
+    memset(reinterpret_cast<void *>(node1->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
+    memset(reinterpret_cast<void *>(node2->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
 
     clReleaseEvent(event2);
     EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. cmdQ owns node2

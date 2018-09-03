@@ -33,12 +33,13 @@ class TimestampPacket {
         GlobalStart,
         ContextEnd,
         GlobalEnd,
+        Submit,
         Max
     };
 
     enum class WriteOperationType : uint32_t {
-        Start,
-        End
+        BeforeWalker,
+        AfterWalker
     };
 
     bool canBeReleased() const {
@@ -46,21 +47,14 @@ class TimestampPacket {
                data[static_cast<uint32_t>(DataIndex::GlobalEnd)] != 1;
     }
 
-    const uint32_t *pickDataPtr() const { return &(data[0]); }
-
-    uint64_t pickAddressForPipeControlWrite(WriteOperationType operationType) const {
-        auto index = WriteOperationType::Start == operationType
-                         ? static_cast<uint32_t>(DataIndex::ContextStart)
-                         : static_cast<uint32_t>(DataIndex::ContextEnd);
-
+    uint64_t pickAddressForDataWrite(DataIndex operationType) const {
+        auto index = static_cast<uint32_t>(operationType);
         return reinterpret_cast<uint64_t>(&data[index]);
     }
 
-    uint32_t pickDataValue(DataIndex index) const { return data[static_cast<uint32_t>(index)]; }
-
-    void initialize() { data = {{1, 1, 1, 1}}; }
+    void initialize() { data = {{1, 1, 1, 1, 1}}; }
 
   protected:
-    std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max)> data = {{1, 1, 1, 1}};
+    std::array<uint32_t, static_cast<uint32_t>(DataIndex::Max)> data = {{1, 1, 1, 1, 1}};
 };
 } // namespace OCLRT
