@@ -23,7 +23,9 @@
 #include "hw_cmds.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/command_stream/aub_subcapture.h"
+#include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
@@ -38,9 +40,10 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment),
-      stream(std::unique_ptr<AUBCommandStreamReceiver::AubFileStream>(new AUBCommandStreamReceiver::AubFileStream())),
-      subCaptureManager(std::unique_ptr<AubSubCaptureManager>(new AubSubCaptureManager(fileName))),
-      standalone(standalone) {
+      stream(std::make_unique<AUBCommandStreamReceiver::AubFileStream>()),
+      subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
+      standalone(standalone),
+      ppgtt(std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>()) {
     this->dispatchMode = DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
@@ -286,7 +289,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             stream->addComment(str.str().c_str());
         }
 
-        auto physBatchBuffer = ppgtt.map(static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer);
+        auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer);
         AUB::reserveAddressPPGTT(*stream, static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer, physBatchBuffer,
                                  getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
 
@@ -463,12 +466,12 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::addPatchInfoComments() {
 
         if (patchInfoData.sourceAllocation) {
             allocationsMap.insert(std::pair<uint64_t, uint64_t>(patchInfoData.sourceAllocation,
-                                                                ppgtt.map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1)));
+                                                                ppgtt->map(static_cast<uintptr_t>(patchInfoData.sourceAllocation), 1)));
         }
 
         if (patchInfoData.targetAllocation) {
             allocationsMap.insert(std::pair<uint64_t, uintptr_t>(patchInfoData.targetAllocation,
-                                                                 ppgtt.map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1)));
+                                                                 ppgtt->map(static_cast<uintptr_t>(patchInfoData.targetAllocation), 1)));
         }
     }
     bool result = stream->addComment(str.str().c_str());
@@ -532,6 +535,9 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     auto cpuAddress = gfxAllocation.getUnderlyingBuffer();
     auto gpuAddress = GmmHelper::decanonize(gfxAllocation.getGpuAddress());
     auto size = gfxAllocation.getUnderlyingBufferSize();
+    if (gfxAllocation.gmm && gfxAllocation.gmm->isRenderCompressed) {
+        size = gfxAllocation.gmm->gmmResourceInfo->getSizeAllocation();
+    }
 
     if ((size == 0) || !gfxAllocation.isAubWritable())
         return false;
@@ -551,7 +557,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
         AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation));
     };
-    ppgtt.pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
+    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker);
 
     if (gfxAllocation.isLocked()) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);
@@ -657,7 +663,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     miBatchBufferStart->setBatchBufferStartAddressGraphicsaddress472(AUB::ptrToPPGTT(buffer.get()));
     miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
 
-    auto physBufferAddres = ppgtt.map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize);
+    auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize);
     AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres, getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()));
 
     AUB::addMemoryWrite(

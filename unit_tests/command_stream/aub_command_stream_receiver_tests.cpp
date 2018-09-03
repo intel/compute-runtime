@@ -1897,6 +1897,42 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     EXPECT_FALSE(aubCsr->writeMemoryParametrization.statusToReturn);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMemoryIsCalledThenGraphicsAllocationSizeIsReadCorrectly) {
+    std::unique_ptr<MemoryManager> memoryManager(nullptr);
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", false, *pDevice->executionEnvironment);
+    memoryManager.reset(aubCsr->createMemoryManager(false));
+
+    struct PpgttMock : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type {
+        void pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker) override {
+            receivedSize = size;
+        }
+        size_t receivedSize = 0;
+    };
+    auto ppgttMock = new PpgttMock();
+
+    aubCsr->ppgtt.reset(ppgttMock);
+
+    auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    gfxAllocation->setAubWritable(true);
+
+    auto gmm = new Gmm(nullptr, 1, false);
+    gfxAllocation->gmm = gmm;
+
+    for (bool compressed : {false, true}) {
+        gmm->isRenderCompressed = compressed;
+
+        aubCsr->writeMemory(*gfxAllocation);
+
+        if (compressed) {
+            EXPECT_EQ(gfxAllocation->gmm->gmmResourceInfo->getSizeAllocation(), ppgttMock->receivedSize);
+        } else {
+            EXPECT_EQ(gfxAllocation->getUnderlyingBufferSize(), ppgttMock->receivedSize);
+        }
+    }
+
+    memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
 #if defined(__clang__)
 #pragma clang diagnostic pop
 #endif
