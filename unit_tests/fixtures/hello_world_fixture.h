@@ -103,6 +103,9 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
         pDestMemory = destBuffer->getCpuAddressForMapping();
         pSrcMemory = srcBuffer->getCpuAddressForMapping();
 
+        memset(pDestMemory, destPattern, sizeUserMemory);
+        memset(pSrcMemory, srcPattern, sizeUserMemory);
+
         pKernel->setArg(0, srcBuffer);
         pKernel->setArg(1, destBuffer);
     }
@@ -127,6 +130,8 @@ struct HelloWorldFixture : public FixtureFactory::IndirectHeapFixture,
     size_t sizeUserMemory;
     const char *kernelFilename;
     const char *kernelName;
+    const int srcPattern = 85;
+    const int destPattern = 170;
 
     cl_int callOneWorkItemNDRKernel(cl_event *eventWaitList = nullptr, cl_int waitListSize = 0, cl_event *returnEvent = nullptr) {
 
