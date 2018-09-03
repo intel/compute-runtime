@@ -41,11 +41,17 @@
 namespace OCLRT {
 
 template <typename GfxFamily>
+size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
+    return defaultHeapSize;
+}
+
+template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-    : CommandStreamReceiver(executionEnvironment, defaultHeapSize), hwInfo(hwInfoIn) {
+    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));
+    defaultSshSize = getSshHeapSize();
 }
 
 template <typename GfxFamily>

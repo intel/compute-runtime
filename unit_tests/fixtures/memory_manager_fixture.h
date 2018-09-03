@@ -39,7 +39,7 @@ class MemoryManagerWithCsrFixture {
     uint32_t taskCount = 0;
     uint32_t currentGpuTag = initialHardwareTag;
 
-    MemoryManagerWithCsrFixture() { csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment, defaultHeapSize); }
+    MemoryManagerWithCsrFixture() { csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment); }
 
     ~MemoryManagerWithCsrFixture() = default;
 

@@ -422,7 +422,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
     typedef CommandStreamReceiver BaseClass;
 
   public:
-    CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment), defaultHeapSize) {
+    CommandStreamReceiverMock() : BaseClass(*(new ExecutionEnvironment)) {
         this->mockExecutionEnvironment.reset(&this->executionEnvironment);
     }
 

@@ -99,6 +99,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void addDcFlushToPipeControl(typename GfxFamily::PIPE_CONTROL *pCmd, bool flushDC);
     void addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd);
     PIPE_CONTROL *addPipeControlCmd(LinearStream &commandStream);
+    size_t getSshHeapSize();
 
     uint64_t getScratchPatchAddress();
 
