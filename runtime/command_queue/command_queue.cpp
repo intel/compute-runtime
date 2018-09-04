@@ -362,7 +362,7 @@ cl_int CommandQueue::enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr,
             UNRECOVERABLE_IF(mipIdx >= 4);
             writeOrigin[mipIdx] = unmapInfo.mipLevel;
             retVal = enqueueWriteImage(image, CL_FALSE, writeOrigin, &unmapInfo.size[0],
-                                       image->getHostPtrRowPitchForMap(unmapInfo.mipLevel), image->getHostPtrSlicePitchForMap(unmapInfo.mipLevel), mappedPtr,
+                                       image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), mappedPtr,
                                        eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, eventsRequest.outEvent);
             bool mustCallFinish = true;
             if (!(image->getFlags() & CL_MEM_USE_HOST_PTR)) {
@@ -409,7 +409,7 @@ void *CommandQueue::enqueueReadMemObjForMap(TransferProperties &transferProperti
         UNRECOVERABLE_IF(mipIdx >= 4);
         readOrigin[mipIdx] = transferProperties.mipLevel;
         errcodeRet = enqueueReadImage(image, transferProperties.blocking, readOrigin, &transferProperties.size[0],
-                                      image->getHostPtrRowPitchForMap(transferProperties.mipLevel), image->getHostPtrSlicePitchForMap(transferProperties.mipLevel), returnPtr, eventsRequest.numEventsInWaitList,
+                                      image->getHostPtrRowPitch(), image->getHostPtrSlicePitch(), returnPtr, eventsRequest.numEventsInWaitList,
                                       eventsRequest.eventWaitList, eventsRequest.outEvent);
     }
 
@@ -465,7 +465,6 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
                                           const_cast<size_t *>(origin), const_cast<size_t *>(region), nullptr);
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
 
-    auto returnPtr = enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
     if (image->isMemObjZeroCopy() && image->mappingOnCpuAllowed()) {
         GetInfoHelper::set(imageSlicePitch, image->getImageDesc().image_slice_pitch);
         if (image->getImageDesc().image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
@@ -478,14 +477,13 @@ void *CommandQueue::enqueueMapImage(Image *image, cl_bool blockingMap,
             GetInfoHelper::set(imageRowPitch, image->getImageDesc().image_row_pitch);
         }
     } else {
-        GetInfoHelper::set(imageSlicePitch, image->getHostPtrSlicePitchForMap(transferProperties.mipLevel));
-        GetInfoHelper::set(imageRowPitch, image->getHostPtrRowPitchForMap(transferProperties.mipLevel));
+        GetInfoHelper::set(imageSlicePitch, image->getHostPtrSlicePitch());
+        GetInfoHelper::set(imageRowPitch, image->getHostPtrRowPitch());
     }
     if (Image::hasSlices(image->peekClMemObjType()) == false) {
         GetInfoHelper::set(imageSlicePitch, static_cast<size_t>(0));
     }
-
-    return returnPtr;
+    return enqueueMapMemObject(transferProperties, eventsRequest, errcodeRet);
 }
 
 cl_int CommandQueue::enqueueUnmapMemObject(MemObj *memObj, void *mappedPtr, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event) {

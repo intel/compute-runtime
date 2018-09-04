@@ -260,14 +260,4 @@ void ImageHw<GfxFamily>::transformImage3dTo2dArray(void *memory) {
     surfaceState->setSurfaceType(SURFACE_TYPE::SURFACE_TYPE_SURFTYPE_2D);
     surfaceState->setSurfaceArray(true);
 }
-
-template <typename GfxFamily>
-size_t ImageHw<GfxFamily>::getHostPtrRowPitchForMap(uint32_t mipLevel) {
-    return getHostPtrRowPitch();
-}
-
-template <typename GfxFamily>
-size_t ImageHw<GfxFamily>::getHostPtrSlicePitchForMap(uint32_t mipLevel) {
-    return getHostPtrSlicePitch();
-}
 } // namespace OCLRT

@@ -103,7 +103,7 @@ TEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalle
 
 typedef EnqueueMapImageParamsTest MipMapMapImageParamsTest;
 
-TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrAndMapWithDifferentMipMapsIsCalledThenReturnDifferentPointers) {
+TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrWhenMapsWithDifferentMipMapsAreCalledThenReturnDifferentPointers) {
     auto image_type = (cl_mem_object_type)GetParam();
     cl_int retVal = CL_SUCCESS;
     cl_image_desc imageDesc = {};
@@ -115,6 +115,7 @@ TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrAndMapWithDifferentMipMapsI
     const size_t origin1[4] = {0, 0, 0, 0};
     size_t origin2[4] = {0, 0, 0, 0};
     std::unique_ptr<Image> image;
+    size_t mapOffset = 16u;
     switch (image_type) {
     case CL_MEM_OBJECT_IMAGE1D:
         origin2[1] = 1;
@@ -159,7 +160,6 @@ TEST_P(MipMapMapImageParamsTest, givenAllocatedMapPtrAndMapWithDifferentMipMapsI
         EXPECT_NE(nullptr, image->getAllocatedMapPtr());
     }
 
-    size_t mapOffset = 16u;
     EXPECT_EQ(ptr2, ptrOffset(ptr1, mapOffset));
 }
 
@@ -850,7 +850,7 @@ TEST_F(EnqueueMapImageTest, givenNonZeroCopyImageWhenMappedOnGpuThenReturnHostRo
     EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
 }
 
-TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitchForMap) {
+TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSlicePitch) {
     const size_t origin[4] = {0, 0, 0, 1};
     const size_t region[3] = {1, 1, 1};
     size_t retImageRowPitch = 0;
@@ -872,8 +872,8 @@ TEST_F(EnqueueMapImageTest, givenMipMapImageWhenMappedThenReturnHostRowAndSliceP
                            0, nullptr, nullptr, retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_EQ(image->getHostPtrRowPitchForMap(static_cast<uint32_t>(origin[3])), retImageRowPitch);
-    EXPECT_EQ(image->getHostPtrSlicePitchForMap(static_cast<uint32_t>(origin[3])), retImageSlicePitch);
+    EXPECT_EQ(image->getHostPtrRowPitch(), retImageRowPitch);
+    EXPECT_EQ(image->getHostPtrSlicePitch(), retImageSlicePitch);
 }
 
 TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenReturnRowAndSlicePitchAreEqual) {
@@ -895,8 +895,6 @@ TEST_F(EnqueueMapImageTest, givenImage1DArrayWhenEnqueueMapImageIsCalledThenRetu
         void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
         void transformImage2dArrayTo3d(void *memory) override {}
         void transformImage3dTo2dArray(void *memory) override {}
-        size_t getHostPtrRowPitchForMap(uint32_t mipLevel) override { return getHostPtrRowPitch(); }
-        size_t getHostPtrSlicePitchForMap(uint32_t mipLevel) override { return getHostPtrSlicePitch(); }
     };
 
     const size_t origin[3] = {0, 0, 0};

@@ -1030,7 +1030,7 @@ TEST(ImageTest, givenImageWhenAskedForPtrLengthForCpuMappingThenReturnCorrectVal
     EXPECT_EQ(expectedLength, retLength);
 }
 
-TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithoutSlicePitch) {
+TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithSlicePitch) {
     MockContext ctx;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
@@ -1042,16 +1042,16 @@ TEST(ImageTest, givenMipMapImage3DWhenAskedForPtrOffsetForGpuMappingThenReturnOf
     std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{}};
+    MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
     size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
-                            image->getHostPtrRowPitch() * origin[1];
+                            image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }
 
-TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithoutSlicePitch) {
+TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithSlicePitch) {
     MockContext ctx;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
@@ -1063,16 +1063,37 @@ TEST(ImageTest, givenMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     std::unique_ptr<Image> image(ImageHelper<Image2dArrayDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{}};
+    MemObjOffsetArray origin{{1, 1, 1}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
     size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
-                            image->getHostPtrRowPitch() * origin[1];
+                            image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }
 
-TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithoutSlicePitch) {
+TEST(ImageTest, givenNonMipMapImage2DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithSlicePitch) {
+    MockContext ctx;
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D_ARRAY;
+    imageDesc.image_width = 5;
+    imageDesc.image_height = 5;
+    imageDesc.image_array_size = 5;
+    imageDesc.num_mip_levels = 1;
+
+    std::unique_ptr<Image> image(ImageHelper<Image2dArrayDefaults>::create(&ctx, &imageDesc));
+    EXPECT_FALSE(image->mappingOnCpuAllowed());
+
+    MemObjOffsetArray origin{{1, 1, 1}};
+
+    auto retOffset = image->calculateOffsetForMapping(origin);
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] +
+                            image->getHostPtrRowPitch() * origin[1] + image->getHostPtrSlicePitch() * origin[2];
+
+    EXPECT_EQ(expectedOffset, retOffset);
+}
+
+TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenReturnOffsetWithSlicePitch) {
     MockContext ctx;
     cl_image_desc imageDesc{};
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D_ARRAY;
@@ -1083,10 +1104,10 @@ TEST(ImageTest, givenMipMapImage1DArrayWhenAskedForPtrOffsetForGpuMappingThenRet
     std::unique_ptr<Image> image(ImageHelper<Image1dArrayDefaults>::create(&ctx, &imageDesc));
     EXPECT_FALSE(image->mappingOnCpuAllowed());
 
-    MemObjOffsetArray origin = {{}};
+    MemObjOffsetArray origin{{1, 1, 0}};
 
     auto retOffset = image->calculateOffsetForMapping(origin);
-    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0];
+    size_t expectedOffset = image->getSurfaceFormatInfo().ImageElementSizeInBytes * origin[0] + image->getHostPtrSlicePitch() * origin[1];
 
     EXPECT_EQ(expectedOffset, retOffset);
 }
@@ -1095,7 +1116,7 @@ typedef ::testing::TestWithParam<uint32_t> MipLevelCoordinateTest;
 
 TEST_P(MipLevelCoordinateTest, givenMipmappedImageWhenValidateRegionAndOriginIsCalledThenAdditionalOriginCoordinateIsAnalyzed) {
     size_t origin[4]{};
-    size_t region[3] = {1, 1, 1};
+    size_t region[3]{1, 1, 1};
     cl_image_desc desc = {};
     desc.image_type = GetParam();
     desc.num_mip_levels = 2;

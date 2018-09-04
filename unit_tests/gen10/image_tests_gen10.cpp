@@ -28,38 +28,6 @@ GEN10TEST_F(gen10ImageTests, appendSurfaceStateParamsDoesNothing) {
     EXPECT_EQ(0, memcmp(&surfaceStateBefore, &surfaceStateAfter, sizeof(RENDER_SURFACE_STATE)));
 }
 
-GEN10TEST_F(gen10ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLevelZeroThenReturnHostPtrRowPitchAndSlicePitch) {
-    MockContext context;
-    cl_image_desc imageDesc{};
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
-    imageDesc.image_width = 5;
-    imageDesc.image_height = 5;
-    imageDesc.image_array_size = 5;
-    imageDesc.num_mip_levels = 2;
-
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context, &imageDesc));
-    auto rowPitch = image->getHostPtrRowPitchForMap(0u);
-    auto slicePitch = image->getHostPtrSlicePitchForMap(0u);
-    EXPECT_EQ(image->getHostPtrRowPitch(), rowPitch);
-    EXPECT_EQ(image->getHostPtrSlicePitch(), slicePitch);
-}
-
-GEN10TEST_F(gen10ImageTests, WhenGetHostPtrRowOrSlicePitchForMapIsCalledWithMipLevelNonZeroThenReturnHostPtrRowPitchAndSlicePitch) {
-    MockContext context;
-    cl_image_desc imageDesc{};
-    imageDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
-    imageDesc.image_width = 5;
-    imageDesc.image_height = 5;
-    imageDesc.image_array_size = 5;
-    imageDesc.num_mip_levels = 2;
-
-    std::unique_ptr<Image> image(ImageHelper<Image3dDefaults>::create(&context, &imageDesc));
-    auto rowPitch = image->getHostPtrRowPitchForMap(1u);
-    auto slicePitch = image->getHostPtrSlicePitchForMap(1u);
-    EXPECT_EQ(image->getHostPtrRowPitch(), rowPitch);
-    EXPECT_EQ(image->getHostPtrSlicePitch(), slicePitch);
-}
-
 GEN10TEST_F(gen10ImageTests, givenImageForGen10WhenClearColorParametersAreSetThenSurfaceStateIsNotModified) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     MockContext context;

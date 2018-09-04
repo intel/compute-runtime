@@ -779,8 +779,6 @@ struct NullImage : public Image {
     void setSurfaceMemoryObjectControlStateIndexToMocsTable(void *memory, uint32_t value) override {}
     void transformImage2dArrayTo3d(void *memory) override {}
     void transformImage3dTo2dArray(void *memory) override {}
-    size_t getHostPtrRowPitchForMap(uint32_t mipLevel) override { return getHostPtrRowPitch(); }
-    size_t getHostPtrSlicePitchForMap(uint32_t mipLevel) override { return getHostPtrSlicePitch(); }
 };
 
 TEST_P(ValidParentImageFormatTest, givenParentChannelOrderWhenTestWithAllChannelOrdersThenReturnTrueForValidChannelOrder) {
