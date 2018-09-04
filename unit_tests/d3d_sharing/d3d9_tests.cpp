@@ -202,6 +202,13 @@ TEST_F(D3D9Tests, createSurface) {
     clReleaseMemObject(memObj);
 }
 
+TEST(D3D9SimpleTests, givenWrongFormatWhenFindIsCalledThenErrorIsReturned) {
+    cl_image_format expectedImgFormat = {};
+    OCLPlane oclPlane = OCLPlane::NO_PLANE;
+    auto status = D3DSurface::findImgFormat(D3DFMT_FORCE_DWORD, expectedImgFormat, 0, oclPlane);
+    EXPECT_EQ(CL_INVALID_IMAGE_FORMAT_DESCRIPTOR, status);
+}
+
 TEST_F(D3D9Tests, createSurfaceIntel) {
     cl_int retVal;
     cl_image_format expectedImgFormat = {};

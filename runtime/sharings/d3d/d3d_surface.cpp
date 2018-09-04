@@ -212,46 +212,48 @@ const std::map<const D3DFORMAT, const cl_image_format> D3DSurface::D3DFMTCLImage
 cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat, cl_uint plane, OCLPlane &oclPlane) {
     oclPlane = OCLPlane::NO_PLANE;
     static const cl_image_format unknown_format = {0, 0};
-    try {
-        imgFormat = D3DFMTCLImageFormat.at(d3dFormat);
-        switch (d3dFormat) {
-        case static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')):
-            switch (plane) {
-            case 0:
-                imgFormat.image_channel_order = CL_R;
-                oclPlane = OCLPlane::PLANE_Y;
-                return CL_SUCCESS;
-            case 1:
-                imgFormat.image_channel_order = CL_RG;
-                oclPlane = OCLPlane::PLANE_UV;
-                return CL_SUCCESS;
-            default:
-                imgFormat = unknown_format;
-                return CL_INVALID_VALUE;
-            }
 
-        case static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')):
-            switch (plane) {
-            case 0:
-                oclPlane = OCLPlane::PLANE_Y;
-                return CL_SUCCESS;
-
-            case 1:
-                oclPlane = OCLPlane::PLANE_V;
-                return CL_SUCCESS;
-
-            case 2:
-                oclPlane = OCLPlane::PLANE_U;
-                return CL_SUCCESS;
-
-            default:
-                imgFormat = unknown_format;
-                return CL_INVALID_VALUE;
-            }
-        }
-    } catch (const std::out_of_range &) {
+    auto element = D3DFMTCLImageFormat.find(d3dFormat);
+    if (element == D3DFMTCLImageFormat.end()) {
         imgFormat = unknown_format;
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
+    }
+
+    imgFormat = element->second;
+    switch (d3dFormat) {
+    case static_cast<D3DFORMAT>(MAKEFOURCC('N', 'V', '1', '2')):
+        switch (plane) {
+        case 0:
+            imgFormat.image_channel_order = CL_R;
+            oclPlane = OCLPlane::PLANE_Y;
+            return CL_SUCCESS;
+        case 1:
+            imgFormat.image_channel_order = CL_RG;
+            oclPlane = OCLPlane::PLANE_UV;
+            return CL_SUCCESS;
+        default:
+            imgFormat = unknown_format;
+            return CL_INVALID_VALUE;
+        }
+
+    case static_cast<D3DFORMAT>(MAKEFOURCC('Y', 'V', '1', '2')):
+        switch (plane) {
+        case 0:
+            oclPlane = OCLPlane::PLANE_Y;
+            return CL_SUCCESS;
+
+        case 1:
+            oclPlane = OCLPlane::PLANE_V;
+            return CL_SUCCESS;
+
+        case 2:
+            oclPlane = OCLPlane::PLANE_U;
+            return CL_SUCCESS;
+
+        default:
+            imgFormat = unknown_format;
+            return CL_INVALID_VALUE;
+        }
     }
 
     if (plane > 0) {
