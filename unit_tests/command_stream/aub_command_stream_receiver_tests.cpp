@@ -1700,19 +1700,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenAddBatc
     EXPECT_EQ(0xA000u, addr.second);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenFlatBatchBufferHelperWhenSettingSroreQwordOnSDICommandThenAppropriateBitIsSet) {
-    typedef typename FamilyType::MI_STORE_DATA_IMM MI_STORE_DATA_IMM;
-
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(*platformDevices[0], "", true, *pDevice->executionEnvironment));
-
-    MI_STORE_DATA_IMM cmd;
-    cmd.init();
-    FlatBatchBufferHelperHw<FamilyType>::sdiSetStoreQword(&cmd, false);
-    EXPECT_EQ(0u, static_cast<uint32_t>(cmd.getStoreQword()));
-    FlatBatchBufferHelperHw<FamilyType>::sdiSetStoreQword(&cmd, true);
-    EXPECT_EQ(1u, static_cast<uint32_t>(cmd.getStoreQword()));
-}
-
 class OsAgnosticMemoryManagerForImagesWithNoHostPtr : public OsAgnosticMemoryManager {
   public:
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {

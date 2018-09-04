@@ -398,4 +398,108 @@ typedef struct tagMI_SEMAPHORE_WAIT {
     }
 } MI_SEMAPHORE_WAIT;
 STATIC_ASSERT(16 == sizeof(MI_SEMAPHORE_WAIT));
+
+typedef struct tagMI_STORE_DATA_IMM {
+    union tagTheStructure {
+        struct tagCommon {
+            uint32_t DwordLength : BITFIELD_RANGE(0, 9);
+            uint32_t Reserved_10 : BITFIELD_RANGE(10, 20);
+            uint32_t StoreQword : BITFIELD_RANGE(21, 21);
+            uint32_t UseGlobalGtt : BITFIELD_RANGE(22, 22);
+            uint32_t MiCommandOpcode : BITFIELD_RANGE(23, 28);
+            uint32_t CommandType : BITFIELD_RANGE(29, 31);
+            uint32_t Reserved_32 : BITFIELD_RANGE(0, 1);
+            uint32_t Address : BITFIELD_RANGE(2, 31);
+            uint32_t AddressHigh : BITFIELD_RANGE(0, 15);
+            uint32_t Reserved_80 : BITFIELD_RANGE(16, 31);
+            uint32_t DataDword0;
+            uint32_t DataDword1;
+        } Common;
+        uint32_t RawData[5];
+    } TheStructure;
+    typedef enum tagDWORD_LENGTH {
+        DWORD_LENGTH_EXCLUDES_DWORD_0_1 = 0x0,
+    } DWORD_LENGTH;
+    typedef enum tagMI_COMMAND_OPCODE {
+        MI_COMMAND_OPCODE_MI_STORE_DATA_IMM = 0x20,
+    } MI_COMMAND_OPCODE;
+    typedef enum tagCOMMAND_TYPE {
+        COMMAND_TYPE_MI_COMMAND = 0x0,
+    } COMMAND_TYPE;
+    typedef enum tagPATCH_CONSTANTS {
+        ADDRESS_BYTEOFFSET = 0x4,
+        ADDRESS_INDEX = 0x1,
+        ADDRESSHIGH_BYTEOFFSET = 0x8,
+        ADDRESSHIGH_INDEX = 0x2,
+    } PATCH_CONSTANTS;
+    inline void init(void) {
+        memset(&TheStructure, 0, sizeof(TheStructure));
+        TheStructure.Common.DwordLength = DWORD_LENGTH_EXCLUDES_DWORD_0_1;
+        TheStructure.Common.MiCommandOpcode = MI_COMMAND_OPCODE_MI_STORE_DATA_IMM;
+        TheStructure.Common.CommandType = COMMAND_TYPE_MI_COMMAND;
+    }
+    static tagMI_STORE_DATA_IMM sInit(void) {
+        MI_STORE_DATA_IMM state;
+        state.init();
+        return state;
+    }
+    inline uint32_t &getRawData(const uint32_t index) {
+        DEBUG_BREAK_IF(index >= 5);
+        return TheStructure.RawData[index];
+    }
+    inline void setDwordLength(const DWORD_LENGTH value) {
+        TheStructure.Common.DwordLength = value;
+    }
+    inline DWORD_LENGTH getDwordLength(void) const {
+        return static_cast<DWORD_LENGTH>(TheStructure.Common.DwordLength);
+    }
+    inline void setStoreQword(const bool value) {
+        TheStructure.Common.StoreQword = value;
+    }
+    inline bool getStoreQword(void) const {
+        return TheStructure.Common.StoreQword;
+    }
+    inline void setUseGlobalGtt(const uint32_t value) {
+        TheStructure.Common.UseGlobalGtt = value;
+    }
+    inline uint32_t getUseGlobalGtt(void) const {
+        return (TheStructure.Common.UseGlobalGtt);
+    }
+    typedef enum tagADDRESS {
+        ADDRESS_BIT_SHIFT = 0x2,
+        ADDRESS_ALIGN_SIZE = 0x4,
+    } ADDRESS;
+    inline void setAddress(const uint64_t value) {
+        setAddressLow(static_cast<uint32_t>(value & 0x0000FFFFFFFFULL));
+        setAddressHigh(static_cast<uint32_t>(value >> 32));
+    }
+    inline uint64_t getAddress(void) const {
+        return (static_cast<uint64_t>(getAddressHigh()) << 32) | static_cast<uint64_t>(getAddressLow());
+    }
+    inline void setAddressLow(const uint32_t value) {
+        TheStructure.Common.Address = value >> ADDRESS_BIT_SHIFT;
+    }
+    inline uint32_t getAddressLow(void) const {
+        return (TheStructure.Common.Address << ADDRESS_BIT_SHIFT);
+    }
+    inline void setAddressHigh(const uint32_t value) {
+        TheStructure.Common.AddressHigh = value;
+    }
+    inline uint32_t getAddressHigh(void) const {
+        return (TheStructure.Common.AddressHigh);
+    }
+    inline void setDataDword0(const uint32_t value) {
+        TheStructure.Common.DataDword0 = value;
+    }
+    inline uint32_t getDataDword0(void) const {
+        return (TheStructure.Common.DataDword0);
+    }
+    inline void setDataDword1(const uint32_t value) {
+        TheStructure.Common.DataDword1 = value;
+    }
+    inline uint32_t getDataDword1(void) const {
+        return (TheStructure.Common.DataDword1);
+    }
+} MI_STORE_DATA_IMM;
+STATIC_ASSERT(20 == sizeof(MI_STORE_DATA_IMM));
 #pragma pack()

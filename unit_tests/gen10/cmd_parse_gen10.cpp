@@ -48,6 +48,7 @@ using MI_MATH                         = GEN10::MI_MATH;
 using GPGPU_CSR_BASE_ADDRESS          = GEN10::GPGPU_CSR_BASE_ADDRESS;
 using STATE_SIP                       = GEN10::STATE_SIP;
 using MI_SEMAPHORE_WAIT               = GEN10::MI_SEMAPHORE_WAIT;
+using MI_STORE_DATA_IMM               = GEN10::MI_STORE_DATA_IMM;
 // clang-format on
 
 template <>
@@ -278,6 +279,16 @@ MI_SEMAPHORE_WAIT *genCmdCast<MI_SEMAPHORE_WAIT *>(void *buffer) {
                : nullptr;
 }
 
+template <>
+MI_STORE_DATA_IMM *genCmdCast<MI_STORE_DATA_IMM *>(void *buffer) {
+    auto pCmd = reinterpret_cast<MI_STORE_DATA_IMM *>(buffer);
+
+    return MI_STORE_DATA_IMM::COMMAND_TYPE_MI_COMMAND == pCmd->TheStructure.Common.CommandType &&
+                   MI_STORE_DATA_IMM::MI_COMMAND_OPCODE_MI_STORE_DATA_IMM == pCmd->TheStructure.Common.MiCommandOpcode
+               ? pCmd
+               : nullptr;
+}
+
 size_t CnlParse::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<STATE_BASE_ADDRESS *>(cmd);
@@ -383,6 +394,11 @@ size_t CnlParse::getCommandLength(void *cmd) {
         auto pCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(cmd);
         if (pCmd)
             return pCmd->TheStructure.Common.DwordLength + 2;
+    }
+    {
+        auto pCmd = genCmdCast<MI_STORE_DATA_IMM *>(cmd);
+        if (pCmd)
+            return pCmd->TheStructure.Common.DwordLength + 3;
     }
     return 0;
 }

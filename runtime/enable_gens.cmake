@@ -48,7 +48,6 @@ set(RUNTIME_SRCS_GENX_CPP_BASE
   command_stream_receiver_hw
   device_queue
   experimental_command_buffer
-  flat_batch_buffer_helper_hw
   gpgpu_walker
   hw_helper
   hw_info

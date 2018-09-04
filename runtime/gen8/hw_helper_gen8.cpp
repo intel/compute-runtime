@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper.inl"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 #include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
@@ -46,4 +47,5 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
 }
 
 template class HwHelperHw<Family>;
+template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

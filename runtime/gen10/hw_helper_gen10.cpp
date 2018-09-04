@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper.inl"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 
 namespace OCLRT {
 typedef CNLFamily Family;
@@ -47,4 +48,5 @@ bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool en
 }
 
 template class HwHelperHw<Family>;
+template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

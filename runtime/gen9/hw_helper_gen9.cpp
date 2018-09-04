@@ -22,6 +22,7 @@
 
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper.inl"
+#include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 
 namespace OCLRT {
 typedef SKLFamily Family;
@@ -46,4 +47,5 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
 }
 
 template class HwHelperHw<Family>;
+template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

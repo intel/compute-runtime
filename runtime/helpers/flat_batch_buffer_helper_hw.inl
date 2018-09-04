@@ -176,8 +176,8 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
         if (patchInfoData.requiresIndirectPatching()) {
             auto storeDataImmediate = indirectPatchCommandStream.getSpaceForCmd<MI_STORE_DATA_IMM>();
             storeDataImmediate->init();
-            sdiSetAddress(storeDataImmediate, patchInfoData.targetAllocation + patchInfoData.targetAllocationOffset);
-            sdiSetStoreQword(storeDataImmediate, patchInfoData.patchAddressSize != sizeof(uint32_t));
+            storeDataImmediate->setAddress(patchInfoData.targetAllocation + patchInfoData.targetAllocationOffset);
+            storeDataImmediate->setStoreQword(patchInfoData.patchAddressSize != sizeof(uint32_t));
             storeDataImmediate->setDataDword0(static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) & 0x0000FFFFFFFFULL));
             storeDataImmediate->setDataDword1(static_cast<uint32_t>((patchInfoData.sourceAllocation + patchInfoData.sourceAllocationOffset) >> 32));
 

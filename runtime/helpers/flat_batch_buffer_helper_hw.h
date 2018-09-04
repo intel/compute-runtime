@@ -33,8 +33,6 @@ class FlatBatchBufferHelperHw : public FlatBatchBufferHelper {
     GraphicsAllocation *flattenBatchBuffer(BatchBuffer &batchBuffer, size_t &sizeBatchBuffer, DispatchMode dispatchMode) override;
     char *getIndirectPatchCommands(size_t &indirectPatchCommandsSize, std::vector<PatchInfoData> &indirectPatchInfo) override;
     void removePipeControlData(size_t pipeControlLocationSize, void *pipeControlForNooping) override;
-    static void sdiSetAddress(typename GfxFamily::MI_STORE_DATA_IMM *sdiCommand, uint64_t address);
-    static void sdiSetStoreQword(typename GfxFamily::MI_STORE_DATA_IMM *sdiCommand, bool setQword);
 };
 
 } // namespace OCLRT
