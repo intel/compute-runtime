@@ -86,6 +86,7 @@ class TagAllocator {
     NodeType *getTag() {
         NodeType *node = freeTags.removeFrontOne().release();
         if (!node) {
+            std::unique_lock<std::mutex> lock(allocatorMutex);
             populateFreeTags();
             node = freeTags.removeFrontOne().release();
         }
@@ -97,13 +98,18 @@ class TagAllocator {
 
     MOCKABLE_VIRTUAL void returnTag(NodeType *node) {
         if (node->refCount.fetch_sub(1) == 1) {
-            return returnTagToPool(node);
+            if (node->tag->canBeReleased()) {
+                returnTagToFreePool(node);
+            } else {
+                returnTagToDeferredPool(node);
+            }
         }
     }
 
   protected:
     IDList<NodeType> freeTags;
     IDList<NodeType> usedTags;
+    IDList<NodeType> deferredTags;
     std::vector<GraphicsAllocation *> gfxAllocations;
     std::vector<NodeType *> tagPoolMemory;
 
@@ -111,22 +117,25 @@ class TagAllocator {
     size_t tagCount;
     size_t tagAlignment;
 
-    std::mutex allocationsMutex;
+    std::mutex allocatorMutex;
 
-    MOCKABLE_VIRTUAL void returnTagToPool(NodeType *node) {
+    MOCKABLE_VIRTUAL void returnTagToFreePool(NodeType *node) {
         NodeType *usedNode = usedTags.removeOne(*node).release();
         DEBUG_BREAK_IF(usedNode == nullptr);
         ((void)(usedNode));
         freeTags.pushFrontOne(*node);
     }
 
-    void populateFreeTags() {
+    void returnTagToDeferredPool(NodeType *node) {
+        NodeType *usedNode = usedTags.removeOne(*node).release();
+        DEBUG_BREAK_IF(!usedNode);
+        deferredTags.pushFrontOne(*usedNode);
+    }
 
+    void populateFreeTags() {
         size_t tagSize = sizeof(TagType);
         tagSize = alignUp(tagSize, tagAlignment);
         size_t allocationSizeRequired = tagCount * tagSize;
-
-        std::unique_lock<std::mutex> lock(allocationsMutex);
 
         GraphicsAllocation *graphicsAllocation = memoryManager->allocateGraphicsMemory(allocationSizeRequired);
         gfxAllocations.push_back(graphicsAllocation);

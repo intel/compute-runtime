@@ -35,6 +35,7 @@ struct HwTimeStamps {
         GlobalCompleteTS = 0;
         ContextCompleteTS = 0;
     }
+    bool canBeReleased() const { return true; }
     uint64_t GlobalStartTS;
     uint64_t ContextStartTS;
     uint64_t GlobalEndTS;

@@ -41,6 +41,11 @@ class TimestampPacket {
         End
     };
 
+    bool canBeReleased() const {
+        return data[static_cast<uint32_t>(DataIndex::ContextEnd)] != 1 &&
+               data[static_cast<uint32_t>(DataIndex::GlobalEnd)] != 1;
+    }
+
     const uint32_t *pickDataPtr() const { return &(data[0]); }
 
     uint64_t pickAddressForPipeControlWrite(WriteOperationType operationType) const {

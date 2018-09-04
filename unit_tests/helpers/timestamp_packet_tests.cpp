@@ -57,15 +57,37 @@ struct TimestampPacketTests : public ::testing::Test {
             BaseClass::returnTag(node);
         }
 
-        void returnTagToPool(NodeType *node) override {
-            returnToPoolTagNodes.push_back(node);
-            BaseClass::returnTagToPool(node);
+        void returnTagToFreePool(NodeType *node) override {
+            returnedToFreePoolNodes.push_back(node);
+            BaseClass::returnTagToFreePool(node);
         }
 
         std::vector<NodeType *> releaseReferenceNodes;
-        std::vector<NodeType *> returnToPoolTagNodes;
+        std::vector<NodeType *> returnedToFreePoolNodes;
     };
 };
+
+TEST_F(TimestampPacketTests, whenEndTagIsNotOneThenCanBeReleased) {
+    MockTimestampPacket timestampPacket;
+    auto contextEndIndex = static_cast<uint32_t>(TimestampPacket::DataIndex::ContextEnd);
+    auto globalEndIndex = static_cast<uint32_t>(TimestampPacket::DataIndex::GlobalEnd);
+
+    timestampPacket.data[contextEndIndex] = 1;
+    timestampPacket.data[globalEndIndex] = 1;
+    EXPECT_FALSE(timestampPacket.canBeReleased());
+
+    timestampPacket.data[contextEndIndex] = 1;
+    timestampPacket.data[globalEndIndex] = 0;
+    EXPECT_FALSE(timestampPacket.canBeReleased());
+
+    timestampPacket.data[contextEndIndex] = 0;
+    timestampPacket.data[globalEndIndex] = 1;
+    EXPECT_FALSE(timestampPacket.canBeReleased());
+
+    timestampPacket.data[contextEndIndex] = 0;
+    timestampPacket.data[globalEndIndex] = 0;
+    EXPECT_TRUE(timestampPacket.canBeReleased());
+}
 
 TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
     MockMemoryManager memoryManager;
@@ -227,26 +249,30 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     auto node2 = cmdQ->timestampPacketNode;
     EXPECT_NE(nullptr, node2);
     EXPECT_EQ(node2, cmdQ->timestampPacketNode);
-    EXPECT_EQ(0u, mockTagAllocator->returnToPoolTagNodes.size());  // nothing returned. event1 owns previous node
-    EXPECT_EQ(1u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released first node
+    EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. event1 owns previous node
+    EXPECT_EQ(1u, mockTagAllocator->releaseReferenceNodes.size());   // cmdQ released first node
     EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(0));
 
     EXPECT_NE(node1, node2);
+    size_t dataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
+    // mark nodes as ready
+    memset(const_cast<uint32_t *>(node1->tag->pickDataPtr()), 0, dataSize);
+    memset(const_cast<uint32_t *>(node2->tag->pickDataPtr()), 0, dataSize);
 
     clReleaseEvent(event2);
-    EXPECT_EQ(0u, mockTagAllocator->returnToPoolTagNodes.size());  // nothing returned. cmdQ owns node2
-    EXPECT_EQ(2u, mockTagAllocator->releaseReferenceNodes.size()); // event2 released  node2
+    EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. cmdQ owns node2
+    EXPECT_EQ(2u, mockTagAllocator->releaseReferenceNodes.size());   // event2 released  node2
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(1));
 
     clReleaseEvent(event1);
-    EXPECT_EQ(1u, mockTagAllocator->returnToPoolTagNodes.size()); // removed last reference on node1
-    EXPECT_EQ(node1, mockTagAllocator->returnToPoolTagNodes.at(0));
+    EXPECT_EQ(1u, mockTagAllocator->returnedToFreePoolNodes.size()); // removed last reference on node1
+    EXPECT_EQ(node1, mockTagAllocator->returnedToFreePoolNodes.at(0));
     EXPECT_EQ(3u, mockTagAllocator->releaseReferenceNodes.size()); // event1 released node1
     EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(2));
 
     cmdQ.reset(nullptr);
-    EXPECT_EQ(2u, mockTagAllocator->returnToPoolTagNodes.size()); // removed last reference on node2
-    EXPECT_EQ(node2, mockTagAllocator->returnToPoolTagNodes.at(1));
+    EXPECT_EQ(2u, mockTagAllocator->returnedToFreePoolNodes.size()); // removed last reference on node2
+    EXPECT_EQ(node2, mockTagAllocator->returnedToFreePoolNodes.at(1));
     EXPECT_EQ(4u, mockTagAllocator->releaseReferenceNodes.size()); // cmdQ released node2
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
 }

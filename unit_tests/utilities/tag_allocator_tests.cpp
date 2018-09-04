@@ -35,13 +35,19 @@ struct timeStamps {
     void initialize() {
         start = 1;
         end = 2;
+        release = true;
     }
+    bool canBeReleased() const { return release; }
+    bool release;
     uint64_t start;
     uint64_t end;
 };
 
 class MockTagAllocator : public TagAllocator<timeStamps> {
   public:
+    using TagAllocator<timeStamps>::populateFreeTags;
+    using TagAllocator<timeStamps>::deferredTags;
+
     MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(memMngr, tagCount, tagAlignment) {
     }
 
@@ -282,4 +288,26 @@ TEST_F(TagAllocatorTest, givenMultipleReferencesOnTagWhenReleasingThenReturnWhen
     EXPECT_NE(nullptr, tagAllocator.getUsedTagsHead()); // 1 reference left
     tagAllocator.returnTag(tag);
     EXPECT_EQ(nullptr, tagAllocator.getUsedTagsHead());
+}
+
+TEST_F(TagAllocatorTest, givenNotReadyTagWhenReturnedThenMoveToDeferredList) {
+    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    auto node = tagAllocator.getTag();
+
+    node->tag->release = false;
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    tagAllocator.returnTag(node);
+    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+}
+
+TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
+    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    auto node = tagAllocator.getTag();
+
+    node->tag->release = true;
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    tagAllocator.returnTag(node);
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
 }

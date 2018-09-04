@@ -1036,6 +1036,8 @@ TEST_F(EventTest, getHwTimeStampsReturnsValidPointer) {
     ASSERT_EQ(0ULL, timeStamps->GlobalCompleteTS);
     ASSERT_EQ(0ULL, timeStamps->ContextCompleteTS);
 
+    EXPECT_TRUE(timeStamps->canBeReleased());
+
     HwTimeStamps *timeStamps2 = event->getHwTimeStamp();
     ASSERT_EQ(timeStamps, timeStamps2);
 }
@@ -1089,6 +1091,8 @@ TEST_F(EventTest, getHwPerfCounterReturnsValidPointer) {
     ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.ContextEndTS);
     ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.GlobalCompleteTS);
     ASSERT_EQ(0ULL, perfCounter->HWTimeStamp.ContextCompleteTS);
+
+    EXPECT_TRUE(perfCounter->canBeReleased());
 
     HwPerfCounter *perfCounter2 = event->getHwPerfCounter();
     ASSERT_EQ(perfCounter, perfCounter2);

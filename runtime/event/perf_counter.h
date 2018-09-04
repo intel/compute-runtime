@@ -32,6 +32,7 @@ struct HwPerfCounter {
         HWPerfCounters = {};
         HWTimeStamp.initialize();
     }
+    bool canBeReleased() const { return true; }
     HwPerfCounters HWPerfCounters;
     HwTimeStamps HWTimeStamp;
 };
