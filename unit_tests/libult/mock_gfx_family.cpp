@@ -25,7 +25,7 @@
 #include "runtime/command_stream/preemption.inl"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue_hw.inl"
-#include "runtime/helpers/hw_helper.inl"
+#include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/kernel_commands.inl"
 #include "runtime/helpers/preamble.inl"
 

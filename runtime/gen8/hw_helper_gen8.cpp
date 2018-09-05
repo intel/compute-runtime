@@ -21,7 +21,7 @@
  */
 
 #include "runtime/helpers/hw_helper.h"
-#include "runtime/helpers/hw_helper.inl"
+#include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
 #include "runtime/memory_manager/memory_constants.h"
 
