@@ -24,6 +24,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
 #include "runtime/program/printf_handler.h"
 #include "runtime/program/program.h"

@@ -25,6 +25,7 @@
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.inl"
 #include "runtime/execution_environment/execution_environment.h"
 #include "runtime/helpers/dispatch_info.h"
+#include "runtime/os_interface/os_context.h"
 
 #include "test.h"
 

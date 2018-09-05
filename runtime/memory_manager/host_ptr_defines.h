@@ -23,7 +23,7 @@
 #pragma once
 #include <cstdlib>
 #include <cinttypes>
-#include "runtime/os_interface/os_context.h"
+#include "runtime/memory_manager/residency.h"
 
 namespace OCLRT {
 
@@ -51,26 +51,6 @@ enum OverlapStatus {
 enum RequirementsStatus {
     SUCCESS = 0,
     FATAL
-};
-
-struct ResidencyData {
-    ResidencyData() {
-    }
-    void addOsContext(OsContext *osContext) {
-        if (!this->osContext) {
-            osContext->incRefInternal();
-            this->osContext = osContext;
-        }
-        DEBUG_BREAK_IF(this->osContext != osContext);
-    }
-    ~ResidencyData() {
-        if (osContext) {
-            osContext->decRefInternal();
-        }
-    }
-    bool resident = false;
-    uint64_t lastFence = 0;
-    OsContext *osContext = nullptr;
 };
 
 struct PartialAllocation {
