@@ -41,6 +41,7 @@
 #include "runtime/kernel/kernel.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/mem_obj/image.h"
+#include "runtime/mem_obj/mem_obj_helper.h"
 #include "runtime/mem_obj/pipe.h"
 #include "runtime/memory_manager/svm_memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
@@ -551,10 +552,6 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
                    "size", size,
                    "hostPtr", DebugManager.infoPointerToString(hostPtr, size));
     cl_mem buffer = nullptr;
-    const cl_mem_flags allValidFlags =
-        CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
-        CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR |
-        CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
     do {
         if (size == 0) {
@@ -563,7 +560,7 @@ cl_mem CL_API_CALL clCreateBuffer(cl_context context,
         }
 
         /* Are there some invalid flag bits? */
-        if ((flags & (~allValidFlags)) != 0) {
+        if (!MemObjHelper::checkMemFlagsForBuffer(flags)) {
             retVal = CL_INVALID_VALUE;
             break;
         }
@@ -618,9 +615,6 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
                    "bufferCreateInfo", bufferCreateInfo);
     cl_mem subBuffer = nullptr;
     Buffer *parentBuffer = castToObject<Buffer>(buffer);
-    const cl_mem_flags allValidFlags =
-        CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY |
-        CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
     do {
         if (parentBuffer == nullptr) {
@@ -629,7 +623,7 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
         }
 
         /* Are there some invalid flag bits? */
-        if ((flags & (~allValidFlags)) != 0) {
+        if (!MemObjHelper::checkMemFlagsForSubBuffer(flags)) {
             retVal = CL_INVALID_VALUE;
             break;
         }

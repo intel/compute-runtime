@@ -32,6 +32,8 @@ set(RUNTIME_SRCS_MEM_OBJ
   ${CMAKE_CURRENT_SOURCE_DIR}/map_operations_handler.h
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/mem_obj_helper.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_helper.h
   ${CMAKE_CURRENT_SOURCE_DIR}/pipe.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/pipe.h
 )

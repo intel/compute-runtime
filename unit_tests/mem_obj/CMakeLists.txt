@@ -45,6 +45,7 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/map_operations_handler_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_destruction_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/mem_obj_helper_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/nv12_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/packed_yuv_image_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/pipe_tests.cpp
