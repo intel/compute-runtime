@@ -32,6 +32,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"
+#include "runtime/os_interface/os_context.h"
 #include "runtime/utilities/stackvec.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -76,6 +77,9 @@ MemoryManager::MemoryManager(bool enable64kbpages) : allocator32Bit(nullptr), en
 MemoryManager::~MemoryManager() {
     freeAllocationsList(-1, graphicsAllocations);
     freeAllocationsList(-1, allocationsForReuse);
+    for (auto osContext : registeredOsContexts) {
+        osContext->decRefInternal();
+    }
 }
 
 void *MemoryManager::allocateSystemMemory(size_t size, size_t alignment) {
@@ -377,6 +381,11 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
         }
     }
     return status;
+}
+
+void MemoryManager::registerOsContext(OsContext *contextToRegister) {
+    contextToRegister->incRefInternal();
+    registeredOsContexts.push_back(contextToRegister);
 }
 
 bool MemoryManager::getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {

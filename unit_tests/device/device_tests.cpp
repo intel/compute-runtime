@@ -175,6 +175,12 @@ TEST(DeviceCreation, givenDefaultHwCsrInDebugVarsWhenDeviceIsCreatedThenIsSimula
     EXPECT_FALSE(device->isSimulation());
 }
 
+TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryManager) {
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
+    auto memoryManager = device->getMemoryManager();
+    EXPECT_EQ(1u, memoryManager->getOsContextCount());
+}
+
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
     FeatureTable skuTable = *platformDevices[0]->pSkuTable;
     skuTable.ftrSimulationMode = true;

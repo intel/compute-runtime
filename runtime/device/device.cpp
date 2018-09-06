@@ -120,9 +120,6 @@ Device::~Device() {
 
         alignedFree(this->slmWindowStartAddress);
     }
-    if (osContext) {
-        osContext->decRefInternal();
-    }
     executionEnvironment->decRefInternal();
 }
 
@@ -132,9 +129,10 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo)) {
         return false;
     }
-    outDevice.osContext = new OsContext(executionEnvironment->osInterface.get());
-    outDevice.osContext->incRefInternal();
     executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages());
+
+    outDevice.osContext = new OsContext(executionEnvironment->osInterface.get());
+    executionEnvironment->memoryManager->registerOsContext(outDevice.osContext);
 
     CommandStreamReceiver *commandStreamReceiver = executionEnvironment->commandStreamReceiver.get();
     if (!commandStreamReceiver->initializeTagAllocation()) {

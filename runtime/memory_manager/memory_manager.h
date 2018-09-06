@@ -251,6 +251,9 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
+    void registerOsContext(OsContext *contextToRegister);
+    size_t getOsContextCount() { return registeredOsContexts.size(); }
+
   protected:
     static bool getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
@@ -268,6 +271,7 @@ class MemoryManager {
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;
+    std::vector<OsContext *> registeredOsContexts;
 };
 
 std::unique_ptr<DeferredDeleter> createDeferredDeleter();

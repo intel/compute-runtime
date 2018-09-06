@@ -1824,3 +1824,11 @@ TEST(ResidencyDataTest, givenResidencyDataWhenAddTheSameOsContextTwiceThenIncrem
     residencyData.addOsContext(osContext);
     EXPECT_EQ(1, osContext->getRefInternalCount());
 }
+
+TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
+    auto osContext = new OsContext(nullptr);
+    OsAgnosticMemoryManager memoryManager;
+    memoryManager.registerOsContext(osContext);
+    EXPECT_EQ(1u, memoryManager.getOsContextCount());
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+}
