@@ -126,7 +126,7 @@ TEST_F(TimestampPacketTests, whenAskedForStampAddressThenReturnWithValidOffset) 
     }
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
     MockKernelWithInternals kernel1(*device);

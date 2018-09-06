@@ -1007,4 +1007,9 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfi
     return size;
 }
 
+template <typename GfxFamily>
+size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
+    return 2 * sizeof(PIPE_CONTROL);
+}
+
 } // namespace OCLRT
