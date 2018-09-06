@@ -23,6 +23,7 @@
 #include "runtime/device/device.h"
 #include "runtime/helpers/options.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/os_interface/os_context.h"
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -179,6 +180,17 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto memoryManager = device->getMemoryManager();
     EXPECT_EQ(1u, memoryManager->getOsContextCount());
+}
+
+TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+
+    EXPECT_EQ(0u, device->getOsContext()->getContextId());
+    EXPECT_EQ(1u, device2->getOsContext()->getContextId());
+    EXPECT_EQ(2u, device->getMemoryManager()->getOsContextCount());
 }
 
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {

@@ -385,6 +385,7 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
 
 void MemoryManager::registerOsContext(OsContext *contextToRegister) {
     contextToRegister->incRefInternal();
+    contextToRegister->setContextId(static_cast<uint32_t>(registeredOsContexts.size()));
     registeredOsContexts.push_back(contextToRegister);
 }
 

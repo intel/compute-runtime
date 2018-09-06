@@ -35,7 +35,11 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
         return osContextImpl.get();
     };
 
+    void setContextId(uint32_t inputContextId) { contextId = inputContextId; }
+    uint32_t getContextId() { return contextId; }
+
   protected:
     std::unique_ptr<OsContextImpl> osContextImpl;
+    uint32_t contextId = 0;
 };
 } // namespace OCLRT
