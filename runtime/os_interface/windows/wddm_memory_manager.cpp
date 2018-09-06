@@ -350,7 +350,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         if (input->getResidencyData().osContext) {
             osContextWin = input->getResidencyData().osContext->get();
         }
-        auto status = tryDeferDeletions(allocationHandles, allocationCount, input->getResidencyData().lastFence, resourceHandle, osContextWin);
+        auto status = tryDeferDeletions(allocationHandles, allocationCount, resourceHandle);
         DEBUG_BREAK_IF(!status);
         alignedFreeWrapper(cpuPtr);
     }
@@ -358,12 +358,12 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     delete gfxAllocation;
 }
 
-bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) {
+bool WddmMemoryManager::tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     bool status = true;
     if (deferredDeleter) {
-        deferredDeleter->deferDeletion(DeferrableDeletion::create(wddm, handles, allocationCount, lastFenceValue, resourceHandle, osContext));
+        deferredDeleter->deferDeletion(DeferrableDeletion::create(wddm, handles, allocationCount, resourceHandle));
     } else {
-        status = wddm->destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle, osContext);
+        status = wddm->destroyAllocations(handles, allocationCount, resourceHandle);
     }
     return status;
 }
@@ -427,7 +427,7 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
     if (osContext) {
         osContextWin = osContext->get();
     }
-    bool success = tryDeferDeletions(handles, allocationCount, lastFenceValue, 0, osContextWin);
+    bool success = tryDeferDeletions(handles, allocationCount, 0);
 
     for (unsigned int i = 0; i < max_fragments_count; i++) {
         if (handleStorage.fragmentStorageData[i].freeTheFragment) {
@@ -862,7 +862,7 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, Allocat
             mapSuccess = wddm->mapGpuVirtualAddress(allocation, allocation->getAlignedCpuPtr(), allocation->is32BitAllocation, false, useHeap1);
         }
         if (!mapSuccess) {
-            wddm->destroyAllocations(&allocation->handle, 1, 0, allocation->resourceHandle, nullptr);
+            wddm->destroyAllocations(&allocation->handle, 1, allocation->resourceHandle);
             wddmSuccess = STATUS_UNSUCCESSFUL;
         }
         allocation->setGpuAddress(allocation->gpuPtr);

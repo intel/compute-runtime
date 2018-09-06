@@ -549,13 +549,10 @@ NTSTATUS Wddm::createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) {
     return status;
 }
 
-bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) {
+bool Wddm::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_DESTROYALLOCATION2 DestroyAllocation = {0};
     DEBUG_BREAK_IF(!(allocationCount <= 1 || resourceHandle == 0));
-    if (lastFenceValue > 0) {
-        waitFromCpu(lastFenceValue, *osContext);
-    }
 
     DestroyAllocation.hDevice = device;
     DestroyAllocation.hResource = resourceHandle;

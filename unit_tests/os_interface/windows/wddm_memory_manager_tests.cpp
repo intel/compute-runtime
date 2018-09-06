@@ -1904,7 +1904,7 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledTh
     MockWddmMemoryManager memoryManager(wddm.get());
     memoryManager.setDeferredDeleter(deleter);
     EXPECT_EQ(0, deleter->deferDeletionCalled);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0, nullptr);
+    memoryManager.tryDeferDeletions(nullptr, 0, 0);
     EXPECT_EQ(1, deleter->deferDeletionCalled);
     EXPECT_EQ(1u, wddm.get()->destroyAllocationResult.called);
 }
@@ -1914,7 +1914,7 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledT
     wddm->callBaseDestroyAllocations = false;
     MockWddmMemoryManager memoryManager(wddm.get());
     memoryManager.setDeferredDeleter(nullptr);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0, 0, nullptr);
+    memoryManager.tryDeferDeletions(nullptr, 0, 0);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }
 

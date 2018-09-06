@@ -315,7 +315,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
     storage.fragmentStorageData[2].freeTheFragment = true;
 
     D3DKMT_HANDLE handles[3] = {ALLOCATION_HANDLE, ALLOCATION_HANDLE, ALLOCATION_HANDLE};
-    bool retVal = wddm->destroyAllocations(handles, 3, 0, 0, osContextWin);
+    bool retVal = wddm->destroyAllocations(handles, 3, 0);
     EXPECT_TRUE(retVal);
 
     auto destroyWithResourceHandleCalled = 0u;
@@ -640,40 +640,7 @@ TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
     EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
 }
 
-TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueGreaterThanCurrentValueCallsWaitFromCpu) {
-    WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
-    allocation.getResidencyData().lastFence = 20;
-    allocation.handle = ALLOCATION_HANDLE;
-
-    *osContextWin->getMonitoredFence().cpuAddress = 10;
-
-    D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
-
-    gdi->getWaitFromCpuArg().FenceValueArray = nullptr;
-    gdi->getWaitFromCpuArg().Flags.Value = 0;
-    gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi->getWaitFromCpuArg().ObjectCount = 0;
-    gdi->getWaitFromCpuArg().ObjectHandleArray = nullptr;
-
-    gdi->getDestroyArg().AllocationCount = 0;
-    gdi->getDestroyArg().Flags.Value = 0;
-    gdi->getDestroyArg().hDevice = (D3DKMT_HANDLE)0;
-    gdi->getDestroyArg().hResource = (D3DKMT_HANDLE)0;
-    gdi->getDestroyArg().phAllocationList = nullptr;
-
-    wddm->destroyAllocation(&allocation, osContextWin);
-
-    EXPECT_NE(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ(wddm->getDevice(), gdi->getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(1u, gdi->getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(&osContextWin->getMonitoredFence().fenceHandle, gdi->getWaitFromCpuArg().ObjectHandleArray);
-
-    EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
-    EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);
-    EXPECT_NE(nullptr, gdi->getDestroyArg().phAllocationList);
-}
-
-TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDoesNotCallWaitFromCpu) {
+TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
     allocation.getResidencyData().lastFence = 10;
     allocation.handle = ALLOCATION_HANDLE;
@@ -695,11 +662,6 @@ TEST_F(Wddm20Tests, destroyAllocationWithLastFenceValueLessEqualToCurrentValueDo
     gdi->getDestroyArg().phAllocationList = nullptr;
 
     wddm->destroyAllocation(&allocation, osContextWin);
-
-    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().FenceValueArray);
-    EXPECT_EQ((D3DKMT_HANDLE)0, gdi->getWaitFromCpuArg().hDevice);
-    EXPECT_EQ(0u, gdi->getWaitFromCpuArg().ObjectCount);
-    EXPECT_EQ(nullptr, gdi->getWaitFromCpuArg().ObjectHandleArray);
 
     EXPECT_EQ(wddm->getDevice(), gdi->getDestroyArg().hDevice);
     EXPECT_EQ(1u, gdi->getDestroyArg().AllocationCount);

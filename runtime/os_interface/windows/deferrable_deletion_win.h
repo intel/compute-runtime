@@ -34,8 +34,7 @@ using OsContextWin = OsContext::OsContextImpl;
 
 class DeferrableDeletionImpl : public DeferrableDeletion {
   public:
-    DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue,
-                           D3DKMT_HANDLE resourceHandle, OsContextWin *osContext);
+    DeferrableDeletionImpl(Wddm *wddm, D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
     void apply() override;
     ~DeferrableDeletionImpl();
 
@@ -46,8 +45,6 @@ class DeferrableDeletionImpl : public DeferrableDeletion {
     Wddm *wddm;
     D3DKMT_HANDLE *handles = nullptr;
     uint32_t allocationCount;
-    uint64_t lastFenceValue;
     D3DKMT_HANDLE resourceHandle;
-    OsContextWin *osContext = nullptr;
 };
 } // namespace OCLRT

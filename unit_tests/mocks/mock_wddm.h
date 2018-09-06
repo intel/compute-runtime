@@ -70,7 +70,7 @@ class WddmMock : public Wddm {
     bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) override;
     NTSTATUS createAllocation(WddmAllocation *alloc) override;
     bool createAllocation64k(WddmAllocation *alloc) override;
-    bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) override;
+    bool destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) override;
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext(D3DKMT_HANDLE &context) override;

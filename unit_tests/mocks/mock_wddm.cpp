@@ -83,10 +83,10 @@ bool WddmMock::createAllocation64k(WddmAllocation *alloc) {
     return createAllocationResult.success = Wddm::createAllocation64k(alloc);
 }
 
-bool WddmMock::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, uint64_t lastFenceValue, D3DKMT_HANDLE resourceHandle, OsContextWin *osContext) {
+bool WddmMock::destroyAllocations(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle) {
     destroyAllocationResult.called++;
     if (callBaseDestroyAllocations) {
-        return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, lastFenceValue, resourceHandle, osContext);
+        return destroyAllocationResult.success = Wddm::destroyAllocations(handles, allocationCount, resourceHandle);
     } else {
         return true;
     }
@@ -107,7 +107,7 @@ bool WddmMock::destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext)
             cpuPtr = alloc->getAlignedCpuPtr();
         }
     }
-    auto success = destroyAllocations(allocationHandles, allocationCount, alloc->getResidencyData().lastFence, resourceHandle, osContext);
+    auto success = destroyAllocations(allocationHandles, allocationCount, resourceHandle);
     ::alignedFree(cpuPtr);
     releaseReservedAddress(reserveAddress);
     return success;
