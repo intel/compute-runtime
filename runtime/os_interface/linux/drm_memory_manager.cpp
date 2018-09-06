@@ -40,7 +40,7 @@
 
 namespace OCLRT {
 
-DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory) : MemoryManager(false),
+DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory) : MemoryManager(false, false),
                                                                                                                           drm(drm),
                                                                                                                           pinBB(nullptr),
                                                                                                                           forcePinEnabled(forcePinAllowed),

@@ -54,7 +54,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
-    OsAgnosticMemoryManager(bool enable64kbPages = false) : MemoryManager(enable64kbPages) {
+    OsAgnosticMemoryManager() : OsAgnosticMemoryManager(false, false){};
+    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory) : MemoryManager(enable64kbPages, enableLocalMemory) {
         uint64_t heap32Base = 0x80000000000ul;
         if (sizeof(uintptr_t) == 4) {
             heap32Base = 0x0;

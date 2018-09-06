@@ -74,7 +74,7 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
     ExecutionEnvironment executionEnvironment;
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
 
-    auto memManager = csr->createMemoryManager(false);
+    auto memManager = csr->createMemoryManager(false, false);
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,

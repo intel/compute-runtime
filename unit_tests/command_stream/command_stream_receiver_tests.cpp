@@ -334,7 +334,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
     auto mockGraphicsAllocation = new MockGraphicsAllocation(nullptr, 1u);
     mockGraphicsAllocation->destructorCalled = &destructorCalled;
     std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false));
     csr->setMemoryManager(memoryManager.get());
     csr->setTagAllocation(mockGraphicsAllocation);
     EXPECT_FALSE(destructorCalled);
@@ -343,7 +343,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenItIsDestroye
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocated) {
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false));
     std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
     csr->setMemoryManager(memoryManager.get());
     EXPECT_EQ(nullptr, csr->getTagAllocation());
@@ -357,7 +357,7 @@ TEST(CommandStreamReceiverSimpleTest, givenCommandStreamReceiverWhenInitializeTa
 TEST(CommandStreamReceiverSimpleTest, givenNullHardwareDebugModeWhenInitializeTagAllocationIsCalledThenTagAllocationIsBeingAllocatedAndinitialValueIsMinusOne) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.EnableNullHardware.set(true);
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager);
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false));
     std::unique_ptr<MockCommandStreamReceiver> csr(new MockCommandStreamReceiver);
     csr->setMemoryManager(memoryManager.get());
     EXPECT_EQ(nullptr, csr->getTagAllocation());

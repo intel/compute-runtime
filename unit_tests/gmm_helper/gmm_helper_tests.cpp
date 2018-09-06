@@ -44,7 +44,7 @@ class GmmTests : public ::testing::Test {
 };
 
 TEST_F(GmmTests, resourceCreation) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
 
@@ -58,7 +58,7 @@ TEST_F(GmmTests, resourceCreation) {
 }
 
 TEST_F(GmmTests, resourceCreationUncacheable) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, true));
@@ -74,7 +74,7 @@ TEST_F(GmmTests, resourceCreationUncacheable) {
 }
 
 TEST_F(GmmTests, resourceCleanupOnDelete) {
-    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager);
+    std::unique_ptr<MemoryManager> mm(new OsAgnosticMemoryManager(false, false));
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     std::unique_ptr<Gmm> gmm(new Gmm(pSysMem, 4096, false));
@@ -87,7 +87,7 @@ TEST_F(GmmTests, resourceCleanupOnDelete) {
 TEST_F(GmmTests, GivenBufferSizeLargerThenMaxPitchWhenAskedForGmmCreationThenGMMResourceIsCreatedWithNoRestrictionsFlag) {
     auto maxSize = GmmHelper::maxPossiblePitch;
 
-    MemoryManager *mm = new OsAgnosticMemoryManager;
+    MemoryManager *mm = new OsAgnosticMemoryManager(false, false);
     void *pSysMem = mm->allocateSystemMemory(4096, 4096);
 
     auto gmmRes = new Gmm(pSysMem, maxSize, false);

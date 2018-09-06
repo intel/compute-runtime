@@ -112,7 +112,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamR
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
-    executionEnvironment->initializeMemoryManager(false);
+    executionEnvironment->initializeMemoryManager(false, false);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
 

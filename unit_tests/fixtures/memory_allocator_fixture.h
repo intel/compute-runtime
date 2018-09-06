@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -34,7 +34,7 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        memoryManager = new OsAgnosticMemoryManager;
+        memoryManager = new OsAgnosticMemoryManager(false, false);
     }
 
     void TearDown() override {

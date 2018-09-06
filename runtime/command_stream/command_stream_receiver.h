@@ -86,7 +86,7 @@ class CommandStreamReceiver {
     virtual void addPipeControl(LinearStream &commandStream, bool dcFlush) = 0;
 
     MemoryManager *getMemoryManager();
-    virtual MemoryManager *createMemoryManager(bool enable64kbPages) { return nullptr; }
+    virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) { return nullptr; }
     void setMemoryManager(MemoryManager *mm);
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }

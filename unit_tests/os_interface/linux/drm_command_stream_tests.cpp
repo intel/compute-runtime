@@ -74,7 +74,7 @@ class DrmCommandStreamFixture {
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
-        mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
+        mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ::testing::Mock::VerifyAndClearExpectations(mock);
 
         //assert we have memory manager
@@ -699,7 +699,7 @@ class DrmCommandStreamEnhancedFixture
         tCsr = new TestedDrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*executionEnvironment);
         csr = tCsr;
         ASSERT_NE(nullptr, csr);
-        mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false));
+        mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
         device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);

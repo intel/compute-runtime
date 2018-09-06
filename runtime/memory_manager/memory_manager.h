@@ -108,7 +108,7 @@ class MemoryManager {
         RetryInNonDevicePool
     };
 
-    MemoryManager(bool enable64kbpages);
+    MemoryManager(bool enable64kbpages, bool enableLocalMemory);
 
     virtual ~MemoryManager();
     MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
@@ -271,6 +271,7 @@ class MemoryManager {
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;
+    bool localMemorySupported = false;
     std::vector<OsContext *> registeredOsContexts;
 };
 

@@ -77,8 +77,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void initializeEngine(EngineType engineType);
     void freeEngineInfoTable();
 
-    MemoryManager *createMemoryManager(bool enable64kbPages) override {
-        this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages);
+    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
+        this->memoryManager = new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory);
         this->flatBatchBufferHelper->setMemoryManager(this->memoryManager);
         return this->memoryManager;
     }

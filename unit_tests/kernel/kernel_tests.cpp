@@ -500,7 +500,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
 
     // Test it
-    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager());
+    std::unique_ptr<OsAgnosticMemoryManager> memoryManager(new OsAgnosticMemoryManager(false, false));
     std::unique_ptr<CommandStreamReceiverMock> csr(new CommandStreamReceiverMock());
     csr->setMemoryManager(memoryManager.get());
     csr->residency.clear();

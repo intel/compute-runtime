@@ -43,7 +43,7 @@ WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
 }
 
-WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, Wddm *wddm) : MemoryManager(enable64kbPages), residencyLock(false) {
+WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, Wddm *wddm) : MemoryManager(enable64kbPages, false), residencyLock(false) {
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));

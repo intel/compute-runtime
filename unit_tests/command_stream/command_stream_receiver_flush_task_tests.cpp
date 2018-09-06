@@ -1375,7 +1375,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, CreateCommandStreamReceiverHw) {
     auto csrHw = CommandStreamReceiverHw<FamilyType>::create(hwInfo, executionEnvironment);
     EXPECT_NE(nullptr, csrHw);
 
-    MemoryManager *mm = csrHw->createMemoryManager(false);
+    MemoryManager *mm = csrHw->createMemoryManager(false, false);
     EXPECT_EQ(nullptr, mm);
     GmmPageTableMngr *ptm = csrHw->createPageTableManager();
     EXPECT_EQ(nullptr, ptm);
@@ -2596,6 +2596,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
 }
 
 struct MockedMemoryManager : public OsAgnosticMemoryManager {
+    MockedMemoryManager() : OsAgnosticMemoryManager(false, false) {}
     bool isMemoryBudgetExhausted() const override { return budgetExhausted; }
     bool budgetExhausted = false;
 };

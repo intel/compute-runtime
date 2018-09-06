@@ -202,7 +202,7 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
 }
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen64kbAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
     AllocationData allocData;
     MockMemoryManager::getAllocationData(allocData, true, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
 
@@ -263,7 +263,7 @@ TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMus
 }
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHostPtrForBufferThenExistingMemoryIsUsedForAllocation) {
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
     AllocationData allocData;
     char memory[1];
     MockMemoryManager::getAllocationData(allocData, false, &memory, 1, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);

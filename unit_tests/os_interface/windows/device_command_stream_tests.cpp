@@ -149,7 +149,7 @@ class WddmCommandStreamWithMockGdiFixture {
         executionEnvironment->commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*platformDevices[0],
                                                                                                               *executionEnvironment);
         this->csr = static_cast<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME> *>(executionEnvironment->commandStreamReceiver.get());
-        memManager = csr->createMemoryManager(false);
+        memManager = csr->createMemoryManager(false, false);
         ASSERT_NE(nullptr, memManager);
         executionEnvironment->memoryManager.reset(memManager);
         device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
@@ -271,7 +271,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     executionEnvironment.osInterface->get()->setWddm(wddm);
     executionEnvironment.commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(localHwInfo,
                                                                                                          executionEnvironment);
-    executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false));
+    executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false, false));
 
     executionEnvironment.commandStreamReceiver->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
@@ -299,7 +299,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     executionEnvironment.osInterface->get()->setWddm(wddm);
     executionEnvironment.commandStreamReceiver = std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(localHwInfo,
                                                                                                          executionEnvironment);
-    executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false));
+    executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false, false));
     executionEnvironment.commandStreamReceiver->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
 
     auto commandBuffer = executionEnvironment.memoryManager->allocateGraphicsMemory(4096);

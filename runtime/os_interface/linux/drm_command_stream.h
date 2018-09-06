@@ -59,7 +59,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
     void overrideMediaVFEStateDirty(bool dirty) override;
 
     DrmMemoryManager *getMemoryManager();
-    MemoryManager *createMemoryManager(bool enable64kbPages) override;
+    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override;
 
     gemCloseWorkerMode peekGemCloseWorkerOperationMode() {
         return this->gemCloseWorkerOperationMode;

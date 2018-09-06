@@ -180,7 +180,7 @@ TEST_F(Wddm20Tests, whenInitializeWddmThenContextIsCreated) {
 }
 
 TEST_F(Wddm20Tests, allocation) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -328,7 +328,7 @@ TEST_F(Wddm20WithMockGdiDllTests, GivenThreeOsHandlesWhenAskedForDestroyAllocati
 }
 
 TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -353,7 +353,7 @@ TEST_F(Wddm20Tests, mapAndFreeGpuVa) {
 }
 
 TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
 
     WddmAllocation allocation(nullptr, 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
@@ -373,7 +373,7 @@ TEST_F(Wddm20Tests, givenNullAllocationWhenCreateThenAllocateAndMap) {
 }
 
 TEST_F(Wddm20Tests, makeResidentNonResident) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     Gmm *gmm = GmmHelperFunctions::getGmm(allocation.getUnderlyingBuffer(), allocation.getUnderlyingBufferSize());
 
@@ -578,7 +578,7 @@ TEST(DebugFlagTest, givenDebugManagerWhenGetForUseNoRingFlushesKmdModeIsCalledTh
 }
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
 
@@ -600,7 +600,7 @@ TEST_F(Wddm20Tests, makeResidentMultipleHandles) {
 }
 
 TEST_F(Wddm20Tests, makeResidentMultipleHandlesWithReturnBytesToTrim) {
-    OsAgnosticMemoryManager mm(false);
+    OsAgnosticMemoryManager mm(false, false);
     WddmAllocation allocation(mm.allocateSystemMemory(100, 0), 100, nullptr, MemoryPool::MemoryNull);
     allocation.handle = ALLOCATION_HANDLE;
 

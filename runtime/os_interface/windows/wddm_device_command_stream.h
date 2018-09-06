@@ -47,7 +47,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) override;
 
     WddmMemoryManager *getMemoryManager();
-    MemoryManager *createMemoryManager(bool enable64kbPages);
+    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory);
     Wddm *peekWddm() {
         return wddm;
     }

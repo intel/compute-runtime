@@ -39,7 +39,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 
-    MemoryManager *createMemoryManager(bool enable64kbPages) override;
+    MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override;
 
     CommandStreamReceiver *aubCSR = nullptr;
 };

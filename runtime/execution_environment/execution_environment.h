@@ -49,7 +49,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo);
-    void initializeMemoryManager(bool enable64KBpages);
+    void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
     void initSourceLevelDebugger(const HardwareInfo &hwInfo);
 
     GmmHelper *getGmmHelper() const;

@@ -40,7 +40,7 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
 
 OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
     : Device(hwInfo, executionEnvironment) {
-    this->mockMemoryManager.reset(new OsAgnosticMemoryManager);
+    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
 }
@@ -86,7 +86,7 @@ OCLRT::FailMemoryManager::FailMemoryManager() : MockMemoryManager() {
 
 OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MockMemoryManager() {
     allocations.reserve(fail);
-    agnostic = new OsAgnosticMemoryManager(false);
+    agnostic = new OsAgnosticMemoryManager(false, false);
     this->fail = fail;
 }
 

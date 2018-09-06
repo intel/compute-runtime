@@ -34,8 +34,8 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::getAllocationData;
     using MemoryManager::timestampPacketAllocator;
 
-    MockMemoryManager() = default;
-    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages) {}
+    MockMemoryManager() : OsAgnosticMemoryManager(false, false){};
+    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false) {}
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
@@ -71,7 +71,7 @@ class GMockMemoryManager : public MockMemoryManager {
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
   public:
-    MockAllocSysMemAgnosticMemoryManager() : OsAgnosticMemoryManager() {
+    MockAllocSysMemAgnosticMemoryManager() : OsAgnosticMemoryManager(false, false) {
         ptrRestrictions = nullptr;
         testRestrictions.minAddress = 0;
     }

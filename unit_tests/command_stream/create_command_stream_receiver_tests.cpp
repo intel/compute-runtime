@@ -59,7 +59,7 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     executionEnvironment.commandStreamReceiver.reset(createCommandStream(&hwInfo, executionEnvironment));
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
         EXPECT_NE(nullptr, executionEnvironment.commandStreamReceiver.get());
-        executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false));
+        executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false, false));
         EXPECT_NE(nullptr, executionEnvironment.memoryManager.get());
     } else {
         EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceiver.get());

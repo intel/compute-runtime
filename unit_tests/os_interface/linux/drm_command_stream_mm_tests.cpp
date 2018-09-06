@@ -48,7 +48,7 @@ HWTEST_F(DrmCommandStreamMMTest, MMwithPinBB) {
         DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
                                                  gemCloseWorkerMode::gemCloseWorkerInactive);
 
-        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
+        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false, false);
         ASSERT_NE(nullptr, mm);
         EXPECT_NE(nullptr, mm->getPinBB());
         csr.setMemoryManager(nullptr);
@@ -72,7 +72,7 @@ HWTEST_F(DrmCommandStreamMMTest, givenForcePinDisabledWhenMemoryManagerIsCreated
         DrmCommandStreamReceiver<FamilyType> csr(*platformDevices[0], executionEnvironment,
                                                  gemCloseWorkerMode::gemCloseWorkerInactive);
 
-        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false);
+        auto mm = (DrmMemoryManager *)csr.createMemoryManager(false, false);
         csr.setMemoryManager(nullptr);
 
         ASSERT_NE(nullptr, mm);

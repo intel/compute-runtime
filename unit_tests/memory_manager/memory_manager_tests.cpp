@@ -585,7 +585,7 @@ TEST_F(MemoryAllocatorTest, givenTimestampPacketAllocatorWhenAskingForTagThenRet
     class MyMockMemoryManager : public OsAgnosticMemoryManager {
       public:
         using OsAgnosticMemoryManager::timestampPacketAllocator;
-        MyMockMemoryManager() : OsAgnosticMemoryManager(false){};
+        MyMockMemoryManager() : OsAgnosticMemoryManager(false, false){};
     } myMockMemoryManager;
 
     EXPECT_EQ(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
@@ -837,7 +837,7 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
-    OsAgnosticMemoryManager memoryManager(false);
+    OsAgnosticMemoryManager memoryManager(false, false);
     auto size = 4096u;
 
     auto allocation = memoryManager.allocateGraphicsMemory(size);
@@ -852,7 +852,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
     auto size = 4096u;
 
     auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
@@ -864,7 +864,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryFailsThenNullptrIsReturned) {
     class MockOsAgnosticManagerWithFailingAllocate : public OsAgnosticMemoryManager {
       public:
-        MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages) : OsAgnosticMemoryManager(enable64kbPages) {}
+        MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages) : OsAgnosticMemoryManager(enable64kbPages, false) {}
 
         GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
             return nullptr;
@@ -879,7 +879,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
-    OsAgnosticMemoryManager memoryManager(false);
+    OsAgnosticMemoryManager memoryManager(false, false);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
@@ -892,7 +892,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPt
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    OsAgnosticMemoryManager memoryManager(false);
+    OsAgnosticMemoryManager memoryManager(false, false);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
@@ -905,7 +905,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithoutPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    OsAgnosticMemoryManager memoryManager(false);
+    OsAgnosticMemoryManager memoryManager(false, false);
     void *ptr = nullptr;
     auto size = MemoryConstants::pageSize;
 
@@ -917,7 +917,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
     auto size = 4096u;
 
     auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, false);
@@ -927,7 +927,7 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(false);
+    OsAgnosticMemoryManager memoryManager(false, false);
     auto size = 4096u;
     auto isCoherent = true;
 
@@ -964,7 +964,7 @@ TEST(OsAgnosticMemoryManager, givenDeviceWith64kbPagesDisbledWhenCreatingMemoryM
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThen64KBGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
     auto size = 4096u;
     auto isCoherent = true;
 
@@ -1224,7 +1224,7 @@ TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCr
 TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
-    OsAgnosticMemoryManager memoryManager(true);
+    OsAgnosticMemoryManager memoryManager(true, false);
 
     GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(true, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);

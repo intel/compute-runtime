@@ -55,13 +55,13 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     this->commandStreamReceiver.reset(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages) {
+void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory) {
     if (this->memoryManager) {
         commandStreamReceiver->setMemoryManager(this->memoryManager.get());
         return;
     }
 
-    memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages));
+    memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages, enableLocalMemory));
     commandStreamReceiver->setMemoryManager(memoryManager.get());
 
     DEBUG_BREAK_IF(!this->memoryManager);

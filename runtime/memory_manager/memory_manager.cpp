@@ -71,9 +71,12 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     }
     return nullptr;
 }
-MemoryManager::MemoryManager(bool enable64kbpages) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages) {
+
+MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
+                                                                             localMemorySupported(enableLocalMemory) {
     residencyAllocations.reserve(20);
 };
+
 MemoryManager::~MemoryManager() {
     freeAllocationsList(-1, graphicsAllocations);
     freeAllocationsList(-1, allocationsForReuse);
