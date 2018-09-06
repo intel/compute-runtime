@@ -35,6 +35,11 @@ void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename Family>
+bool HwHelperHw<Family>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) {
+    return false;
+}
+
+template <typename Family>
 void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) {
     caps->image3DMaxHeight = 16384;
     caps->image3DMaxWidth = 16384;
@@ -42,7 +47,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
     //Reason to subtract 8KB is that driver may pad the buffer with addition pages for over fetching..
     caps->maxMemAllocSize = (4ULL * MemoryConstants::gigaByte) - (8ULL * MemoryConstants::kiloByte);
     caps->isStatelesToStatefullWithOffsetSupported = true;
-    caps->localMemorySupported = false;
+    caps->localMemorySupported = isLocalMemoryEnabled(hwInfo);
 }
 
 template <typename Family>
@@ -63,4 +68,15 @@ template <typename Family>
 uint32_t HwHelperHw<Family>::getConfigureAddressSpaceMode() {
     return 0u;
 }
+
+template <typename Family>
+bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
+    return false;
+}
+
+template <typename Family>
+size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
+    return 32;
+}
+
 } // namespace OCLRT

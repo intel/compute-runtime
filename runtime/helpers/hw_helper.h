@@ -49,6 +49,7 @@ class HwHelper {
 
   protected:
     HwHelper(){};
+    virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
 };
 
 template <typename GfxFamily>
@@ -96,6 +97,8 @@ class HwHelperHw : public HwHelper {
     SipKernelType getSipKernelType(bool debuggingActive) override;
 
     uint32_t getConfigureAddressSpaceMode() override;
+
+    bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) override;
 
   private:
     HwHelperHw(){};

@@ -28,11 +28,6 @@ namespace OCLRT {
 typedef CNLFamily Family;
 
 template <>
-size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
-    return 32;
-}
-
-template <>
 void HwHelperHw<Family>::setCapabilityCoherencyFlag(const HardwareInfo *pHwInfo, bool &coherencyFlag) {
     if (pHwInfo->pPlatform->usRevId < 0x4) {
         coherencyFlag = false;

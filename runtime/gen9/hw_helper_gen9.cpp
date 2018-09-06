@@ -28,11 +28,6 @@ namespace OCLRT {
 typedef SKLFamily Family;
 
 template <>
-size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
-    return 32;
-}
-
-template <>
 bool HwHelperHw<Family>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580;
