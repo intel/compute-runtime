@@ -38,6 +38,19 @@ std::string getAubFileName(const OCLRT::Device *pDevice, const std::string baseN
     return strfilename.str();
 }
 
+TEST(PageTableTraits, when48BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
+    EXPECT_EQ(BIT(34), AubMemDump::PageTableTraits<48>::ptBaseAddress);
+    EXPECT_EQ(BIT(33), AubMemDump::PageTableTraits<48>::pdBaseAddress);
+    EXPECT_EQ(BIT(32), AubMemDump::PageTableTraits<48>::pdpBaseAddress);
+    EXPECT_EQ(BIT(31), AubMemDump::PageTableTraits<48>::pml4BaseAddress);
+}
+
+TEST(PageTableTraits, when32BitTraitsAreUsedThenPageTableAddressesAreCorrect) {
+    EXPECT_EQ(BIT(38), AubMemDump::PageTableTraits<32>::ptBaseAddress);
+    EXPECT_EQ(BIT(37), AubMemDump::PageTableTraits<32>::pdBaseAddress);
+    EXPECT_EQ(BIT(36), AubMemDump::PageTableTraits<32>::pdpBaseAddress);
+}
+
 typedef Test<DeviceFixture> AubMemDumpTests;
 
 HWTEST_F(AubMemDumpTests, givenAubFileStreamWhenOpenAndCloseIsCalledThenFileNameIsReportedCorrectly) {
