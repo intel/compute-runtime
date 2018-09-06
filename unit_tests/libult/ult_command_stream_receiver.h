@@ -61,6 +61,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::taskCount;
     using BaseClass::CommandStreamReceiver::taskLevel;
+    using BaseClass::CommandStreamReceiver::timestampPacketWriteEnabled;
 
     UltCommandStreamReceiver(const UltCommandStreamReceiver &) = delete;
     UltCommandStreamReceiver &operator=(const UltCommandStreamReceiver &) = delete;

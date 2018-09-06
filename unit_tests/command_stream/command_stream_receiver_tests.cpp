@@ -303,6 +303,18 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWithoutTagAllocationWhenGetTagAllo
     EXPECT_EQ(nullptr, csr.getTagAllocation());
 }
 
+TEST(CommandStreamReceiverSimpleTest, givenDebugVariableEnabledWhenCreatingCsrThenEnableTimestampPacketWriteMode) {
+    DebugManagerStateRestore restore;
+
+    DebugManager.flags.EnableTimestampPacket.set(true);
+    MockCommandStreamReceiver csr1;
+    EXPECT_TRUE(csr1.peekTimestampPacketWriteEnabled());
+
+    DebugManager.flags.EnableTimestampPacket.set(false);
+    MockCommandStreamReceiver csr2;
+    EXPECT_FALSE(csr2.peekTimestampPacketWriteEnabled());
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenCSRWithTagAllocationSetWhenGetTagAllocationIsCalledThenCorrectAllocationIsReturned) {
     MockCommandStreamReceiver csr;
     GraphicsAllocation allocation(reinterpret_cast<void *>(0x1000), 0x1000);

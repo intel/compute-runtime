@@ -161,6 +161,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::mediaVfeStateDirty;
     using CommandStreamReceiver::taskCount;
     using CommandStreamReceiver::taskLevel;
+    using CommandStreamReceiver::timestampPacketWriteEnabled;
 
     MockCsrHw2(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment) : CommandStreamReceiverHw<GfxFamily>(hwInfoIn, executionEnvironment) {}
 

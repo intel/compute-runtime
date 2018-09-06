@@ -24,7 +24,6 @@
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
-#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_device.h"
@@ -127,20 +126,18 @@ TEST_F(TimestampPacketTests, whenAskedForStampAddressThenReturnWithValidOffset) 
     }
 }
 
-HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(false);
-
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
 
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, false, false, multiDispatchInfo);
     auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
 
-    DebugManager.flags.EnableTimestampPacket.set(true);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, false, false, multiDispatchInfo);
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
@@ -208,9 +205,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
     EXPECT_EQ(2u, walkersFound);
 }
 
-HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(false);
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     auto mockMemoryManager = new MockMemoryManager();
@@ -221,13 +216,15 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
     MockKernelWithInternals kernel(*device, &context);
 
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+
     size_t gws[] = {1, 1, 1};
 
     cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(nullptr, cmdQ->timestampPacketNode);
     EXPECT_EQ(nullptr, mockTagAllocator->usedTags.peekHead());
 
-    DebugManager.flags.EnableTimestampPacket.set(true);
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     cl_event event1, event2;
 
     // obtain first node for cmdQ and event1
@@ -269,16 +266,16 @@ HWTEST_F(TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenObtain
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenDebugVariableEnabledWhenEnqueueingThenWriteWalkerStamp) {
+HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(true);
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     MockContext context(device.get());
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
     MockKernelWithInternals kernel(*device, &context);
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
     size_t gws[] = {1, 1, 1};
     cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);

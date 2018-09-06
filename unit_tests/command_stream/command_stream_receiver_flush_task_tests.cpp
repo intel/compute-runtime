@@ -297,10 +297,9 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, higherTaskLevelShouldSendAPipeCont
     EXPECT_NE(cmdList.end(), itorPC);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenDebugVariableIsEnabledThenDontAddPipeControl) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(true);
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenHigherTaskLevelWhenTimestampPacketWriteIsEnabledThenDontAddPipeControl) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.timestampPacketWriteEnabled = true;
     commandStreamReceiver.isPreambleSent = true;
     configureCSRtoNonDirtyState<FamilyType>();
     commandStreamReceiver.taskLevel = taskLevel;
@@ -2919,8 +2918,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, givenCsrInBatch
     EXPECT_NE(itorPipeControl, itorBatchBufferStartSecond);
 }
 
-HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSetToFalseWhenDebugVariableIsSetThenNoopPipeControl) {
-    DebugManagerStateRestore restore;
+HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSetToFalseWhenTimestampPacketWriteIsEnabledThenNoopPipeControl) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
 
@@ -2938,7 +2936,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSe
 
     auto taskLevelPriorToSubmission = mockCsr->peekTaskLevel();
 
-    DebugManager.flags.EnableTimestampPacket.set(false);
+    mockCsr->timestampPacketWriteEnabled = false;
     mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
     mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
 
@@ -2949,7 +2947,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeAndOoqFlagSe
 
     mockCsr->flushBatchedSubmissions();
 
-    DebugManager.flags.EnableTimestampPacket.set(true);
+    mockCsr->timestampPacketWriteEnabled = true;
     mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
     mockCsr->flushTask(commandStream, 0, dsh, ioh, ssh, taskLevelPriorToSubmission, dispatchFlags, *pDevice);
 

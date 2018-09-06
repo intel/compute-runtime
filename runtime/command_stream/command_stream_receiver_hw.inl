@@ -181,7 +181,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
-        if ((dispatchFlags.outOfOrderExecutionAllowed || DebugManager.flags.EnableTimestampPacket.get()) &&
+        if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&
             !dispatchFlags.dcFlush) {
             currentPipeControlForNooping = epiloguePipeControlLocation;
         }
@@ -355,7 +355,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // Add a PC if we have a dependency on a previous walker to avoid concurrency issues.
     if (taskLevel > this->taskLevel) {
-        if (!DebugManager.flags.EnableTimestampPacket.get()) {
+        if (!timestampPacketWriteEnabled) {
             addPipeControl(commandStreamCSR, false);
         }
         this->taskLevel = taskLevel;

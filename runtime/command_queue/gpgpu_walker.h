@@ -291,7 +291,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
         SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
     }
-    if (DebugManager.flags.EnableTimestampPacket.get()) {
+    if (commandQueue.getDevice().peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += 2 * sizeof(typename GfxFamily::PIPE_CONTROL);
     }
     return commandQueue.getCS(expectedSizeCS);

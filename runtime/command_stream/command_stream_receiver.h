@@ -155,12 +155,16 @@ class CommandStreamReceiver {
         return kmdNotifyHelper.get();
     }
 
+    bool peekTimestampPacketWriteEnabled() const { return timestampPacketWriteEnabled; }
+
     size_t defaultSshSize;
 
   protected:
     void setDisableL3Cache(bool val) {
         disableL3Cache = val;
     }
+
+    bool timestampPacketWriteEnabled = false;
 
     // taskCount - # of tasks submitted
     uint32_t taskCount = 0;

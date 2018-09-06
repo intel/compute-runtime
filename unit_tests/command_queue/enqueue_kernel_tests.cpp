@@ -1577,9 +1577,8 @@ HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsD
 }
 
 HWTEST_F(EnqueueKernelTest, givenTimestampPacketWhenEnqueueingNonBlockedThenMakeItResident) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(true);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
     MockKernelWithInternals mockKernel(*pDevice, context);
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
 
@@ -1593,9 +1592,8 @@ HWTEST_F(EnqueueKernelTest, givenTimestampPacketWhenEnqueueingNonBlockedThenMake
 }
 
 HWTEST_F(EnqueueKernelTest, givenTimestampPacketWhenEnqueueingBlockedThenMakeItResidentOnSubmit) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableTimestampPacket.set(true);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
     MockKernelWithInternals mockKernel(*pDevice, context);
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pDevice, nullptr);
 
