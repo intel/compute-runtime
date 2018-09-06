@@ -28,7 +28,7 @@ class OsContext;
 struct ResidencyData {
     ResidencyData() = default;
     void addOsContext(OsContext *osContext);
-    ~ResidencyData();
+    ~ResidencyData() = default;
     bool resident = false;
     uint64_t lastFence = 0;
     OsContext *osContext = nullptr;

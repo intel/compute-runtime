@@ -28,14 +28,7 @@ using namespace OCLRT;
 
 void ResidencyData::addOsContext(OsContext *osContext) {
     if (!this->osContext) {
-        osContext->incRefInternal();
         this->osContext = osContext;
     }
     DEBUG_BREAK_IF(this->osContext != osContext);
-}
-
-ResidencyData::~ResidencyData() {
-    if (osContext) {
-        osContext->decRefInternal();
-    }
 }
