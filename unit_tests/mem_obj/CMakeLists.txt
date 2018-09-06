@@ -53,3 +53,4 @@ set(IGDRCL_SRCS_tests_mem_obj
   ${CMAKE_CURRENT_SOURCE_DIR}/zero_copy_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_mem_obj})
+add_subdirectories()
