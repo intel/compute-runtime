@@ -267,4 +267,9 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
 }
+
+uint32_t Device::getDeviceIndex() {
+    return osContext->getContextId();
+}
+
 } // namespace OCLRT

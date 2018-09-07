@@ -193,6 +193,16 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
     EXPECT_EQ(2u, device->getMemoryManager()->getOsContextCount());
 }
 
+TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+
+    EXPECT_EQ(0u, device->getDeviceIndex());
+    EXPECT_EQ(1u, device2->getDeviceIndex());
+}
+
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
     FeatureTable skuTable = *platformDevices[0]->pSkuTable;
     skuTable.ftrSimulationMode = true;

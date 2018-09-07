@@ -133,6 +133,7 @@ class Device : public BaseObject<_cl_device_id> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
     OsContext *getOsContext() const { return osContext; }
+    uint32_t getDeviceIndex();
 
   protected:
     Device() = delete;
