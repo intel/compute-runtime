@@ -320,10 +320,6 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
 
-    void flushWaitList(cl_uint numEventsInWaitList,
-                       const cl_event *eventWaitList,
-                       bool ndRangeKernel);
-
     static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);

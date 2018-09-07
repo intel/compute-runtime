@@ -634,12 +634,10 @@ void Event::executeCallbacks(int32_t executionStatusIn) {
 
 void Event::tryFlushEvent() {
     //only if event is not completed, completed event has already been flushed
-    if (cmdQueue && (updateStatusAndCheckCompletion() == false)) {
+    if (cmdQueue && updateStatusAndCheckCompletion() == false) {
         //flush the command queue only if it is not blocked event
         if (taskLevel != Event::eventNotReady) {
-            cl_event ev = this;
-            DBG_LOG(EventsDebugEnable, "tryFlushEvent", this);
-            cmdQueue->flushWaitList(1, &ev, this->getCommandType() == CL_COMMAND_NDRANGE_KERNEL);
+            cmdQueue->getDevice().getCommandStreamReceiver().flushBatchedSubmissions();
         }
     }
 }

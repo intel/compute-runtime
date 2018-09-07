@@ -52,33 +52,3 @@ struct CommandQueueSimpleTest
         DeviceFixture::TearDown();
     }
 };
-
-HWTEST_F(CommandQueueSimpleTest, flushWaitlistDoesNotFlushSingleEventWhenTaskCountIsAlreadySent) {
-    MockCommandQueue commandQueue(pContext, pDevice, 0);
-
-    MockEvent<Event> event(&commandQueue, CL_COMMAND_NDRANGE_KERNEL, 1, 1);
-    cl_event clEvent = &event;
-
-    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    auto *gfxAllocation = pDevice->getMemoryManager()->allocateGraphicsMemory(4096);
-    IndirectHeap stream(gfxAllocation);
-
-    // Update latestSentTaskCount to == 1
-    DispatchFlags dispatchFlags;
-    dispatchFlags.blocking = true;
-    dispatchFlags.dcFlush = true;
-
-    csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags, *pDevice);
-
-    EXPECT_EQ(1u, csr.peekLatestSentTaskCount());
-    csr.taskCount = 1;
-    // taskLevel less than event's level
-    csr.taskLevel = 0;
-
-    commandQueue.flushWaitList(1, &clEvent, true);
-
-    EXPECT_EQ(0u, csr.peekTaskLevel());
-    EXPECT_EQ(1u, csr.peekTaskCount());
-
-    pDevice->getMemoryManager()->freeGraphicsMemory(gfxAllocation);
-}

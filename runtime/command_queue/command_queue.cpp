@@ -320,21 +320,6 @@ void CommandQueue::updateFromCompletionStamp(const CompletionStamp &completionSt
     this->taskLevel = completionStamp.taskLevel;
 }
 
-void CommandQueue::flushWaitList(
-    cl_uint numEventsInWaitList,
-    const cl_event *eventWaitList,
-    bool ndRangeKernel) {
-
-    bool isQBlocked = false;
-
-    //as long as queue is blocked we need to stall.
-    if (!isOOQEnabled()) {
-        while ((isQBlocked = isQueueBlocked()))
-            ;
-    }
-    device->getCommandStreamReceiver().flushBatchedSubmissions();
-}
-
 bool CommandQueue::setPerfCountersEnabled(bool perfCountersEnabled, cl_uint configuration) {
     DEBUG_BREAK_IF(device == nullptr);
     if (perfCountersEnabled == this->perfCountersEnabled) {
