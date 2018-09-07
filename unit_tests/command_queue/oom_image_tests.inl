@@ -30,19 +30,19 @@
 
 using namespace OCLRT;
 
-struct OOMSetting {
+struct OOMSetting1 {
     bool oomCS;
     bool oomISH;
 };
 
-static OOMSetting oomSettings[] = {
+static OOMSetting1 oomSettings1[] = {
     {true, false},
     {false, true},
     {true, true}};
 
 struct OOMCommandQueueImageTest : public DeviceFixture,
                                   public CommandQueueFixture,
-                                  public ::testing::TestWithParam<OOMSetting> {
+                                  public ::testing::TestWithParam<OOMSetting1> {
 
     using CommandQueueFixture::SetUp;
 
@@ -189,4 +189,4 @@ HWTEST_P(OOMCommandQueueImageTest, enqueueWriteImage) {
 INSTANTIATE_TEST_CASE_P(
     OOM,
     OOMCommandQueueImageTest,
-    testing::ValuesIn(oomSettings));
+    testing::ValuesIn(oomSettings1));

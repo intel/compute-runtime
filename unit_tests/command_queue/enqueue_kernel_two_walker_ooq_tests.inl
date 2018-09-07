@@ -26,11 +26,11 @@
 
 using namespace OCLRT;
 
-struct OOQFixtureFactory : public HelloWorldFixtureFactory {
+struct OOQFixtureFactory1 : public HelloWorldFixtureFactory {
     typedef OOQueueFixture CommandQueueFixture;
 };
 
-typedef TwoWalkerTest<OOQFixtureFactory> OOQWithTwoWalkers;
+typedef TwoWalkerTest<OOQFixtureFactory1> OOQWithTwoWalkers;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, OOQWithTwoWalkers, shouldHaveTwoWalkers) {
     enqueueTwoKernels<FamilyType>();
