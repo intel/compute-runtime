@@ -46,6 +46,9 @@ using WALKER_HANDLE = void *;
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
+template <typename GfxFamily>
+using HARDWARE_INTERFACE = typename GfxFamily::HARDWARE_INTERFACE;
+
 constexpr int32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 constexpr int32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
@@ -217,43 +220,6 @@ class GpgpuWalkerHelper {
         WALKER_HANDLE walkerHandle,
         TimestampPacket *timestampPacket,
         TimestampPacket::WriteOperationType writeOperationType);
-
-    static void getDefaultDshSpace(
-        const size_t &offsetInterfaceDescriptorTable,
-        CommandQueue &commandQueue,
-        const MultiDispatchInfo &multiDispatchInfo,
-        size_t &totalInterfaceDescriptorTableSize,
-        OCLRT::Kernel *parentKernelDispatched,
-        OCLRT::IndirectHeap *dsh,
-        OCLRT::LinearStream *commandStream);
-
-    static INTERFACE_DESCRIPTOR_DATA *obtainInterfaceDescriptorData(
-        WALKER_HANDLE pCmdData);
-
-    static void setOffsetCrossThreadData(
-        WALKER_HANDLE pCmdData,
-        size_t &offsetCrossThreadData,
-        uint32_t &interfaceDescriptorIndex);
-
-    static void dispatchWorkarounds(
-        OCLRT::LinearStream *commandStream,
-        CommandQueue &commandQueue,
-        OCLRT::Kernel &kernel,
-        const bool &enable);
-
-    static void dispatchProfilingPerfStartCommands(
-        const OCLRT::DispatchInfo &dispatchInfo,
-        const MultiDispatchInfo &multiDispatchInfo,
-        HwTimeStamps *hwTimeStamps,
-        OCLRT::HwPerfCounter *hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
-        CommandQueue &commandQueue);
-
-    static void dispatchProfilingPerfEndCommands(
-        HwTimeStamps *hwTimeStamps,
-        OCLRT::HwPerfCounter *hwPerfCounter,
-        OCLRT::LinearStream *commandStream,
-        CommandQueue &commandQueue);
 
     static void dispatchScheduler(
         CommandQueue &commandQueue,

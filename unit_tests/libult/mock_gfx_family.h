@@ -26,6 +26,9 @@
 
 namespace OCLRT {
 
+template <class GfxFamily>
+class BaseInterfaceVersion;
+
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
 struct GENX {
@@ -358,6 +361,7 @@ struct GENX {
         inline void setCompareOperation(COMPARE_OPERATION value) {}
     } MI_SEMAPHORE_WAIT;
 
+    using HARDWARE_INTERFACE = BaseInterfaceVersion<GENX>;
     typedef GPGPU_WALKER WALKER_TYPE;
     static GPGPU_WALKER cmdInitGpgpuWalker;
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
