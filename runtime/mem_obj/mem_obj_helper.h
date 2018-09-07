@@ -35,7 +35,7 @@ class MemObjHelper {
             CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS;
 
         bool flagsValidated = (flags & (~allValidFlags)) == 0;
-        flagsValidated &= checkExtraMemFlagsForBuffer(flags);
+        flagsValidated &= checkExtraMemFlagsForBuffer(flags & (~allValidFlags));
 
         return flagsValidated;
     }
