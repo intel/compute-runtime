@@ -127,6 +127,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     GraphicsAllocation *getHwTimeStampAllocation();
 
     void setTimestampPacketNode(TagNode<TimestampPacket> *node);
+    TimestampPacket *getTimestampPacket() const;
 
     bool isPerfCountersEnabled() {
         return perfCountersEnabled;

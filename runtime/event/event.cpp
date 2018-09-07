@@ -719,4 +719,5 @@ void Event::setTimestampPacketNode(TagNode<TimestampPacket> *node) {
     timestampPacketNode = node;
 }
 
+TimestampPacket *Event::getTimestampPacket() const { return timestampPacketNode->tag; }
 } // namespace OCLRT

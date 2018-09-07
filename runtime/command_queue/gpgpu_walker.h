@@ -261,6 +261,9 @@ class GpgpuWalkerHelper {
         SchedulerKernel &scheduler,
         IndirectHeap *ssh,
         IndirectHeap *dsh);
+
+    static void dispatchOnDeviceWaitlistSemaphores(LinearStream *commandStream, Device &currentDevice,
+                                                   cl_uint numEventsInWaitList, const cl_event *eventWaitList);
 };
 
 template <typename GfxFamily>
@@ -282,7 +285,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
 }
 
 template <typename GfxFamily, uint32_t eventType>
-LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const MultiDispatchInfo &multiDispatchInfo) {
+LinearStream &getCommandStream(CommandQueue &commandQueue, cl_uint numEventsInWaitList, bool reserveProfilingCmdsSpace, bool reservePerfCounterCmdsSpace, const MultiDispatchInfo &multiDispatchInfo) {
     size_t expectedSizeCS = 0;
     Kernel *parentKernel = multiDispatchInfo.peekParentKernel();
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -294,6 +297,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, bool reserveProfiling
     }
     if (commandQueue.getDevice().peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
+        expectedSizeCS += numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
     return commandQueue.getCS(expectedSizeCS);
 }

@@ -134,14 +134,37 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, false, false, multiDispatchInfo);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, 0, false, false, multiDispatchInfo);
     auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, false, false, multiDispatchInfo);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, 0, false, false, multiDispatchInfo);
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
     EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)));
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeWithWaitlistThenAddSizeForSemaphores) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
+    MockKernelWithInternals kernel1(*device);
+    MockKernelWithInternals kernel2(*device);
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
+
+    cl_uint numEventsOnWaitlist = 5;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
+
+    size_t extendedSize = sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)) +
+                          (numEventsOnWaitlist * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
+
+    EXPECT_EQ(sizeWithEnabled, extendedSize);
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
@@ -294,4 +317,86 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
         }
     }
     EXPECT_TRUE(walkerFound);
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingThenProgramSemaphoresForWaitlist) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using WALKER = WALKER_TYPE<FamilyType>;
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment));
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment));
+    MockKernelWithInternals kernel1(*device1);
+    device1->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context1(device1.get());
+    MockContext context2(device2.get());
+
+    MockMultiDispatchInfo
+    multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel}));
+
+    MockCommandQueue cmdQ1(&context1, device1.get(), nullptr);
+    MockCommandQueue cmdQ2(&context2, device2.get(), nullptr);
+    auto &cmdStream = cmdQ1.getCS(0);
+
+    const cl_uint eventsOnWaitlist = 6;
+    TagNode<TimestampPacket> *tagNodes[eventsOnWaitlist];
+    for (size_t i = 0; i < eventsOnWaitlist; i++) {
+        tagNodes[i] = executionEnvironment.memoryManager->getTimestampPacketAllocator()->getTag();
+    }
+
+    UserEvent event1;
+    UserEvent event2;
+    Event event3(&cmdQ1, 0, 0, 0);
+    event3.setTimestampPacketNode(tagNodes[2]);
+    Event event4(&cmdQ2, 0, 0, 0);
+    event4.setTimestampPacketNode(tagNodes[3]);
+    Event event5(&cmdQ1, 0, 0, 0);
+    event5.setTimestampPacketNode(tagNodes[4]);
+    Event event6(&cmdQ2, 0, 0, 0);
+    event6.setTimestampPacketNode(tagNodes[5]);
+
+    cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
+
+    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        cmdQ1,
+        multiDispatchInfo,
+        eventsOnWaitlist,
+        waitlist,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        device1->getPreemptionMode(),
+        false);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    auto verifySemaphore = [](MI_SEMAPHORE_WAIT *semaphoreCmd, Event *compareEvent) {
+        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(compareEvent->getTimestampPacket()->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
+                  semaphoreCmd->getSemaphoreGraphicsAddress());
+    };
+
+    uint32_t semaphoresFound = 0;
+    uint32_t walkersFound = 0;
+
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
+        if (semaphoreCmd) {
+            semaphoresFound++;
+            if (semaphoresFound == 1) {
+                verifySemaphore(semaphoreCmd, &event3);
+            } else if (semaphoresFound == 2) {
+                verifySemaphore(semaphoreCmd, &event5);
+            }
+        }
+        if (genCmdCast<WALKER *>(*it)) {
+            walkersFound++;
+            EXPECT_EQ(2u, semaphoresFound); // semaphores from events programmed before walker
+        }
+    }
+    EXPECT_EQ(1u, walkersFound);
+    EXPECT_EQ(2u, semaphoresFound); // total number of semaphores found in cmdList
 }

@@ -206,7 +206,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
 
-    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, profilingRequired, perfCountersRequired, multiDispatchInfo);
+    auto &commandStream = getCommandStream<GfxFamily, commandType>(*this, numEventsInWaitList, profilingRequired, perfCountersRequired, multiDispatchInfo);
     auto commandStreamStart = commandStream.getUsed();
 
     DBG_LOG(EventsDebugEnable, "blockQueue", blockQueue, "virtualEvent", virtualEvent, "taskLevel", taskLevel);

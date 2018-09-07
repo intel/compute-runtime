@@ -343,6 +343,21 @@ struct GENX {
         }
     } STATE_SIP;
 
+    typedef struct tagMI_SEMAPHORE_WAIT {
+        typedef enum tagCOMPARE_OPERATION {
+            COMPARE_OPERATION_SAD_NOT_EQUAL_SDD = 0x5,
+        } COMPARE_OPERATION;
+
+        static tagMI_SEMAPHORE_WAIT sInit(void) {
+            MI_SEMAPHORE_WAIT state;
+            return state;
+        }
+
+        inline void setSemaphoreDataDword(uint32_t value) {}
+        inline void setSemaphoreGraphicsAddress(uint64_t value) {}
+        inline void setCompareOperation(COMPARE_OPERATION value) {}
+    } MI_SEMAPHORE_WAIT;
+
     typedef GPGPU_WALKER WALKER_TYPE;
     static GPGPU_WALKER cmdInitGpgpuWalker;
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;

@@ -494,6 +494,11 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
+    if (commandQueue.getDevice().peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
+        GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
+                                                                         numEventsInWaitList, eventWaitList);
+    }
+
     dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
 
     uint32_t interfaceDescriptorIndex = 0;
@@ -643,6 +648,28 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         currentDispatchIndex++;
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+}
+
+template <typename GfxFamily>
+inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(LinearStream *commandStream, Device &currentDevice,
+                                                                             cl_uint numEventsInWaitList, const cl_event *eventWaitList) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+    for (cl_uint i = 0; i < numEventsInWaitList; i++) {
+        auto event = castToObjectOrAbort<Event>(eventWaitList[i]);
+        if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() != &currentDevice)) {
+            continue;
+        }
+        auto timestampPacket = event->getTimestampPacket();
+
+        auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+
+        auto miSemaphoreCmd = commandStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+        *miSemaphoreCmd = MI_SEMAPHORE_WAIT::sInit();
+        miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        miSemaphoreCmd->setSemaphoreDataDword(1);
+        miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+    }
 }
 
 template <typename GfxFamily>
