@@ -1810,13 +1810,40 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
     EXPECT_EQ(1, osContext->getRefInternalCount());
 }
 
-TEST(ResidencyDataTest, givenOsContextWhenItIsAddedToResidencyThenItCantBeOverwritten) {
-    ResidencyData residency;
+TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {
+    struct mockResidencyData : public ResidencyData {
+        using ResidencyData::completionData;
+    };
+
+    mockResidencyData residency;
+
     OsContext osContext(nullptr);
     OsContext osContext2(nullptr);
-    EXPECT_EQ(nullptr, residency.osContext);
-    residency.addOsContext(&osContext);
-    EXPECT_EQ(&osContext, residency.osContext);
-    residency.addOsContext(&osContext2);
-    EXPECT_EQ(&osContext, residency.osContext);
+    osContext2.setContextId(1u);
+
+    auto lastFenceValue = 45llu;
+    auto lastFenceValue2 = 23llu;
+    auto lastFenceValue3 = 373llu;
+
+    EXPECT_EQ(0u, residency.completionData.size());
+
+    residency.updateCompletionData(lastFenceValue, &osContext);
+    EXPECT_EQ(1u, residency.completionData.size());
+    EXPECT_EQ(&osContext, residency.completionData[0].osContext);
+    EXPECT_EQ(lastFenceValue, residency.completionData[0].lastFence);
+    EXPECT_EQ(lastFenceValue, residency.getFenceValueForContextId(osContext.getContextId()));
+    EXPECT_EQ(&osContext, residency.getOsContextFromId(0u));
+
+    residency.updateCompletionData(lastFenceValue2, &osContext2);
+
+    EXPECT_EQ(2u, residency.completionData.size());
+    EXPECT_EQ(&osContext2, residency.completionData[1].osContext);
+    EXPECT_EQ(lastFenceValue2, residency.completionData[1].lastFence);
+    EXPECT_EQ(lastFenceValue2, residency.getFenceValueForContextId(osContext2.getContextId()));
+    EXPECT_EQ(&osContext2, residency.getOsContextFromId(1u));
+
+    residency.updateCompletionData(lastFenceValue3, &osContext2);
+    EXPECT_EQ(lastFenceValue3, residency.completionData[1].lastFence);
+    EXPECT_EQ(lastFenceValue3, residency.getFenceValueForContextId(osContext2.getContextId()));
+    EXPECT_EQ(&osContext2, residency.getOsContextFromId(1u));
 }

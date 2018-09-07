@@ -642,7 +642,7 @@ TEST_F(Wddm20Tests, makeNonResidentCallsEvict) {
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
-    allocation.getResidencyData().lastFence = 10;
+    allocation.getResidencyData().updateCompletionData(10, osContext.get());
     allocation.handle = ALLOCATION_HANDLE;
 
     *osContextWin->getMonitoredFence().cpuAddress = 10;
@@ -670,7 +670,7 @@ TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedTo
 
 TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalled) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
-    allocation.getResidencyData().lastFence = 10;
+    allocation.getResidencyData().updateCompletionData(10, osContext.get());
     allocation.handle = ALLOCATION_HANDLE;
 
     *osContextWin->getMonitoredFence().cpuAddress = 10;
@@ -693,7 +693,7 @@ TEST_F(Wddm20Tests, WhenLastFenceLessEqualThanMonitoredThenWaitFromCpuIsNotCalle
 
 TEST_F(Wddm20Tests, WhenLastFenceGreaterThanMonitoredThenWaitFromCpuIsCalled) {
     WddmAllocation allocation((void *)0x23000, 0x1000, nullptr, MemoryPool::MemoryNull);
-    allocation.getResidencyData().lastFence = 10;
+    allocation.getResidencyData().updateCompletionData(10, osContext.get());
     allocation.handle = ALLOCATION_HANDLE;
 
     *osContextWin->getMonitoredFence().cpuAddress = 10;

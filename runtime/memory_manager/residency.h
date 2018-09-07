@@ -22,15 +22,25 @@
 
 #pragma once
 #include <cinttypes>
+#include <vector>
 namespace OCLRT {
 class OsContext;
 
-struct ResidencyData {
-    ResidencyData() = default;
-    void addOsContext(OsContext *osContext);
-    ~ResidencyData() = default;
-    bool resident = false;
+struct FenceData {
     uint64_t lastFence = 0;
     OsContext *osContext = nullptr;
+};
+
+struct ResidencyData {
+    ResidencyData() = default;
+    ~ResidencyData() = default;
+    bool resident = false;
+
+    void updateCompletionData(uint64_t newFenceValue, OsContext *context);
+    uint64_t getFenceValueForContextId(uint32_t contextId);
+    OsContext *getOsContextFromId(uint32_t contextId);
+
+  protected:
+    std::vector<FenceData> completionData;
 };
 } // namespace OCLRT
