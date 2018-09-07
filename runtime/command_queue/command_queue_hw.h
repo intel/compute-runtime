@@ -325,6 +325,7 @@ class CommandQueueHw : public CommandQueue {
                                       size_t commandStreamStart,
                                       bool &blocking,
                                       const MultiDispatchInfo &multiDispatchInfo,
+                                      EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       uint32_t taskLevel,
                                       bool slmUsed,

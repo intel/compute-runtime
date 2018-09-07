@@ -347,6 +347,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         auto submissionRequired = isCommandWithoutKernel(commandType) ? false : true;
 
         if (submissionRequired) {
+            EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, nullptr);
+
             completionStamp = enqueueNonBlocked<commandType>(
                 surfacesForResidency,
                 numSurfaceForResidency,
@@ -354,6 +356,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStreamStart,
                 blocking,
                 multiDispatchInfo,
+                eventsRequest,
                 eventBuilder,
                 taskLevel,
                 slmUsed,
@@ -507,6 +510,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     size_t commandStreamStart,
     bool &blocking,
     const MultiDispatchInfo &multiDispatchInfo,
+    EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     uint32_t taskLevel,
     bool slmUsed,
@@ -588,6 +592,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.flushStampReference = this->flushStamp->getStampReference();
     dispatchFlags.preemptionMode = PreemptionHelper::taskPreemptionMode(*device, multiDispatchInfo);
     dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || commandStreamReceiver.isNTo1SubmissionModelEnabled();
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        dispatchFlags.outOfDeviceDependencies = &eventsRequest;
+    }
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

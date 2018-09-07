@@ -262,6 +262,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto &commandStreamCSR = this->getCS(getRequiredCmdStreamSizeAligned(dispatchFlags, device));
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
+    if (dispatchFlags.outOfDeviceDependencies) {
+        programOutOfDeviceWaitlistSemaphores(commandStreamCSR, dispatchFlags, device);
+    }
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, device, dispatchFlags);
     programCoherency(commandStreamCSR, dispatchFlags);
@@ -650,6 +653,9 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     if (experimentalCmdBuffer.get() != nullptr) {
         size += experimentalCmdBuffer->getRequiredInjectionSize<GfxFamily>();
     }
+    if (dispatchFlags.outOfDeviceDependencies) {
+        size += dispatchFlags.outOfDeviceDependencies->numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+    }
     return size;
 }
 
@@ -776,5 +782,26 @@ void CommandStreamReceiverHw<GfxFamily>::resetKmdNotifyHelper(KmdNotifyHelper *n
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamily::PIPE_CONTROL *pCmd) {
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::programOutOfDeviceWaitlistSemaphores(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+    for (cl_uint i = 0; i < dispatchFlags.outOfDeviceDependencies->numEventsInWaitList; i++) {
+        auto event = castToObjectOrAbort<Event>(dispatchFlags.outOfDeviceDependencies->eventWaitList[i]);
+        if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() == &currentDevice)) {
+            continue;
+        }
+        auto timestampPacket = event->getTimestampPacket();
+
+        auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+
+        auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+        *miSemaphoreCmd = MI_SEMAPHORE_WAIT::sInit();
+        miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        miSemaphoreCmd->setSemaphoreDataDword(1);
+        miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+    }
 }
 } // namespace OCLRT

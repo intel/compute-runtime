@@ -57,6 +57,7 @@ struct DispatchFlags {
     bool outOfOrderExecutionAllowed = false;
     FlushStampTrackingObj *flushStampReference = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
+    EventsRequest *outOfDeviceDependencies = nullptr;
 };
 
 struct CsrSizeRequestFlags {
