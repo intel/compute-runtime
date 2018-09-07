@@ -210,7 +210,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
             lrcAddressPhys,
             pLRCABase,
             sizeLRCA,
-            AubMemDump::AddressSpaceValues::TraceNonlocal,
+            getAddressSpace(csTraits.aubHintLRCA),
             csTraits.aubHintLRCA);
     }
 
@@ -298,7 +298,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physBatchBuffer,
             pBatchBuffer,
             sizeBatchBuffer,
-            AubMemDump::AddressSpaceValues::TraceNonlocal,
+            getAddressSpace(AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary),
             AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
     }
 
@@ -346,7 +346,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
                 physDumpStart,
                 pTail,
                 sizeToWrap,
-                AubMemDump::AddressSpaceValues::TraceNonlocal,
+                getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
                 AubMemDump::DataTypeHintValues::TraceCommandBuffer);
             previousTail = 0;
             engineInfo.tailRingBuffer = 0;
@@ -396,7 +396,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physDumpStart,
             dumpStart,
             dumpLength,
-            AubMemDump::AddressSpaceValues::TraceNonlocal,
+            getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
             AubMemDump::DataTypeHintValues::TraceCommandBuffer);
 
         // update the ring mmio tail in the LRCA
@@ -412,7 +412,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physLRCA + 0x101c,
             &engineInfo.tailRingBuffer,
             sizeof(engineInfo.tailRingBuffer),
-            AubMemDump::AddressSpaceValues::TraceNonlocal);
+            getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
 
         DEBUG_BREAK_IF(engineInfo.tailRingBuffer >= engineInfo.sizeRingBuffer);
     }
@@ -671,7 +671,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
         physBufferAddres,
         buffer.get(),
         bufferSize,
-        AubMemDump::AddressSpaceValues::TraceNonlocal);
+        getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
 
     PatchInfoData patchInfoData(batchBufferAddress, 0u, PatchInfoAllocationType::Default, reinterpret_cast<uintptr_t>(buffer.get()), sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START) - sizeof(uint64_t), PatchInfoAllocationType::GUCStartMessage);
     this->flatBatchBufferHelper->setPatchInfoData(patchInfoData);
@@ -692,6 +692,11 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
     data.present = true;
     data.localMemory = false;
+}
+
+template <typename GfxFamily>
+int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpace(int hint) {
+    return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
 
 } // namespace OCLRT

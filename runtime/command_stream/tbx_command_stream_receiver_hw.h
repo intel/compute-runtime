@@ -101,5 +101,8 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_TBX;
     }
+
+  protected:
+    int getAddressSpace(int hint);
 };
 } // namespace OCLRT

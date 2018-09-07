@@ -117,6 +117,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     }
 
   protected:
+    int getAddressSpace(int hint);
+
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 };
