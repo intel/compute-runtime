@@ -20,12 +20,17 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-//#include "unit_tests/command_queue/enqueue_map_image_tests.inl"
-#include "unit_tests/command_queue/enqueue_marker_tests.inl"
-#include "unit_tests/command_queue/enqueue_media_kernel.inl"
-#include "unit_tests/command_queue/enqueue_migrate_mem_objects_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_rect_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_image_tests.inl"
-#include "unit_tests/command_queue/enqueue_thread_tests.inl"
+//4
+#include "unit_tests/command_queue/enqueue_write_buffer_rect_tests.inl"
+#include "unit_tests/command_queue/enqueue_write_buffer_tests.inl"
+
+//5 
+#include "unit_tests/command_queue/multiple_map_image_tests.inl"
+#include "unit_tests/command_queue/ioq_task_tests.inl"
+#include "unit_tests/command_queue/get_size_required_image_tests.inl"
+#include "unit_tests/command_queue/get_size_required_tests.inl"
+
+// 6
+#include "unit_tests/command_queue/enqueue_debug_kernel_tests.inl"
+#include "unit_tests/command_queue/enqueue_fill_buffer_event_tests.inl"
+#include "unit_tests/command_queue/enqueue_svm_mem_copy_tests.inl"

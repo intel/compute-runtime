@@ -20,9 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/enqueue_fill_buffer_negative_tests.inl"
+//#include "unit_tests/command_queue/enqueue_fill_buffer_negative_tests.inl"
 #include "unit_tests/command_queue/enqueue_fill_buffer_tests.inl"
-#include "unit_tests/command_queue/enqueue_fill_image_tests.inl"
+//#include "unit_tests/command_queue/enqueue_fill_image_tests.inl"
 #include "unit_tests/command_queue/enqueue_handler_tests.inl"
 #include "unit_tests/command_queue/enqueue_kernel_event_tests.inl"
 #include "unit_tests/command_queue/enqueue_kernel_global_offset_tests.inl"

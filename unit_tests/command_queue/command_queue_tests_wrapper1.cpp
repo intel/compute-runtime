@@ -20,13 +20,13 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
+//#include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
 #include "unit_tests/command_queue/dispatch_walker_tests.inl"
 #include "unit_tests/command_queue/drm_requirements_tests.inl"
-#include "unit_tests/command_queue/enqueue_barrier_tests.inl"
-#include "unit_tests/command_queue/enqueue_copy_buffer_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_copy_buffer_rect_tests.inl"
-#include "unit_tests/command_queue/enqueue_copy_buffer_tests.inl"
+//#include "unit_tests/command_queue/enqueue_barrier_tests.inl"
+//#include "unit_tests/command_queue/enqueue_copy_buffer_event_tests.inl"
+//#include "unit_tests/command_queue/enqueue_copy_buffer_rect_tests.inl"
+//#include "unit_tests/command_queue/enqueue_copy_buffer_tests.inl"
 #include "unit_tests/command_queue/enqueue_copy_buffer_to_image_tests.inl"
 #include "unit_tests/command_queue/enqueue_copy_image_tests.inl"
 #include "unit_tests/command_queue/enqueue_copy_image_to_buffer_tests.inl"
