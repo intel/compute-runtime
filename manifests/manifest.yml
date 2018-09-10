@@ -36,5 +36,5 @@ components:
     dest_dir: wdk
     revision: 790647-1082
     type: git
-converter: M-1087
+converter: M-1088
 version: '1'
