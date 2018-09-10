@@ -20,9 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/enqueue_waitlist_tests.inl"
-#include "unit_tests/command_queue/enqueue_write_buffer_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_write_buffer_rect_tests.inl"
+//#include "unit_tests/command_queue/enqueue_waitlist_tests.inl"
+//#include "unit_tests/command_queue/enqueue_write_buffer_event_tests.inl"
+//#include "unit_tests/command_queue/enqueue_write_buffer_rect_tests.inl"
 #include "unit_tests/command_queue/enqueue_write_buffer_tests.inl"
 #include "unit_tests/command_queue/enqueue_write_image_tests.inl"
 #include "unit_tests/command_queue/finish_tests.inl"

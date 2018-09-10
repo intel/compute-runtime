@@ -21,12 +21,11 @@
  */
 
 #include "unit_tests/command_queue/enqueue_map_image_tests.inl"
-#include "unit_tests/command_queue/enqueue_marker_tests.inl"
+//#include "unit_tests/command_queue/enqueue_marker_tests.inl"
 #include "unit_tests/command_queue/enqueue_media_kernel.inl"
 #include "unit_tests/command_queue/enqueue_migrate_mem_objects_tests.inl"
 #include "unit_tests/command_queue/enqueue_read_buffer_event_tests.inl"
 #include "unit_tests/command_queue/enqueue_read_buffer_rect_tests.inl"
 #include "unit_tests/command_queue/enqueue_read_buffer_tests.inl"
 #include "unit_tests/command_queue/enqueue_read_image_tests.inl"
-
-#include "unit_tests/command_queue/enqueue_thread_tests.inl"
+//#include "unit_tests/command_queue/enqueue_thread_tests.inl"

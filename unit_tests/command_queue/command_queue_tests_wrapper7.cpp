@@ -20,13 +20,27 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-//#include "unit_tests/command_queue/get_command_queue_info_tests.inl"
-#include "unit_tests/command_queue/get_size_required_buffer_tests.inl"
-//#include "unit_tests/command_queue/get_size_required_image_tests.inl"
-//#include "unit_tests/command_queue/get_size_required_tests.inl"
-#include "unit_tests/command_queue/ioq_task_tests.inl"
-#include "unit_tests/command_queue/local_id_tests.inl"
-#include "unit_tests/command_queue/local_work_size_tests.inl"
-#include "unit_tests/command_queue/multi_dispatch_info_tests.inl"
-#include "unit_tests/command_queue/multiple_map_buffer_tests.inl"
-#include "unit_tests/command_queue/multiple_map_image_tests.inl"
+//1
+#include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
+#include "unit_tests/command_queue/enqueue_barrier_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_image_to_buffer_tests.inl"
+
+// 2
+
+
+// 3
+#include "unit_tests/command_queue/enqueue_thread_tests.inl"
+#include "unit_tests/command_queue/enqueue_marker_tests.inl"
+
+// 4
+#include "unit_tests/command_queue/enqueue_waitlist_tests.inl"
+#include "unit_tests/command_queue/enqueue_write_buffer_event_tests.inl"
+#include "unit_tests/command_queue/enqueue_write_buffer_rect_tests.inl"
+
+// 5
+#include "unit_tests/command_queue/get_command_queue_info_tests.inl"
+#include "unit_tests/command_queue/get_size_required_image_tests.inl"
+#include "unit_tests/command_queue/get_size_required_tests.inl"
+
+// 6
+#include "unit_tests/command_queue/enqueue_unmap_memobject_tests.inl"
