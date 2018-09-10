@@ -130,8 +130,8 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemory(size_t size, size_
 }
 
 GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(size_t size, void *cpuPtr) {
-    auto alignedPtr = alignDown(reinterpret_cast<char *>(cpuPtr), MemoryConstants::pageSize);
-    auto offsetInPage = reinterpret_cast<char *>(cpuPtr) - alignedPtr;
+    auto alignedPtr = alignDown(cpuPtr, MemoryConstants::pageSize);
+    auto offsetInPage = ptrDiff(cpuPtr, alignedPtr);
     auto alignedSize = alignSizeWholePage(cpuPtr, size);
 
     auto wddmAllocation = new WddmAllocation(cpuPtr, size, alignedPtr, alignedSize, nullptr, MemoryPool::System4KBPages);

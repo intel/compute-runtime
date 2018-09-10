@@ -130,6 +130,14 @@ class MemoryManager {
     }
     virtual GraphicsAllocation *allocateGraphicsMemory(size_t size, const void *ptr, bool forcePin);
 
+    GraphicsAllocation *allocateGraphicsMemoryForHostPtr(size_t size, void *ptr, bool fullRangeSvm) {
+        if (fullRangeSvm) {
+            return allocateGraphicsMemory(size, ptr);
+        } else {
+            return allocateGraphicsMemoryForNonSvmHostPtr(size, ptr);
+        }
+    }
+
     virtual GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) = 0;
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;

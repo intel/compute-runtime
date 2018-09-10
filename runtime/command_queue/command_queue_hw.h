@@ -342,10 +342,6 @@ class CommandQueueHw : public CommandQueue {
                         bool slmUsed,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
-    bool isFullRangeSvm() {
-        return this->device->getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
-    }
-
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface);

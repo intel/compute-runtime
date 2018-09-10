@@ -737,12 +737,7 @@ bool CommandQueueHw<GfxFamily>::createAllocationForHostSurface(HostPtrSurface &s
     auto memoryManager = device->getCommandStreamReceiver().getMemoryManager();
     GraphicsAllocation *allocation = nullptr;
 
-    if (!isFullRangeSvm()) {
-        allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer());
-    } else {
-        allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), surface.getMemoryPointer());
-    }
-
+    allocation = memoryManager->allocateGraphicsMemoryForHostPtr(surface.getSurfaceSize(), surface.getMemoryPointer(), device->isFullRangeSvm());
     if (allocation == nullptr && surface.peekIsPtrCopyAllowed()) {
         // Try with no host pointer allocation and copy
         allocation = memoryManager->allocateGraphicsMemory(surface.getSurfaceSize(), MemoryConstants::pageSize, false, false);

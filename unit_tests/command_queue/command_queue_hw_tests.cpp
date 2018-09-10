@@ -1048,7 +1048,7 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, true);
 
-    if (mockCmdQ->isFullRangeSvm()) {
+    if (device->isFullRangeSvm()) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));
@@ -1089,7 +1089,7 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
     size_t size = sizeof(memory);
     HostPtrSurface surface(const_cast<char *>(memory), size, false);
 
-    if (mockCmdQ->isFullRangeSvm()) {
+    if (device->isFullRangeSvm()) {
         EXPECT_CALL(*gmockMemoryManager, populateOsHandles(::testing::_))
             .Times(1)
             .WillOnce(::testing::Return(MemoryManager::AllocationStatus::InvalidHostPointer));

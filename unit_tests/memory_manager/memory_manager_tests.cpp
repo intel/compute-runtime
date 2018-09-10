@@ -1319,6 +1319,28 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMe
     memoryManager.freeGraphicsMemory(allocation);
 }
 
+TEST(OsAgnosticMemoryManager, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
+    OsAgnosticMemoryManager memoryManager;
+    auto hostPtr = reinterpret_cast<void *>(0x5001);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, false);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(0u, allocation->fragmentsStorage.fragmentCount);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
+    OsAgnosticMemoryManager memoryManager;
+    auto hostPtr = reinterpret_cast<void *>(0x5001);
+
+    auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, true);
+    EXPECT_NE(nullptr, allocation);
+    EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
+
+    memoryManager.freeGraphicsMemory(allocation);
+}
+
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {
     Gmm *gmm = new Gmm(nullptr, 65536, false);
     EXPECT_NE(nullptr, gmm);

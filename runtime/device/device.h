@@ -27,6 +27,7 @@
 #include "runtime/helpers/base_object.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/engine_node.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/performance_counters.h"
 #include <vector>
 
@@ -134,6 +135,9 @@ class Device : public BaseObject<_cl_device_id> {
     const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
     OsContext *getOsContext() const { return osContext; }
     uint32_t getDeviceIndex();
+    bool isFullRangeSvm() {
+        return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
+    }
 
   protected:
     Device() = delete;
