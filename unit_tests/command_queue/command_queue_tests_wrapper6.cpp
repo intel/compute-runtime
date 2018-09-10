@@ -26,7 +26,7 @@
 #include "unit_tests/command_queue/enqueue_svm_mem_copy_tests.inl"
 #include "unit_tests/command_queue/enqueue_svm_mem_fill_tests.inl"
 #include "unit_tests/command_queue/enqueue_svm_tests.inl"
-#include "unit_tests/command_queue/enqueue_unmap_memobject_tests.inl"
+// #include "unit_tests/command_queue/enqueue_unmap_memobject_tests.inl"
 #include "unit_tests/command_queue/flush_tests.inl"
 #include "unit_tests/command_queue/oom_buffer_tests.inl"
 #include "unit_tests/command_queue/oom_image_tests.inl"

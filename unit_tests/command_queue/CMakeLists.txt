@@ -31,6 +31,7 @@ set(IGDRCL_SRCS_tests_command_queue
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_wrapper4.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_wrapper5.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_wrapper6.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_wrapper7.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/drm_requirements_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_api_tests_mt_with_asyncGPU.cpp
