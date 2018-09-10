@@ -161,7 +161,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
-    size_t extendedSize = sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)) +
+    size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() +
                           (numEventsOnWaitlist * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
 
     EXPECT_EQ(sizeWithEnabled, extendedSize);
