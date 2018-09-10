@@ -34,12 +34,12 @@
 
 using namespace OCLRT;
 
-struct OOMSetting2 {
+struct OOMSetting {
     bool oomCS;
     bool oomISH;
 };
 
-static OOMSetting2 oomSettings2[] = {
+static OOMSetting oomSettings[] = {
     {true, false},
     {false, true},
     {true, true}};
@@ -49,7 +49,7 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public CommandQueueFixture,
                                    public SimpleArgKernelFixture,
                                    public HelloWorldKernelFixture,
-                                   public ::testing::TestWithParam<OOMSetting2> {
+                                   public ::testing::TestWithParam<OOMSetting> {
 
     using CommandQueueFixture::SetUp;
     using HelloWorldKernelFixture::SetUp;
@@ -289,4 +289,4 @@ HWTEST_P(OOMCommandQueueBufferTest, enqueueKernelSimpleArg) {
 INSTANTIATE_TEST_CASE_P(
     OOM,
     OOMCommandQueueBufferTest,
-    testing::ValuesIn(oomSettings2));
+    testing::ValuesIn(oomSettings));
