@@ -599,9 +599,10 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
 void CommandQueue::obtainNewTimestampPacketNode() {
     auto allocator = device->getMemoryManager()->getTimestampPacketAllocator();
 
-    if (timestampPacketNode) {
-        allocator->returnTag(timestampPacketNode);
-    }
+    auto oldNode = timestampPacketNode;
     timestampPacketNode = allocator->getTag();
+    if (oldNode) {
+        allocator->returnTag(oldNode);
+    }
 }
 } // namespace OCLRT

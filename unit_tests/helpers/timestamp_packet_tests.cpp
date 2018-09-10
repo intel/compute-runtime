@@ -46,6 +46,7 @@ struct TimestampPacketTests : public ::testing::Test {
     class MockTagAllocator : public TagAllocator<TagType> {
       public:
         using BaseClass = TagAllocator<TagType>;
+        using BaseClass::freeTags;
         using BaseClass::usedTags;
         using NodeType = typename BaseClass::NodeType;
 
@@ -478,4 +479,26 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     }
     EXPECT_EQ(1u, walkersFound);
     EXPECT_EQ(2u, semaphoresFound); // total number of semaphores found in cmdList
+}
+
+TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBeforeReleasing) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    auto mockMemoryManager = new MockMemoryManager();
+    device->injectMemoryManager(mockMemoryManager);
+    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
+    mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
+
+    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
+    cmdQ.obtainNewTimestampPacketNode();
+    auto firstNode = cmdQ.timestampPacketNode;
+    EXPECT_TRUE(mockTagAllocator->freeTags.peekIsEmpty());
+
+    // mark as ready to release
+    size_t dataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
+    memset(reinterpret_cast<void *>(firstNode->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
+
+    cmdQ.obtainNewTimestampPacketNode();
+    auto secondNode = cmdQ.timestampPacketNode;
+    EXPECT_FALSE(mockTagAllocator->freeTags.peekIsEmpty()); // new pool allocated for secondNode
+    EXPECT_NE(firstNode, secondNode);
 }

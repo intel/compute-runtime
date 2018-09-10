@@ -31,6 +31,8 @@ namespace OCLRT {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
+    using CommandQueue::obtainNewTimestampPacketNode;
+    using CommandQueue::timestampPacketNode;
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
