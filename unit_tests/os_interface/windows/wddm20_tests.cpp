@@ -412,7 +412,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    WddmMemoryManager mm(false, wddm);
+    WddmMemoryManager mm(false, false, wddm);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
@@ -449,7 +449,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     auto status = setSizesFcn(gmm->gmmResourceInfo.get(), 1u, 1024u, 1u);
     EXPECT_EQ(0u, status);
 
-    WddmMemoryManager mm(false, wddm);
+    WddmMemoryManager mm(false, false, wddm);
 
     auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, false);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;

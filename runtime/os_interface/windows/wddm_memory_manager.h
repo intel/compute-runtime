@@ -43,7 +43,7 @@ class WddmMemoryManager : public MemoryManager {
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
     ~WddmMemoryManager();
-    WddmMemoryManager(bool enable64kbPages, Wddm *wddm);
+    WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm);
 
     WddmMemoryManager(const WddmMemoryManager &) = delete;
     WddmMemoryManager &operator=(const WddmMemoryManager &) = delete;
