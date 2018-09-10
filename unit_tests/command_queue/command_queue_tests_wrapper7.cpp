@@ -20,12 +20,20 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-//#include "unit_tests/command_queue/enqueue_map_image_tests.inl"
-#include "unit_tests/command_queue/enqueue_marker_tests.inl"
-#include "unit_tests/command_queue/enqueue_media_kernel.inl"
-#include "unit_tests/command_queue/enqueue_migrate_mem_objects_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_rect_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_buffer_tests.inl"
-#include "unit_tests/command_queue/enqueue_read_image_tests.inl"
-#include "unit_tests/command_queue/enqueue_thread_tests.inl"
+// 1
+ #include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
+ #include "unit_tests/command_queue/enqueue_barrier_tests.inl"
+ #include "unit_tests/command_queue/enqueue_copy_buffer_event_tests.inl"
+ #include "unit_tests/command_queue/enqueue_copy_buffer_rect_tests.inl"
+ #include "unit_tests/command_queue/enqueue_copy_buffer_tests.inl"
+
+// 2
+#include "unit_tests/command_queue/enqueue_fill_buffer_negative_tests.inl"
+#include "unit_tests/command_queue/enqueue_fill_image_tests.inl"
+
+// 3
+#include "unit_tests/command_queue/enqueue_map_image_tests.inl"
+
+// 4
+#include "unit_tests/command_queue/enqueue_waitlist_tests.inl"
+#include "unit_tests/command_queue/enqueue_write_buffer_event_tests.inl"
