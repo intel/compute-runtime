@@ -20,13 +20,9 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/enqueue_fill_buffer_tests.inl"
-#include "unit_tests/command_queue/enqueue_handler_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_global_offset_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_local_work_size_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_ioq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_ooq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_walker_ioq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_walker_ooq_tests.inl"
-#include "unit_tests/command_queue/enqueue_map_buffer_tests.inl"
+#include "unit_tests/command_queue/get_command_queue_info_tests.inl"
+#include "unit_tests/command_queue/local_work_size_tests.inl"
+#include "unit_tests/command_queue/enqueue_svm_mem_fill_tests.inl"
+#include "unit_tests/command_queue/enqueue_svm_tests.inl"
+#include "unit_tests/command_queue/enqueue_waitlist_tests.inl"
+#include "unit_tests/command_queue/enqueue_write_buffer_event_tests.inl"

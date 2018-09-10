@@ -20,13 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/get_command_queue_info_tests.inl"
 #include "unit_tests/command_queue/get_size_required_buffer_tests.inl"
-#include "unit_tests/command_queue/get_size_required_image_tests.inl"
-#include "unit_tests/command_queue/get_size_required_tests.inl"
-#include "unit_tests/command_queue/ioq_task_tests.inl"
 #include "unit_tests/command_queue/local_id_tests.inl"
-#include "unit_tests/command_queue/local_work_size_tests.inl"
 #include "unit_tests/command_queue/multi_dispatch_info_tests.inl"
 #include "unit_tests/command_queue/multiple_map_buffer_tests.inl"
-#include "unit_tests/command_queue/multiple_map_image_tests.inl"

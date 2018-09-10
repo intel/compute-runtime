@@ -20,13 +20,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "unit_tests/command_queue/enqueue_fill_buffer_tests.inl"
-#include "unit_tests/command_queue/enqueue_handler_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_event_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_global_offset_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_local_work_size_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_ioq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_ooq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_walker_ioq_tests.inl"
-#include "unit_tests/command_queue/enqueue_kernel_two_walker_ooq_tests.inl"
-#include "unit_tests/command_queue/enqueue_map_buffer_tests.inl"
+#include "unit_tests/command_queue/command_queue_flush_waitlist_tests.inl"
+#include "unit_tests/command_queue/enqueue_barrier_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_event_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_rect_tests.inl"
+#include "unit_tests/command_queue/enqueue_copy_buffer_tests.inl"
+#include "unit_tests/command_queue/enqueue_fill_buffer_negative_tests.inl"
+#include "unit_tests/command_queue/enqueue_fill_image_tests.inl"
+#include "unit_tests/command_queue/enqueue_map_image_tests.inl"
