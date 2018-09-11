@@ -23,9 +23,10 @@
 #pragma once
 #include "runtime/helpers/basic_math.h"
 
-#include <functional>
-#include <atomic>
 #include <array>
+#include <atomic>
+#include <cinttypes>
+#include <functional>
 #include <memory>
 #include <vector>
 
