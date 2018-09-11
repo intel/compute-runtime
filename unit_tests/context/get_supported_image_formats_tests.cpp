@@ -146,12 +146,12 @@ TEST_P(GetSupportedImageFormatsTest, retrieveImageFormatsSRGB) {
 }
 
 TEST(ImageFormats, isDepthFormat) {
-    for (size_t i = 0; i < numReadOnlySurfaceFormats; i++) {
-        EXPECT_FALSE(Image::isDepthFormat(readOnlySurfaceFormats[i].OCLImageFormat));
+    for (auto &format : SurfaceFormats::readOnly()) {
+        EXPECT_FALSE(Image::isDepthFormat(format.OCLImageFormat));
     }
 
-    for (size_t i = 0; i < numReadOnlyDepthSurfaceFormats; i++) {
-        EXPECT_TRUE(Image::isDepthFormat(readOnlyDepthSurfaceFormats[i].OCLImageFormat));
+    for (auto &format : SurfaceFormats::readOnlyDepth()) {
+        EXPECT_TRUE(Image::isDepthFormat(format.OCLImageFormat));
     }
 }
 
@@ -274,17 +274,17 @@ TEST_P(NV12ExtensionSupportedImageFormatsTest, givenNV12ExtensionWhenQueriedForI
         nullptr,
         &numImageFormats);
 
-    size_t expectedNumReadOnlyFormats = numReadOnlySurfaceFormats;
+    size_t expectedNumReadOnlyFormats = SurfaceFormats::readOnly().size();
     if (Image::isImage2dOr2dArray(imageFormats) && imageFormatsFlags == CL_MEM_READ_ONLY) {
-        expectedNumReadOnlyFormats += numReadOnlyDepthSurfaceFormats;
+        expectedNumReadOnlyFormats += SurfaceFormats::readOnlyDepth().size();
     }
 
     if (Image::isImage2d(imageFormats)) {
         if (imageFormatsFlags == CL_MEM_READ_ONLY) {
-            EXPECT_EQ(expectedNumReadOnlyFormats + numPlanarYuvSurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(expectedNumReadOnlyFormats + SurfaceFormats::planarYuv().size(), static_cast<size_t>(numImageFormats));
         }
         if (imageFormatsFlags == CL_MEM_NO_ACCESS_INTEL) {
-            EXPECT_EQ(expectedNumReadOnlyFormats + numPlanarYuvSurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(expectedNumReadOnlyFormats + SurfaceFormats::planarYuv().size(), static_cast<size_t>(numImageFormats));
         }
     } else {
         if (imageFormatsFlags == CL_MEM_READ_ONLY) {
@@ -344,17 +344,19 @@ TEST_P(NV12ExtensionUnsupportedImageFormatsTest, givenNV12ExtensionWhenQueriedFo
 
     if (imageFormatsFlags == CL_MEM_WRITE_ONLY) {
         if (!Image::isImage2dOr2dArray(imageFormats)) {
-            EXPECT_EQ(numWriteOnlySurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(SurfaceFormats::writeOnly().size(), static_cast<size_t>(numImageFormats));
         } else {
-            EXPECT_EQ(numWriteOnlySurfaceFormats + numReadWriteDepthSurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(SurfaceFormats::writeOnly().size() + SurfaceFormats::readWriteDepth().size(),
+                      static_cast<size_t>(numImageFormats));
         }
     }
 
     if (imageFormatsFlags == CL_MEM_READ_WRITE) {
         if (!Image::isImage2dOr2dArray(imageFormats)) {
-            EXPECT_EQ(numReadWriteSurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(SurfaceFormats::readWrite().size(), static_cast<size_t>(numImageFormats));
         } else {
-            EXPECT_EQ(numReadWriteSurfaceFormats + numReadWriteDepthSurfaceFormats, static_cast<size_t>(numImageFormats));
+            EXPECT_EQ(SurfaceFormats::readWrite().size() + SurfaceFormats::readWriteDepth().size(),
+                      static_cast<size_t>(numImageFormats));
         }
     }
 

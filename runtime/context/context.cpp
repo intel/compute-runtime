@@ -253,85 +253,51 @@ cl_int Context::getSupportedImageFormats(
     cl_uint numEntries,
     cl_image_format *imageFormats,
     cl_uint *numImageFormatsReturned) {
-
     size_t numImageFormats = 0;
-    size_t numDepthFormats = 0;
-    const SurfaceFormatInfo *baseSurfaceFormats = nullptr;
-    const SurfaceFormatInfo *depthFormats = nullptr;
-
     const bool nv12ExtensionEnabled = device->getDeviceInfo().nv12Extension;
     const bool packedYuvExtensionEnabled = device->getDeviceInfo().packedYuvExtension;
-    bool appendPlanarYUVSurfaces = false;
-    bool appendPackedYUVSurfaces = false;
-    bool appendDepthSurfaces = true;
+
+    auto appendImageFormats = [&](ArrayRef<const SurfaceFormatInfo> formats) {
+        if (imageFormats) {
+            size_t offset = numImageFormats;
+            for (size_t i = 0; i < formats.size() && offset < numEntries; ++i) {
+                imageFormats[offset++] = formats[i].OCLImageFormat;
+            }
+        }
+        numImageFormats += formats.size();
+    };
 
     if (flags & CL_MEM_READ_ONLY) {
-        numImageFormats = numReadOnlySurfaceFormats;
-        baseSurfaceFormats = readOnlySurfaceFormats;
-        depthFormats = readOnlyDepthSurfaceFormats;
-        numDepthFormats = numReadOnlyDepthSurfaceFormats;
-        appendPlanarYUVSurfaces = true;
-        appendPackedYUVSurfaces = true;
+        appendImageFormats(SurfaceFormats::readOnly());
+        if (Image::isImage2d(imageType) && nv12ExtensionEnabled) {
+            appendImageFormats(SurfaceFormats::planarYuv());
+        }
+        if (Image::isImage2dOr2dArray(imageType)) {
+            appendImageFormats(SurfaceFormats::readOnlyDepth());
+        }
+        if (Image::isImage2d(imageType) && packedYuvExtensionEnabled) {
+            appendImageFormats(SurfaceFormats::packedYuv());
+        }
     } else if (flags & CL_MEM_WRITE_ONLY) {
-        numImageFormats = numWriteOnlySurfaceFormats;
-        baseSurfaceFormats = writeOnlySurfaceFormats;
-        depthFormats = readWriteDepthSurfaceFormats;
-        numDepthFormats = numReadWriteDepthSurfaceFormats;
+        appendImageFormats(SurfaceFormats::writeOnly());
+        if (Image::isImage2dOr2dArray(imageType)) {
+            appendImageFormats(SurfaceFormats::readWriteDepth());
+        }
     } else if (nv12ExtensionEnabled && (flags & CL_MEM_NO_ACCESS_INTEL)) {
-        numImageFormats = numReadOnlySurfaceFormats;
-        baseSurfaceFormats = readOnlySurfaceFormats;
-        appendPlanarYUVSurfaces = true;
+        appendImageFormats(SurfaceFormats::readOnly());
+        if (Image::isImage2d(imageType)) {
+            appendImageFormats(SurfaceFormats::planarYuv());
+        }
     } else {
-        numImageFormats = numReadWriteSurfaceFormats;
-        baseSurfaceFormats = readWriteSurfaceFormats;
-        depthFormats = readWriteDepthSurfaceFormats;
-        numDepthFormats = numReadWriteDepthSurfaceFormats;
-    }
-
-    if (!Image::isImage2d(imageType)) {
-        appendPlanarYUVSurfaces = false;
-        appendPackedYUVSurfaces = false;
-    }
-    if (!Image::isImage2dOr2dArray(imageType)) {
-        appendDepthSurfaces = false;
-    }
-
-    if (imageFormats) {
-        cl_uint entry = 0;
-        auto appendFormats = [&](const SurfaceFormatInfo *srcSurfaceFormats, size_t srcFormatsCount) {
-            for (size_t srcFormatPos = 0; srcFormatPos < srcFormatsCount && entry < numEntries; ++srcFormatPos, ++entry) {
-                imageFormats[entry] = srcSurfaceFormats[srcFormatPos].OCLImageFormat;
-            }
-        };
-
-        appendFormats(baseSurfaceFormats, numImageFormats);
-
-        if (nv12ExtensionEnabled && appendPlanarYUVSurfaces) {
-            appendFormats(planarYuvSurfaceFormats, numPlanarYuvSurfaceFormats);
-        }
-
-        if (appendDepthSurfaces) {
-            appendFormats(depthFormats, numDepthFormats);
-        }
-
-        if (packedYuvExtensionEnabled && appendPackedYUVSurfaces) {
-            appendFormats(packedYuvSurfaceFormats, numPackedYuvSurfaceFormats);
+        appendImageFormats(SurfaceFormats::readWrite());
+        if (Image::isImage2dOr2dArray(imageType)) {
+            appendImageFormats(SurfaceFormats::readWriteDepth());
         }
     }
-
     if (numImageFormatsReturned) {
-        if (nv12ExtensionEnabled && appendPlanarYUVSurfaces) {
-            numImageFormats += numPlanarYuvSurfaceFormats;
-        }
-        if (packedYuvExtensionEnabled && appendPackedYUVSurfaces) {
-            numImageFormats += numPackedYuvSurfaceFormats;
-        }
-        if (appendDepthSurfaces) {
-            numImageFormats += numDepthFormats;
-        }
-
         *numImageFormatsReturned = static_cast<cl_uint>(numImageFormats);
     }
     return CL_SUCCESS;
 }
+
 } // namespace OCLRT

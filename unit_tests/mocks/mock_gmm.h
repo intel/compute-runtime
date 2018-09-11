@@ -29,6 +29,7 @@ class MockGmm : public Gmm {
         imgInfo.baseMipLevel = baseMipLevel;
         imgInfo.imgDesc = &imgDesc;
         if (!surfaceFormat) {
+            ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
             MockGmmParams::mockSurfaceFormat = readWriteSurfaceFormats[0]; // any valid format
             imgInfo.surfaceFormat = &MockGmmParams::mockSurfaceFormat;
         } else {

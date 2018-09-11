@@ -14,6 +14,7 @@
 #endif
 
 #include "runtime/gmm_helper/gmm_lib.h"
+#include "runtime/utilities/arrayref.h"
 
 namespace OCLRT {
 enum GFX3DSTATE_SURFACEFORMAT : unsigned short {
@@ -227,26 +228,29 @@ struct McsSurfaceInfo {
     uint32_t multisampleCount;
 };
 
-extern const size_t numReadOnlySurfaceFormats;
-extern const size_t numWriteOnlySurfaceFormats;
-extern const size_t numReadWriteSurfaceFormats;
-
-extern const SurfaceFormatInfo readOnlySurfaceFormats[];
-extern const SurfaceFormatInfo writeOnlySurfaceFormats[];
-extern const SurfaceFormatInfo readWriteSurfaceFormats[];
-extern const SurfaceFormatInfo noAccessSurfaceFormats[];
-
+class SurfaceFormats {
+  private:
+    static const SurfaceFormatInfo readOnlySurfaceFormats[];
+    static const SurfaceFormatInfo writeOnlySurfaceFormats[];
+    static const SurfaceFormatInfo readWriteSurfaceFormats[];
+    static const SurfaceFormatInfo readOnlyDepthSurfaceFormats[];
+    static const SurfaceFormatInfo readWriteDepthSurfaceFormats[];
 #ifdef SUPPORT_YUV
-extern const size_t numPackedYuvSurfaceFormats;
-extern const size_t numPlanarYuvSurfaceFormats;
-extern const SurfaceFormatInfo packedYuvSurfaceFormats[];
-extern const SurfaceFormatInfo planarYuvSurfaceFormats[];
+    static const SurfaceFormatInfo packedYuvSurfaceFormats[];
+    static const SurfaceFormatInfo planarYuvSurfaceFormats[];
 #endif
 
-extern const size_t numReadOnlyDepthSurfaceFormats;
-extern const size_t numReadWriteDepthSurfaceFormats;
+  public:
+    static ArrayRef<const SurfaceFormatInfo> readOnly() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> writeOnly() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> readWrite() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> packedYuv() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> planarYuv() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> readOnlyDepth() noexcept;
+    static ArrayRef<const SurfaceFormatInfo> readWriteDepth() noexcept;
 
-extern const SurfaceFormatInfo readOnlyDepthSurfaceFormats[];
-extern const SurfaceFormatInfo readWriteDepthSurfaceFormats[];
+    static ArrayRef<const SurfaceFormatInfo> surfaceFormats(cl_mem_flags flags) noexcept;
+    static ArrayRef<const SurfaceFormatInfo> surfaceFormats(cl_mem_flags flags, const cl_image_format *imageFormat) noexcept;
+};
 
 } // namespace OCLRT

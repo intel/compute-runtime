@@ -76,26 +76,26 @@ void MockGmmResourceInfo::computeRowPitch() {
 }
 
 void MockGmmResourceInfo::setSurfaceFormat() {
-    auto iterate = [&](const SurfaceFormatInfo *formats, const size_t numFormats) {
+    auto iterate = [&](ArrayRef<const SurfaceFormatInfo> formats) {
         if (!surfaceFormatInfo) {
-            for (size_t i = 0; i < numFormats; i++) {
-                if (mockResourceCreateParams.Format == formats[i].GMMSurfaceFormat) {
-                    surfaceFormatInfo = &formats[i];
+            for (auto &format : formats) {
+                if (mockResourceCreateParams.Format == format.GMMSurfaceFormat) {
+                    surfaceFormatInfo = &format;
                     break;
                 }
             }
         }
     };
 
-    iterate(readOnlySurfaceFormats, numReadOnlySurfaceFormats);
-    iterate(writeOnlySurfaceFormats, numWriteOnlySurfaceFormats);
-    iterate(readWriteSurfaceFormats, numReadWriteSurfaceFormats);
+    iterate(SurfaceFormats::readOnly());
+    iterate(SurfaceFormats::writeOnly());
+    iterate(SurfaceFormats::readWrite());
 
-    iterate(packedYuvSurfaceFormats, numPackedYuvSurfaceFormats);
-    iterate(planarYuvSurfaceFormats, numPlanarYuvSurfaceFormats);
+    iterate(SurfaceFormats::packedYuv());
+    iterate(SurfaceFormats::planarYuv());
 
-    iterate(readOnlyDepthSurfaceFormats, numReadOnlyDepthSurfaceFormats);
-    iterate(readWriteDepthSurfaceFormats, numReadWriteDepthSurfaceFormats);
+    iterate(SurfaceFormats::readOnlyDepth());
+    iterate(SurfaceFormats::readWriteDepth());
 
     ASSERT_NE(nullptr, surfaceFormatInfo);
 }

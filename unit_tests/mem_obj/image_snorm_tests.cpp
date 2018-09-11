@@ -14,11 +14,10 @@ using namespace OCLRT;
 
 const cl_mem_flags flagsForTests[] = {CL_MEM_READ_ONLY, CL_MEM_WRITE_ONLY, CL_MEM_READ_WRITE};
 
-const std::tuple<const SurfaceFormatInfo *, const size_t *> paramsForSnormTests[] = {
-    std::make_tuple(readOnlySurfaceFormats, &numReadOnlySurfaceFormats),
-    std::make_tuple(writeOnlySurfaceFormats, &numWriteOnlySurfaceFormats),
-    std::make_tuple(readWriteSurfaceFormats, &numReadWriteSurfaceFormats),
-};
+const ArrayRef<const SurfaceFormatInfo> paramsForSnormTests[] = {
+    SurfaceFormats::readOnly(),
+    SurfaceFormats::writeOnly(),
+    SurfaceFormats::readWrite()};
 
 const std::array<SurfaceFormatInfo, 6> referenceSnormSurfaceFormats = {{
     // clang-format off
@@ -45,14 +44,13 @@ TEST_P(SnormSurfaceFormatAccessFlagsTests, givenSnormFormatWhenGetSurfaceFormatF
     }
 }
 
-using SnormSurfaceFormatTests = ::testing::TestWithParam<std::tuple<const SurfaceFormatInfo *, const size_t *>>;
+using SnormSurfaceFormatTests = ::testing::TestWithParam<ArrayRef<const SurfaceFormatInfo>>;
 
 TEST_P(SnormSurfaceFormatTests, givenSnormOclFormatWhenCheckingrReadOnlySurfaceFormatsThenFindExactCount) {
-    const SurfaceFormatInfo *formatsTable = std::get<0>(GetParam());
-    size_t formatsTableCount = *std::get<1>(GetParam());
+    ArrayRef<const SurfaceFormatInfo> formatsTable = GetParam();
 
     size_t snormFormatsFound = 0;
-    for (size_t i = 0; i < formatsTableCount; i++) {
+    for (size_t i = 0; i < formatsTable.size(); ++i) {
         auto oclFormat = formatsTable[i].OCLImageFormat;
         if (CL_SNORM_INT8 == oclFormat.image_channel_data_type || CL_SNORM_INT16 == oclFormat.image_channel_data_type) {
             EXPECT_TRUE(oclFormat.image_channel_order == CL_R || oclFormat.image_channel_order == CL_RG || oclFormat.image_channel_order == CL_RGBA);

@@ -27,6 +27,7 @@ class ImageRedescribeTest : public testing::TestWithParam<std::tuple<size_t, uin
 
         std::tie(indexImageFormat, ImageType) = this->GetParam();
 
+        ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
         auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
         imageFormat = surfaceFormatInfo.OCLImageFormat;
 
@@ -144,6 +145,7 @@ TEST_P(ImageRedescribeTest, givenImageWithMaxSizesWhenItIsRedescribedThenNewImag
     auto memoryManager = (OsAgnosticMemoryManager *)context.getMemoryManager();
     memoryManager->turnOnFakingBigAllocations();
 
+    ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
     auto &surfaceFormatInfo = readWriteSurfaceFormats[indexImageFormat];
     imageFormat = surfaceFormatInfo.OCLImageFormat;
 
@@ -208,10 +210,10 @@ static uint32_t ImageType[] = {
     CL_MEM_OBJECT_IMAGE1D_ARRAY,
     CL_MEM_OBJECT_IMAGE2D_ARRAY};
 
-decltype(numReadWriteSurfaceFormats) readWriteSurfaceFormatsStart = 0u;
+decltype(SurfaceFormats::readWrite().size()) readWriteSurfaceFormatsStart = 0u;
 INSTANTIATE_TEST_CASE_P(
     Redescribe,
     ImageRedescribeTest,
     testing::Combine(
-        ::testing::Range(readWriteSurfaceFormatsStart, numReadWriteSurfaceFormats),
+        ::testing::Range(readWriteSurfaceFormatsStart, SurfaceFormats::readWrite().size()),
         ::testing::ValuesIn(ImageType)));

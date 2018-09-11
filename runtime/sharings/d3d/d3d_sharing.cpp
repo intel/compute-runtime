@@ -83,26 +83,11 @@ void D3DSharing<D3D>::updateImgInfo(Gmm *gmm, ImageInfo &imgInfo, cl_image_desc 
 
 template <typename D3D>
 const SurfaceFormatInfo *D3DSharing<D3D>::findSurfaceFormatInfo(GMM_RESOURCE_FORMAT_ENUM gmmFormat, cl_mem_flags flags) {
-    const SurfaceFormatInfo *surfaceFormatTable = nullptr;
-    const SurfaceFormatInfo *surfaceFormatInfo = nullptr;
-    size_t numSurfaceFormats = 0;
-
-    if ((flags & CL_MEM_READ_ONLY) == CL_MEM_READ_ONLY) {
-        surfaceFormatTable = readOnlySurfaceFormats;
-        numSurfaceFormats = numReadOnlySurfaceFormats;
-    } else if ((flags & CL_MEM_WRITE_ONLY) == CL_MEM_WRITE_ONLY) {
-        surfaceFormatTable = writeOnlySurfaceFormats;
-        numSurfaceFormats = numWriteOnlySurfaceFormats;
-    } else {
-        surfaceFormatTable = readWriteSurfaceFormats;
-        numSurfaceFormats = numReadWriteSurfaceFormats;
-    }
-
-    for (size_t i = 0; i < numSurfaceFormats; i++) {
-        if (gmmFormat == surfaceFormatTable[i].GMMSurfaceFormat) {
-            surfaceFormatInfo = &surfaceFormatTable[i];
-            break;
+    ArrayRef<const SurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags);
+    for (auto &format : formats) {
+        if (gmmFormat == format.GMMSurfaceFormat) {
+            return &format;
         }
     }
-    return surfaceFormatInfo;
+    return nullptr;
 }

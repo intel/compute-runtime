@@ -776,6 +776,8 @@ Image *Image::redescribeFillImage() {
     uint32_t redescribeTableCol = this->surfaceFormatInfo.NumChannels / 2;
     uint32_t redescribeTableRow = this->surfaceFormatInfo.PerChannelSizeInBytes / 2;
 
+    ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+
     uint32_t surfaceFormatIdx = redescribeTable[redescribeTableRow][redescribeTableCol];
     surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
 
@@ -822,6 +824,8 @@ Image *Image::redescribe() {
     DEBUG_BREAK_IF(exponent >= 32);
 
     uint32_t surfaceFormatIdx = redescribeTableBytes[exponent % 5];
+    ArrayRef<const SurfaceFormatInfo> readWriteSurfaceFormats = SurfaceFormats::readWrite();
+
     surfaceFormat = &readWriteSurfaceFormats[surfaceFormatIdx];
 
     imageFormatNew.image_channel_order = surfaceFormat->OCLImageFormat.image_channel_order;
@@ -925,52 +929,17 @@ const SurfaceFormatInfo *Image::getSurfaceFormatFromTable(cl_mem_flags flags, co
         DEBUG_BREAK_IF("Invalid format");
         return nullptr;
     }
-    const SurfaceFormatInfo *surfaceFormatTable = nullptr;
-    size_t numSurfaceFormats = 0;
-    bool isDepthFormat = Image::isDepthFormat(*imageFormat);
 
-    if (IsNV12Image(imageFormat)) {
-#if SUPPORT_YUV
-        surfaceFormatTable = planarYuvSurfaceFormats;
-        numSurfaceFormats = numPlanarYuvSurfaceFormats;
-#else
-        return nullptr;
-#endif
-    } else if (IsPackedYuvImage(imageFormat)) {
-#if SUPPORT_YUV
-        surfaceFormatTable = packedYuvSurfaceFormats;
-        numSurfaceFormats = numPackedYuvSurfaceFormats;
-#else
-        return nullptr;
-#endif
-    } else if ((flags & CL_MEM_READ_ONLY) == CL_MEM_READ_ONLY) {
-        surfaceFormatTable = isDepthFormat ? readOnlyDepthSurfaceFormats : readOnlySurfaceFormats;
-        numSurfaceFormats = isDepthFormat ? numReadOnlyDepthSurfaceFormats : numReadOnlySurfaceFormats;
-    } else if ((flags & CL_MEM_WRITE_ONLY) == CL_MEM_WRITE_ONLY) {
-        surfaceFormatTable = isDepthFormat ? readWriteDepthSurfaceFormats : writeOnlySurfaceFormats;
-        numSurfaceFormats = isDepthFormat ? numReadWriteDepthSurfaceFormats : numWriteOnlySurfaceFormats;
-    } else {
-        surfaceFormatTable = isDepthFormat ? readWriteDepthSurfaceFormats : readWriteSurfaceFormats;
-        numSurfaceFormats = isDepthFormat ? numReadWriteDepthSurfaceFormats : numReadWriteSurfaceFormats;
-    }
+    ArrayRef<const SurfaceFormatInfo> formats = SurfaceFormats::surfaceFormats(flags, imageFormat);
 
-    // Find a matching surface format
-    size_t indexSurfaceFormat = 0;
-    while (indexSurfaceFormat < numSurfaceFormats) {
-        const auto &surfaceFormat = surfaceFormatTable[indexSurfaceFormat].OCLImageFormat;
-        if (surfaceFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
-            surfaceFormat.image_channel_order == imageFormat->image_channel_order) {
-            break;
+    for (auto &format : formats) {
+        if (format.OCLImageFormat.image_channel_data_type == imageFormat->image_channel_data_type &&
+            format.OCLImageFormat.image_channel_order == imageFormat->image_channel_order) {
+            return &format;
         }
-        ++indexSurfaceFormat;
     }
-
-    if (indexSurfaceFormat >= numSurfaceFormats) {
-        DEBUG_BREAK_IF("Invalid format");
-        return nullptr;
-    }
-
-    return &surfaceFormatTable[indexSurfaceFormat];
+    DEBUG_BREAK_IF("Invalid format");
+    return nullptr;
 }
 
 bool Image::isImage2d(cl_mem_object_type imageType) {
