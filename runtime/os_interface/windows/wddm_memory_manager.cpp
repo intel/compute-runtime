@@ -465,10 +465,9 @@ uint64_t WddmMemoryManager::getInternalHeapBaseAddress() {
 }
 
 bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+    DEBUG_BREAK_IF(allocationsForResidency == nullptr);
 
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->residencyAllocations;
-
-    size_t residencyCount = residencyAllocations.size();
+    size_t residencyCount = allocationsForResidency->size();
     std::unique_ptr<D3DKMT_HANDLE[]> handlesForResidency(new D3DKMT_HANDLE[residencyCount * max_fragments_count]);
 
     uint32_t totalHandlesCount = 0;
@@ -478,7 +477,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer *all
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.get()->getMonitoredFence().currentFenceValue);
 
     for (uint32_t i = 0; i < residencyCount; i++) {
-        WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(residencyAllocations[i]);
+        WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>((*allocationsForResidency)[i]);
         bool mainResidency = false;
         bool fragmentResidency[3] = {false, false, false};
 
@@ -528,7 +527,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer *all
 
     if (result == true) {
         for (uint32_t i = 0; i < residencyCount; i++) {
-            WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>(residencyAllocations[i]);
+            WddmAllocation *allocation = reinterpret_cast<WddmAllocation *>((*allocationsForResidency)[i]);
             // Update fence value not to early destroy / evict allocation
             auto currentFence = osContext.get()->getMonitoredFence().currentFenceValue;
             allocation->getResidencyData().updateCompletionData(currentFence, &osContext);
