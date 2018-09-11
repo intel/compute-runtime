@@ -443,7 +443,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, engineType, nullptr, *device.getOsContext()));
+            flushStamp->setStamp(this->flush(batchBuffer, engineType, &this->getResidencyAllocations(), *device.getOsContext()));
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(nullptr);
         } else {

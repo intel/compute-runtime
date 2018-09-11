@@ -89,6 +89,8 @@ class CommandStreamReceiver {
     virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) { return nullptr; }
     void setMemoryManager(MemoryManager *mm);
 
+    ResidencyContainer &getResidencyAllocations();
+
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 
     GraphicsAllocation *createAllocationAndHandleResidency(const void *address, size_t size, bool addToDefferFreeList = true);

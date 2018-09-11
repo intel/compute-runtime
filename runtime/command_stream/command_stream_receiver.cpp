@@ -264,6 +264,10 @@ void CommandStreamReceiver::initProgrammingFlags() {
     latestSentStatelessMocsConfig = 0;
 }
 
+ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
+    return this->memoryManager->getResidencyAllocations();
+}
+
 void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}
 
 GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
