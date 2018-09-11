@@ -702,7 +702,7 @@ class DrmCommandStreamEnhancedFixture
         mm = reinterpret_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
         ASSERT_NE(nullptr, mm);
         executionEnvironment->memoryManager.reset(mm);
-        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
+        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
         ASSERT_NE(nullptr, device);
         osContext = device->getOsContext();
     }

@@ -181,8 +181,8 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqueId) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
-    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(0u, device->getOsContext()->getContextId());
     EXPECT_EQ(1u, device2->getOsContext()->getContextId());
@@ -192,8 +192,8 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachOsContextHasUniqu
 TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateDeviceIndex) {
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.incRefInternal();
-    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
-    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment));
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
 
     EXPECT_EQ(0u, device->getDeviceIndex());
     EXPECT_EQ(1u, device2->getDeviceIndex());

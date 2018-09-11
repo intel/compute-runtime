@@ -98,7 +98,7 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManage
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
     executionEnvironment->incRefInternal();
-    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get()));
+    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment.get(), 0u));
     device.reset(nullptr);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
@@ -161,11 +161,11 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {
     auto executionEnvironment = new ExecutionEnvironment;
-    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+    std::unique_ptr<Device> device(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();
 
-    std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment));
+    std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 1u));
     EXPECT_EQ(&commandStreamReceiver, &device->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }

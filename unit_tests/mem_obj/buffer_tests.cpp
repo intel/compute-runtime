@@ -338,7 +338,7 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         localHwInfo = *platformDevices[0];
-        device.reset(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment()));
+        device.reset(Device::create<MockDevice>(&localHwInfo, new ExecutionEnvironment(), 0u));
         context = std::make_unique<MockContext>(device.get(), true);
     }
 

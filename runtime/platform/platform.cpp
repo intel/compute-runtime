@@ -154,8 +154,8 @@ bool Platform::initialize() {
     this->platformInfo.reset(new PlatformInfo);
 
     this->devices.resize(numDevicesReturned);
-    for (size_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
-        auto pDevice = Device::create<OCLRT::Device>(&hwInfo[deviceOrdinal], executionEnvironment);
+    for (uint32_t deviceOrdinal = 0; deviceOrdinal < numDevicesReturned; ++deviceOrdinal) {
+        auto pDevice = Device::create<OCLRT::Device>(&hwInfo[deviceOrdinal], executionEnvironment, deviceOrdinal);
         DEBUG_BREAK_IF(!pDevice);
         if (pDevice) {
             this->devices[deviceOrdinal] = pDevice;

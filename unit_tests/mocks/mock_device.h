@@ -51,7 +51,7 @@ class MockDevice : public Device {
         return this->slmWindowStartAddress;
     }
     MockDevice(const HardwareInfo &hwInfo);
-    MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
+    MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 
     DeviceInfo *getDeviceInfoToModify() {
         return &this->deviceInfo;
@@ -102,16 +102,16 @@ class MockDevice : public Device {
     }
 
     template <typename T>
-    static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment) {
+    static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo, executionEnvironment);
+        T *device = new T(*pHwInfo, executionEnvironment, deviceIndex);
         executionEnvironment->memoryManager = std::move(device->mockMemoryManager);
         return createDeviceInternals(pHwInfo, device);
     }
 
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo) {
-        return createWithExecutionEnvironment<T>(pHwInfo, new ExecutionEnvironment());
+        return createWithExecutionEnvironment<T>(pHwInfo, new ExecutionEnvironment(), 0u);
     }
 
     void allocatePreemptionAllocationIfNotPresent() {
@@ -135,7 +135,7 @@ class MockDevice : public Device {
 
 template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo) {
-    return Device::create<Device>(pHwInfo, new ExecutionEnvironment);
+    return Device::create<Device>(pHwInfo, new ExecutionEnvironment, 0u);
 }
 
 class FailMemoryManager : public MockMemoryManager {
@@ -205,23 +205,23 @@ class FailMemoryManager : public MockMemoryManager {
 
 class FailDevice : public MockDevice {
   public:
-    FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-        : MockDevice(hwInfo, executionEnvironment) {
+    FailDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+        : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
         this->mockMemoryManager.reset(new FailMemoryManager);
     }
 };
 
 class FailDeviceAfterOne : public MockDevice {
   public:
-    FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-        : MockDevice(hwInfo, executionEnvironment) {
+    FailDeviceAfterOne(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+        : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
         this->mockMemoryManager.reset(new FailMemoryManager(1));
     }
 };
 
 class MockAlignedMallocManagerDevice : public MockDevice {
   public:
-    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
+    MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 };
 
 } // namespace OCLRT

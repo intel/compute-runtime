@@ -31,15 +31,15 @@
 using namespace OCLRT;
 
 MockDevice::MockDevice(const HardwareInfo &hwInfo)
-    : MockDevice(hwInfo, new ExecutionEnvironment) {
+    : MockDevice(hwInfo, new ExecutionEnvironment, 0u) {
     CommandStreamReceiver *commandStreamReceiver = createCommandStream(&hwInfo, *this->executionEnvironment);
     executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
     commandStreamReceiver->setMemoryManager(this->mockMemoryManager.get());
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
     this->commandStreamReceiver = commandStreamReceiver;
 }
-OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : Device(hwInfo, executionEnvironment) {
+OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+    : Device(hwInfo, executionEnvironment, deviceIndex) {
     this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
@@ -91,6 +91,6 @@ OCLRT::FailMemoryManager::FailMemoryManager(int32_t fail) : MockMemoryManager() 
     this->fail = fail;
 }
 
-MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment) : MockDevice(hwInfo, executionEnvironment) {
+MockAlignedMallocManagerDevice::MockAlignedMallocManagerDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex) : MockDevice(hwInfo, executionEnvironment, deviceIndex) {
     this->mockMemoryManager.reset(new MockAllocSysMemAgnosticMemoryManager());
 }

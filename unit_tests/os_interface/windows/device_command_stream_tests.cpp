@@ -85,7 +85,7 @@ class WddmCommandStreamFixture {
         csr->setMemoryManager(memManager.get());
 
         ASSERT_NE(nullptr, memManager);
-        device.reset(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+        device.reset(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
         ASSERT_NE(nullptr, device);
     }
 
@@ -152,7 +152,7 @@ class WddmCommandStreamWithMockGdiFixture {
         memManager = csr->createMemoryManager(false, false);
         ASSERT_NE(nullptr, memManager);
         executionEnvironment->memoryManager.reset(memManager);
-        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
+        device = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
         ASSERT_NE(nullptr, device);
         this->csr->overrideRecorededCommandBuffer(*device);
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
@@ -816,7 +816,7 @@ using WddmSimpleTest = ::testing::Test;
 HWTEST_F(WddmSimpleTest, givenDefaultWddmCsrWhenItIsCreatedThenBatchingIsTurnedOn) {
     DebugManager.flags.CsrDispatchMode.set(0);
     ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
     auto wddm = Wddm::createWddm();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
     executionEnvironment->osInterface->get()->setWddm(wddm);
@@ -862,7 +862,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
     bool compressionEnabled[2][2] = {{true, false}, {false, true}};
     for (size_t i = 0; i < 2; i++) {
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
-        std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+        std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
         setCompressionEnabled(compressionEnabled[i][0], compressionEnabled[i][1]);
         createMockWddm();
         EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
@@ -913,7 +913,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenInitializedThenCrea
 
 HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenInitializedThenDontCreatePagetableMngr) {
     ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
     setCompressionEnabled(false, false);
     createMockWddm();
     executionEnvironment->osInterface = std::make_unique<OSInterface>();
@@ -937,7 +937,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
         executionEnvironment->commandStreamReceiver.reset(mockWddmCsr);
 
         auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
-        std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+        std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
 
         auto memManager = executionEnvironment->memoryManager.get();
 
@@ -978,7 +978,7 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     executionEnvironment->commandStreamReceiver.reset(mockWddmCsr);
     mockWddmCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
 
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
 
     auto memManager = executionEnvironment->memoryManager.get();
 

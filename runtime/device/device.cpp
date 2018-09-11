@@ -79,8 +79,8 @@ bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
 
-Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
-    : hwInfo(hwInfo), executionEnvironment(executionEnvironment) {
+Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
+    : hwInfo(hwInfo), executionEnvironment(executionEnvironment), deviceIndex(deviceIndex) {
     memset(&deviceInfo, 0, sizeof(deviceInfo));
     deviceExtensions.reserve(1000);
     name.reserve(100);
@@ -267,9 +267,4 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 bool Device::isSourceLevelDebuggerActive() const {
     return deviceInfo.sourceLevelDebuggerActive;
 }
-
-uint32_t Device::getDeviceIndex() {
-    return osContext->getContextId();
-}
-
 } // namespace OCLRT

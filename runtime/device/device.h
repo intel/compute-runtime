@@ -52,9 +52,9 @@ class Device : public BaseObject<_cl_device_id> {
     static const cl_ulong objectMagic = 0x8055832341AC8D08LL;
 
     template <typename T>
-    static T *create(const HardwareInfo *pHwInfo, ExecutionEnvironment *execEnv) {
+    static T *create(const HardwareInfo *pHwInfo, ExecutionEnvironment *execEnv, uint32_t deviceIndex) {
         pHwInfo = getDeviceInitHwInfo(pHwInfo);
-        T *device = new T(*pHwInfo, execEnv);
+        T *device = new T(*pHwInfo, execEnv, deviceIndex);
         return createDeviceInternals(pHwInfo, device);
     }
 
@@ -133,14 +133,14 @@ class Device : public BaseObject<_cl_device_id> {
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
     OsContext *getOsContext() const { return osContext; }
-    uint32_t getDeviceIndex();
+    uint32_t getDeviceIndex() { return deviceIndex; }
     bool isFullRangeSvm() {
         return getHardwareInfo().capabilityTable.gpuAddressSpace == MemoryConstants::max48BitAddress;
     }
 
   protected:
     Device() = delete;
-    Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment);
+    Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex);
 
     template <typename T>
     static T *createDeviceInternals(const HardwareInfo *pHwInfo, T *device) {
@@ -178,6 +178,7 @@ class Device : public BaseObject<_cl_device_id> {
     PreemptionMode preemptionMode;
     EngineType engineType;
     ExecutionEnvironment *executionEnvironment = nullptr;
+    uint32_t deviceIndex = 0u;
     CommandStreamReceiver *commandStreamReceiver = nullptr;
 };
 

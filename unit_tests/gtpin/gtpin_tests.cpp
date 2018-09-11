@@ -158,7 +158,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         memoryManager = new MockMemoryManagerWithFailures();
         ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->memoryManager.reset(memoryManager);
-        pDevice = Device::create<MockDevice>(platformDevices[0], executionEnvironment);
+        pDevice = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
         cl_device_id device = (cl_device_id)pDevice;
         ContextFixture::SetUp(1, &device);
 
