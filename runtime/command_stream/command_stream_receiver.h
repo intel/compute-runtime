@@ -90,6 +90,7 @@ class CommandStreamReceiver {
     void setMemoryManager(MemoryManager *mm);
 
     ResidencyContainer &getResidencyAllocations();
+    void pushAllocationForResidency(GraphicsAllocation *gfxAllocation);
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 

@@ -68,7 +68,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.residencyTaskCount < (int)submissionTaskCount) {
-        getMemoryManager()->pushAllocationForResidency(&gfxAllocation);
+        this->pushAllocationForResidency(&gfxAllocation);
         gfxAllocation.taskCount = submissionTaskCount;
         if (gfxAllocation.residencyTaskCount == ObjectNotResident) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
@@ -266,6 +266,10 @@ void CommandStreamReceiver::initProgrammingFlags() {
 
 ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
     return this->memoryManager->getResidencyAllocations();
+}
+
+void CommandStreamReceiver::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {
+    this->memoryManager->pushAllocationForResidency(gfxAllocation);
 }
 
 void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}

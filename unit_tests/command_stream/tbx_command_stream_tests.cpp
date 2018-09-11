@@ -235,7 +235,6 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenWriteMemoryIsCa
 HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidencyIsCalledWithoutAllocationsForResidencyThenItShouldProcessAllocationsFromMemoryManager) {
     TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
     TbxMemoryManager *memoryManager = tbxCsr->getMemoryManager();
-    ResidencyContainer &allocationsForResidency = memoryManager->getResidencyAllocations();
     ASSERT_NE(nullptr, memoryManager);
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
@@ -243,8 +242,8 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
 
     EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
 
-    memoryManager->pushAllocationForResidency(graphicsAllocation);
-    tbxCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    tbxCsr->pushAllocationForResidency(graphicsAllocation);
+    tbxCsr->processResidency(&tbxCsr->getResidencyAllocations(), *pDevice->getOsContext());
 
     EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
     EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);

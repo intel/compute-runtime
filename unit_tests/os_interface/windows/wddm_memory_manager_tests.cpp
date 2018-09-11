@@ -1042,13 +1042,9 @@ TEST_F(WddmMemoryManagerResidencyTest, compactTrimCandidateListWithNonNullEntrie
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllocationsResident) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
+    ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(&allocation2);
-    memoryManager->pushAllocationForResidency(&allocation3);
-    memoryManager->pushAllocationForResidency(&allocation4);
-
-    memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_TRUE(allocation1.getResidencyData().resident);
     EXPECT_TRUE(allocation2.getResidencyData().resident);
@@ -1058,15 +1054,11 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksAllo
 
 TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsUpdatesLastFence) {
     MockWddmAllocation allocation1, allocation2, allocation3, allocation4;
-
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(&allocation2);
-    memoryManager->pushAllocationForResidency(&allocation3);
-    memoryManager->pushAllocationForResidency(&allocation4);
+    ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
 
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
-    memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_EQ(20u, allocation1.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
     EXPECT_EQ(20u, allocation2.getResidencyData().getFenceValueForContextId(osContext->getContextId()));
@@ -1079,12 +1071,9 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsMarksTrip
     void *ptr = reinterpret_cast<void *>(wddm->virtualAllocAddress + 0x1500);
 
     WddmAllocation *allocationTriple = (WddmAllocation *)memoryManager->allocateGraphicsMemory(8196, ptr);
+    ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(allocationTriple);
-    memoryManager->pushAllocationForResidency(&allocation2);
-
-    memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_TRUE(allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->resident);
@@ -1102,11 +1091,8 @@ TEST_F(WddmMemoryManagerResidencyTest, makeResidentResidencyAllocationsSetsLastF
 
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(allocationTriple);
-    memoryManager->pushAllocationForResidency(&allocation2);
-
-    memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
+    memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     for (uint32_t i = 0; i < allocationTriple->fragmentsStorage.fragmentCount; i++) {
         EXPECT_EQ(20u, allocationTriple->fragmentsStorage.fragmentStorageData[i].residency->getFenceValueForContextId(0));
@@ -1732,12 +1718,8 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkAlloca
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(&allocation2);
-    memoryManager->pushAllocationForResidency(&allocation3);
-    memoryManager->pushAllocationForResidency(&allocation4);
-
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_FALSE(result);
 
@@ -1758,11 +1740,8 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsDoesNotMarkTriple
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(allocationTriple);
-    memoryManager->pushAllocationForResidency(&allocation2);
-
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1, allocationTriple, &allocation2};
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_FALSE(result);
 
@@ -1781,12 +1760,8 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsFailsWhenMakeResi
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2);
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    memoryManager->pushAllocationForResidency(&allocation2);
-    memoryManager->pushAllocationForResidency(&allocation3);
-    memoryManager->pushAllocationForResidency(&allocation4);
-
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1, &allocation2, &allocation3, &allocation4};
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_FALSE(result);
 
@@ -1805,24 +1780,18 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsCallsMakeResident
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, false, ::testing::_)).Times(1);
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, true, ::testing::_)).Times(1);
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1};
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_FALSE(result);
 }
 
-TEST_F(WddmMemoryManagerTest2, givenAllocationPackWhenTheyArePassedToMakeResidentThenTheyAreUsedInsteadOfMemoryManagerMembers) {
+TEST_F(WddmMemoryManagerTest2, givenAllocationPackPassedWhenCallingMakeResidentResidencyAllocationsThenItIsUsed) {
     MockWddmAllocation allocation1;
     MockWddmAllocation allocation2;
-    MockWddmAllocation allocation3;
     allocation1.handle = 1;
     allocation2.handle = 2;
-    allocation3.handle = 3;
-
-    ResidencyContainer residencyPack;
-    residencyPack.push_back(&allocation1);
-    residencyPack.push_back(&allocation2);
+    ResidencyContainer residencyPack{&allocation1, &allocation2};
 
     auto makeResidentWithOutBytesToTrim = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool {
         EXPECT_EQ(1, handles[0]);
@@ -1832,7 +1801,6 @@ TEST_F(WddmMemoryManagerTest2, givenAllocationPackWhenTheyArePassedToMakeResiden
     ON_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(makeResidentWithOutBytesToTrim));
     EXPECT_CALL(*wddm, makeResident(::testing::_, 2, false, ::testing::_)).Times(1);
 
-    memoryManager->pushAllocationForResidency(&allocation3);
     bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
     EXPECT_TRUE(result);
 }
@@ -1851,9 +1819,8 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
 
     memoryManager->addToTrimCandidateList(&allocationToTrim);
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    ResidencyContainer residencyPack{&allocation1};
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
 
     EXPECT_TRUE(result);
 
@@ -1862,14 +1829,14 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
 
 TEST_F(WddmMemoryManagerTest2, givenMemoryManagerWhenMakeResidentFailsThenMemoryBudgetExhaustedIsReturnedAsTrue) {
     MockWddmAllocation allocation1;
+    ResidencyContainer residencyPack{&allocation1};
 
     auto makeResidentThatFails = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return false; };
     auto makeResidentThatSucceds = [](D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim) -> bool { return true; };
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentThatFails)).WillOnce(::testing::Invoke(makeResidentThatSucceds));
 
-    memoryManager->pushAllocationForResidency(&allocation1);
-    bool result = memoryManager->makeResidentResidencyAllocations(&memoryManager->getResidencyAllocations(), *osContext);
+    bool result = memoryManager->makeResidentResidencyAllocations(&residencyPack, *osContext);
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 
