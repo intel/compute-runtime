@@ -435,7 +435,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
     OCLRT::HwPerfCounter *hwPerfCounter,
-    TimestampPacket *timestampPacket,
+    TimestampPacket *previousTimestampPacket,
+    TimestampPacket *currentTimestampPacket,
     PreemptionMode preemptionMode,
     bool blockQueue,
     uint32_t commandType) {
@@ -497,6 +498,10 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
     if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
+        if (previousTimestampPacket) {
+            auto compareAddress = previousTimestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+            KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, compareAddress, 1);
+        }
     }
 
     dsh->align(KernelCommandsHelper<GfxFamily>::alignInterfaceDescriptorData);
@@ -590,9 +595,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
-        bool setupTimestampPacket = timestampPacket && (currentDispatchIndex == multiDispatchInfo.size() - 1);
+        bool setupTimestampPacket = currentTimestampPacket && (currentDispatchIndex == multiDispatchInfo.size() - 1);
         if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket,
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, currentTimestampPacket,
                                                                TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
@@ -601,7 +606,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         *pWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
 
         if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pWalkerCmd, timestampPacket,
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pWalkerCmd, currentTimestampPacket,
                                                                TimestampPacket::WriteOperationType::AfterWalker);
         }
 

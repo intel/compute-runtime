@@ -65,6 +65,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
             nullptr,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -121,6 +122,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
             nullptr,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -144,6 +146,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             nullptr,
@@ -180,6 +183,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             nullptr,
@@ -281,6 +285,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
             nullptr,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             true);
 
@@ -312,6 +317,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             nullptr,
@@ -372,6 +378,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
             nullptr,
             nullptr,
             nullptr,
+            nullptr,
             pDevice->getPreemptionMode(),
             false);
 
@@ -405,6 +412,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
             0,
             nullptr,
             &blockedCommandsData,
+            nullptr,
             nullptr,
             nullptr,
             nullptr,

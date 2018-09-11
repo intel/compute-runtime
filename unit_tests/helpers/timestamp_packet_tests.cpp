@@ -65,6 +65,12 @@ struct TimestampPacketTests : public ::testing::Test {
         std::vector<NodeType *> releaseReferenceNodes;
         std::vector<NodeType *> returnedToFreePoolNodes;
     };
+
+    void setTagToReadyState(TimestampPacket *tag) {
+        memset(reinterpret_cast<void *>(tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, timestampDataSize);
+    }
+
+    const size_t timestampDataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
 };
 
 TEST_F(TimestampPacketTests, whenEndTagIsNotOneThenCanBeReleased) {
@@ -142,7 +148,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, 0, false, false, multiDispatchInfo);
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
-    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)));
+    auto extendedSize = sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)) + sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
+
+    EXPECT_EQ(sizeWithEnabled, extendedSize);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeWithWaitlistThenAddSizeForSemaphores) {
@@ -163,7 +171,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
     size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() +
-                          (numEventsOnWaitlist * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
+                          ((numEventsOnWaitlist + 1) * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
 
     EXPECT_EQ(sizeWithEnabled, extendedSize);
 }
@@ -186,6 +194,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
         cmdQ,
         multiDispatchInfo,
         0,
+        nullptr,
         nullptr,
         nullptr,
         nullptr,
@@ -267,10 +276,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(node1, mockTagAllocator->releaseReferenceNodes.at(0));
 
     EXPECT_NE(node1, node2);
-    size_t dataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
-    // mark nodes as ready
-    memset(reinterpret_cast<void *>(node1->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
-    memset(reinterpret_cast<void *>(node2->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
+    setTagToReadyState(node1->tag);
+    setTagToReadyState(node2->tag);
 
     clReleaseEvent(event2);
     EXPECT_EQ(0u, mockTagAllocator->returnedToFreePoolNodes.size()); // nothing returned. cmdQ owns node2
@@ -446,6 +453,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
         nullptr,
         nullptr,
         nullptr,
+        nullptr,
         device1->getPreemptionMode(),
         false);
 
@@ -493,12 +501,69 @@ TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBefo
     auto firstNode = cmdQ.timestampPacketNode;
     EXPECT_TRUE(mockTagAllocator->freeTags.peekIsEmpty());
 
-    // mark as ready to release
-    size_t dataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
-    memset(reinterpret_cast<void *>(firstNode->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextStart)), 0, dataSize);
+    setTagToReadyState(firstNode->tag);
 
     cmdQ.obtainNewTimestampPacketNode();
     auto secondNode = cmdQ.timestampPacketNode;
     EXPECT_FALSE(mockTagAllocator->freeTags.peekIsEmpty()); // new pool allocated for secondNode
     EXPECT_NE(firstNode, secondNode);
+}
+
+HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKeepDependencyOnPreviousNodeIfItsReady) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context(device.get());
+    MockKernelWithInternals kernel(*device);
+
+    MockCommandQueueHw<FamilyType> cmdQ(&context, device.get(), nullptr);
+    cmdQ.obtainNewTimestampPacketNode();
+    auto firstNode = cmdQ.timestampPacketNode;
+    setTagToReadyState(firstNode->tag);
+
+    size_t gws[] = {1, 1, 1};
+    cmdQ.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
+
+    uint32_t semaphoresFound = 0;
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
+            semaphoresFound++;
+        }
+    }
+    EXPECT_EQ(0u, semaphoresFound);
+}
+
+HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDependencyOnPreviousNodeIfItsNotReady) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context(device.get());
+    MockKernelWithInternals kernel(*device);
+
+    MockCommandQueueHw<FamilyType> cmdQ(&context, device.get(), nullptr);
+    cmdQ.obtainNewTimestampPacketNode();
+    auto firstNode = cmdQ.timestampPacketNode;
+
+    size_t gws[] = {1, 1, 1};
+    cmdQ.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
+
+    auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
+    EXPECT_NE(nullptr, semaphoreCmd);
+    EXPECT_EQ(firstNode->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd), semaphoreCmd->getSemaphoreGraphicsAddress());
+    EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, semaphoreCmd->getCompareOperation());
+
+    uint32_t semaphoresFound = 0;
+    auto it = hwParser.cmdList.begin();
+    for (++it; it != hwParser.cmdList.end(); it++) {
+        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
+            semaphoresFound++;
+        }
+    }
+    EXPECT_EQ(0u, semaphoresFound);
 }

@@ -206,7 +206,8 @@ class GpgpuWalkerHelper {
         KernelOperation **blockedCommandsData,
         HwTimeStamps *hwTimeStamps,
         OCLRT::HwPerfCounter *hwPerfCounter,
-        TimestampPacket *timestampPacket,
+        TimestampPacket *previousTimestampPacket,
+        TimestampPacket *currentTimestampPacket,
         PreemptionMode preemptionMode,
         bool blockQueue,
         uint32_t commandType = 0);
@@ -297,7 +298,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, cl_uint numEventsInWa
     }
     if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        expectedSizeCS += numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        expectedSizeCS += (numEventsInWaitList + 1) * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
     return commandQueue.getCS(expectedSizeCS);
 }

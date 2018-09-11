@@ -241,10 +241,17 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        TimestampPacket *timestampPacket = nullptr;
+        TimestampPacket *currentTimestampPacket = nullptr;
+        TimestampPacket *previousTimestampPacket = nullptr;
         if (device->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+            auto previousTimestampPacketNode = timestampPacketNode;
             obtainNewTimestampPacketNode();
-            timestampPacket = timestampPacketNode->tag;
+            currentTimestampPacket = timestampPacketNode->tag;
+
+            if (previousTimestampPacketNode && !previousTimestampPacketNode->tag->canBeReleased()) {
+                // keep dependency on previous enqueue
+                previousTimestampPacket = previousTimestampPacketNode->tag;
+            }
         }
 
         if (eventBuilder.getEvent()) {
@@ -281,7 +288,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
-            timestampPacket,
+            previousTimestampPacket,
+            currentTimestampPacket,
             preemption,
             blockQueue,
             commandType);

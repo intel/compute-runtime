@@ -78,7 +78,9 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     typedef CommandQueueHw<GfxFamily> BaseClass;
 
   public:
+    using BaseClass::commandStream;
     using BaseClass::createAllocationForHostSurface;
+    using BaseClass::obtainNewTimestampPacketNode;
     using BaseClass::timestampPacketNode;
 
     MockCommandQueueHw(Context *context,
