@@ -1909,13 +1909,16 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", false, *pDevice->executionEnvironment);
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
 
+    PhysicalAddressAllocator allocator;
     struct PpgttMock : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type {
-        void pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker) override {
+        PpgttMock(PhysicalAddressAllocator *allocator) : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type(allocator) {}
+
+        void pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker, uint32_t memoryBank) override {
             receivedSize = size;
         }
         size_t receivedSize = 0;
     };
-    auto ppgttMock = new PpgttMock();
+    auto ppgttMock = new PpgttMock(&allocator);
 
     aubCsr->ppgtt.reset(ppgttMock);
 
@@ -1938,6 +1941,19 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     }
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(*platformDevices[0], "", false, *pDevice->executionEnvironment);
+    ASSERT_NE(nullptr, aubCsr->ppgtt.get());
+    ASSERT_NE(nullptr, aubCsr->ggtt.get());
+
+    uintptr_t address = 0x20000;
+    auto physicalAddress = aubCsr->ppgtt->map(address, MemoryConstants::pageSize, PageTableHelper::memoryBankNotSpecified);
+    EXPECT_NE(0u, physicalAddress);
+
+    physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, PageTableHelper::memoryBankNotSpecified);
+    EXPECT_NE(0u, physicalAddress);
 }
 
 #if defined(__clang__)

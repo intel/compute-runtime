@@ -67,7 +67,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
                                          size);
         };
 
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, walker);
+        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, walker, PageTableHelper::memoryBankNotSpecified);
     }
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;

@@ -333,3 +333,14 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenWaitBeforeMakeNonResidentWhen
     EXPECT_TRUE(tbxCsr.makeCoherentCalled);
     EXPECT_EQ(6u, tag);
 }
+
+HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPGTTAndGGTTCreatedHavePhysicalAddressAllocatorSet) {
+    MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
+
+    uintptr_t address = 0x20000;
+    auto physicalAddress = tbxCsr.ppgtt->map(address, MemoryConstants::pageSize, PageTableHelper::memoryBankNotSpecified);
+    EXPECT_NE(0u, physicalAddress);
+
+    physicalAddress = tbxCsr.ggtt->map(address, MemoryConstants::pageSize, PageTableHelper::memoryBankNotSpecified);
+    EXPECT_NE(0u, physicalAddress);
+}

@@ -23,7 +23,7 @@
 namespace OCLRT {
 
 template <>
-inline uintptr_t PageTable<void, 0, 9>::map(uintptr_t vm, size_t size) {
+inline uintptr_t PageTable<void, 0, 9>::map(uintptr_t vm, size_t size, uint32_t memoryBank) {
     return 0;
 }
 
@@ -33,15 +33,11 @@ inline size_t PageTable<void, 0, 9>::getBits() {
 }
 
 template <>
-inline void PageTable<void, 0, 9>::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker) {
-}
-
-template <>
-inline PageTable<void, 0, 9>::~PageTable() {
+inline void PageTable<void, 0, 9>::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker, uint32_t memoryBank) {
 }
 
 template <class T, uint32_t level, uint32_t bits>
-inline uintptr_t PageTable<T, level, bits>::map(uintptr_t vm, size_t size) {
+inline uintptr_t PageTable<T, level, bits>::map(uintptr_t vm, size_t size, uint32_t memoryBank) {
     const size_t shift = T::getBits() + 12;
     const uintptr_t mask = (1 << bits) - 1;
     size_t indexStart = (vm >> shift) & mask;
@@ -57,15 +53,15 @@ inline uintptr_t PageTable<T, level, bits>::map(uintptr_t vm, size_t size) {
         vmEnd = std::min(vmEnd, maskedVm + size - 1);
 
         if (entries[index] == nullptr) {
-            entries[index] = new T;
+            entries[index] = new T(allocator);
         }
-        res = std::min((entries[index])->map(vmStart, vmEnd - vmStart + 1), res);
+        res = std::min((entries[index])->map(vmStart, vmEnd - vmStart + 1, memoryBank), res);
     }
     return res;
 }
 
 template <class T, uint32_t level, uint32_t bits>
-inline void PageTable<T, level, bits>::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker) {
+inline void PageTable<T, level, bits>::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker, uint32_t memoryBank) {
     const size_t shift = T::getBits() + 12;
     const uintptr_t mask = (1 << bits) - 1;
     size_t indexStart = (vm >> shift) & mask;
@@ -80,18 +76,11 @@ inline void PageTable<T, level, bits>::pageWalk(uintptr_t vm, size_t size, size_
         vmEnd = std::min(vmEnd, maskedVm + size - 1);
 
         if (entries[index] == nullptr) {
-            entries[index] = new T;
+            entries[index] = new T(allocator);
         }
-        entries[index]->pageWalk(vmStart, vmEnd - vmStart + 1, offset, pageWalker);
+        entries[index]->pageWalk(vmStart, vmEnd - vmStart + 1, offset, pageWalker, memoryBank);
 
         offset += (vmEnd - vmStart + 1);
     }
 }
-
-template <class T, uint32_t level, uint32_t bits>
-inline PageTable<T, level, bits>::~PageTable() {
-    for (auto &e : entries)
-        delete e;
-}
-
 } // namespace OCLRT

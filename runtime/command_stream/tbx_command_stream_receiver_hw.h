@@ -93,8 +93,9 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t aubDeviceId;
     bool streamInitialized = false;
 
-    TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type ppgtt;
-    PDPE ggtt;
+    PhysicalAddressAllocator physicalAddressAllocator;
+    std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
+    std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;
 

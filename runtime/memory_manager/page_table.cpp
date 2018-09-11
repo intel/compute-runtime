@@ -25,10 +25,7 @@
 
 namespace OCLRT {
 
-const uint32_t PTE::initialPage = 1;
-std::atomic<uint32_t> PTE::nextPage(PTE::initialPage);
-
-uintptr_t PTE::map(uintptr_t vm, size_t size) {
+uintptr_t PTE::map(uintptr_t vm, size_t size, uint32_t memoryBank) {
     const size_t shift = 12;
     const uint32_t mask = (1 << bits) - 1;
     size_t indexStart = (vm >> shift) & mask;
@@ -37,15 +34,15 @@ uintptr_t PTE::map(uintptr_t vm, size_t size) {
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
-            uint64_t tmp = nextPage.fetch_add(1);
-            entries[index] = reinterpret_cast<void *>(tmp * pageSize | 0x1);
+            uint64_t tmp = allocator->reservePage(memoryBank);
+            entries[index] = reinterpret_cast<void *>(tmp | 0x1);
         }
         res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & 0xfffffffeu, res);
     }
     return (res & ~0x1) + (vm & (pageSize - 1));
 }
 
-void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker) {
+void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker, uint32_t memoryBank) {
     static const uint32_t bits = 9;
     const size_t shift = 12;
     const uint32_t mask = (1 << bits) - 1;
@@ -56,8 +53,8 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWal
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
-            uint64_t tmp = nextPage.fetch_add(1);
-            entries[index] = reinterpret_cast<void *>(tmp * pageSize | 0x1);
+            uint64_t tmp = allocator->reservePage(memoryBank);
+            entries[index] = reinterpret_cast<void *>(tmp | 0x1);
         }
         res = reinterpret_cast<uintptr_t>(entries[index]) & 0xfffffffeu;
 
