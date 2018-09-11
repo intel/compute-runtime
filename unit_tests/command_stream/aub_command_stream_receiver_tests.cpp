@@ -124,7 +124,7 @@ struct AubExecutionEnvironment {
     GraphicsAllocation *commandBuffer = nullptr;
     template <typename CsrType>
     CsrType *getCsr() {
-        return static_cast<CsrType *>(executionEnvironment->commandStreamReceiver.get());
+        return static_cast<CsrType *>(executionEnvironment->commandStreamReceivers[0u].get());
     }
     ~AubExecutionEnvironment() {
         if (commandBuffer) {
@@ -136,11 +136,11 @@ struct AubExecutionEnvironment {
 template <typename CsrType>
 std::unique_ptr<AubExecutionEnvironment> getEnvironment(bool createTagAllocation, bool allocateCommandBuffer, bool standalone) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
-    executionEnvironment->commandStreamReceiver.reset(new CsrType(*platformDevices[0], "", standalone, *executionEnvironment));
-    executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceiver->createMemoryManager(false, false));
-    executionEnvironment->commandStreamReceiver->setMemoryManager(executionEnvironment->memoryManager.get());
+    executionEnvironment->commandStreamReceivers.push_back(std::make_unique<CsrType>(*platformDevices[0], "", standalone, *executionEnvironment));
+    executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0u]->createMemoryManager(false, false));
+    executionEnvironment->commandStreamReceivers[0u]->setMemoryManager(executionEnvironment->memoryManager.get());
     if (createTagAllocation) {
-        executionEnvironment->commandStreamReceiver->initializeTagAllocation();
+        executionEnvironment->commandStreamReceivers[0u]->initializeTagAllocation();
     }
 
     std::unique_ptr<AubExecutionEnvironment> aubExecutionEnvironment(new AubExecutionEnvironment);

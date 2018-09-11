@@ -85,7 +85,7 @@ TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesCommandStrea
     Platform platform;
     auto executionEnvironment = platform.peekExecutionEnvironment();
     platform.initialize();
-    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceiver);
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0u].get());
 }
 
 TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
@@ -105,18 +105,42 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeCommandStreamReceiverIsCalledThenItIsInitalized) {
     std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
-    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
-    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceiver);
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0u);
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0u]);
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledWithDifferentDeviceIndexesThenInternalStorageIsResized) {
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
+    EXPECT_EQ(0u, executionEnvironment->commandStreamReceivers.size());
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0u);
+    EXPECT_EQ(1u, executionEnvironment->commandStreamReceivers.size());
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0u]);
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 1u);
+    EXPECT_EQ(2u, executionEnvironment->commandStreamReceivers.size());
+    EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[1u]);
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultipleTimesForTheSameIndexThenCommandStreamReceiverIsReused) {
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    EXPECT_EQ(0u, executionEnvironment->commandStreamReceivers.size());
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 1u);
+
+    auto currentCommandStreamReceiver = executionEnvironment->commandStreamReceivers[1u].get();
+
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 1u);
+
+    EXPECT_EQ(currentCommandStreamReceiver, executionEnvironment->commandStreamReceivers[1u].get());
+    EXPECT_EQ(2u, executionEnvironment->commandStreamReceivers.size());
+    EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0u].get());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
-    std::unique_ptr<ExecutionEnvironment> executionEnvironment(new ExecutionEnvironment);
-    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0]);
-    executionEnvironment->initializeMemoryManager(false, false);
+    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
+    executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0u);
+    executionEnvironment->initializeMemoryManager(false, false, 0u);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
-
-static_assert(sizeof(ExecutionEnvironment) == sizeof(std::mutex) + (is64bit ? 80 : 44), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) + sizeof(std::mutex) + (is64bit ? 72 : 40), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
@@ -150,7 +174,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
-    executionEnvironment->commandStreamReceiver = std::make_unique<CommandStreamReceiverMock>(destructorId);
+    executionEnvironment->commandStreamReceivers.push_back(std::make_unique<CommandStreamReceiverMock>(destructorId));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
@@ -166,7 +190,7 @@ TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseThe
     auto memoryManager = device->getMemoryManager();
 
     std::unique_ptr<Device> device2(Device::create<OCLRT::Device>(nullptr, executionEnvironment, 1u));
-    EXPECT_EQ(&commandStreamReceiver, &device->getCommandStreamReceiver());
+    EXPECT_NE(&commandStreamReceiver, &device2->getCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
 
@@ -176,8 +200,8 @@ HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamRecei
     ExecutionEnvironment executionEnvironment;
     HardwareInfo localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo);
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceiver.get());
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 0u);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0u].get());
     ASSERT_NE(nullptr, csr);
     EXPECT_TRUE(csr->createPageTableManagerCalled);
 }
@@ -186,9 +210,9 @@ HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamRecei
     ExecutionEnvironment executionEnvironment;
     HardwareInfo localHwInfo = *platformDevices[0];
     localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo);
-    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceiver);
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceiver.get());
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 0u);
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0]);
+    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0u].get());
     ASSERT_NE(nullptr, csr);
     EXPECT_TRUE(csr->createPageTableManagerCalled);
 }

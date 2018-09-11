@@ -360,9 +360,6 @@ void CommandStreamReceiver::setExperimentalCmdBuffer(std::unique_ptr<Experimenta
 }
 
 bool CommandStreamReceiver::initializeTagAllocation() {
-    if (tagAllocation) {
-        return true;
-    }
     auto tagAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t));
     if (!tagAllocation) {
         return false;

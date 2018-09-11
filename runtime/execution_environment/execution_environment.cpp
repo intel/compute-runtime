@@ -41,29 +41,32 @@ void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {
         gmmHelper.reset(new GmmHelper(hwInfo));
     }
 }
-bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo) {
-    if (this->commandStreamReceiver) {
+bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex) {
+    if (deviceIndex + 1 > commandStreamReceivers.size()) {
+        commandStreamReceivers.resize(deviceIndex + 1);
+    }
+
+    if (this->commandStreamReceivers[deviceIndex]) {
         return true;
     }
-    CommandStreamReceiver *commandStreamReceiver = createCommandStream(pHwInfo, *this);
+    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver(createCommandStream(pHwInfo, *this));
     if (!commandStreamReceiver) {
         return false;
     }
     if (pHwInfo->capabilityTable.ftrRenderCompressedBuffers || pHwInfo->capabilityTable.ftrRenderCompressedImages) {
         commandStreamReceiver->createPageTableManager();
     }
-    this->commandStreamReceiver.reset(commandStreamReceiver);
+    this->commandStreamReceivers[deviceIndex] = std::move(commandStreamReceiver);
     return true;
 }
-void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory) {
+void ExecutionEnvironment::initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex) {
     if (this->memoryManager) {
-        commandStreamReceiver->setMemoryManager(this->memoryManager.get());
+        commandStreamReceivers[deviceIndex]->setMemoryManager(this->memoryManager.get());
         return;
     }
 
-    memoryManager.reset(commandStreamReceiver->createMemoryManager(enable64KBpages, enableLocalMemory));
-    commandStreamReceiver->setMemoryManager(memoryManager.get());
-
+    memoryManager.reset(commandStreamReceivers[deviceIndex]->createMemoryManager(enable64KBpages, enableLocalMemory));
+    commandStreamReceivers[deviceIndex]->setMemoryManager(memoryManager.get());
     DEBUG_BREAK_IF(!this->memoryManager);
 }
 void ExecutionEnvironment::initSourceLevelDebugger(const HardwareInfo &hwInfo) {

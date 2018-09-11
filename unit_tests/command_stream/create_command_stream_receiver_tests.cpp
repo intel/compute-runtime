@@ -56,13 +56,13 @@ HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetTo
     overrideCommandStreamReceiverCreation = true;
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.commandStreamReceiver.reset(createCommandStream(&hwInfo, executionEnvironment));
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(&hwInfo, executionEnvironment)));
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
-        EXPECT_NE(nullptr, executionEnvironment.commandStreamReceiver.get());
-        executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceiver->createMemoryManager(false, false));
+        EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0u].get());
+        executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceivers[0u]->createMemoryManager(false, false));
         EXPECT_NE(nullptr, executionEnvironment.memoryManager.get());
     } else {
-        EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceiver.get());
+        EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[0u]);
         EXPECT_EQ(nullptr, executionEnvironment.memoryManager.get());
     }
 }

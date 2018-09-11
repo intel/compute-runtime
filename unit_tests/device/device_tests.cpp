@@ -199,6 +199,19 @@ TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperate
     EXPECT_EQ(1u, device2->getDeviceIndex());
 }
 
+TEST(DeviceCreation, givenMultiDeviceWhenTheyAreCreatedThenEachDeviceHasSeperateCommandStreamReceiver) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.incRefInternal();
+    auto device = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 0u));
+    auto device2 = std::unique_ptr<Device>(Device::create<Device>(nullptr, &executionEnvironment, 1u));
+
+    EXPECT_EQ(2u, executionEnvironment.commandStreamReceivers.size());
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0]);
+    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[1]);
+    EXPECT_EQ(&device->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[0].get());
+    EXPECT_EQ(&device2->getCommandStreamReceiver(), executionEnvironment.commandStreamReceivers[1].get());
+}
+
 TEST(DeviceCreation, givenFtrSimulationModeFlagTrueWhenNoOtherSimulationFlagsArePresentThenIsSimulationReturnsTrue) {
     FeatureTable skuTable = *platformDevices[0]->pSkuTable;
     skuTable.ftrSimulationMode = true;

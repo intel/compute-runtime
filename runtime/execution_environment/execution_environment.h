@@ -24,6 +24,7 @@
 #include "runtime/utilities/reference_tracked_object.h"
 
 #include <mutex>
+#include <vector>
 
 namespace OCLRT {
 class GmmHelper;
@@ -48,8 +49,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ~ExecutionEnvironment() override;
 
     void initGmm(const HardwareInfo *hwInfo);
-    bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo);
-    void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory);
+    bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex);
+    void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex);
     void initSourceLevelDebugger(const HardwareInfo &hwInfo);
 
     GmmHelper *getGmmHelper() const;
@@ -58,7 +59,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
-    std::unique_ptr<CommandStreamReceiver> commandStreamReceiver;
+    std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
     std::unique_ptr<SourceLevelDebugger> sourceLevelDebugger;

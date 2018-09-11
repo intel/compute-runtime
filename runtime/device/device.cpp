@@ -103,8 +103,8 @@ Device::~Device() {
         performanceCounters->shutdown();
     }
 
-    if (executionEnvironment->commandStreamReceiver) {
-        executionEnvironment->commandStreamReceiver->flushBatchedSubmissions();
+    if (commandStreamReceiver) {
+        commandStreamReceiver->flushBatchedSubmissions();
     }
 
     if (deviceInfo.sourceLevelDebuggerActive && executionEnvironment->sourceLevelDebugger) {
@@ -126,15 +126,15 @@ Device::~Device() {
 bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
     auto executionEnvironment = outDevice.executionEnvironment;
     executionEnvironment->initGmm(pHwInfo);
-    if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo)) {
+    if (!executionEnvironment->initializeCommandStreamReceiver(pHwInfo, outDevice.getDeviceIndex())) {
         return false;
     }
-    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getHardwareCapabilities().localMemorySupported);
+    executionEnvironment->initializeMemoryManager(outDevice.getEnabled64kbPages(), outDevice.getHardwareCapabilities().localMemorySupported, outDevice.getDeviceIndex());
 
     outDevice.osContext = new OsContext(executionEnvironment->osInterface.get());
     executionEnvironment->memoryManager->registerOsContext(outDevice.osContext);
 
-    outDevice.commandStreamReceiver = executionEnvironment->commandStreamReceiver.get();
+    outDevice.commandStreamReceiver = executionEnvironment->commandStreamReceivers[outDevice.getDeviceIndex()].get();
     if (!outDevice.commandStreamReceiver->initializeTagAllocation()) {
         return false;
     }
@@ -246,7 +246,7 @@ unique_ptr_if_unused<Device> Device::release() {
 
 bool Device::isSimulation() const {
     bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.pPlatform->usDeviceID);
-    if (executionEnvironment->commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
+    if (commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
         simulation = true;
     }
     if (hwInfo.pSkuTable->ftrSimulationMode) {
