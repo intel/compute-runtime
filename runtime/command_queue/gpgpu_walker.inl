@@ -664,11 +664,7 @@ inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(Lin
 
         auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
 
-        auto miSemaphoreCmd = commandStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-        *miSemaphoreCmd = MI_SEMAPHORE_WAIT::sInit();
-        miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        miSemaphoreCmd->setSemaphoreDataDword(1);
-        miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, compareAddress, 1);
     }
 }
 

@@ -420,4 +420,15 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
 
     return offsetCrossThreadData;
 }
+
+template <typename GfxFamily>
+void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData) {
+    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+
+    auto miSemaphoreCmd = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    *miSemaphoreCmd = MI_SEMAPHORE_WAIT::sInit();
+    miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+    miSemaphoreCmd->setSemaphoreDataDword(compareData);
+    miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+}
 } // namespace OCLRT

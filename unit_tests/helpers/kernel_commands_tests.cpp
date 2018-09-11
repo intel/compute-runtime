@@ -1011,6 +1011,26 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, GivenKernelWithSamplersWhenIndir
     delete[] mockDsh;
 }
 
+using KernelCommandsHelperTests = ::testing::Test;
+
+HWTEST_F(KernelCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSemaphoreWaitThenSetupAllFields) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    uint64_t compareAddress = 0x10000;
+    uint32_t compareData = 1234;
+
+    uint8_t buffer[1024] = {};
+    LinearStream cmdStream(buffer, 1024);
+
+    MI_SEMAPHORE_WAIT referenceCommand = MI_SEMAPHORE_WAIT::sInit();
+    referenceCommand.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+    referenceCommand.setSemaphoreDataDword(compareData);
+    referenceCommand.setSemaphoreGraphicsAddress(compareAddress);
+
+    KernelCommandsHelper<FamilyType>::programMiSemaphoreWait(cmdStream, compareAddress, compareData);
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), cmdStream.getUsed());
+    EXPECT_EQ(0, memcmp(&referenceCommand, buffer, sizeof(MI_SEMAPHORE_WAIT)));
+}
+
 typedef ExecutionModelKernelFixture ParentKernelCommandsFromBinaryTest;
 
 HWTEST_P(ParentKernelCommandsFromBinaryTest, getSizeRequiredForExecutionModelForSurfaceStatesReturnsSizeOfBlocksPlusMaxBindingTableSizeForAllIDTEntriesAndSchedulerSSHSize) {

@@ -160,6 +160,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         return totalSize;
     }
 
+    static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
+
     static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);
 };
