@@ -36,8 +36,8 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
     executionEnvironment->commandStreamReceiver.reset(commandStreamReceiver);
     commandStreamReceiver->setMemoryManager(this->mockMemoryManager.get());
     this->executionEnvironment->memoryManager = std::move(this->mockMemoryManager);
+    this->commandStreamReceiver = commandStreamReceiver;
 }
-
 OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment)
     : Device(hwInfo, executionEnvironment) {
     this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported));
@@ -76,6 +76,7 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr) {
     executionEnvironment->commandStreamReceiver->initializeTagAllocation();
     executionEnvironment->commandStreamReceiver->setPreemptionCsrAllocation(preemptionAllocation);
     executionEnvironment->memoryManager->csr = executionEnvironment->commandStreamReceiver.get();
+    this->commandStreamReceiver = newCsr;
     this->tagAddress = executionEnvironment->commandStreamReceiver->getTagAddress();
 }
 

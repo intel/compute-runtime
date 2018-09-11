@@ -295,7 +295,7 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, cl_uint numEventsInWa
         SchedulerKernel &scheduler = commandQueue.getDevice().getExecutionEnvironment()->getBuiltIns()->getSchedulerKernel(parentKernel->getContext());
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
     }
-    if (commandQueue.getDevice().peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
+    if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         expectedSizeCS += numEventsInWaitList * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }

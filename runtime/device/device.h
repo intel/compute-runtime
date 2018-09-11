@@ -88,7 +88,6 @@ class Device : public BaseObject<_cl_device_id> {
     }
 
     CommandStreamReceiver &getCommandStreamReceiver();
-    CommandStreamReceiver *peekCommandStreamReceiver();
 
     volatile uint32_t *getTagAddress() const;
 
@@ -179,6 +178,7 @@ class Device : public BaseObject<_cl_device_id> {
     PreemptionMode preemptionMode;
     EngineType engineType;
     ExecutionEnvironment *executionEnvironment = nullptr;
+    CommandStreamReceiver *commandStreamReceiver = nullptr;
 };
 
 template <cl_device_info Param>
@@ -190,11 +190,7 @@ inline void Device::getCap(const void *&src,
 }
 
 inline CommandStreamReceiver &Device::getCommandStreamReceiver() {
-    return *executionEnvironment->commandStreamReceiver;
-}
-
-inline CommandStreamReceiver *Device::peekCommandStreamReceiver() {
-    return executionEnvironment->commandStreamReceiver.get();
+    return *this->commandStreamReceiver;
 }
 
 inline volatile uint32_t *Device::getTagAddress() const {

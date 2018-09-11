@@ -242,7 +242,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         TimestampPacket *timestampPacket = nullptr;
-        if (device->peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
+        if (device->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             obtainNewTimestampPacketNode();
             timestampPacket = timestampPacketNode->tag;
         }

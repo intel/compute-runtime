@@ -494,7 +494,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
         ssh = &getIndirectHeap<GfxFamily, IndirectHeap::SURFACE_STATE>(commandQueue, multiDispatchInfo);
     }
 
-    if (commandQueue.getDevice().peekCommandStreamReceiver()->peekTimestampPacketWriteEnabled()) {
+    if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
     }
