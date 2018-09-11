@@ -591,9 +591,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
         }
     }
 
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
-
-    for (auto &gfxAllocation : residencyAllocations) {
+    DEBUG_BREAK_IF(allocationsForResidency == nullptr);
+    for (auto &gfxAllocation : *allocationsForResidency) {
         if (dumpAubNonWritable) {
             gfxAllocation->setAubWritable(true);
         }
