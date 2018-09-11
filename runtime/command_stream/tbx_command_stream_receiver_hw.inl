@@ -21,6 +21,7 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
@@ -403,7 +404,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::waitBeforeMakingNonResidentWhenRequi
 
 template <typename GfxFamily>
 uint64_t TbxCommandStreamReceiverHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
-    return 7;
+    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::userSupervisorBit);
 }
 
 template <typename GfxFamily>

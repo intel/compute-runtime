@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (c) 2017 - 2018, Intel Corporation
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -20,22 +20,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "gtest/gtest.h"
-#include "runtime/aub/aub_helper.h"
-#include "runtime/aub_mem_dump/aub_mem_dump.h"
-#include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#pragma once
 
-using namespace OCLRT;
+#include <stdint.h>
 
-TEST(AubHelper, WhenGetMemTraceIsCalledWithZeroPDEntryBitsThenTraceNonLocalIsReturned) {
-    int hint = AubHelper::getMemTrace(0u);
-    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, hint);
-}
-
-TEST(AubHelper, WhenGetPTEntryBitsIsCalledThenEntryBitsAreNotMasked) {
-    uint64_t entryBits = BIT(PageTableEntry::presentBit) |
-                         BIT(PageTableEntry::writableBit) |
-                         BIT(PageTableEntry::userSupervisorBit);
-    uint64_t maskedEntryBits = AubHelper::getPTEntryBits(entryBits);
-    EXPECT_EQ(entryBits, maskedEntryBits);
-}
+namespace PageTableEntry {
+const uint32_t presentBit = 0;
+const uint32_t writableBit = 1;
+const uint32_t userSupervisorBit = 2;
+} // namespace PageTableEntry

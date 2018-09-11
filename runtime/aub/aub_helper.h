@@ -38,5 +38,6 @@ class AubHelper {
         }
     }
     static int getMemTrace(uint64_t pdEntryBits);
+    static uint64_t getPTEntryBits(uint64_t pdEntryBits);
 };
 } // namespace OCLRT

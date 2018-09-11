@@ -22,6 +22,7 @@
 
 #include "hw_cmds.h"
 #include "runtime/aub/aub_helper.h"
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_subcapture.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
@@ -685,7 +686,7 @@ uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getGUCWorkQueueItemHeader(Engine
 
 template <typename GfxFamily>
 uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation) {
-    return 7;
+    return BIT(PageTableEntry::presentBit) | BIT(PageTableEntry::writableBit) | BIT(PageTableEntry::userSupervisorBit);
 }
 
 template <typename GfxFamily>
