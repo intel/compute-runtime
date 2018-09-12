@@ -74,6 +74,7 @@ class Wddm {
     bool mapGpuVirtualAddress(WddmAllocation *allocation, void *cpuPtr, bool allocation32bit, bool use64kbPages, bool useHeap1);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData, bool allocation32bit, bool use64kbPages);
     MOCKABLE_VIRTUAL bool createContext(D3DKMT_HANDLE &context);
+    MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(WddmAllocation *alloc);
     MOCKABLE_VIRTUAL bool createAllocation64k(WddmAllocation *alloc);

@@ -688,6 +688,7 @@ bool Wddm::createContext(D3DKMT_HANDLE &context) {
     PrivateData.pHwContextId = &hwContextId;
     PrivateData.IsMediaUsage = false;
     PrivateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
+    applyAdditionalContextFlags(PrivateData);
 
     CreateContext.EngineAffinity = 0;
     CreateContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());

@@ -783,3 +783,9 @@ TEST_F(Wddm20Tests, givenReadOnlyMemoryWhenCreateAllocationFailsWithNoVideoMemor
 
     delete handleStorage.fragmentStorageData[0].osHandleStorage->gmm;
 }
+
+TEST_F(Wddm20Tests, whenContextIsInitializedThenApplyAdditionalContextFlagsIsCalled) {
+    auto result = wddm->init();
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1u, wddm->applyAdditionalContextFlagsResult.called);
+}

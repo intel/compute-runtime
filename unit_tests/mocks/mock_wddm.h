@@ -74,6 +74,7 @@ class WddmMock : public Wddm {
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext(D3DKMT_HANDLE &context) override;
+    void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData) override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, OsContextWin &osContext) override;
@@ -117,6 +118,7 @@ class WddmMock : public Wddm {
     WddmMockHelpers::CallResult waitOnGPUResult;
     WddmMockHelpers::CallResult configureDeviceAddressSpaceResult;
     WddmMockHelpers::CallResult createContextResult;
+    WddmMockHelpers::CallResult applyAdditionalContextFlagsResult;
     WddmMockHelpers::CallResult lockResult;
     WddmMockHelpers::CallResult unlockResult;
     WddmMockHelpers::KmDafLockCall kmDafLockResult;

@@ -126,6 +126,11 @@ bool WddmMock::createContext(D3DKMT_HANDLE &context) {
     return createContextResult.success = Wddm::createContext(context);
 }
 
+void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData) {
+    applyAdditionalContextFlagsResult.called++;
+    Wddm::applyAdditionalContextFlags(privateData);
+}
+
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
     destroyContextResult.called++;
     return destroyContextResult.success = Wddm::destroyContext(context);
