@@ -252,7 +252,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             scratchAllocation->taskCount = this->taskCount;
             getMemoryManager()->storeAllocation(std::unique_ptr<GraphicsAllocation>(scratchAllocation), TEMPORARY_ALLOCATION);
         }
-        scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
+        createScratchSpaceAllocation(requiredScratchSizeInBytes);
         overrideMediaVFEStateDirty(true);
         if (is64bit && !force32BitAllocations) {
             stateBaseAddressDirty = true;
@@ -799,5 +799,10 @@ void CommandStreamReceiverHw<GfxFamily>::programOutOfDeviceWaitlistSemaphores(Li
 
         KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(csr, compareAddress, 1);
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceAllocation(size_t requiredScratchSizeInBytes) {
+    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
 }
 } // namespace OCLRT
