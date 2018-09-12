@@ -53,7 +53,7 @@ void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cp
     monitoredFence.gpuAddress = gpuAddress;
 }
 
-OsContext::OsContext(OSInterface *osInterface) {
+OsContext::OsContext(OSInterface *osInterface, uint32_t contextId) : contextId(contextId) {
     if (osInterface) {
         osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm());
     }

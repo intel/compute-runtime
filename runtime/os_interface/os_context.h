@@ -29,13 +29,12 @@ class OSInterface;
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
     class OsContextImpl;
-    OsContext(OSInterface *osInterface);
+    OsContext(OSInterface *osInterface, uint32_t contextId);
     ~OsContext() override;
     OsContextImpl *get() const {
         return osContextImpl.get();
     };
 
-    void setContextId(uint32_t inputContextId) { contextId = inputContextId; }
     uint32_t getContextId() { return contextId; }
 
   protected:

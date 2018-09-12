@@ -51,7 +51,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         PreemptionMode preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfoTest);
         wddm->setPreemptionMode(preemptionMode);
         wddm->init();
-        osContext = std::make_unique<OsContext>(osInterface.get());
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u);
         osContextWin = osContext->get();
     }
 

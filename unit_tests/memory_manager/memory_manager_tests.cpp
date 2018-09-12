@@ -1825,11 +1825,22 @@ TEST(GraphicsAllocation, givenSharedHandleBasedConstructorWhenGraphicsAllocation
 }
 
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
-    auto osContext = new OsContext(nullptr);
+    auto osContext = new OsContext(nullptr, 0u);
     OsAgnosticMemoryManager memoryManager;
     memoryManager.registerOsContext(osContext);
     EXPECT_EQ(1u, memoryManager.getOsContextCount());
     EXPECT_EQ(1, osContext->getRefInternalCount());
+}
+
+TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerThenProperSizeIsReturned) {
+    auto osContext2 = new OsContext(nullptr, 1u);
+    auto osContext = new OsContext(nullptr, 0u);
+    OsAgnosticMemoryManager memoryManager;
+    memoryManager.registerOsContext(osContext2);
+    memoryManager.registerOsContext(osContext);
+    EXPECT_EQ(2u, memoryManager.getOsContextCount());
+    EXPECT_EQ(1, osContext->getRefInternalCount());
+    EXPECT_EQ(1, osContext2->getRefInternalCount());
 }
 
 TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenItIsProperlyUpdated) {
@@ -1839,9 +1850,8 @@ TEST(ResidencyDataTest, givenResidencyDataWhenUpdateCompletionDataIsCalledThenIt
 
     mockResidencyData residency;
 
-    OsContext osContext(nullptr);
-    OsContext osContext2(nullptr);
-    osContext2.setContextId(1u);
+    OsContext osContext(nullptr, 0u);
+    OsContext osContext2(nullptr, 1u);
 
     auto lastFenceValue = 45llu;
     auto lastFenceValue2 = 23llu;

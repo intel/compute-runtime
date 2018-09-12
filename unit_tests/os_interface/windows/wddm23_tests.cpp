@@ -49,7 +49,7 @@ struct Wddm23TestsWithoutWddmInit : public ::testing::Test, GdiDllFixture, publi
 
     void init() {
         EXPECT_TRUE(wddm->init());
-        osContext = std::make_unique<OsContext>(osInterface.get());
+        osContext = std::make_unique<OsContext>(osInterface.get(), 0u);
         osContextWin = osContext->get();
     }
 

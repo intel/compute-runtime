@@ -387,9 +387,12 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
 }
 
 void MemoryManager::registerOsContext(OsContext *contextToRegister) {
+    auto contextId = contextToRegister->getContextId();
+    if (contextId + 1 > registeredOsContexts.size()) {
+        registeredOsContexts.resize(contextId + 1);
+    }
     contextToRegister->incRefInternal();
-    contextToRegister->setContextId(static_cast<uint32_t>(registeredOsContexts.size()));
-    registeredOsContexts.push_back(contextToRegister);
+    registeredOsContexts[contextToRegister->getContextId()] = contextToRegister;
 }
 
 bool MemoryManager::getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {

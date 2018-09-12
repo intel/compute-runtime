@@ -279,7 +279,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    OsContext *osContext = new OsContext(executionEnvironment.osInterface.get());
+    OsContext *osContext = new OsContext(executionEnvironment.osInterface.get(), 0u);
     osContext->incRefInternal();
     executionEnvironment.commandStreamReceivers[0u]->flush(batchBuffer, EngineType::ENGINE_RCS, &executionEnvironment.commandStreamReceivers[0u]->getResidencyAllocations(), *osContext);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
@@ -306,7 +306,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     LinearStream cs(commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
-    OsContext *osContext = new OsContext(executionEnvironment.osInterface.get());
+    OsContext *osContext = new OsContext(executionEnvironment.osInterface.get(), 0u);
     osContext->incRefInternal();
     executionEnvironment.commandStreamReceivers[0u]->flush(batchBuffer, EngineType::ENGINE_RCS, &executionEnvironment.commandStreamReceivers[0u]->getResidencyAllocations(), *osContext);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;

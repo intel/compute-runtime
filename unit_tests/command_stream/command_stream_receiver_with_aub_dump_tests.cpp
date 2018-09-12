@@ -147,7 +147,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
-    OsContext osContext(nullptr);
+    OsContext osContext(nullptr, 0u);
 
     ResidencyContainer allocationsForResidency;
     FlushStamp flushStamp = csrWithAubDump->flush(batchBuffer, engineType, &allocationsForResidency, osContext);
@@ -190,7 +190,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     ASSERT_NE(nullptr, gfxAllocation);
 
     ResidencyContainer allocationsForResidency = {gfxAllocation};
-    OsContext osContext(nullptr);
+    OsContext osContext(nullptr, 0u);
     csrWithAubDump->processResidency(&allocationsForResidency, osContext);
 
     EXPECT_TRUE(csrWithAubDump->processResidencyParameterization.wasCalled);

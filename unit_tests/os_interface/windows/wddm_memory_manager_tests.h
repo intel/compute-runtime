@@ -64,7 +64,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         gdi = new MockGdi();
         wddm->gdi.reset(gdi);
         EXPECT_TRUE(wddm->init());
-        osContext = new OsContext(osInterface.get());
+        osContext = new OsContext(osInterface.get(), 0u);
         osContext->incRefInternal();
         uint64_t heap32Base = (uint64_t)(0x800000000000);
         if (sizeof(uintptr_t) == 4) {
@@ -130,7 +130,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         ASSERT_NE(nullptr, wddm);
         EXPECT_TRUE(wddm->init());
         osInterface->get()->setWddm(wddm);
-        osContext = new OsContext(osInterface.get());
+        osContext = new OsContext(osInterface.get(), 0u);
         osContext->incRefInternal();
         wddm->init();
         memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);

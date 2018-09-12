@@ -57,7 +57,7 @@ class DrmCommandStreamFixture {
     const int mockFd = 33;
 
     void SetUp() {
-        osContext = std::make_unique<OsContext>(nullptr);
+        osContext = std::make_unique<OsContext>(nullptr, 0u);
         this->dbgState = new DebugManagerStateRestore();
         //make sure this is disabled, we don't want test this now
         DebugManager.flags.EnableForcePin.set(false);
