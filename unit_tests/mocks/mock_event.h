@@ -47,6 +47,8 @@ struct MockEvent : public BaseEventType {
 
     using BaseEventType::timeStampNode;
     using Event::magic;
+    using Event::queueTimeStamp;
+    using Event::submitTimeStamp;
 };
 
 #undef FORWARD_CONSTRUCTOR

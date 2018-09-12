@@ -180,11 +180,18 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     switch (paramName) {
     case CL_PROFILING_COMMAND_QUEUED:
         src = &queueTimeStamp.CPUTimeinNS;
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            src = &queueTimeStamp.GPUTimeStamp;
+        }
+
         srcSize = sizeof(cl_ulong);
         break;
 
     case CL_PROFILING_COMMAND_SUBMIT:
         src = &submitTimeStamp.CPUTimeinNS;
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            src = &submitTimeStamp.GPUTimeStamp;
+        }
         srcSize = sizeof(cl_ulong);
         break;
 
@@ -291,8 +298,16 @@ bool Event::calcProfilingData() {
         cpuDuration = static_cast<uint64_t>(gpuDuration * frequency);
         cpuCompleteDuration = static_cast<uint64_t>(gpuCompleteDuration * frequency);
         startTimeStamp = static_cast<uint64_t>(((HwTimeStamps *)timeStampNode->tag)->GlobalStartTS * frequency) + c0;
+
         endTimeStamp = startTimeStamp + cpuDuration;
         completeTimeStamp = startTimeStamp + cpuCompleteDuration;
+
+        if (DebugManager.flags.ReturnRawGpuTimestamps.get()) {
+            startTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextStartTS;
+            endTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextEndTS;
+            completeTimeStamp = ((HwTimeStamps *)timeStampNode->tag)->ContextCompleteTS;
+        }
+
         dataCalculated = true;
     }
     return dataCalculated;
@@ -385,7 +400,6 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     }
 
     auto childEventRef = childEventsToNotify.detachNodes();
-
     while (childEventRef != nullptr) {
         auto childEvent = childEventRef->ref;
 

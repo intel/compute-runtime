@@ -31,6 +31,7 @@
 #include "runtime/utilities/tag_allocator.h"
 
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
@@ -460,6 +461,58 @@ TEST(EventProfilingTest, givenEventWhenCompleteIsZeroThenCalcProfilingDataSetsEn
 
     EXPECT_EQ(timestamp.ContextEndTS, timestamp.ContextCompleteTS);
     cmdQ.device = nullptr;
+}
+
+TEST(EventProfilingTest, givenRawTimestampsDebugModeWhenDataIsQueriedThenRawDataIsReturned) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ReturnRawGpuTimestamps.set(1);
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    MyOSTime::instanceNum = 0;
+    device->setOSTime(new MyOSTime());
+    EXPECT_EQ(1, MyOSTime::instanceNum);
+    MockContext context;
+    cl_command_queue_properties props[5] = {0, 0, 0, 0, 0};
+    MockCommandQueue cmdQ(&context, device.get(), props);
+    cmdQ.setProfilingEnabled();
+    cmdQ.device = device.get();
+
+    HwTimeStamps timestamp;
+    timestamp.GlobalStartTS = 10;
+    timestamp.ContextStartTS = 20;
+    timestamp.GlobalEndTS = 80;
+    timestamp.ContextEndTS = 56;
+    timestamp.GlobalCompleteTS = 0;
+    timestamp.ContextCompleteTS = 70;
+
+    MockTagNode<HwTimeStamps> timestampNode;
+    timestampNode.tag = &timestamp;
+
+    MockEvent<Event> event(&cmdQ, CL_COMPLETE, 0, 0);
+    cl_event clEvent = &event;
+
+    event.queueTimeStamp.CPUTimeinNS = 1;
+    event.queueTimeStamp.GPUTimeStamp = 2;
+
+    event.submitTimeStamp.CPUTimeinNS = 3;
+    event.submitTimeStamp.GPUTimeStamp = 4;
+
+    event.setCPUProfilingPath(false);
+    event.timeStampNode = &timestampNode;
+    event.calcProfilingData();
+
+    cl_ulong queued, submited, start, end, complete;
+
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_QUEUED, sizeof(cl_ulong), &queued, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_SUBMIT, sizeof(cl_ulong), &submited, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, nullptr);
+    clGetEventProfilingInfo(clEvent, CL_PROFILING_COMMAND_COMPLETE, sizeof(cl_ulong), &complete, nullptr);
+
+    EXPECT_EQ(timestamp.ContextCompleteTS, complete);
+    EXPECT_EQ(timestamp.ContextEndTS, end);
+    EXPECT_EQ(timestamp.ContextStartTS, start);
+    EXPECT_EQ(event.submitTimeStamp.GPUTimeStamp, submited);
+    EXPECT_EQ(event.queueTimeStamp.GPUTimeStamp, queued);
 }
 
 struct ProfilingWithPerfCountersTests : public ProfilingTests,
