@@ -31,17 +31,17 @@ typedef api_tests clCloneKernelTests;
 
 namespace ULT {
 
-TEST_F(clCloneKernelTests, returnsNullKernel) {
+TEST_F(clCloneKernelTests, GivenNullKernelWhenCloningKernelThenNullIsReturned) {
     auto kernel = clCloneKernel(nullptr, nullptr);
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCloneKernelTests, returnsInvalidKernel) {
+TEST_F(clCloneKernelTests, GivenNullKernelWhenCloningKernelThenInvalidKernelErrorIsReturned) {
     clCloneKernel(nullptr, &retVal);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);
 }
 
-TEST_F(clCloneKernelTests, returnsSuccess) {
+TEST_F(clCloneKernelTests, GivenValidKernelWhenCloningKernelThenSuccessIsReturned) {
     cl_kernel pSourceKernel = nullptr;
     cl_kernel pClonedKernel = nullptr;
     cl_program pProgram = nullptr;
