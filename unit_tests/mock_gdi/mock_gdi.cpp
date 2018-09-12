@@ -389,6 +389,8 @@ NTSTATUS __stdcall D3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHR
     }
 
     synchObject->Info.MonitoredFence.FenceValueCPUVirtualAddress = &cpuFence;
+    synchObject->Info.MonitoredFence.FenceValueGPUVirtualAddress = 3;
+    synchObject->hSyncObject = 4;
     return STATUS_SUCCESS;
 }
 

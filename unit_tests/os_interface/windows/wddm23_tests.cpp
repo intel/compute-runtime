@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/os_interface/windows/gdi_interface.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
@@ -78,18 +79,6 @@ TEST_F(Wddm23Tests, whenCreateContextIsCalledThenEnableHwQueues) {
     EXPECT_EQ(1u, getCreateContextDataFcn()->Flags.HwQueueSupported);
 }
 
-TEST_F(Wddm23Tests, whenCreateHwQueueIsCalledThenSetAllRequiredFieldsAndMonitoredFence) {
-    EXPECT_EQ(osContextWin->getContext(), getCreateHwQueueDataFcn()->hHwContext);
-    EXPECT_EQ(0u, getCreateHwQueueDataFcn()->PrivateDriverDataSize);
-    EXPECT_EQ(nullptr, getCreateHwQueueDataFcn()->pPrivateDriverData);
-
-    EXPECT_TRUE(nullptr != osContextWin->getMonitoredFence().cpuAddress);
-    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
-    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContextWin->getMonitoredFence().fenceHandle);
-    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContextWin->getMonitoredFence().gpuAddress);
-    EXPECT_EQ(0u, osContextWin->getMonitoredFence().lastSubmittedFence);
-}
-
 TEST_F(Wddm23Tests, givenPreemptionModeWhenCreateHwQueueCalledThenSetGpuTimeoutIfEnabled) {
     wddm->setPreemptionMode(PreemptionMode::Disabled);
     wddm->wddmInterface->createHwQueue(wddm->preemptionMode, *osContextWin);
@@ -135,12 +124,22 @@ TEST_F(Wddm23Tests, givenCmdBufferWhenSubmitCalledThenSetAllRequiredFiledsAndUpd
     EXPECT_EQ(hwQueue, getSubmitCommandToHwQueueDataFcn()->hHwQueue);
     EXPECT_EQ(osContextWin->getMonitoredFence().fenceHandle, getSubmitCommandToHwQueueDataFcn()->HwQueueProgressFenceId);
     EXPECT_EQ(&cmdBufferHeader, getSubmitCommandToHwQueueDataFcn()->pPrivateDriverData);
-    EXPECT_EQ(static_cast<UINT>(sizeof(COMMAND_BUFFER_HEADER)), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
+    EXPECT_EQ(static_cast<UINT>(MemoryConstants::pageSize), getSubmitCommandToHwQueueDataFcn()->PrivateDriverDataSize);
 
     EXPECT_EQ(osContextWin->getMonitoredFence().gpuAddress, cmdBufferHeader.MonitorFenceVA);
     EXPECT_EQ(osContextWin->getMonitoredFence().lastSubmittedFence, cmdBufferHeader.MonitorFenceValue);
     EXPECT_EQ(2u, osContextWin->getMonitoredFence().currentFenceValue);
     EXPECT_EQ(1u, osContextWin->getMonitoredFence().lastSubmittedFence);
+}
+
+TEST_F(Wddm23Tests, whenMonitoredFenceIsCreatedThenSetupAllRequiredFields) {
+    wddm->wddmInterface->createMonitoredFence(*osContextWin);
+
+    EXPECT_NE(nullptr, osContextWin->getMonitoredFence().cpuAddress);
+    EXPECT_EQ(1u, osContextWin->getMonitoredFence().currentFenceValue);
+    EXPECT_NE(static_cast<D3DKMT_HANDLE>(0), osContextWin->getMonitoredFence().fenceHandle);
+    EXPECT_NE(static_cast<D3DGPU_VIRTUAL_ADDRESS>(0), osContextWin->getMonitoredFence().gpuAddress);
+    EXPECT_EQ(0u, osContextWin->getMonitoredFence().lastSubmittedFence);
 }
 
 TEST_F(Wddm23Tests, givenCurrentPendingFenceValueGreaterThanPendingFenceValueWhenSubmitCalledThenCallWaitOnGpu) {
