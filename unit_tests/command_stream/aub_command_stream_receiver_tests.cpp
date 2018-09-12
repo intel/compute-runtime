@@ -275,14 +275,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, aubCsr->getResidencyAllocations().size());
 
     // Second makeResident should have no impact
     aubCsr->makeResident(*gfxAllocation);
     EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
     EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, aubCsr->getResidencyAllocations().size());
 
     // First makeNonResident marks the allocation as nonresident
     aubCsr->makeNonResident(*gfxAllocation);
@@ -336,7 +336,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenItShouldLeaveProperRingTailAlignment) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    auto allocationsForResidency = aubExecutionEnvironment->executionEnvironment->memoryManager->getResidencyAllocations();
+    auto allocationsForResidency = aubCsr->getResidencyAllocations();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto engineType = OCLRT::ENGINE_RCS;
@@ -476,7 +476,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnCommandBufferAllocation) {
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    auto allocationsForResidency = aubExecutionEnvironment->executionEnvironment->memoryManager->getResidencyAllocations();
+    auto allocationsForResidency = aubCsr->getResidencyAllocations();
     auto commandBuffer = aubExecutionEnvironment->commandBuffer;
     LinearStream cs(commandBuffer);
 
@@ -499,7 +499,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnCommandBufferAllocation) {
     auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(false, true, false);
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    auto allocationsForResidency = aubExecutionEnvironment->executionEnvironment->memoryManager->getResidencyAllocations();
+    auto allocationsForResidency = aubCsr->getResidencyAllocations();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -1283,7 +1283,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    auto allocationsForResidency = aubExecutionEnvironment->executionEnvironment->memoryManager->getResidencyAllocations();
+    auto allocationsForResidency = aubCsr->getResidencyAllocations();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());
@@ -1314,7 +1314,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
 
     auto aubExecutionEnvironment = getEnvironment<MockAubCsr<FamilyType>>(true, true, true);
     auto aubCsr = aubExecutionEnvironment->template getCsr<MockAubCsr<FamilyType>>();
-    auto allocationsForResidency = aubExecutionEnvironment->executionEnvironment->memoryManager->getResidencyAllocations();
+    auto allocationsForResidency = aubCsr->getResidencyAllocations();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
     auto mockHelper = new MockFlatBatchBufferHelper<FamilyType>(aubCsr->getMemoryManager());

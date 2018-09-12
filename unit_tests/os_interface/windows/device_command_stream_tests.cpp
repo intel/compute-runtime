@@ -444,8 +444,8 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
     csr->makeResident(*linearStreamAllocation);
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
-    EXPECT_EQ(linearStreamAllocation, memManager->getResidencyAllocations()[0]);
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
+    EXPECT_EQ(linearStreamAllocation, csr->getResidencyAllocations()[0]);
 
     wddm->setKmDafEnabled(true);
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, &csr->getResidencyAllocations(), *device->getOsContext());
@@ -532,8 +532,8 @@ TEST_F(WddmCommandStreamTest, makeResident) {
     csr->makeResident(*commandBuffer);
 
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
-    EXPECT_EQ(commandBuffer, memManager->getResidencyAllocations()[0]);
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
+    EXPECT_EQ(commandBuffer, csr->getResidencyAllocations()[0]);
 
     memManager->freeGraphicsMemory(commandBuffer);
 }
@@ -599,8 +599,8 @@ TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
 
     csr->makeResident(*buffer->getGraphicsAllocation());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
-    EXPECT_EQ(gfxAllocation, memManager->getResidencyAllocations()[0]);
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
+    EXPECT_EQ(gfxAllocation, csr->getResidencyAllocations()[0]);
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
     EXPECT_EQ(gfxAllocation, memManager->getEvictionAllocations()[0]);
@@ -617,7 +617,7 @@ TEST_F(WddmCommandStreamTest, createAllocationAndMakeResident) {
 
     ASSERT_NE(nullptr, gfxAllocation);
 
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
 
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
 }
@@ -632,7 +632,7 @@ TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAlloc
 
     ASSERT_NE(nullptr, gfxAllocation);
 
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
 
     EXPECT_EQ(hostPtr, gfxAllocation->getUnderlyingBuffer());
     EXPECT_EQ(expectedReserve, gfxAllocation->getReservedAddress());
@@ -689,7 +689,7 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
 
     csr->makeResident(*commandBuffer);
 
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
 
     gdi->getMakeResidentArg().NumAllocations = 0;
 
@@ -708,7 +708,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     csr->makeResident(*commandBuffer);
 
-    EXPECT_EQ(1u, memManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, memManager->getEvictionAllocations().size());
 
     EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
@@ -717,7 +717,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     csr->makeSurfacePackNonResident(nullptr);
 
-    EXPECT_EQ(0u, memManager->getResidencyAllocations().size());
+    EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, memManager->getEvictionAllocations().size());
 
     EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());

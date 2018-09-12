@@ -57,7 +57,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     void makeResident(GraphicsAllocation &gfxAllocation) override {
         madeResidentGfxAllocations.push_back(&gfxAllocation);
         if (this->getMemoryManager()) {
-            this->getMemoryManager()->getResidencyAllocations().push_back(&gfxAllocation);
+            this->getResidencyAllocations().push_back(&gfxAllocation);
         }
         gfxAllocation.residencyTaskCount = this->taskCount;
     }
@@ -188,7 +188,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
         if (allocationsForResidency) {
             copyOfAllocations = *allocationsForResidency;
         } else {
-            copyOfAllocations = this->getMemoryManager()->getResidencyAllocations();
+            copyOfAllocations = this->getResidencyAllocations();
         }
         flushStamp->setStamp(flushStamp->peekStamp() + 1);
         return flushStamp->peekStamp();

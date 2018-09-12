@@ -449,7 +449,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         } else {
             auto commandBuffer = new CommandBuffer(device);
             commandBuffer->batchBuffer = batchBuffer;
-            commandBuffer->surfaces.swap(getMemoryManager()->getResidencyAllocations());
+            commandBuffer->surfaces.swap(this->getResidencyAllocations());
             commandBuffer->batchBufferEndLocation = bbEndLocation;
             commandBuffer->taskCount = this->taskCount + 1;
             commandBuffer->flushStamp->replaceStampObject(dispatchFlags.flushStampReference);

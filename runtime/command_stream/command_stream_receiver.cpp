@@ -95,7 +95,7 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
 }
 
 void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency) {
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getMemoryManager()->getResidencyAllocations();
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getResidencyAllocations();
     this->waitBeforeMakingNonResidentWhenRequired();
 
     for (auto &surface : residencyAllocations) {

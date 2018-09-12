@@ -1640,11 +1640,11 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInMemoryM
 
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    EXPECT_NE(0u, mm->getResidencyAllocations().size());
+    EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(nullptr, *device->getOsContext());
     csr->makeSurfacePackNonResident(nullptr);
-    EXPECT_EQ(0u, mm->getResidencyAllocations().size());
+    EXPECT_EQ(0u, csr->getResidencyAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
     mm->freeGraphicsMemory(allocation2);
@@ -1658,12 +1658,12 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation1);
 
-    EXPECT_NE(0u, mm->getResidencyAllocations().size());
+    EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(nullptr, *device->getOsContext());
     csr->makeSurfacePackNonResident(nullptr);
 
-    EXPECT_EQ(0u, mm->getResidencyAllocations().size());
+    EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_FALSE(allocation1->isResident());
 
     mm->freeGraphicsMemory(allocation1);

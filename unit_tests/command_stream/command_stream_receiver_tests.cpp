@@ -245,7 +245,7 @@ TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerRes
 
     commandStreamReceiver->makeResident(*graphicsAllocation);
 
-    auto &residencyAllocations = memoryManager->getResidencyAllocations();
+    auto &residencyAllocations = commandStreamReceiver->getResidencyAllocations();
 
     ASSERT_EQ(1u, residencyAllocations.size());
     EXPECT_EQ(graphicsAllocation, residencyAllocations[0]);
@@ -254,9 +254,8 @@ TEST_F(CommandStreamReceiverTest, makeResidentPushesAllocationToMemoryManagerRes
 }
 
 TEST_F(CommandStreamReceiverTest, makeResidentWithoutParametersDoesNothing) {
-    auto *memoryManager = commandStreamReceiver->getMemoryManager();
     commandStreamReceiver->processResidency(nullptr, *pDevice->getOsContext());
-    auto &residencyAllocations = memoryManager->getResidencyAllocations();
+    auto &residencyAllocations = commandStreamReceiver->getResidencyAllocations();
     EXPECT_EQ(0u, residencyAllocations.size());
 }
 

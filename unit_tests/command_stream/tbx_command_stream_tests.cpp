@@ -182,11 +182,11 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentIsC
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(0u, tbxCsr->getResidencyAllocations().size());
 
     tbxCsr->makeResident(*graphicsAllocation);
 
-    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, tbxCsr->getResidencyAllocations().size());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -199,15 +199,15 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenMakeResidentHas
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_EQ(0u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(0u, tbxCsr->getResidencyAllocations().size());
 
     tbxCsr->makeResident(*graphicsAllocation);
 
-    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, tbxCsr->getResidencyAllocations().size());
 
     tbxCsr->makeResident(*graphicsAllocation);
 
-    EXPECT_EQ(1u, memoryManager->getResidencyAllocations().size());
+    EXPECT_EQ(1u, tbxCsr->getResidencyAllocations().size());
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -1962,7 +1962,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInNonDirtyStateAndBatching
     EXPECT_TRUE(mockedSubmissionsAggregator->peekCmdBufferList().peekIsEmpty());
 
     //surfaces are non resident
-    auto &surfacesForResidency = mockCsr->getMemoryManager()->getResidencyAllocations();
+    auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
 }
 
@@ -2310,7 +2310,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenRecorded
 
     EXPECT_EQ(0, mockCsr->flushCalledCount);
 
-    auto &surfacesForResidency = mockCsr->getMemoryManager()->getResidencyAllocations();
+    auto &surfacesForResidency = mockCsr->getResidencyAllocations();
     EXPECT_EQ(0u, surfacesForResidency.size());
 
     auto &cmdBufferList = mockedSubmissionsAggregator->peekCommandBuffers();

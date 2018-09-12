@@ -1317,9 +1317,6 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
         residency.erase(graphicsAllocation.getUnderlyingBuffer());
         CommandStreamReceiver::makeNonResident(graphicsAllocation);
     }
-    ResidencyContainer &getResidencyContainer() {
-        return this->memoryManager->getResidencyAllocations();
-    }
 
     std::map<const void *, size_t> residency;
 };
@@ -1364,7 +1361,7 @@ HWTEST_F(PatchTokenTests, givenKernelRequiringConstantAllocationWhenMakeResident
     pKernel->makeResident(*pCommandStreamReceiver);
     EXPECT_EQ(2u, pCommandStreamReceiver->residency.size());
 
-    auto &residencyVector = pCommandStreamReceiver->getResidencyContainer();
+    auto &residencyVector = pCommandStreamReceiver->getResidencyAllocations();
 
     //we expect kernel ISA here and constant allocation
     auto kernelIsa = pKernel->getKernelInfo().getGraphicsAllocation();

@@ -224,7 +224,7 @@ void WddmCommandStreamReceiver<GfxFamily>::initPageTableManagerRegisters(LinearS
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::kmDafLockAllocations(ResidencyContainer *allocationsForResidency) {
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : getMemoryManager()->getResidencyAllocations();
+    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getResidencyAllocations();
 
     for (uint32_t i = 0; i < residencyAllocations.size(); i++) {
         auto graphicsAllocation = residencyAllocations[i];
