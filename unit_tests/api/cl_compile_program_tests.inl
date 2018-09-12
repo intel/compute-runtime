@@ -35,7 +35,7 @@ typedef api_tests clCompileProgramTests;
 
 namespace ULT {
 
-TEST_F(clCompileProgramTests, CompileSingleSource) {
+TEST_F(clCompileProgramTests, GivenKernelAsSingleSourceWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     void *pSource = nullptr;
     size_t sourceSize = 0;
@@ -82,7 +82,7 @@ TEST_F(clCompileProgramTests, CompileSingleSource) {
     CompilerInterface::shutdown();
 }
 
-TEST_F(clCompileProgramTests, CompileSingleSourceWithHeader) {
+TEST_F(clCompileProgramTests, GivenKernelAsSourceWithHeaderWhenCompilingProgramThenSuccessIsReturned) {
     cl_program pProgram = nullptr;
     cl_program pHeader = nullptr;
     void *pSource = nullptr;
@@ -155,7 +155,7 @@ TEST_F(clCompileProgramTests, CompileSingleSourceWithHeader) {
     CompilerInterface::shutdown();
 }
 
-TEST_F(clCompileProgramTests, NullProgram_returnsError) {
+TEST_F(clCompileProgramTests, GivenNullProgramWhenCompilingProgramThenInvalidProgramErrorIsReturned) {
     retVal = clCompileProgram(
         nullptr,
         1,
