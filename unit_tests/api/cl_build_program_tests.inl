@@ -35,7 +35,7 @@ typedef api_tests clBuildProgramTests;
 
 namespace ULT {
 
-TEST_F(clBuildProgramTests, FromSourceBasic) {
+TEST_F(clBuildProgramTests, GivenSourceAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     void *pSource = nullptr;
     size_t sourceSize = 0;
@@ -87,7 +87,7 @@ TEST_F(clBuildProgramTests, FromSourceBasic) {
     EXPECT_EQ(nullptr, pProgram);
 }
 
-TEST_F(clBuildProgramTests, FromBinaryBasic) {
+TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildSucceeds) {
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
     void *pBinary = nullptr;
@@ -231,7 +231,7 @@ TEST_F(clBuildProgramTests, GivenSpirAsInputWhenCreatingProgramFromBinaryThenPro
     CompilerInterface::shutdown();
 }
 
-TEST_F(clBuildProgramTests, NullProgramReturnsError) {
+TEST_F(clBuildProgramTests, GivenNullAsInputWhenCreatingProgramThenInvalidProgramErrorIsReturned) {
     retVal = clBuildProgram(
         nullptr,
         1,
