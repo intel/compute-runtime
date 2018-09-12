@@ -610,7 +610,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
-        this->getMemoryManager()->pushAllocationForEviction(&gfxAllocation);
+        this->pushAllocationForEviction(&gfxAllocation);
         gfxAllocation.residencyTaskCount = ObjectNotResident;
     }
 }

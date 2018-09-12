@@ -547,7 +547,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer *all
     return result;
 }
 
-void WddmMemoryManager::makeNonResidentEvictionAllocations() {
+void WddmMemoryManager::makeNonResidentEvictionAllocations(ResidencyContainer &evictionAllocations) {
 
     acquireResidencyLock();
 

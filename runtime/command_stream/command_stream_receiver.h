@@ -91,6 +91,11 @@ class CommandStreamReceiver {
 
     ResidencyContainer &getResidencyAllocations();
     void pushAllocationForResidency(GraphicsAllocation *gfxAllocation);
+    void clearResidencyAllocations();
+
+    ResidencyContainer &getEvictionAllocations();
+    void pushAllocationForEviction(GraphicsAllocation *gfxAllocation);
+    void clearEvictionAllocations();
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 

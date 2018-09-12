@@ -1191,7 +1191,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     EXPECT_EQ(buffer, bo1);
     EXPECT_EQ(1u, bo1->getRefCount());
 
-    csr->getMemoryManager()->clearResidencyAllocations();
+    csr->clearResidencyAllocations();
     csr->makeResident(*allocation);
     csr->processResidency(&csr->getResidencyAllocations(), *osContext);
 
@@ -1383,7 +1383,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
         EXPECT_EQ(1u, bo->getRefCount());
     }
     mm->freeGraphicsMemory(allocation);
-    mm->clearResidencyAllocations();
+    csr->clearResidencyAllocations();
 
     EXPECT_EQ(0u, hostPtrManager.getFragmentCount());
 
@@ -1438,7 +1438,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSame
 
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
-    mm->clearResidencyAllocations();
+    csr->clearResidencyAllocations();
 }
 
 TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDifferentThenMakeResidentShouldAddTwoLocations) {
@@ -1461,7 +1461,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDiffere
 
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
-    mm->clearResidencyAllocations();
+    csr->clearResidencyAllocations();
 }
 
 TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
@@ -1682,7 +1682,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeNonResidentOnMemObjectCallsDrmCSMakeNonRes
 
     EXPECT_TRUE(tCsr->makeNonResidentResult.called);
     EXPECT_EQ(allocation1, tCsr->makeNonResidentResult.allocation);
-    EXPECT_EQ(0u, mm->getEvictionAllocations().size());
+    EXPECT_EQ(0u, tCsr->getEvictionAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
 }
