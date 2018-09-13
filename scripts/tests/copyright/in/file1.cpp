@@ -1,0 +1,3 @@
+/*
+ * No copyright at all
+ */
