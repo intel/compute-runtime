@@ -227,17 +227,6 @@ class MemoryManager {
     void setVirtualPaddingSupport(bool virtualPaddingSupport) { virtualPaddingAvailable = virtualPaddingSupport; }
     GraphicsAllocation *peekPaddingAllocation() { return paddingAllocation; }
 
-    void pushAllocationForResidency(GraphicsAllocation *gfxAllocation);
-    void clearResidencyAllocations();
-    ResidencyContainer &getResidencyAllocations() {
-        return residencyAllocations;
-    }
-    void pushAllocationForEviction(GraphicsAllocation *gfxAllocation);
-    void clearEvictionAllocations();
-    ResidencyContainer &getEvictionAllocations() {
-        return evictionAllocations;
-    }
-
     DeferredDeleter *getDeferredDeleter() const {
         return deferredDeleter.get();
     }
@@ -274,8 +263,6 @@ class MemoryManager {
     bool virtualPaddingAvailable = false;
     GraphicsAllocation *paddingAllocation = nullptr;
     void applyCommonCleanup();
-    ResidencyContainer residencyAllocations;
-    ResidencyContainer evictionAllocations;
     std::unique_ptr<DeferredDeleter> deferredDeleter;
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;

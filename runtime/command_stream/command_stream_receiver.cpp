@@ -39,6 +39,8 @@ CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE] 
 
 CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvironment)
     : executionEnvironment(executionEnvironment) {
+    residencyAllocations.reserve(20);
+
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     submissionAggregator.reset(new SubmissionAggregator());
     if (DebugManager.flags.CsrDispatchMode.get()) {
@@ -265,27 +267,27 @@ void CommandStreamReceiver::initProgrammingFlags() {
 }
 
 ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
-    return this->memoryManager->getResidencyAllocations();
+    return this->residencyAllocations;
 }
 
 void CommandStreamReceiver::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {
-    this->memoryManager->pushAllocationForResidency(gfxAllocation);
+    this->residencyAllocations.push_back(gfxAllocation);
 }
 
 void CommandStreamReceiver::clearResidencyAllocations() {
-    this->memoryManager->clearResidencyAllocations();
+    this->residencyAllocations.clear();
 }
 
 ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
-    return this->memoryManager->getEvictionAllocations();
+    return this->evictionAllocations;
 }
 
 void CommandStreamReceiver::pushAllocationForEviction(GraphicsAllocation *gfxAllocation) {
-    this->memoryManager->pushAllocationForEviction(gfxAllocation);
+    this->evictionAllocations.push_back(gfxAllocation);
 }
 
 void CommandStreamReceiver::clearEvictionAllocations() {
-    this->memoryManager->clearEvictionAllocations();
+    this->evictionAllocations.clear();
 }
 
 void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}

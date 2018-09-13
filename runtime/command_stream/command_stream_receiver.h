@@ -211,6 +211,9 @@ class CommandStreamReceiver {
     OSInterface *osInterface = nullptr;
     std::unique_ptr<SubmissionAggregator> submissionAggregator;
 
+    ResidencyContainer residencyAllocations;
+    ResidencyContainer evictionAllocations;
+
     bool nTo1SubmissionModelEnabled = false;
     DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
     bool disableL3Cache = false;

@@ -73,9 +73,7 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
 }
 
 MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
-                                                                             localMemorySupported(enableLocalMemory) {
-    residencyAllocations.reserve(20);
-};
+                                                                             localMemorySupported(enableLocalMemory){};
 
 MemoryManager::~MemoryManager() {
     freeAllocationsList(-1, graphicsAllocations);
@@ -292,22 +290,6 @@ TagAllocator<TimestampPacket> *MemoryManager::getTimestampPacketAllocator() {
         timestampPacketAllocator = std::make_unique<TagAllocator<TimestampPacket>>(this, TagCount, MemoryConstants::cacheLineSize);
     }
     return timestampPacketAllocator.get();
-}
-
-void MemoryManager::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {
-    residencyAllocations.push_back(gfxAllocation);
-}
-
-void MemoryManager::clearResidencyAllocations() {
-    residencyAllocations.clear();
-}
-
-void MemoryManager::pushAllocationForEviction(GraphicsAllocation *gfxAllocation) {
-    evictionAllocations.push_back(gfxAllocation);
-}
-
-void MemoryManager::clearEvictionAllocations() {
-    evictionAllocations.clear();
 }
 
 void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {

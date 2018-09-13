@@ -1072,56 +1072,6 @@ TEST(OsAgnosticMemoryManager, pleaseDetectLeak) {
     MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::EXPECT_TO_LEAK;
 }
 
-TEST(OsAgnosticMemoryManager, pushAllocationForResidency) {
-    OsAgnosticMemoryManager memoryManager;
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
-
-    EXPECT_EQ(0u, memoryManager.getResidencyAllocations().size());
-
-    memoryManager.pushAllocationForResidency(graphicsAllocation);
-
-    EXPECT_EQ(1u, memoryManager.getResidencyAllocations().size());
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST(OsAgnosticMemoryManager, clearResidencyAllocations) {
-    OsAgnosticMemoryManager memoryManager;
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
-
-    memoryManager.pushAllocationForResidency(graphicsAllocation);
-
-    EXPECT_EQ(1u, memoryManager.getResidencyAllocations().size());
-
-    memoryManager.clearResidencyAllocations();
-    EXPECT_EQ(0u, memoryManager.getResidencyAllocations().size());
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST(OsAgnosticMemoryManager, pushAllocationForEviction) {
-    OsAgnosticMemoryManager memoryManager;
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
-
-    EXPECT_EQ(0u, memoryManager.getEvictionAllocations().size());
-
-    memoryManager.pushAllocationForEviction(graphicsAllocation);
-
-    EXPECT_EQ(1u, memoryManager.getEvictionAllocations().size());
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
-TEST(OsAgnosticMemoryManager, clearEvictionAllocations) {
-    OsAgnosticMemoryManager memoryManager;
-    auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
-
-    memoryManager.pushAllocationForEviction(graphicsAllocation);
-
-    EXPECT_EQ(1u, memoryManager.getEvictionAllocations().size());
-
-    memoryManager.clearEvictionAllocations();
-    EXPECT_EQ(0u, memoryManager.getEvictionAllocations().size());
-    memoryManager.freeGraphicsMemory(graphicsAllocation);
-}
-
 TEST(OsAgnosticMemoryManager, alignmentIsCorrect) {
     OsAgnosticMemoryManager memoryManager;
     const size_t alignment = 0;
