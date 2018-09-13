@@ -32,7 +32,7 @@ typedef api_tests clCreateCommandQueueTest;
 
 namespace ULT {
 
-TEST_F(clCreateCommandQueueTest, returnsSuccess) {
+TEST_F(clCreateCommandQueueTest, GivenCorrectParametersWhenCreatingCommandQueueThenCommandQueueIsCreatedAndSuccessIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
 
@@ -45,17 +45,17 @@ TEST_F(clCreateCommandQueueTest, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, NullContext_returnsError) {
+TEST_F(clCreateCommandQueueTest, GivenNullContextWhenCreatingCommandQueueThenInvalidContextErrorIsReturned) {
     clCreateCommandQueue(nullptr, devices[0], 0, &retVal);
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, NullDevice_returnsError) {
+TEST_F(clCreateCommandQueueTest, GivenNullDeviceWhenCreatingCommandQueueThenInvalidDeviceErrorIsReturned) {
     clCreateCommandQueue(pContext, nullptr, 0, &retVal);
     ASSERT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, InvalidProp_returnsError) {
+TEST_F(clCreateCommandQueueTest, GivenInvalidPropertiesWhenCreatingCommandQueueThenInvalidValueErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0xf0000;
 
@@ -65,7 +65,7 @@ TEST_F(clCreateCommandQueueTest, InvalidProp_returnsError) {
     ASSERT_EQ(CL_INVALID_VALUE, retVal);
 }
 
-TEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
+TEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenQueueIsSucesfullyCreated) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto cmdq = clCreateCommandQueue(pContext, devices[0], ooq, &retVal);
@@ -74,7 +74,7 @@ TEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenQueueIs
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
+HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToBatchingMode) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
@@ -85,7 +85,7 @@ HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenComma
     retVal = clReleaseCommandQueue(cmdq);
 }
 
-HWTEST_F(clCreateCommandQueueTest, givenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
+HWTEST_F(clCreateCommandQueueTest, GivenOoqParametersWhenQueueIsCreatedThenCommandStreamReceiverSwitchesToNTo1SubmissionModel) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto &csr = reinterpret_cast<UltCommandStreamReceiver<FamilyType> &>(pContext->getDevice(0)->getCommandStreamReceiver());
