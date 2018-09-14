@@ -49,7 +49,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
-    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void waitBeforeMakingNonResidentWhenRequired() override;
     bool writeMemory(GraphicsAllocation &gfxAllocation);
 

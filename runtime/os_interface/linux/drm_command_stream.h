@@ -53,7 +53,7 @@ class DrmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> {
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
-    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
     bool waitForFlushStamp(FlushStamp &flushStampToWait, OsContext &osContext) override;
     void overrideMediaVFEStateDirty(bool dirty) override;

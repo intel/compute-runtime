@@ -106,7 +106,8 @@ FlushStamp WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer,
         batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
     }
 
-    this->processResidency(allocationsForResidency, osContext);
+    UNRECOVERABLE_IF(allocationsForResidency == nullptr);
+    this->processResidency(*allocationsForResidency, osContext);
 
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandBufferHeader);
     pHeader->RequiresCoherency = batchBuffer.requiresCoherency;
@@ -152,8 +153,8 @@ void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
-    bool success = getMemoryManager()->makeResidentResidencyAllocations(allocationsForResidency, osContext);
+void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+    bool success = getMemoryManager()->makeResidentResidencyAllocations(&allocationsForResidency, osContext);
     DEBUG_BREAK_IF(!success);
 }
 

@@ -35,7 +35,7 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     CommandStreamReceiverWithAUBDump &operator=(const CommandStreamReceiverWithAUBDump &) = delete;
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
-    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override;
 

@@ -75,7 +75,8 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
 
     if (bb) {
         flushStamp = bb->peekHandle();
-        this->processResidency(allocationsForResidency, osContext);
+        UNRECOVERABLE_IF(allocationsForResidency == nullptr);
+        this->processResidency(*allocationsForResidency, osContext);
         // Residency hold all allocation except command buffer, hence + 1
         auto requiredSize = this->residency.size() + 1;
         if (requiredSize > this->execObjectsStorage.size()) {
@@ -123,9 +124,8 @@ void DrmCommandStreamReceiver<GfxFamily>::makeResident(BufferObject *bo) {
 }
 
 template <typename GfxFamily>
-void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer *inputAllocationsForResidency, OsContext &osContext) {
-    UNRECOVERABLE_IF(inputAllocationsForResidency == nullptr);
-    for (auto &alloc : *inputAllocationsForResidency) {
+void DrmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &inputAllocationsForResidency, OsContext &osContext) {
+    for (auto &alloc : inputAllocationsForResidency) {
         auto drmAlloc = reinterpret_cast<DrmAllocation *>(alloc);
         if (drmAlloc->fragmentsStorage.fragmentCount) {
             for (unsigned int f = 0; f < drmAlloc->fragmentsStorage.fragmentCount; f++) {

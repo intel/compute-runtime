@@ -243,7 +243,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
 
     tbxCsr->pushAllocationForResidency(graphicsAllocation);
-    tbxCsr->processResidency(&tbxCsr->getResidencyAllocations(), *pDevice->getOsContext());
+    tbxCsr->processResidency(tbxCsr->getResidencyAllocations(), *pDevice->getOsContext());
 
     EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
     EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
@@ -262,7 +262,7 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
-    tbxCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    tbxCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
     EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);

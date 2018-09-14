@@ -48,7 +48,7 @@ FlushStamp CommandStreamReceiverWithAUBDump<BaseCSR>::flush(BatchBuffer &batchBu
 }
 
 template <typename BaseCSR>
-void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     BaseCSR::processResidency(allocationsForResidency, osContext);
     if (aubCSR) {
         aubCSR->processResidency(allocationsForResidency, osContext);

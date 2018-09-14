@@ -221,7 +221,8 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     // Write allocations for residency
-    processResidency(allocationsForResidency, osContext);
+    UNRECOVERABLE_IF(allocationsForResidency == nullptr);
+    processResidency(*allocationsForResidency, osContext);
 
     // Add a batch buffer start to the RCS
     auto previousTail = engineInfo.tailRCS;
@@ -367,9 +368,8 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
 }
 
 template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
-    DEBUG_BREAK_IF(allocationsForResidency == nullptr);
-    for (auto &gfxAllocation : *allocationsForResidency) {
+void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
+    for (auto &gfxAllocation : allocationsForResidency) {
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!(gfxAllocation->getUnderlyingBufferSize() == 0));
         }

@@ -634,7 +634,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     auto gfxDefaultAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
 
     ResidencyContainer allocationsForResidency = {gfxDefaultAllocation};
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_TRUE(gfxDefaultAllocation->isAubWritable());
 
@@ -676,7 +676,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     gfxImageAllocation->setAllocationType(GraphicsAllocation::AllocationType::IMAGE);
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
     EXPECT_FALSE(gfxImageAllocation->isAubWritable());
@@ -702,7 +702,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptur
     aubCsr->dumpAubNonWritable = true;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_TRUE(gfxBufferAllocation->isAubWritable());
     EXPECT_TRUE(gfxImageAllocation->isAubWritable());
@@ -728,7 +728,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
     aubCsr->dumpAubNonWritable = false;
 
     ResidencyContainer allocationsForResidency = {gfxBufferAllocation, gfxImageAllocation};
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_FALSE(gfxBufferAllocation->isAubWritable());
     EXPECT_FALSE(gfxImageAllocation->isAubWritable());
@@ -1881,7 +1881,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(addr, aubCsr->writeMemoryParametrization.receivedAllocationView.first);
@@ -1896,7 +1896,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenProcess
 
     ASSERT_EQ(1u, aubCsr->externalAllocations.size());
     ResidencyContainer allocationsForResidency;
-    aubCsr->processResidency(&allocationsForResidency, *pDevice->getOsContext());
+    aubCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
     EXPECT_TRUE(aubCsr->writeMemoryParametrization.wasCalled);
     EXPECT_EQ(0u, aubCsr->writeMemoryParametrization.receivedAllocationView.first);

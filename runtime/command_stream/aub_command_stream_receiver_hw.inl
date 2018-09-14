@@ -315,7 +315,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
             batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
         }
-        processResidency(allocationsForResidency, osContext);
+        UNRECOVERABLE_IF(allocationsForResidency == nullptr);
+        processResidency(*allocationsForResidency, osContext);
     }
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(pBatchBuffer)), engineType);
@@ -582,7 +583,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             return;
@@ -595,8 +596,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
         }
     }
 
-    DEBUG_BREAK_IF(allocationsForResidency == nullptr);
-    for (auto &gfxAllocation : *allocationsForResidency) {
+    for (auto &gfxAllocation : allocationsForResidency) {
         if (dumpAubNonWritable) {
             gfxAllocation->setAubWritable(true);
         }

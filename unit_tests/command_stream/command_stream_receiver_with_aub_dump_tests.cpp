@@ -49,9 +49,9 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         makeResidentParameterization.receivedGfxAllocation = &gfxAllocation;
     }
 
-    void processResidency(ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+    void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         processResidencyParameterization.wasCalled = true;
-        processResidencyParameterization.receivedAllocationsForResidency = allocationsForResidency;
+        processResidencyParameterization.receivedAllocationsForResidency = &allocationsForResidency;
     }
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
@@ -191,7 +191,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
 
     ResidencyContainer allocationsForResidency = {gfxAllocation};
     OsContext osContext(nullptr, 0u);
-    csrWithAubDump->processResidency(&allocationsForResidency, osContext);
+    csrWithAubDump->processResidency(allocationsForResidency, osContext);
 
     EXPECT_TRUE(csrWithAubDump->processResidencyParameterization.wasCalled);
     EXPECT_EQ(&allocationsForResidency, csrWithAubDump->processResidencyParameterization.receivedAllocationsForResidency);

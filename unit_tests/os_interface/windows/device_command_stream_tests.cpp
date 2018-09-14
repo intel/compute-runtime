@@ -713,7 +713,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
 
-    csr->processResidency(&csr->getResidencyAllocations(), *device->getOsContext());
+    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
 
     csr->makeSurfacePackNonResident(nullptr);
 

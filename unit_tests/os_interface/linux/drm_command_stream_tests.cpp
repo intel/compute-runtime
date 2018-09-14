@@ -879,7 +879,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, givenGemCloseWorkerInactiveModeWhenMakeRe
     csr->makeResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
 
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     csr->makeNonResident(*dummyAllocation);
     EXPECT_EQ(1u, bo->getRefCount());
@@ -899,7 +899,7 @@ TEST_F(DrmCommandStreamGemWorkerTests, GivenTwoAllocationsWhenBackingStorageIsDi
     EXPECT_FALSE(bo1->peekIsResident());
     EXPECT_FALSE(bo2->peekIsResident());
 
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(bo1->peekIsResident());
     EXPECT_TRUE(bo2->peekIsResident());
@@ -1135,7 +1135,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResident) {
     EXPECT_EQ(nullptr, allocation->getUnderlyingBuffer());
 
     csr->makeResident(*allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(isResident(buffer));
     auto bo = getResident(buffer);
@@ -1160,7 +1160,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentOnly) {
 
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(isResident(buffer1));
     EXPECT_TRUE(isResident(buffer2));
@@ -1184,7 +1184,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
     auto allocation = new DrmAllocation(buffer, nullptr, buffer->peekSize(), MemoryPool::MemoryNull);
 
     csr->makeResident(*allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(isResident(buffer));
     auto bo1 = getResident(buffer);
@@ -1193,7 +1193,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwice) {
 
     csr->clearResidencyAllocations();
     csr->makeResident(*allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(isResident(buffer));
     auto bo2 = getResident(buffer);
@@ -1222,7 +1222,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentTwiceWhenFragmentStorage) {
     csr->makeResident(*allocation);
     csr->makeResident(*allocation);
 
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
     for (int i = 0; i < max_fragments_count; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
                   reqs.AllocationFragments[i].allocationPtr);
@@ -1265,7 +1265,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     tCsr->makeResident(*graphicsAllocation);
     tCsr->makeResident(*graphicsAllocation2);
 
-    tCsr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    tCsr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident);
@@ -1289,7 +1289,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
     tCsr->makeResident(*graphicsAllocation);
     tCsr->makeResident(*graphicsAllocation2);
 
-    tCsr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    tCsr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
     EXPECT_TRUE(graphicsAllocation->fragmentsStorage.fragmentStorageData[1].residency->resident);
@@ -1325,7 +1325,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationCreatedFromThreeFragmentsWhenMa
     ASSERT_EQ(3u, allocation->fragmentsStorage.fragmentCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     for (int i = 0; i < max_fragments_count; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1363,7 +1363,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     ASSERT_EQ(2u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1395,7 +1395,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenAllocationsContainingDifferentCountOfFrag
     ASSERT_EQ(1u, reqs.requiredFragmentsCount);
 
     csr->makeResident(*allocation2);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     for (unsigned int i = 0; i < reqs.requiredFragmentsCount; i++) {
         ASSERT_EQ(allocation2->fragmentsStorage.fragmentStorageData[i].cpuPtr,
@@ -1429,7 +1429,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsTheSame
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 1u);
 
@@ -1452,7 +1452,7 @@ TEST_F(DrmCommandStreamLeaksTest, GivenTwoAllocationsWhenBackingStorageIsDiffere
     csr->makeResident(*allocation);
     csr->makeResident(*allocation2);
 
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 2u);
 
@@ -1471,7 +1471,7 @@ TEST_F(DrmCommandStreamLeaksTest, makeResidentSizeZero) {
     EXPECT_EQ(buffer->peekSize(), allocation.getUnderlyingBufferSize());
 
     csr->makeResident(allocation);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_FALSE(isResident(buffer.get()));
     auto bo = getResident(buffer.get());
@@ -1500,7 +1500,7 @@ TEST_F(DrmCommandStreamLeaksTest, ClearResidencyWhenFlushNotCalled) {
     EXPECT_EQ(tCsr->getResidencyVector()->size(), 0u);
     csr->makeResident(*allocation1);
     csr->makeResident(*allocation2);
-    csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+    csr->processResidency(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_TRUE(isResident(allocation1->getBO()));
     EXPECT_TRUE(isResident(allocation2->getBO()));
@@ -1642,7 +1642,7 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInMemoryM
     csr->makeResident(*allocation2);
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(&csr->getResidencyAllocations(), *device->getOsContext());
+    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
     csr->makeSurfacePackNonResident(nullptr);
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
 
@@ -1660,7 +1660,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
 
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
-    csr->processResidency(&csr->getResidencyAllocations(), *device->getOsContext());
+    csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
     csr->makeSurfacePackNonResident(nullptr);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
@@ -1722,7 +1722,7 @@ TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
         csr->makeResident(*buffer->getGraphicsAllocation());
-        csr->processResidency(&csr->getResidencyAllocations(), *osContext);
+        csr->processResidency(csr->getResidencyAllocations(), *osContext);
         EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident());
         EXPECT_EQ(buffer->getGraphicsAllocation()->residencyTaskCount, (int)csr->peekTaskCount() + 1);
     }
