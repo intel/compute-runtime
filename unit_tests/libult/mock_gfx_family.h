@@ -351,6 +351,11 @@ struct GENX {
             COMPARE_OPERATION_SAD_NOT_EQUAL_SDD = 0x5,
         } COMPARE_OPERATION;
 
+        typedef enum tagWAIT_MODE {
+            WAIT_MODE_SIGNAL_MODE = 0x0,
+            WAIT_MODE_POLLING_MODE = 0x1,
+        } WAIT_MODE;
+
         static tagMI_SEMAPHORE_WAIT sInit(void) {
             MI_SEMAPHORE_WAIT state;
             return state;
@@ -359,6 +364,7 @@ struct GENX {
         inline void setSemaphoreDataDword(uint32_t value) {}
         inline void setSemaphoreGraphicsAddress(uint64_t value) {}
         inline void setCompareOperation(COMPARE_OPERATION value) {}
+        inline void setWaitMode(const WAIT_MODE value) {}
     } MI_SEMAPHORE_WAIT;
 
     using HARDWARE_INTERFACE = BaseInterfaceVersion<GENX>;

@@ -1033,6 +1033,7 @@ HWTEST_F(KernelCommandsHelperTests, givenCompareAddressAndDataWhenProgrammingSem
     referenceCommand.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     referenceCommand.setSemaphoreDataDword(compareData);
     referenceCommand.setSemaphoreGraphicsAddress(compareAddress);
+    referenceCommand.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 
     KernelCommandsHelper<FamilyType>::programMiSemaphoreWait(cmdStream, compareAddress, compareData);
     EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), cmdStream.getUsed());

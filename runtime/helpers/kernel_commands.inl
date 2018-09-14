@@ -430,6 +430,7 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
     miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     miSemaphoreCmd->setSemaphoreDataDword(compareData);
     miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+    miSemaphoreCmd->setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
 }
 
 template <typename GfxFamily>
