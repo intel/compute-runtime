@@ -55,7 +55,7 @@ CommandStreamReceiver::~CommandStreamReceiver() {
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
     auto submissionTaskCount = this->taskCount + 1;
     if (gfxAllocation.residencyTaskCount[deviceIndex] < (int)submissionTaskCount) {
-        this->pushAllocationForResidency(&gfxAllocation);
+        this->getResidencyAllocations().push_back(&gfxAllocation);
         gfxAllocation.taskCount = submissionTaskCount;
         if (gfxAllocation.residencyTaskCount[deviceIndex] == ObjectNotResident) {
             this->totalMemoryUsed += gfxAllocation.getUnderlyingBufferSize();
@@ -65,14 +65,14 @@ void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
 }
 
 void CommandStreamReceiver::processEviction() {
-    this->clearEvictionAllocations();
+    this->getEvictionAllocations().clear();
 }
 
 void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     if (gfxAllocation.residencyTaskCount[deviceIndex] != ObjectNotResident) {
         makeCoherent(gfxAllocation);
         if (gfxAllocation.peekEvictable()) {
-            this->pushAllocationForEviction(&gfxAllocation);
+            this->getEvictionAllocations().push_back(&gfxAllocation);
         } else {
             gfxAllocation.setEvictable(true);
         }
@@ -88,11 +88,7 @@ void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer *alloc
     for (auto &surface : residencyAllocations) {
         this->makeNonResident(*surface);
     }
-    if (allocationsForResidency) {
-        residencyAllocations.clear();
-    } else {
-        this->clearResidencyAllocations();
-    }
+    residencyAllocations.clear();
     this->processEviction();
 }
 
@@ -255,24 +251,8 @@ ResidencyContainer &CommandStreamReceiver::getResidencyAllocations() {
     return this->residencyAllocations;
 }
 
-void CommandStreamReceiver::pushAllocationForResidency(GraphicsAllocation *gfxAllocation) {
-    this->residencyAllocations.push_back(gfxAllocation);
-}
-
-void CommandStreamReceiver::clearResidencyAllocations() {
-    this->residencyAllocations.clear();
-}
-
 ResidencyContainer &CommandStreamReceiver::getEvictionAllocations() {
     return this->evictionAllocations;
-}
-
-void CommandStreamReceiver::pushAllocationForEviction(GraphicsAllocation *gfxAllocation) {
-    this->evictionAllocations.push_back(gfxAllocation);
-}
-
-void CommandStreamReceiver::clearEvictionAllocations() {
-    this->evictionAllocations.clear();
 }
 
 void CommandStreamReceiver::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {}

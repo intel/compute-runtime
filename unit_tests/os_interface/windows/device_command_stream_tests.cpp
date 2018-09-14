@@ -547,8 +547,8 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
     ASSERT_NE(nullptr, allocation);
     ASSERT_NE(nullptr, allocation2);
 
-    csr->pushAllocationForEviction(allocation);
-    csr->pushAllocationForEviction(allocation2);
+    csr->getEvictionAllocations().push_back(allocation);
+    csr->getEvictionAllocations().push_back(allocation2);
 
     EXPECT_EQ(2u, csr->getEvictionAllocations().size());
 
@@ -566,7 +566,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
     GraphicsAllocation *allocation = memManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, allocation);
 
-    csr->pushAllocationForEviction(allocation);
+    csr->getEvictionAllocations().push_back(allocation);
 
     EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 

@@ -41,44 +41,6 @@ struct CommandStreamReceiverTest : public DeviceFixture,
     CommandStreamReceiver *commandStreamReceiver;
 };
 
-TEST_F(CommandStreamReceiverTest, givenValidCsrWhenPushingAllocationForResidencyThanAllocationsCountIsIncreated) {
-    ASSERT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
-
-    GraphicsAllocation allocation(nullptr, 0);
-    commandStreamReceiver->pushAllocationForResidency(&allocation);
-    EXPECT_EQ(1u, commandStreamReceiver->getResidencyAllocations().size());
-}
-
-TEST_F(CommandStreamReceiverTest, givenValidCsrWhenClearingAllocationsForResidencyThenAllAllocationsAreRemoved) {
-    GraphicsAllocation allocation1(nullptr, 0);
-    GraphicsAllocation allocation2(nullptr, 0);
-    commandStreamReceiver->pushAllocationForResidency(&allocation1);
-    commandStreamReceiver->pushAllocationForResidency(&allocation2);
-    ASSERT_EQ(2u, commandStreamReceiver->getResidencyAllocations().size());
-
-    commandStreamReceiver->clearResidencyAllocations();
-    EXPECT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
-}
-
-TEST_F(CommandStreamReceiverTest, givenValidCsrWhenPushingAllocationForEvictionThanAllocationsCountIsIncreated) {
-    ASSERT_EQ(0u, commandStreamReceiver->getResidencyAllocations().size());
-
-    GraphicsAllocation allocation(nullptr, 0);
-    commandStreamReceiver->pushAllocationForEviction(&allocation);
-    EXPECT_EQ(1u, commandStreamReceiver->getEvictionAllocations().size());
-}
-
-TEST_F(CommandStreamReceiverTest, givenValidCsrWhenClearingAllocationsForEvictionThenAllAllocationsAreRemoved) {
-    GraphicsAllocation allocation1(nullptr, 0);
-    GraphicsAllocation allocation2(nullptr, 0);
-    commandStreamReceiver->pushAllocationForEviction(&allocation1);
-    commandStreamReceiver->pushAllocationForEviction(&allocation2);
-    ASSERT_EQ(2u, commandStreamReceiver->getEvictionAllocations().size());
-
-    commandStreamReceiver->clearEvictionAllocations();
-    EXPECT_EQ(0u, commandStreamReceiver->getEvictionAllocations().size());
-}
-
 HWTEST_F(CommandStreamReceiverTest, testCtor) {
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     EXPECT_EQ(0u, csr.peekTaskLevel());
