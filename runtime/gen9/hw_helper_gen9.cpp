@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/aub/aub_helper.h"
+#include "runtime/aub/aub_helper.inl"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
@@ -41,6 +43,7 @@ SipKernelType HwHelperHw<Family>::getSipKernelType(bool debuggingActive) {
     return SipKernelType::DbgCsrLocal;
 }
 
+template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

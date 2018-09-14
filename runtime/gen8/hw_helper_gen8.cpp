@@ -20,6 +20,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/aub/aub_helper.h"
+#include "runtime/aub/aub_helper.inl"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.inl"
@@ -41,6 +43,7 @@ void HwHelperHw<Family>::setupHardwareCapabilities(HardwareCapabilities *caps, c
     caps->isStatelesToStatefullWithOffsetSupported = false;
 }
 
+template class AubHelperHw<Family>;
 template class HwHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 } // namespace OCLRT

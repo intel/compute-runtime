@@ -21,9 +21,11 @@
  */
 
 #include "hw_cmds.h"
+#include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
@@ -209,7 +211,11 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     auto sizeBatchBuffer = currentOffset - batchBuffer.startOffset;
     {
         auto physBatchBuffer = ppgtt->map(reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, PageTableHelper::getMemoryBankIndex(*batchBuffer.commandBufferAllocation));
-        AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer, getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+
+        AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+        AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer,
+                                 getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
+                                 aubHelperHw);
 
         AUB::addMemoryWrite(
             stream,
@@ -359,8 +365,11 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
     if (size == 0)
         return false;
 
+    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation));
+        AUB::reserveAddressGGTTAndWriteMmeory(stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation),
+                                              aubHelperHw);
     };
 
     ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker, PageTableHelper::getMemoryBankIndex(gfxAllocation));

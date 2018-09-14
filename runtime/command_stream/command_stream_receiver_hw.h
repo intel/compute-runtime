@@ -113,6 +113,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     const HardwareInfo &hwInfo;
     CsrSizeRequestFlags csrSizeRequestFlags = {};
+    const bool localMemoryEnabled;
 };
 
 } // namespace OCLRT

@@ -21,6 +21,8 @@
  */
 
 #include "aub_mem_dump_tests.h"
+#include "runtime/aub/aub_helper.h"
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/fixtures/device_fixture.h"
 
 using OCLRT::AUBCommandStreamReceiver;
@@ -92,7 +94,9 @@ HWTEST_F(AubMemDumpTests, reserveMaxAddress) {
 
     auto gAddress = static_cast<uintptr_t>(-1) - 4096;
     auto pAddress = static_cast<uint64_t>(gAddress) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7);
+
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(pDevice->getHardwareCapabilities().localMemorySupported);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, 4096, pAddress, 7, aubHelperHw);
 
     aubFile.fileHandle.close();
 }
@@ -112,7 +116,9 @@ HWTEST_F(AubMemDumpTests, writeVerifyOneBytePPGTT) {
     uint8_t byte = 0xbf;
     auto gAddress = reinterpret_cast<uintptr_t>(&byte);
     uint64_t physAddress = reinterpret_cast<uint64_t>(&byte) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7);
+
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(byte), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, &byte, sizeof(byte), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, &byte, sizeof(byte));
 
@@ -156,7 +162,9 @@ HWTEST_F(AubMemDumpTests, writeVerifySevenBytesPPGTT) {
     uint8_t bytes[] = {0, 1, 2, 3, 4, 5, 6};
     auto gAddress = reinterpret_cast<uintptr_t>(bytes);
     auto physAddress = reinterpret_cast<uint64_t>(bytes) & 0xFFFFFFFF;
-    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7);
+
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+    AUB::reserveAddressPPGTT(aubFile, gAddress, sizeof(bytes), physAddress, 7, aubHelperHw);
     AUB::addMemoryWrite(aubFile, physAddress, bytes, sizeof(bytes), AubMemDump::AddressSpaceValues::TraceNonlocal);
     aubFile.expectMemory(physAddress, bytes, sizeof(bytes));
 

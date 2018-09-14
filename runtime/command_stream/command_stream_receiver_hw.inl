@@ -27,6 +27,7 @@
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/cache_policy.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/preamble.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/state_base_address.h"
@@ -47,7 +48,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
 
 template <typename GfxFamily>
 CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment)
-    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn) {
+    : CommandStreamReceiver(executionEnvironment), hwInfo(hwInfoIn),
+      localMemoryEnabled(HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily).isLocalMemoryEnabled(hwInfo)) {
     requiredThreadArbitrationPolicy = PreambleHelper<GfxFamily>::getDefaultThreadArbitrationPolicy();
     resetKmdNotifyHelper(new KmdNotifyHelper(&(hwInfoIn.capabilityTable.kmdNotifyProperties)));
     flatBatchBufferHelper.reset(new FlatBatchBufferHelperHw<GfxFamily>(this->memoryManager));

@@ -29,6 +29,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
@@ -294,8 +295,10 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         }
 
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer, PageTableHelper::getMemoryBankIndex(*batchBuffer.commandBufferAllocation));
+        AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
         AUB::reserveAddressPPGTT(*stream, static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer, physBatchBuffer,
-                                 getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation));
+                                 getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
+                                 aubHelperHw);
 
         AUB::addMemoryWrite(
             *stream,
@@ -559,8 +562,11 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
         gfxAllocation.setLocked(true);
     }
 
+    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
+
     PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
-        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation));
+        AUB::reserveAddressGGTTAndWriteMmeory(*stream, static_cast<uintptr_t>(gpuAddress), cpuAddress, physAddress, size, offset, getPPGTTAdditionalBits(&gfxAllocation),
+                                              aubHelperHw);
     };
 
     ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, walker, PageTableHelper::getMemoryBankIndex(gfxAllocation));
@@ -654,6 +660,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
 
     auto bufferSize = sizeof(uint32_t) + sizeof(MI_BATCH_BUFFER_START);
+    AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
 
     std::unique_ptr<void, std::function<void(void *)>> buffer(this->getMemoryManager()->alignedMallocWrapper(bufferSize, MemoryConstants::pageSize), [&](void *ptr) { this->getMemoryManager()->alignedFreeWrapper(ptr); });
     LinearStream linearStream(buffer.get(), bufferSize);
@@ -668,7 +675,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::addGUCStartMessage(uint64_t batchBuf
     miBatchBufferStart->setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
 
     auto physBufferAddres = ppgtt->map(reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, PageTableHelper::memoryBankNotSpecified);
-    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres, getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()));
+    AUB::reserveAddressPPGTT(*stream, reinterpret_cast<uintptr_t>(buffer.get()), bufferSize, physBufferAddres,
+                             getPPGTTAdditionalBits(linearStream.getGraphicsAllocation()),
+                             aubHelperHw);
 
     AUB::addMemoryWrite(
         *stream,

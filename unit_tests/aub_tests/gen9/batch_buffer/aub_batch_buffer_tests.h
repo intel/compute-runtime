@@ -21,6 +21,7 @@
 */
 
 #pragma once
+#include "runtime/aub/aub_helper.h"
 #include "unit_tests/aub_tests/command_stream/aub_mem_dump_tests.h"
 
 template <typename FamilyType>
@@ -67,7 +68,10 @@ void setupAUBWithBatchBuffer(const OCLRT::Device *pDevice, OCLRT::EngineType eng
     const auto sizeBatchBuffer = 0x1000;
     auto gpuBatchBuffer = static_cast<uintptr_t>(gpuBatchBufferAddr);
     physAddress += sizeBatchBuffer;
-    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7);
+
+    OCLRT::AubHelperHw<FamilyType> aubHelperHw(false);
+
+    AUB::reserveAddressPPGTT(aubFile, gpuBatchBuffer, sizeBatchBuffer, physBatchBuffer, 7, aubHelperHw);
     uint8_t batchBuffer[sizeBatchBuffer];
 
     auto noop = MI_NOOP::sInit();

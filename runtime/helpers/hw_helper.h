@@ -46,10 +46,10 @@ class HwHelper {
     virtual void setupHardwareCapabilities(HardwareCapabilities *caps, const HardwareInfo &hwInfo) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
+    virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
 
   protected:
     HwHelper(){};
-    virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
 };
 
 template <typename GfxFamily>

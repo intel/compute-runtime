@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/aub_mem_dump/aub_mem_dump.h"
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/memory_manager/memory_constants.h"
@@ -78,5 +79,4 @@ template <typename Family>
 size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
     return 32;
 }
-
 } // namespace OCLRT
