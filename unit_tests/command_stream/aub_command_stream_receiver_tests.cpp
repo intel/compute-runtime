@@ -96,6 +96,8 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
     std::string openFileName = "";
 
     MOCK_METHOD0(addPatchInfoComments, bool(void));
+
+    using CommandStreamReceiverHw<GfxFamily>::localMemoryEnabled;
 };
 
 template <typename GfxFamily>
@@ -1791,13 +1793,18 @@ HWTEST_F(AubCommandStreamReceiverTests, givenDbgDeviceIdFlagIsSetWhenAubCsrIsCre
     EXPECT_EQ(9u, aubCsr->aubDeviceId);
 }
 
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryShouldBeDisabled) {
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetGTTDataIsCalledThenLocalMemoryIsSetAccordingToCsrFeature) {
     const HardwareInfo &hwInfoIn = *platformDevices[0];
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true, *pDevice->executionEnvironment));
     AubGTTData data = {};
     aubCsr->getGTTData(nullptr, data);
     EXPECT_TRUE(data.present);
-    EXPECT_FALSE(data.localMemory);
+
+    if (aubCsr->localMemoryEnabled) {
+        EXPECT_TRUE(data.localMemory);
+    } else {
+        EXPECT_FALSE(data.localMemory);
+    }
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCalledThenGttEntrysBitFieldsShouldBePopulated) {
