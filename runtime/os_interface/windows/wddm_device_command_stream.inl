@@ -38,15 +38,8 @@ WddmCommandStreamReceiver<GfxFamily>::WddmCommandStreamReceiver(const HardwareIn
                                                                 ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment) {
 
-    if (!executionEnvironment.osInterface) {
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        this->wddm = Wddm::createWddm();
-        this->osInterface = executionEnvironment.osInterface.get();
-        this->osInterface->get()->setWddm(this->wddm);
-    } else {
-        this->wddm = executionEnvironment.osInterface->get()->getWddm();
-        this->osInterface = executionEnvironment.osInterface.get();
-    }
+    this->wddm = executionEnvironment.osInterface->get()->getWddm();
+    this->osInterface = executionEnvironment.osInterface.get();
 
     GPUNODE_ORDINAL nodeOrdinal = GPUNODE_3D;
     UNRECOVERABLE_IF(!WddmEngineMapper<GfxFamily>::engineNodeMap(hwInfoIn.capabilityTable.defaultEngineType, nodeOrdinal));

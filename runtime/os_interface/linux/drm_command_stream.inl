@@ -28,14 +28,9 @@ template <typename GfxFamily>
 DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo &hwInfoIn,
                                                               ExecutionEnvironment &executionEnvironment, gemCloseWorkerMode mode)
     : BaseClass(hwInfoIn, executionEnvironment), gemCloseWorkerOperationMode(mode) {
-    if (!executionEnvironment.osInterface) {
-        executionEnvironment.osInterface = std::make_unique<OSInterface>();
-        this->drm = Drm::get(0);
-    } else {
-        this->drm = executionEnvironment.osInterface->get()->getDrm()
-                        ? executionEnvironment.osInterface->get()->getDrm()
-                        : Drm::get(0);
-    }
+
+    this->drm = executionEnvironment.osInterface->get()->getDrm();
+
     residency.reserve(512);
     execObjectsStorage.reserve(512);
 

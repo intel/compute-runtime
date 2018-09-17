@@ -16,31 +16,39 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "hw_cmds.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "test.h"
 
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
 
 using namespace OCLRT;
 
-typedef Test<DeviceFixture> DeviceCommandStreamLeaksTest;
+struct DeviceCommandStreamLeaksTest : ::testing::Test {
+    void SetUp() override {
+        HardwareInfo *hwInfo = nullptr;
+        executionEnvironment = std::unique_ptr<ExecutionEnvironment>(getExecutionEnvironmentImpl(hwInfo));
+    }
+
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+};
 
 HWTEST_F(DeviceCommandStreamLeaksTest, Create) {
-    this->executionEnvironment.osInterface = std::make_unique<OSInterface>();
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false, this->executionEnvironment));
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false,
+                                                                                               *executionEnvironment));
     DrmMockSuccess mockDrm;
     EXPECT_NE(nullptr, ptr);
 }
 
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenItIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
-    this->executionEnvironment.osInterface = std::make_unique<OSInterface>();
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false, this->executionEnvironment));
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false,
+                                                                                               *executionEnvironment));
     auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
     EXPECT_EQ(drmCsr->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerActive);
 }
 
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWithAubDumWhenItIsCreatedThenGemCloseWorkerInactiveModeIsSelected) {
-    this->executionEnvironment.osInterface = std::make_unique<OSInterface>();
-    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], true, this->executionEnvironment));
+    std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], true,
+                                                                                               *executionEnvironment));
     auto drmCsrWithAubDump = (CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<FamilyType>> *)ptr.get();
     EXPECT_EQ(drmCsrWithAubDump->peekGemCloseWorkerOperationMode(), gemCloseWorkerMode::gemCloseWorkerActive);
     auto aubCSR = static_cast<CommandStreamReceiverWithAUBDump<DrmCommandStreamReceiver<FamilyType>> *>(ptr.get())->aubCSR;
@@ -49,8 +57,8 @@ HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWithAubDumWhenItIsCreat
 
 HWTEST_F(DeviceCommandStreamLeaksTest, givenDefaultDrmCsrWhenOsInterfaceIsNullptrThenValidateDrm) {
     std::unique_ptr<CommandStreamReceiver> ptr(DeviceCommandStreamReceiver<FamilyType>::create(*platformDevices[0], false,
-                                                                                               this->executionEnvironment));
+                                                                                               *executionEnvironment));
     auto drmCsr = (DrmCommandStreamReceiver<FamilyType> *)ptr.get();
-    EXPECT_NE(nullptr, executionEnvironment.osInterface);
-    EXPECT_EQ(drmCsr->getOSInterface()->get()->getDrm(), executionEnvironment.osInterface->get()->getDrm());
+    EXPECT_NE(nullptr, executionEnvironment->osInterface);
+    EXPECT_EQ(drmCsr->getOSInterface()->get()->getDrm(), executionEnvironment->osInterface->get()->getDrm());
 }

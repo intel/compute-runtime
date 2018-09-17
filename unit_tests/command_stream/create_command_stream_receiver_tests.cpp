@@ -11,6 +11,7 @@
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "runtime/helpers/options.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "test.h"
@@ -34,21 +35,24 @@ struct CreateCommandStreamReceiverTest : public GmmEnvironmentFixture, public ::
 
 HWTEST_P(CreateCommandStreamReceiverTest, givenCreateCommandStreamWhenCsrIsSetToValidTypeThenTheFuntionReturnsCommandStreamReceiver) {
     DebugManagerStateRestore stateRestorer;
-    const HardwareInfo hwInfo = *platformDevices[0];
+    HardwareInfo *hwInfo = nullptr;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment = std::unique_ptr<ExecutionEnvironment>(getExecutionEnvironmentImpl(hwInfo));
 
     CommandStreamReceiverType csrType = GetParam();
 
     overrideCommandStreamReceiverCreation = true;
     DebugManager.flags.SetCommandStreamReceiver.set(csrType);
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(&hwInfo, executionEnvironment)));
+
+    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(hwInfo,
+                                                                                                                      *executionEnvironment)));
+
     if (csrType < CommandStreamReceiverType::CSR_TYPES_NUM) {
-        EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0u].get());
-        executionEnvironment.memoryManager.reset(executionEnvironment.commandStreamReceivers[0u]->createMemoryManager(false, false));
-        EXPECT_NE(nullptr, executionEnvironment.memoryManager.get());
+        EXPECT_NE(nullptr, executionEnvironment->commandStreamReceivers[0u].get());
+        executionEnvironment->memoryManager.reset(executionEnvironment->commandStreamReceivers[0u]->createMemoryManager(false, false));
+        EXPECT_NE(nullptr, executionEnvironment->memoryManager.get());
     } else {
-        EXPECT_EQ(nullptr, executionEnvironment.commandStreamReceivers[0u]);
-        EXPECT_EQ(nullptr, executionEnvironment.memoryManager.get());
+        EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0u]);
+        EXPECT_EQ(nullptr, executionEnvironment->memoryManager.get());
     }
 }
 

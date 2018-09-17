@@ -6,19 +6,19 @@
  */
 
 #include "cl_api_tests.h"
+#include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 
 using namespace OCLRT;
 
-struct clSetPerformanceConfigurationINTELTests : public api_fixture,
+struct clSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFixture,
                                                  public PerformanceCountersDeviceFixture,
                                                  ::testing::Test {
     void SetUp() override {
         PerformanceCountersDeviceFixture::SetUp();
-        api_fixture::SetUp();
+        DeviceInstrumentationFixture::SetUp(true);
     }
     void TearDown() override {
-        api_fixture::TearDown();
         PerformanceCountersDeviceFixture::TearDown();
     }
 };
@@ -29,7 +29,7 @@ TEST_F(clSetPerformanceConfigurationINTELTests, positiveSetPerfConfig) {
     cl_uint offsets[2];
     cl_uint values[2];
 
-    ret = clSetPerformanceConfigurationINTEL(devices[0], 2, offsets, values);
+    ret = clSetPerformanceConfigurationINTEL(device.get(), 2, offsets, values);
     EXPECT_EQ(CL_SUCCESS, ret);
 }
 
@@ -37,9 +37,9 @@ TEST_F(clSetPerformanceConfigurationINTELTests, negativeInvalidDevice) {
     cl_int ret = CL_OUT_OF_RESOURCES;
     cl_uint offsets[2];
     cl_uint values[2];
-    cl_device_id device = {0};
+    cl_device_id clDevice = {0};
 
-    ret = clSetPerformanceConfigurationINTEL(device, 2, offsets, values);
+    ret = clSetPerformanceConfigurationINTEL(clDevice, 2, offsets, values);
     EXPECT_EQ(CL_INVALID_DEVICE, ret);
 }
 
@@ -48,12 +48,11 @@ TEST_F(clSetPerformanceConfigurationINTELTests, negativeInstrumentationDisabled)
     cl_uint offsets[2];
     cl_uint values[2];
 
-    const HardwareInfo &hwInfo = pPlatform->getDevice(0)->getHardwareInfo();
-    HardwareInfo *pInHwInfo = const_cast<HardwareInfo *>(&hwInfo);
+    HardwareInfo *pInHwInfo = const_cast<HardwareInfo *>(hwInfo);
     bool instrumentationEnabled = pInHwInfo->capabilityTable.instrumentationEnabled;
     pInHwInfo->capabilityTable.instrumentationEnabled = false;
 
-    ret = clSetPerformanceConfigurationINTEL(devices[0], 2, offsets, values);
+    ret = clSetPerformanceConfigurationINTEL(device.get(), 2, offsets, values);
     EXPECT_EQ(CL_PROFILING_INFO_NOT_AVAILABLE, ret);
 
     pInHwInfo->capabilityTable.instrumentationEnabled = instrumentationEnabled;

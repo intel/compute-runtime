@@ -15,6 +15,7 @@
 #include "runtime/os_interface/linux/os_interface.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/helpers/hw_parse.h"
 #include "unit_tests/mocks/mock_program.h"
 #include "unit_tests/mocks/mock_host_ptr_manager.h"
@@ -508,14 +509,19 @@ struct DrmCsrVfeTests : ::testing::Test {
         csr.flushTask(stream, 0, stream, stream, stream, 0, dispatchFlags, device);
     }
 
+    void SetUp() override {
+        HardwareInfo *hwInfo = nullptr;
+        ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+        device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(hwInfo, executionEnvironment, 0));
+    }
+
     HardwareParse hwParser;
     DispatchFlags dispatchFlags = {};
     CommandStreamReceiver *oldCsr = nullptr;
+    std::unique_ptr<MockDevice> device = nullptr;
 };
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhenLowPriorityIsFlushedThenReprogram) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -543,8 +549,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForDefaultContextWhe
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenDefaultPriorityIsFlushedThenReprogram) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -572,8 +576,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContextWhenLowPriorityIsFlushedThenDontReprogram) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -601,8 +603,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DrmCsrVfeTests, givenNonDirtyVfeForLowPriorityContex
 }
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWithScratchRequirementThenMakeDefaultDirty) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);
@@ -623,8 +623,6 @@ HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedLowWit
 }
 
 HWTEST_F(DrmCsrVfeTests, givenNonDirtyVfeForBothPriorityContextWhenFlushedDefaultWithScratchRequirementThenMakeLowDirty) {
-    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->executionEnvironment->osInterface = std::make_unique<OSInterface>();
     auto mockCsr = new MyCsr<FamilyType>(*device->executionEnvironment);
 
     device->resetCommandStreamReceiver(mockCsr);

@@ -10,6 +10,7 @@
 #include "runtime/program/kernel_info.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "unit_tests/fixtures/device_fixture.h"
+#include "unit_tests/helpers/execution_environment_helper.h"
 #include "unit_tests/libult/source_level_debugger_library.h"
 #include "unit_tests/libult/create_command_stream.h"
 #include "unit_tests/mocks/mock_source_level_debugger.h"
@@ -429,8 +430,12 @@ TEST(SourceLevelDebugger, givenKernelDebuggerLibraryActiveWhenDeviceImplIsCreate
 
         overrideCommandStreamReceiverCreation = true;
 
-        // Device::create must be used to create correct OS memory manager
-        unique_ptr<Device> device(MockDevice::createWithNewExecutionEnvironment<Device>(platformDevices[0]));
+        HardwareInfo *hwInfo = nullptr;
+        ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo);
+
+        hwInfo->capabilityTable.instrumentationEnabled = true;
+        unique_ptr<Device> device(Device::create<Device>(&hwInfo[0], executionEnvironment, 0));
+
         ASSERT_NE(nullptr, device->getCommandStreamReceiver().getOSInterface());
 
         EXPECT_TRUE(interceptor.newDeviceCalled);

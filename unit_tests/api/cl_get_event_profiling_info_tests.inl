@@ -10,6 +10,7 @@
 #include "runtime/event/event.h"
 #include "runtime/event/user_event.h"
 #include "unit_tests/api/cl_api_tests.h"
+#include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "test.h"
 
@@ -247,22 +248,30 @@ TEST(clGetEventProfilingInfo, IsPerfCountersEnabledRegularEvent) {
     delete pEvent;
 }
 
-class clEventProfilingWithPerfCountersTests : public api_fixture, public PerformanceCountersDeviceFixture, public ::testing::Test {
+class clEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixture,
+                                              public PerformanceCountersDeviceFixture,
+                                              public ::testing::Test {
   public:
     void SetUp() override {
         PerformanceCountersDeviceFixture::SetUp();
-        api_fixture::SetUp();
+        DeviceInstrumentationFixture::SetUp(true);
+
+        cl_device_id clDevice = device.get();
+        cl_int retVal = CL_SUCCESS;
+        context = std::unique_ptr<Context>(Context::create<MockContext>(nullptr, DeviceVector(&clDevice, 1),
+                                                                        nullptr, nullptr, retVal));
     }
 
     void TearDown() override {
-        api_fixture::TearDown();
         PerformanceCountersDeviceFixture::TearDown();
     }
+
+    std::unique_ptr<Context> context;
 };
 
 TEST_F(clEventProfilingWithPerfCountersTests, clGetEventProfilingInfoGetPerfCounters) {
     CommandQueue *pCommandQueue;
-    pCommandQueue = new CommandQueue(pContext, pPlatform->getDevice(0), 0);
+    pCommandQueue = new CommandQueue(context.get(), device.get(), 0);
     Event *pEvent = new Event(pCommandQueue, 0, 0, 0);
     pEvent->setStatus(CL_COMPLETE);
     size_t param_value_size;

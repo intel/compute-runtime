@@ -8,6 +8,7 @@
 #include "runtime/helpers/options.h"
 #include "runtime/os_interface/os_time.h"
 #include "runtime/os_interface/os_interface.h"
+#include "unit_tests/fixtures/device_instrumentation_fixture.h"
 #include "unit_tests/os_interface/mock_performance_counters.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "gtest/gtest.h"
@@ -15,35 +16,27 @@
 using namespace OCLRT;
 
 struct PerformanceCountersDeviceTest : public PerformanceCountersDeviceFixture,
+                                       public DeviceInstrumentationFixture,
                                        public ::testing::Test {
     void SetUp() override {
         PerformanceCountersDeviceFixture::SetUp();
         PerfCounterFlags::resetPerfCountersFlags();
-        hwInfoToModify = (HardwareInfo *)(platformDevices[0]);
-        instrumentationEnabledFlag = hwInfoToModify->capabilityTable.instrumentationEnabled;
     }
     void TearDown() override {
         PerformanceCountersDeviceFixture::TearDown();
-        hwInfoToModify->capabilityTable.instrumentationEnabled = instrumentationEnabledFlag;
     }
-    HardwareInfo *hwInfoToModify;
-    bool instrumentationEnabledFlag;
 };
 
 TEST_F(PerformanceCountersDeviceTest, createDeviceWithPerformanceCounters) {
-    hwInfoToModify->capabilityTable.instrumentationEnabled = true;
-    auto device = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfoToModify);
+    DeviceInstrumentationFixture::SetUp(true);
     EXPECT_NE(nullptr, device->getPerformanceCounters());
     EXPECT_EQ(1, PerfCounterFlags::initalizeCalled);
-    delete device;
 }
 
 TEST_F(PerformanceCountersDeviceTest, createDeviceWithoutPerformanceCounters) {
-    hwInfoToModify->capabilityTable.instrumentationEnabled = false;
-    auto device = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfoToModify);
+    DeviceInstrumentationFixture::SetUp(false);
     EXPECT_EQ(nullptr, device->getPerformanceCounters());
     EXPECT_EQ(0, PerfCounterFlags::initalizeCalled);
-    delete device;
 }
 
 struct PerformanceCountersTest : public PerformanceCountersFixture,
