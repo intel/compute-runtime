@@ -164,5 +164,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);
+
+    static bool doBindingTablePrefetch();
 };
 } // namespace OCLRT

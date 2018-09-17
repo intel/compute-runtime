@@ -388,7 +388,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     DEBUG_BREAK_IF(patchInfo.executionEnvironment == nullptr);
 
     auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
-    if (kernel.isSchedulerKernel) {
+    if (kernel.isSchedulerKernel || !KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch()) {
         bindingTablePrefetchSize = 0;
     }
 
@@ -430,5 +430,10 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
     miSemaphoreCmd->setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
     miSemaphoreCmd->setSemaphoreDataDword(compareData);
     miSemaphoreCmd->setSemaphoreGraphicsAddress(compareAddress);
+}
+
+template <typename GfxFamily>
+bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
+    return true;
 }
 } // namespace OCLRT

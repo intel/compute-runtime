@@ -382,7 +382,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWithFourBindingTableE
         nullptr);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
-    EXPECT_EQ(expectedBindingTableCount, interfaceDescriptor->getBindingTableEntryCount());
+    if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
+        EXPECT_EQ(expectedBindingTableCount, interfaceDescriptor->getBindingTableEntryCount());
+    } else {
+        EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
+    }
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelThatIsSchedulerWhenIndirectStateIsEmittedThenInterfaceDescriptorContainsZeroBindingTableEntryCount) {
@@ -452,7 +456,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWith100BindingTableEn
         nullptr);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
-    EXPECT_EQ(31u, interfaceDescriptor->getBindingTableEntryCount());
+    if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
+        EXPECT_EQ(31u, interfaceDescriptor->getBindingTableEntryCount());
+    } else {
+        EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
+    }
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKernelsWalkOrderIsTakenIntoAccount) {

@@ -20,6 +20,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include "runtime/helpers/kernel_commands.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "test.h"
@@ -31,4 +32,8 @@ GEN8TEST_F(Gen8KernelTest, givenKernelWhenCanTransformImagesIsCalledThenReturnsF
     MockKernelWithInternals mockKernel(*pDevice);
     auto retVal = mockKernel.mockKernel->Kernel::canTransformImages();
     EXPECT_FALSE(retVal);
+}
+using Gen8KernelCommandsTest = testing::Test;
+GEN8TEST_F(Gen8KernelCommandsTest, givenGen8PlatformWhenDoBindingTablePrefetchIsCalledThenReturnsTrue) {
+    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::doBindingTablePrefetch());
 }
