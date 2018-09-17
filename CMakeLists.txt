@@ -615,6 +615,7 @@ if(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 endif(EXISTS ${IGDRCL_SOURCE_DIR}/../internal)
 
 include(package.cmake)
+add_subdirectory(scripts/lint)
 
 configure_file(config.h.in ${IGDRCL_BUILD_DIR}/config.h)
 if(NOT IGDRCL__IGC_FOUND)

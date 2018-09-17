@@ -91,7 +91,7 @@ for path in sys.argv:
         break
 
     if not path_ok:
-        print "Ignoring file: %s" % path
+        print "[MIT] Ignoring file: %s" % path
         continue
 
     # check that first arg is a existing file
@@ -99,7 +99,7 @@ for path in sys.argv:
         print "cannot find file %s, skipping" % path
         continue
 
-    print "Processing file: %s" % path
+    print "[MIT] Processing file: %s" % path
 
     L = list()
     start_year = None
