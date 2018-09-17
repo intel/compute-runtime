@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "gmock/gmock.h"
@@ -109,9 +94,9 @@ INSTANTIATE_TEST_CASE_P(
 
 class GMockMemoryManagerFailFirstAllocation : public MockMemoryManager {
   public:
-    MOCK_METHOD4(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
-    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
-        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(allocateMemory, hostPtr, size, type);
+    MOCK_METHOD5(allocateGraphicsMemoryInPreferredPool, GraphicsAllocation *(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type));
+    GraphicsAllocation *baseallocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+        return MockMemoryManager::allocateGraphicsMemoryInPreferredPool(flags, deviceIndex, hostPtr, size, type);
     }
 };
 
@@ -128,7 +113,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsThenB
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr))
         .WillRepeatedly(::testing::Invoke(memoryManager, &GMockMemoryManagerFailFirstAllocation::baseallocateGraphicsMemoryInPreferredPool));
 
@@ -159,7 +144,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithReadOnlyFlagsAndSe
 
     // First fail simulates error for read only memory allocation
     // Second fail returns nullptr
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillRepeatedly(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -184,7 +169,7 @@ TEST(Buffer, givenReadOnlyHostPtrMemoryWhenBufferIsCreatedWithKernelWriteFlagThe
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -204,7 +189,7 @@ TEST(Buffer, givenNullPtrWhenBufferIsCreatedWithKernelReadOnlyFlagsThenBufferAll
     MockContext ctx(device.get());
 
     // First fail simulates error for read only memory allocation
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Return(nullptr));
 
     cl_int retVal;
@@ -222,13 +207,13 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());
 
-    auto allocateNonSystemGraphicsAllocation = [memoryManager](bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
+    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
         auto allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize, false, false);
         reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
         return allocation;
     };
 
-    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_))
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
         .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
 
     cl_int retVal = 0;

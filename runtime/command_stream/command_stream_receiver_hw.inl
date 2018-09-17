@@ -794,6 +794,6 @@ void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearS
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createScratchSpaceAllocation(size_t requiredScratchSizeInBytes) {
-    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(true, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
+    scratchAllocation = getMemoryManager()->allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, requiredScratchSizeInBytes, GraphicsAllocation::AllocationType::SCRATCH_SURFACE);
 }
 } // namespace OCLRT

@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #pragma once
@@ -60,6 +45,35 @@ enum AllocationOrigin {
     EXTERNAL_ALLOCATION,
     INTERNAL_ALLOCATION
 };
+
+struct AllocationFlags {
+    union {
+        struct {
+            uint32_t allocateMemory : 1;
+            uint32_t flushL3RequiredForRead : 1;
+            uint32_t flushL3RequiredForWrite : 1;
+            uint32_t reserved : 29;
+        } flags;
+        uint32_t allFlags;
+    };
+
+    static_assert(sizeof(AllocationFlags::flags) == sizeof(AllocationFlags::allFlags), "");
+
+    AllocationFlags() {
+        allFlags = 0;
+        flags.flushL3RequiredForRead = 1;
+        flags.flushL3RequiredForWrite = 1;
+    }
+
+    AllocationFlags(bool allocateMemory) {
+        allFlags = 0;
+        flags.flushL3RequiredForRead = 1;
+        flags.flushL3RequiredForWrite = 1;
+        flags.allocateMemory = allocateMemory;
+    }
+};
+
+using DeviceIndex = uint32_t;
 
 struct AllocationData {
     union {
@@ -142,7 +156,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
-    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
