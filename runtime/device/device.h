@@ -131,7 +131,7 @@ class Device : public BaseObject<_cl_device_id> {
     bool isSourceLevelDebuggerActive() const;
     SourceLevelDebugger *getSourceLevelDebugger() { return executionEnvironment->sourceLevelDebugger.get(); }
     ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
-    const HardwareCapabilities &getHardwareCapabilities() { return hardwareCapabilities; }
+    const HardwareCapabilities &getHardwareCapabilities() const { return hardwareCapabilities; }
     OsContext *getOsContext() const { return osContext; }
     uint32_t getDeviceIndex() { return deviceIndex; }
     bool isFullRangeSvm() {
