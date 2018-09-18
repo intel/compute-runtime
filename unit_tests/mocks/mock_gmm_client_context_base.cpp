@@ -12,7 +12,9 @@ MockGmmClientContextBase::MockGmmClientContextBase(GMM_CLIENT clientType, GmmExp
 }
 
 MEMORY_OBJECT_CONTROL_STATE MockGmmClientContextBase::cachePolicyGetMemoryObject(GMM_RESOURCE_INFO *pResInfo, GMM_RESOURCE_USAGE_TYPE usage) {
-    return {};
+    MEMORY_OBJECT_CONTROL_STATE retVal = {};
+    memset(&retVal, 0, sizeof(MEMORY_OBJECT_CONTROL_STATE));
+    return retVal;
 }
 
 GMM_RESOURCE_INFO *MockGmmClientContextBase::createResInfoObject(GMM_RESCREATE_PARAMS *pCreateParams) {

@@ -416,7 +416,6 @@ int main(int argc, char **argv) {
 #else
     SetUnhandledExceptionFilter(&UltExceptionFilter);
 #endif
-#ifdef GMM_LIB_DLL
     if (!useMockGmm) {
         Os::gmmDllName = GMM_UMD_DLL;
         Os::gmmEntryName = GMM_ENTRY_NAME;
@@ -424,7 +423,6 @@ int main(int argc, char **argv) {
         GmmHelper::createGmmContextWrapperFunc = GmmClientContextBase::create<MockGmmClientContext>;
     }
     std::unique_ptr<OsLibrary> gmmLib(OsLibrary::load(Os::gmmDllName));
-#endif
     initializeTestHelpers();
 
     retVal = RUN_ALL_TESTS();

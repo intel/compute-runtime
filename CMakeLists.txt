@@ -196,7 +196,6 @@ if(NOT IGC__IGC_TARGETS)
         if(DEFINED IGC_DIR AND IS_DIRECTORY "${IGC_DIR}/lib/pkgconfig/")
             unset(ENV{PKG_CONFIG_PATH})
             set(IGDRCL__IGC_LIBRARY_PATH "${IGC_DIR}/lib/")
-            set(ENV{LD_LIBRARY_PATH} "${IGDRCL__IGC_LIBRARY_PATH}")
         endif()
 
         if(IGDRCL__IGC_FOUND)
@@ -267,11 +266,11 @@ if(NOT GMMUMD_LIB_NAME)
         if(IS_DIRECTORY "${GMM_SOURCE_DIR}/lib/pkgconfig/")
           string(REPLACE "${IGDRCL__GMM_INCLUDEDIR}" "${GMM_SOURCE_DIR}/include/igdgmm" IGDRCL__GMM_INCLUDE_DIRS "${IGDRCL__GMM_INCLUDE_DIRS}")
           string(REPLACE "${IGDRCL__GMM_LIBDIR}" "${GMM_SOURCE_DIR}/lib/${BUILD_TYPE_lower}" IGDRCL__GMM_LIBDIR "${IGDRCL__GMM_LIBDIR}")
-          link_directories(${IGDRCL__GMM_LIBDIR})
+          set(IGDRCL__GMM_LIBRARY_PATH "${IGDRCL__GMM_LIBDIR}")
         endif()
 
-        set(USE_STATIC_GMM TRUE)
-        set(GMMUMD_LIB_NAME "gmm_umd")
+        set(USE_STATIC_GMM FALSE)
+        set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
 
         set(IGDRCL__GMM_INCLUDE_DIR ${IGDRCL__GMM_INCLUDE_DIRS})
         set(UMKM_SHAREDDATA_INCLUDE_PATHS "${IGDRCL__GMM_INCLUDE_DIR}")
@@ -286,7 +285,7 @@ if(NOT GMMUMD_LIB_NAME)
       add_subdirectory("${GMM_SOURCE_DIR}" "${IGDRCL_BUILD_DIR}/gmmlib")
 
       if(NOT GMMUMD_LIB_NAME)
-        set(GMMUMD_LIB_NAME "gmm_umd")
+        set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
       endif()
 
       get_target_property(target_type ${GMMUMD_LIB_NAME} TYPE)
@@ -311,7 +310,7 @@ endif()
 set(GMM_LIBRARY_NAME "igdgmm${NEO_BITS}")
 
 macro(copy_gmm_dll_for target)
-  if(NOT USE_STATIC_GMM)
+  if(NOT USE_STATIC_GMM AND NOT IGDRCL__GMM_FOUND)
     add_dependencies(${target} ${GMMUMD_LIB_NAME})
     add_custom_command(
       TARGET ${target}

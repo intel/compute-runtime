@@ -20,15 +20,13 @@ void GmmHelper::loadLib() {
     gmmLib.reset(OsLibrary::load(Os::gmmDllName));
     bool isLoaded = false;
     UNRECOVERABLE_IF(!gmmLib);
-    if (gmmLib->isLoaded()) {
-        auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(Os::gmmEntryName));
-        auto status = openGmmFunc(&gmmEntries);
-        if (status == GMM_SUCCESS) {
-            isLoaded = gmmEntries.pfnCreateClientContext &&
-                       gmmEntries.pfnCreateSingletonContext &&
-                       gmmEntries.pfnDeleteClientContext &&
-                       gmmEntries.pfnDestroySingletonContext;
-        }
+    auto openGmmFunc = reinterpret_cast<decltype(&OpenGmm)>(gmmLib->getProcAddress(Os::gmmEntryName));
+    auto status = openGmmFunc(&gmmEntries);
+    if (status == GMM_SUCCESS) {
+        isLoaded = gmmEntries.pfnCreateClientContext &&
+                   gmmEntries.pfnCreateSingletonContext &&
+                   gmmEntries.pfnDeleteClientContext &&
+                   gmmEntries.pfnDestroySingletonContext;
     }
     UNRECOVERABLE_IF(!isLoaded);
 }

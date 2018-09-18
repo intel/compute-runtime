@@ -58,6 +58,10 @@ endif()
 
 set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
 
+if(NOT USE_STATIC_GMM)
+  add_dependencies(igdrcl_mt_tests mock_gmm)
+endif()
+
 function(run_mt_tests target slices subslices eu_per_ss)
   add_custom_target(run_${target}_mt_unit_tests DEPENDS igdrcl_mt_tests)
   if(NOT WIN32)
