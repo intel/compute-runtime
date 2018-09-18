@@ -145,10 +145,18 @@ bool Drm::is48BitAddressRangeSupported() {
 }
 
 bool Drm::hasPreemption() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_SCHEDULER_CAP_PREEMPTION)
     int value = 0;
-    auto ret = getParam(I915_PARAM_HAS_PREEMPTION, &value);
-    if (ret == 0 && value == 1) {
+    auto ret = getParamIoctl(I915_PARAM_HAS_SCHEDULER, &value);
+    if (ret) {
+        printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s():  I915_PARAM_HAS_SCHEDULER is NOT supported!\n",
+            __func__);
+        return false;
+    }
+     printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "%s():  Scheduler's Capability = %x.\n",
+        __func__, value);
+
+    if (value & I915_SCHEDULER_CAP_PREEMPTION) {
         return contextCreate() && setLowPriority();
     }
 #endif
@@ -156,7 +164,7 @@ bool Drm::hasPreemption() {
 }
 
 bool Drm::setLowPriority() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_SCHEDULER_CAP_PRIORITY)
     struct drm_i915_gem_context_param gcp = {};
     gcp.ctx_id = lowPriorityContextId;
     gcp.param = I915_CONTEXT_PARAM_PRIORITY;
@@ -171,7 +179,7 @@ bool Drm::setLowPriority() {
 }
 
 bool Drm::contextCreate() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_SCHEDULER_CAP_PRIORITY)
     drm_i915_gem_context_create gcc = {};
     if (ioctl(DRM_IOCTL_I915_GEM_CONTEXT_CREATE, &gcc) == 0) {
         lowPriorityContextId = gcc.ctx_id;
@@ -182,7 +190,7 @@ bool Drm::contextCreate() {
 }
 
 void Drm::contextDestroy() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_SCHEDULER_CAP_PRIORITY)
     drm_i915_gem_context_destroy destroy = {};
     destroy.ctx_id = lowPriorityContextId;
     ioctl(DRM_IOCTL_I915_GEM_CONTEXT_DESTROY, &destroy);
