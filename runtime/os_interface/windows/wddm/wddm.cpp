@@ -826,6 +826,9 @@ uint64_t Wddm::getHeap32Size() {
 }
 
 void Wddm::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmMemoryManager *memoryManager) {
+    if (DebugManager.flags.DoNotRegisterTrimCallback.get()) {
+        return;
+    }
     D3DKMT_REGISTERTRIMNOTIFICATION registerTrimNotification;
     registerTrimNotification.Callback = callback;
     registerTrimNotification.AdapterLuid = this->adapterLuid;

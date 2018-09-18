@@ -59,6 +59,7 @@ class WddmMock : public Wddm {
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
     using Wddm::preemptionMode;
+    using Wddm::trimCallbackHandle;
     using Wddm::wddmInterface;
 
     WddmMock() : Wddm(){};
