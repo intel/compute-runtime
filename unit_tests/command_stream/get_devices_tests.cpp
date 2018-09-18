@@ -31,6 +31,16 @@
 
 using namespace OCLRT;
 
+namespace OCLRT {
+bool operator==(const HardwareInfo &hwInfoIn, const HardwareInfo &hwInfoOut) {
+    bool result = (0 == memcmp(hwInfoIn.pPlatform, hwInfoOut.pPlatform, sizeof(PLATFORM)));
+    result &= (0 == memcmp(hwInfoIn.pSkuTable, hwInfoOut.pSkuTable, sizeof(FeatureTable)));
+    result &= (0 == memcmp(hwInfoIn.pWaTable, hwInfoOut.pWaTable, sizeof(WorkaroundTable)));
+    result &= (0 == memcmp(&hwInfoIn.capabilityTable, &hwInfoOut.capabilityTable, sizeof(RuntimeCapabilityTable)));
+    return result;
+}
+} // namespace OCLRT
+
 struct GetDevicesTest : ::testing::TestWithParam<std::tuple<CommandStreamReceiverType, const char *>> {
     void SetUp() override {
         overrideDeviceWithDefaultHardwareInfo = false;
@@ -43,7 +53,7 @@ struct GetDevicesTest : ::testing::TestWithParam<std::tuple<CommandStreamReceive
     GT_SYSTEM_INFO gtSystemInfo;
 };
 
-HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFuntionReturnsTheExpectedValueOfHardwareInfo) {
+HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFunctionReturnsTheExpectedValueOfHardwareInfo) {
     DebugManagerStateRestore stateRestorer;
     CommandStreamReceiverType csrType = std::get<0>(GetParam());
     const char *hwPrefix = std::get<1>(GetParam());
@@ -85,11 +95,11 @@ HWTEST_P(GetDevicesTest, givenGetDevicesWhenCsrIsSetToValidTypeThenTheFuntionRet
         EXPECT_TRUE(i < IGFX_MAX_PRODUCT);
         ASSERT_NE(nullptr, hardwarePrefix[i]);
         if (hwPrefix != nullptr) {
-            EXPECT_EQ(hardwareInfoTable[i], hwInfo);
+            EXPECT_EQ(*hardwareInfoTable[i], *hwInfo);
             EXPECT_STREQ(hardwarePrefix[i], productFamily.c_str());
         } else {
             auto defaultHwInfo = *platformDevices;
-            EXPECT_EQ(defaultHwInfo, hwInfo);
+            EXPECT_EQ(*defaultHwInfo, *hwInfo);
         }
         break;
     default:

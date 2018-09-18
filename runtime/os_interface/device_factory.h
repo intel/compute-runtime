@@ -31,6 +31,7 @@ class ExecutionEnvironment;
 class DeviceFactory {
   public:
     static bool getDevices(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment);
+    static bool getDevicesForProductFamilyOverride(HardwareInfo **pHWInfos, size_t &numDevices, ExecutionEnvironment &executionEnvironment);
     static void releaseDevices();
 
   protected:

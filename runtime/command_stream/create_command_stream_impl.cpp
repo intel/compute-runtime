@@ -69,14 +69,7 @@ bool getDevicesImpl(HardwareInfo **hwInfo, size_t &numDevicesReturned, Execution
         case CSR_AUB:
         case CSR_TBX: {
         case CSR_TBX_WITH_AUB:
-            auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
-            auto hwInfoConst = *platformDevices;
-            getHwInfoForPlatformString(productFamily.c_str(), hwInfoConst);
-            *hwInfo = const_cast<HardwareInfo *>(hwInfoConst);
-            hardwareInfoSetup[hwInfoConst->pPlatform->eProductFamily](const_cast<GT_SYSTEM_INFO *>(hwInfo[0]->pSysInfo),
-                                                                      const_cast<FeatureTable *>(hwInfo[0]->pSkuTable), true);
-            numDevicesReturned = 1;
-            return true;
+            return DeviceFactory::getDevicesForProductFamilyOverride(hwInfo, numDevicesReturned, executionEnvironment);
         }
         case CSR_HW_WITH_AUB:
             return DeviceFactory::getDevices(hwInfo, numDevicesReturned, executionEnvironment);
