@@ -505,6 +505,54 @@ TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBefo
     EXPECT_NE(firstNode, secondNode);
 }
 
+HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
+    auto mockMemoryManager = new MockMemoryManager();
+    device->injectMemoryManager(mockMemoryManager);
+    context->setMemoryManager(mockMemoryManager);
+    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
+    mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    cmdQ->obtainNewTimestampPacketNode();
+    auto firstNode = cmdQ->timestampPacketNode;
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+    csr.timestampPacketWriteEnabled = true;
+
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    auto secondNode = cmdQ->timestampPacketNode;
+
+    EXPECT_NE(firstNode->getGraphicsAllocation(), secondNode->getGraphicsAllocation());
+    EXPECT_TRUE(csr.isMadeResident(firstNode->getGraphicsAllocation()));
+}
+
+HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {
+    auto mockMemoryManager = new MockMemoryManager();
+    device->injectMemoryManager(mockMemoryManager);
+    context->setMemoryManager(mockMemoryManager);
+    auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
+    mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    cmdQ->obtainNewTimestampPacketNode();
+    auto firstNode = cmdQ->timestampPacketNode;
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+    csr.timestampPacketWriteEnabled = true;
+
+    UserEvent userEvent;
+    cl_event clEvent = &userEvent;
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 1, &clEvent, nullptr);
+    auto secondNode = cmdQ->timestampPacketNode;
+
+    EXPECT_NE(firstNode->getGraphicsAllocation(), secondNode->getGraphicsAllocation());
+    EXPECT_FALSE(csr.isMadeResident(firstNode->getGraphicsAllocation()));
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_TRUE(csr.isMadeResident(firstNode->getGraphicsAllocation()));
+}
+
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKeepDependencyOnPreviousNodeIfItsReady) {
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 

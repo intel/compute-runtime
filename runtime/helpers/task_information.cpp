@@ -104,9 +104,12 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
 
 CommandComputeKernel::~CommandComputeKernel() {
     auto &commandStreamReceiver = commandQueue.getDevice().getCommandStreamReceiver();
-    if (timestampPacketNode) {
-        auto allocator = commandStreamReceiver.getMemoryManager()->getTimestampPacketAllocator();
-        allocator->returnTag(timestampPacketNode);
+    auto allocator = commandStreamReceiver.getMemoryManager()->getTimestampPacketAllocator();
+    if (currentTimestampPacketNode) {
+        allocator->returnTag(currentTimestampPacketNode);
+    }
+    if (previousTimestampPacketNode) {
+        allocator->returnTag(previousTimestampPacketNode);
     }
     for (auto surface : surfaces) {
         delete surface;
@@ -158,8 +161,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (printfHandler) {
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
-    if (timestampPacketNode) {
-        commandStreamReceiver.makeResident(*timestampPacketNode->getGraphicsAllocation());
+    if (currentTimestampPacketNode) {
+        commandStreamReceiver.makeResident(*currentTimestampPacketNode->getGraphicsAllocation());
+    }
+    if (previousTimestampPacketNode) {
+        commandStreamReceiver.makeResident(*previousTimestampPacketNode->getGraphicsAllocation());
     }
 
     if (executionModelKernel) {
@@ -229,9 +235,13 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-void CommandComputeKernel::setTimestampPacketNode(TagNode<TimestampPacket> *node) {
-    node->incRefCount();
-    timestampPacketNode = node;
+void CommandComputeKernel::setTimestampPacketNode(TagNode<TimestampPacket> *current, TagNode<TimestampPacket> *previous) {
+    current->incRefCount();
+    currentTimestampPacketNode = current;
+    if (previous) {
+        previous->incRefCount();
+        previousTimestampPacketNode = previous;
+    }
 }
 
 CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/command_queue/hardware_interface/hardware_interface.h"
+#include "runtime/utilities/tag_allocator.h"
 
 namespace OCLRT {
 
@@ -19,7 +20,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
     OCLRT::HwPerfCounter *hwPerfCounter,
-    TimestampPacket *previousTimestampPacket,
+    TagNode<TimestampPacket> *previousTimestampPacketNode,
     TimestampPacket *currentTimestampPacket,
     PreemptionMode preemptionMode,
     bool blockQueue,
@@ -82,8 +83,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
-        if (previousTimestampPacket) {
-            auto compareAddress = previousTimestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        if (previousTimestampPacketNode) {
+            auto compareAddress = previousTimestampPacketNode->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
             KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, compareAddress, 1);
         }
     }

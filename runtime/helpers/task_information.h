@@ -97,7 +97,7 @@ class CommandComputeKernel : public Command {
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
 
-    void setTimestampPacketNode(TagNode<TimestampPacket> *node);
+    void setTimestampPacketNode(TagNode<TimestampPacket> *current, TagNode<TimestampPacket> *previous);
     void setEventsRequest(EventsRequest &eventsRequest) { this->eventsRequest = eventsRequest; }
 
   private:
@@ -111,7 +111,8 @@ class CommandComputeKernel : public Command {
     Kernel *kernel;
     uint32_t kernelCount;
     PreemptionMode preemptionMode;
-    TagNode<TimestampPacket> *timestampPacketNode = nullptr;
+    TagNode<TimestampPacket> *currentTimestampPacketNode = nullptr;
+    TagNode<TimestampPacket> *previousTimestampPacketNode = nullptr;
     EventsRequest eventsRequest = {0, nullptr, nullptr};
 };
 

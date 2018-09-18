@@ -211,6 +211,9 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         blocking = true;
     }
 
+    TimestampPacket *currentTimestampPacket = nullptr;
+    TagNode<TimestampPacket> *previousTimestampPacketNode = nullptr;
+
     if (multiDispatchInfo.empty() == false) {
         HwPerfCounter *hwPerfCounter = nullptr;
         DebugManager.dumpKernelArgs(&multiDispatchInfo);
@@ -226,16 +229,14 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        TimestampPacket *currentTimestampPacket = nullptr;
-        TimestampPacket *previousTimestampPacket = nullptr;
         if (device->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            auto previousTimestampPacketNode = timestampPacketNode;
+            previousTimestampPacketNode = timestampPacketNode;
             obtainNewTimestampPacketNode();
             currentTimestampPacket = timestampPacketNode->tag;
 
-            if (previousTimestampPacketNode && !previousTimestampPacketNode->tag->canBeReleased() && !isOOQEnabled()) {
-                // keep dependency on previous enqueue
-                previousTimestampPacket = previousTimestampPacketNode->tag;
+            if (previousTimestampPacketNode && (previousTimestampPacketNode->tag->canBeReleased() || isOOQEnabled())) {
+                // no need to keep dependency on previous enqueue
+                previousTimestampPacketNode = nullptr;
             }
         }
 
@@ -273,7 +274,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             &blockedCommandsData,
             hwTimeStamps,
             hwPerfCounter,
-            previousTimestampPacket,
+            previousTimestampPacketNode,
             currentTimestampPacket,
             preemption,
             blockQueue,
@@ -348,6 +349,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 commandStreamStart,
                 blocking,
                 multiDispatchInfo,
+                previousTimestampPacketNode,
                 eventsRequest,
                 eventBuilder,
                 taskLevel,
@@ -424,6 +426,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             numSurfaceForResidency,
             blocking,
             multiDispatchInfo,
+            previousTimestampPacketNode,
             blockedCommandsData,
             eventsRequest,
             slmUsed,
@@ -501,6 +504,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     size_t commandStreamStart,
     bool &blocking,
     const MultiDispatchInfo &multiDispatchInfo,
+    TagNode<TimestampPacket> *previousTimestampPacket,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     uint32_t taskLevel,
@@ -518,6 +522,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
     if (timestampPacketNode) {
         device->getCommandStreamReceiver().makeResident(*timestampPacketNode->getGraphicsAllocation());
+    }
+    if (previousTimestampPacket) {
+        device->getCommandStreamReceiver().makeResident(*previousTimestampPacket->getGraphicsAllocation());
     }
 
     auto requiresCoherency = false;
@@ -613,6 +620,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
     size_t surfaceCount,
     bool &blocking,
     const MultiDispatchInfo &multiDispatchInfo,
+    TagNode<TimestampPacket> *previousTimestampPacket,
     KernelOperation *blockedCommandsData,
     EventsRequest &eventsRequest,
     bool slmUsed,
@@ -686,7 +694,7 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
             (uint32_t)multiDispatchInfo.size());
 
         if (timestampPacketNode) {
-            cmd->setTimestampPacketNode(timestampPacketNode);
+            cmd->setTimestampPacketNode(timestampPacketNode, previousTimestampPacket);
         }
         cmd->setEventsRequest(eventsRequest);
         eventBuilder->getEvent()->setCommand(std::move(cmd));

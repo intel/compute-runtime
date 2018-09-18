@@ -194,7 +194,7 @@ class GpgpuWalkerHelper {
         KernelOperation **blockedCommandsData,
         HwTimeStamps *hwTimeStamps,
         OCLRT::HwPerfCounter *hwPerfCounter,
-        TimestampPacket *previousTimestampPacket,
+        TagNode<TimestampPacket> *previousTimestampPacketNode,
         TimestampPacket *currentTimestampPacket,
         PreemptionMode preemptionMode,
         bool blockQueue,
