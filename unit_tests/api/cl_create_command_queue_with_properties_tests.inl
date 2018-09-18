@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "cl_api_tests.h"
@@ -76,7 +61,7 @@ struct clCreateCommandQueueWithPropertiesApi : public api_fixture,
 
 typedef CommandQueueWithPropertiesTest clCreateCommandQueueWithPropertiesTests;
 
-TEST_P(clCreateCommandQueueWithPropertiesTests, returnsSuccessForValidValues) {
+TEST_P(clCreateCommandQueueWithPropertiesTests, GivenPropertiesWhenCreatingCommandQueueThenExpectedResultIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties[] =
         {
@@ -187,7 +172,7 @@ INSTANTIATE_TEST_CASE_P(api,
                             ::testing::ValuesIn(queuePriorities),
                             ::testing::ValuesIn(queueThrottles)));
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCase) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextWhenCreatingCommandQueueWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto cmdQ = clCreateCommandQueueWithProperties(
         nullptr,
@@ -195,10 +180,10 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCase) {
         0,
         &retVal);
     EXPECT_EQ(cmdQ, nullptr);
-    EXPECT_NE(retVal, CL_SUCCESS);
+    EXPECT_EQ(retVal, CL_INVALID_CONTEXT);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCaseKHR) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextWhenCreatingCommandQueueWithPropertiesKHRThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto cmdQ = clCreateCommandQueueWithPropertiesKHR(
         nullptr,
@@ -206,10 +191,10 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, negativeCaseKHR) {
         0,
         &retVal);
     EXPECT_EQ(cmdQ, nullptr);
-    EXPECT_NE(retVal, CL_SUCCESS);
+    EXPECT_EQ(retVal, CL_INVALID_CONTEXT);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, givenOoqPropertiesWhenQueueIsCreatedThenSuccessIsReturned) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenOoqPropertiesWhenQueueIsCreatedThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], ooq, &retVal);
@@ -220,14 +205,14 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, givenOoqPropertiesWhenQueueIsCreat
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, givenQueueOnDeviceWithoutOoqPropertiesWhenQueueIsCreatedThenErrorIsReturned) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOoqPropertiesWhenQueueIsCreatedThenErrorIsReturned) {
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidContext) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullContextAndOoqPropertiesWhenCreatingCommandQueueWithPropertiesThenInvalidContextErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(nullptr, devices[0], ooq, &retVal);
@@ -235,7 +220,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidContext) {
     EXPECT_EQ(retVal, CL_INVALID_CONTEXT);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidDevice) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullDeviceWhenCreatingCommandQueueWithPropertiesThenInvalidDeviceErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, nullptr, ooq, &retVal);
@@ -243,7 +228,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidDevice) {
     EXPECT_EQ(retVal, CL_INVALID_DEVICE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidQueuePropertiesWhenSizeExceedsMaxDeviceQueueSize) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenSizeWhichExceedsMaxDeviceQueueSizeWhenCreatingCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, CL_QUEUE_SIZE, (cl_uint)0xffffffff, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], ooq, &retVal);
@@ -251,7 +236,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidQueuePropertiesWhenSi
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidValueWhenQueueOnDeviceIsUsedWithoutOutOfOrderExecModeProperty) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenQueueOnDeviceWithoutOutOfOrderExecModePropertyWhenCreatingCommandQueueWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], odq, &retVal);
@@ -259,7 +244,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidValueWhenQueueOnDevic
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidValueWhenDefaultDeviceQueueIsUsedWithoutQueueOnDeviceProperty) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenDefaultDeviceQueueWithoutQueueOnDevicePropertyWhenCreatingCommandQueueWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ddq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
     auto cmdq = clCreateCommandQueueWithProperties(pContext, devices[0], ddq, &retVal);
@@ -267,7 +252,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnInvalidValueWhenDefaultDevic
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemoryWhenNumberOfDeviceQueuesExceedsMaxOnDeviceQueues) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNumberOfDevicesGreaterThanMaxWhenCreatingCommandQueueWithPropertiesThenOutOfResourcesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto pDevice = castToObject<Device>(devices[0]);
     cl_queue_properties odq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE, 0, 0};
@@ -291,7 +276,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemoryWhenNumberOfDevic
     }
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemory) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenFailedAllocationWhenCreatingCommandQueueWithPropertiesThenOutOfHostMemoryErrorIsReturned) {
     InjectedFunction method = [this](size_t failureIndex) {
         cl_queue_properties ooq[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT, 0, 0};
         auto retVal = CL_INVALID_VALUE;
@@ -310,7 +295,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnOutOfMemory) {
     injectFailureOnIndex(method, 0);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithHighPriority) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenHighPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_HIGH_KHR, 0, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -318,14 +303,14 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithHighPriorit
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithLowPriority) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
     EXPECT_EQ(nullptr, cmdqd);
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithMedPriority) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenMedPriorityWhenCreatingOoqCommandQueueWithPropertiesThenInvalidQueuePropertiesErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_ON_DEVICE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_MED_KHR, 0, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -333,7 +318,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, returnErrorOnDeviceWithMedPriority
     EXPECT_EQ(retVal, CL_INVALID_QUEUE_PROPERTIES);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidPropertiesWhenQueueIsCreatedThenReturnError) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenInvalidPropertiesWhenCreatingOoqCommandQueueWithPropertiesThenInvalidValueErrorIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties properties = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
     auto commandQueue = clCreateCommandQueueWithProperties(pContext, devices[0], &properties, &retVal);
@@ -349,7 +334,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, givenInvalidPropertiesOnSubsequent
     EXPECT_EQ(retVal, CL_INVALID_VALUE);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, givenNullPropertiesWhenQueueIsCreatedThenReturnSuccess) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenNullPropertiesWhenCreatingCommandQueueWithPropertiesThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     auto commandQueue = clCreateCommandQueueWithProperties(pContext, devices[0], nullptr, &retVal);
     EXPECT_NE(nullptr, commandQueue);
@@ -357,7 +342,7 @@ TEST_F(clCreateCommandQueueWithPropertiesApi, givenNullPropertiesWhenQueueIsCrea
     clReleaseCommandQueue(commandQueue);
 }
 
-TEST_F(clCreateCommandQueueWithPropertiesApi, returnSuccessOnQueueWithPriority) {
+TEST_F(clCreateCommandQueueWithPropertiesApi, GivenLowPriorityWhenCreatingCommandQueueWithPropertiesThenSuccessIsReturned) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, CL_QUEUE_PRIORITY_LOW_KHR, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -376,7 +361,7 @@ class clCreateCommandQueueWithPropertiesApiPriority : public clCreateCommandQueu
                                                       public ::testing::WithParamInterface<std::pair<uint32_t, QueuePriority>> {
 };
 
-TEST_P(clCreateCommandQueueWithPropertiesApiPriority, givenCreateQueueWithWhenPriorityPropertiesThenSetCorrectPriorityInternally) {
+TEST_P(clCreateCommandQueueWithPropertiesApiPriority, GivenValidPriorityWhenCreatingCommandQueueWithPropertiesThenCorrectPriorityIsSetInternally) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_PRIORITY_KHR, GetParam().first, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
@@ -403,7 +388,7 @@ class clCreateCommandQueueWithPropertiesApiThrottle : public clCreateCommandQueu
                                                       public ::testing::WithParamInterface<std::pair<uint32_t, QueueThrottle>> {
 };
 
-TEST_P(clCreateCommandQueueWithPropertiesApiThrottle, givenCreateQueueWithWhenThrottlePropertiesThenSetCorrectThrottleInternally) {
+TEST_P(clCreateCommandQueueWithPropertiesApiThrottle, GivenThrottlePropertiesWhenCreatingCommandQueueWithPropertiesThenCorrectThrottleIsSetInternally) {
     cl_int retVal = CL_SUCCESS;
     cl_queue_properties ondevice[] = {CL_QUEUE_THROTTLE_KHR, GetParam().first, 0};
     auto cmdqd = clCreateCommandQueueWithProperties(pContext, devices[0], ondevice, &retVal);
