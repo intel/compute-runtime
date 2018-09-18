@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/helpers/ptr_math.h"
@@ -48,11 +33,11 @@ class MockPTE : public PTE {
 
     MockPTE(PhysicalAddressAllocator *physicalAddressAllocator) : PTE(physicalAddressAllocator) {}
 
-    uintptr_t map(uintptr_t vm, size_t size, uint32_t memoryBank) override {
-        return PTE::map(vm, size, memoryBank);
+    uintptr_t map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memoryBank) override {
+        return PTE::map(vm, size, entryBits, memoryBank);
     }
-    void pageWalk(uintptr_t vm, size_t size, size_t offset, PageWalker &pageWalker, uint32_t memoryBank) override {
-        return PTE::pageWalk(vm, size, offset, pageWalker, memoryBank);
+    void pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) override {
+        return PTE::pageWalk(vm, size, offset, entryBits, pageWalker, memoryBank);
     }
 };
 
@@ -76,6 +61,15 @@ class MockPML4 : public MockPageTable<MockPDP, 3> {
     using PageTable<MockPDP, 3>::allocator;
 
     MockPML4(PhysicalAddressAllocator *physicalAddressAllocator) : MockPageTable<MockPDP, 3>(physicalAddressAllocator) {
+    }
+};
+
+class MockPDPE : public MockPageTable<MockPDE, 2, 2> {
+  public:
+    using MockPageTable<MockPDE, 2, 2>::entries;
+    using PageTable<MockPDE, 2, 2>::allocator;
+
+    MockPDPE(PhysicalAddressAllocator *physicalAddressAllocator) : MockPageTable<MockPDE, 2, 2>(physicalAddressAllocator) {
     }
 };
 
@@ -122,18 +116,38 @@ class PageTableFixture {
     }
 };
 
-typedef Test<PageTableFixture> PageTableTests32;
+class PageTableEntryChecker {
+  public:
+    template <class T>
+    static void testEntry(T *pageTable, uint32_t pteIndex, uintptr_t expectedValue) {
+    }
+};
 
+template <>
+void PageTableEntryChecker::testEntry<MockPML4>(MockPML4 *pageTable, uint32_t pteIndex, uintptr_t expectedValue) {
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+    ASSERT_NE(nullptr, pageTable->entries[0]->entries[0]);
+    ASSERT_NE(nullptr, pageTable->entries[0]->entries[0]->entries[0]);
+    EXPECT_EQ(reinterpret_cast<void *>(expectedValue), pageTable->entries[0]->entries[0]->entries[0]->entries[pteIndex]);
+}
+
+template <>
+void PageTableEntryChecker::testEntry<MockPDPE>(MockPDPE *pageTable, uint32_t pteIndex, uintptr_t expectedValue) {
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+    EXPECT_EQ(reinterpret_cast<void *>(expectedValue), pageTable->entries[0]->entries[0]->entries[pteIndex]);
+}
+
+typedef Test<PageTableFixture> PageTableTests32;
 typedef Test<PageTableFixture> PageTableTests48;
 typedef Test<PageTableFixture> PageTableTestsGPU;
 
 TEST_F(PageTableTests48, dummy) {
     PageTable<void, 0, 9> pt(&allocator);
 
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
     };
 
-    pt.pageWalk(0, pageSize, 0, walker, PageTableHelper::memoryBankNotSpecified);
+    pt.pageWalk(0, pageSize, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
 }
 
 TEST_F(PageTableTests48, newIsEmpty) {
@@ -147,7 +161,7 @@ TEST_F(PageTableTests48, DISABLED_mapSizeZero) {
     EXPECT_TRUE(pageTable->isEmpty());
     EXPECT_EQ(allocator.initialPageAddress, allocator.nextPageAddress);
 
-    auto phys1 = pageTable->map(0x0, 0x0, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(0x0, 0x0, 0, PageTableHelper::memoryBankNotSpecified);
     std::cerr << phys1 << std::endl;
 }
 
@@ -158,14 +172,14 @@ TEST_F(PageTableTests48, pageWalkSimple) {
 
     size_t walked = 0u;
     size_t lastOffset = 0;
-    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
         EXPECT_EQ(lastOffset, offset);
         EXPECT_GE(pageSize, size);
 
         walked += size;
         lastOffset += size;
     };
-    pageTable->pageWalk(addr1, lSize, 0, walker, PageTableHelper::memoryBankNotSpecified);
+    pageTable->pageWalk(addr1, lSize, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(lSize, walked);
 }
 
@@ -183,10 +197,10 @@ TEST_F(PageTableTests48, givenReservedPhysicalAddressWhenPageWalkIsCalledThenPag
         size_t walked = 0u;
         auto address = allocator.nextPageAddress.load();
 
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
             walked += size;
         };
-        pageTable->pageWalk(gpuVa, size, 0, walker, PageTableHelper::memoryBankNotSpecified);
+        pageTable->pageWalk(gpuVa, size, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
 
         EXPECT_EQ(size, walked);
 
@@ -201,27 +215,126 @@ TEST_F(PageTableTests48, givenReservedPhysicalAddressWhenPageWalkIsCalledThenPag
     }
 }
 
+TEST_F(PageTableTests48, givenZeroEntryBitsWhenPageWalkIsCalledThenPageTableEntryHasPresentBitSet) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+
+    uintptr_t gpuVa = 0x1000;
+
+    size_t size = pageSize;
+
+    size_t walked = 0u;
+    auto address = allocator.nextPageAddress.load();
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        walked += size;
+    };
+    pageTable->pageWalk(gpuVa, size, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
+
+    EXPECT_EQ(size, walked);
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
+}
+
+TEST_F(PageTableTests48, givenZeroEntryBitsWhenMapIsCalledThenPageTableEntryHasPresentBitSet) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    auto address = allocator.nextPageAddress.load();
+
+    pageTable->map(gpuVa, size, 0, 0);
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
+}
+
+TEST_F(PageTableTests48, givenEntryBitsWhenPageWalkIsCalledThenEntryBitsArePassedToPageWalker) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    size_t walked = 0u;
+    uint64_t ppgttBits = 0xabc;
+    uint64_t entryBitsPassed = 0u;
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        walked += size;
+        entryBitsPassed = entryBits;
+    };
+    pageTable->pageWalk(gpuVa, size, 0, ppgttBits, walker, PageTableHelper::memoryBankNotSpecified);
+
+    ppgttBits |= 0x1;
+    EXPECT_EQ(ppgttBits, entryBitsPassed);
+}
+
+TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferenEntryBitsThenEntryIsUpdated) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    size_t walked = 0u;
+    uint64_t ppgttBits = 0xabc;
+    uint64_t entryBitsPassed = 0u;
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        walked += size;
+        entryBitsPassed = entryBits;
+    };
+    pageTable->pageWalk(gpuVa, size, 0, ppgttBits, walker, PageTableHelper::memoryBankNotSpecified);
+
+    ppgttBits |= 0x1;
+    EXPECT_EQ(ppgttBits, entryBitsPassed);
+
+    ppgttBits = 0x345;
+    pageTable->pageWalk(gpuVa, size, 0, ppgttBits, walker, PageTableHelper::memoryBankNotSpecified);
+
+    EXPECT_EQ(ppgttBits, entryBitsPassed);
+}
+
+TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasDifferentEntryBitsThenEntryIsUpdated) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    uint64_t ppgttBits = 0xabc;
+    auto address = allocator.nextPageAddress.load();
+
+    pageTable->map(gpuVa, size, ppgttBits, 0);
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+
+    ppgttBits = 0x345;
+    pageTable->map(gpuVa, size, ppgttBits, 0);
+
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+}
+
 TEST_F(PageTableTests48, givenPageTableWhenMappingTheSameAddressMultipleTimesThenNumberOfPagesReservedInAllocatorMatchPagesMapped) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t address = refAddr;
 
     auto initialAddress = allocator.initialPageAddress;
 
-    auto phys1 = pageTable->map(address, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(address, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
 
-    auto phys1_1 = pageTable->map(address, 1, PageTableHelper::memoryBankNotSpecified);
+    auto phys1_1 = pageTable->map(address, 1, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1_1);
 
-    auto phys2 = pageTable->map(address, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys2 = pageTable->map(address, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(phys1, phys2);
 
     address = ptrOffset(address, pageSize);
-    auto phys3 = pageTable->map(address, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys3 = pageTable->map(address, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys1, phys3);
 
     address = ptrOffset(address, pageSize);
-    auto phys4 = pageTable->map(address, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys4 = pageTable->map(address, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys3, phys4);
 
     auto nextFreeAddress = initialAddress + ptrDiff(phys4 + pageSize, initialAddress);
@@ -233,7 +346,7 @@ TEST_F(PageTableTests48, physicalAddressesInAUBCantStartAt0) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
-    auto phys1 = pageTable->map(addr1, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(addr1, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(0u, phys1);
 }
 
@@ -241,11 +354,11 @@ TEST_F(PageTableTests48, mapPageMapByteInMapped) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
-    auto phys1 = pageTable->map(addr1, pageSize, 0);
+    auto phys1 = pageTable->map(addr1, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.nextPageAddress);
 
-    auto phys1_1 = pageTable->map(addr1, 1, PageTableHelper::memoryBankNotSpecified);
+    auto phys1_1 = pageTable->map(addr1, 1, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1_1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.nextPageAddress);
 }
@@ -254,37 +367,37 @@ TEST_F(PageTableTests48, mapsCorrectlyEvenMultipleCalls) {
     std::unique_ptr<PPGTTPageTable> pageTable(new PPGTTPageTable(&allocator));
     uintptr_t addr1 = refAddr;
 
-    auto phys1 = pageTable->map(addr1, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(addr1, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.nextPageAddress);
 
-    auto phys1_1 = pageTable->map(addr1, 1, PageTableHelper::memoryBankNotSpecified);
+    auto phys1_1 = pageTable->map(addr1, 1, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1_1);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.nextPageAddress);
 
-    auto phys2 = pageTable->map(addr1, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys2 = pageTable->map(addr1, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(phys1, phys2);
     EXPECT_EQ(allocator.initialPageAddress + pageSize, allocator.nextPageAddress);
 
-    auto phys3 = pageTable->map(addr1 + pageSize, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys3 = pageTable->map(addr1 + pageSize, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys1, phys3);
     EXPECT_EQ(allocator.initialPageAddress + 2 * pageSize, allocator.nextPageAddress);
 
-    auto phys4 = pageTable->map(addr1 + pageSize, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys4 = pageTable->map(addr1 + pageSize, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys1, phys3);
     EXPECT_EQ(phys3, phys4);
 
     auto addr2 = addr1 + pageSize + pageSize;
-    auto phys5 = pageTable->map(addr2, 2 * pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys5 = pageTable->map(addr2, 2 * pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys1, phys5);
     EXPECT_NE(phys3, phys5);
 
-    auto phys6 = pageTable->map(addr2, 2 * pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys6 = pageTable->map(addr2, 2 * pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(phys1, phys6);
     EXPECT_NE(phys3, phys6);
     EXPECT_EQ(phys5, phys6);
 
-    auto phys7 = pageTable->map(addr2 + pageSize, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys7 = pageTable->map(addr2 + pageSize, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_NE(0u, phys7);
     EXPECT_NE(phys1, phys7);
     EXPECT_NE(phys3, phys7);
@@ -299,7 +412,7 @@ TEST_F(PageTableTests48, mapsPagesOnTableBoundary) {
     size_t pages = (1 << 9) * 2;
     size_t size = pages * pageSize;
 
-    auto phys1 = pageTable->map(addr1, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(addr1, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
 }
 
@@ -309,10 +422,10 @@ TEST_F(PageTableTests48, mapsPagesOnTableBoundary2ndAllocation) {
     size_t pages = (1 << 9) * 2;
     size_t size = pages * pageSize;
 
-    auto phys1 = pageTable->map(0x0, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(0x0, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
 
-    auto phys2 = pageTable->map(addr1, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys2 = pageTable->map(addr1, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress + pageSize, phys2);
 }
 
@@ -325,10 +438,10 @@ TEST_F(PageTableTestsGPU, mapsPagesOnTableBoundary) {
     size_t pages = (1 << 9) * 2;
     size_t size = pages * pageSize;
 
-    auto phys32 = ggtt->map(addrGGTT, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys32 = ggtt->map(addrGGTT, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys32);
 
-    auto phys48 = ppgtt->map(addrPPGTT, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys48 = ppgtt->map(addrPPGTT, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress + size, phys48);
 }
 
@@ -342,7 +455,7 @@ TEST_F(PageTableTestsGPU, newIsEmpty) {
 
 TEST_F(PageTableTests32, level0) {
     std::unique_ptr<PageTable<void, 0, 9>> pt(new PageTable<void, 0, 9>(&allocator));
-    auto phys = pt->map(0x10000, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys = pt->map(0x10000, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(0u, phys);
 }
 
@@ -357,7 +470,7 @@ TEST_F(PageTableTests32, mapsPagesOnTableBoundary) {
     size_t pages = (1 << 9) * 2;
     size_t size = pages * pageSize;
 
-    auto phys1 = pageTable->map(addr1, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(addr1, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
 }
 
@@ -367,9 +480,9 @@ TEST_F(PageTableTests32, mapsPagesOnTableBoundary2ndAllocation) {
     size_t pages = (1 << 9) * 2;
     size_t size = pages * pageSize;
 
-    auto phys1 = pageTable->map(0x0, pageSize, PageTableHelper::memoryBankNotSpecified);
+    auto phys1 = pageTable->map(0x0, pageSize, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress, phys1);
 
-    auto phys2 = pageTable->map(addr1, size, PageTableHelper::memoryBankNotSpecified);
+    auto phys2 = pageTable->map(addr1, size, 0, PageTableHelper::memoryBankNotSpecified);
     EXPECT_EQ(startAddress + pageSize, phys2);
 }

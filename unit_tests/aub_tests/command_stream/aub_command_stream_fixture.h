@@ -56,7 +56,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         }
 
         auto aubCsr = reinterpret_cast<AUBCommandStreamReceiverHw<FamilyType> *>(csr);
-        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset) {
+        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
             if (offset > length)
                 abort();
 
@@ -65,7 +65,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
                                          size);
         };
 
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, walker, PageTableHelper::memoryBankNotSpecified);
+        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
     }
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
