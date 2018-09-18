@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (C) 2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/command_queue/gpgpu_walker.h"
@@ -36,7 +21,7 @@
 
 using namespace OCLRT;
 
-struct TimestampPacketTests : public ::testing::Test {
+struct TimestampPacketSimpleTests : public ::testing::Test {
     class MockTimestampPacket : public TimestampPacket {
       public:
         using TimestampPacket::data;
@@ -71,9 +56,26 @@ struct TimestampPacketTests : public ::testing::Test {
     }
 
     const size_t timestampDataSize = sizeof(uint32_t) * static_cast<size_t>(TimestampPacket::DataIndex::Max);
+    const size_t gws[3] = {1, 1, 1};
 };
 
-TEST_F(TimestampPacketTests, whenEndTagIsNotOneThenCanBeReleased) {
+struct TimestampPacketTests : public TimestampPacketSimpleTests {
+    void SetUp() override {
+        executionEnvironment.incRefInternal();
+        device = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
+        context = std::make_unique<MockContext>(device.get());
+        kernel = std::make_unique<MockKernelWithInternals>(*device, context.get());
+        mockCmdQ = std::make_unique<MockCommandQueue>(context.get(), device.get(), nullptr);
+    }
+
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<MockDevice> device;
+    std::unique_ptr<MockContext> context;
+    std::unique_ptr<MockKernelWithInternals> kernel;
+    std::unique_ptr<MockCommandQueue> mockCmdQ;
+};
+
+TEST_F(TimestampPacketSimpleTests, whenEndTagIsNotOneThenCanBeReleased) {
     MockTimestampPacket timestampPacket;
     auto contextEndIndex = static_cast<uint32_t>(TimestampPacket::DataIndex::ContextEnd);
     auto globalEndIndex = static_cast<uint32_t>(TimestampPacket::DataIndex::GlobalEnd);
@@ -95,7 +97,7 @@ TEST_F(TimestampPacketTests, whenEndTagIsNotOneThenCanBeReleased) {
     EXPECT_TRUE(timestampPacket.canBeReleased());
 }
 
-TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
+TEST_F(TimestampPacketSimpleTests, whenNewTagIsTakenThenReinitialize) {
     MockMemoryManager memoryManager;
     MockTagAllocator<MockTimestampPacket> allocator(&memoryManager, 1);
 
@@ -112,7 +114,7 @@ TEST_F(TimestampPacketTests, whenNewTagIsTakenThenReinitialize) {
     }
 }
 
-TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
+TEST_F(TimestampPacketSimpleTests, whenObjectIsCreatedThenInitializeAllStamps) {
     MockTimestampPacket timestampPacket;
     auto maxElements = static_cast<uint32_t>(TimestampPacket::DataIndex::Max);
     EXPECT_EQ(5u, maxElements);
@@ -124,7 +126,7 @@ TEST_F(TimestampPacketTests, whenObjectIsCreatedThenInitializeAllStamps) {
     }
 }
 
-TEST_F(TimestampPacketTests, whenAskedForStampAddressThenReturnWithValidOffset) {
+TEST_F(TimestampPacketSimpleTests, whenAskedForStampAddressThenReturnWithValidOffset) {
     MockTimestampPacket timestampPacket;
 
     for (size_t i = 0; i < static_cast<uint32_t>(TimestampPacket::DataIndex::Max); i++) {
@@ -134,19 +136,16 @@ TEST_F(TimestampPacketTests, whenAskedForStampAddressThenReturnWithValidOffset) 
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddTwoPipeControls) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
-    MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
-    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, 0, false, false, multiDispatchInfo);
-    auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, 0, false, false, multiDispatchInfo);
+    auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, 0, false, false, multiDispatchInfo);
-    auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, 0, false, false, multiDispatchInfo);
+    auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
 
     auto extendedSize = sizeWithDisabled + (2 * sizeof(typename FamilyType::PIPE_CONTROL)) + sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
 
@@ -154,21 +153,18 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeWithWaitlistThenAddSizeForSemaphores) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
-    MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
-    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
 
     cl_uint numEventsOnWaitlist = 5;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
-    auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    auto sizeWithDisabled = mockCmdQ->requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
-    auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQ, numEventsOnWaitlist, false, false, multiDispatchInfo);
+    auto sizeWithEnabled = mockCmdQ->requestedCmdStreamSize;
 
     size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() +
                           ((numEventsOnWaitlist + 1) * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT));
@@ -181,17 +177,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     MockTimestampPacket timestampPacket;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
 
-    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
 
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
-    auto &cmdStream = cmdQ.getCS(0);
+    auto &cmdStream = mockCmdQ->getCS(0);
 
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
-        cmdQ,
+        *mockCmdQ,
         multiDispatchInfo,
         0,
         nullptr,
@@ -239,21 +232,16 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
-
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     auto mockMemoryManager = new MockMemoryManager();
     device->injectMemoryManager(mockMemoryManager);
+    context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager);
     mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
-    MockContext context(device.get());
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
-    MockKernelWithInternals kernel(*device, &context);
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
 
-    size_t gws[] = {1, 1, 1};
-
-    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(nullptr, cmdQ->timestampPacketNode);
     EXPECT_EQ(nullptr, mockTagAllocator->usedTags.peekHead());
 
@@ -261,13 +249,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     cl_event event1, event2;
 
     // obtain first node for cmdQ and event1
-    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event1);
     auto node1 = cmdQ->timestampPacketNode;
     EXPECT_NE(nullptr, node1);
     EXPECT_EQ(node1, cmdQ->timestampPacketNode);
 
     // obtain new node for cmdQ and event2
-    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &event2);
     auto node2 = cmdQ->timestampPacketNode;
     EXPECT_NE(nullptr, node2);
     EXPECT_EQ(node2, cmdQ->timestampPacketNode);
@@ -301,15 +289,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-    MockContext context(device.get());
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device.get(), nullptr);
-    MockKernelWithInternals kernel(*device, &context);
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
 
-    size_t gws[] = {1, 1, 1};
-    cmdQ->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_NE(nullptr, cmdQ->timestampPacketNode);
 
     HardwareParse hwParser;
@@ -328,8 +312,6 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabl
 }
 
 HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrThenAddSizeForSemaphores) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
-
     cl_uint numEventsOnWaitlist = 5;
     EventsRequest eventsRequest(numEventsOnWaitlist, nullptr, nullptr);
     DispatchFlags flags;
@@ -346,19 +328,12 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
-    device1->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockContext context1(device1.get());
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockContext context2(device2.get());
 
-    MockKernelWithInternals kernel(*device1, &context1);
-
-    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context1, device1.get(), nullptr);
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
 
     const cl_uint eventsOnWaitlist = 6;
@@ -382,9 +357,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
-    size_t gws[] = {1, 1, 1};
-    cmdQ1->enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
-    auto &cmdStream = device1->getUltCommandStreamReceiver<FamilyType>().commandStream;
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
+    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -393,7 +367,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         EXPECT_NE(nullptr, semaphoreCmd);
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(compareEvent->getTimestampPacket()->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
+        EXPECT_EQ(compareEvent->getTimestampPacketNode()->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
                   semaphoreCmd->getSemaphoreGraphicsAddress());
     };
 
@@ -406,24 +380,19 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
         it++;
     }
 }
+
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingThenProgramSemaphoresForWaitlist) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using WALKER = WALKER_TYPE<FamilyType>;
-    ExecutionEnvironment executionEnvironment;
-    executionEnvironment.incRefInternal();
-    auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 0u));
+
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
-    MockKernelWithInternals kernel1(*device1);
-    device1->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockContext context1(device1.get());
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     MockContext context2(device2.get());
 
-    MockMultiDispatchInfo
-    multiDispatchInfo(std::vector<Kernel *>({kernel1.mockKernel}));
+    MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({kernel->mockKernel}));
 
-    MockCommandQueue cmdQ1(&context1, device1.get(), nullptr);
-    MockCommandQueue cmdQ2(&context2, device2.get(), nullptr);
-    auto &cmdStream = cmdQ1.getCS(0);
+    MockCommandQueue mockCmdQ2(&context2, device2.get(), nullptr);
+    auto &cmdStream = mockCmdQ->getCS(0);
 
     const cl_uint eventsOnWaitlist = 6;
     TagNode<TimestampPacket> *tagNodes[eventsOnWaitlist];
@@ -433,19 +402,19 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     UserEvent event1;
     UserEvent event2;
-    Event event3(&cmdQ1, 0, 0, 0);
+    Event event3(mockCmdQ.get(), 0, 0, 0);
     event3.setTimestampPacketNode(tagNodes[2]);
-    Event event4(&cmdQ2, 0, 0, 0);
+    Event event4(&mockCmdQ2, 0, 0, 0);
     event4.setTimestampPacketNode(tagNodes[3]);
-    Event event5(&cmdQ1, 0, 0, 0);
+    Event event5(mockCmdQ.get(), 0, 0, 0);
     event5.setTimestampPacketNode(tagNodes[4]);
-    Event event6(&cmdQ2, 0, 0, 0);
+    Event event6(&mockCmdQ2, 0, 0, 0);
     event6.setTimestampPacketNode(tagNodes[5]);
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
     GpgpuWalkerHelper<FamilyType>::dispatchWalker(
-        cmdQ1,
+        *mockCmdQ,
         multiDispatchInfo,
         eventsOnWaitlist,
         waitlist,
@@ -454,7 +423,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
         nullptr,
         nullptr,
         nullptr,
-        device1->getPreemptionMode(),
+        device->getPreemptionMode(),
         false);
 
     HardwareParse hwParser;
@@ -463,7 +432,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     auto verifySemaphore = [](MI_SEMAPHORE_WAIT *semaphoreCmd, Event *compareEvent) {
         EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(compareEvent->getTimestampPacket()->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
+        EXPECT_EQ(compareEvent->getTimestampPacketNode()->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
                   semaphoreCmd->getSemaphoreGraphicsAddress());
     };
 
@@ -490,38 +459,33 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 }
 
 TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBeforeReleasing) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     auto mockMemoryManager = new MockMemoryManager();
     device->injectMemoryManager(mockMemoryManager);
+    context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
     mockMemoryManager->timestampPacketAllocator.reset(mockTagAllocator);
 
-    MockCommandQueue cmdQ(nullptr, device.get(), nullptr);
-    cmdQ.obtainNewTimestampPacketNode();
-    auto firstNode = cmdQ.timestampPacketNode;
+    mockCmdQ->obtainNewTimestampPacketNode();
+    auto firstNode = mockCmdQ->timestampPacketNode;
     EXPECT_TRUE(mockTagAllocator->freeTags.peekIsEmpty());
 
     setTagToReadyState(firstNode->tag);
 
-    cmdQ.obtainNewTimestampPacketNode();
-    auto secondNode = cmdQ.timestampPacketNode;
+    mockCmdQ->obtainNewTimestampPacketNode();
+    auto secondNode = mockCmdQ->timestampPacketNode;
     EXPECT_FALSE(mockTagAllocator->freeTags.peekIsEmpty()); // new pool allocated for secondNode
     EXPECT_NE(firstNode, secondNode);
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKeepDependencyOnPreviousNodeIfItsReady) {
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockContext context(device.get());
-    MockKernelWithInternals kernel(*device);
 
-    MockCommandQueueHw<FamilyType> cmdQ(&context, device.get(), nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
     cmdQ.obtainNewTimestampPacketNode();
     auto firstNode = cmdQ.timestampPacketNode;
     setTagToReadyState(firstNode->tag);
 
-    size_t gws[] = {1, 1, 1};
-    cmdQ.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
@@ -537,17 +501,13 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenDontKee
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDependencyOnPreviousNodeIfItsNotReady) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(platformDevices[0]));
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    MockContext context(device.get());
-    MockKernelWithInternals kernel(*device);
 
-    MockCommandQueueHw<FamilyType> cmdQ(&context, device.get(), nullptr);
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
     cmdQ.obtainNewTimestampPacketNode();
     auto firstNode = cmdQ.timestampPacketNode;
 
-    size_t gws[] = {1, 1, 1};
-    cmdQ.enqueueKernel(kernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
@@ -566,4 +526,33 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
         }
     }
     EXPECT_EQ(0u, semaphoresFound);
+}
+
+HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+
+    auto &ultCsr = device->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.timestampPacketWriteEnabled = true;
+    ultCsr.storeMakeResidentAllocations = true;
+    MockContext context2(device2.get());
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    TagAllocator<TimestampPacket> tagAllocator1(executionEnvironment.memoryManager.get(), 1, 1);
+    auto tagNode1 = tagAllocator1.getTag();
+    TagAllocator<TimestampPacket> tagAllocator2(executionEnvironment.memoryManager.get(), 1, 1);
+    auto tagNode2 = tagAllocator2.getTag();
+
+    Event event0(cmdQ1.get(), 0, 0, 0);
+    event0.setTimestampPacketNode(tagNode1);
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.setTimestampPacketNode(tagNode2);
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 2, waitlist, nullptr);
+
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode1->getGraphicsAllocation()));
+    EXPECT_TRUE(ultCsr.isMadeResident(tagNode2->getGraphicsAllocation()));
 }

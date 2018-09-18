@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (C) 2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/command_stream/command_stream_receiver_hw.h"
@@ -37,6 +22,7 @@
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/utilities/tag_allocator.h"
 #include "command_stream_receiver_hw.h"
 
 namespace OCLRT {
@@ -265,7 +251,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto commandStreamStartCSR = commandStreamCSR.getUsed();
 
     if (dispatchFlags.outOfDeviceDependencies) {
-        programOutOfDeviceWaitlistSemaphores(commandStreamCSR, dispatchFlags, device);
+        handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, device);
     }
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, device, dispatchFlags);
@@ -787,19 +773,22 @@ void CommandStreamReceiverHw<GfxFamily>::addClearSLMWorkAround(typename GfxFamil
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::programOutOfDeviceWaitlistSemaphores(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice) {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-
+void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearStream &csr, DispatchFlags &dispatchFlags, Device &currentDevice) {
     for (cl_uint i = 0; i < dispatchFlags.outOfDeviceDependencies->numEventsInWaitList; i++) {
         auto event = castToObjectOrAbort<Event>(dispatchFlags.outOfDeviceDependencies->eventWaitList[i]);
-        if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() == &currentDevice)) {
+        if (event->isUserEvent()) {
             continue;
         }
-        auto timestampPacket = event->getTimestampPacket();
 
-        auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        makeResident(*event->getTimestampPacketNode()->getGraphicsAllocation());
 
-        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(csr, compareAddress, 1);
+        if (&event->getCommandQueue()->getDevice() != &currentDevice) {
+            auto timestampPacket = event->getTimestampPacketNode()->tag;
+
+            auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+
+            KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(csr, compareAddress, 1);
+        }
     }
 }
 
