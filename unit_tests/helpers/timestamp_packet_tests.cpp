@@ -68,6 +68,15 @@ struct TimestampPacketTests : public TimestampPacketSimpleTests {
         mockCmdQ = std::make_unique<MockCommandQueue>(context.get(), device.get(), nullptr);
     }
 
+    template <typename MI_SEMAPHORE_WAIT>
+    void verifySemaphore(MI_SEMAPHORE_WAIT *semaphoreCmd, Event *compareEvent) {
+        EXPECT_NE(nullptr, semaphoreCmd);
+        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        EXPECT_EQ(compareEvent->getTimestampPacketNode()->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
+                  semaphoreCmd->getSemaphoreGraphicsAddress());
+    };
+
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
@@ -363,17 +372,43 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
-    auto verifySemaphore = [](MI_SEMAPHORE_WAIT *semaphoreCmd, Event *compareEvent) {
-        EXPECT_NE(nullptr, semaphoreCmd);
-        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(compareEvent->getTimestampPacketNode()->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
-                  semaphoreCmd->getSemaphoreGraphicsAddress());
-    };
-
     auto it = hwParser.cmdList.begin();
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &event4);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &event6);
+
+    while (it != hwParser.cmdList.end()) {
+        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
+        it++;
+    }
+}
+
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
+
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    MockContext context2(device2.get());
+
+    auto cmdQ1 = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto cmdQ2 = std::make_unique<MockCommandQueueHw<FamilyType>>(&context2, device2.get(), nullptr);
+
+    UserEvent userEvent;
+    Event event0(cmdQ1.get(), 0, 0, 0);
+    event0.setTimestampPacketNode(executionEnvironment.memoryManager->getTimestampPacketAllocator()->getTag());
+    Event event1(cmdQ2.get(), 0, 0, 0);
+    event1.setTimestampPacketNode(executionEnvironment.memoryManager->getTimestampPacketAllocator()->getTag());
+
+    cl_event waitlist[] = {&userEvent, &event0, &event1};
+    cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 3, waitlist, nullptr);
+    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
+    EXPECT_EQ(0u, cmdStream.getUsed());
+    userEvent.setStatus(CL_COMPLETE);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+
+    auto it = hwParser.cmdList.begin();
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), &event1);
 
     while (it != hwParser.cmdList.end()) {
         EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
@@ -428,13 +463,6 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
-
-    auto verifySemaphore = [](MI_SEMAPHORE_WAIT *semaphoreCmd, Event *compareEvent) {
-        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-        EXPECT_EQ(compareEvent->getTimestampPacketNode()->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd),
-                  semaphoreCmd->getSemaphoreGraphicsAddress());
-    };
 
     uint32_t semaphoresFound = 0;
     uint32_t walkersFound = 0;

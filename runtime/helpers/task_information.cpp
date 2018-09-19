@@ -89,30 +89,21 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     return completionStamp;
 }
 
-CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, CommandStreamReceiver &commandStreamReceiver,
-                                           std::unique_ptr<KernelOperation> kernelOperation, std::vector<Surface *> &surfaces,
+CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> kernelOperation, std::vector<Surface *> &surfaces,
                                            bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
                                            PreemptionMode preemptionMode, Kernel *kernel, uint32_t kernelCount)
-    : commandQueue(commandQueue),
-      commandStreamReceiver(commandStreamReceiver),
-      kernelOperation(std::move(kernelOperation)),
-      flushDC(flushDC),
-      slmUsed(usesSLM),
-      NDRangeKernel(ndRangeKernel),
-      printfHandler(std::move(printfHandler)),
-      kernel(nullptr),
-      kernelCount(0) {
+    : commandQueue(commandQueue), kernelOperation(std::move(kernelOperation)), flushDC(flushDC), slmUsed(usesSLM),
+      NDRangeKernel(ndRangeKernel), printfHandler(std::move(printfHandler)), kernel(kernel),
+      kernelCount(kernelCount), preemptionMode(preemptionMode) {
     for (auto surface : surfaces) {
         this->surfaces.push_back(surface);
     }
-    this->kernel = kernel;
     UNRECOVERABLE_IF(nullptr == this->kernel);
     kernel->incRefInternal();
-    this->kernelCount = kernelCount;
-    this->preemptionMode = preemptionMode;
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
+    auto &commandStreamReceiver = commandQueue.getDevice().getCommandStreamReceiver();
     if (timestampPacketNode) {
         auto allocator = commandStreamReceiver.getMemoryManager()->getTimestampPacketAllocator();
         allocator->returnTag(timestampPacketNode);
@@ -131,6 +122,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (terminated) {
         return completionStamp;
     }
+    auto &commandStreamReceiver = commandQueue.getDevice().getCommandStreamReceiver();
     bool executionModelKernel = kernel->isParentKernel;
     auto devQueue = commandQueue.getContext().getDefaultDeviceQueue();
 
@@ -213,6 +205,9 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     dispatchFlags.throttle = commandQueue.getThrottle();
     dispatchFlags.preemptionMode = preemptionMode;
     dispatchFlags.mediaSamplerRequired = kernel->isVmeKernel();
+    if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        dispatchFlags.outOfDeviceDependencies = &eventsRequest;
+    }
 
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 

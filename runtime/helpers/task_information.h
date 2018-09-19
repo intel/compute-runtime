@@ -87,8 +87,7 @@ struct KernelOperation {
 
 class CommandComputeKernel : public Command {
   public:
-    CommandComputeKernel(CommandQueue &commandQueue, CommandStreamReceiver &commandStreamReceiver,
-                         std::unique_ptr<KernelOperation> kernelResources, std::vector<Surface *> &surfaces,
+    CommandComputeKernel(CommandQueue &commandQueue, std::unique_ptr<KernelOperation> kernelResources, std::vector<Surface *> &surfaces,
                          bool flushDC, bool usesSLM, bool ndRangeKernel, std::unique_ptr<PrintfHandler> printfHandler,
                          PreemptionMode preemptionMode, Kernel *kernel = nullptr, uint32_t kernelCount = 0);
 
@@ -99,10 +98,10 @@ class CommandComputeKernel : public Command {
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
 
     void setTimestampPacketNode(TagNode<TimestampPacket> *node);
+    void setEventsRequest(EventsRequest &eventsRequest) { this->eventsRequest = eventsRequest; }
 
   private:
     CommandQueue &commandQueue;
-    CommandStreamReceiver &commandStreamReceiver;
     std::unique_ptr<KernelOperation> kernelOperation;
     std::vector<Surface *> surfaces;
     bool flushDC;
@@ -113,6 +112,7 @@ class CommandComputeKernel : public Command {
     uint32_t kernelCount;
     PreemptionMode preemptionMode;
     TagNode<TimestampPacket> *timestampPacketNode = nullptr;
+    EventsRequest eventsRequest = {0, nullptr, nullptr};
 };
 
 class CommandMarker : public Command {

@@ -322,11 +322,11 @@ class CommandQueueHw : public CommandQueue {
                         bool &blocking,
                         const MultiDispatchInfo &multiDispatchInfo,
                         KernelOperation *blockedCommandsData,
-                        cl_uint numEventsInWaitList,
-                        const cl_event *eventWaitList,
+                        EventsRequest &eventsRequest,
                         bool slmUsed,
                         EventBuilder &externalEventBuilder,
                         std::unique_ptr<PrintfHandler> printfHandler);
+
   protected:
     MOCKABLE_VIRTUAL void enqueueHandlerHook(const unsigned int commandType, const MultiDispatchInfo &dispatchInfo){};
     MOCKABLE_VIRTUAL bool createAllocationForHostSurface(HostPtrSurface &surface);
