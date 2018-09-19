@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "cl_api_tests.h"
@@ -63,7 +48,7 @@ struct clCreateImageTests : public api_fixture,
 
 typedef clCreateImageTests<::testing::Test> clCreateImageTest;
 
-TEST_F(clCreateImageTest, returnsSuccess) {
+TEST_F(clCreateImageTest, GivenValidParametersWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
     char ptr[10];
     imageDesc.image_row_pitch = 128;
     auto image = clCreateImage(
@@ -80,7 +65,7 @@ TEST_F(clCreateImageTest, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImageTest, InvalidFlagsCombinationWithFlagClMemAccessFlagsUnrestrictedIntel) {
+TEST_F(clCreateImageTest, GivenUnrestrictedIntelFlagWhenCreatingImageWithInvalidFlagCombinationThenImageIsCreatedAndSuccessReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -97,7 +82,7 @@ TEST_F(clCreateImageTest, InvalidFlagsCombinationWithFlagClMemAccessFlagsUnrestr
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImageTest, InvalidFlagBits) {
+TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageThenInvalidValueErrorIsReturned) {
     cl_mem_flags flags = (1 << 12);
     auto image = clCreateImage(
         pContext,
@@ -114,7 +99,7 @@ TEST_F(clCreateImageTest, InvalidFlagBits) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTest, CreateImageWithInvalidFlagBitsFromAnotherImage) {
+TEST_F(clCreateImageTest, GivenInvalidFlagBitsWhenCreatingImageFromAnotherImageThenInvalidValueErrorIsReturned) {
     imageFormat.image_channel_order = CL_NV12_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -148,7 +133,7 @@ TEST_F(clCreateImageTest, CreateImageWithInvalidFlagBitsFromAnotherImage) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTest, NotNullHostPtrAndRowPitchIsNotMultipleOfElementSizeReturnsError) {
+TEST_F(clCreateImageTest, GivenInvalidRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_row_pitch = 655;
     char ptr[10];
     auto image = clCreateImage(
@@ -165,7 +150,7 @@ TEST_F(clCreateImageTest, NotNullHostPtrAndRowPitchIsNotMultipleOfElementSizeRet
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTest, givenNullHostPtrWhenCopyHostPtrFlagPassedThenReturnError) {
+TEST_F(clCreateImageTest, GivenNullHostPtrAndCopyHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
@@ -177,7 +162,7 @@ TEST_F(clCreateImageTest, givenNullHostPtrWhenCopyHostPtrFlagPassedThenReturnErr
     EXPECT_EQ(nullptr, image);
 }
 
-TEST_F(clCreateImageTest, givenNullHostPtrWhenUseHostPtrFlagPassedThenReturnError) {
+TEST_F(clCreateImageTest, GivenNullHostPtrAndMemUseHostPtrFlagWhenCreatingImageThenInvalidHostPtrErrorIsReturned) {
     auto image = clCreateImage(
         pContext,
         CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR,
@@ -189,7 +174,7 @@ TEST_F(clCreateImageTest, givenNullHostPtrWhenUseHostPtrFlagPassedThenReturnErro
     EXPECT_EQ(nullptr, image);
 }
 
-TEST_F(clCreateImageTest, NullHostPtrAndRowPitchIsNotZeroReturnsError) {
+TEST_F(clCreateImageTest, GivenNullHostPtrAndNonZeroRowPitchWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_row_pitch = 4;
     auto image = clCreateImage(
         pContext,
@@ -205,7 +190,7 @@ TEST_F(clCreateImageTest, NullHostPtrAndRowPitchIsNotZeroReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTest, givenImage2DFromBufferInputParamsWhenImageIsCreatedThenNonZeroRowPitchIsAccepted) {
+TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageIsCreatedAndSuccessReturned) {
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
 
@@ -232,7 +217,7 @@ TEST_F(clCreateImageTest, givenImage2DFromBufferInputParamsWhenImageIsCreatedThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImageTest, NotNullHostPtrAndRowPitchIsNotGreaterThanWidthTimesElementSizeReturnsError) {
+TEST_F(clCreateImageTest, GivenNotNullHostPtrAndRowPitchIsNotGreaterThanWidthTimesElementSizeWhenCreatingImageThenInvalidImageDescriptorErrorIsReturned) {
     imageDesc.image_row_pitch = 64;
     char ptr[10];
     auto image = clCreateImage(
@@ -249,7 +234,7 @@ TEST_F(clCreateImageTest, NotNullHostPtrAndRowPitchIsNotGreaterThanWidthTimesEle
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTest, nullContextReturnsError) {
+TEST_F(clCreateImageTest, GivenNullContextWhenCreatingImageThenInvalidContextErrorIsReturned) {
     auto image = clCreateImage(
         nullptr,
         CL_MEM_READ_WRITE,
@@ -265,7 +250,7 @@ TEST_F(clCreateImageTest, nullContextReturnsError) {
 }
 
 typedef clCreateImageTests<::testing::Test> clCreateImageTestYUV;
-TEST_F(clCreateImageTestYUV, invalidFlagReturnsError) {
+TEST_F(clCreateImageTestYUV, GivenInvalidGlagWhenCreatingYuvImageThenInvalidValueErrorIsReturned) {
     imageFormat.image_channel_order = CL_YUYV_INTEL;
     auto image = clCreateImage(
         pContext,
@@ -281,7 +266,7 @@ TEST_F(clCreateImageTestYUV, invalidFlagReturnsError) {
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 
-TEST_F(clCreateImageTestYUV, invalidImageTypeReturnsError) {
+TEST_F(clCreateImageTestYUV, Given1DImageTypeWhenCreatingYuvImageThenInvalidImageDescriptorErrorIsReturned) {
     imageFormat.image_channel_order = CL_YUYV_INTEL;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
     auto image = clCreateImage(
@@ -318,7 +303,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         clCreateImageValidFlags,
                         ::testing::ValuesIn(validFlags));
 
-TEST_P(clCreateImageValidFlags, validFlags) {
+TEST_P(clCreateImageValidFlags, GivenValidFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
 
     char ptr[128 * 32];
     imageDesc.image_row_pitch = 128;
@@ -358,7 +343,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         clCreateImageInvalidFlags,
                         ::testing::ValuesIn(invalidFlagsCombinations));
 
-TEST_P(clCreateImageInvalidFlags, invalidFlagsCombinations) {
+TEST_P(clCreateImageInvalidFlags, GivenInvalidFlagsCombinationsWhenCreatingImageThenInvalidValueErrorIsReturned) {
 
     char ptr[10];
     imageDesc.image_row_pitch = 128;
@@ -394,7 +379,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         clCreateImageFlagsUnrestrictedIntel,
                         ::testing::ValuesIn(flagsWithUnrestrictedIntel));
 
-TEST_P(clCreateImageFlagsUnrestrictedIntel, flagsWithUnrestrictedIntel) {
+TEST_P(clCreateImageFlagsUnrestrictedIntel, GivenFlagsIncludingUnrestrictedIntelWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
 
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
@@ -444,7 +429,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         clCreateImageValidFlagsAndParentFlagsCombinations,
                         ::testing::ValuesIn(validFlagsAndParentFlags));
 
-TEST_P(clCreateImageValidFlagsAndParentFlagsCombinations, validFlagsAndParentFlags) {
+TEST_P(clCreateImageValidFlagsAndParentFlagsCombinations, GivenValidFlagsAndParentFlagsWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
 
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
@@ -494,7 +479,7 @@ INSTANTIATE_TEST_CASE_P(CreateImageWithFlags,
                         clCreateImageInvalidFlagsAndParentFlagsCombinations,
                         ::testing::ValuesIn(invalidFlagsAndParentFlags));
 
-TEST_P(clCreateImageInvalidFlagsAndParentFlagsCombinations, invalidFlagsAndParentFlags) {
+TEST_P(clCreateImageInvalidFlagsAndParentFlagsCombinations, GivenInvalidFlagsAndParentFlagsWhenCreatingImageThenInvalidMemObjectErrorIsReturned) {
 
     imageFormat.image_channel_order = CL_NV12_INTEL;
     ImageFlags imageFlags = GetParam();
@@ -546,7 +531,7 @@ INSTANTIATE_TEST_CASE_P(validImage2DSizes,
                         clCreateImageValidSizesTest,
                         ::testing::ValuesIn(validImage2DSizes));
 
-TEST_P(clCreateImageValidSizesTest, ValidSizesPassedToCreateImageReturnsImage) {
+TEST_P(clCreateImageValidSizesTest, GivenValidSizesWhenCreatingImageThenImageIsCreatedAndSuccessReturned) {
 
     ImageSizes sizes = GetParam();
     imageDesc.image_width = sizes.width;
@@ -568,7 +553,7 @@ TEST_P(clCreateImageValidSizesTest, ValidSizesPassedToCreateImageReturnsImage) {
 
 typedef clCreateImageTests<::testing::Test> clCreateImage2DTest;
 
-TEST_F(clCreateImage2DTest, GivenValidInputsWhenImageIsCreatedThenReturnsSuccess) {
+TEST_F(clCreateImage2DTest, GivenValidParametersWhenCreating2DImageThenImageIsCreatedAndSuccessReturned) {
     auto image = clCreateImage2D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -586,7 +571,7 @@ TEST_F(clCreateImage2DTest, GivenValidInputsWhenImageIsCreatedThenReturnsSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImage2DTest, noRet) {
+TEST_F(clCreateImage2DTest, GivenNoPtrToReturnValueWhenCreating2DImageThenImageIsCreated) {
     auto image = clCreateImage2D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -603,7 +588,7 @@ TEST_F(clCreateImage2DTest, noRet) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImage2DTest, GivenInvalidContextsWhenImageIsCreatedThenReturnsFail) {
+TEST_F(clCreateImage2DTest, GivenInvalidContextsWhenCreating2DImageThenInvalidContextErrorIsReturned) {
     auto image = clCreateImage2D(
         nullptr,
         CL_MEM_READ_WRITE,
@@ -620,7 +605,7 @@ TEST_F(clCreateImage2DTest, GivenInvalidContextsWhenImageIsCreatedThenReturnsFai
 
 typedef clCreateImageTests<::testing::Test> clCreateImage3DTest;
 
-TEST_F(clCreateImage3DTest, GivenValidInputsWhenImageIsCreatedThenReturnsSuccess) {
+TEST_F(clCreateImage3DTest, GivenValidParametersWhenCreating3DImageThenImageIsCreatedAndSuccessReturned) {
     auto image = clCreateImage3D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -640,7 +625,7 @@ TEST_F(clCreateImage3DTest, GivenValidInputsWhenImageIsCreatedThenReturnsSuccess
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImage3DTest, noRet) {
+TEST_F(clCreateImage3DTest, GivenNoPtrToReturnValueWhenCreating3DImageThenImageIsCreated) {
     auto image = clCreateImage3D(
         pContext,
         CL_MEM_READ_WRITE,
@@ -659,7 +644,7 @@ TEST_F(clCreateImage3DTest, noRet) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImage3DTest, GivenInvalidContextsWhenImageIsCreatedThenReturnsFail) {
+TEST_F(clCreateImage3DTest, GivenInvalidContextsWhenCreating3DImageThenInvalidContextErrorIsReturned) {
     auto image = clCreateImage3D(
         nullptr,
         CL_MEM_READ_WRITE,
@@ -678,7 +663,7 @@ TEST_F(clCreateImage3DTest, GivenInvalidContextsWhenImageIsCreatedThenReturnsFai
 
 typedef clCreateImageTests<::testing::Test> clCreateImageFromImageTest;
 
-TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithTheSameDescriptorAndValidFormatThenReturnsSuccess) {
+TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithTheSameDescriptorAndValidFormatThenImageIsCreatedAndSuccessReturned) {
 
     imageFormat.image_channel_order = CL_BGRA;
 
@@ -730,7 +715,7 @@ TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithThe
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithDifferentDescriptorAndValidFormatThenReturnsError) {
+TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithDifferentDescriptorAndValidFormatThenInvalidImageFormatDescriptorErrorIsReturned) {
 
     imageFormat.image_channel_order = CL_BGRA;
 
@@ -780,7 +765,7 @@ TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithDif
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateImageFromImageTest, givenImage2dWhenCreateImage2dFromImageWithTheSameDescriptorAndNotValidFormatThenReturnsError) {
+TEST_F(clCreateImageFromImageTest, GivenImage2dWhenCreatingImage2dFromImageWithTheSameDescriptorAndNotValidFormatThenInvalidImageFormatDescriptorErrorIsReturned) {
 
     imageFormat.image_channel_order = CL_BGRA;
 
@@ -853,7 +838,7 @@ struct clCreateNon2dImageFromImageTest : public clCreateImageFromImageTest,
     cl_mem image;
 };
 
-TEST_P(clCreateNon2dImageFromImageTest, givenImage2dWhenCreateImageFromNon2dImageThenReturnsError) {
+TEST_P(clCreateNon2dImageFromImageTest, GivenImage2dWhenCreatingImageFromNon2dImageThenInvalidImageDescriptorErrorIsReturned) {
 
     imageDesc.image_type = GetParam();
     auto imageFromImageObject = clCreateImage(
