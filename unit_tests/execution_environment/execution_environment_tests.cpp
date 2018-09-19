@@ -6,6 +6,7 @@
  */
 
 #include "runtime/built_ins/built_ins.h"
+#include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -119,13 +120,25 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
     EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0u].get());
 }
 
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubStreamProviderIsCalledThenItIsInitalizedOnce) {
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.initAubStreamProvider();
+    auto currentAubStreamProvider = executionEnvironment.aubStreamProvider.get();
+    EXPECT_NE(nullptr, currentAubStreamProvider);
+    auto currentAubFileStream = currentAubStreamProvider->getStream();
+    EXPECT_NE(nullptr, currentAubFileStream);
+    executionEnvironment.initAubStreamProvider();
+    EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubStreamProvider.get());
+    EXPECT_EQ(currentAubFileStream, executionEnvironment.aubStreamProvider->getStream());
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->initializeCommandStreamReceiver(platformDevices[0], 0u);
     executionEnvironment->initializeMemoryManager(false, false, 0u);
     EXPECT_NE(nullptr, executionEnvironment->memoryManager);
 }
-static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) + sizeof(std::mutex) + (is64bit ? 72 : 40), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
+static_assert(sizeof(ExecutionEnvironment) == sizeof(std::vector<std::unique_ptr<CommandStreamReceiver>>) + sizeof(std::mutex) + (is64bit ? 80 : 44), "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDestroyedThenDeleteSequenceIsSpecified) {
     uint32_t destructorId = 0u;
@@ -133,14 +146,17 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct MockExecutionEnvironment : ExecutionEnvironment {
         using ExecutionEnvironment::gmmHelper;
     };
-    struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
+    struct GmmHelperMock : public DestructorCounted<GmmHelper, 7> {
         GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, hwInfo) {}
     };
-    struct OsInterfaceMock : public DestructorCounted<OSInterface, 5> {
+    struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryMangerMock : public DestructorCounted<OsAgnosticMemoryManager, 4> {
+    struct MemoryMangerMock : public DestructorCounted<OsAgnosticMemoryManager, 5> {
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+    };
+    struct AubFileStreamProviderMock : public DestructorCounted<AubFileStreamProvider, 4> {
+        AubFileStreamProviderMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
         CommandStreamReceiverMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -159,13 +175,14 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
+    executionEnvironment->aubStreamProvider = std::make_unique<AubFileStreamProviderMock>(destructorId);
     executionEnvironment->commandStreamReceivers.push_back(std::make_unique<CommandStreamReceiverMock>(destructorId));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->sourceLevelDebugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
 
     executionEnvironment.reset(nullptr);
-    EXPECT_EQ(7u, destructorId);
+    EXPECT_EQ(8u, destructorId);
 }
 
 TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseTheSameMemoryManagerAndCommandStreamReceiver) {

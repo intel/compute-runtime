@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdint>
 #include <fstream>
+#include <mutex>
 
 #ifndef BIT
 #define BIT(x) (((uint64_t)1) << (x))
@@ -137,9 +138,11 @@ struct AubFileStream : public AubStream {
     MOCKABLE_VIRTUAL void flush();
     MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace);
     MOCKABLE_VIRTUAL bool addComment(const char *message);
+    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream();
 
     std::ofstream fileHandle;
     std::string fileName;
+    std::mutex mutex;
 };
 
 template <int addressingBits>

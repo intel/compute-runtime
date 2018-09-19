@@ -98,10 +98,20 @@ struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<Gf
 };
 
 struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
+    bool init(uint32_t stepping, uint32_t device) override {
+        initCalledCnt++;
+        return true;
+    }
     void flush() override {
         flushCalled = true;
     }
+    std::unique_lock<std::mutex> lockStream() override {
+        lockStreamCalled = true;
+        return AUBCommandStreamReceiver::AubFileStream::lockStream();
+    }
+    uint32_t initCalledCnt = 0;
     bool flushCalled = false;
+    bool lockStreamCalled = false;
 };
 
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
@@ -201,6 +211,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenItIsCre
     aubCsr->setMemoryManager(nullptr);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyOperateOnSingleFileStream) {
+    ExecutionEnvironment executionEnvironment;
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    EXPECT_EQ(aubCsr1->stream, aubCsr2->stream);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenItIsCreatedThenFileIsNotCreated) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
@@ -251,6 +268,81 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFil
     aubCsr->closeFile();
     EXPECT_FALSE(aubCsr->isFileOpen());
     EXPECT_TRUE(aubCsr->getFileName().empty());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileWithSpecifiedNameIsReopened) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    std::string fileName = "file_name.aub";
+    std::string newFileName = "new_file_name.aub";
+
+    aubCsr->reopenFile(fileName);
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
+
+    aubCsr->reopenFile(newFileName);
+    EXPECT_TRUE(aubCsr->isFileOpen());
+    EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileShouldBeInitializedWithHeaderOnce) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+    std::string fileName = "file_name.aub";
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    aubCsr->initFile(fileName);
+    aubCsr->initFile(fileName);
+
+    EXPECT_EQ(1u, mockAubFileStreamPtr->initCalledCnt);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenOpenFileIsCalledThenFileStreamShouldBeLocked) {
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    std::string fileName = "file_name.aub";
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    aubCsr->openFile(fileName);
+    EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileStreamShouldBeLocked) {
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    std::string fileName = "file_name.aub";
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    aubCsr->reopenFile(fileName);
+    EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeLocked) {
+    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
+    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
+    LinearStream cs(aubExecutionEnvironment->commandBuffer);
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
+    auto engineType = OCLRT::ENGINE_RCS;
+    ResidencyContainer allocationsForResidency = {};
+
+    aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
+    EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
@@ -1375,7 +1467,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     std::vector<std::string> comments;
 
@@ -1390,8 +1482,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenNoPat
 
     EXPECT_EQ("PatchInfoData\n", comments[0]);
     EXPECT_EQ("AllocationsList\n", comments[1]);
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeFlushed) {
@@ -1402,7 +1492,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
     MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
@@ -1410,8 +1500,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
     EXPECT_TRUE(mockAubFileStreamPtr->flushCalled);
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirstAddCommentsFailsThenFunctionReturnsFalse) {
@@ -1424,13 +1512,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenFirst
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(1).WillOnce(Return(false));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_FALSE(result);
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecondAddCommentsFailsThenFunctionReturnsFalse) {
@@ -1443,13 +1529,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSecon
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     EXPECT_CALL(*mockAubFileStreamPtr, addComment(_)).Times(2).WillOnce(Return(true)).WillOnce(Return(false));
     bool result = aubCsr->addPatchInfoComments();
     EXPECT_FALSE(result);
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatchInfoDataObjectsAddedThenCommentsAreNotEmpty) {
@@ -1462,7 +1546,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     PatchInfoData patchInfoData[2] = {{0xAAAAAAAA, 128u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 256u, PatchInfoAllocationType::Default},
                                       {0xBBBBBBBB, 128u, PatchInfoAllocationType::Default, 0xDDDDDDDD, 256u, PatchInfoAllocationType::Default}};
@@ -1522,8 +1606,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenPatch
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourceAllocationIsNullThenDoNotAddToAllocationsList) {
@@ -1536,7 +1618,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     PatchInfoData patchInfoData = {0x0, 0u, PatchInfoAllocationType::Default, 0xBBBBBBBB, 0u, PatchInfoAllocationType::Default};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
@@ -1578,8 +1660,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenSourc
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTargetAllocationIsNullThenDoNotAddToAllocationsList) {
@@ -1592,7 +1672,7 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
     std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new GmockAubFileStream());
     GmockAubFileStream *mockAubFileStreamPtr = static_cast<GmockAubFileStream *>(mockAubFileStream.get());
     ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    mockAubFileStream.swap(aubCsr->stream);
+    aubCsr->stream = mockAubFileStreamPtr;
 
     PatchInfoData patchInfoData = {0xAAAAAAAA, 0u, PatchInfoAllocationType::Default, 0x0, 0u, PatchInfoAllocationType::Default};
     EXPECT_TRUE(aubCsr->getFlatBatchBufferHelper().setPatchInfoData(patchInfoData));
@@ -1634,8 +1714,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAddPatchInfoCommentsCalledWhenTarge
         EXPECT_TRUE(line.size() > 9);
         lineNo++;
     }
-
-    mockAubFileStream.swap(aubCsr->stream);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenGetIndirectPatchCommandsIsCalledForEmptyPatchInfoListThenIndirectPatchCommandBufferIsNotCreated) {

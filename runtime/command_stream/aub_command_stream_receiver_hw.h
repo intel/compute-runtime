@@ -54,6 +54,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     AUBCommandStreamReceiverHw(const AUBCommandStreamReceiverHw &) = delete;
     AUBCommandStreamReceiverHw &operator=(const AUBCommandStreamReceiverHw &) = delete;
 
+    MOCKABLE_VIRTUAL void openFile(const std::string &fileName);
+    MOCKABLE_VIRTUAL bool reopenFile(const std::string &fileName);
     MOCKABLE_VIRTUAL void initFile(const std::string &fileName);
     MOCKABLE_VIRTUAL void closeFile();
     MOCKABLE_VIRTUAL bool isFileOpen();
@@ -81,7 +83,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
         uint32_t tailRingBuffer;
     } engineInfoTable[EngineType::NUM_ENGINES] = {};
 
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> stream;
+    AUBCommandStreamReceiver::AubFileStream *stream;
     std::unique_ptr<AubSubCaptureManager> subCaptureManager;
     uint32_t aubDeviceId;
     bool standalone;

@@ -10,6 +10,7 @@ set(RUNTIME_SRCS_COMMAND_STREAM
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_command_stream_receiver_hw.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/aub_stream_provider.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.h
   ${CMAKE_CURRENT_SOURCE_DIR}/aub_subcapture.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver.cpp

@@ -137,7 +137,7 @@ void AubFileStream::writeMemoryWriteHeader(uint64_t physAddress, size_t size, ui
 }
 
 void AubFileStream::writeGTT(uint32_t gttOffset, uint64_t entry) {
-    fileHandle.write(reinterpret_cast<char *>(&entry), sizeof(entry));
+    write(reinterpret_cast<char *>(&entry), sizeof(entry));
 }
 
 void AubFileStream::writePTE(uint64_t physAddress, uint64_t entry) {
@@ -245,6 +245,10 @@ bool AubFileStream::addComment(const char *message) {
         write(reinterpret_cast<char *>(&zero), sizeof(uint32_t) - remainder);
     }
     return true;
+}
+
+std::unique_lock<std::mutex> AubFileStream::lockStream() {
+    return std::unique_lock<std::mutex>(mutex);
 }
 
 } // namespace AubMemDump

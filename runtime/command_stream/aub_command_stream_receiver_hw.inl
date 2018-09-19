@@ -8,7 +8,9 @@
 #include "hw_cmds.h"
 #include "runtime/aub/aub_helper.h"
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
+#include "runtime/command_stream/aub_stream_provider.h"
 #include "runtime/command_stream/aub_subcapture.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/gmm_helper/resource_info.h"
@@ -27,7 +29,6 @@ namespace OCLRT {
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const HardwareInfo &hwInfoIn, const std::string &fileName, bool standalone, ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment),
-      stream(std::make_unique<AUBCommandStreamReceiver::AubFileStream>()),
       subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
       standalone(standalone) {
 
@@ -40,6 +41,8 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
+    executionEnvironment.initAubStreamProvider();
+    stream = executionEnvironment.aubStreamProvider->getStream();
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         this->subCaptureManager->subCaptureMode = static_cast<AubSubCaptureManager::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
         this->subCaptureManager->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());
@@ -58,7 +61,6 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
 
 template <typename GfxFamily>
 AUBCommandStreamReceiverHw<GfxFamily>::~AUBCommandStreamReceiverHw() {
-    AUBCommandStreamReceiverHw<GfxFamily>::closeFile();
     freeEngineInfoTable();
 }
 
@@ -85,19 +87,41 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initEngineMMIO(EngineType engineType
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName) {
-    stream.reset(new AUBCommandStreamReceiver::AubFileStream());
+void AUBCommandStreamReceiverHw<GfxFamily>::openFile(const std::string &fileName) {
+    auto streamLocked = stream->lockStream();
+    initFile(fileName);
+}
 
-    // Open our file
-    stream->open(fileName.c_str());
-
-    if (!stream->isOpen()) {
-        // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
-        // try adding <familycodename>_aub
-        DEBUG_BREAK_IF(true);
+template <typename GfxFamily>
+bool AUBCommandStreamReceiverHw<GfxFamily>::reopenFile(const std::string &fileName) {
+    auto streamLocked = stream->lockStream();
+    if (isFileOpen()) {
+        if (fileName != getFileName()) {
+            closeFile();
+            freeEngineInfoTable();
+        }
     }
-    // Add the file header
-    stream->init(AubMemDump::SteppingValues::A, aubDeviceId);
+    if (!isFileOpen()) {
+        initFile(fileName);
+        return true;
+    }
+    return false;
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::initFile(const std::string &fileName) {
+    if (!stream->isOpen()) {
+        // Open our file
+        stream->open(fileName.c_str());
+
+        if (!stream->isOpen()) {
+            // This DEBUG_BREAK_IF most probably means you are not executing aub tests with correct current directory (containing aub_out folder)
+            // try adding <familycodename>_aub
+            DEBUG_BREAK_IF(true);
+        }
+        // Add the file header
+        stream->init(AubMemDump::SteppingValues::A, aubDeviceId);
+    }
 }
 
 template <typename GfxFamily>
@@ -235,7 +259,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
     auto csr = new AUBCommandStreamReceiverHw<GfxFamily>(hwInfoIn, fileName, standalone, executionEnvironment);
 
     if (!csr->subCaptureManager->isSubCaptureMode()) {
-        csr->initFile(fileName);
+        csr->openFile(fileName);
     }
 
     return csr;
@@ -253,6 +277,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         }
     }
 
+    auto streamLocked = stream->lockStream();
     uint32_t mmioBase = getCsTraits(engineType).mmioBase;
     auto &engineInfo = engineInfoTable[engineType];
 
@@ -621,14 +646,8 @@ void AUBCommandStreamReceiverHw<GfxFamily>::activateAubSubCapture(const MultiDis
     bool active = subCaptureManager->activateSubCapture(dispatchInfo);
     if (active) {
         std::string subCaptureFile = subCaptureManager->getSubCaptureFileName(dispatchInfo);
-        if (isFileOpen()) {
-            if (subCaptureFile != getFileName()) {
-                closeFile();
-                freeEngineInfoTable();
-            }
-        }
-        if (!isFileOpen()) {
-            initFile(subCaptureFile);
+        auto isReopened = reopenFile(subCaptureFile);
+        if (isReopened) {
             dumpAubNonWritable = true;
         }
     }

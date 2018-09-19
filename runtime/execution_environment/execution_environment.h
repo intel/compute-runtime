@@ -13,6 +13,7 @@
 #include <vector>
 
 namespace OCLRT {
+class AubStreamProvider;
 class GmmHelper;
 class CommandStreamReceiver;
 class MemoryManager;
@@ -34,6 +35,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     ExecutionEnvironment();
     ~ExecutionEnvironment() override;
 
+    void initAubStreamProvider();
     void initGmm(const HardwareInfo *hwInfo);
     bool initializeCommandStreamReceiver(const HardwareInfo *pHwInfo, uint32_t deviceIndex);
     void initializeMemoryManager(bool enable64KBpages, bool enableLocalMemory, uint32_t deviceIndex);
@@ -45,6 +47,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
 
     std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MemoryManager> memoryManager;
+    std::unique_ptr<AubStreamProvider> aubStreamProvider;
     std::vector<std::unique_ptr<CommandStreamReceiver>> commandStreamReceivers;
     std::unique_ptr<BuiltIns> builtins;
     std::unique_ptr<CompilerInterface> compilerInterface;
