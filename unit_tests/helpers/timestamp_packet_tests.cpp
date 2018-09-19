@@ -528,6 +528,28 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingThenKeepDep
     EXPECT_EQ(0u, semaphoresFound);
 }
 
+HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingToOoqThenDontKeepDependencyOnPreviousNodeIfItsNotReady) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    cl_queue_properties properties[] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), properties);
+    cmdQ.obtainNewTimestampPacketNode();
+
+    cmdQ.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
+
+    uint32_t semaphoresFound = 0;
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
+            semaphoresFound++;
+        }
+    }
+    EXPECT_EQ(0u, semaphoresFound);
+}
+
 HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueueingThenMakeAllTimestampsResident) {
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(nullptr, &executionEnvironment, 1u));
 
