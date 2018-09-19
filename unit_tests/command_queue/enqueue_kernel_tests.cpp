@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/built_ins/built_ins.h"
@@ -239,7 +224,10 @@ struct TestParam {
     {64, 1, 1, 64, 1, 1},
     {190, 1, 1, 95, 1, 1},
     {510, 1, 1, 255, 1, 1},
-    {512, 1, 1, 256, 1, 1}};
+    {512, 1, 1, 256, 1, 1}},
+  OneEntryTestParamTable[] = {
+      {1, 1, 1, 1, 1, 1},
+};
 template <typename InputType>
 struct EnqueueKernelTypeTest : public HelloWorldFixture<HelloWorldFixtureFactory>,
                                public HardwareParse,
@@ -326,6 +314,7 @@ void EnqueueKernelTypeTest<TestParam>::FillValues() {
 }
 
 typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTests;
+typedef EnqueueKernelTypeTest<TestParam> EnqueueWorkItemTestsWithLimitedParamSet;
 
 HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, GPGPUWalker) {
     typedef typename FamilyType::PARSE PARSE;
@@ -363,37 +352,36 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, GPGPUWalker) {
     EXPECT_EQ(expectedWorkItems, numWorkItems);
 }
 
-HWTEST_P(EnqueueWorkItemTests, bumpsTaskLevel) {
+HWTEST_F(EnqueueKernelTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
-
-    enqueueKernel<FamilyType, false>();
+    callOneWorkItemNDRKernel();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWTEST_P(EnqueueWorkItemTests, alignsToCSR) {
+HWTEST_F(EnqueueKernelTest, alignsToCSR) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
 
-    enqueueKernel<FamilyType, false>();
+    callOneWorkItemNDRKernel();
     EXPECT_EQ(pCmdQ->taskCount, csr.peekTaskCount());
     EXPECT_EQ(pCmdQ->taskLevel + 1, csr.peekTaskLevel());
 }
 
-HWTEST_P(EnqueueWorkItemTests, addsCommands) {
+HWTEST_F(EnqueueKernelTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
-    enqueueKernel<FamilyType, false>();
+    callOneWorkItemNDRKernel();
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWTEST_P(EnqueueWorkItemTests, addsIndirectData) {
+HWTEST_F(EnqueueKernelTest, addsIndirectData) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
 
-    enqueueKernel<FamilyType, false>();
+    callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), pKernel));
     EXPECT_NE(iohBefore, pIOH->getUsed());
     if (pKernel->requiresSshForBuffers() || (pKernel->getKernelInfo().patchInfo.imageMemObjKernelArgs.size() > 0)) {
@@ -401,19 +389,19 @@ HWTEST_P(EnqueueWorkItemTests, addsIndirectData) {
     }
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, LoadRegisterImmediateL3CNTLREG) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, LoadRegisterImmediateL3CNTLREG) {
     enqueueKernel<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, WhenEnqueueIsDoneThenStateBaseAddressIsProperlyProgrammed) {
     enqueueKernel<FamilyType>();
     validateStateBaseAddress<FamilyType>(this->pDevice->getCommandStreamReceiver().getMemoryManager()->getInternalHeapBaseAddress(),
                                          pDSH, pIOH, pSSH, itorPipelineSelect, itorWalker, cmdList,
                                          context->getMemoryManager()->peekForce32BitAllocations() ? context->getMemoryManager()->allocator32Bit->getBase() : 0llu);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, MediaInterfaceDescriptorLoad) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, MediaInterfaceDescriptorLoad) {
     typedef typename FamilyType::PARSE PARSE;
     typedef typename PARSE::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename PARSE::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
@@ -441,12 +429,11 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, MediaInterfaceDescriptorLoad) 
     PARSE::template validateCommand<MEDIA_INTERFACE_DESCRIPTOR_LOAD *>(cmdList.begin(), itorCmd);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, InterfaceDescriptorData) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, InterfaceDescriptorData) {
     typedef typename FamilyType::PARSE PARSE;
     typedef typename PARSE::MEDIA_INTERFACE_DESCRIPTOR_LOAD MEDIA_INTERFACE_DESCRIPTOR_LOAD;
     typedef typename PARSE::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
     typedef typename PARSE::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
-
     enqueueKernel<FamilyType>();
 
     // Extract the MIDL command
@@ -480,13 +467,13 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, InterfaceDescriptorData) {
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, PipelineSelect) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, PipelineSelect) {
     enqueueKernel<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
 }
 
-HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, MediaVFEState) {
+HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTestsWithLimitedParamSet, MediaVFEState) {
     enqueueKernel<FamilyType>();
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
@@ -494,6 +481,10 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueWorkItemTests, MediaVFEState) {
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,
                         EnqueueWorkItemTests,
                         ::testing::ValuesIn(TestParamTable));
+
+INSTANTIATE_TEST_CASE_P(EnqueueKernel,
+                        EnqueueWorkItemTestsWithLimitedParamSet,
+                        ::testing::ValuesIn(OneEntryTestParamTable));
 
 typedef EnqueueKernelTypeTest<TestParam2> EnqueueScratchSpaceTests;
 
