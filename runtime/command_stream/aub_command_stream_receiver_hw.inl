@@ -14,7 +14,6 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
-#include "runtime/helpers/debug_helpers.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/string.h"
 #include "runtime/memory_manager/graphics_allocation.h"
