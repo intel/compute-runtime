@@ -263,7 +263,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyNegativeUnknownDeviceId) {
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport = 7;
     drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
@@ -273,7 +273,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidThreadOn) {
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport = 7;
     drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestThreadGroupBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
@@ -283,7 +283,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledThreadGroupOn)
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledMidBatchOn) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport = 7;
     drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
@@ -313,7 +313,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmDisabledAllPreemption
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverThreadGroup) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport = 7;
     drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);
@@ -323,7 +323,7 @@ TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionD
 
 TEST_F(HwInfoConfigTestLinuxDummy, dummyConfigPreemptionDrmEnabledAllPreemptionDriverMidBatch) {
     pInHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidBatch;
-    drm->StoredPreemptionSupport = 1;
+    drm->StoredPreemptionSupport = 7;
     drm->StoredMockPreemptionSupport = 1;
     drm->StoredDeviceID = hwConfigTestMidThreadBit | hwConfigTestThreadGroupBit | hwConfigTestMidBatchBit;
     int ret = hwConfig.configureHwInfo(pInHwInfo, &outHwInfo, osInterface);

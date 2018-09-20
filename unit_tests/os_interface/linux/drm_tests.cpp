@@ -140,10 +140,10 @@ TEST(DrmTest, GivenDrmWhenAskedFor48BitAddressCorrectValueReturned) {
     delete pDrm;
 }
 
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_PARAM_HAS_SCHEDULER)
 TEST(DrmTest, GivenDrmWhenAskedForPreemptionCorrectValueReturned) {
     DrmMock *pDrm = new DrmMock;
-    pDrm->StoredPreemptionSupport = 1;
+    pDrm->StoredPreemptionSupport = 7;
     EXPECT_TRUE(pDrm->hasPreemption());
     pDrm->StoredPreemptionSupport = 0;
     EXPECT_FALSE(pDrm->hasPreemption());

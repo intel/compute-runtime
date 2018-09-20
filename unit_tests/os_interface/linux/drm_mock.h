@@ -113,8 +113,8 @@ class DrmMock : public Drm {
                 }
                 return this->StoredRetValForMinEUinPool;
             }
-#if defined(I915_PARAM_HAS_PREEMPTION)
-            if (gp->param == I915_PARAM_HAS_PREEMPTION) {
+#if defined(I915_PARAM_HAS_SCHEDULER)
+            if (gp->param == I915_PARAM_HAS_SCHEDULER) {
                 *((int *)(gp->value)) = this->StoredPreemptionSupport;
                 return this->StoredRetVal;
             }
@@ -128,7 +128,7 @@ class DrmMock : public Drm {
                 return this->StoredRetVal;
             }
         }
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_PARAM_HAS_SCHEDULER)
         if ((request == DRM_IOCTL_I915_GEM_CONTEXT_CREATE) && (arg != nullptr)) {
             drm_i915_gem_context_create *create = (drm_i915_gem_context_create *)arg;
             create->ctx_id = this->StoredCtxId;
@@ -210,13 +210,14 @@ class DrmMock : public Drm {
     void setDeviceRevID(int revisionId) { this->revisionId = revisionId; }
 
     bool hasPreemption() {
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_SCHEDULER_CAP_PREEMPTION)
         drm_i915_getparam_t gp;
         int value = 0;
         gp.value = &value;
-        gp.param = I915_PARAM_HAS_PREEMPTION;
+        gp.param = I915_PARAM_HAS_SCHEDULER;
         int ret = ioctl(DRM_IOCTL_I915_GETPARAM, &gp);
-        if (ret == 0 && *gp.value == 1) {
+
+        if (ret == 0 && (value & I915_SCHEDULER_CAP_PREEMPTION)) {
             return contextCreate() && setLowPriority();
         }
         return false;
@@ -239,7 +240,7 @@ class DrmMock : public Drm {
     int StoredRetValForPooledEU = 0;
     int StoredRetValForMinEUinPool = 0;
     int StoredPPGTT = 3;
-    int StoredPreemptionSupport = 1;
+    int StoredPreemptionSupport = 7;
     int StoredMockPreemptionSupport = 0;
     int StoredExecSoftPin = 0;
     uint32_t StoredCtxId = 1;

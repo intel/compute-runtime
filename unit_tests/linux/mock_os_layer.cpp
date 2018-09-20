@@ -31,7 +31,7 @@ int fakeFd = 1023;
 int haveDri = 0;                                         // index of dri to serve, -1 - none
 int deviceId = OCLRT::deviceDescriptorTable[0].deviceId; // default supported DeviceID
 int haveSoftPin = 1;
-int havePreemption = 1;
+int havePreemption = 7;
 int failOnDeviceId = 0;
 int failOnRevisionId = 0;
 int failOnSoftPin = 0;
@@ -78,8 +78,8 @@ int drmGetParam(drm_i915_getparam_t *param) {
         *param->value = haveSoftPin;
         ret = failOnSoftPin;
         break;
-#if defined(I915_PARAM_HAS_PREEMPTION)
-    case I915_PARAM_HAS_PREEMPTION:
+#if defined(I915_PARAM_HAS_SCHEDULER)
+    case I915_PARAM_HAS_SCHEDULER:
         *param->value = havePreemption;
         ret = failOnPreemption;
         break;
@@ -100,7 +100,7 @@ int drmSetContextParam(drm_i915_gem_context_param *param) {
     case I915_CONTEXT_PRIVATE_PARAM_BOOST:
         ret = failOnParamBoost;
         break;
-#if defined(I915_PARAM_HAS_PREEMPTION)
+#if defined(I915_PARAM_HAS_SCHEDULER)
     case I915_CONTEXT_PARAM_PRIORITY:
         ret = failOnSetPriority;
         break;
@@ -141,7 +141,7 @@ int ioctl(int fd, unsigned long int request, ...) throw() {
     int res;
     va_list vl;
     va_start(vl, request);
-
+	
     if (fd == fakeFd) {
         res = ioctlSeq[ioctlCnt % (sizeof(ioctlSeq) / sizeof(int))];
         ioctlCnt++;
