@@ -50,6 +50,7 @@ struct FeatureTableBase {
     bool ftr3dObjectLevelPreempt = false;
     bool ftrPerCtxtPreemptionGranularityControl = false;
 
+    bool ftrTileY = false;
     bool ftrDisplayYTiling = false;
     bool ftrTranslationTable = false;
     bool ftrUserModeTranslationTable = false;

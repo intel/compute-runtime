@@ -20,6 +20,7 @@ struct SkuInfoBaseReference {
         refFtrTable.FtrFrameBufferLLC = 1;
         refFtrTable.FtrCrystalwell = 1;
         refFtrTable.FtrDisplayEngineS3d = 1;
+        refFtrTable.FtrTileY = 1;
         refFtrTable.FtrDisplayYTiling = 1;
         refFtrTable.FtrFbc = 1;
         refFtrTable.FtrVERing = 1;
@@ -84,6 +85,7 @@ struct SkuInfoBaseReference {
         refFtrTable.ftr3dObjectLevelPreempt = true;
         refFtrTable.ftrPerCtxtPreemptionGranularityControl = true;
 
+        refFtrTable.ftrTileY = true;
         refFtrTable.ftrDisplayYTiling = true;
         refFtrTable.ftrTranslationTable = true;
         refFtrTable.ftrUserModeTranslationTable = true;

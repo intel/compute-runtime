@@ -25,6 +25,7 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(FrameBufferLLC);
         TRANSFER_FTR_TO_GMM(Crystalwell);
         TRANSFER_FTR_TO_GMM(DisplayEngineS3d);
+        TRANSFER_FTR_TO_GMM(TileY);
         TRANSFER_FTR_TO_GMM(DisplayYTiling);
         TRANSFER_FTR_TO_GMM(Fbc);
         TRANSFER_FTR_TO_GMM(VERing);

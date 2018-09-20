@@ -60,6 +60,7 @@ class SkuInfoReceiver {
         RECEIVE_FTR(3dObjectLevelPreempt);
         RECEIVE_FTR(PerCtxtPreemptionGranularityControl);
 
+        RECEIVE_FTR(TileY);
         RECEIVE_FTR(DisplayYTiling);
         RECEIVE_FTR(TranslationTable);
         RECEIVE_FTR(UserModeTranslationTable);
