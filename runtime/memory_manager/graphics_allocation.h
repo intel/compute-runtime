@@ -49,7 +49,7 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t gpuBaseAddress = 0;
     Gmm *gmm = nullptr;
     uint64_t allocationOffset = 0u;
-    int residencyTaskCount[maxOsContextCount] = {ObjectNotResident};
+    int residencyTaskCount[maxOsContextCount] = {ObjectNotResident, ObjectNotResident, ObjectNotResident, ObjectNotResident};
     bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
 
     enum class AllocationType {
