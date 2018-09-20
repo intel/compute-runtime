@@ -16,6 +16,7 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_defines.h
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/host_ptr_manager.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/memory_banks.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_constants.h
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager.h
@@ -37,3 +38,4 @@ set(RUNTIME_SRCS_MEMORY_MANAGER
 
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_MEMORY_MANAGER})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_MEMORY_MANAGER ${RUNTIME_SRCS_MEMORY_MANAGER})
+add_subdirectories()

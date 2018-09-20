@@ -25,6 +25,7 @@
 #include "unit_tests/mocks/mock_deferred_deleter.h"
 #include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_gmm.h"
+#include "unit_tests/mocks/mock_graphics_allocation.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
@@ -37,6 +38,17 @@
 using namespace OCLRT;
 
 typedef Test<MemoryAllocatorFixture> MemoryAllocatorTest;
+
+TEST(MemoryBank, givenDifferentDeviceOrdinalsWhenGettingBankThenCorrectBanksAreReturned) {
+    auto bank = MemoryBanks::getBank(0);
+    EXPECT_EQ(MemoryBanks::MainBank, bank);
+
+    bank = MemoryBanks::getBank(1);
+    EXPECT_EQ(MemoryBanks::MainBank, bank);
+
+    bank = MemoryBanks::getBank(100);
+    EXPECT_EQ(MemoryBanks::MainBank, bank);
+}
 
 TEST(GraphicsAllocationTest, defaultTypeTraits) {
     EXPECT_FALSE(std::is_copy_constructible<GraphicsAllocation>::value);

@@ -11,6 +11,7 @@
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
+#include "runtime/memory_manager/memory_banks.h"
 #include "unit_tests/command_stream/command_stream_fixture.h"
 #include "unit_tests/tests_configuration.h"
 
@@ -68,7 +69,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
                                          aubCsr->getAddressSpaceFromPTEBits(entryBits));
         };
 
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, PageTableHelper::memoryBankNotSpecified);
+        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
     }
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;

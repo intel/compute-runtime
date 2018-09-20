@@ -13,6 +13,8 @@
 #include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/memory_manager/graphics_allocation.h"
+#include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
@@ -22,9 +24,13 @@ namespace OCLRT {
 template <typename GfxFamily>
 TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const HardwareInfo &hwInfoIn,
                                                                   ExecutionEnvironment &executionEnvironment)
-    : BaseClass(hwInfoIn, executionEnvironment),
-      ppgtt(std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(&physicalAddressAllocator)),
-      ggtt(std::make_unique<PDPE>(&physicalAddressAllocator)) {
+    : BaseClass(hwInfoIn, executionEnvironment) {
+
+    createPhysicalAddressAllocator();
+
+    ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator.get());
+    ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
+
     for (auto &engineInfo : engineInfoTable) {
         engineInfo.pLRCA = nullptr;
         engineInfo.ggttLRCA = 0u;
@@ -98,7 +104,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         const size_t alignHWSP = 0x1000;
         engineInfo.pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
         engineInfo.ggttHWSP = gttRemap.map(engineInfo.pGlobalHWStatusPage, sizeHWSP);
-        auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+        auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, getGTTBits(), getMemoryBankForGtt());
 
         // Write our GHWSP
         AubGTTData data = {0};
@@ -123,7 +129,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         const size_t alignRCS = 0x1000;
         engineInfo.pRCS = alignedMalloc(engineInfo.sizeRCS, alignRCS);
         engineInfo.ggttRCS = gttRemap.map(engineInfo.pRCS, engineInfo.sizeRCS);
-        auto physRCS = ggtt->map(engineInfo.ggttRCS, engineInfo.sizeRCS, getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+        auto physRCS = ggtt->map(engineInfo.ggttRCS, engineInfo.sizeRCS, getGTTBits(), getMemoryBankForGtt());
 
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(physRCS), data);
@@ -145,7 +151,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     // Write our LRCA
     {
         engineInfo.ggttLRCA = gttRemap.map(engineInfo.pLRCA, sizeLRCA);
-        auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+        auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, getGTTBits(), getMemoryBankForGtt());
 
         AubGTTData data = {0};
         getGTTData(reinterpret_cast<void *>(lrcAddressPhys), data);
@@ -197,7 +203,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     {
         auto physBatchBuffer = ppgtt->map(reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer,
                                           getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
-                                          PageTableHelper::getMemoryBankIndex(*batchBuffer.commandBufferAllocation));
+                                          getMemoryBank(batchBuffer.commandBufferAllocation));
 
         AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
         AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer,
@@ -236,7 +242,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             auto sizeToWrap = engineInfo.sizeRCS - engineInfo.tailRCS;
             memset(pTail, 0, sizeToWrap);
             // write remaining ring
-            auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+            auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, getGTTBits(), getMemoryBankForGtt());
             AUB::addMemoryWrite(
                 stream,
                 physDumpStart,
@@ -276,7 +282,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         auto dumpLength = engineInfo.tailRCS - previousTail;
 
         // write RCS
-        auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+        auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
             stream,
             physDumpStart,
@@ -286,7 +292,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             AubMemDump::DataTypeHintValues::TraceCommandBuffer);
 
         // update the RCS mmio tail in the LRCA
-        auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRCS), getGTTBits(), PageTableHelper::memoryBankNotSpecified);
+        auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRCS), getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
             stream,
             physLRCA + 0x101c,
@@ -359,7 +365,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
                                               aubHelperHw);
     };
 
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, PageTableHelper::getMemoryBankIndex(gfxAllocation));
+    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, getMemoryBank(&gfxAllocation));
     return true;
 }
 
@@ -384,7 +390,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfx
             DEBUG_BREAK_IF(offset > length);
             stream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
         };
-        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, PageTableHelper::getMemoryBankIndex(gfxAllocation));
+        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, getMemoryBank(&gfxAllocation));
     }
 }
 
@@ -417,6 +423,21 @@ int TbxCommandStreamReceiverHw<GfxFamily>::getAddressSpace(int hint) {
 template <typename GfxFamily>
 uint64_t TbxCommandStreamReceiverHw<GfxFamily>::getGTTBits() const {
     return 0;
+}
+
+template <typename GfxFamily>
+uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
+    return MemoryBanks::getBank(this->deviceIndex);
+}
+
+template <typename GfxFamily>
+uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMemoryBank(GraphicsAllocation *allocation) const {
+    return MemoryBanks::getBank(this->deviceIndex);
+}
+
+template <typename GfxFamily>
+void TbxCommandStreamReceiverHw<GfxFamily>::createPhysicalAddressAllocator() {
+    physicalAddressAllocator = std::make_unique<PhysicalAddressAllocator>();
 }
 
 } // namespace OCLRT

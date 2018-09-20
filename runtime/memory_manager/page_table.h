@@ -20,15 +20,6 @@ namespace OCLRT {
 
 class GraphicsAllocation;
 
-class PageTableHelper {
-  public:
-    static uint32_t getMemoryBankIndex(GraphicsAllocation &allocation) {
-        return memoryBankNotSpecified;
-    }
-
-    static const uint32_t memoryBankNotSpecified = 0;
-};
-
 typedef std::function<void(uint64_t addr, size_t size, size_t offset, uint64_t entryBits)> PageWalker;
 template <class T, uint32_t level, uint32_t bits = 9>
 class PageTable {

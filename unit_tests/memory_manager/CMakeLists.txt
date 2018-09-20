@@ -20,3 +20,4 @@ set(IGDRCL_SRCS_tests_memory_manager
   ${CMAKE_CURRENT_SOURCE_DIR}/svm_memory_manager.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_memory_manager})
+add_subdirectories()

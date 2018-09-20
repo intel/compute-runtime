@@ -12,6 +12,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/flat_batch_buffer_helper_hw.h"
 #include "runtime/helpers/hw_info.h"
+#include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "test.h"
@@ -1806,6 +1807,15 @@ HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCal
     EXPECT_FALSE(entry.pageConfig.LocalMemory);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, whenGetMemoryBankForGttIsCalledThenCorrectBankIsReturned) {
+    const HardwareInfo &hwInfoIn = *platformDevices[0];
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true, *pDevice->executionEnvironment));
+    aubCsr->localMemoryEnabled = false;
+
+    auto bank = aubCsr->getMemoryBankForGtt();
+    EXPECT_EQ(MemoryBanks::MainBank, bank);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenEntryBitsPresentAndWritableWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceNonLocalIsReturned) {
     const HardwareInfo &hwInfoIn = *platformDevices[0];
     std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true, *pDevice->executionEnvironment));
@@ -1950,10 +1960,10 @@ HWTEST_F(AubCommandStreamReceiverTests, whenAubCommandStreamReceiverIsCreatedThe
     ASSERT_NE(nullptr, aubCsr->ggtt.get());
 
     uintptr_t address = 0x20000;
-    auto physicalAddress = aubCsr->ppgtt->map(address, MemoryConstants::pageSize, 0, PageTableHelper::memoryBankNotSpecified);
+    auto physicalAddress = aubCsr->ppgtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
     EXPECT_NE(0u, physicalAddress);
 
-    physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, 0, PageTableHelper::memoryBankNotSpecified);
+    physicalAddress = aubCsr->ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
     EXPECT_NE(0u, physicalAddress);
 }
 

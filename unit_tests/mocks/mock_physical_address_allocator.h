@@ -13,5 +13,6 @@ using namespace OCLRT;
 class MockPhysicalAddressAllocator : public PhysicalAddressAllocator {
   public:
     using PhysicalAddressAllocator::initialPageAddress;
-    using PhysicalAddressAllocator::nextPageAddress;
+    using PhysicalAddressAllocator::mainAllocator;
+    using PhysicalAddressAllocator::PhysicalAddressAllocator;
 };

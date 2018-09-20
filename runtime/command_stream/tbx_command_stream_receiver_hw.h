@@ -74,12 +74,14 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint64_t getGTTBits() const;
+    uint32_t getMemoryBankForGtt() const;
+    uint32_t getMemoryBank(GraphicsAllocation *allocation) const;
 
     TbxCommandStreamReceiver::TbxStream stream;
     uint32_t aubDeviceId;
     bool streamInitialized = false;
 
-    PhysicalAddressAllocator physicalAddressAllocator;
+    std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
@@ -91,5 +93,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
   protected:
     int getAddressSpace(int hint);
+    void createPhysicalAddressAllocator();
 };
 } // namespace OCLRT

@@ -10,6 +10,7 @@
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/helpers/ptr_math.h"
+#include "runtime/memory_manager/memory_banks.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "gen_cmd_parse.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
@@ -323,9 +324,9 @@ HWTEST_F(TbxCommandSteamSimpleTest, whenTbxCommandStreamReceiverIsCreatedThenPPG
     MockTbxCsr<FamilyType> tbxCsr(*platformDevices[0], *pDevice->executionEnvironment);
 
     uintptr_t address = 0x20000;
-    auto physicalAddress = tbxCsr.ppgtt->map(address, MemoryConstants::pageSize, 0, PageTableHelper::memoryBankNotSpecified);
+    auto physicalAddress = tbxCsr.ppgtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
     EXPECT_NE(0u, physicalAddress);
 
-    physicalAddress = tbxCsr.ggtt->map(address, MemoryConstants::pageSize, 0, PageTableHelper::memoryBankNotSpecified);
+    physicalAddress = tbxCsr.ggtt->map(address, MemoryConstants::pageSize, 0, MemoryBanks::MainBank);
     EXPECT_NE(0u, physicalAddress);
 }

@@ -86,7 +86,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     uint32_t aubDeviceId;
     bool standalone;
 
-    PhysicalAddressAllocator physicalAddressAllocator;
+    std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
@@ -98,6 +98,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
     uint64_t getGTTBits() const;
+    uint32_t getMemoryBankForGtt() const;
+    uint32_t getMemoryBank(GraphicsAllocation *allocation) const;
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;
@@ -107,6 +109,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
 
   protected:
     int getAddressSpace(int hint);
+    void createPhysicalAddressAllocator();
 
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
