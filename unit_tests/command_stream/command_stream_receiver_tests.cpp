@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2018, Intel Corporation
+ * Copyright (C) 2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -127,11 +112,11 @@ TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {
         srcMemory,
         retVal);
     ASSERT_NE(nullptr, buffer);
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident());
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
 
     commandStreamReceiver->makeResident(*buffer->getGraphicsAllocation());
 
-    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident());
+    EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
 
     delete buffer;
 }
@@ -414,4 +399,36 @@ TEST(CommandStreamReceiverSimpleTest, givenCSRWhenWaitBeforeMakingNonResidentWhe
     csr.waitBeforeMakingNonResidentWhenRequired();
 
     EXPECT_EQ(0u, tag);
+}
+
+TEST(CommandStreamReceiverMultiContextTests, givenMultipleCsrsWhenSameResourcesAreUsedThenResidencyIsProperlyHandled) {
+    auto executionEnvironment = new ExecutionEnvironment;
+
+    std::unique_ptr<Device> device0(Device::create<Device>(nullptr, executionEnvironment, 0u));
+    std::unique_ptr<Device> device1(Device::create<Device>(nullptr, executionEnvironment, 1u));
+
+    auto &commandStreamReceiver0 = device0->getCommandStreamReceiver();
+    auto &commandStreamReceiver1 = device1->getCommandStreamReceiver();
+
+    auto graphicsAllocation = executionEnvironment->memoryManager->allocateGraphicsMemory(4096u);
+
+    commandStreamReceiver0.makeResident(*graphicsAllocation);
+    commandStreamReceiver1.makeResident(*graphicsAllocation);
+
+    EXPECT_EQ(1u, commandStreamReceiver0.getResidencyAllocations().size());
+    EXPECT_EQ(1u, commandStreamReceiver1.getResidencyAllocations().size());
+
+    EXPECT_EQ(1, graphicsAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(1, graphicsAllocation->residencyTaskCount[1u]);
+
+    commandStreamReceiver0.makeNonResident(*graphicsAllocation);
+    commandStreamReceiver1.makeNonResident(*graphicsAllocation);
+
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[1u]);
+
+    EXPECT_EQ(1u, commandStreamReceiver0.getEvictionAllocations().size());
+    EXPECT_EQ(1u, commandStreamReceiver1.getEvictionAllocations().size());
+
+    executionEnvironment->memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

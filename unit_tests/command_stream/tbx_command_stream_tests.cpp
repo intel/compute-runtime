@@ -225,13 +225,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
 
     tbxCsr->pushAllocationForResidency(graphicsAllocation);
     tbxCsr->processResidency(tbxCsr->getResidencyAllocations(), *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
-    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -244,13 +244,13 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenProcessResidenc
     auto graphicsAllocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, graphicsAllocation);
 
-    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
 
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
     tbxCsr->processResidency(allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
-    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
@@ -271,12 +271,12 @@ HWTEST_F(TbxCommandStreamTests, givenTbxCommandStreamReceiverWhenFlushIsCalledTh
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {graphicsAllocation};
 
-    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
 
     tbxCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount);
-    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, graphicsAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ((int)tbxCsr->peekTaskCount() + 1, graphicsAllocation->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemory(commandBuffer);
     memoryManager->freeGraphicsMemory(graphicsAllocation);

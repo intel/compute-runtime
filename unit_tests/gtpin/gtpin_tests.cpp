@@ -1669,11 +1669,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     auto pBuffer1 = castToObject<Buffer>(gtpinBuffer1);
     GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
     CommandStreamReceiver &csr = pCmdQueue->getDevice().getCommandStreamReceiver();
-    EXPECT_FALSE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    EXPECT_FALSE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     gtpinNotifyMakeResident(pKernel, &csr);
-    EXPECT_TRUE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    EXPECT_TRUE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
 
     // Cancel information about second submitted kernel
     kernelExecQueue.pop_back();
@@ -1840,24 +1840,24 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     GraphicsAllocation *pGfxAlloc1 = pBuffer1->getGraphicsAllocation();
     CommandStreamReceiver &csr = pCmdQueue->getDevice().getCommandStreamReceiver();
     // Make resident resource of first submitted kernel
-    EXPECT_FALSE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    EXPECT_FALSE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     gtpinNotifyMakeResident(pKernel, &csr);
-    EXPECT_TRUE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    EXPECT_TRUE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     // Make resident resource of second submitted kernel
     gtpinNotifyMakeResident(pKernel, &csr);
-    EXPECT_TRUE(pGfxAlloc0->isResident());
-    EXPECT_TRUE(pGfxAlloc1->isResident());
+    EXPECT_TRUE(pGfxAlloc0->isResident(0u));
+    EXPECT_TRUE(pGfxAlloc1->isResident(0u));
 
     // Verify that correct GT-Pin resource is added to residency list.
     // This simulates enqueuing blocked kernels
     kernelExecQueue[0].isResourceResident = false;
     kernelExecQueue[1].isResourceResident = false;
-    pGfxAlloc0->residencyTaskCount = ObjectNotResident;
-    pGfxAlloc1->residencyTaskCount = ObjectNotResident;
-    EXPECT_FALSE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    pGfxAlloc0->residencyTaskCount[0u] = ObjectNotResident;
+    pGfxAlloc1->residencyTaskCount[0u] = ObjectNotResident;
+    EXPECT_FALSE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     std::vector<Surface *> residencyVector;
     EXPECT_EQ(0u, residencyVector.size());
     // Add to residency list resource of first submitted kernel
@@ -1866,16 +1866,16 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     // Make resident first resource on residency list
     GeneralSurface *pSurf1 = (GeneralSurface *)residencyVector[0];
     pSurf1->makeResident(csr);
-    EXPECT_TRUE(pGfxAlloc0->isResident());
-    EXPECT_FALSE(pGfxAlloc1->isResident());
+    EXPECT_TRUE(pGfxAlloc0->isResident(0u));
+    EXPECT_FALSE(pGfxAlloc1->isResident(0u));
     // Add to residency list resource of second submitted kernel
     gtpinNotifyUpdateResidencyList(pKernel, &residencyVector);
     EXPECT_EQ(2u, residencyVector.size());
     // Make resident second resource on residency list
     GeneralSurface *pSurf2 = (GeneralSurface *)residencyVector[1];
     pSurf2->makeResident(csr);
-    EXPECT_TRUE(pGfxAlloc0->isResident());
-    EXPECT_TRUE(pGfxAlloc1->isResident());
+    EXPECT_TRUE(pGfxAlloc0->isResident(0u));
+    EXPECT_TRUE(pGfxAlloc1->isResident(0u));
 
     // Cleanup
     delete pSurf1;

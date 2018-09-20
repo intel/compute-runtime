@@ -259,26 +259,26 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 
     // First makeResident marks the allocation resident
     aubCsr->makeResident(*gfxAllocation);
-    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(1u, aubCsr->getResidencyAllocations().size());
 
     // Second makeResident should have no impact
     aubCsr->makeResident(*gfxAllocation);
-    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(aubCsr->peekTaskCount() + 1, gfxAllocation->taskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(1u, aubCsr->getResidencyAllocations().size());
 
     // First makeNonResident marks the allocation as nonresident
     aubCsr->makeNonResident(*gfxAllocation);
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(1u, aubCsr->getEvictionAllocations().size());
 
     // Second makeNonResident should have no impact
     aubCsr->makeNonResident(*gfxAllocation);
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
     EXPECT_EQ(1u, aubCsr->getEvictionAllocations().size());
 
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
@@ -470,17 +470,17 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->makeSurfacePackNonResident(nullptr);
 
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStandaloneModeWhenFlushIsCalledThenItShouldNotCallMakeResidentOnCommandBufferAllocation) {
@@ -492,11 +492,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto engineType = OCLRT::ENGINE_RCS;
 
-    EXPECT_EQ(ObjectNotResident, aubExecutionEnvironment->commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, aubExecutionEnvironment->commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_EQ(ObjectNotResident, aubExecutionEnvironment->commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, aubExecutionEnvironment->commandBuffer->residencyTaskCount[0u]);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandaloneModeWhenFlushIsCalledThenItShouldCallMakeResidentOnResidencyAllocations) {
@@ -513,22 +513,22 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount[0u]);
 
-    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->makeSurfacePackNonResident(&allocationsForResidency);
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
@@ -546,13 +546,13 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInNoneStand
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
@@ -582,22 +582,22 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInStandalon
     auto engineType = OCLRT::ENGINE_RCS;
     ResidencyContainer allocationsForResidency = {gfxAllocation};
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
     aubCsr->flush(batchBuffer, engineType, &allocationsForResidency, *pDevice->getOsContext());
 
-    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, gfxAllocation->residencyTaskCount[0u]);
 
-    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount);
-    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount);
+    EXPECT_NE(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
+    EXPECT_EQ((int)aubCsr->peekTaskCount() + 1, commandBuffer->residencyTaskCount[0u]);
 
     aubCsr->makeSurfacePackNonResident(&allocationsForResidency);
 
-    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount);
-    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount);
+    EXPECT_EQ(ObjectNotResident, gfxAllocation->residencyTaskCount[0u]);
+    EXPECT_EQ(ObjectNotResident, commandBuffer->residencyTaskCount[0u]);
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }

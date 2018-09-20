@@ -304,7 +304,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             }
         } else {
             allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
-            batchBuffer.commandBufferAllocation->residencyTaskCount = this->taskCount;
+            batchBuffer.commandBufferAllocation->residencyTaskCount[this->deviceIndex] = this->taskCount;
         }
         UNRECOVERABLE_IF(allocationsForResidency == nullptr);
         processResidency(*allocationsForResidency, osContext);
@@ -598,7 +598,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!((gfxAllocation->getUnderlyingBufferSize() == 0) || !gfxAllocation->isAubWritable()));
         }
-        gfxAllocation->residencyTaskCount = this->taskCount + 1;
+        gfxAllocation->residencyTaskCount[this->deviceIndex] = this->taskCount + 1;
     }
 
     dumpAubNonWritable = false;
@@ -606,9 +606,9 @@ void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
 
 template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::makeNonResident(GraphicsAllocation &gfxAllocation) {
-    if (gfxAllocation.residencyTaskCount != ObjectNotResident) {
+    if (gfxAllocation.residencyTaskCount[this->deviceIndex] != ObjectNotResident) {
         this->pushAllocationForEviction(&gfxAllocation);
-        gfxAllocation.residencyTaskCount = ObjectNotResident;
+        gfxAllocation.residencyTaskCount[this->deviceIndex] = ObjectNotResident;
     }
 }
 

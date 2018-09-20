@@ -369,7 +369,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer 
         if (!writeMemory(*gfxAllocation)) {
             DEBUG_BREAK_IF(!(gfxAllocation->getUnderlyingBufferSize() == 0));
         }
-        gfxAllocation->residencyTaskCount = this->taskCount + 1;
+        gfxAllocation->residencyTaskCount[this->deviceIndex] = this->taskCount + 1;
     }
 }
 

@@ -1,23 +1,8 @@
 /*
- * Copyright (c) 2017 - 2018, Intel Corporation
+ * Copyright (C) 2017-2018 Intel Corporation
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * SPDX-License-Identifier: MIT
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
- * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
- * OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
- * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
- * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 #include "hw_cmds.h"
@@ -1091,7 +1076,7 @@ TEST_F(DrmCommandStreamBatchingTests, givenRecordedCommandBufferWhenItIsSubmitte
     EXPECT_TRUE(cmdBuffers.peekIsEmpty());
 
     auto commandBufferGraphicsAllocation = submittedCommandBuffer.getGraphicsAllocation();
-    EXPECT_FALSE(commandBufferGraphicsAllocation->isResident());
+    EXPECT_FALSE(commandBufferGraphicsAllocation->isResident(0u));
 
     //preemption allocation
     size_t csrSurfaceCount = (device->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
@@ -1664,7 +1649,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
     csr->makeSurfacePackNonResident(nullptr);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
-    EXPECT_FALSE(allocation1->isResident());
+    EXPECT_FALSE(allocation1->isResident(0u));
 
     mm->freeGraphicsMemory(allocation1);
 }
@@ -1715,24 +1700,24 @@ class DrmMockBuffer : public Buffer {
 TEST_F(DrmCommandStreamLeaksTest, BufferResidency) {
     std::unique_ptr<Buffer> buffer(DrmMockBuffer::create());
 
-    ASSERT_FALSE(buffer->getGraphicsAllocation()->isResident());
-    ASSERT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount);
+    ASSERT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    ASSERT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount[0u]);
     ASSERT_GT(buffer->getSize(), 0u);
 
     //make it resident 8 times
     for (int c = 0; c < 8; c++) {
         csr->makeResident(*buffer->getGraphicsAllocation());
         csr->processResidency(csr->getResidencyAllocations(), *osContext);
-        EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident());
-        EXPECT_EQ(buffer->getGraphicsAllocation()->residencyTaskCount, (int)csr->peekTaskCount() + 1);
+        EXPECT_TRUE(buffer->getGraphicsAllocation()->isResident(0u));
+        EXPECT_EQ(buffer->getGraphicsAllocation()->residencyTaskCount[0u], (int)csr->peekTaskCount() + 1);
     }
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident());
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
 
     csr->makeNonResident(*buffer->getGraphicsAllocation());
-    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident());
-    EXPECT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount);
+    EXPECT_FALSE(buffer->getGraphicsAllocation()->isResident(0u));
+    EXPECT_EQ(ObjectNotResident, buffer->getGraphicsAllocation()->residencyTaskCount[0u]);
 }
 
 typedef Test<DrmCommandStreamEnhancedFixture> DrmCommandStreamMemoryManagerTest;
