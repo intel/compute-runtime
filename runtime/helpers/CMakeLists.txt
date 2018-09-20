@@ -21,6 +21,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
   ${CMAKE_CURRENT_SOURCE_DIR}/convert_color.h
   ${CMAKE_CURRENT_SOURCE_DIR}/debug_helpers.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/device_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_info.cpp

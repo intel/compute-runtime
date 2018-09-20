@@ -9,6 +9,7 @@
 #include "runtime/device/device_vector.h"
 #include "runtime/device/device_info.h"
 #include "runtime/device/device_info_map.h"
+#include "runtime/helpers/device_helpers.h"
 #include "runtime/helpers/get_info.h"
 #include "runtime/platform/platform.h"
 #include "runtime/os_interface/os_time.h"
@@ -203,6 +204,8 @@ cl_int Device::getDeviceInfo(cl_device_info paramName,
         if (deviceInfo.nv12Extension)
             getCap<CL_DEVICE_PLANAR_YUV_MAX_HEIGHT_INTEL>(src, srcSize, retSize);
         break;
+    default:
+        getExtraDeviceInfo(paramName, param, src, srcSize, retSize);
     }
 
     retVal = ::getInfo(paramValue, paramValueSize, src, srcSize);
