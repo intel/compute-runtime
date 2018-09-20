@@ -53,6 +53,11 @@ banned_paths = [
     'scripts/tests/copyright/out'
 ]
 
+cpp_sharp_lines = [
+    '#pragma',
+    '#include'
+]
+
 def isBanned(path):
     path_ok = False
     for banned_path in banned_paths:
@@ -120,11 +125,18 @@ for path in sys.argv:
         line = f.readline()
 
     # check whether comment type is '#'
-    if first_line or line.startswith('#'):
-        header_start = '#'
-        header_end = '\n'
-        header = header_bash_style
-        comment_char = "#"
+    try:
+        if first_line or line.startswith('#'):
+            for a in cpp_sharp_lines:
+                print "a: %s ~ %s" % (a, line)
+                if line.startswith(a):
+                    raise "c++"
+            header_start = '#'
+            header_end = '\n'
+            header = header_bash_style
+            comment_char = "#"
+    except:
+        pass
 
     curr_comment = list()
 
