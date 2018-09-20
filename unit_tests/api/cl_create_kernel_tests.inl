@@ -17,7 +17,7 @@ typedef api_tests clCreateKernelTests;
 
 namespace ULT {
 
-TEST_F(clCreateKernelTests, returnsSuccess) {
+TEST_F(clCreateKernelTests, GivenCorrectKernelInProgramWhenCreatingNewKernelThenKernelIsCreatedAndSuccessIsReturned) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -72,7 +72,7 @@ TEST_F(clCreateKernelTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, givenInvalidKernelWhenCreatingNewKernelThenReturnClInvalidProgramExecutable) {
+TEST_F(clCreateKernelTests, GivenInvalidKernelWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = new KernelInfo();
     pKernelInfo->isValid = false;
@@ -90,7 +90,7 @@ TEST_F(clCreateKernelTests, givenInvalidKernelWhenCreatingNewKernelThenReturnClI
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, invalidParams) {
+TEST_F(clCreateKernelTests, GivenInvalidKernelNameWhenCreatingNewKernelThenInvalidKernelNameErrorIsReturned) {
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_int binaryStatus = CL_SUCCESS;
@@ -142,7 +142,7 @@ TEST_F(clCreateKernelTests, invalidParams) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreateKernelTests, nullProgram) {
+TEST_F(clCreateKernelTests, GivenNullProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
     cl_kernel kernel = nullptr;
     kernel = clCreateKernel(
         nullptr,
@@ -153,7 +153,7 @@ TEST_F(clCreateKernelTests, nullProgram) {
     ASSERT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, givenNullKernelNameWhenCreatingNewKernelThenReturnClInvalidValue) {
+TEST_F(clCreateKernelTests, GivenNullKernelNameWhenCreatingNewKernelThenInvalidValueErrorIsReturned) {
     cl_kernel kernel = nullptr;
     KernelInfo *pKernelInfo = new KernelInfo();
     pKernelInfo->isValid = true;
@@ -170,7 +170,7 @@ TEST_F(clCreateKernelTests, givenNullKernelNameWhenCreatingNewKernelThenReturnCl
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, invalidProgram) {
+TEST_F(clCreateKernelTests, GivenInvalidProgramWhenCreatingNewKernelThenInvalidProgramErrorIsReturned) {
     cl_kernel kernel = nullptr;
 
     kernel = clCreateKernel(
@@ -182,7 +182,7 @@ TEST_F(clCreateKernelTests, invalidProgram) {
     ASSERT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, givenProgramWithBuildErrorWhenCreatingNewKernelThenReturnClInvalidProgramExecutable) {
+TEST_F(clCreateKernelTests, GivenProgramWithBuildErrorWhenCreatingNewKernelThenInvalidProgramExecutableErrorIsReturned) {
     cl_kernel kernel = nullptr;
     std::unique_ptr<MockProgram> pMockProg = std::make_unique<MockProgram>(*pPlatform->peekExecutionEnvironment(), pContext, false);
     pMockProg->SetBuildStatus(CL_BUILD_ERROR);
@@ -196,7 +196,7 @@ TEST_F(clCreateKernelTests, givenProgramWithBuildErrorWhenCreatingNewKernelThenR
     EXPECT_EQ(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelTests, noRet) {
+TEST_F(clCreateKernelTests, GivenNullPtrForReturnWhenCreatingNewKernelThenKernelIsCreated) {
     cl_kernel kernel = nullptr;
     kernel = clCreateKernel(
         nullptr,
