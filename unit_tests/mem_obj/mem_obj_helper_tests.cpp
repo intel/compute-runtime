@@ -20,10 +20,8 @@ TEST(MemObjHelper, givenValidMemFlagsForBufferWhenFlagsAreCheckedThenTrueIsRetur
 
 TEST(MemObjHelper, givenInvalidMemFlagsForBufferWhenFlagsAreCheckedThenFalseIsReturned) {
     cl_mem_flags flags = (1 << 13) | (1 << 14) | (1 << 30) | (1 << 31);
-
-    if (MemObjHelper::checkExtraMemFlagsForBuffer(flags)) {
-        EXPECT_FALSE(MemObjHelper::checkMemFlagsForBuffer(flags));
-    }
+    EXPECT_FALSE(MemObjHelper::checkExtraMemFlagsForBuffer(flags));
+    EXPECT_FALSE(MemObjHelper::checkMemFlagsForBuffer(flags));
 }
 
 TEST(MemObjHelper, givenValidMemFlagsForSubBufferWhenFlagsAreCheckedThenTrueIsReturned) {

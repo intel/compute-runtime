@@ -10,7 +10,7 @@
 namespace OCLRT {
 
 bool MemObjHelper::checkExtraMemFlagsForBuffer(cl_mem_flags flags) {
-    return true;
+    return false;
 }
 
 AllocationFlags MemObjHelper::getAllocationFlags(cl_mem_flags flags) {
