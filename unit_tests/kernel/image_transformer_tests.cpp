@@ -29,7 +29,9 @@ class ImageTransformerTest : public ::testing::Test {
         clImage1 = static_cast<cl_mem>(image2.get());
         clImage2 = static_cast<cl_mem>(image2.get());
         imageArg1.value = &clImage1;
+        imageArg1.object = clImage1;
         imageArg2.value = &clImage2;
+        imageArg2.object = clImage2;
         kernelArguments.push_back(imageArg1);
         kernelArguments.push_back(imageArg2);
     }
