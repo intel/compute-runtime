@@ -488,7 +488,8 @@ cl_int Program::parsePatchList(KernelInfo &kernelInfo) {
                     "\n  .UnusedPerThreadConstantPresent", kernelInfo.patchInfo.threadPayload->UnusedPerThreadConstantPresent,
                     "\n  .GetLocalIDPresent", kernelInfo.patchInfo.threadPayload->GetLocalIDPresent,
                     "\n  .GetGroupIDPresent", kernelInfo.patchInfo.threadPayload->GetGroupIDPresent,
-                    "\n  .GetGlobalOffsetPresent", kernelInfo.patchInfo.threadPayload->GetGlobalOffsetPresent);
+                    "\n  .GetGlobalOffsetPresent", kernelInfo.patchInfo.threadPayload->GetGlobalOffsetPresent,
+                    "\n  .OffsetToSkipPerThreadDataLoad", kernelInfo.patchInfo.threadPayload->OffsetToSkipPerThreadDataLoad);
             break;
 
         case PATCH_TOKEN_EXECUTION_ENVIRONMENT:
