@@ -73,8 +73,6 @@ struct AllocationFlags {
     }
 };
 
-using DeviceIndex = uint32_t;
-
 struct AllocationData {
     union {
         struct {
@@ -85,7 +83,8 @@ struct AllocationData {
             uint32_t useSystemMemory : 1;
             uint32_t forcePin : 1;
             uint32_t uncacheable : 1;
-            uint32_t reserved : 25;
+            uint32_t flushL3 : 1;
+            uint32_t reserved : 24;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -94,6 +93,7 @@ struct AllocationData {
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
     const void *hostPtr = nullptr;
     size_t size = 0;
+    DeviceIndex deviceIndex = 0;
 };
 
 struct AlignedMallocRestrictions {
@@ -169,6 +169,8 @@ class MemoryManager {
         if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
             auto allocation = allocateGraphicsMemory(allocationData);
             if (allocation) {
+                allocation->deviceIndex = allocationData.deviceIndex;
+                allocation->flushL3Required = allocationData.flags.flushL3;
                 status = AllocationStatus::Success;
             }
             return allocation;
@@ -266,7 +268,8 @@ class MemoryManager {
     size_t getOsContextCount() { return registeredOsContexts.size(); }
 
   protected:
-    static bool getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+    static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DeviceIndex deviceIndex,
+                                  const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);
     std::recursive_mutex mtx;

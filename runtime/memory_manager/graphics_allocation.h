@@ -19,7 +19,9 @@
 
 namespace OCLRT {
 
-typedef unsigned int osHandle;
+using osHandle = unsigned int;
+using DeviceIndex = uint32_t;
+
 namespace Sharing {
 constexpr auto nonSharedResource = 0u;
 }
@@ -51,6 +53,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     uint64_t allocationOffset = 0u;
     int residencyTaskCount[maxOsContextCount] = {ObjectNotResident, ObjectNotResident, ObjectNotResident, ObjectNotResident};
     bool cpuPtrAllocated = false; // flag indicating if cpuPtr is driver-allocated
+    DeviceIndex deviceIndex = 0;
+    bool flushL3Required = false;
 
     enum class AllocationType {
         UNKNOWN = 0,

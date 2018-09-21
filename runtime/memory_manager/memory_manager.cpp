@@ -362,8 +362,9 @@ void MemoryManager::registerOsContext(OsContext *contextToRegister) {
     registeredOsContexts[contextToRegister->getContextId()] = contextToRegister;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, bool allocateMemory, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
-    UNRECOVERABLE_IF(hostPtr == nullptr && !allocateMemory);
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DeviceIndex deviceIndex,
+                                      const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+    UNRECOVERABLE_IF(hostPtr == nullptr && !flags.flags.allocateMemory);
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -411,11 +412,12 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool alloc
     }
 
     allocationData.flags.mustBeZeroCopy = mustBeZeroCopy;
-    allocationData.flags.allocateMemory = allocateMemory;
+    allocationData.flags.allocateMemory = flags.flags.allocateMemory;
     allocationData.flags.allow32Bit = allow32Bit;
     allocationData.flags.allow64kbPages = allow64KbPages;
     allocationData.flags.forcePin = forcePin;
     allocationData.flags.uncacheable = uncacheable;
+    allocationData.flags.flushL3 = flags.flags.flushL3RequiredForRead | flags.flags.flushL3RequiredForWrite;
 
     if (allocationData.flags.mustBeZeroCopy) {
         allocationData.flags.useSystemMemory = true;
@@ -424,6 +426,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, bool alloc
     allocationData.hostPtr = hostPtr;
     allocationData.size = size;
     allocationData.type = type;
+    allocationData.deviceIndex = deviceIndex;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
@@ -435,7 +438,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(Allocat
     AllocationData allocationData;
     AllocationStatus status = AllocationStatus::Error;
 
-    getAllocationData(allocationData, flags.flags.allocateMemory, hostPtr, size, type);
+    getAllocationData(allocationData, flags, deviceIndex, hostPtr, size, type);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 
