@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/page_table.inl"
 
@@ -16,19 +17,20 @@ uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memor
     size_t indexStart = (vm >> shift) & mask;
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uintptr_t res = -1;
-    entryBits &= 0xfff;
-    entryBits |= 0x1;
+    bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
+    uint64_t newEntryBits = entryBits & 0xfff;
+    newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
             uint64_t tmp = allocator->reservePage(memoryBank);
-            entries[index] = reinterpret_cast<void *>(tmp | entryBits);
-        } else {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | entryBits);
+            entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
+        } else if (updateEntryBits) {
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | newEntryBits);
         }
         res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u, res);
     }
-    return (res & ~entryBits) + (vm & (pageSize - 1));
+    return (res & ~newEntryBits) + (vm & (pageSize - 1));
 }
 
 void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) {
@@ -39,15 +41,16 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits,
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uint64_t res = -1;
     uintptr_t rem = vm & (pageSize - 1);
-    entryBits &= 0xfff;
-    entryBits |= 0x1;
+    bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
+    uint64_t newEntryBits = entryBits & 0xfff;
+    newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
             uint64_t tmp = allocator->reservePage(memoryBank);
-            entries[index] = reinterpret_cast<void *>(tmp | entryBits);
-        } else {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | entryBits);
+            entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
+        } else if (updateEntryBits) {
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | newEntryBits);
         }
         res = reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u;
 

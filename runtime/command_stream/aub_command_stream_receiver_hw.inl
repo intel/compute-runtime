@@ -704,6 +704,11 @@ int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpace(int hint) {
 }
 
 template <typename GfxFamily>
+int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
+    return AubMemDump::AddressSpaceValues::TraceNonlocal;
+}
+
+template <typename GfxFamily>
 uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getGTTBits() const {
     return 0;
 }

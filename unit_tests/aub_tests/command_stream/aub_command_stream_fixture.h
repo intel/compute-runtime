@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "runtime/command_stream/tbx_command_stream_receiver_hw.h"
@@ -64,10 +65,10 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
             aubCsr->stream->expectMemory(physAddress,
                                          reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
                                          size,
-                                         AubMemDump::CmdServicesMemTraceMemoryCompare::AddressSpaceValues::TraceNonlocal);
+                                         aubCsr->getAddressSpaceFromPTEBits(entryBits));
         };
 
-        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, 0, walker, PageTableHelper::memoryBankNotSpecified);
+        aubCsr->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, PageTableHelper::memoryBankNotSpecified);
     }
 
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;

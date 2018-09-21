@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/selectors.h"
 #include "runtime/memory_manager/page_table.h"
@@ -270,7 +271,7 @@ TEST_F(PageTableTests48, givenEntryBitsWhenPageWalkIsCalledThenEntryBitsArePasse
     EXPECT_EQ(ppgttBits, entryBitsPassed);
 }
 
-TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferenEntryBitsThenEntryIsUpdated) {
+TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferentEntryBitsThenEntryIsUpdated) {
     std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
         pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
 
@@ -295,7 +296,54 @@ TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferenEntryBitsThen
     EXPECT_EQ(ppgttBits, entryBitsPassed);
 }
 
+TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasNonValidEntryBitsThenEntryIsNotUpdated) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    size_t walked = 0u;
+    uint64_t ppgttBits = 0xabc;
+    uint64_t entryBitsPassed = 0u;
+    uint64_t entryBitsPassedFirstTime = 0u;
+    uint64_t entryBitsPassedSecondTime = 0u;
+
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        walked += size;
+        entryBitsPassed = entryBits;
+    };
+    pageTable->pageWalk(gpuVa, size, 0, ppgttBits, walker, 0);
+
+    ppgttBits |= 0x1;
+    EXPECT_EQ(ppgttBits, entryBitsPassed);
+    entryBitsPassedFirstTime = entryBitsPassed;
+
+    ppgttBits = PageTableEntry::nonValidBits;
+    pageTable->pageWalk(gpuVa, size, 0, ppgttBits, walker, 0);
+
+    entryBitsPassedSecondTime = entryBitsPassed;
+    EXPECT_EQ(entryBitsPassedFirstTime, entryBitsPassedSecondTime);
+}
+
 TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasDifferentEntryBitsThenEntryIsUpdated) {
+    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
+        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    uintptr_t gpuVa = 0x1000;
+    size_t size = pageSize;
+    uint64_t ppgttBits = 0xabc;
+
+    auto address = allocator.nextPageAddress.load();
+
+    pageTable->map(gpuVa, size, ppgttBits, 0);
+    ASSERT_NE(nullptr, pageTable->entries[0]);
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+
+    ppgttBits = 0x345;
+    pageTable->map(gpuVa, size, ppgttBits, 0);
+    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+}
+
+TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasNonValidEntryBitsThenEntryIsNotUpdated) {
     std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
         pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
     uintptr_t gpuVa = 0x1000;
@@ -308,8 +356,8 @@ TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasDifferentEntryBitsThenEntry
 
     PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 
-    ppgttBits = 0x345;
-    pageTable->map(gpuVa, size, ppgttBits, 0);
+    uint64_t nonValidPpgttBits = PageTableEntry::nonValidBits;
+    pageTable->map(gpuVa, size, nonValidPpgttBits, 0);
 
     PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 }

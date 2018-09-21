@@ -6,6 +6,7 @@
  */
 
 #include "runtime/aub_mem_dump/aub_mem_dump.h"
+#include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/command_stream/aub_command_stream_receiver_hw.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/dispatch_info.h"
@@ -1803,6 +1804,14 @@ HWTEST_F(AubCommandStreamReceiverTests, givenPhysicalAddressWhenSetGttEntryIsCal
     EXPECT_EQ(entry.pageConfig.PhysicalAddress, address / 4096);
     EXPECT_TRUE(entry.pageConfig.Present);
     EXPECT_FALSE(entry.pageConfig.LocalMemory);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenEntryBitsPresentAndWritableWhenGetAddressSpaceFromPTEBitsIsCalledThenTraceNonLocalIsReturned) {
+    const HardwareInfo &hwInfoIn = *platformDevices[0];
+    std::unique_ptr<MockAubCsr<FamilyType>> aubCsr(new MockAubCsr<FamilyType>(hwInfoIn, "", true, *pDevice->executionEnvironment));
+
+    auto space = aubCsr->getAddressSpaceFromPTEBits(PageTableEntry::presentBit | PageTableEntry::writableBit);
+    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, space);
 }
 
 template <typename GfxFamily>

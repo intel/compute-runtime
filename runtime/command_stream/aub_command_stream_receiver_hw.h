@@ -103,6 +103,8 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
         return CommandStreamReceiverType::CSR_AUB;
     }
 
+    int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
+
   protected:
     int getAddressSpace(int hint);
 
