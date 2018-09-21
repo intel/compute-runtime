@@ -19,14 +19,14 @@ GEN9TEST_F(Gen9CoherencyRequirements, noCoherencyProgramming) {
     LinearStream stream;
     DispatchFlags flags = {};
 
-    auto retSize = csr.getCmdSizeForCoherency();
+    auto retSize = csr.getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
-    csr.programCoherency(stream, flags);
+    csr.programComputeMode(stream, flags);
     EXPECT_EQ(0u, stream.getUsed());
 
     flags.requiresCoherency = true;
-    retSize = csr.getCmdSizeForCoherency();
+    retSize = csr.getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
-    csr.programCoherency(stream, flags);
+    csr.programComputeMode(stream, flags);
     EXPECT_EQ(0u, stream.getUsed());
 }

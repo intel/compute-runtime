@@ -239,5 +239,6 @@ struct KernelInfo {
     bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;
+    bool computeMode = false;
 };
 } // namespace OCLRT

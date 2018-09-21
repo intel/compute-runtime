@@ -15,12 +15,12 @@ typedef BDWFamily Family;
 static auto gfxCore = IGFX_GEN8_CORE;
 
 template <>
-size_t CommandStreamReceiverHw<Family>::getCmdSizeForCoherency() {
+size_t CommandStreamReceiverHw<Family>::getCmdSizeForComputeMode() {
     return 0;
 }
 
 template <>
-void CommandStreamReceiverHw<Family>::programCoherency(LinearStream &stream, DispatchFlags &dispatchFlags) {
+void CommandStreamReceiverHw<Family>::programComputeMode(LinearStream &stream, DispatchFlags &dispatchFlags) {
 }
 
 template <>

@@ -228,6 +228,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     csrSizeRequestFlags.coherencyRequestChanged = this->lastSentCoherencyRequest != static_cast<int8_t>(dispatchFlags.requiresCoherency);
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
     csrSizeRequestFlags.mediaSamplerConfigChanged = this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.mediaSamplerRequired);
+    csrSizeRequestFlags.numGrfRequiredChanged = this->lastSentNumGrfRequired != dispatchFlags.numGrfRequired;
 
     size_t requiredScratchSizeInBytes = requiredScratchSize * device.getDeviceInfo().computeUnitsUsedForScratch;
 
@@ -255,7 +256,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, device, dispatchFlags);
-    programCoherency(commandStreamCSR, dispatchFlags);
+    programComputeMode(commandStreamCSR, dispatchFlags);
     programL3(commandStreamCSR, dispatchFlags, newL3Config);
     programPipelineSelect(commandStreamCSR, dispatchFlags);
     programPreamble(commandStreamCSR, device, dispatchFlags, newL3Config);
@@ -628,7 +629,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += sizeof(typename GfxFamily::MI_BATCH_BUFFER_START);
 
     size += getCmdSizeForL3Config();
-    size += getCmdSizeForCoherency();
+    size += getCmdSizeForComputeMode();
     size += getCmdSizeForMediaSampler(dispatchFlags.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);

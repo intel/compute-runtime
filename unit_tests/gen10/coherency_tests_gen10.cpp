@@ -42,19 +42,19 @@ struct Gen10CoherencyRequirements : public ::testing::Test {
 GEN10TEST_F(Gen10CoherencyRequirements, coherencyCmdSize) {
     auto lriSize = sizeof(MI_LOAD_REGISTER_IMM);
     overrideCoherencyRequest(false, false);
-    auto retSize = csr->getCmdSizeForCoherency();
+    auto retSize = csr->getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
 
     overrideCoherencyRequest(false, true);
-    retSize = csr->getCmdSizeForCoherency();
+    retSize = csr->getCmdSizeForComputeMode();
     EXPECT_EQ(0u, retSize);
 
     overrideCoherencyRequest(true, true);
-    retSize = csr->getCmdSizeForCoherency();
+    retSize = csr->getCmdSizeForComputeMode();
     EXPECT_EQ(lriSize, retSize);
 
     overrideCoherencyRequest(true, false);
-    retSize = csr->getCmdSizeForCoherency();
+    retSize = csr->getCmdSizeForComputeMode();
     EXPECT_EQ(lriSize, retSize);
 }
 
@@ -68,14 +68,14 @@ GEN10TEST_F(Gen10CoherencyRequirements, coherencyCmdValues) {
     expectedCmd.setDataDword(DwordBuilder::build(4, true));
 
     overrideCoherencyRequest(true, false);
-    csr->programCoherency(stream, flags);
+    csr->programComputeMode(stream, flags);
     EXPECT_EQ(lriSize, stream.getUsed());
 
     auto cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(stream.getCpuBase());
     EXPECT_TRUE(memcmp(&expectedCmd, cmd, lriSize) == 0);
 
     overrideCoherencyRequest(true, true);
-    csr->programCoherency(stream, flags);
+    csr->programComputeMode(stream, flags);
     EXPECT_EQ(lriSize * 2, stream.getUsed());
 
     cmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(stream.getCpuBase(), lriSize));

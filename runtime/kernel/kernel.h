@@ -458,6 +458,8 @@ class Kernel : public BaseObject<_cl_kernel> {
 
     void resolveArgs();
 
+    void reconfigureKernel();
+
     Program *program;
     Context *context;
     const Device &device;

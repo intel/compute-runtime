@@ -9,6 +9,7 @@
 #include "runtime/memory_manager/memory_constants.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/properties_helper.h"
+#include "runtime/kernel/grf_config.h"
 #include <limits>
 
 namespace OCLRT {
@@ -43,6 +44,7 @@ struct DispatchFlags {
     FlushStampTrackingObj *flushStampReference = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Disabled;
     EventsRequest *outOfDeviceDependencies = nullptr;
+    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
 };
 
 struct CsrSizeRequestFlags {
@@ -51,5 +53,6 @@ struct CsrSizeRequestFlags {
     bool preemptionRequestChanged = false;
     bool mediaSamplerConfigChanged = false;
     bool hasSharedHandles = false;
+    bool numGrfRequiredChanged = false;
 };
 } // namespace OCLRT

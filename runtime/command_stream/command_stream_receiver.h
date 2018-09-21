@@ -15,6 +15,7 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/helpers/options.h"
+#include "runtime/kernel/grf_config.h"
 #include "runtime/indirect_heap/indirect_heap.h"
 #include <cstddef>
 #include <cstdint>
@@ -179,6 +180,7 @@ class CommandStreamReceiver {
     int8_t lastMediaSamplerConfig = -1;
     PreemptionMode lastPreemptionMode = PreemptionMode::Initial;
     uint32_t latestSentStatelessMocsConfig = 0;
+    uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;
 
     LinearStream commandStream;
 

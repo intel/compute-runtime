@@ -8,6 +8,7 @@
 #pragma once
 
 #include "runtime/helpers/string.h"
+#include "runtime/kernel/grf_config.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/scheduler/scheduler_kernel.h"
 #include "runtime/device/device.h"
@@ -118,6 +119,7 @@ class MockKernel : public Kernel {
         SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
         memset(executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
         executionEnvironment->HasDeviceEnqueue = 0;
+        executionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         info->crossThreadData = new char[crossThreadSize];
@@ -243,6 +245,8 @@ class MockKernelWithInternals {
         memset(&executionEnvironment, 0, sizeof(SPatchExecutionEnvironment));
         memset(&executionEnvironmentBlock, 0, sizeof(SPatchExecutionEnvironment));
         memset(&dataParameterStream, 0, sizeof(SPatchDataParameterStream));
+        executionEnvironment.NumGRFRequired = GrfConfig::DefaultGrfNumber;
+        executionEnvironmentBlock.NumGRFRequired = GrfConfig::DefaultGrfNumber;
         kernelHeader.SurfaceStateHeapSize = sizeof(sshLocal);
         threadPayload.LocalIDXPresent = 1;
         threadPayload.LocalIDYPresent = 1;
@@ -324,6 +328,7 @@ class MockParentKernel : public Kernel {
         SPatchExecutionEnvironment *executionEnvironment = new SPatchExecutionEnvironment;
         *executionEnvironment = {};
         executionEnvironment->HasDeviceEnqueue = 1;
+        executionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
         info->patchInfo.executionEnvironment = executionEnvironment;
 
         SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateDeviceQueue = new SPatchAllocateStatelessDefaultDeviceQueueSurface;

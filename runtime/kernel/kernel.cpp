@@ -354,6 +354,8 @@ cl_int Kernel::initialize() {
             program->allocateBlockPrivateSurfaces();
         }
 
+        reconfigureKernel();
+
         retVal = CL_SUCCESS;
 
     } while (false);

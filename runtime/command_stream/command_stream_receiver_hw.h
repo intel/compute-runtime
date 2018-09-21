@@ -50,9 +50,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForPreemption(const DispatchFlags &dispatchFlags) const;
     size_t getCmdSizeForL3Config() const;
     size_t getCmdSizeForPipelineSelect() const;
-    size_t getCmdSizeForCoherency();
+    size_t getCmdSizeForComputeMode();
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
-    void programCoherency(LinearStream &csr, DispatchFlags &dispatchFlags);
+    void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
 
     void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, OsContext &osContext) override;
     const HardwareInfo &peekHwInfo() const { return hwInfo; }

@@ -534,6 +534,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     auto mediaSamplerRequired = false;
+    uint32_t numGrfRequired = GrfConfig::DefaultGrfNumber;
     Kernel *kernel = nullptr;
     for (auto &dispatchInfo : multiDispatchInfo) {
         if (kernel != dispatchInfo.getKernel()) {
@@ -544,6 +545,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->makeResident(commandStreamReceiver);
         requiresCoherency |= kernel->requiresCoherency();
         mediaSamplerRequired |= kernel->isVmeKernel();
+        auto numGrfRequiredByKernel = kernel->getKernelInfo().patchInfo.executionEnvironment->NumGRFRequired;
+        numGrfRequired = std::max(numGrfRequired, numGrfRequiredByKernel);
     }
 
     if (mediaSamplerRequired) {
@@ -593,7 +596,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.outOfDeviceDependencies = &eventsRequest;
     }
-
+    dispatchFlags.numGrfRequired = numGrfRequired;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
 
     if (gtpinIsGTPinInitialized()) {
