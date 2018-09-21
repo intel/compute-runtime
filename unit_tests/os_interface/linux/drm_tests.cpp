@@ -181,7 +181,7 @@ TEST(DrmTest, GivenDrmWhenAskedForContextWithLowPriorityThatFailsThenFalseIsRetu
 #else
 TEST(DrmTest, GivenDrmWhenAskedForContextWithLowPriorityThenFalseIsReturned) {
     DrmMock drmMock;
-    EXPECT_TRUE(drmMock.contextCreate());
+    EXPECT_FALSE(drmMock.contextCreate());
 }
 
 TEST(DrmTest, GivenDrmWhenContextDestroyIsCalledThenThereAreNoLeaksOrCrashes) {
@@ -191,7 +191,7 @@ TEST(DrmTest, GivenDrmWhenContextDestroyIsCalledThenThereAreNoLeaksOrCrashes) {
 
 TEST(DrmTest, GivenDrmWhenSetContextPriorityIsCalledThenFalseIsReturned) {
     DrmMock drmMock;
-    EXPECT_TRUE(drmMock.setLowPriority());
+    EXPECT_FALSE(drmMock.setLowPriority());
 }
 #endif
 

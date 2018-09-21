@@ -84,8 +84,8 @@ PreemptionMode PreemptionHelper::taskPreemptionMode(Device &device, const MultiD
         if (devMode > taskMode) {
             devMode = taskMode;
         }
-        DebugManager.log(DebugManager.flags.EventsDebugEnable.get(), "devMode = ", static_cast<int>(device.getPreemptionMode()),
-			"taskMode = ", static_cast<int>(taskMode));
+        DebugManager.log(DebugManager.flags.PrintDebugMessages.get(), "devMode = ", static_cast<int>(device.getPreemptionMode()),
+                         "taskMode = ", static_cast<int>(taskMode));
     }
     return devMode;
 }
