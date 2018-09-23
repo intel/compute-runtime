@@ -148,9 +148,9 @@ Buffer *Buffer::create(Context *context,
 
     if (!memory) {
         AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags);
-        DeviceIndex deviceIndex = MemObjHelper::getDeviceIndex(flags);
+        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
         allocFlags.flags.allocateMemory = allocateMemory;
-        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, deviceIndex, hostPtr, static_cast<size_t>(size), allocationType);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, hostPtr, static_cast<size_t>(size), allocationType);
     }
 
     if (allocateMemory) {
@@ -166,9 +166,9 @@ Buffer *Buffer::create(Context *context,
             zeroCopyAllowed = false;
             copyMemoryFromHostPtr = true;
             AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags);
-            DeviceIndex deviceIndex = MemObjHelper::getDeviceIndex(flags);
+            DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
             allocFlags.flags.allocateMemory = true;
-            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, deviceIndex, nullptr, static_cast<size_t>(size), allocationType);
+            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, nullptr, static_cast<size_t>(size), allocationType);
         }
     }
 

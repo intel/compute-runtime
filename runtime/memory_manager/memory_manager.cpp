@@ -362,7 +362,7 @@ void MemoryManager::registerOsContext(OsContext *contextToRegister) {
     registeredOsContexts[contextToRegister->getContextId()] = contextToRegister;
 }
 
-bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DeviceIndex deviceIndex,
+bool MemoryManager::getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
                                       const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
     UNRECOVERABLE_IF(hostPtr == nullptr && !flags.flags.allocateMemory);
 
@@ -426,7 +426,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     allocationData.size = size;
     allocationData.type = type;
-    allocationData.deviceIndex = deviceIndex;
+    allocationData.devicesBitfield = devicesBitfield;
 
     if (allocationData.flags.allocateMemory) {
         allocationData.hostPtr = nullptr;
@@ -434,11 +434,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     return true;
 }
 
-GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
+GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) {
     AllocationData allocationData;
     AllocationStatus status = AllocationStatus::Error;
 
-    getAllocationData(allocationData, flags, deviceIndex, hostPtr, size, type);
+    getAllocationData(allocationData, flags, devicesBitfield, hostPtr, size, type);
     UNRECOVERABLE_IF(allocationData.type == GraphicsAllocation::AllocationType::IMAGE || allocationData.type == GraphicsAllocation::AllocationType::SHARED_RESOURCE);
     GraphicsAllocation *allocation = nullptr;
 

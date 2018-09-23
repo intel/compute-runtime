@@ -93,7 +93,7 @@ TEST(MemoryManagerGetAlloctionDataTest, givenSpecificDeviceWhenAllocationDataIsQ
     AllocationFlags flags(true);
     MockMemoryManager::getAllocationData(allocData, flags, 3u, nullptr, 10, GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
 
-    EXPECT_EQ(3u, allocData.deviceIndex);
+    EXPECT_EQ(3u, allocData.devicesBitfield);
 }
 
 typedef MemoryManagerGetAlloctionDataTest MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest;

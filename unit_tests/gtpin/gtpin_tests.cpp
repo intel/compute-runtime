@@ -120,12 +120,12 @@ class MockMemoryManagerWithFailures : public OsAgnosticMemoryManager {
   public:
     using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
 
-    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
+    GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) override {
         if (failAllAllocationsInPreferredPool) {
             failAllAllocationsInPreferredPool = false;
             return nullptr;
         }
-        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(flags, deviceIndex, hostPtr, size, type);
+        return OsAgnosticMemoryManager::allocateGraphicsMemoryInPreferredPool(flags, devicesBitfield, hostPtr, size, type);
     }
     bool failAllAllocationsInPreferredPool = false;
 };

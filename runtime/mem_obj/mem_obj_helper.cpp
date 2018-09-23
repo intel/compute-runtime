@@ -17,8 +17,8 @@ AllocationFlags MemObjHelper::getAllocationFlags(cl_mem_flags flags) {
     return AllocationFlags(); // Initialized by default constructor
 }
 
-DeviceIndex MemObjHelper::getDeviceIndex(cl_mem_flags flags) {
-    return DeviceIndex(0);
+DevicesBitfield MemObjHelper::getDevicesBitfield(cl_mem_flags flags) {
+    return DevicesBitfield(0);
 }
 
 } // namespace OCLRT

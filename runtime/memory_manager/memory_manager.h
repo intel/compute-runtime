@@ -93,7 +93,7 @@ struct AllocationData {
     GraphicsAllocation::AllocationType type = GraphicsAllocation::AllocationType::UNKNOWN;
     const void *hostPtr = nullptr;
     size_t size = 0;
-    DeviceIndex deviceIndex = 0;
+    DevicesBitfield devicesBitfield = 0;
 };
 
 struct AlignedMallocRestrictions {
@@ -156,7 +156,7 @@ class MemoryManager {
 
     virtual GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) = 0;
 
-    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DeviceIndex deviceIndex, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
+    MOCKABLE_VIRTUAL GraphicsAllocation *allocateGraphicsMemoryInPreferredPool(AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemoryForSVM(size_t size, bool coherent);
 
@@ -169,7 +169,7 @@ class MemoryManager {
         if (!allocationData.flags.useSystemMemory && !(allocationData.flags.allow32Bit && this->force32bitAllocations)) {
             auto allocation = allocateGraphicsMemory(allocationData);
             if (allocation) {
-                allocation->deviceIndex = allocationData.deviceIndex;
+                allocation->devicesBitfield = allocationData.devicesBitfield;
                 allocation->flushL3Required = allocationData.flags.flushL3;
                 status = AllocationStatus::Success;
             }
@@ -268,7 +268,7 @@ class MemoryManager {
     size_t getOsContextCount() { return registeredOsContexts.size(); }
 
   protected:
-    static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DeviceIndex deviceIndex,
+    static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
                                   const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type);
 
     GraphicsAllocation *allocateGraphicsMemory(const AllocationData &allocationData);

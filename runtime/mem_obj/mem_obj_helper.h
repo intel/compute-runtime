@@ -30,7 +30,7 @@ class MemObjHelper {
 
     static AllocationFlags getAllocationFlags(cl_mem_flags flags);
 
-    static DeviceIndex getDeviceIndex(cl_mem_flags flags);
+    static DevicesBitfield getDevicesBitfield(cl_mem_flags flags);
 
     static bool checkMemFlagsForSubBuffer(cl_mem_flags flags) {
         const cl_mem_flags allValidFlags =
