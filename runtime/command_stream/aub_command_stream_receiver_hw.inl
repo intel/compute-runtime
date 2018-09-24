@@ -606,6 +606,39 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(AllocationView &allocati
 }
 
 template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMMIO(uint32_t mmioRegister, uint32_t expectedValue) {
+    using AubMemDump::CmdServicesMemTraceRegisterCompare;
+    CmdServicesMemTraceRegisterCompare header;
+    memset(&header, 0, sizeof(header));
+    header.setHeader();
+
+    header.data[0] = expectedValue;
+    header.registerOffset = mmioRegister;
+    header.noReadExpect = CmdServicesMemTraceRegisterCompare::NoReadExpectValues::ReadExpect;
+    header.registerSize = CmdServicesMemTraceRegisterCompare::RegisterSizeValues::Dword;
+    header.registerSpace = CmdServicesMemTraceRegisterCompare::RegisterSpaceValues::Mmio;
+    header.readMaskLow = 0xffffffff;
+    header.readMaskHigh = 0xffffffff;
+    header.dwordCount = (sizeof(header) / sizeof(uint32_t)) - 1;
+
+    this->stream->fileHandle.write(reinterpret_cast<char *>(&header), sizeof(header));
+}
+
+template <typename GfxFamily>
+void AUBCommandStreamReceiverHw<GfxFamily>::expectMemory(void *gfxAddress, const void *srcAddress, size_t length) {
+    PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+        UNRECOVERABLE_IF(offset > length);
+
+        this->stream->expectMemory(physAddress,
+                                   reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(srcAddress) + offset),
+                                   size,
+                                   this->getAddressSpaceFromPTEBits(entryBits));
+    };
+
+    this->ppgtt->pageWalk(reinterpret_cast<uintptr_t>(gfxAddress), length, 0, PageTableEntry::nonValidBits, walker, MemoryBanks::BankNotSpecified);
+}
+
+template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {

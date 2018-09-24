@@ -24,6 +24,7 @@
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
 
+#include <fstream>
 #include <memory>
 
 #if defined(__clang__)
@@ -109,9 +110,19 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
         lockStreamCalled = true;
         return AUBCommandStreamReceiver::AubFileStream::lockStream();
     }
+    void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace) override {
+        physAddressCapturedFromExpectMemory = physAddress;
+        memoryCapturedFromExpectMemory = reinterpret_cast<uintptr_t>(memory);
+        sizeCapturedFromExpectMemory = size;
+        addressSpaceCapturedFromExpectMemory = addressSpace;
+    }
     uint32_t initCalledCnt = 0;
     bool flushCalled = false;
     bool lockStreamCalled = false;
+    uint64_t physAddressCapturedFromExpectMemory = 0;
+    uintptr_t memoryCapturedFromExpectMemory = 0;
+    size_t sizeCapturedFromExpectMemory = 0;
+    uint32_t addressSpaceCapturedFromExpectMemory = 0;
 };
 
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
@@ -343,6 +354,54 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIs
 
     aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
     EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenExpectMemoryIsCalledThenPageWalkIsCallingStreamsExpectMemory) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(std::make_unique<MockAubFileStream>());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+
+    uintptr_t gpuAddress = 0x30000;
+    void *sourceAddress = reinterpret_cast<void *>(0x50000);
+    auto physicalAddress = aubCsr->ppgtt->map(gpuAddress, MemoryConstants::pageSize, PageTableEntry::presentBit, MemoryBanks::MainBank);
+
+    aubCsr->expectMemory(reinterpret_cast<void *>(gpuAddress), sourceAddress, MemoryConstants::pageSize);
+
+    EXPECT_EQ(AubMemDump::AddressSpaceValues::TraceNonlocal, mockAubFileStreamPtr->addressSpaceCapturedFromExpectMemory);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(sourceAddress), mockAubFileStreamPtr->memoryCapturedFromExpectMemory);
+    EXPECT_EQ(physicalAddress, mockAubFileStreamPtr->physAddressCapturedFromExpectMemory);
+    EXPECT_EQ(MemoryConstants::pageSize, mockAubFileStreamPtr->sizeCapturedFromExpectMemory);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenExpectMMIOIsCalledThenHeaderIsWrittenToFile) {
+    std::string fileName = "file_name.aub";
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, fileName.c_str(), true, *pDevice->executionEnvironment);
+
+    std::remove(fileName.c_str());
+
+    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(std::make_unique<MockAubFileStream>());
+    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
+    ASSERT_NE(nullptr, mockAubFileStreamPtr);
+    aubCsr->stream = mockAubFileStreamPtr;
+    aubCsr->initFile(fileName);
+
+    aubCsr->expectMMIO(5, 10);
+
+    aubCsr->stream->fileHandle.flush();
+
+    std::ifstream aubFile(fileName);
+    EXPECT_TRUE(aubFile.is_open());
+
+    if (aubFile.is_open()) {
+        AubMemDump::CmdServicesMemTraceRegisterCompare header;
+        aubFile.read(reinterpret_cast<char *>(&header), sizeof(AubMemDump::CmdServicesMemTraceRegisterCompare));
+        EXPECT_EQ(5u, header.registerOffset);
+        EXPECT_EQ(10u, header.data[0]);
+        aubFile.close();
+    }
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentCalledMultipleTimesAffectsResidencyOnce) {
