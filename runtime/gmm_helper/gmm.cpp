@@ -10,6 +10,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/helpers/hw_info.h"
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/surface_formats.h"
@@ -110,6 +111,11 @@ void Gmm::queryImageParams(ImageInfo &imgInfo) {
     }
 
     applyAuxFlagsForImage(imgInfo);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform->eRenderCoreFamily);
+    if (!hwHelper.supportsYTiling() && this->resourceParams.Flags.Info.TiledY == 1) {
+        this->resourceParams.Flags.Info.Linear = 0;
+        this->resourceParams.Flags.Info.TiledY = 0;
+    }
 
     this->gmmResourceInfo.reset(GmmResourceInfo::create(&this->resourceParams));
 

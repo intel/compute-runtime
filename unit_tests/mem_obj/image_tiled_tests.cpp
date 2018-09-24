@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/helpers/hw_helper.h"
 #include "unit_tests/command_queue/command_queue_fixture.h"
 #include "unit_tests/fixtures/image_fixture.h"
 #include "unit_tests/fixtures/device_fixture.h"
@@ -110,7 +111,8 @@ TEST_P(CreateTiledImageTest, isTiledImageIsSetForSharedImages) {
 
     ASSERT_NE(nullptr, image);
 
-    EXPECT_TRUE(image->isTiledImage);
+    auto &hwHelper = HwHelper::get(GmmHelper::getInstance()->getHardwareInfo()->pPlatform->eRenderCoreFamily);
+    EXPECT_EQ(hwHelper.supportsYTiling(), image->isTiledImage);
 
     delete image;
 }

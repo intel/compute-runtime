@@ -35,6 +35,7 @@ class HwHelper {
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const = 0;
+    virtual bool supportsYTiling() const = 0;
 
   protected:
     HwHelper() = default;
@@ -89,6 +90,8 @@ class HwHelperHw : public HwHelper {
     uint32_t getConfigureAddressSpaceMode() override;
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) override;
+
+    bool supportsYTiling() const override;
 
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
 

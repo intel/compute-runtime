@@ -74,4 +74,9 @@ template <typename Family>
 bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
+
+template <typename Family>
+bool HwHelperHw<Family>::supportsYTiling() const {
+    return true;
+}
 } // namespace OCLRT

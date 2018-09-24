@@ -15,6 +15,7 @@ extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
 struct GENX {
     static bool (*isSimulationFcn)(unsigned short);
+    static bool enabledYTiling;
     typedef struct tagINTERFACE_DESCRIPTOR_DATA {
         typedef enum tagDENORM_MODE {
             DENORM_MODE_FTZ = 0x0,
