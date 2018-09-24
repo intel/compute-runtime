@@ -299,7 +299,10 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     releaseResidencyLock();
 
-    UNRECOVERABLE_IF(gfxAllocation->taskCount != ObjectNotUsed && this->csr && this->csr->getTagAddress() && gfxAllocation->taskCount > *this->csr->getTagAddress());
+    UNRECOVERABLE_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
+                     gfxAllocation->taskCount != ObjectNotUsed &&
+                     this->csr && this->csr->getTagAddress() &&
+                     gfxAllocation->taskCount > *this->csr->getTagAddress());
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {
