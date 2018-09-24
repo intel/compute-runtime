@@ -89,7 +89,8 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         const uint64_t offsetInterfaceDescriptorTable,
         const uint32_t interfaceDescriptorIndex,
         PreemptionMode preemptionMode,
-        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+        bool localIdsGeneration);
 
     static size_t getSizeRequiredCS();
     static bool isPipeControlWArequired();
@@ -151,5 +152,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);
 
     static bool doBindingTablePrefetch();
+
+    static bool isDispatchForLocalIdsGeneration(uint32_t workDim, size_t *gws, size_t *lws);
 };
 } // namespace OCLRT

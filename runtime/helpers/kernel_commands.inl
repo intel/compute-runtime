@@ -294,7 +294,8 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     const uint64_t offsetInterfaceDescriptorTable,
     const uint32_t interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
-    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor) {
+    INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
+    bool localIdsGeneration) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
@@ -420,6 +421,11 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
 
 template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
+    return true;
+}
+
+template <typename GfxFamily>
+bool KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(uint32_t workDim, size_t *gws, size_t *lws) {
     return true;
 }
 } // namespace OCLRT

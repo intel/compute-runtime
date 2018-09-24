@@ -174,6 +174,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         // Send our indirect object data
         size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};
+        size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
 
         dispatchProfilingPerfStartCommands(dispatchInfo, multiDispatchInfo, hwTimeStamps,
                                            hwPerfCounter, commandStream, commandQueue);
@@ -197,6 +198,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         auto idd = obtainInterfaceDescriptorData(pWalkerCmd);
 
+        bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(dim, globalWorkSizes, localWorkSizes);
         auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
             *commandStream,
             *dsh,
@@ -208,7 +210,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             offsetInterfaceDescriptorTable,
             interfaceDescriptorIndex,
             preemptionMode,
-            idd);
+            idd,
+            localIdsGeneration);
 
         size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
@@ -218,21 +221,24 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
         setOffsetCrossThreadData(pWalkerCmd, offsetCrossThreadData, interfaceDescriptorIndex);
-
-        auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
-        DEBUG_BREAK_IF(nullptr == threadPayload);
-
-        auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
-        auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
-        localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
-
-        auto sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkSize) * localIdSizePerThread;
-        DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
-
         auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
-        auto IndirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
+
+        size_t sizePerThreadDataTotal = 0;
+        if (localIdsGeneration) {
+            auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
+            DEBUG_BREAK_IF(nullptr == threadPayload);
+
+            auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+            auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
+            localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
+
+            sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkSize) * localIdSizePerThread;
+            DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
+        }
+
+        auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
                                           WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-        pWalkerCmd->setIndirectDataLength(IndirectDataLength);
+        pWalkerCmd->setIndirectDataLength(indirectDataLength);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;

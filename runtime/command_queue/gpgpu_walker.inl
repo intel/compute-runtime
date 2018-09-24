@@ -553,6 +553,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     // Send our indirect object data
     size_t localWorkSizes[3] = {scheduler.getLws(), 1, 1};
+    size_t globalWorkSizes[3] = {scheduler.getGws(), 1, 1};
 
     // Create indirectHeap for IOH that is located at the end of device enqueue DSH
     size_t curbeOffset = devQueueHw.setSchedulerCrossThreadData(scheduler);
@@ -560,6 +561,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     indirectObjectHeap.getSpace(curbeOffset);
     ioh = &indirectObjectHeap;
 
+    bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(1, globalWorkSizes, localWorkSizes);
     auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
         *commandStream,
         *dsh,
@@ -571,7 +573,8 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         offsetInterfaceDescriptorTable,
         interfaceDescriptorIndex,
         preemptionMode,
-        nullptr);
+        nullptr,
+        localIdsGeneration);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);

@@ -317,7 +317,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
         IDToffset,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -364,7 +365,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWithFourBindingTableE
         0,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -404,7 +406,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelThatIsSchedulerWhenIn
         0,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -438,7 +441,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWith100BindingTableEn
         0,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -503,7 +507,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKern
         IDToffset,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     numThreads = (numThreads + modifiedKernelInfo.getMaxSimdSize() - 1) / modifiedKernelInfo.getMaxSimdSize();
     size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
@@ -575,7 +580,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
         0,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -728,7 +734,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
             0,
             0,
             pDevice->getPreemptionMode(),
-            nullptr);
+            nullptr,
+            true);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -962,7 +969,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, GivenKernelWithSamplersWhenIndir
         interfaceDescriptorTableOffset,
         0,
         pDevice->getPreemptionMode(),
-        nullptr);
+        nullptr,
+        true);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);
