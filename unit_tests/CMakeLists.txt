@@ -156,12 +156,12 @@ endif()
 
 function(neo_gen_kernels target platform_name suffix)
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
 
   set(results)
   foreach(filepath ${ARGN})
     get_filename_component(filename ${filepath} NAME)
     get_filename_component(basename ${filepath} NAME_WE)
+    get_filename_component(workdir ${filepath} DIRECTORY)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     set(output_files
@@ -186,9 +186,10 @@ endfunction()
 function(neo_gen_kernel_with_options target platform_name suffix filepath)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
+  get_filename_component(base_workdir ${filepath} DIRECTORY)
 
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
+  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
   set(results)
   foreach(arg ${ARGN})
@@ -221,9 +222,10 @@ set(TEST_KERNEL_kernel_debug_enable
 function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix filepath)
   get_filename_component(filename ${filepath} NAME)
   get_filename_component(basename ${filepath} NAME_WE)
+  get_filename_component(base_workdir ${filepath} DIRECTORY)
 
   set(outputdir "${TargetDir}/${suffix}/test_files/${NEO_ARCH}/")
-  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/test_files/")
+  set(workdir "${CMAKE_CURRENT_SOURCE_DIR}/${base_workdir}/")
 
   set(results)
   string(REPLACE " " "_" argwospaces ${TEST_KERNEL_kernel_debug_enable})
@@ -301,28 +303,10 @@ set(TEST_KERNEL_SIP_DEBUG_LOCAL_options
   "-cl-include-sip-kernel-local-debug -cl-include-sip-csr -cl-set-bti:0"
 )
 
-set(TEST_KERNELS
-  test_files/17246368129176860573.cl
-  test_files/copybuffer.cl
-  test_files/CopyBuffer_simd16.cl
-  test_files/CopyBuffer_simd32.cl
-  test_files/CopyBuffer_simd8.cl
-  test_files/copybuffer_with_header.cl
-  test_files/emptykernel.cl
-  test_files/kernel_data_param.cl
-  test_files/kernel_num_args.cl
-  test_files/media_kernels_backend.cl
-  test_files/media_kernels_frontend.cl
-  test_files/printf.cl
-  test_files/required_work_group.cl
-  test_files/simple_arg_int.cl
-  test_files/simple_kernels.cl
-  test_files/simple_kernels_opts.cl
-  test_files/test_basic_constant.cl
-  test_files/test_basic_kernel_memory_alignment_private.cl
-  test_files/test_constant_memory.cl
-  test_files/vme_kernels.cl
-)
+file(GLOB_RECURSE TEST_KERNELS test_files/*.cl)
+list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/shouldfail.cl")
+list(REMOVE_ITEM TEST_KERNELS "${CMAKE_CURRENT_SOURCE_DIR}/test_files/simple_block_kernel.cl")
+
 function(gen_run_tests_with_appverifier product slices subslices eu_per_ss)
   if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" AND "${IGDRCL_OPTION__BITS}" STREQUAL "64" AND APPVERIFIER_ALLOWED)
     add_custom_command(
