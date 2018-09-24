@@ -60,7 +60,7 @@ struct clCreateKernelsInProgramTests : public api_tests {
     void *pBinary = nullptr;
 };
 
-TEST_F(clCreateKernelsInProgramTests, normalPathReturnsSuccess) {
+TEST_F(clCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObjectsThenKernelsAndSuccessAreReturned) {
     cl_uint numKernelsRet = 0;
     retVal = clCreateKernelsInProgram(
         program,
@@ -72,7 +72,7 @@ TEST_F(clCreateKernelsInProgramTests, normalPathReturnsSuccess) {
     EXPECT_NE(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, nullKernelArgReturnsSuccess) {
+TEST_F(clCreateKernelsInProgramTests, GivenNullKernelArgWhenCreatingKernelObjectsThenSuccessIsReturned) {
     cl_uint numKernelsRet = 0;
     retVal = clCreateKernelsInProgram(
         program,
@@ -83,7 +83,7 @@ TEST_F(clCreateKernelsInProgramTests, nullKernelArgReturnsSuccess) {
     EXPECT_EQ(1u, numKernelsRet);
 }
 
-TEST_F(clCreateKernelsInProgramTests, nullNumKernelsRetReturnsSuccess) {
+TEST_F(clCreateKernelsInProgramTests, GivenNullPtrForNumKernelsReturnWhenCreatingKernelObjectsThenSuccessIsReturned) {
     retVal = clCreateKernelsInProgram(
         program,
         1,
@@ -93,7 +93,7 @@ TEST_F(clCreateKernelsInProgramTests, nullNumKernelsRetReturnsSuccess) {
     EXPECT_NE(nullptr, kernel);
 }
 
-TEST_F(clCreateKernelsInProgramTests, nullProgram) {
+TEST_F(clCreateKernelsInProgramTests, GivenNullProgramWhenCreatingKernelObjectsThenInvalidProgramErrorIsReturn) {
     retVal = clCreateKernelsInProgram(
         nullptr,
         1,
