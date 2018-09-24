@@ -711,14 +711,14 @@ cl_int CL_API_CALL clGetSupportedDX9MediaSurfaceFormatsINTEL(cl_context context,
     }
 
     cl_uint i = 0;
-    for (auto format : D3DSurface::D3DFMTCLImageFormat) {
+    for (auto format : D3DSurface::D3DtoClFormatConversions) {
         if (i >= numEntries) {
             break;
         }
         dx9Formats[i++] = format.first;
     }
 
-    *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DFMTCLImageFormat.size());
+    *numImageFormats = static_cast<cl_uint>(D3DSurface::D3DtoClFormatConversions.size());
 
     return CL_SUCCESS;
 }

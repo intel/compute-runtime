@@ -168,7 +168,7 @@ void D3DSurface::releaseResource(MemObj *memObject) {
     }
 }
 
-const std::map<const D3DFORMAT, const cl_image_format> D3DSurface::D3DFMTCLImageFormat = {
+const std::map<const D3DFORMAT, const cl_image_format> D3DSurface::D3DtoClFormatConversions = {
     {D3DFMT_R32F, {CL_R, CL_FLOAT}},
     {D3DFMT_R16F, {CL_R, CL_HALF_FLOAT}},
     {D3DFMT_L16, {CL_R, CL_UNORM_INT16}},
@@ -198,8 +198,8 @@ cl_int D3DSurface::findImgFormat(D3DFORMAT d3dFormat, cl_image_format &imgFormat
     oclPlane = OCLPlane::NO_PLANE;
     static const cl_image_format unknown_format = {0, 0};
 
-    auto element = D3DFMTCLImageFormat.find(d3dFormat);
-    if (element == D3DFMTCLImageFormat.end()) {
+    auto element = D3DtoClFormatConversions.find(d3dFormat);
+    if (element == D3DtoClFormatConversions.end()) {
         imgFormat = unknown_format;
         return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
     }
