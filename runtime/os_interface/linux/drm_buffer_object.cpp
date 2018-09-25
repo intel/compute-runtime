@@ -159,8 +159,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
     if (lowPriority) {
         execbuf.rsvd1 = this->drm->lowPriorityContextId & I915_EXEC_CONTEXT_ID_MASK;
         DebugManager.log(DebugManager.flags.EventsDebugEnable.get(), "Executing buffers in low priority mode, ctx_id = ", execbuf.rsvd1);
-    }
-    else
+    } else
         DebugManager.log(DebugManager.flags.EventsDebugEnable.get(), "Executing buffers with default priority, ctx_id = ", execbuf.rsvd1);
 
     int ret = this->drm->ioctl(DRM_IOCTL_I915_GEM_EXECBUFFER2, &execbuf);

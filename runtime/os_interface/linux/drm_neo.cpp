@@ -150,11 +150,11 @@ bool Drm::hasPreemption() {
     auto ret = getParamIoctl(I915_PARAM_HAS_SCHEDULER, &value);
     if (ret) {
         DebugManager.log(DebugManager.flags.EventsDebugEnable.get(),
-            __func__, "():  I915_PARAM_HAS_SCHEDULER is NOT supported!\n");
+                         __func__, "():  I915_PARAM_HAS_SCHEDULER is NOT supported!\n");
         return false;
     }
     DebugManager.log(DebugManager.flags.EventsDebugEnable.get(),
-            __func__, "(): Scheduler's Capability = ", value);
+                     __func__, "(): Scheduler's Capability = ", value);
 
     if (value & I915_SCHEDULER_CAP_PREEMPTION) {
         return contextCreate() && setLowPriority();
