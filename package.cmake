@@ -31,19 +31,31 @@ if(UNIX)
     set(_dir_etc "/etc")
   endif()
 
-  foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
-    list(APPEND IGC_TARGET_FILES $<TARGET_FILE:${TARGET_tmp}>)
-  endforeach()
+  if(DEFINED IGDRCL__IGC_TARGETS)
+    foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+      install(FILES $<TARGET_FILE:${TARGET_tmp}> DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
+    endforeach()
+  else()
+    file(GLOB _igc_libs "${IGC_DIR}/lib/*.so")
+    foreach(_tmp ${_igc_libs})
+      install(FILES ${_tmp} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
+    endforeach()
+  endif()
+
   if(TARGET ${GMMUMD_LIB_NAME})
-    set(GMMLIB_TARGET_FILE $<TARGET_FILE:${GMMUMD_LIB_NAME}>)
+    install(FILES $<TARGET_FILE:${GMMUMD_LIB_NAME}> DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
+  else()
+    if(EXISTS ${GMM_SOURCE_DIR}/lib/release/libigdgmm.so)
+      install(FILES ${GMM_SOURCE_DIR}/lib/release/libigdgmm.so DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
+    else()
+      install(FILES ${GMM_SOURCE_DIR}/lib/libigdgmm.so DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
+    endif()
   endif()
 
   install(FILES
-    ${IGDRCL_BINARY_DIR}/bin/libigdrcl.so
-    ${IGC_TARGET_FILES}
-    ${GMMLIB_TARGET_FILE}
+    $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}>
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    COMPONENT igdrcl
+    COMPONENT opencl
   )
 
   set(OCL_ICD_RUNTIME_NAME libigdrcl.so)
@@ -52,10 +64,10 @@ if(UNIX)
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${OCL_ICD_RUNTIME_NAME}\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
-    COMPONENT igdrcl
+    COMPONENT opencl
   )
-  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT igdrcl)
-  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT igdrcl)
+  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT opencl)
+  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
 
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
@@ -72,7 +84,7 @@ if(UNIX)
 
   set(CPACK_SET_DESTDIR TRUE)
   set(CPACK_PACKAGE_RELOCATABLE FALSE)
-  set(CPACK_PACKAGE_NAME "intel-opencl")
+  set(CPACK_PACKAGE_NAME "intel")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Intel OpenCL GPU driver")
   set(CPACK_PACKAGE_VENDOR "Intel")
   set(CPACK_PACKAGE_VERSION_MAJOR ${NEO_VERSION_MAJOR})
@@ -87,21 +99,41 @@ if(UNIX)
   set(CPACK_RPM_PACKAGE_DESCRIPTION "Intel OpenCL GPU driver")
   set(CPACK_RPM_PACKAGE_GROUP "System Environment/Libraries")
   set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+  set(CPACK_RPM_PACKAGE_RELEASE 1)
+  set(CPACK_RPM_PACKAGE_RELEASE_DIST ON)
   set(CPACK_RPM_PACKAGE_URL "http://01.org/compute-runtime")
   set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE "${IGDRCL_BINARY_DIR}/postinst")
   set(CPACK_RPM_POST_UNINSTALL_SCRIPT_FILE "${IGDRCL_BINARY_DIR}/postrm")
   set(CPACK_PACKAGE_INSTALL_DIRECTORY ${CMAKE_INSTALL_PREFIX})
   set(CPACK_PACKAGE_CONTACT "Intel Corporation")
-  set(CPACK_PACKAGE_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}-${NEO_VERSION_BUILD}.${CPACK_RPM_PACKAGE_ARCHITECTURE}")
   set(CPACK_DEB_COMPONENT_INSTALL ON)
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-  set(CPACK_COMPONENTS_ALL igdrcl)
+  set(CPACK_COMPONENTS_ALL opencl)
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
     /etc/ld.so.conf.d
     /usr/local
     /usr/local/lib64
   )
+
+  if(CMAKE_VERSION VERSION_GREATER 3.6 OR CMAKE_VERSION VERSION_EQUAL 3.6)
+    set(CPACK_DEBIAN_OPENCL_FILE_NAME "intel-opencl_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-1_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}.deb")
+    set(CPACK_RPM_OPENCL_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
+    set(CPACK_ARCHIVE_OPENCL_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_PACKAGE_ARCHITECTURE}")
+  else()
+    if(CPACK_GENERATOR STREQUAL "DEB")
+      set(CPACK_PACKAGE_FILE_NAME "intel-opencl_${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}-${NEO_VERSION_BUILD}_${CPACK_DEBIAN_PACKAGE_ARCHITECTURE}")
+    elseif(CPACK_GENERATOR STREQUAL "RPM")
+      set(CPACK_PACKAGE_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_RPM_PACKAGE_RELEASE}%{?dist}.${CPACK_RPM_PACKAGE_ARCHITECTURE}.rpm")
+    else()
+      set(CPACK_PACKAGE_FILE_NAME "intel-opencl-${NEO_VERSION_MAJOR}.${NEO_VERSION_MINOR}.${NEO_VERSION_BUILD}-${CPACK_PACKAGE_ARCHITECTURE}")
+    endif()
+  endif()
+
   include(CPack)
 
+  get_directory_property(__HAS_PARENT PARENT_DIRECTORY)
+  if(__HAS_PARENT)
+    set(IGDRCL__COMPONENT_NAME "opencl" PARENT_SCOPE)
+  endif()
 endif(UNIX)
