@@ -53,6 +53,8 @@ set(IGDRCL_SRCS_tests_helpers
 
 set(IGDRCL_SRCS_tests_helpers_windows
   ${CMAKE_CURRENT_SOURCE_DIR}/windows/kmd_notify_windows_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/windows/mock_function.h
 )
 
 set(IGDRCL_SRCS_tests_helpers_linux

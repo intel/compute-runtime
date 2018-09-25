@@ -650,12 +650,6 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextF
     EXPECT_EQ(1, GLSetSharedOCLContextStateCalled);
 }
 
-TEST(glSharingBasicTest, givenInvalidFunctionNameWhenLoadGLFunctionThenReturnNullptr) {
-    MockGLSharingFunctions glSharingFunctions;
-    auto fPointer = glSharingFunctions.loadGlFunction("BadFunctionName", 0);
-    EXPECT_EQ(nullptr, fPointer);
-}
-
 TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedThenReturnFalse) {
     GLSharingFunctions glSharingFunctions;
     bool RetVal = glSharingFunctions.isOpenGlExtensionSupported("InvalidExtensionName");
@@ -664,7 +658,7 @@ TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedT
 
 TEST(glSharingBasicTest, givenglGetIntegervIsNullWhenCheckGLExtensionSupportedThenReturnFalse) {
     MockGLSharingFunctions glSharingFunctions;
-    glSharingFunctions.setglGetIntegervToNull();
+    glSharingFunctions.glGetIntegerv = nullptr;
     bool RetVal = glSharingFunctions.isOpenGlExtensionSupported("InvalidExtensionName");
     EXPECT_FALSE(RetVal);
 }
@@ -687,7 +681,7 @@ TEST(glSharingBasicTest, givenVendorisNullWhenCheckGLSharingSupportedThenReturnF
     };
 
     MockGLSharingFunctions glSharingFunctions;
-    glSharingFunctions.setGetStringFcn(invalidGetStringFcn);
+    glSharingFunctions.glGetString = invalidGetStringFcn;
 
     bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
     EXPECT_FALSE(RetVal);

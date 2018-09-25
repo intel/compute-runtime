@@ -21,3 +21,4 @@
 LIBRARY    "gdi32_mock"
 EXPORTS
 wglGetProcAddress
+mockLoader

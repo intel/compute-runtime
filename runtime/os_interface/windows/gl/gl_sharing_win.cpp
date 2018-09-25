@@ -32,30 +32,31 @@ GLSharingFunctions::~GLSharingFunctions() {
 }
 
 GLboolean GLSharingFunctions::initGLFunctions() {
-    GLGetCurrentContext = reinterpret_cast<PFNOGLGetCurrentContext>(loadGlFunction("wglGetCurrentContext", GLHDCType));
-    GLGetCurrentDisplay = reinterpret_cast<PFNOGLGetCurrentDisplay>(loadGlFunction("wglGetCurrentDC", GLHDCType));
-    glGetString = reinterpret_cast<PFNglGetString>(loadGlFunction("glGetString", GLHDCType));
-    glGetIntegerv = reinterpret_cast<PFNglGetIntegerv>(loadGlFunction("glGetIntegerv", GLHDCType));
+    glLibrary.reset(OsLibrary::load(Os::openglDllName));
 
-    pfnWglCreateContext = reinterpret_cast<PFNwglCreateContext>(loadGlFunction("wglCreateContext", GLHDCType));
-    pfnWglDeleteContext = reinterpret_cast<PFNwglDeleteContext>(loadGlFunction("wglDeleteContext", GLHDCType));
+    if (glLibrary->isLoaded()) {
+        glFunctionHelper wglLibrary(glLibrary.get(), "wglGetProcAddress");
+        GLGetCurrentContext = (*glLibrary)["wglGetCurrentContext"];
+        GLGetCurrentDisplay = (*glLibrary)["wglGetCurrentDC"];
+        glGetString = (*glLibrary)["glGetString"];
+        glGetIntegerv = (*glLibrary)["glGetIntegerv"];
+        pfnWglCreateContext = (*glLibrary)["wglCreateContext"];
+        pfnWglDeleteContext = (*glLibrary)["wglDeleteContext"];
+        pfnWglShareLists = (*glLibrary)["wglShareLists"];
 
-    pfnWglShareLists = reinterpret_cast<PFNwglShareLists>(loadGlFunction("wglShareLists", GLHDCType));
-
-    auto wglGetProcAddressFuncPtr = reinterpret_cast<PROC(WINAPI *)(LPCSTR)>(loadGlFunction("wglGetProcAddress", GLHDCType));
-    GLSetSharedOCLContextState = reinterpret_cast<PFNOGLSetSharedOCLContextStateINTEL>(wglGetProcAddressFuncPtr("wglSetSharedOCLContextStateINTEL"));
-    GLAcquireSharedBuffer = reinterpret_cast<PFNOGLAcquireSharedBufferINTEL>(wglGetProcAddressFuncPtr("wglAcquireSharedBufferINTEL"));
-    GLReleaseSharedBuffer = reinterpret_cast<PFNOGLReleaseSharedBufferINTEL>(wglGetProcAddressFuncPtr("wglReleaseSharedBufferINTEL"));
-    GLAcquireSharedRenderBuffer = reinterpret_cast<PFNOGLAcquireSharedRenderBufferINTEL>(wglGetProcAddressFuncPtr("wglAcquireSharedRenderBufferINTEL"));
-    GLReleaseSharedRenderBuffer = reinterpret_cast<PFNOGLReleaseSharedRenderBufferINTEL>(wglGetProcAddressFuncPtr("wglReleaseSharedRenderBufferINTEL"));
-    GLAcquireSharedTexture = reinterpret_cast<PFNOGLAcquireSharedTextureINTEL>(wglGetProcAddressFuncPtr("wglAcquireSharedTextureINTEL"));
-    GLReleaseSharedTexture = reinterpret_cast<PFNOGLReleaseSharedTextureINTEL>(wglGetProcAddressFuncPtr("wglReleaseSharedTextureINTEL"));
-    GLRetainSync = reinterpret_cast<PFNOGLRetainSyncINTEL>(wglGetProcAddressFuncPtr("wglRetainSyncINTEL"));
-    GLReleaseSync = reinterpret_cast<PFNOGLReleaseSyncINTEL>(wglGetProcAddressFuncPtr("wglReleaseSyncINTEL"));
-    GLGetSynciv = reinterpret_cast<PFNOGLGetSyncivINTEL>(wglGetProcAddressFuncPtr("wglGetSyncivINTEL"));
-    glGetStringi = reinterpret_cast<PFNglGetStringi>(wglGetProcAddressFuncPtr("glGetStringi"));
-    this->wglMakeCurrent = reinterpret_cast<PFNwglMakeCurrent>(loadGlFunction("wglMakeCurrent", GLHDCType));
-
+        GLSetSharedOCLContextState = wglLibrary["wglSetSharedOCLContextStateINTEL"];
+        GLAcquireSharedBuffer = wglLibrary["wglAcquireSharedBufferINTEL"];
+        GLReleaseSharedBuffer = wglLibrary["wglReleaseSharedBufferINTEL"];
+        GLAcquireSharedRenderBuffer = wglLibrary["wglAcquireSharedRenderBufferINTEL"];
+        GLReleaseSharedRenderBuffer = wglLibrary["wglReleaseSharedRenderBufferINTEL"];
+        GLAcquireSharedTexture = wglLibrary["wglAcquireSharedTextureINTEL"];
+        GLReleaseSharedTexture = wglLibrary["wglReleaseSharedTextureINTEL"];
+        GLRetainSync = wglLibrary["wglRetainSyncINTEL"];
+        GLReleaseSync = wglLibrary["wglReleaseSyncINTEL"];
+        GLGetSynciv = wglLibrary["wglGetSyncivINTEL"];
+        glGetStringi = wglLibrary["glGetStringi"];
+        wglMakeCurrent = wglLibrary["wglMakeCurrent"];
+    }
     this->pfnGlArbSyncObjectCleanup = cleanupArbSyncObject;
     this->pfnGlArbSyncObjectSetup = setupArbSyncObject;
     this->pfnGlArbSyncObjectSignal = signalArbSyncObject;
@@ -118,12 +119,6 @@ bool GLSharingFunctions::isOpenGlSharingSupported() {
     }
 
     return true;
-}
-
-void *GLSharingFunctions::loadGlFunction(const char *functionName, uint32_t hdc) {
-
-    HMODULE module = LoadLibraryA(Os::openglDllName);
-    return reinterpret_cast<PFNglGetString>(GetProcAddress(module, functionName));
 }
 
 void GLSharingFunctions::createBackupContext() {

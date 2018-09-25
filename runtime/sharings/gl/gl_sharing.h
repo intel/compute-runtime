@@ -12,7 +12,8 @@
 #include "GL/gl.h"
 #include "GL/glext.h"
 #include "runtime/sharings/sharing.h"
-#include "gl/gl_sharing_os.h"
+#include "runtime/os_interface/windows/gl/gl_sharing_os.h"
+#include "runtime/helpers/windows/gl_helper.h"
 
 #include <functional>
 #include <mutex>
@@ -208,6 +209,8 @@ class GLSharingFunctions : public SharingFunctions {
     }
 
   protected:
+    std::unique_ptr<OsLibrary> glLibrary;
+
     GLType GLHDCType = 0;
     GLContext GLHGLRCHandle = 0;
     GLContext GLHGLRCHandleBkpCtx = 0;
@@ -239,9 +242,6 @@ class GLSharingFunctions : public SharingFunctions {
     PFNglArbSyncObjectCleanup pfnGlArbSyncObjectCleanup = nullptr;
     PFNglArbSyncObjectSignal pfnGlArbSyncObjectSignal = nullptr;
     PFNglArbSyncObjectWaitServer pfnGlArbSyncObjectWaitServer = nullptr;
-
-    // loading OGL libraries for OGL_OCL sharing
-    void *loadGlFunction(const char *functionName, uint32_t hdc);
 
     // support for GL_ARB_cl_event
     std::mutex glArbEventMutex;

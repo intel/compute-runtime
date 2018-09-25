@@ -91,3 +91,40 @@ TEST_F(OSLibraryTest, testFailNew) {
     };
     injectFailures(method);
 }
+
+TEST(OsLibrary, whenCallingIndexOperatorThenObjectConvertibleToFunctionOrVoidPointerIsReturned) {
+    struct MockOsLibrary : OsLibrary {
+        void *getProcAddress(const std::string &procName) override {
+            lastRequestedProcName = procName;
+            return ptrToReturn;
+        }
+        bool isLoaded() override { return true; }
+
+        void *ptrToReturn = nullptr;
+        std::string lastRequestedProcName;
+    };
+
+    MockOsLibrary lib;
+
+    int varA;
+    int varB;
+    int varC;
+
+    using FunctionTypeA = void (*)(int *, float);
+    using FunctionTypeB = int (*)();
+
+    lib.ptrToReturn = &varA;
+    FunctionTypeA functionA = lib["funcA"];
+    EXPECT_STREQ("funcA", lib.lastRequestedProcName.c_str());
+    EXPECT_EQ(&varA, reinterpret_cast<void *>(functionA));
+
+    lib.ptrToReturn = &varB;
+    FunctionTypeB functionB = lib["funcB"];
+    EXPECT_STREQ("funcB", lib.lastRequestedProcName.c_str());
+    EXPECT_EQ(&varB, reinterpret_cast<void *>(functionB));
+
+    lib.ptrToReturn = &varC;
+    void *rawPtr = lib["funcC"];
+    EXPECT_STREQ("funcC", lib.lastRequestedProcName.c_str());
+    EXPECT_EQ(&varC, rawPtr);
+}
