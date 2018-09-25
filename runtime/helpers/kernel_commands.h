@@ -29,6 +29,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
+    using MI_ATOMIC = typename GfxFamily::MI_ATOMIC;
 
     static uint32_t computeSlmValues(uint32_t valueIn);
 
@@ -147,6 +148,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     }
 
     static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
+    static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
 
     static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);

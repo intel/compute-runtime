@@ -84,8 +84,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
         if (previousTimestampPacketNode) {
-            auto compareAddress = previousTimestampPacketNode->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-            KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, compareAddress, 1);
+            TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *previousTimestampPacketNode->tag);
         }
     }
 

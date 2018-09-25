@@ -32,6 +32,7 @@ class MockTagAllocator : public TagAllocator<timeStamps> {
   public:
     using TagAllocator<timeStamps>::populateFreeTags;
     using TagAllocator<timeStamps>::deferredTags;
+    using TagAllocator<timeStamps>::releaseDeferredTags;
 
     MockTagAllocator(MemoryManager *memMngr, size_t tagCount, size_t tagAlignment) : TagAllocator<timeStamps>(memMngr, tagCount, tagAlignment) {
     }
@@ -293,6 +294,44 @@ TEST_F(TagAllocatorTest, givenReadyTagWhenReturnedThenMoveToFreeList) {
     node->tag->release = true;
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     tagAllocator.returnTag(node);
+    EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
+}
+
+TEST_F(TagAllocatorTest, givenEmptyFreeListWhenAskingForNewTagThenTryToReleaseDeferredListFirst) {
+    MockTagAllocator tagAllocator(memoryManager, 1, 1);
+    auto node = tagAllocator.getTag();
+
+    node->tag->release = false;
+    tagAllocator.returnTag(node);
+    node->tag->release = false;
+    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+    node = tagAllocator.getTag();
+    EXPECT_NE(nullptr, node);
+    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty()); // empty again - new pool wasnt allocated
+}
+
+TEST_F(TagAllocatorTest, givenTagsOnDeferredListWhenReleasingItThenMoveReadyTagsToFreePool) {
+    MockTagAllocator tagAllocator(memoryManager, 2, 1); // pool with 2 tags
+    auto node1 = tagAllocator.getTag();
+    auto node2 = tagAllocator.getTag();
+
+    node1->tag->release = false;
+    node2->tag->release = false;
+    tagAllocator.returnTag(node1);
+    tagAllocator.returnTag(node2);
+
+    tagAllocator.releaseDeferredTags();
+    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_TRUE(tagAllocator.getFreeTags().peekIsEmpty());
+
+    node1->tag->release = true;
+    tagAllocator.releaseDeferredTags();
+    EXPECT_FALSE(tagAllocator.deferredTags.peekIsEmpty());
+    EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
+
+    node2->tag->release = true;
+    tagAllocator.releaseDeferredTags();
     EXPECT_TRUE(tagAllocator.deferredTags.peekIsEmpty());
     EXPECT_FALSE(tagAllocator.getFreeTags().peekIsEmpty());
 }

@@ -420,6 +420,19 @@ void KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(LinearStream &comma
 }
 
 template <typename GfxFamily>
+typename GfxFamily::MI_ATOMIC *KernelCommandsHelper<GfxFamily>::programMiAtomic(LinearStream &commandStream, uint64_t writeAddress,
+                                                                                typename MI_ATOMIC::ATOMIC_OPCODES opcode,
+                                                                                typename MI_ATOMIC::DATA_SIZE dataSize) {
+    auto miAtomic = commandStream.getSpaceForCmd<MI_ATOMIC>();
+    *miAtomic = MI_ATOMIC::sInit();
+    miAtomic->setAtomicOpcode(opcode);
+    miAtomic->setDataSize(dataSize);
+    miAtomic->setMemoryAddress(static_cast<uint32_t>(writeAddress & 0x0000FFFFFFFFULL));
+    miAtomic->setMemoryAddressHigh(static_cast<uint32_t>(writeAddress >> 32));
+    return miAtomic;
+}
+
+template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
     return true;
 }

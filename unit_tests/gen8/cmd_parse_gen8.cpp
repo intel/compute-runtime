@@ -272,7 +272,7 @@ size_t BdwParse::getCommandLength(void *cmd) {
     {
         auto pCmd = genCmdCast<MI_ATOMIC *>(cmd);
         if (pCmd)
-            return pCmd->TheStructure.Common.DwordLength + 2;
+            return sizeof(MI_ATOMIC) / sizeof(uint32_t);
     }
     {
         auto pCmd = genCmdCast<MI_BATCH_BUFFER_END *>(cmd);

@@ -457,11 +457,8 @@ inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(Lin
         if (event->isUserEvent() || (&event->getCommandQueue()->getDevice() != &currentDevice)) {
             continue;
         }
-        auto timestampPacket = event->getTimestampPacketNode()->tag;
 
-        auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-
-        KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(*commandStream, compareAddress, 1);
+        TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *event->getTimestampPacketNode()->tag);
     }
 }
 
@@ -472,20 +469,16 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     TimestampPacket *timestampPacket,
     TimestampPacket::WriteOperationType writeOperationType) {
 
-    uint64_t address;
-    if (TimestampPacket::WriteOperationType::BeforeWalker == writeOperationType) {
-        address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::Submit);
-    } else {
-        address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+    if (TimestampPacket::WriteOperationType::AfterWalker == writeOperationType) {
+        uint64_t address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        auto pipeControlCmd = cmdStream->getSpaceForCmd<PIPE_CONTROL>();
+        *pipeControlCmd = PIPE_CONTROL::sInit();
+        pipeControlCmd->setCommandStreamerStallEnable(true);
+        pipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
+        pipeControlCmd->setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
+        pipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
+        pipeControlCmd->setImmediateData(0);
     }
-
-    auto pipeControlCmd = cmdStream->getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControlCmd = PIPE_CONTROL::sInit();
-    pipeControlCmd->setCommandStreamerStallEnable(true);
-    pipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-    pipeControlCmd->setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-    pipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
-    pipeControlCmd->setImmediateData(0);
 }
 
 template <typename GfxFamily>
@@ -740,7 +733,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfi
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
-    return 2 * sizeof(PIPE_CONTROL);
+    return sizeof(PIPE_CONTROL);
 }
 
 } // namespace OCLRT

@@ -1044,6 +1044,7 @@ typedef struct tagMI_ATOMIC {
         MEMORYADDRESS_INDEX = 0x1,
     } PATCH_CONSTANTS;
     typedef enum tagATOMIC_OPCODES {
+        ATOMIC_4B_DECREMENT = 0x6,
         ATOMIC_8B_INCREMENT = 0x25,
         ATOMIC_8B_DECREMENT = 0x26,
     } ATOMIC_OPCODES;

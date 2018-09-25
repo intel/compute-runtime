@@ -69,6 +69,9 @@ class TagAllocator {
     }
 
     NodeType *getTag() {
+        if (freeTags.peekIsEmpty()) {
+            releaseDeferredTags();
+        }
         NodeType *node = freeTags.removeFrontOne().release();
         if (!node) {
             std::unique_lock<std::mutex> lock(allocatorMutex);
@@ -141,6 +144,29 @@ class TagAllocator {
         DEBUG_BREAK_IF(Start > End);
         ((void)(End));
         tagPoolMemory.push_back(nodesMemory);
+    }
+
+    void releaseDeferredTags() {
+        IDList<NodeType, false> pendingFreeTags;
+        IDList<NodeType, false> pendingDeferredTags;
+        auto currentNode = deferredTags.detachNodes();
+
+        while (currentNode != nullptr) {
+            auto nextNode = currentNode->next;
+            if (currentNode->tag->canBeReleased()) {
+                pendingFreeTags.pushFrontOne(*currentNode);
+            } else {
+                pendingDeferredTags.pushFrontOne(*currentNode);
+            }
+            currentNode = nextNode;
+        }
+
+        if (!pendingFreeTags.peekIsEmpty()) {
+            freeTags.splice(*pendingFreeTags.detachNodes());
+        }
+        if (!pendingDeferredTags.peekIsEmpty()) {
+            deferredTags.splice(*pendingDeferredTags.detachNodes());
+        }
     }
 };
 } // namespace OCLRT

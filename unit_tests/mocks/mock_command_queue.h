@@ -22,6 +22,9 @@ class MockCommandQueue : public CommandQueue {
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
     }
+    void setOoqEnabled() {
+        commandQueueProperties |= CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
+    }
     MockCommandQueue() : CommandQueue(nullptr, nullptr, 0) {}
     MockCommandQueue(Context *context, Device *device, const cl_queue_properties *props)
         : CommandQueue(context, device, props) {

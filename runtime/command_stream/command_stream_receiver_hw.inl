@@ -784,11 +784,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleEventsTimestampPacketTags(LinearS
         makeResident(*event->getTimestampPacketNode()->getGraphicsAllocation());
 
         if (&event->getCommandQueue()->getDevice() != &currentDevice) {
-            auto timestampPacket = event->getTimestampPacketNode()->tag;
-
-            auto compareAddress = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-
-            KernelCommandsHelper<GfxFamily>::programMiSemaphoreWait(csr, compareAddress, 1);
+            TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(csr, *event->getTimestampPacketNode()->tag);
         }
     }
 }

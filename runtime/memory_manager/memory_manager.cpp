@@ -14,6 +14,7 @@
 #include "runtime/gmm_helper/resource_info.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/basic_math.h"
+#include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/deferred_deleter.h"

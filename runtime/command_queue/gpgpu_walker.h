@@ -250,8 +250,14 @@ LinearStream &getCommandStream(CommandQueue &commandQueue, cl_uint numEventsInWa
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredCS(eventType, reserveProfilingCmdsSpace, reservePerfCounterCmdsSpace, commandQueue, &scheduler);
     }
     if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto semaphoreSize = sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        auto atomicSize = sizeof(typename GfxFamily::MI_ATOMIC);
+
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        expectedSizeCS += (numEventsInWaitList + 1) * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        expectedSizeCS += numEventsInWaitList * (semaphoreSize + atomicSize);
+        if (!commandQueue.isOOQEnabled()) {
+            expectedSizeCS += semaphoreSize + atomicSize;
+        }
     }
     return commandQueue.getCS(expectedSizeCS);
 }
