@@ -11,4 +11,8 @@ namespace OCLRT {
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(const AllocationData &allocationData, AllocationStatus &status) {
     return MemoryManager::allocateGraphicsMemoryInDevicePool(allocationData, status);
 }
+
+void MemoryAllocation::overrideMemoryPool(MemoryPool::Type pool) {
+    this->memoryPool = pool;
+}
 } // namespace OCLRT

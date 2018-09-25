@@ -24,12 +24,10 @@ class MemoryAllocation : public GraphicsAllocation {
     MemoryAllocation(bool cpuPtrAllocated, void *pMem, uint64_t gpuAddress, size_t memSize, uint64_t count, MemoryPool::Type pool) : GraphicsAllocation(pMem, gpuAddress, 0u, memSize),
                                                                                                                                      id(count) {
         this->cpuPtrAllocated = cpuPtrAllocated;
-        this->memoryPool = pool;
+        overrideMemoryPool(pool);
     }
 
-    void overrideMemoryPool(MemoryPool::Type pool) {
-        memoryPool = pool;
-    }
+    void overrideMemoryPool(MemoryPool::Type pool);
 };
 
 typedef std::map<void *, MemoryAllocation *> PointerMap;
