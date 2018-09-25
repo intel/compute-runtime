@@ -49,7 +49,7 @@ class WddmMemoryManager : public MemoryManager {
     void *lockResource(GraphicsAllocation *graphicsAllocation) override;
     void unlockResource(GraphicsAllocation *graphicsAllocation) override;
 
-    bool makeResidentResidencyAllocations(ResidencyContainer *allocationsForResidency, OsContext &osContext);
+    bool makeResidentResidencyAllocations(ResidencyContainer &allocationsForResidency, OsContext &osContext);
     void makeNonResidentEvictionAllocations(ResidencyContainer &evictionAllocations);
 
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;

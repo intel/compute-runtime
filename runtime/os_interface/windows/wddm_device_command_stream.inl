@@ -139,7 +139,7 @@ void WddmCommandStreamReceiver<GfxFamily>::makeResident(GraphicsAllocation &gfxA
 
 template <typename GfxFamily>
 void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) {
-    bool success = getMemoryManager()->makeResidentResidencyAllocations(&allocationsForResidency, osContext);
+    bool success = getMemoryManager()->makeResidentResidencyAllocations(allocationsForResidency, osContext);
     DEBUG_BREAK_IF(!success);
 }
 
