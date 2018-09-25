@@ -298,6 +298,22 @@ TEST_F(OfflineCompilerTests, NaughtyArgTest_NumArgs) {
     delete pOfflineCompiler;
 }
 
+TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenExitWithErrorMsg) {
+    auto argv = {
+        "cloc",
+        "-file",
+        "test_files/copybuffer.cl",
+        "-device",
+        "foobar"};
+
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv.begin(), retVal);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device foobar.\n");
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
 TEST_F(OfflineCompilerTests, NaughtyKernelTest) {
     auto argv = {
         "cloc",

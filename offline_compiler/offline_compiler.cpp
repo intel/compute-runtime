@@ -505,9 +505,10 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const char *const *argv) {
             retVal = getHardwareInfo(deviceName.c_str());
             if (retVal != CL_SUCCESS) {
                 printf("Error: Cannot get HW Info for device %s.\n", deviceName.c_str());
+            } else {
+                std::string extensionsList = getExtensionsList(*hwInfo);
+                internalOptions.append(convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
             }
-            std::string extensionsList = getExtensionsList(*hwInfo);
-            internalOptions.append(convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str()));
         }
     }
 
