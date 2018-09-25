@@ -31,31 +31,15 @@ if(UNIX)
     set(_dir_etc "/etc")
   endif()
 
-  if(DEFINED IGDRCL__IGC_TARGETS)
-    foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
-      install(FILES $<TARGET_FILE:${TARGET_tmp}> DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
-    endforeach()
-  else()
-    file(GLOB _igc_libs "${IGC_DIR}/lib/*.so")
-    foreach(_tmp ${_igc_libs})
-      install(FILES ${_tmp} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
-    endforeach()
-  endif()
-
-  if(TARGET ${GMMUMD_LIB_NAME})
-    install(FILES $<TARGET_FILE:${GMMUMD_LIB_NAME}> DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
-  else()
-    if(EXISTS ${GMM_SOURCE_DIR}/lib/release/libigdgmm.so)
-      install(FILES ${GMM_SOURCE_DIR}/lib/release/libigdgmm.so DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
-    else()
-      install(FILES ${GMM_SOURCE_DIR}/lib/libigdgmm.so DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT opencl)
-    endif()
-  endif()
+  foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
+    list(APPEND IGC_TARGET_FILES $<TARGET_FILE:${TARGET_tmp}>)
+  endforeach()
 
   install(FILES
-    $<TARGET_FILE:${NEO_DYNAMIC_LIB_NAME}>
+    ${IGDRCL_BINARY_DIR}/bin/libigdrcl.so
+    ${IGC_TARGET_FILES}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    COMPONENT opencl
+    COMPONENT igdrcl
   )
 
   set(OCL_ICD_RUNTIME_NAME libigdrcl.so)
@@ -64,10 +48,10 @@ if(UNIX)
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/intel.icd \"${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/${OCL_ICD_RUNTIME_NAME}\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postinst \"/sbin/ldconfig\n\" )"
     CODE "file( WRITE ${IGDRCL_BINARY_DIR}/postrm \"/sbin/ldconfig\n\" )"
-    COMPONENT opencl
+    COMPONENT igdrcl
   )
-  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT opencl)
-  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT opencl)
+  install(FILES ${IGDRCL_BINARY_DIR}/libintelopencl.conf DESTINATION ${_dir_etc}/ld.so.conf.d COMPONENT igdrcl)
+  install(FILES ${IGDRCL_BINARY_DIR}/intel.icd DESTINATION ${_dir_etc}/OpenCL/vendors/ COMPONENT igdrcl)
 
   if(NEO_CPACK_GENERATOR)
     set(CPACK_GENERATOR "${NEO_CPACK_GENERATOR}")
@@ -84,7 +68,7 @@ if(UNIX)
 
   set(CPACK_SET_DESTDIR TRUE)
   set(CPACK_PACKAGE_RELOCATABLE FALSE)
-  set(CPACK_PACKAGE_NAME "intel")
+  set(CPACK_PACKAGE_NAME "intel-opencl")
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Intel OpenCL GPU driver")
   set(CPACK_PACKAGE_VENDOR "Intel")
   set(CPACK_PACKAGE_VERSION_MAJOR ${NEO_VERSION_MAJOR})
@@ -108,7 +92,7 @@ if(UNIX)
   set(CPACK_DEB_COMPONENT_INSTALL ON)
   set(CPACK_RPM_COMPONENT_INSTALL ON)
   set(CPACK_ARCHIVE_COMPONENT_INSTALL ON)
-  set(CPACK_COMPONENTS_ALL opencl)
+  set(CPACK_COMPONENTS_ALL igdrcl)
   set(CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION
     /etc/ld.so.conf.d
     /usr/local
