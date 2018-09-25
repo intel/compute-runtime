@@ -700,7 +700,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
 
-    csr->makeSurfacePackNonResident(nullptr);
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());

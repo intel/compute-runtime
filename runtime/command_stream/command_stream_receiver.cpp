@@ -81,14 +81,13 @@ void CommandStreamReceiver::makeNonResident(GraphicsAllocation &gfxAllocation) {
     gfxAllocation.residencyTaskCount[deviceIndex] = ObjectNotResident;
 }
 
-void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer *allocationsForResidency) {
-    auto &residencyAllocations = allocationsForResidency ? *allocationsForResidency : this->getResidencyAllocations();
+void CommandStreamReceiver::makeSurfacePackNonResident(ResidencyContainer &allocationsForResidency) {
     this->waitBeforeMakingNonResidentWhenRequired();
 
-    for (auto &surface : residencyAllocations) {
+    for (auto &surface : allocationsForResidency) {
         this->makeNonResident(*surface);
     }
-    residencyAllocations.clear();
+    allocationsForResidency.clear();
     this->processEviction();
 }
 
