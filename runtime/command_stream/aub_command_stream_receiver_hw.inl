@@ -311,7 +311,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
 
         auto physBatchBuffer = ppgtt->map(static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer,
                                           getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
-                                          getMemoryBank(batchBuffer.commandBufferAllocation));
+                                          this->getMemoryBank(batchBuffer.commandBufferAllocation));
         AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
         AUB::reserveAddressPPGTT(*stream, static_cast<uintptr_t>(batchBufferGpuAddress), sizeBatchBuffer, physBatchBuffer,
                                  getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
@@ -586,7 +586,7 @@ bool AUBCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
                                               aubHelperHw);
     };
 
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, getMemoryBank(&gfxAllocation));
+    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, this->getMemoryBank(&gfxAllocation));
 
     if (gfxAllocation.isLocked()) {
         this->getMemoryManager()->unlockResource(&gfxAllocation);
@@ -771,11 +771,6 @@ uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getGTTBits() const {
 
 template <typename GfxFamily>
 uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
-    return MemoryBanks::getBank(this->deviceIndex);
-}
-
-template <typename GfxFamily>
-uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMemoryBank(GraphicsAllocation *allocation) const {
     return MemoryBanks::getBank(this->deviceIndex);
 }
 

@@ -203,7 +203,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     {
         auto physBatchBuffer = ppgtt->map(reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer,
                                           getPPGTTAdditionalBits(batchBuffer.commandBufferAllocation),
-                                          getMemoryBank(batchBuffer.commandBufferAllocation));
+                                          this->getMemoryBank(batchBuffer.commandBufferAllocation));
 
         AubHelperHw<GfxFamily> aubHelperHw(this->localMemoryEnabled);
         AUB::reserveAddressPPGTT(stream, reinterpret_cast<uintptr_t>(pBatchBuffer), sizeBatchBuffer, physBatchBuffer,
@@ -364,7 +364,7 @@ bool TbxCommandStreamReceiverHw<GfxFamily>::writeMemory(GraphicsAllocation &gfxA
                                               aubHelperHw);
     };
 
-    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, getMemoryBank(&gfxAllocation));
+    ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), size, 0, getPPGTTAdditionalBits(&gfxAllocation), walker, this->getMemoryBank(&gfxAllocation));
     return true;
 }
 
@@ -389,7 +389,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::makeCoherent(GraphicsAllocation &gfx
             DEBUG_BREAK_IF(offset > length);
             stream.readMemory(physAddress, ptrOffset(cpuAddress, offset), size);
         };
-        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, getMemoryBank(&gfxAllocation));
+        ppgtt->pageWalk(static_cast<uintptr_t>(gpuAddress), length, 0, 0, walker, this->getMemoryBank(&gfxAllocation));
     }
 }
 
@@ -426,11 +426,6 @@ uint64_t TbxCommandStreamReceiverHw<GfxFamily>::getGTTBits() const {
 
 template <typename GfxFamily>
 uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
-    return MemoryBanks::getBank(this->deviceIndex);
-}
-
-template <typename GfxFamily>
-uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMemoryBank(GraphicsAllocation *allocation) const {
     return MemoryBanks::getBank(this->deviceIndex);
 }
 

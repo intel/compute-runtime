@@ -7,7 +7,7 @@
 
 #pragma once
 #include "runtime/gen_common/aub_mapper.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "command_stream_receiver_simulated_hw.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/page_table.h"
@@ -18,8 +18,8 @@ namespace OCLRT {
 class AubSubCaptureManager;
 
 template <typename GfxFamily>
-class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
-    typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
+class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
+    typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
     using ExternalAllocationsContainer = std::vector<AllocationView>;
@@ -103,7 +103,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void getGTTData(void *memory, AubGTTData &data);
     uint64_t getGTTBits() const;
     uint32_t getMemoryBankForGtt() const;
-    uint32_t getMemoryBank(GraphicsAllocation *allocation) const;
 
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_AUB;

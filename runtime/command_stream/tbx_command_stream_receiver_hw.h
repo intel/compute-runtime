@@ -7,7 +7,7 @@
 
 #pragma once
 #include "runtime/gen_common/aub_mapper.h"
-#include "runtime/command_stream/command_stream_receiver_hw.h"
+#include "command_stream_receiver_simulated_hw.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
@@ -24,9 +24,9 @@ class TbxMemoryManager : public OsAgnosticMemoryManager {
 };
 
 template <typename GfxFamily>
-class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
+class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
     using CommandStreamReceiverHw<GfxFamily>::memoryManager;
-    typedef CommandStreamReceiverHw<GfxFamily> BaseClass;
+    typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
@@ -75,7 +75,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     void getGTTData(void *memory, AubGTTData &data);
     uint64_t getGTTBits() const;
     uint32_t getMemoryBankForGtt() const;
-    uint32_t getMemoryBank(GraphicsAllocation *allocation) const;
 
     TbxCommandStreamReceiver::TbxStream stream;
     uint32_t aubDeviceId;
