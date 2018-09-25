@@ -421,7 +421,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         CommandStreamReceiver::makeNonResident(graphicsAllocation);
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         return flushStamp->peekStamp();
     }
 

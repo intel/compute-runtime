@@ -31,7 +31,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
 
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void makeCoherent(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;

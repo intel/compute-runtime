@@ -8,7 +8,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "runtime/os_interface/os_interface.h"
 
-FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+FlushStamp MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     FlushStamp stamp = 0;
     return stamp;
 }

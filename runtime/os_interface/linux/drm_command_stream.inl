@@ -46,7 +46,7 @@ DrmCommandStreamReceiver<GfxFamily>::DrmCommandStreamReceiver(const HardwareInfo
 }
 
 template <typename GfxFamily>
-FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     unsigned int engineFlag = 0xFF;
     bool ret = DrmEngineMapper<GfxFamily>::engineNodeMap(engineType, engineFlag);
     UNRECOVERABLE_IF(!(ret));
@@ -60,8 +60,7 @@ FlushStamp DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBuffer, 
 
     if (bb) {
         flushStamp = bb->peekHandle();
-        UNRECOVERABLE_IF(allocationsForResidency == nullptr);
-        this->processResidency(*allocationsForResidency, osContext);
+        this->processResidency(allocationsForResidency, osContext);
         // Residency hold all allocation except command buffer, hence + 1
         auto requiredSize = this->residency.size() + 1;
         if (requiredSize > this->execObjectsStorage.size()) {

@@ -25,7 +25,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
     WddmCommandStreamReceiver(const HardwareInfo &hwInfoIn, ExecutionEnvironment &executionEnvironment);
     virtual ~WddmCommandStreamReceiver();
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void makeResident(GraphicsAllocation &gfxAllocation) override;
     void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void processEviction() override;
@@ -40,7 +40,7 @@ class WddmCommandStreamReceiver : public DeviceCommandStreamReceiver<GfxFamily> 
 
   protected:
     void initPageTableManagerRegisters(LinearStream &csr) override;
-    void kmDafLockAllocations(ResidencyContainer *allocationsForResidency);
+    void kmDafLockAllocations(ResidencyContainer &allocationsForResidency);
 
     Wddm *wddm;
     COMMAND_BUFFER_HEADER_REC *commandBufferHeader;

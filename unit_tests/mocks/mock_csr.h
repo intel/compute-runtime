@@ -97,7 +97,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     MockCsr(int32_t &execStamp, ExecutionEnvironment &executionEnvironment) : BaseClass(execStamp, executionEnvironment) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         return 0;
     }
 
@@ -165,16 +165,10 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType,
-                     ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+                     ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         flushCalledCount++;
         recordedCommandBuffer->batchBuffer = batchBuffer;
-        copyOfAllocations.clear();
-
-        if (allocationsForResidency) {
-            copyOfAllocations = *allocationsForResidency;
-        } else {
-            copyOfAllocations = this->getResidencyAllocations();
-        }
+        copyOfAllocations = allocationsForResidency;
         flushStamp->setStamp(flushStamp->peekStamp() + 1);
         return flushStamp->peekStamp();
     }
@@ -224,7 +218,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     ~MockCommandStreamReceiver() {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
 
     CompletionStamp flushTask(
         LinearStream &commandStream,

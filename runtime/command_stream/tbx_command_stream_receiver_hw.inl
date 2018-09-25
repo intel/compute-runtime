@@ -186,7 +186,7 @@ CommandStreamReceiver *TbxCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 }
 
 template <typename GfxFamily>
-FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     uint32_t mmioBase = getCsTraits(engineType).mmioBase;
     auto &engineInfo = engineInfoTable[engineType];
 
@@ -220,8 +220,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
     }
 
     // Write allocations for residency
-    UNRECOVERABLE_IF(allocationsForResidency == nullptr);
-    processResidency(*allocationsForResidency, osContext);
+    processResidency(allocationsForResidency, osContext);
 
     // Add a batch buffer start to the RCS
     auto previousTail = engineInfo.tailRCS;

@@ -25,7 +25,7 @@ class CommandStreamReceiverDrmMock : public UltCommandStreamReceiver<FamilyType>
 
     std::vector<GraphicsAllocation *> toFree; // pointers to be freed on destruction
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         EXPECT_NE(nullptr, batchBuffer.commandBufferAllocation->getUnderlyingBuffer());
 
         toFree.push_back(batchBuffer.commandBufferAllocation);

@@ -25,7 +25,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverHw<GfxFamily> {
     using ExternalAllocationsContainer = std::vector<AllocationView>;
 
   public:
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) override;
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
     void makeNonResident(GraphicsAllocation &gfxAllocation) override;
 
     void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override;

@@ -43,7 +43,7 @@ CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiverHw(const HardwareInfo &
 }
 
 template <typename GfxFamily>
-FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+FlushStamp CommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     return flushStamp->peekStamp();
 }
 
@@ -431,7 +431,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (submitCSR | submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
-            flushStamp->setStamp(this->flush(batchBuffer, engineType, &this->getResidencyAllocations(), *device.getOsContext()));
+            flushStamp->setStamp(this->flush(batchBuffer, engineType, this->getResidencyAllocations(), *device.getOsContext()));
             this->latestFlushedTaskCount = this->taskCount + 1;
             this->makeSurfacePackNonResident(nullptr);
         } else {
@@ -552,7 +552,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             if (epiloguePipeControlLocation) {
                 ((PIPE_CONTROL *)epiloguePipeControlLocation)->setDcFlushEnable(true);
             }
-            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, &surfacesForSubmit, *device.getOsContext());
+            auto flushStamp = this->flush(primaryCmdBuffer->batchBuffer, engineType, surfacesForSubmit, *device.getOsContext());
 
             //after flush task level is closed
             this->taskLevel++;

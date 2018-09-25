@@ -21,11 +21,11 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
         : UltCommandStreamReceiver(hwInfoIn, executionEnvironment) {
     }
 
-    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer *allocationsForResidency, OsContext &osContext) override {
+    FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineOrdinal, ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
         flushParametrization.wasCalled = true;
         flushParametrization.receivedBatchBuffer = &batchBuffer;
         flushParametrization.receivedEngine = engineOrdinal;
-        flushParametrization.receivedAllocationsForResidency = allocationsForResidency;
+        flushParametrization.receivedAllocationsForResidency = &allocationsForResidency;
         return flushParametrization.flushStampToReturn;
     }
 
@@ -135,7 +135,7 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     OsContext osContext(nullptr, 0u);
 
     ResidencyContainer allocationsForResidency;
-    FlushStamp flushStamp = csrWithAubDump->flush(batchBuffer, engineType, &allocationsForResidency, osContext);
+    FlushStamp flushStamp = csrWithAubDump->flush(batchBuffer, engineType, allocationsForResidency, osContext);
     EXPECT_EQ(flushStamp, csrWithAubDump->flushParametrization.flushStampToReturn);
 
     EXPECT_TRUE(csrWithAubDump->flushParametrization.wasCalled);

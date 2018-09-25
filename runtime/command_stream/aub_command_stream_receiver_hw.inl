@@ -267,7 +267,7 @@ CommandStreamReceiver *AUBCommandStreamReceiverHw<GfxFamily>::create(const Hardw
 
 template <typename GfxFamily>
 FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer,
-                                                        EngineType engineType, ResidencyContainer *allocationsForResidency, OsContext &osContext) {
+                                                        EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) {
     if (subCaptureManager->isSubCaptureMode()) {
         if (!subCaptureManager->isSubCaptureEnabled()) {
             if (this->standalone) {
@@ -332,11 +332,10 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
                 CommandStreamReceiver::makeResident(*batchBuffer.commandBufferAllocation);
             }
         } else {
-            allocationsForResidency->push_back(batchBuffer.commandBufferAllocation);
+            allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
             batchBuffer.commandBufferAllocation->residencyTaskCount[this->deviceIndex] = this->taskCount;
         }
-        UNRECOVERABLE_IF(allocationsForResidency == nullptr);
-        processResidency(*allocationsForResidency, osContext);
+        processResidency(allocationsForResidency, osContext);
     }
     if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
         addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(pBatchBuffer)), engineType);
