@@ -101,7 +101,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t getGUCWorkQueueItemHeader(EngineType engineType);
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
-    uint64_t getGTTBits() const;
     uint32_t getMemoryBankForGtt() const;
 
     CommandStreamReceiverType getType() override {

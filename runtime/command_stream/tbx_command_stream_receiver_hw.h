@@ -73,7 +73,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
     uint64_t getPPGTTAdditionalBits(GraphicsAllocation *gfxAllocation);
     void getGTTData(void *memory, AubGTTData &data);
-    uint64_t getGTTBits() const;
     uint32_t getMemoryBankForGtt() const;
 
     TbxCommandStreamReceiver::TbxStream stream;

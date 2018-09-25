@@ -154,7 +154,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         engineInfo.pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
         engineInfo.ggttHWSP = gttRemap.map(engineInfo.pGlobalHWStatusPage, sizeHWSP);
 
-        auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, getGTTBits(), getMemoryBankForGtt());
+        auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, this->getGTTBits(), getMemoryBankForGtt());
 
         // Write our GHWSP
         {
@@ -185,7 +185,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         const size_t alignRingBuffer = 0x1000;
         engineInfo.pRingBuffer = alignedMalloc(engineInfo.sizeRingBuffer, alignRingBuffer);
         engineInfo.ggttRingBuffer = gttRemap.map(engineInfo.pRingBuffer, engineInfo.sizeRingBuffer);
-        auto physRingBuffer = ggtt->map(engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, getGTTBits(), getMemoryBankForGtt());
+        auto physRingBuffer = ggtt->map(engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, this->getGTTBits(), getMemoryBankForGtt());
 
         {
             std::ostringstream str;
@@ -213,7 +213,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     // Write our LRCA
     {
         engineInfo.ggttLRCA = gttRemap.map(engineInfo.pLRCA, sizeLRCA);
-        auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, getGTTBits(), getMemoryBankForGtt());
+        auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, this->getGTTBits(), getMemoryBankForGtt());
 
         {
             std::ostringstream str;
@@ -365,7 +365,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             memset(pTail, 0, sizeToWrap);
             // write remaining ring
 
-            auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, getGTTBits(), getMemoryBankForGtt());
+            auto physDumpStart = ggtt->map(ggttTail, sizeToWrap, this->getGTTBits(), getMemoryBankForGtt());
             AUB::addMemoryWrite(
                 *stream,
                 physDumpStart,
@@ -415,7 +415,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             stream->addComment(str.str().c_str());
         }
 
-        auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, getGTTBits(), getMemoryBankForGtt());
+        auto physDumpStart = ggtt->map(ggttDumpStart, dumpLength, this->getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
             *stream,
             physDumpStart,
@@ -431,7 +431,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             stream->addComment(str.str().c_str());
         }
 
-        auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRingBuffer), getGTTBits(), getMemoryBankForGtt());
+        auto physLRCA = ggtt->map(engineInfo.ggttLRCA, sizeof(engineInfo.tailRingBuffer), this->getGTTBits(), getMemoryBankForGtt());
         AUB::addMemoryWrite(
             *stream,
             physLRCA + 0x101c,
@@ -762,11 +762,6 @@ int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpace(int hint) {
 template <typename GfxFamily>
 int AUBCommandStreamReceiverHw<GfxFamily>::getAddressSpaceFromPTEBits(uint64_t entryBits) const {
     return AubMemDump::AddressSpaceValues::TraceNonlocal;
-}
-
-template <typename GfxFamily>
-uint64_t AUBCommandStreamReceiverHw<GfxFamily>::getGTTBits() const {
-    return 0;
 }
 
 template <typename GfxFamily>
