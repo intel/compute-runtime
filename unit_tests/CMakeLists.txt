@@ -144,12 +144,14 @@ target_include_directories(igdrcl_tests BEFORE PRIVATE ${IGDRCL_SOURCE_DIR}/unit
 
 if(WIN32)
   set(cloc_cmd_prefix cloc)
+  set(ir_extension ".spv")
 else()
   if(DEFINED IGDRCL__IGC_LIBRARY_PATH)
     set(cloc_cmd_prefix LD_LIBRARY_PATH=${IGDRCL__IGC_LIBRARY_PATH} $<TARGET_FILE:cloc>)
   else()
     set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
   endif()
+  set(ir_extension ".bc")
 endif()
 
 function(neo_gen_kernels target platform_name suffix)
@@ -163,7 +165,7 @@ function(neo_gen_kernels target platform_name suffix)
 
     set(outputpath_base "${outputdir}${basename}_${suffix}")
     set(output_files
-      ${outputpath_base}.bc
+      ${outputpath_base}${ir_extension}
       ${outputpath_base}.bin
       ${outputpath_base}.gen
     )
@@ -194,7 +196,7 @@ function(neo_gen_kernel_with_options target platform_name suffix filepath)
 
     set(outputpath_base "${outputdir}/${basename}_${suffix}")
     set(output_files
-      ${outputpath_base}.bc${argwospaces}
+      ${outputpath_base}${ir_extension}${argwospaces}
       ${outputpath_base}.bin${argwospaces}
       ${outputpath_base}.gen${argwospaces}
     )
@@ -228,7 +230,7 @@ function(neo_gen_kernel_with_kernel_debug_options target platform_name suffix fi
 
   set(outputpath_base "${outputdir}/${argwospaces}_${suffix}")
   set(output_files
-    ${outputpath_base}.bc
+    ${outputpath_base}${ir_extension}
     ${outputpath_base}.bin
     ${outputpath_base}.gen
     ${outputpath_base}.dbg
