@@ -6,7 +6,7 @@
  */
 
 #pragma once
-
+#include "runtime/gen_common/aub_mapper_base.h"
 #include "runtime/helpers/hw_helper.h"
 
 namespace OCLRT {
@@ -358,6 +358,13 @@ struct GENX {
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static MEDIA_STATE_FLUSH cmdInitMediaStateFlush;
     static MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;
+};
+
+template <>
+struct AUBFamilyMapper<GENX> {
+    static const AubMemDump::LrcaHelper *csTraits[EngineType::NUM_ENGINES];
+    static const MMIOList globalMMIO;
+    static const MMIOList *perEngineMMIO[EngineType::NUM_ENGINES];
 };
 
 } // namespace OCLRT

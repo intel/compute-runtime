@@ -10,11 +10,25 @@
 #include "runtime/command_stream/preemption.inl"
 #include "runtime/device_queue/device_queue_hw.h"
 #include "runtime/device_queue/device_queue_hw.inl"
+#include "runtime/gen_common/aub_mapper.h"
 #include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/kernel_commands.inl"
 #include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {
+
+static AubMemDump::LrcaHelperRcs rcs(0x000000);
+static AubMemDump::LrcaHelperBcs bcs(0x020000);
+static AubMemDump::LrcaHelperVcs vcs(0x010000);
+static AubMemDump::LrcaHelperVecs vecs(0x018000);
+
+const AubMemDump::LrcaHelper *AUBFamilyMapper<GENX>::csTraits[EngineType::NUM_ENGINES] = {
+    &rcs,
+    &bcs,
+    &vcs,
+    &vecs};
+
+const MMIOList AUBFamilyMapper<GENX>::globalMMIO;
 
 bool (*GENX::isSimulationFcn)(unsigned short) = nullptr;
 
@@ -42,6 +56,10 @@ template <>
 bool HwHelperHw<GENX>::setupPreemptionRegisters(HardwareInfo *pHwInfo, bool enable) {
     pHwInfo->capabilityTable.whitelistedRegisters.csChicken1_0x2580 = enable;
     return enable;
+}
+template <>
+const AubMemDump::LrcaHelper &HwHelperHw<GENX>::getCsTraits(EngineType engineType) const {
+    return *AUBFamilyMapper<GENX>::csTraits[engineType];
 }
 
 struct hw_helper_static_init {

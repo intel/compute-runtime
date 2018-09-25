@@ -5,6 +5,7 @@
  *
  */
 
+#pragma once
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/graphics_allocation.h"
 

@@ -64,4 +64,9 @@ template <typename Family>
 size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
     return 32;
 }
+
+template <typename Family>
+const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(EngineType engineType) const {
+    return *AUBFamilyMapper<Family>::csTraits[engineType];
+}
 } // namespace OCLRT

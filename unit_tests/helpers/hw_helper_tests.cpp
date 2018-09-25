@@ -68,6 +68,14 @@ HWTEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTy
     EXPECT_EQ(SipKernelType::Csr, sipType);
 }
 
+HWTEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTraitsIsReturned) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_NE(nullptr, &helper);
+
+    auto &csTraits = helper.getCsTraits(EngineType::ENGINE_RCS);
+    EXPECT_STREQ("RCS", csTraits.name);
+}
+
 TEST(DwordBuilderTest, setNonMaskedBits) {
     uint32_t dword = 0;
 

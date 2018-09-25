@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/gen_common/aub_mapper.h"
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/built_ins/sip.h"
@@ -32,6 +33,7 @@ class HwHelper {
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
+    virtual const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const = 0;
 
   protected:
     HwHelper(){};
@@ -66,6 +68,8 @@ class HwHelperHw : public HwHelper {
         using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
         return sizeof(INTERFACE_DESCRIPTOR_DATA);
     }
+
+    const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const override;
 
     size_t getMaxBarrierRegisterPerSlice() const override;
 

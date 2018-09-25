@@ -9,6 +9,7 @@
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/tbx_command_stream_receiver.h"
 #include "runtime/device/device.h"
+#include "runtime/helpers/hw_helper.h"
 
 #include "gen_cmd_parse.h"
 
@@ -24,12 +25,13 @@ namespace OCLRT {
 void AUBCommandStreamFixture::SetUp(CommandQueue *pCmdQ) {
     ASSERT_NE(pCmdQ, nullptr);
     auto &device = reinterpret_cast<MockDevice &>(pCmdQ->getDevice());
+    const auto &hwInfo = device.getHardwareInfo();
+    auto &hwHelper = HwHelper::get(hwInfo.pPlatform->eRenderCoreFamily);
 
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
     std::stringstream strfilename;
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name();
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(device.getEngineType()).name;
 
-    const auto &hwInfo = device.getHardwareInfo();
     if (testMode == TestMode::AubTestsWithTbx) {
         pCommandStreamReceiver = TbxCommandStreamReceiver::create(hwInfo, true, *device.executionEnvironment);
     } else {
