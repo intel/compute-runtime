@@ -292,12 +292,9 @@ class MockGLSharingFunctions : public GLSharingFunctions {
         ((ContextInfo *)pContextInfo)->DeviceHandle = 2;
         return GLSetSharedOCLContextStateReturnedValue;
     }
+    using GLSharingFunctions::glGetIntegerv;
+    using GLSharingFunctions::glGetString;
 
-    void *loadGlFunction(const char *FunctionName, DWORD HDC) { return GLSharingFunctions::loadGlFunction(FunctionName, HDC); };
-
-    void setGetStringFcn(PFNglGetString fcn) { glGetString = fcn; }
-
-    void setglGetIntegervToNull() { glGetIntegerv = nullptr; }
     MockGLSharingFunctions() {
         glGetString = (PFNglGetString)glGetStringTest;
         glGetStringi = (PFNglGetStringi)glGetStringiTest;
