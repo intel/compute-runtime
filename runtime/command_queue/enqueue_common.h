@@ -611,6 +611,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     }
 
     DebugManager.log(DebugManager.flags.PrintDebugMessages.get(), "preemption = ", static_cast<int>(dispatchFlags.preemptionMode));
+    printDebugString(DebugManager.flags.PrintDebugMessages.get(), stdout, "preemption = %d.\n", static_cast<int>(dispatchFlags.preemptionMode));
+
     CompletionStamp completionStamp = commandStreamReceiver.flushTask(
         commandStream,
         commandStreamStart,
