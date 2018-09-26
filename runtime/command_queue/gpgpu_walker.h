@@ -137,7 +137,9 @@ class GpgpuWalkerHelper {
         const size_t startWorkGroups[3],
         const size_t numWorkGroups[3],
         const size_t localWorkSizesIn[3],
-        uint32_t simd);
+        uint32_t simd,
+        uint32_t workDim,
+        bool localIdsGeneration);
 
     static void dispatchProfilingCommandsStart(
         HwTimeStamps &hwTimeStamps,

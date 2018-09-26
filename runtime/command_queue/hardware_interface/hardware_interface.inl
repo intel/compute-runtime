@@ -217,7 +217,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
         auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pWalkerCmd, globalOffsets, startWorkGroups,
-                                                                                    numWorkGroups, localWorkSizes, simd);
+                                                                                    numWorkGroups, localWorkSizes, simd, dim, localIdsGeneration);
 
         DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
         setOffsetCrossThreadData(pWalkerCmd, offsetCrossThreadData, interfaceDescriptorIndex);

@@ -108,7 +108,9 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     const size_t startWorkGroups[3],
     const size_t numWorkGroups[3],
     const size_t localWorkSizesIn[3],
-    uint32_t simd) {
+    uint32_t simd,
+    uint32_t workDim,
+    bool localIdsGeneration) {
     WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
 
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
@@ -585,7 +587,7 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
 
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
-    auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd);
+    auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd, 1, localIdsGeneration);
 
     pGpGpuWalkerCmd->setIndirectDataStartAddress((uint32_t)offsetCrossThreadData);
     DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
