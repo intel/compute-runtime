@@ -34,10 +34,14 @@ if(UNIX)
   foreach(TARGET_tmp ${IGDRCL__IGC_TARGETS})
     list(APPEND IGC_TARGET_FILES $<TARGET_FILE:${TARGET_tmp}>)
   endforeach()
+  if(TARGET ${GMMUMD_LIB_NAME})
+    set(GMMLIB_TARGET_FILE $<TARGET_FILE:${GMMUMD_LIB_NAME}>)
+  endif()
 
   install(FILES
     ${IGDRCL_BINARY_DIR}/bin/libigdrcl.so
     ${IGC_TARGET_FILES}
+    ${GMMLIB_TARGET_FILE}
     DESTINATION ${CMAKE_INSTALL_LIBDIR}
     COMPONENT igdrcl
   )
