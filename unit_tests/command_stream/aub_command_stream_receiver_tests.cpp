@@ -18,6 +18,7 @@
 #include "test.h"
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/mocks/mock_aub_file_stream.h"
 #include "unit_tests/mocks/mock_aub_subcapture_manager.h"
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_gmm.h"
@@ -96,33 +97,6 @@ struct MockAubCsrToTestDumpAubNonWritable : public AUBCommandStreamReceiverHw<Gf
     bool writeMemory(GraphicsAllocation &gfxAllocation) override {
         return true;
     }
-};
-
-struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
-    bool init(uint32_t stepping, uint32_t device) override {
-        initCalledCnt++;
-        return true;
-    }
-    void flush() override {
-        flushCalled = true;
-    }
-    std::unique_lock<std::mutex> lockStream() override {
-        lockStreamCalled = true;
-        return AUBCommandStreamReceiver::AubFileStream::lockStream();
-    }
-    void expectMemory(uint64_t physAddress, const void *memory, size_t size, uint32_t addressSpace) override {
-        physAddressCapturedFromExpectMemory = physAddress;
-        memoryCapturedFromExpectMemory = reinterpret_cast<uintptr_t>(memory);
-        sizeCapturedFromExpectMemory = size;
-        addressSpaceCapturedFromExpectMemory = addressSpace;
-    }
-    uint32_t initCalledCnt = 0;
-    bool flushCalled = false;
-    bool lockStreamCalled = false;
-    uint64_t physAddressCapturedFromExpectMemory = 0;
-    uintptr_t memoryCapturedFromExpectMemory = 0;
-    size_t sizeCapturedFromExpectMemory = 0;
-    uint32_t addressSpaceCapturedFromExpectMemory = 0;
 };
 
 struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
@@ -229,6 +203,28 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipl
     EXPECT_EQ(aubCsr1->stream, aubCsr2->stream);
 }
 
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSameFileStream) {
+    ExecutionEnvironment executionEnvironment;
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto streamProvider1 = executionEnvironment.aubCenter->getStreamProvider();
+    EXPECT_NE(nullptr, streamProvider1);
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto streamProvider2 = executionEnvironment.aubCenter->getStreamProvider();
+    EXPECT_NE(nullptr, streamProvider2);
+    EXPECT_EQ(streamProvider1, streamProvider2);
+}
+
+HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesAreCreatedThenTheyUseTheSamePhysicalAddressAllocator) {
+    ExecutionEnvironment executionEnvironment;
+    auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto physicalAddressAlocator1 = executionEnvironment.aubCenter->getPhysicalAddressAllocator();
+    EXPECT_NE(nullptr, physicalAddressAlocator1);
+    auto aubCsr2 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, executionEnvironment);
+    auto physicalAddressAlocator2 = executionEnvironment.aubCenter->getPhysicalAddressAllocator();
+    EXPECT_NE(nullptr, physicalAddressAlocator2);
+    EXPECT_EQ(physicalAddressAlocator1, physicalAddressAlocator2);
+}
+
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverInSubCaptureModeWhenItIsCreatedThenFileIsNotCreated) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.AUBDumpSubCaptureMode.set(static_cast<int32_t>(AubSubCaptureManager::SubCaptureMode::Filter));
@@ -258,84 +254,6 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCsrInSubCaptureModeWhenItIsCreat
     EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelStartIdx);
     EXPECT_EQ(static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelEndIdx.get()), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelEndIdx);
     EXPECT_STREQ(DebugManager.flags.AUBDumpFilterKernelName.get().c_str(), aubCsr->subCaptureManager->subCaptureFilter.dumpKernelName.c_str());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledWithInvalidFileNameThenFileIsNotOpened) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, "", true, *pDevice->executionEnvironment));
-    std::string invalidFileName = "";
-
-    aubCsr->initFile(invalidFileName);
-    EXPECT_FALSE(aubCsr->isFileOpen());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileIsOpenedAndFileNameIsStored) {
-    std::unique_ptr<AUBCommandStreamReceiverHw<FamilyType>> aubCsr(new AUBCommandStreamReceiverHw<FamilyType>(**platformDevices, "", true, *pDevice->executionEnvironment));
-    std::string fileName = "file_name.aub";
-
-    aubCsr->initFile(fileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
-
-    aubCsr->closeFile();
-    EXPECT_FALSE(aubCsr->isFileOpen());
-    EXPECT_TRUE(aubCsr->getFileName().empty());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileWithSpecifiedNameIsReopened) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
-    std::string fileName = "file_name.aub";
-    std::string newFileName = "new_file_name.aub";
-
-    aubCsr->reopenFile(fileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(fileName.c_str(), aubCsr->getFileName().c_str());
-
-    aubCsr->reopenFile(newFileName);
-    EXPECT_TRUE(aubCsr->isFileOpen());
-    EXPECT_STREQ(newFileName.c_str(), aubCsr->getFileName().c_str());
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenInitFileIsCalledThenFileShouldBeInitializedWithHeaderOnce) {
-    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>(**platformDevices, "", true, *pDevice->executionEnvironment);
-    std::string fileName = "file_name.aub";
-
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-    ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    aubCsr->stream = mockAubFileStreamPtr;
-
-    aubCsr->initFile(fileName);
-    aubCsr->initFile(fileName);
-
-    EXPECT_EQ(1u, mockAubFileStreamPtr->initCalledCnt);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenOpenFileIsCalledThenFileStreamShouldBeLocked) {
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    std::string fileName = "file_name.aub";
-
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-    ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    aubCsr->stream = mockAubFileStreamPtr;
-
-    aubCsr->openFile(fileName);
-    EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
-}
-
-HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenReopenFileIsCalledThenFileStreamShouldBeLocked) {
-    auto aubExecutionEnvironment = getEnvironment<AUBCommandStreamReceiverHw<FamilyType>>(true, true, true);
-    auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
-    std::string fileName = "file_name.aub";
-
-    std::unique_ptr<AUBCommandStreamReceiver::AubFileStream> mockAubFileStream(new MockAubFileStream());
-    MockAubFileStream *mockAubFileStreamPtr = static_cast<MockAubFileStream *>(mockAubFileStream.get());
-    ASSERT_NE(nullptr, mockAubFileStreamPtr);
-    aubCsr->stream = mockAubFileStreamPtr;
-
-    aubCsr->reopenFile(fileName);
-    EXPECT_TRUE(mockAubFileStreamPtr->lockStreamCalled);
 }
 
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenFlushIsCalledThenFileStreamShouldBeLocked) {

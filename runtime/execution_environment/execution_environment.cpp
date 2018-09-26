@@ -6,7 +6,7 @@
  */
 
 #include "runtime/execution_environment/execution_environment.h"
-#include "runtime/command_stream/aub_stream_provider.h"
+#include "runtime/command_stream/aub_center.h"
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/source_level_debugger/source_level_debugger.h"
@@ -22,9 +22,9 @@ ExecutionEnvironment::ExecutionEnvironment() = default;
 ExecutionEnvironment::~ExecutionEnvironment() = default;
 extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
-void ExecutionEnvironment::initAubStreamProvider() {
-    if (!aubStreamProvider) {
-        aubStreamProvider.reset(new AubFileStreamProvider());
+void ExecutionEnvironment::initAubCenter() {
+    if (!aubCenter) {
+        aubCenter.reset(new AubCenter());
     }
 }
 void ExecutionEnvironment::initGmm(const HardwareInfo *hwInfo) {

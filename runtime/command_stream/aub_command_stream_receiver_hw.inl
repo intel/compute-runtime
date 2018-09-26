@@ -21,6 +21,7 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
 
@@ -32,17 +33,29 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
       subCaptureManager(std::make_unique<AubSubCaptureManager>(fileName)),
       standalone(standalone) {
 
-    createPhysicalAddressAllocator();
+    executionEnvironment.initAubCenter();
+    auto aubCenter = executionEnvironment.aubCenter.get();
+    UNRECOVERABLE_IF(nullptr == aubCenter);
 
-    ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator.get());
-    ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
+    if (!aubCenter->getPhysicalAddressAllocator()) {
+        aubCenter->initPhysicalAddressAllocator(createPhysicalAddressAllocator());
+    }
+    auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
+    UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);
+
+    ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator);
+    ggtt = std::make_unique<PDPE>(physicalAddressAllocator);
+
+    auto streamProvider = aubCenter->getStreamProvider();
+    UNRECOVERABLE_IF(nullptr == streamProvider);
+
+    stream = streamProvider->getStream();
+    UNRECOVERABLE_IF(nullptr == stream);
 
     this->dispatchMode = DispatchMode::BatchedDispatch;
     if (DebugManager.flags.CsrDispatchMode.get()) {
         this->dispatchMode = (DispatchMode)DebugManager.flags.CsrDispatchMode.get();
     }
-    executionEnvironment.initAubStreamProvider();
-    stream = executionEnvironment.aubStreamProvider->getStream();
     if (DebugManager.flags.AUBDumpSubCaptureMode.get()) {
         this->subCaptureManager->subCaptureMode = static_cast<AubSubCaptureManager::SubCaptureMode>(DebugManager.flags.AUBDumpSubCaptureMode.get());
         this->subCaptureManager->subCaptureFilter.dumpKernelStartIdx = static_cast<uint32_t>(DebugManager.flags.AUBDumpFilterKernelStartIdx.get());
@@ -770,8 +783,8 @@ uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
 }
 
 template <typename GfxFamily>
-void AUBCommandStreamReceiverHw<GfxFamily>::createPhysicalAddressAllocator() {
-    physicalAddressAllocator = std::make_unique<PhysicalAddressAllocator>();
+PhysicalAddressAllocator *AUBCommandStreamReceiverHw<GfxFamily>::createPhysicalAddressAllocator() {
+    return new PhysicalAddressAllocator();
 }
 
 } // namespace OCLRT

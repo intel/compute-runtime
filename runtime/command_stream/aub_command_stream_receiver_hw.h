@@ -8,9 +8,11 @@
 #pragma once
 #include "runtime/gen_common/aub_mapper.h"
 #include "command_stream_receiver_simulated_hw.h"
+#include "runtime/command_stream/aub_center.h"
 #include "runtime/command_stream/aub_command_stream_receiver.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "runtime/memory_manager/page_table.h"
+#include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
 namespace OCLRT {
@@ -90,7 +92,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t aubDeviceId;
     bool standalone;
 
-    std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
     std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
@@ -111,7 +112,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
 
   protected:
     int getAddressSpace(int hint);
-    void createPhysicalAddressAllocator();
+    PhysicalAddressAllocator *createPhysicalAddressAllocator();
 
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;

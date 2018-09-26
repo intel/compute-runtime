@@ -6,7 +6,7 @@
  */
 
 #include "runtime/built_ins/built_ins.h"
-#include "runtime/command_stream/aub_stream_provider.h"
+#include "runtime/command_stream/aub_center.h"
 #include "runtime/compiler_interface/compiler_interface.h"
 #include "runtime/device/device.h"
 #include "runtime/execution_environment/execution_environment.h"
@@ -120,16 +120,19 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeIsCalledMultip
     EXPECT_EQ(nullptr, executionEnvironment->commandStreamReceivers[0u].get());
 }
 
-TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubStreamProviderIsCalledThenItIsInitalizedOnce) {
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
     ExecutionEnvironment executionEnvironment;
-    executionEnvironment.initAubStreamProvider();
-    auto currentAubStreamProvider = executionEnvironment.aubStreamProvider.get();
+    executionEnvironment.initAubCenter();
+    auto currentAubCenter = executionEnvironment.aubCenter.get();
+    EXPECT_NE(nullptr, currentAubCenter);
+    auto currentAubStreamProvider = currentAubCenter->getStreamProvider();
     EXPECT_NE(nullptr, currentAubStreamProvider);
     auto currentAubFileStream = currentAubStreamProvider->getStream();
     EXPECT_NE(nullptr, currentAubFileStream);
-    executionEnvironment.initAubStreamProvider();
-    EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubStreamProvider.get());
-    EXPECT_EQ(currentAubFileStream, executionEnvironment.aubStreamProvider->getStream());
+    executionEnvironment.initAubCenter();
+    EXPECT_EQ(currentAubCenter, executionEnvironment.aubCenter.get());
+    EXPECT_EQ(currentAubStreamProvider, executionEnvironment.aubCenter->getStreamProvider());
+    EXPECT_EQ(currentAubFileStream, executionEnvironment.aubCenter->getStreamProvider()->getStream());
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
@@ -155,8 +158,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct MemoryMangerMock : public DestructorCounted<OsAgnosticMemoryManager, 5> {
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct AubFileStreamProviderMock : public DestructorCounted<AubFileStreamProvider, 4> {
-        AubFileStreamProviderMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
+    struct AubCenterMock : public DestructorCounted<AubCenter, 4> {
+        AubCenterMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct CommandStreamReceiverMock : public DestructorCounted<MockCommandStreamReceiver, 3> {
         CommandStreamReceiverMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -175,7 +178,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     executionEnvironment->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, platformDevices[0]);
     executionEnvironment->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId);
-    executionEnvironment->aubStreamProvider = std::make_unique<AubFileStreamProviderMock>(destructorId);
+    executionEnvironment->aubCenter = std::make_unique<AubCenterMock>(destructorId);
     executionEnvironment->commandStreamReceivers.push_back(std::make_unique<CommandStreamReceiverMock>(destructorId));
     executionEnvironment->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
