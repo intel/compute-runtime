@@ -21,6 +21,8 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
 
     MockMemoryManager() : OsAgnosticMemoryManager(false, false){};
     MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false) {}
+    MockMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, aubUsage) {}
+
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);

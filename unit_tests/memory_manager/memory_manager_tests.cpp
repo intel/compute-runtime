@@ -8,6 +8,7 @@
 #include "runtime/event/event.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/timestamp_packet.h"
+#include "runtime/memory_manager/memory_constants.h"
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_context.h"
 #include "runtime/os_interface/os_interface.h"
@@ -1286,6 +1287,48 @@ TEST(OsAgnosticMemoryManager, givenFullGpuAddressSpaceWhenAllocateGraphicsMemory
     EXPECT_EQ(1u, allocation->fragmentsStorage.fragmentCount);
 
     memoryManager.freeGraphicsMemory(allocation);
+}
+
+TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
+    MockMemoryManager memoryManager(false, false, false);
+    uint64_t heap32Base = 0x80000000000ul;
+
+    if (is32bit) {
+        heap32Base = 0;
+    }
+    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+}
+
+TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
+    MockMemoryManager memoryManager(false, true, false);
+    uint64_t heap32Base = 0x80000000000ul;
+
+    if (is32bit) {
+        heap32Base = 0;
+    }
+    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+}
+
+TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
+    MockMemoryManager memoryManager(false, false, true);
+    uint64_t heap32Base = 0x80000000000ul;
+
+    if (is32bit) {
+        heap32Base = 0;
+    }
+    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
+}
+
+TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
+    MockMemoryManager memoryManager(false, true, true);
+    uint64_t heap32Base = 0x80000000000ul;
+
+    if (is32bit) {
+        heap32Base = 0;
+    } else {
+        heap32Base = 0x40000000000ul;
+    }
+    EXPECT_EQ(heap32Base, memoryManager.allocator32Bit->getBase());
 }
 
 TEST_F(MemoryAllocatorTest, GivenSizeWhenGmmIsCreatedThenSuccess) {

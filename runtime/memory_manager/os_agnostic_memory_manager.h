@@ -38,13 +38,12 @@ class OsAgnosticMemoryManager : public MemoryManager {
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
     OsAgnosticMemoryManager() : OsAgnosticMemoryManager(false, false){};
-    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory) : MemoryManager(enable64kbPages, enableLocalMemory) {
-        uint64_t heap32Base = 0x80000000000ul;
-        if (sizeof(uintptr_t) == 4) {
-            heap32Base = 0x0;
-        }
-        allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(heap32Base, GB - 2 * 4096));
+    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, false){};
+
+    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage) : MemoryManager(enable64kbPages, enableLocalMemory) {
+        allocator32Bit = std::unique_ptr<Allocator32bit>(create32BitAllocator(aubUsage));
     };
+
     ~OsAgnosticMemoryManager() override;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override;
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
@@ -71,6 +70,8 @@ class OsAgnosticMemoryManager : public MemoryManager {
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
 
     void turnOnFakingBigAllocations();
+
+    Allocator32bit *create32BitAllocator(bool enableLocalMemory);
 
   private:
     unsigned long long counter = 0;

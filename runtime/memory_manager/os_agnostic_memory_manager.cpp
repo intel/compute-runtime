@@ -89,10 +89,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemory(size_t 
 
     auto allocationSize = alignUp(size, MemoryConstants::pageSize);
     void *ptrAlloc = nullptr;
-
-    if (size < 0xfffff000)
-        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
     auto gpuAddress = allocator32Bit->allocate(allocationSize);
+
+    if (size < 0xfffff000) {
+        ptrAlloc = alignedMallocWrapper(allocationSize, MemoryConstants::allocationAlignment);
+    }
 
     MemoryAllocation *memoryAllocation = nullptr;
     if (ptrAlloc != nullptr) {
@@ -226,5 +227,19 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryForImage(Imag
     }
 
     return alloc;
+}
+
+Allocator32bit *OsAgnosticMemoryManager::create32BitAllocator(bool aubUsage) {
+    uint64_t allocatorSize = MemoryConstants::gigaByte - 2 * 4096;
+    uint64_t heap32Base = 0x80000000000ul;
+
+    if (is64bit && this->localMemorySupported && aubUsage) {
+        heap32Base = 0x40000000000ul;
+    }
+
+    if (is32bit) {
+        heap32Base = 0x0;
+    }
+    return new Allocator32bit(heap32Base, allocatorSize);
 }
 } // namespace OCLRT
