@@ -46,7 +46,7 @@ endif()
 
 add_custom_target(run_mt_unit_tests)
 
-add_dependencies(igdrcl_mt_tests test_dynamic_lib)
+add_dependencies(igdrcl_mt_tests test_dynamic_lib mock_gmm)
 
 create_project_source_tree(igdrcl_mt_tests ${IGDRCL_SOURCE_DIR}/runtime ${IGDRCL_SOURCE_DIR}/unit_tests)
 
@@ -57,10 +57,6 @@ if(NOT WIN32)
 endif()
 
 set_target_properties(run_mt_unit_tests PROPERTIES FOLDER ${TEST_PROJECTS_FOLDER})
-
-if(NOT USE_STATIC_GMM)
-  add_dependencies(igdrcl_mt_tests mock_gmm)
-endif()
 
 function(run_mt_tests target slices subslices eu_per_ss)
   add_custom_target(run_${target}_mt_unit_tests DEPENDS igdrcl_mt_tests)
