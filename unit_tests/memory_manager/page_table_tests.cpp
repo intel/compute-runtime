@@ -215,6 +215,38 @@ TEST_F(PageTableTests48, givenReservedPhysicalAddressWhenPageWalkIsCalledThenPag
     }
 }
 
+TEST_F(PageTableTests48, givenBigGpuAddressWhenPageWalkIsCalledThenPageTablesAreFilledWithProperAddresses) {
+    if (is64Bit) {
+        std::unique_ptr<MockPML4> pageTable(std::make_unique<MockPML4>(&allocator));
+
+        int shiftPML4 = is64Bit ? (47) : 0;
+        int shiftPDP = is64Bit ? (9 + 9 + 12) : 0;
+
+        uintptr_t gpuVa = (uintptr_t(0x1) << (shiftPML4)) | (uintptr_t(0x1) << (shiftPDP)) | (uintptr_t(0x1) << (9 + 12)) | 0x100;
+
+        size_t size = 10 * pageSize;
+
+        size_t walked = 0u;
+        auto address = allocator.mainAllocator.load();
+
+        PageWalker walker = [&](uint64_t physAddress, size_t size, size_t offset, uint64_t entryBits) {
+            walked += size;
+        };
+        pageTable->pageWalk(gpuVa, size, 0, 0, walker, MemoryBanks::MainBank);
+
+        EXPECT_EQ(size, walked);
+
+        ASSERT_NE(nullptr, pageTable->entries[0x100]);
+        ASSERT_NE(nullptr, pageTable->entries[0x100]->entries[1]);
+        ASSERT_NE(nullptr, pageTable->entries[0x100]->entries[1]->entries[1]);
+
+        for (uint32_t i = 0; i < 10; i++) {
+            EXPECT_EQ(reinterpret_cast<void *>(address | 0x1), pageTable->entries[0x100]->entries[1]->entries[1]->entries[i]);
+            address += pageSize;
+        }
+    }
+}
+
 TEST_F(PageTableTests48, givenZeroEntryBitsWhenPageWalkIsCalledThenPageTableEntryHasPresentBitSet) {
     std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
         pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));

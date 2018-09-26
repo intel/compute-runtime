@@ -450,7 +450,7 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physLRCA + 0x101c,
             &engineInfo.tailRingBuffer,
             sizeof(engineInfo.tailRingBuffer),
-            getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
+            getAddressSpace(getCsTraits(engineType).aubHintLRCA));
 
         DEBUG_BREAK_IF(engineInfo.tailRingBuffer >= engineInfo.sizeRingBuffer);
     }

@@ -18,7 +18,7 @@ struct AubWriteCopyReadBuffer : public AUBFixture,
                                 public ::testing::Test {
 
     void SetUp() override {
-        AUBFixture::SetUp();
+        AUBFixture::SetUp(nullptr);
     }
 
     void TearDown() override {

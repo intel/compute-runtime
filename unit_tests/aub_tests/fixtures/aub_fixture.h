@@ -24,8 +24,8 @@ namespace OCLRT {
 
 class AUBFixture : public CommandQueueHwFixture {
   public:
-    void SetUp() {
-        const HardwareInfo &hwInfo = *platformDevices[0];
+    void SetUp(const HardwareInfo *hardwareInfo) {
+        const HardwareInfo &hwInfo = hardwareInfo ? *hardwareInfo : *platformDevices[0];
         uint32_t deviceIndex = 0;
 
         const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
@@ -71,5 +71,8 @@ class AUBFixture : public CommandQueueHwFixture {
     std::unique_ptr<MockDevice> device;
 
     ExecutionEnvironment *executionEnvironment;
+
+  private:
+    using CommandQueueHwFixture::SetUp;
 };
 } // namespace OCLRT

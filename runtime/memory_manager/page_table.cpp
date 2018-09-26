@@ -19,6 +19,7 @@ uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memor
     uintptr_t res = -1;
     bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
     uint64_t newEntryBits = entryBits & 0xfff;
+    auto entriesMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
     newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
@@ -26,9 +27,9 @@ uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memor
             uint64_t tmp = allocator->reservePage(memoryBank);
             entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
         } else if (updateEntryBits) {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | newEntryBits);
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & entriesMask) | newEntryBits);
         }
-        res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u, res);
+        res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & entriesMask, res);
     }
     return (res & ~newEntryBits) + (vm & (pageSize - 1));
 }
@@ -43,6 +44,7 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits,
     uintptr_t rem = vm & (pageSize - 1);
     bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
     uint64_t newEntryBits = entryBits & 0xfff;
+    auto entriesMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
     newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
@@ -50,9 +52,9 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits,
             uint64_t tmp = allocator->reservePage(memoryBank);
             entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
         } else if (updateEntryBits) {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u) | newEntryBits);
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & entriesMask) | newEntryBits);
         }
-        res = reinterpret_cast<uintptr_t>(entries[index]) & 0xfffff000u;
+        res = reinterpret_cast<uintptr_t>(entries[index]) & entriesMask;
 
         size_t lSize = std::min(pageSize - rem, size);
         pageWalker((res & ~0x1) + rem, lSize, offset, reinterpret_cast<uintptr_t>(entries[index]) & 0xfffu);
