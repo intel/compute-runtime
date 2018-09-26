@@ -240,8 +240,8 @@ endif()
 
 # GmmLib detection
 if(NOT GMMUMD_LIB_NAME)
-  if(TARGET gmm_umd)
-    set(GMMUMD_LIB_NAME "gmm_umd")
+  if(TARGET igfx_gmmumd_dll)
+    set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
   else()
     if(DEFINED GMM_SOURCE_DIR)
       get_filename_component(GMM_SOURCE_DIR "${GMM_SOURCE_DIR}" ABSOLUTE)
@@ -269,7 +269,6 @@ if(NOT GMMUMD_LIB_NAME)
           set(IGDRCL__GMM_LIBRARY_PATH "${IGDRCL__GMM_LIBDIR}")
         endif()
 
-        set(USE_STATIC_GMM FALSE)
         set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
 
         set(IGDRCL__GMM_INCLUDE_DIR ${IGDRCL__GMM_INCLUDE_DIRS})
@@ -288,29 +287,19 @@ if(NOT GMMUMD_LIB_NAME)
         set(GMMUMD_LIB_NAME "igfx_gmmumd_dll")
       endif()
 
-      get_target_property(target_type ${GMMUMD_LIB_NAME} TYPE)
-
-      if(target_type STREQUAL "STATIC_LIBRARY")
-        set(USE_STATIC_GMM TRUE)
-      endif()
       set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
     else()
       message(FATAL_ERROR "GmmLib not found!")
     endif()
   endif()
 else()
-  get_target_property(target_type ${GMMUMD_LIB_NAME} TYPE)
-
-  if(target_type STREQUAL "STATIC_LIBRARY")
-    set(USE_STATIC_GMM TRUE)
-  endif()
   set(UMKM_SHAREDDATA_INCLUDE_PATHS $<TARGET_PROPERTY:${GMMUMD_LIB_NAME},INTERFACE_INCLUDE_DIRECTORIES>)
 endif()
 
 set(GMM_LIBRARY_NAME "igdgmm${NEO_BITS}")
 
 macro(copy_gmm_dll_for target)
-  if(NOT USE_STATIC_GMM AND NOT IGDRCL__GMM_FOUND)
+  if(NOT IGDRCL__GMM_FOUND)
     add_dependencies(${target} ${GMMUMD_LIB_NAME})
     add_custom_command(
       TARGET ${target}

@@ -82,15 +82,7 @@ else()
   )
 endif()
 
-target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
-
-link_directories(${GMM_LIB_PATHS})
-
-if(USE_STATIC_GMM)
-  target_link_libraries(${NEO_STATIC_LIB_NAME} ${GMMUMD_LIB_NAME})
-else()
-  target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC GMM_LIB_DLL)
-endif()
+target_compile_definitions(${NEO_STATIC_LIB_NAME} PUBLIC GMM_LIB_DLL DEFAULT_PLATFORM=${DEFAULT_SUPPORTED_PLATFORM})
 
 if(INSTRUMENTATION_LIB_NAME)
   add_dependencies(${NEO_STATIC_LIB_NAME} ${INSTRUMENTATION_LIB_NAME})
