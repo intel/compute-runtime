@@ -264,7 +264,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    void registerOsContext(OsContext *contextToRegister);
+    virtual void registerOsContext(OsContext *contextToRegister);
     size_t getOsContextCount() { return registeredOsContexts.size(); }
 
   protected:

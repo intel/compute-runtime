@@ -32,9 +32,9 @@ class WddmMemoryManagerFixture : public GmmEnvironmentFixture, public GdiDllFixt
         GdiDllFixture::TearDown();
         GmmEnvironmentFixture::TearDown();
     }
-
+    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
-    std::unique_ptr<WddmMock> wddm;
+    WddmMock *wddm;
 };
 
 typedef ::Test<WddmMemoryManagerFixture> WddmMemoryManagerTest;
@@ -43,32 +43,34 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
   public:
     void SetUp() {
         GmmEnvironmentFixture::SetUp();
-        wddm = (static_cast<WddmMock *>(Wddm::createWddm()));
+
+        gdi = new MockGdi();
+
+        wddm = static_cast<WddmMock *>(Wddm::createWddm());
+        wddm->gdi.reset(gdi);
+        constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
+        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
+        EXPECT_TRUE(wddm->init());
+
         osInterface = std::make_unique<OSInterface>();
         osInterface->get()->setWddm(wddm);
-        gdi = new MockGdi();
-        wddm->gdi.reset(gdi);
-        EXPECT_TRUE(wddm->init());
+
         osContext = new OsContext(osInterface.get(), 0u);
         osContext->incRefInternal();
-        uint64_t heap32Base = (uint64_t)(0x800000000000);
-        if (sizeof(uintptr_t) == 4) {
-            heap32Base = 0x1000;
-        }
-        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm));
-        //assert we have memory manager
-        ASSERT_NE(nullptr, memoryManager);
+
+        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm);
+        memoryManager->registerOsContext(osContext);
     }
 
     void TearDown() {
         osContext->decRefInternal();
         GmmEnvironmentFixture::TearDown();
     }
+
+    std::unique_ptr<OSInterface> osInterface;
     std::unique_ptr<MockWddmMemoryManager> memoryManager;
     WddmMock *wddm = nullptr;
-    std::unique_ptr<OSInterface> osInterface;
-    OsContext *osContext;
+    OsContext *osContext = nullptr;
     MockGdi *gdi = nullptr;
 };
 
@@ -145,15 +147,6 @@ class BufferWithWddmMemory : public ::testing::Test,
     void SetUp() {
         WddmMemoryManagerFixture::SetUp();
         tmp = context.getMemoryManager();
-        EXPECT_TRUE(wddm->init());
-        uint64_t heap32Base = (uint64_t)(0x800000000000);
-        if (sizeof(uintptr_t) == 4) {
-            heap32Base = 0x1000;
-        }
-        wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-        memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
-        //assert we have memory manager
-        ASSERT_NE(nullptr, memoryManager);
         context.setMemoryManager(memoryManager.get());
         flags = 0;
     }

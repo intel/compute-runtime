@@ -55,6 +55,8 @@ class WddmMemoryManager : public MemoryManager {
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
+    void registerOsContext(OsContext *contextToRegister) override;
+
     void obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) override;
@@ -112,7 +114,7 @@ class WddmMemoryManager : public MemoryManager {
     ResidencyContainer trimCandidateList;
     std::mutex trimCandidateListMutex;
     std::atomic<bool> residencyLock;
-    uint64_t lastPeriodicTrimFenceValue = 0;
+    std::vector<uint64_t> lastPeriodicTrimFenceValues;
     uint32_t trimCandidatesCount = 0;
     bool memoryBudgetExhausted = false;
     AlignedMallocRestrictions mallocRestrictions;

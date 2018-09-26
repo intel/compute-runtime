@@ -25,22 +25,21 @@ using namespace ::testing;
 void WddmMemoryManagerFixture::SetUp() {
     GmmEnvironmentFixture::SetUp();
     GdiDllFixture::SetUp();
-    wddm.reset(static_cast<WddmMock *>(Wddm::createWddm()));
-    ASSERT_NE(nullptr, wddm);
+
+    wddm = static_cast<WddmMock *>(Wddm::createWddm());
     if (platformDevices[0]->capabilityTable.ftrRenderCompressedBuffers || platformDevices[0]->capabilityTable.ftrRenderCompressedImages) {
         GMM_DEVICE_CALLBACKS_INT dummyDeviceCallbacks = {};
         GMM_TRANSLATIONTABLE_CALLBACKS dummyTTCallbacks = {};
         wddm->resetPageTableManager(GmmPageTableMngr::create(&dummyDeviceCallbacks, 0, &dummyTTCallbacks));
     }
     EXPECT_TRUE(wddm->init());
-    uint64_t heap32Base = (uint64_t)(0x800000000000);
-    if (sizeof(uintptr_t) == 4) {
-        heap32Base = 0x1000;
-    }
+    constexpr uint64_t heap32Base = (is32bit) ? 0x1000 : 0x800000000000;
     wddm->setHeap32(heap32Base, 1000 * MemoryConstants::pageSize - 1);
-    memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
-    //assert we have memory manager
-    ASSERT_NE(nullptr, memoryManager);
+
+    osInterface = std::make_unique<OSInterface>();
+    osInterface->get()->setWddm(wddm);
+
+    memoryManager = std::make_unique<MockWddmMemoryManager>(wddm);
 }
 
 TEST(WddmMemoryManager, NonCopyable) {
@@ -51,6 +50,24 @@ TEST(WddmMemoryManager, NonCopyable) {
 TEST(WddmMemoryManager, NonAssignable) {
     EXPECT_FALSE(std::is_move_assignable<WddmMemoryManager>::value);
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
+}
+
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenRegisteringOsContextThenLastPeriodicTrimFenceValuesIsResizedAccordinglyToContextId) {
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
+    EXPECT_EQ(1, memoryManager->lastPeriodicTrimFenceValues.size());
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
+
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
+    EXPECT_EQ(3, memoryManager->lastPeriodicTrimFenceValues.size());
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[1]);
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[2]);
+
+    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
+    EXPECT_EQ(3, memoryManager->lastPeriodicTrimFenceValues.size());
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[1]);
+    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[2]);
 }
 
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
@@ -206,7 +223,6 @@ TEST_F(WddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenAskedForVirtualPa
 }
 
 TEST_F(WddmMemoryManagerTest, GivenGraphicsAllocationWhenAddAndRemoveAllocationToHostPtrManagerThenfragmentHasCorrectValues) {
-    memoryManager.reset(new (std::nothrow) MockWddmMemoryManager(wddm.get()));
     void *cpuPtr = (void *)0x30000;
     size_t size = 0x1000;
 
@@ -1115,7 +1131,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriod
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1151,7 +1167,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1197,7 +1213,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFra
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1226,14 +1242,14 @@ TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledTh
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimCandidateList.resize(0);
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValue);
+    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValues[0]);
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -1244,14 +1260,14 @@ TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackC
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValue = 10;
+    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimCandidateList.resize(0);
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValue);
+    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValues[0]);
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
