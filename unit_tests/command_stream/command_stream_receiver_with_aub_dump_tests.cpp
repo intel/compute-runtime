@@ -32,6 +32,7 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
     void makeResident(GraphicsAllocation &gfxAllocation) override {
         makeResidentParameterization.wasCalled = true;
         makeResidentParameterization.receivedGfxAllocation = &gfxAllocation;
+        gfxAllocation.residencyTaskCount[deviceIndex] = 1;
     }
 
     void processResidency(ResidencyContainer &allocationsForResidency, OsContext &osContext) override {
@@ -40,8 +41,11 @@ struct MyMockCsr : UltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> {
     }
 
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
-        makeNonResidentParameterization.wasCalled = true;
-        makeNonResidentParameterization.receivedGfxAllocation = &gfxAllocation;
+        if (gfxAllocation.residencyTaskCount[this->deviceIndex] != ObjectNotResident) {
+            makeNonResidentParameterization.wasCalled = true;
+            makeNonResidentParameterization.receivedGfxAllocation = &gfxAllocation;
+            gfxAllocation.residencyTaskCount[this->deviceIndex] = ObjectNotResident;
+        }
     }
 
     void activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) override {
@@ -189,9 +193,10 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);
 }
 
-HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenMakeNonResidentIsCalledThenBaseCsrMakeNonResidentIsCalled) {
+HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAubDumpWhenMakeNonResidentIsCalledThenBothBaseAndAubCsrMakeNonResidentIsCalled) {
     auto gfxAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, gfxAllocation);
+    csrWithAubDump->makeResident(*gfxAllocation);
 
     csrWithAubDump->makeNonResident(*gfxAllocation);
 
@@ -199,8 +204,8 @@ HWTEST_P(CommandStreamReceiverWithAubDumpTest, givenCommandStreamReceiverWithAub
     EXPECT_EQ(gfxAllocation, csrWithAubDump->makeNonResidentParameterization.receivedGfxAllocation);
 
     if (createAubCSR) {
-        EXPECT_FALSE(csrWithAubDump->getAubMockCsr().makeNonResidentParameterization.wasCalled);
-        EXPECT_EQ(nullptr, csrWithAubDump->getAubMockCsr().makeNonResidentParameterization.receivedGfxAllocation);
+        EXPECT_TRUE(csrWithAubDump->getAubMockCsr().makeNonResidentParameterization.wasCalled);
+        EXPECT_EQ(gfxAllocation, csrWithAubDump->getAubMockCsr().makeNonResidentParameterization.receivedGfxAllocation);
     }
 
     memoryManager->freeGraphicsMemoryImpl(gfxAllocation);

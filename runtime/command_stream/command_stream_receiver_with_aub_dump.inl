@@ -41,6 +41,16 @@ void CommandStreamReceiverWithAUBDump<BaseCSR>::processResidency(ResidencyContai
 }
 
 template <typename BaseCSR>
+void CommandStreamReceiverWithAUBDump<BaseCSR>::makeNonResident(GraphicsAllocation &gfxAllocation) {
+    int residencyTaskCount = gfxAllocation.residencyTaskCount[this->deviceIndex];
+    BaseCSR::makeNonResident(gfxAllocation);
+    gfxAllocation.residencyTaskCount[this->deviceIndex] = residencyTaskCount;
+    if (aubCSR) {
+        aubCSR->makeNonResident(gfxAllocation);
+    }
+}
+
+template <typename BaseCSR>
 void CommandStreamReceiverWithAUBDump<BaseCSR>::activateAubSubCapture(const MultiDispatchInfo &dispatchInfo) {
     BaseCSR::activateAubSubCapture(dispatchInfo);
     if (aubCSR) {
