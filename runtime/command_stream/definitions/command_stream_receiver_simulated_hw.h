@@ -19,5 +19,8 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     uint32_t getMemoryBank(GraphicsAllocation *allocation) const {
         return MemoryBanks::getBank(this->deviceIndex);
     }
+    int getAddressSpace(int hint) {
+        return AubMemDump::AddressSpaceValues::TraceNonlocal;
+    }
 };
 } // namespace OCLRT

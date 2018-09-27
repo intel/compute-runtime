@@ -25,10 +25,10 @@ class TbxMemoryManager : public OsAgnosticMemoryManager {
 
 template <typename GfxFamily>
 class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFamily> {
-    using CommandStreamReceiverHw<GfxFamily>::memoryManager;
     typedef CommandStreamReceiverSimulatedHw<GfxFamily> BaseClass;
     typedef typename OCLRT::AUBFamilyMapper<GfxFamily>::AUB AUB;
     typedef typename AUB::MiContextDescriptorReg MiContextDescriptorReg;
+    using CommandStreamReceiverHw<GfxFamily>::memoryManager;
 
   public:
     FlushStamp flush(BatchBuffer &batchBuffer, EngineType engineType, ResidencyContainer &allocationsForResidency, OsContext &osContext) override;
@@ -90,7 +90,6 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     }
 
   protected:
-    int getAddressSpace(int hint);
     void createPhysicalAddressAllocator();
 };
 } // namespace OCLRT

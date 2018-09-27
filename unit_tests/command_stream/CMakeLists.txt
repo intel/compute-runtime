@@ -28,3 +28,4 @@ set(IGDRCL_SRCS_tests_command_stream
   ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_tests.cpp
 )
 target_sources(igdrcl_tests PRIVATE ${IGDRCL_SRCS_tests_command_stream})
+add_subdirectories()

@@ -161,7 +161,7 @@ void TbxCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
             lrcAddressPhys,
             pLRCABase,
             sizeLRCA,
-            getAddressSpace(csTraits.aubHintLRCA),
+            this->getAddressSpace(csTraits.aubHintLRCA),
             csTraits.aubHintLRCA);
     }
 }
@@ -215,7 +215,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physBatchBuffer,
             pBatchBuffer,
             sizeBatchBuffer,
-            getAddressSpace(AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary),
+            this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary),
             AubMemDump::DataTypeHintValues::TraceBatchBufferPrimary);
     }
 
@@ -247,7 +247,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
                 physDumpStart,
                 pTail,
                 sizeToWrap,
-                getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
+                this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
                 AubMemDump::DataTypeHintValues::TraceCommandBuffer);
             previousTail = 0;
             engineInfo.tailRCS = 0;
@@ -287,7 +287,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physDumpStart,
             dumpStart,
             dumpLength,
-            getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
+            this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceCommandBuffer),
             AubMemDump::DataTypeHintValues::TraceCommandBuffer);
 
         // update the RCS mmio tail in the LRCA
@@ -297,7 +297,7 @@ FlushStamp TbxCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
             physLRCA + 0x101c,
             &engineInfo.tailRCS,
             sizeof(engineInfo.tailRCS),
-            getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
+            this->getAddressSpace(AubMemDump::DataTypeHintValues::TraceNotype));
 
         DEBUG_BREAK_IF(engineInfo.tailRCS >= engineInfo.sizeRCS);
     }
@@ -412,11 +412,6 @@ template <typename GfxFamily>
 void TbxCommandStreamReceiverHw<GfxFamily>::getGTTData(void *memory, AubGTTData &data) {
     data.present = true;
     data.localMemory = false;
-}
-
-template <typename GfxFamily>
-int TbxCommandStreamReceiverHw<GfxFamily>::getAddressSpace(int hint) {
-    return AubMemDump::AddressSpaceValues::TraceNonlocal;
 }
 
 template <typename GfxFamily>
