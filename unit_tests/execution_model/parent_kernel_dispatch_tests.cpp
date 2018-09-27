@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_queue/enqueue_kernel.h"
+#include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/kernel/kernel.h"
 #include "runtime/sampler/sampler.h"
@@ -41,7 +42,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDev
         DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(pKernel);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -98,7 +99,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenDef
 
         DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -125,7 +126,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsNotBlockedThenSSH
         MockMultiDispatchInfo multiDispatchInfo(pKernel);
         DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -162,7 +163,7 @@ HWTEST_P(ParentKernelDispatchTest, givenParentKernelWhenQueueIsBlockedThenSSHSiz
 
         DispatchInfo dispatchInfo(pKernel, 1, workItems, nullptr, globalOffsets);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -261,7 +262,7 @@ HWTEST_F(MockParentKernelDispatch, GivenBlockedQueueWhenParentKernelIsDispatched
         DispatchInfo dispatchInfo(mockParentKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -296,7 +297,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, MockParentKernelDispatch, GivenParentKernelWhenDispa
         DispatchInfo dispatchInfo(mockParentKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -354,7 +355,7 @@ HWTEST_F(MockParentKernelDispatch, GivenUsedSSHHeapWhenParentKernelIsDispatchedT
         DispatchInfo dispatchInfo(mockParentKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(mockParentKernel);
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -391,7 +392,7 @@ HWTEST_F(MockParentKernelDispatch, GivenNotUsedSSHHeapWhenParentKernelIsDispatch
         DispatchInfo dispatchInfo(mockParentKernel, 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,

@@ -16,19 +16,15 @@ struct SklParse;
 
 namespace OCLRT {
 
-template <class GfxFamily>
-class BaseInterfaceVersion;
-
 struct GEN9 {
 #include "runtime/gen9/hw_cmds_generated_patched.h"
 #include "runtime/gen9/hw_cmds_generated.h"
 };
 
 struct SKLFamily : public GEN9 {
-    typedef SklParse PARSE;
-    typedef SKLFamily GfxFamily;
-    typedef GPGPU_WALKER WALKER_TYPE;
-    using HARDWARE_INTERFACE = BaseInterfaceVersion<SKLFamily>;
+    using PARSE = SklParse;
+    using GfxFamily = SKLFamily;
+    using WALKER_TYPE = GPGPU_WALKER;
     static const GPGPU_WALKER cmdInitGpgpuWalker;
     static const INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static const MEDIA_INTERFACE_DESCRIPTOR_LOAD cmdInitMediaInterfaceDescriptorLoad;

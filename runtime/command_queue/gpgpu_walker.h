@@ -31,9 +31,6 @@ using WALKER_HANDLE = void *;
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
-template <typename GfxFamily>
-using HARDWARE_INTERFACE = typename GfxFamily::HARDWARE_INTERFACE;
-
 constexpr int32_t NUM_ALU_INST_FOR_READ_MODIFY_WRITE = 4;
 
 constexpr int32_t L3SQC_BIT_LQSC_RO_PERF_DIS = 0x08000000;
@@ -187,20 +184,6 @@ class GpgpuWalkerHelper {
         CommandQueue &commandQueue,
         OCLRT::HwPerfCounter &hwPerfCounter,
         OCLRT::LinearStream *commandStream);
-
-    static void dispatchWalker(
-        CommandQueue &commandQueue,
-        const MultiDispatchInfo &multiDispatchInfo,
-        cl_uint numEventsInWaitList,
-        const cl_event *eventWaitList,
-        KernelOperation **blockedCommandsData,
-        HwTimeStamps *hwTimeStamps,
-        OCLRT::HwPerfCounter *hwPerfCounter,
-        TagNode<TimestampPacket> *previousTimestampPacketNode,
-        TimestampPacket *currentTimestampPacket,
-        PreemptionMode preemptionMode,
-        bool blockQueue,
-        uint32_t commandType = 0);
 
     static void setupTimestampPacket(
         LinearStream *cmdStream,

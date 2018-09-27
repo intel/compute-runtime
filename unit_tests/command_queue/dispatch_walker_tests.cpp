@@ -7,6 +7,7 @@
 
 #include "test.h"
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/perf_counter.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/helpers/kernel_commands.h"
@@ -128,7 +129,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, shouldntChangeCommandStreamMemor
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -177,7 +178,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, noLocalIdsShouldntCrash) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -208,7 +209,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithDefaultLwsAlgorithm)
         DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -240,7 +241,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithSquaredLwsAlgorithm)
         DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -270,7 +271,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithNDLwsAlgorithm) {
         DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -301,7 +302,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterWorkDimensionswithOldLwsAlgorithm) {
         DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimension, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo;
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
@@ -332,7 +333,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNumWorkGroups) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -365,7 +366,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeND) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -397,7 +398,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeND) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -430,7 +431,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithComputeSquared) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -463,7 +464,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterNoLocalWorkSizeWithOutComputeSquaredAn
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, nullptr, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -494,7 +495,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSize) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -528,7 +529,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizes) {
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -566,7 +567,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizeForSplitKernel) {
 
     MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -618,7 +619,7 @@ HWTEST_F(DispatchWalkerTest, dataParameterLocalWorkSizesForSplitWalker) {
     multiDispatchInfo.push(di1);
     multiDispatchInfo.push(di2);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -674,7 +675,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerDoesntConsumeCommandStreamWhenQueueIs
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -715,7 +716,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromKernelW
     DispatchInfo dispatchInfo(const_cast<MockKernel *>(&kernel), dimensions, workItems, workGroupSize, globalOffsets);
     MultiDispatchInfo multiDispatchInfo;
     multiDispatchInfo.push(dispatchInfo);
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -754,7 +755,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerShouldGetRequiredHeapSizesFromMdiWhen
 
     KernelOperation *blockedCommandsData = nullptr;
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -788,7 +789,7 @@ HWTEST_F(DispatchWalkerTest, dispatchWalkerWithMultipleDispatchInfo) {
 
     MockMultiDispatchInfo multiDispatchInfo(std::vector<Kernel *>({&kernel1, &kernel2}));
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -831,7 +832,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     indirectHeap.align(KernelCommandsHelper<FamilyType>::alignInterfaceDescriptorData);
     auto dshBeforeMultiDisptach = indirectHeap.getUsed();
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -917,7 +918,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     // create commandStream
     auto &cmdStream = pCmdQ->getCS(0);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -964,7 +965,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     // create commandStream
     auto &cmdStream = pCmdQ->getCS(0);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -1016,7 +1017,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     // create commandStream
     auto &cmdStream = pCmdQ->getCS(0);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *pCmdQ,
         multiDispatchInfo,
         0,
@@ -1069,7 +1070,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, givenMultiDispatchWhenWhiteliste
     DispatchInfo di2(&kernel, 1, Vec3<size_t>(1, 1, 1), Vec3<size_t>(1, 1, 1), Vec3<size_t>(0, 0, 0));
     MockMultiDispatchInfo multiDispatchInfo(std::vector<DispatchInfo *>({&di1, &di2}));
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode(), false);
+    HardwareInterface<FamilyType>::dispatchWalker(*pCmdQ, multiDispatchInfo, 0, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, pDevice->getPreemptionMode(), false);
 
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 

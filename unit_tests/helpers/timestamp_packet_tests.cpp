@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_queue/hardware_interface.h"
 #include "runtime/helpers/options.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/tag_allocator.h"
@@ -247,7 +248,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
 
     auto &cmdStream = mockCmdQ->getCS(0);
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         0,
@@ -505,7 +506,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
-    GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+    HardwareInterface<FamilyType>::dispatchWalker(
         *mockCmdQ,
         multiDispatchInfo,
         eventsOnWaitlist,

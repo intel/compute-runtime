@@ -6,8 +6,9 @@
  */
 
 #pragma once
-#include "runtime/command_queue/hardware_interface/hardware_interface.h"
-#include "runtime/utilities/tag_allocator.h"
+#include "runtime/command_queue/hardware_interface.h"
+#include "runtime/helpers/kernel_commands.h"
+#include "runtime/helpers/task_information.h"
 
 namespace OCLRT {
 
@@ -19,15 +20,15 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     const cl_event *eventWaitList,
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
-    OCLRT::HwPerfCounter *hwPerfCounter,
+    HwPerfCounter *hwPerfCounter,
     TagNode<TimestampPacket> *previousTimestampPacketNode,
     TimestampPacket *currentTimestampPacket,
     PreemptionMode preemptionMode,
     bool blockQueue,
     uint32_t commandType) {
 
-    OCLRT::LinearStream *commandStream = nullptr;
-    OCLRT::IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
+    LinearStream *commandStream = nullptr;
+    IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     auto parentKernel = multiDispatchInfo.peekParentKernel();
 
     for (auto &dispatchInfo : multiDispatchInfo) {
@@ -243,99 +244,6 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         currentDispatchIndex++;
     }
     dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
-}
-
-template <typename GfxFamily>
-inline void BaseInterfaceVersion<GfxFamily>::getDefaultDshSpace(
-    const size_t &offsetInterfaceDescriptorTable,
-    CommandQueue &commandQueue,
-    const MultiDispatchInfo &multiDispatchInfo,
-    size_t &totalInterfaceDescriptorTableSize,
-    OCLRT::Kernel *parentKernel,
-    OCLRT::IndirectHeap *dsh,
-    OCLRT::LinearStream *commandStream) {
-
-    size_t numDispatches = multiDispatchInfo.size();
-    totalInterfaceDescriptorTableSize *= numDispatches;
-
-    if (!parentKernel) {
-        dsh->getSpace(totalInterfaceDescriptorTableSize);
-    } else {
-        dsh->getSpace(commandQueue.getContext().getDefaultDeviceQueue()->getDshOffset() - dsh->getUsed());
-    }
-}
-
-template <typename GfxFamily>
-inline typename BaseInterfaceVersion<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *
-BaseInterfaceVersion<GfxFamily>::obtainInterfaceDescriptorData(
-    WALKER_HANDLE pCmdData) {
-
-    return nullptr;
-}
-
-template <typename GfxFamily>
-inline void BaseInterfaceVersion<GfxFamily>::setOffsetCrossThreadData(
-    WALKER_HANDLE pCmdData,
-    size_t &offsetCrossThreadData,
-    uint32_t &interfaceDescriptorIndex) {
-
-    WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
-    pCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
-    pCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
-}
-
-template <typename GfxFamily>
-inline void BaseInterfaceVersion<GfxFamily>::dispatchWorkarounds(
-    OCLRT::LinearStream *commandStream,
-    CommandQueue &commandQueue,
-    OCLRT::Kernel &kernel,
-    const bool &enable) {
-
-    if (enable) {
-        PreemptionHelper::applyPreemptionWaCmdsBegin<GfxFamily>(commandStream, commandQueue.getDevice());
-        // Implement enabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
-    } else {
-        // Implement disabling special WA DisableLSQCROPERFforOCL if needed
-        GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, kernel, enable);
-        PreemptionHelper::applyPreemptionWaCmdsEnd<GfxFamily>(commandStream, commandQueue.getDevice());
-    }
-}
-
-template <typename GfxFamily>
-inline void BaseInterfaceVersion<GfxFamily>::dispatchProfilingPerfStartCommands(
-    const OCLRT::DispatchInfo &dispatchInfo,
-    const MultiDispatchInfo &multiDispatchInfo,
-    HwTimeStamps *hwTimeStamps,
-    OCLRT::HwPerfCounter *hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
-    CommandQueue &commandQueue) {
-
-    if (&dispatchInfo == &*multiDispatchInfo.begin()) {
-        // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
-        if (hwTimeStamps != nullptr) {
-            GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream);
-        }
-        if (hwPerfCounter != nullptr) {
-            GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
-        }
-    }
-}
-
-template <typename GfxFamily>
-inline void BaseInterfaceVersion<GfxFamily>::dispatchProfilingPerfEndCommands(
-    HwTimeStamps *hwTimeStamps,
-    OCLRT::HwPerfCounter *hwPerfCounter,
-    OCLRT::LinearStream *commandStream,
-    CommandQueue &commandQueue) {
-
-    // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
-    if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream);
-    }
-    if (hwPerfCounter != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
-    }
 }
 
 } // namespace OCLRT

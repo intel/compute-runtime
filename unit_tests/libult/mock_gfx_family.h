@@ -11,9 +11,6 @@
 
 namespace OCLRT {
 
-template <class GfxFamily>
-class BaseInterfaceVersion;
-
 extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
 
 struct GENX {
@@ -374,8 +371,7 @@ struct GENX {
         inline void setMemoryAddressHigh(uint32_t) {}
     } MI_ATOMIC;
 
-    using HARDWARE_INTERFACE = BaseInterfaceVersion<GENX>;
-    typedef GPGPU_WALKER WALKER_TYPE;
+    using WALKER_TYPE = GPGPU_WALKER;
     static GPGPU_WALKER cmdInitGpgpuWalker;
     static INTERFACE_DESCRIPTOR_DATA cmdInitInterfaceDescriptorData;
     static MEDIA_STATE_FLUSH cmdInitMediaStateFlush;

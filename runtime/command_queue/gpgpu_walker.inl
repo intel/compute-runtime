@@ -7,8 +7,6 @@
 
 #pragma once
 #include "runtime/command_queue/gpgpu_walker.h"
-#include "hardware_interface.h"
-#include "hardware_interface.inl"
 #include "runtime/command_queue/command_queue.h"
 #include "runtime/command_queue/local_id_gen.h"
 #include "runtime/command_stream/command_stream_receiver.h"
@@ -414,37 +412,6 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(
     GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersUserCounterCommands(commandQueue, hwPerfCounter, commandStream, false);
 
     perfCounters->setCpuTimestamp();
-}
-
-template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchWalker(
-    CommandQueue &commandQueue,
-    const MultiDispatchInfo &multiDispatchInfo,
-    cl_uint numEventsInWaitList,
-    const cl_event *eventWaitList,
-    KernelOperation **blockedCommandsData,
-    HwTimeStamps *hwTimeStamps,
-    OCLRT::HwPerfCounter *hwPerfCounter,
-    TagNode<TimestampPacket> *previousTimestampPacketNode,
-    TimestampPacket *currentTimestampPacket,
-    PreemptionMode preemptionMode,
-    bool blockQueue,
-    uint32_t commandType) {
-
-    HARDWARE_INTERFACE<GfxFamily> hardwareInterface;
-    hardwareInterface.dispatchWalker(
-        commandQueue,
-        multiDispatchInfo,
-        numEventsInWaitList,
-        eventWaitList,
-        blockedCommandsData,
-        hwTimeStamps,
-        hwPerfCounter,
-        previousTimestampPacketNode,
-        currentTimestampPacket,
-        preemptionMode,
-        blockQueue,
-        commandType);
 }
 
 template <typename GfxFamily>

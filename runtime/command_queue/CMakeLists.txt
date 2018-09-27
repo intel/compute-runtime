@@ -34,14 +34,14 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.h
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_avx2.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_id_gen_sse4.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size.cpp
-  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface${BRANCH_DIR_SUFFIX}/hardware_interface.h
-  ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface${BRANCH_DIR_SUFFIX}/hardware_interface.inl
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_COMMAND_QUEUE})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_COMMAND_QUEUE ${RUNTIME_SRCS_COMMAND_QUEUE})

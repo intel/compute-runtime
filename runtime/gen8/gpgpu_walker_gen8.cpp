@@ -8,6 +8,9 @@
 #include "runtime/gen8/hw_info.h"
 #include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/command_queue/gpgpu_walker.inl"
+#include "runtime/command_queue/hardware_interface.h"
+#include "runtime/command_queue/hardware_interface.inl"
+#include "runtime/command_queue/hardware_interface_base.inl"
 
 namespace OCLRT {
 
@@ -50,6 +53,8 @@ size_t GpgpuWalkerHelper<BDWFamily>::getSizeForWADisableLSQCROPERFforOCL(const K
     }
     return n;
 }
+
+template class HardwareInterface<BDWFamily>;
 
 template class GpgpuWalkerHelper<BDWFamily>;
 

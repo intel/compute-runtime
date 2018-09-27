@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_queue/gpgpu_walker.h"
+#include "runtime/command_queue/hardware_interface.h"
 #include "runtime/event/hw_timestamps.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/task_information.h"
@@ -419,7 +420,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ParentKernelCommandQueueFixture, givenBlockedCommand
         DispatchInfo dispatchInfo(parentKernel.get(), 1, workItems, nullptr, globalOffsets);
         MultiDispatchInfo multiDispatchInfo(parentKernel.get());
         multiDispatchInfo.push(dispatchInfo);
-        GpgpuWalkerHelper<FamilyType>::dispatchWalker(
+        HardwareInterface<FamilyType>::dispatchWalker(
             *pCmdQ,
             multiDispatchInfo,
             0,
