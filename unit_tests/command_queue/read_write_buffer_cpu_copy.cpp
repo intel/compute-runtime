@@ -292,3 +292,21 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
     alignedFree(alignedHostPtr);
     alignedFree(alignedBufferPtr);
 }
+
+TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInNonSystemMemoryPoolThenIsReadWriteOnCpuAllowedReturnsFalse) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto memoryManager = new MockMemoryManager;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+    ASSERT_NE(nullptr, buffer.get());
+
+    EXPECT_TRUE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+    reinterpret_cast<MemoryAllocation *>(buffer->getGraphicsAllocation())->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    EXPECT_FALSE(buffer->isReadWriteOnCpuAllowed(CL_TRUE, 0, reinterpret_cast<void *>(0x1000), MemoryConstants::pageSize));
+}

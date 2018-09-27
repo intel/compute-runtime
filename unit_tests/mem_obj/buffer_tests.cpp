@@ -320,6 +320,32 @@ TEST(Buffer, givenZeroFlagsNoSharedContextAndRenderCompressedBuffersDisabledWhen
     EXPECT_EQ(GraphicsAllocation::AllocationType::BUFFER, type);
 }
 
+TEST(Buffer, givenClMemCopyHostPointerPassedToBufferCreateWhenAllocationIsNotInSystemMemoryPoolThenAllocationIsWrittenByEnqueueWriteBuffer) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
+        auto allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize, false, false);
+        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+        return allocation;
+    };
+
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+    char memory[] = {1, 2, 3, 4, 5, 6, 7, 8};
+    auto taskCount = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, sizeof(memory), memory, retVal));
+    ASSERT_NE(nullptr, buffer.get());
+    auto taskCountSent = device->getCommandStreamReceiver().peekLatestFlushedTaskCount();
+    EXPECT_LT(taskCount, taskCountSent);
+}
 struct RenderCompressedBuffersTests : public ::testing::Test {
     void SetUp() override {
         localHwInfo = *platformDevices[0];
