@@ -34,7 +34,7 @@ class clCreatePipeWithParamNegativeTests : public api_fixture, public testing::T
     }
 };
 
-TEST_P(clCreatePipeWithParamTests, validFlags) {
+TEST_P(clCreatePipeWithParamTests, GivenValidFlagsWhenCreatingPipeThenPipeIsCreatedAndSuccessIsReturned) {
     cl_mem_flags flags = GetParam();
 
     auto pipe = clCreatePipe(pContext, flags, 1, 20, nullptr, &retVal);
@@ -44,7 +44,7 @@ TEST_P(clCreatePipeWithParamTests, validFlags) {
     clReleaseMemObject(pipe);
 }
 
-TEST_P(clCreatePipeWithParamNegativeTests, invalidFlags) {
+TEST_P(clCreatePipeWithParamNegativeTests, GivenInalidFlagsWhenCreatingPipeThenInvalidValueErrorIsReturned) {
     cl_mem_flags flags = GetParam();
 
     auto pipe = clCreatePipe(pContext, flags, 1, 20, nullptr, &retVal);
@@ -92,7 +92,7 @@ INSTANTIATE_TEST_CASE_P(
     clCreatePipeWithParamNegativeTests,
     testing::ValuesIn(invalidFlags));
 
-TEST_F(clCreatePipeTests, retValIsNull) {
+TEST_F(clCreatePipeTests, GivenValidFlagsAndNullReturnWhenCreatingPipeThenPipeIsCreated) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 1, 20, nullptr, nullptr);
 
@@ -101,7 +101,7 @@ TEST_F(clCreatePipeTests, retValIsNull) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, PipePacketSizeIsZero) {
+TEST_F(clCreatePipeTests, GivenPipePacketSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 0, 20, nullptr, &retVal);
 
@@ -111,7 +111,7 @@ TEST_F(clCreatePipeTests, PipePacketSizeIsZero) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, PipeMaxPacketIsZero) {
+TEST_F(clCreatePipeTests, GivenPipeMaxSizeZeroWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     auto pipe = clCreatePipe(pContext, flags, 1, 0, nullptr, &retVal);
 
@@ -121,7 +121,7 @@ TEST_F(clCreatePipeTests, PipeMaxPacketIsZero) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, PipePropertiesAreNotNull) {
+TEST_F(clCreatePipeTests, GivenPipePropertiesNotNullWhenCreatingPipeThenInvalidValueErrorIsReturned) {
     cl_mem_flags flags = CL_MEM_READ_WRITE;
     cl_pipe_properties properties = {0};
     auto pipe = clCreatePipe(pContext, flags, 1, 20, &properties, &retVal);
@@ -132,7 +132,7 @@ TEST_F(clCreatePipeTests, PipePropertiesAreNotNull) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, PipePacketSizeGreaterThanAllowed) {
+TEST_F(clCreatePipeTests, GivenPipePacketSizeGreaterThanAllowedWhenCreatingPipeThenInvalidPipeSizeErrorIsReturned) {
     cl_uint packetSize = pContext->getDevice(0)->getDeviceInfo().pipeMaxPacketSize;
     cl_mem_flags flags = CL_MEM_READ_WRITE;
 
@@ -151,13 +151,13 @@ TEST_F(clCreatePipeTests, PipePacketSizeGreaterThanAllowed) {
     clReleaseMemObject(pipe);
 }
 
-TEST_F(clCreatePipeTests, PipeInvalidContext) {
+TEST_F(clCreatePipeTests, GivenNullContextWhenCreatingPipeThenInvalidContextErrorIsReturned) {
 
     auto pipe = clCreatePipe(nullptr, 0, 1, 20, nullptr, &retVal);
 
     EXPECT_EQ(nullptr, pipe);
     EXPECT_EQ(CL_INVALID_CONTEXT, retVal);
 
-    delete pipe;
+    clReleaseMemObject(pipe);
 }
 } // namespace ClCreatePipeTests
