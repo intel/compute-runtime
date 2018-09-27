@@ -28,7 +28,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
 
     physicalAddressAllocator.reset(this->createPhysicalAddressAllocator());
 
-    ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator.get());
+    ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
 
     for (auto &engineInfo : engineInfoTable) {

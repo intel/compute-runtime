@@ -10,6 +10,9 @@
 #include <cstddef>
 #include <limits>
 
+constexpr bool is32bit = (sizeof(void *) == 4);
+constexpr bool is64bit = (sizeof(void *) == 8);
+
 namespace MemoryConstants {
 static const uint64_t zoneHigh = ~(uint64_t)0xFFFFFFFF;
 static const uint64_t kiloByte = 1024;
@@ -33,7 +36,5 @@ static const uint64_t max32BitAddress = ((1ULL << 32) - 1);
 static const uint64_t max48BitAddress = ((1ULL << 48) - 1);
 static const uintptr_t page4kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
 static const uintptr_t page64kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::page64kMask;
+static const int GfxAddressBits = is64bit ? 48 : 32;
 } // namespace MemoryConstants
-
-const bool is32bit = (sizeof(void *) == 4) ? true : false;
-const bool is64bit = (sizeof(void *) == 8) ? true : false;

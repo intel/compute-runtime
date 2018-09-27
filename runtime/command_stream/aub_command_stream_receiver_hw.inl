@@ -42,7 +42,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
     UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);
 
-    ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator);
+    ppgtt = std::make_unique<std::conditional<is64bit, PML4, PDPE>::type>(physicalAddressAllocator);
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator);
 
     gttRemap = aubCenter->getAddressMapper();

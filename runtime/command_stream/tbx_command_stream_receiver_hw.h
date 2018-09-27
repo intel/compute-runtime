@@ -80,7 +80,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool streamInitialized = false;
 
     std::unique_ptr<PhysicalAddressAllocator> physicalAddressAllocator;
-    std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
+    std::unique_ptr<std::conditional<is64bit, PML4, PDPE>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper gttRemap;

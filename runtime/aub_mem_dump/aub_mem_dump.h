@@ -35,16 +35,6 @@ inline void setAddress(CmdServicesMemTraceMemoryCompare &cmd, uint64_t address) 
     cmd.addressHigh = static_cast<uint32_t>(address >> 32);
 }
 
-template <typename TypeTrue, typename TypeFalse, bool is32Bits>
-struct TypeSelector {
-    typedef TypeTrue type;
-};
-
-template <typename TypeTrue, typename TypeFalse>
-struct TypeSelector<TypeTrue, TypeFalse, false> {
-    typedef TypeFalse type;
-};
-
 union IAPageTableEntry {
     struct
     {
@@ -264,11 +254,11 @@ struct AubPageTableHelper64 : public AubPageTableHelper<Traits>, PageTableTraits
 };
 
 template <typename TraitsIn>
-struct AubDump : public TypeSelector<AubPageTableHelper32<TraitsIn>, AubPageTableHelper64<TraitsIn>, TraitsIn::addressingBits == 32>::type {
-    typedef TraitsIn Traits;
-    typedef typename TypeSelector<uint32_t, uint64_t, Traits::addressingBits == 32>::type AddressType;
-    typedef typename TypeSelector<AubPageTableHelper32<Traits>, AubPageTableHelper64<Traits>, Traits::addressingBits == 32>::type BaseHelper;
-    typedef typename Traits::Stream Stream;
+struct AubDump : public std::conditional<TraitsIn::addressingBits == 32, AubPageTableHelper32<TraitsIn>, AubPageTableHelper64<TraitsIn>>::type {
+    using Traits = TraitsIn;
+    using AddressType = typename std::conditional<Traits::addressingBits == 32, uint32_t, uint64_t>::type;
+    using BaseHelper = typename std::conditional<Traits::addressingBits == 32, AubPageTableHelper32<Traits>, AubPageTableHelper64<Traits>>::type;
+    using Stream = typename Traits::Stream;
 
     typedef union _MiContextDescriptorReg_ {
         struct {

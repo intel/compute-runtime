@@ -1589,8 +1589,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
     memoryManager.reset(aubCsr->createMemoryManager(false, false));
 
     PhysicalAddressAllocator allocator;
-    struct PpgttMock : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type {
-        PpgttMock(PhysicalAddressAllocator *allocator) : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type(allocator) {}
+    struct PpgttMock : std::conditional<is64bit, PML4, PDPE>::type {
+        PpgttMock(PhysicalAddressAllocator *allocator) : std::conditional<is64bit, PML4, PDPE>::type(allocator) {}
 
         void pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits, PageWalker &pageWalker, uint32_t memoryBank) override {
             receivedSize = size;

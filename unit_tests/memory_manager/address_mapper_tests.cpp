@@ -6,7 +6,6 @@
  */
 
 #include "runtime/helpers/aligned_memory.h"
-#include "runtime/helpers/selectors.h"
 #include "runtime/memory_manager/address_mapper.h"
 #include "test.h"
 #include "gtest/gtest.h"

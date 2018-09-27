@@ -92,7 +92,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     uint32_t aubDeviceId;
     bool standalone;
 
-    std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
+    std::unique_ptr<std::conditional<is64bit, PML4, PDPE>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
     AddressMapper *gttRemap;

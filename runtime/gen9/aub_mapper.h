@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/gen_common/aub_mapper_base.h"
+#include "runtime/memory_manager/memory_constants.h"
 
 namespace OCLRT {
 struct SKLFamily;
@@ -15,7 +16,7 @@ template <>
 struct AUBFamilyMapper<SKLFamily> {
     enum { device = AubMemDump::DeviceValues::Skl };
 
-    typedef AubMemDump::Traits<device, GfxAddressBits::value> AubTraits;
+    using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;
 
     static const AubMemDump::LrcaHelper *csTraits[EngineType::NUM_ENGINES];
 

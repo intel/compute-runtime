@@ -7,7 +7,6 @@
 
 #include "runtime/aub_mem_dump/page_table_entry_bits.h"
 #include "runtime/helpers/ptr_math.h"
-#include "runtime/helpers/selectors.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/page_table.h"
 #include "runtime/memory_manager/page_table.inl"
@@ -75,10 +74,10 @@ class MockPDPE : public MockPageTable<MockPDE, 2, 2> {
     }
 };
 
-class PPGTTPageTable : public TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type {
+class PPGTTPageTable : public std::conditional<is64bit, PML4, PDPE>::type {
   public:
-    const size_t ppgttEntries = IntSelector<512u, 4u, sizeof(void *) == 8>::value;
-    PPGTTPageTable(PhysicalAddressAllocator *allocator) : TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type(allocator) {
+    const size_t ppgttEntries = is64bit ? 512u : 4u;
+    PPGTTPageTable(PhysicalAddressAllocator *allocator) : std::conditional<is64bit, PML4, PDPE>::type(allocator) {
         EXPECT_EQ(ppgttEntries, entries.size());
     }
     bool isEmpty() {
@@ -105,7 +104,7 @@ class GGTTPageTable : public PDPE {
 class PageTableFixture {
   protected:
     const size_t pageSize = 1 << 12;
-    const uintptr_t refAddr = (uintptr_t(1) << IntSelector<46, 31, is64Bit>::value);
+    const uintptr_t refAddr = uintptr_t(1) << (is64Bit ? 46 : 31);
     MockPhysicalAddressAllocator allocator;
     uint64_t startAddress = 0x1000;
 
@@ -248,8 +247,8 @@ TEST_F(PageTableTests48, givenBigGpuAddressWhenPageWalkIsCalledThenPageTablesAre
 }
 
 TEST_F(PageTableTests48, givenZeroEntryBitsWhenPageWalkIsCalledThenPageTableEntryHasPresentBitSet) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
 
     uintptr_t gpuVa = 0x1000;
 
@@ -266,12 +265,12 @@ TEST_F(PageTableTests48, givenZeroEntryBitsWhenPageWalkIsCalledThenPageTableEntr
     EXPECT_EQ(size, walked);
     ASSERT_NE(nullptr, pageTable->entries[0]);
 
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
 }
 
 TEST_F(PageTableTests48, givenZeroEntryBitsWhenMapIsCalledThenPageTableEntryHasPresentBitSet) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
     auto address = allocator.mainAllocator.load();
@@ -279,12 +278,12 @@ TEST_F(PageTableTests48, givenZeroEntryBitsWhenMapIsCalledThenPageTableEntryHasP
     pageTable->map(gpuVa, size, 0, MemoryBanks::MainBank);
     ASSERT_NE(nullptr, pageTable->entries[0]);
 
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | 0x1));
 }
 
 TEST_F(PageTableTests48, givenEntryBitsWhenPageWalkIsCalledThenEntryBitsArePassedToPageWalker) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
 
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
@@ -303,8 +302,8 @@ TEST_F(PageTableTests48, givenEntryBitsWhenPageWalkIsCalledThenEntryBitsArePasse
 }
 
 TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferentEntryBitsThenEntryIsUpdated) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
 
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
@@ -328,8 +327,8 @@ TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasDifferentEntryBitsThe
 }
 
 TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasNonValidEntryBitsThenEntryIsNotUpdated) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
 
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
@@ -357,8 +356,8 @@ TEST_F(PageTableTests48, givenTwoPageWalksWhenSecondWalkHasNonValidEntryBitsThen
 }
 
 TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasDifferentEntryBitsThenEntryIsUpdated) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
     uint64_t ppgttBits = 0xabc;
@@ -366,16 +365,16 @@ TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasDifferentEntryBitsThenEntry
 
     pageTable->map(gpuVa, size, ppgttBits, 0);
     ASSERT_NE(nullptr, pageTable->entries[0]);
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 
     ppgttBits = 0x345;
     pageTable->map(gpuVa, size, ppgttBits, 0);
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 }
 
 TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasNonValidEntryBitsThenEntryIsNotUpdated) {
-    std::unique_ptr<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>
-        pageTable(std::make_unique<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(&allocator));
+    std::unique_ptr<std::conditional<is64bit, MockPML4, MockPDPE>::type>
+        pageTable(std::make_unique<std::conditional<is64bit, MockPML4, MockPDPE>::type>(&allocator));
     uintptr_t gpuVa = 0x1000;
     size_t size = pageSize;
     uint64_t ppgttBits = 0xabc;
@@ -384,12 +383,12 @@ TEST_F(PageTableTests48, givenTwoMapsWhenSecondMapHasNonValidEntryBitsThenEntryI
     pageTable->map(gpuVa, size, ppgttBits, 0);
     ASSERT_NE(nullptr, pageTable->entries[0]);
 
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 
     uint64_t nonValidPpgttBits = PageTableEntry::nonValidBits;
     pageTable->map(gpuVa, size, nonValidPpgttBits, 0);
 
-    PageTableEntryChecker::testEntry<TypeSelector<MockPML4, MockPDPE, sizeof(void *) == 8>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
+    PageTableEntryChecker::testEntry<std::conditional<is64bit, MockPML4, MockPDPE>::type>(pageTable.get(), 1, static_cast<uintptr_t>(address | ppgttBits | 0x1));
 }
 
 TEST_F(PageTableTests48, givenPageTableWhenMappingTheSameAddressMultipleTimesThenNumberOfPagesReservedInAllocatorMatchPagesMapped) {
