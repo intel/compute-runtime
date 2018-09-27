@@ -28,7 +28,7 @@ class MemObjHelper {
 
     static bool checkExtraMemFlagsForBuffer(cl_mem_flags flags);
 
-    static AllocationFlags getAllocationFlags(cl_mem_flags flags);
+    static AllocationFlags getAllocationFlags(cl_mem_flags flags, bool allocateMemory);
 
     static DevicesBitfield getDevicesBitfield(cl_mem_flags flags);
 

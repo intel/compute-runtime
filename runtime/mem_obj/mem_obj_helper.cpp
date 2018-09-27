@@ -13,8 +13,8 @@ bool MemObjHelper::checkExtraMemFlagsForBuffer(cl_mem_flags flags) {
     return false;
 }
 
-AllocationFlags MemObjHelper::getAllocationFlags(cl_mem_flags flags) {
-    return AllocationFlags(); // Initialized by default constructor
+AllocationFlags MemObjHelper::getAllocationFlags(cl_mem_flags flags, bool allocateMemory) {
+    return AllocationFlags(allocateMemory);
 }
 
 DevicesBitfield MemObjHelper::getDevicesBitfield(cl_mem_flags flags) {

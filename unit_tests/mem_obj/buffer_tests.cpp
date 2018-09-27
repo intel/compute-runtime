@@ -225,6 +225,34 @@ TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPool
     EXPECT_FALSE(buffer->isMemObjZeroCopy());
 }
 
+TEST(Buffer, givenNullptrPassedToBufferCreateWhenAllocationIsNotSystemMemoryPoolThenAllocationIsNotAddedToHostPtrManager) {
+    std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation> *memoryManager = new ::testing::NiceMock<GMockMemoryManagerFailFirstAllocation>;
+
+    device->injectMemoryManager(memoryManager);
+    MockContext ctx(device.get());
+
+    auto allocateNonSystemGraphicsAllocation = [memoryManager](AllocationFlags flags, DevicesBitfield devicesBitfield, const void *hostPtr, size_t size, GraphicsAllocation::AllocationType type) -> GraphicsAllocation * {
+        auto allocation = memoryManager->allocateGraphicsMemory(size, MemoryConstants::pageSize, false, false);
+        reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+        return allocation;
+    };
+
+    EXPECT_CALL(*memoryManager, allocateGraphicsMemoryInPreferredPool(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(::testing::Invoke(allocateNonSystemGraphicsAllocation));
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE;
+
+    auto hostPtrAllocationCountBefore = memoryManager->hostPtrManager.getFragmentCount();
+    std::unique_ptr<Buffer> buffer(Buffer::create(&ctx, flags, MemoryConstants::pageSize, nullptr, retVal));
+
+    ASSERT_NE(nullptr, buffer.get());
+    auto hostPtrAllocationCountAfter = memoryManager->hostPtrManager.getFragmentCount();
+
+    EXPECT_EQ(hostPtrAllocationCountBefore, hostPtrAllocationCountAfter);
+}
+
 TEST(Buffer, givenNullptrPassedToBufferCreateWhenNoSharedContextOrRenderCompressedBuffersThenBuffersAllocationTypeIsBufferOrBufferHostMemory) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx(device.get());

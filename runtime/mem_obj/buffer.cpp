@@ -146,30 +146,29 @@ Buffer *Buffer::create(Context *context,
         zeroCopyAllowed = false;
     }
 
+    if (allocateMemory && context->isProvidingPerformanceHints()) {
+        context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
+    }
+
     if (!memory) {
-        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags);
+        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags, allocateMemory);
         DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
-        allocFlags.flags.allocateMemory = allocateMemory;
         memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, hostPtr, static_cast<size_t>(size), allocationType);
     }
 
-    if (allocateMemory) {
-        if (memory) {
-            memoryManager->addAllocationToHostPtrManager(memory);
-        }
-        if (context->isProvidingPerformanceHints()) {
-            context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
-        }
-    } else {
-        if (!memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
-            allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
-            zeroCopyAllowed = false;
-            copyMemoryFromHostPtr = true;
-            AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags);
-            DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
-            allocFlags.flags.allocateMemory = true;
-            memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, nullptr, static_cast<size_t>(size), allocationType);
-        }
+    if (allocateMemory && memory && MemoryPool::isSystemMemoryPool(memory->getMemoryPool())) {
+        memoryManager->addAllocationToHostPtrManager(memory);
+    }
+
+    // if memory pointer should not be allcoated and graphics allocation is nullptr
+    // and cl_mem flags allow, create non-zerocopy buffer
+    if (!allocateMemory && !memory && Buffer::isReadOnlyMemoryPermittedByFlags(flags)) {
+        allocationType = GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY;
+        zeroCopyAllowed = false;
+        copyMemoryFromHostPtr = true;
+        AllocationFlags allocFlags = MemObjHelper::getAllocationFlags(flags, true);
+        DevicesBitfield devices = MemObjHelper::getDevicesBitfield(flags);
+        memory = memoryManager->allocateGraphicsMemoryInPreferredPool(allocFlags, devices, nullptr, static_cast<size_t>(size), allocationType);
     }
 
     if (!memory) {
