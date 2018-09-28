@@ -344,6 +344,23 @@ TEST(MemObj, givenDefaultWhenAskedForCpuMappingThenReturnTrue) {
     EXPECT_TRUE(memObj.mappingOnCpuAllowed());
 }
 
+TEST(MemObj, givenNonCpuAccessibleMemoryWhenAskingForMappingOnCpuThenDisallow) {
+    MockMemoryManager memoryManager;
+    MockContext context;
+
+    context.setMemoryManager(&memoryManager);
+
+    auto allocation = memoryManager.allocateGraphicsMemory(1);
+    allocation->gmm = new Gmm(nullptr, 1, false);
+
+    MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_READ_WRITE,
+                  1, allocation->getUnderlyingBuffer(), nullptr, allocation, false, false, false);
+
+    EXPECT_TRUE(memObj.mappingOnCpuAllowed());
+    reinterpret_cast<MemoryAllocation *>(allocation)->overrideMemoryPool(MemoryPool::SystemCpuInaccessible);
+    EXPECT_FALSE(memObj.mappingOnCpuAllowed());
+}
+
 TEST(MemObj, givenMultipleMemObjectsWithReusedGraphicsAllocationWhenDestroyedThenFreeAllocationOnce) {
 
     MockMemoryManager memoryManager;

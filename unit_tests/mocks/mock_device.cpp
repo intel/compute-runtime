@@ -12,6 +12,7 @@
 #include "runtime/os_interface/os_time.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/mocks/mock_ostime.h"
+#include "unit_tests/tests_configuration.h"
 
 using namespace OCLRT;
 
@@ -26,7 +27,8 @@ MockDevice::MockDevice(const HardwareInfo &hwInfo)
 }
 OCLRT::MockDevice::MockDevice(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnvironment, uint32_t deviceIndex)
     : Device(hwInfo, executionEnvironment, deviceIndex) {
-    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported));
+    bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
+    this->mockMemoryManager.reset(new OsAgnosticMemoryManager(false, this->getHardwareCapabilities().localMemorySupported, aubUsage));
     this->osTime = MockOSTime::create();
     mockWaTable = *hwInfo.pWaTable;
 }
