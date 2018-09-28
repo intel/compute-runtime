@@ -8,6 +8,7 @@
 #pragma once
 #include <cstdint>
 #include <cstddef>
+#include <limits>
 
 namespace MemoryConstants {
 static const uint64_t zoneHigh = ~(uint64_t)0xFFFFFFFF;
@@ -30,6 +31,8 @@ static const uint64_t max64BitAppAddress = ((1ULL << 47) - 1);
 static const uint32_t sizeOf4GBinPageEntities = (MemoryConstants::gigaByte * 4 - MemoryConstants::pageSize) / MemoryConstants::pageSize;
 static const uint64_t max32BitAddress = ((1ULL << 32) - 1);
 static const uint64_t max48BitAddress = ((1ULL << 48) - 1);
+static const uintptr_t page4kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
+static const uintptr_t page64kEntryMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::page64kMask;
 } // namespace MemoryConstants
 
 const bool is32bit = (sizeof(void *) == 4) ? true : false;

@@ -18,18 +18,17 @@ uintptr_t PTE::map(uintptr_t vm, size_t size, uint64_t entryBits, uint32_t memor
     size_t indexEnd = ((vm + size - 1) >> shift) & mask;
     uintptr_t res = -1;
     bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
-    uint64_t newEntryBits = entryBits & 0xfff;
-    auto entriesMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
+    uint64_t newEntryBits = entryBits & MemoryConstants::pageMask;
     newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
-            uint64_t tmp = allocator->reservePage(memoryBank);
+            uint64_t tmp = allocator->reserve4kPage(memoryBank);
             entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
         } else if (updateEntryBits) {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & entriesMask) | newEntryBits);
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & MemoryConstants::page4kEntryMask) | newEntryBits);
         }
-        res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & entriesMask, res);
+        res = std::min(reinterpret_cast<uintptr_t>(entries[index]) & MemoryConstants::page4kEntryMask, res);
     }
     return (res & ~newEntryBits) + (vm & (pageSize - 1));
 }
@@ -43,21 +42,20 @@ void PTE::pageWalk(uintptr_t vm, size_t size, size_t offset, uint64_t entryBits,
     uint64_t res = -1;
     uintptr_t rem = vm & (pageSize - 1);
     bool updateEntryBits = entryBits != PageTableEntry::nonValidBits;
-    uint64_t newEntryBits = entryBits & 0xfff;
-    auto entriesMask = std::numeric_limits<uintptr_t>::max() & ~MemoryConstants::pageMask;
+    uint64_t newEntryBits = entryBits & MemoryConstants::pageMask;
     newEntryBits |= 0x1;
 
     for (size_t index = indexStart; index <= indexEnd; index++) {
         if (entries[index] == 0x0) {
-            uint64_t tmp = allocator->reservePage(memoryBank);
+            uint64_t tmp = allocator->reserve4kPage(memoryBank);
             entries[index] = reinterpret_cast<void *>(tmp | newEntryBits);
         } else if (updateEntryBits) {
-            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & entriesMask) | newEntryBits);
+            entries[index] = reinterpret_cast<void *>((reinterpret_cast<uintptr_t>(entries[index]) & MemoryConstants::page4kEntryMask) | newEntryBits);
         }
-        res = reinterpret_cast<uintptr_t>(entries[index]) & entriesMask;
+        res = reinterpret_cast<uintptr_t>(entries[index]) & MemoryConstants::page4kEntryMask;
 
         size_t lSize = std::min(pageSize - rem, size);
-        pageWalker((res & ~0x1) + rem, lSize, offset, reinterpret_cast<uintptr_t>(entries[index]) & 0xfffu);
+        pageWalker((res & ~0x1) + rem, lSize, offset, reinterpret_cast<uintptr_t>(entries[index]) & MemoryConstants::pageMask);
 
         size -= lSize;
         offset += lSize;
