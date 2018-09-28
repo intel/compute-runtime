@@ -45,7 +45,7 @@ int HwInfoConfigHw<IGFX_SKYLAKE>::configureHardwareCustom(HardwareInfo *hwInfo, 
 
     pSkuTable->ftrGpGpuMidBatchPreempt = 1;
     pSkuTable->ftrGpGpuThreadGroupLevelPreempt = 1;
-    pSkuTable->ftrGpGpuMidThreadLevelPreempt = 0;
+    pSkuTable->ftrGpGpuMidThreadLevelPreempt = 1;
     pSkuTable->ftr3dMidBatchPreempt = 1;
     pSkuTable->ftr3dObjectLevelPreempt = 1;
     pSkuTable->ftrPerCtxtPreemptionGranularityControl = 1;
