@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace GrfConfig {
 constexpr uint32_t DefaultGrfNumber = 128u;
 }
