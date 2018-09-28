@@ -101,7 +101,7 @@ void GpgpuWalkerHelper<GfxFamily>::addAluReadModifyWriteRegister(
 
 template <typename GfxFamily>
 inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
-    WALKER_HANDLE pCmdData,
+    WALKER_TYPE<GfxFamily> *walkerCmd,
     const size_t globalOffsets[3],
     const size_t startWorkGroups[3],
     const size_t numWorkGroups[3],
@@ -109,16 +109,14 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     uint32_t simd,
     uint32_t workDim,
     bool localIdsGeneration) {
-    WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
-
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 
     auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
-    pCmd->setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
+    walkerCmd->setThreadWidthCounterMaximum(static_cast<uint32_t>(threadsPerWorkGroup));
 
-    pCmd->setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
-    pCmd->setThreadGroupIdYDimension(static_cast<uint32_t>(numWorkGroups[1]));
-    pCmd->setThreadGroupIdZDimension(static_cast<uint32_t>(numWorkGroups[2]));
+    walkerCmd->setThreadGroupIdXDimension(static_cast<uint32_t>(numWorkGroups[0]));
+    walkerCmd->setThreadGroupIdYDimension(static_cast<uint32_t>(numWorkGroups[1]));
+    walkerCmd->setThreadGroupIdZDimension(static_cast<uint32_t>(numWorkGroups[2]));
 
     // compute executionMask - to tell which SIMD lines are active within thread
     auto remainderSimdLanes = localWorkSize & (simd - 1);
@@ -128,13 +126,13 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
 
     using SIMD_SIZE = typename WALKER_TYPE<GfxFamily>::SIMD_SIZE;
 
-    pCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
-    pCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
-    pCmd->setSimdSize(static_cast<SIMD_SIZE>(simd >> 4));
+    walkerCmd->setRightExecutionMask(static_cast<uint32_t>(executionMask));
+    walkerCmd->setBottomExecutionMask(static_cast<uint32_t>(0xffffffff));
+    walkerCmd->setSimdSize(static_cast<SIMD_SIZE>(simd >> 4));
 
-    pCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
-    pCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
-    pCmd->setThreadGroupIdStartingResumeZ(static_cast<uint32_t>(startWorkGroups[2]));
+    walkerCmd->setThreadGroupIdStartingX(static_cast<uint32_t>(startWorkGroups[0]));
+    walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
+    walkerCmd->setThreadGroupIdStartingResumeZ(static_cast<uint32_t>(startWorkGroups[2]));
 
     return localWorkSize;
 }
@@ -432,7 +430,7 @@ inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(Lin
 template <typename GfxFamily>
 void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
     LinearStream *cmdStream,
-    WALKER_HANDLE walkerHandle,
+    WALKER_TYPE<GfxFamily> *walkerCmd,
     TimestampPacket *timestampPacket,
     TimestampPacket::WriteOperationType writeOperationType) {
 
@@ -523,8 +521,12 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     indirectObjectHeap.getSpace(curbeOffset);
     ioh = &indirectObjectHeap;
 
-    bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(1, globalWorkSizes, localWorkSizes);
-    auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
+    // Program the walker.  Invokes execution so all state should already be programmed
+    auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
+    *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
+
+    bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
+    KernelCommandsHelper<GfxFamily>::sendIndirectState(
         *commandStream,
         *dsh,
         *ioh,
@@ -535,37 +537,16 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         offsetInterfaceDescriptorTable,
         interfaceDescriptorIndex,
         preemptionMode,
+        pGpGpuWalkerCmd,
         nullptr,
         localIdsGeneration);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);
 
-    // Program the walker.  Invokes execution so all state should already be programmed
-    auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
-    *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
-
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
-    auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd, 1, localIdsGeneration);
-
-    pGpGpuWalkerCmd->setIndirectDataStartAddress((uint32_t)offsetCrossThreadData);
-    DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
-    pGpGpuWalkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex);
-
-    auto threadPayload = scheduler.getKernelInfo().patchInfo.threadPayload;
-    DEBUG_BREAK_IF(nullptr == threadPayload);
-
-    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
-    auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
-    localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
-
-    auto sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkSize) * localIdSizePerThread;
-    DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
-
-    auto sizeCrossThreadData = scheduler.getCrossThreadDataSize();
-    auto IndirectDataLength = alignUp((uint32_t)(sizeCrossThreadData + sizePerThreadDataTotal), GPGPU_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-    pGpGpuWalkerCmd->setIndirectDataLength(IndirectDataLength);
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd, 1, localIdsGeneration);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, false);

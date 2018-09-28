@@ -188,18 +188,17 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
         }
 
         // Program the walker.  Invokes execution so all state should already be programmed
-        auto pWalkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream->getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
-        *pWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
+        auto walkerCmd = allocateWalkerSpace(*commandStream, kernel);
 
         if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, pWalkerCmd, currentTimestampPacket,
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, currentTimestampPacket,
                                                                TimestampPacket::WriteOperationType::AfterWalker);
         }
 
-        auto idd = obtainInterfaceDescriptorData(pWalkerCmd);
+        auto idd = obtainInterfaceDescriptorData(walkerCmd);
 
-        bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(dim, globalWorkSizes, localWorkSizes);
-        auto offsetCrossThreadData = KernelCommandsHelper<GfxFamily>::sendIndirectState(
+        bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
+        KernelCommandsHelper<GfxFamily>::sendIndirectState(
             *commandStream,
             *dsh,
             *ioh,
@@ -210,35 +209,15 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             offsetInterfaceDescriptorTable,
             interfaceDescriptorIndex,
             preemptionMode,
+            walkerCmd,
             idd,
             localIdsGeneration);
 
         size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
-        auto localWorkSize = GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pWalkerCmd, globalOffsets, startWorkGroups,
-                                                                                    numWorkGroups, localWorkSizes, simd, dim, localIdsGeneration);
-
-        DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
-        setOffsetCrossThreadData(pWalkerCmd, offsetCrossThreadData, interfaceDescriptorIndex);
-        auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
-
-        size_t sizePerThreadDataTotal = 0;
-        if (localIdsGeneration) {
-            auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
-            DEBUG_BREAK_IF(nullptr == threadPayload);
-
-            auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
-            auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
-            localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
-
-            sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkSize) * localIdSizePerThread;
-            DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
-        }
-
-        auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
-                                          WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
-        pWalkerCmd->setIndirectDataLength(indirectDataLength);
+        GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
+                                                               numWorkGroups, localWorkSizes, simd, dim, localIdsGeneration);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;

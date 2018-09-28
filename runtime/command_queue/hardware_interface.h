@@ -26,7 +26,8 @@ struct MultiDispatchInfo;
 template <class T>
 struct TagNode;
 
-using WALKER_HANDLE = void *;
+template <typename GfxFamily>
+using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
 template <typename GfxFamily>
 class HardwareInterface {
@@ -57,12 +58,7 @@ class HardwareInterface {
         LinearStream *commandStream);
 
     static INTERFACE_DESCRIPTOR_DATA *obtainInterfaceDescriptorData(
-        WALKER_HANDLE pCmdData);
-
-    static void setOffsetCrossThreadData(
-        WALKER_HANDLE pCmdData,
-        size_t &offsetCrossThreadData,
-        uint32_t &interfaceDescriptorIndex);
+        WALKER_TYPE<GfxFamily> *walkerCmd);
 
     static void dispatchWorkarounds(
         LinearStream *commandStream,
@@ -83,6 +79,9 @@ class HardwareInterface {
         HwPerfCounter *hwPerfCounter,
         LinearStream *commandStream,
         CommandQueue &commandQueue);
+
+    static WALKER_TYPE<GfxFamily> *allocateWalkerSpace(LinearStream &commandStream,
+                                                       const Kernel &kernel);
 };
 
 } // namespace OCLRT

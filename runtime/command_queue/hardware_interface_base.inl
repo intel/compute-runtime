@@ -33,20 +33,8 @@ inline void HardwareInterface<GfxFamily>::getDefaultDshSpace(
 template <typename GfxFamily>
 inline typename HardwareInterface<GfxFamily>::INTERFACE_DESCRIPTOR_DATA *
 HardwareInterface<GfxFamily>::obtainInterfaceDescriptorData(
-    WALKER_HANDLE pCmdData) {
-
+    WALKER_TYPE<GfxFamily> *walkerCmd) {
     return nullptr;
-}
-
-template <typename GfxFamily>
-inline void HardwareInterface<GfxFamily>::setOffsetCrossThreadData(
-    WALKER_HANDLE pCmdData,
-    size_t &offsetCrossThreadData,
-    uint32_t &interfaceDescriptorIndex) {
-
-    WALKER_TYPE<GfxFamily> *pCmd = static_cast<WALKER_TYPE<GfxFamily> *>(pCmdData);
-    pCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
-    pCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
 }
 
 template <typename GfxFamily>
@@ -101,6 +89,14 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
     }
+}
+
+template <typename GfxFamily>
+inline WALKER_TYPE<GfxFamily> *HardwareInterface<GfxFamily>::allocateWalkerSpace(LinearStream &commandStream,
+                                                                                 const Kernel &kernel) {
+    auto walkerCmd = static_cast<WALKER_TYPE<GfxFamily> *>(commandStream.getSpace(sizeof(WALKER_TYPE<GfxFamily>)));
+    *walkerCmd = GfxFamily::cmdInitGpgpuWalker;
+    return walkerCmd;
 }
 
 } // namespace OCLRT

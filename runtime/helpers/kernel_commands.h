@@ -25,6 +25,9 @@ struct CrossThreadInfo;
 struct MultiDispatchInfo;
 
 template <typename GfxFamily>
+using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
+
+template <typename GfxFamily>
 struct KernelCommandsHelper : public PerThreadDataHelper {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
@@ -88,8 +91,9 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         uint32_t simd,
         const size_t localWorkSize[3],
         const uint64_t offsetInterfaceDescriptorTable,
-        const uint32_t interfaceDescriptorIndex,
+        uint32_t &interfaceDescriptorIndex,
         PreemptionMode preemptionMode,
+        WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
         bool localIdsGeneration);
 
@@ -155,6 +159,6 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static bool doBindingTablePrefetch();
 
-    static bool isDispatchForLocalIdsGeneration(uint32_t workDim, size_t *gws, size_t *lws);
+    static bool isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws);
 };
 } // namespace OCLRT

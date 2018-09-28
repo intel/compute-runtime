@@ -26,8 +26,6 @@
 
 namespace OCLRT {
 
-using WALKER_HANDLE = void *;
-
 template <typename GfxFamily>
 using WALKER_TYPE = typename GfxFamily::WALKER_TYPE;
 
@@ -129,7 +127,7 @@ class GpgpuWalkerHelper {
     static size_t getSizeForWADisableLSQCROPERFforOCL(const Kernel *pKernel);
 
     static size_t setGpgpuWalkerThreadData(
-        WALKER_HANDLE pCmdData,
+        WALKER_TYPE<GfxFamily> *walkerCmd,
         const size_t globalOffsets[3],
         const size_t startWorkGroups[3],
         const size_t numWorkGroups[3],
@@ -187,7 +185,7 @@ class GpgpuWalkerHelper {
 
     static void setupTimestampPacket(
         LinearStream *cmdStream,
-        WALKER_HANDLE walkerHandle,
+        WALKER_TYPE<GfxFamily> *walkerCmd,
         TimestampPacket *timestampPacket,
         TimestampPacket::WriteOperationType writeOperationType);
 

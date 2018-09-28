@@ -292,8 +292,9 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     uint32_t simd,
     const size_t localWorkSize[3],
     const uint64_t offsetInterfaceDescriptorTable,
-    const uint32_t interfaceDescriptorIndex,
+    uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
+    WALKER_TYPE<GfxFamily> *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
     bool localIdsGeneration) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
@@ -340,22 +341,29 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
                  ptrOffset(kernel.getDynamicStateHeap(), patchInfo.samplerStateArray->Offset),
                  sizeSamplerState);
 
-        auto pSmplr = (SAMPLER_STATE *)(samplerState);
+        auto pSmplr = reinterpret_cast<SAMPLER_STATE *>(samplerState);
         for (uint32_t i = 0; i < samplerCount; i++) {
             pSmplr->setIndirectStatePointer((uint32_t)borderColorOffset);
             pSmplr++;
         }
     }
 
+    auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
+    DEBUG_BREAK_IF(nullptr == threadPayload);
+
+    auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
+    auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
+    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
+
     // Send thread data
+    auto sizeCrossThreadData = kernel.getCrossThreadDataSize();
     auto offsetCrossThreadData = sendCrossThreadData(
         ioh,
         kernel);
 
-    auto threadPayload = kernel.getKernelInfo().patchInfo.threadPayload;
-    DEBUG_BREAK_IF(nullptr == threadPayload);
+    size_t sizePerThreadDataTotal = 0;
+    size_t sizePerThreadData = 0;
 
-    auto numChannels = PerThreadDataHelper::getNumLocalIdChannels(*threadPayload);
     sendPerThreadData(
         ioh,
         simd,
@@ -364,10 +372,13 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         kernel.getKernelInfo().workgroupDimensionsOrder,
         kernel.usesOnlyImages());
 
-    // send interface descriptor data
-    auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, numChannels);
-    auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
+    sizePerThreadData = getPerThreadSizeLocalIDs(simd, numChannels);
+
+    auto localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, numChannels);
+    localIdSizePerThread = std::max(localIdSizePerThread, sizeof(GRF));
+
+    sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkItems) * localIdSizePerThread;
+    DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
 
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
@@ -382,7 +393,7 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
         dsh,
         offsetInterfaceDescriptor,
         kernelStartOffset,
-        kernel.getCrossThreadDataSize(),
+        sizeCrossThreadData,
         sizePerThreadData,
         dstBindingTablePointer,
         samplerStateOffset,
@@ -403,6 +414,14 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     KernelCommandsHelper<GfxFamily>::sendMediaStateFlush(
         commandStream,
         interfaceDescriptorIndex);
+
+    DEBUG_BREAK_IF(offsetCrossThreadData % 64 != 0);
+    walkerCmd->setIndirectDataStartAddress(static_cast<uint32_t>(offsetCrossThreadData));
+    walkerCmd->setInterfaceDescriptorOffset(interfaceDescriptorIndex++);
+
+    auto indirectDataLength = alignUp(static_cast<uint32_t>(sizeCrossThreadData + sizePerThreadDataTotal),
+                                      WALKER_TYPE<GfxFamily>::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
+    walkerCmd->setIndirectDataLength(indirectDataLength);
 
     return offsetCrossThreadData;
 }
@@ -438,7 +457,7 @@ bool KernelCommandsHelper<GfxFamily>::doBindingTablePrefetch() {
 }
 
 template <typename GfxFamily>
-bool KernelCommandsHelper<GfxFamily>::isDispatchForLocalIdsGeneration(uint32_t workDim, size_t *gws, size_t *lws) {
+bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws) {
     return true;
 }
 } // namespace OCLRT
