@@ -5,8 +5,9 @@
  *
  */
 
-#include "unit_tests/helpers/hw_helper_tests.h"
 #include "runtime/helpers/options.h"
+#include "unit_tests/helpers/debug_manager_state_restore.h"
+#include "unit_tests/helpers/hw_helper_tests.h"
 
 void HwHelperTest::SetUp() {
     memcpy(&testPlatform, platformDevices[0]->pPlatform, sizeof(testPlatform));
@@ -152,4 +153,20 @@ TEST(HwInfoTest, givenHwInfoWhenIsNotCoreThenPlatformTypeIsLp) {
     hwInfo.capabilityTable.isCore = false;
     auto platformType = getPlatformType(hwInfo);
     EXPECT_STREQ("lp", platformType);
+}
+
+TEST(HwInfoTest, givenHwInfoWhenChosenEngineTypeQueriedThenDefaultIsReturned) {
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.defaultEngineType = EngineType::ENGINE_RCS;
+    auto engineType = getChosenEngineType(hwInfo);
+    EXPECT_EQ(EngineType::ENGINE_RCS, engineType);
+}
+
+TEST(HwInfoTest, givenNodeOrdinalSetWhenChosenEngineTypeQueriedThenSetValueIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.NodeOrdinal.set(EngineType::ENGINE_VECS);
+    HardwareInfo hwInfo;
+    hwInfo.capabilityTable.defaultEngineType = EngineType::ENGINE_RCS;
+    auto engineType = getChosenEngineType(hwInfo);
+    EXPECT_EQ(EngineType::ENGINE_VECS, engineType);
 }

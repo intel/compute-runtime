@@ -70,9 +70,8 @@ Device::Device(const HardwareInfo &hwInfo, ExecutionEnvironment *executionEnviro
     deviceExtensions.reserve(1000);
     name.reserve(100);
     preemptionMode = PreemptionHelper::getDefaultPreemptionMode(hwInfo);
-    engineType = DebugManager.flags.NodeOrdinal.get() == -1
-                     ? hwInfo.capabilityTable.defaultEngineType
-                     : static_cast<EngineType>(DebugManager.flags.NodeOrdinal.get());
+    engineType = getChosenEngineType(hwInfo);
+
     if (!getSourceLevelDebugger()) {
         this->executionEnvironment->initSourceLevelDebugger(hwInfo);
     }
