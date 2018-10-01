@@ -90,7 +90,7 @@ HWTEST_F(EnqueueCopyBufferRectTest, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, alignsToCSR) {
+HWTEST_F(EnqueueCopyBufferRectTest, alignsToCSR) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -133,14 +133,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_GPGPUWalker) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_bumpsTaskLevel) {
+HWTEST_F(EnqueueCopyBufferRectTest, 2D_bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueCopyBufferRect2D<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_addsCommands) {
+HWTEST_F(EnqueueCopyBufferRectTest, 2D_addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueCopyBufferRect2D<FamilyType>();
@@ -183,7 +183,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_addsIndirectData) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueCopyBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
     enqueueCopyBufferRect2D<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -238,7 +238,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_InterfaceDescriptorDat
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 2D_PipelineSelect) {
+HWTEST_F(EnqueueCopyBufferRectTest, 2D_PipelineSelect) {
     enqueueCopyBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -284,14 +284,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_GPGPUWalker) {
     //EXPECT_EQ( expectedWorkItems, numWorkItems );
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_bumpsTaskLevel) {
+HWTEST_F(EnqueueCopyBufferRectTest, 3D_bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueCopyBufferRect3D<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_addsCommands) {
+HWTEST_F(EnqueueCopyBufferRectTest, 3D_addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueCopyBufferRect3D<FamilyType>();
@@ -305,7 +305,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_addsIndirectData) {
     EXPECT_NE(usedIndirectHeapBefore, pDSH->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueCopyBufferRectTest, 3D_LoadRegisterImmediateL3CNTLREG) {
     enqueueCopyBufferRect3D<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -360,7 +360,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_InterfaceDescriptorDat
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferRectTest, 3D_PipelineSelect) {
+HWTEST_F(EnqueueCopyBufferRectTest, 3D_PipelineSelect) {
     enqueueCopyBufferRect3D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

@@ -198,7 +198,7 @@ HWTEST_F(EnqueueFillBufferCmdTests, FillBufferLeftLeftover) {
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueFillBufferCmdTests, LoadRegisterImmediateL3CNTLREG) {
     enqueueFillBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -252,7 +252,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, InterfaceDescriptorData) 
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, PipelineSelect) {
+HWTEST_F(EnqueueFillBufferCmdTests, PipelineSelect) {
     enqueueFillBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -263,7 +263,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, MediaVFEState) {
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentZeroShouldMatchDestAddress) {
+HWTEST_F(EnqueueFillBufferCmdTests, argumentZeroShouldMatchDestAddress) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();
@@ -299,7 +299,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentZeroShouldMatchDe
 // This test case should be re-enabled once getStatelessArgumentPointer gets support for SVM pointers.
 // This could happen if KernelInfo.kernelArgInfo was accessible given a Kernel.  Just need an offset
 // into CrossThreadData.
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, DISABLED_argumentOneShouldMatchOffset) {
+HWTEST_F(EnqueueFillBufferCmdTests, DISABLED_argumentOneShouldMatchOffset) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();
@@ -332,7 +332,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, DISABLED_argumentOneShoul
     context.getMemoryManager()->freeGraphicsMemory(patternAllocation);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
+HWTEST_F(EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
     auto patternAllocation = context.getMemoryManager()->allocateGraphicsMemory(EnqueueFillBufferTraits::patternSize);
 
     enqueueFillBuffer<FamilyType>();

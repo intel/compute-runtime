@@ -28,7 +28,7 @@ struct MarkerFixture : public CommandEnqueueFixture {
 
 typedef Test<MarkerFixture> MarkerTest;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
+HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

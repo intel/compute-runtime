@@ -48,7 +48,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, gpgpuWalker) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, alignsToCSR) {
+HWTEST_F(EnqueueCopyImageToBufferTest, alignsToCSR) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -59,21 +59,21 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, alignsToCSR) {
     EXPECT_EQ(csr.peekTaskLevel(), pCmdQ->taskLevel + 1);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, bumpsTaskLevel) {
+HWTEST_F(EnqueueCopyImageToBufferTest, bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueCopyImageToBuffer<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, addsCommands) {
+HWTEST_F(EnqueueCopyImageToBufferTest, addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueCopyImageToBuffer<FamilyType>();
     EXPECT_NE(usedCmdBufferBefore, pCS->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, addsIndirectData) {
+HWTEST_F(EnqueueCopyImageToBufferTest, addsIndirectData) {
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -84,7 +84,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, addsIndirectData) {
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, loadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueCopyImageToBufferTest, loadRegisterImmediateL3CNTLREG) {
     enqueueCopyImageToBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -148,7 +148,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, interfaceDescriptorDat
     EXPECT_NE(kernelStartPointer, interfaceDescriptorData.getBindingTablePointer());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, surfaceState) {
+HWTEST_F(EnqueueCopyImageToBufferTest, surfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     enqueueCopyImageToBuffer<FamilyType>();
@@ -173,7 +173,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, surfaceState) {
     EXPECT_EQ(reinterpret_cast<uint64_t>(srcImage->getCpuAddress()), surfaceState.getSurfaceBaseAddress());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyImageToBufferTest, pipelineSelect) {
+HWTEST_F(EnqueueCopyImageToBufferTest, pipelineSelect) {
     enqueueCopyImageToBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

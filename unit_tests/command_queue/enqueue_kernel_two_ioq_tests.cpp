@@ -81,7 +81,7 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
         delete E1;
         delete E2;
 
-        typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+        typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
         itorWalker1 = find<GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
 
@@ -96,12 +96,12 @@ struct TwoIOQsTwoDependentWalkers : public HelloWorldTest<HelloWorldFixtureFacto
     CommandQueue *pCmdQ2 = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveTwoWalkers) {
     parseWalkers<FamilyType>();
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, shouldHaveOnePS) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveOnePS) {
     parseWalkers<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -114,7 +114,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, shouldHaveOneVFEState) {
     EXPECT_EQ(1u, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TwoIOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
+HWTEST_F(TwoIOQsTwoDependentWalkers, shouldHaveAPipecontrolBetweenWalkers) {
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
     parseWalkers<FamilyType>();

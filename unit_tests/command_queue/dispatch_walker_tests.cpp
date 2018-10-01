@@ -103,14 +103,14 @@ HWTEST_F(DispatchWalkerTest, computeDimensions) {
     EXPECT_EQ(3u, computeDimensions(workItems3D));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
+HWTEST_F(DispatchWalkerTest, shouldntChangeCommandStreamMemory) {
     MockKernel kernel(program.get(), kernelInfo, *pDevice);
     ASSERT_EQ(CL_SUCCESS, kernel.initialize());
 
     auto &commandStream = pCmdQ->getCS(4096);
 
     // Consume all memory except what is needed for this enqueue
-    auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::GPGPU_WALKER) +
+    auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
                                    KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
 
     //cs has a minimum required size
@@ -147,7 +147,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, shouldntChangeCommandStreamMemor
     EXPECT_EQ(sizeDispatchWalkerNeeds, commandStream.getUsed() - commandStreamStart);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, noLocalIdsShouldntCrash) {
+HWTEST_F(DispatchWalkerTest, noLocalIdsShouldntCrash) {
     threadPayload.LocalIDXPresent = 0;
     threadPayload.LocalIDYPresent = 0;
     threadPayload.LocalIDZPresent = 0;
@@ -159,7 +159,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, noLocalIdsShouldntCrash) {
     auto &commandStream = pCmdQ->getCS(4096);
 
     // Consume all memory except what is needed for this enqueue
-    auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::GPGPU_WALKER) +
+    auto sizeDispatchWalkerNeeds = sizeof(typename FamilyType::WALKER_TYPE) +
                                    KernelCommandsHelper<FamilyType>::getSizeRequiredCS();
 
     //cs has a minimum required size
@@ -1055,7 +1055,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, dispatchWalkerWithMultipleDispat
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
+HWTEST_F(DispatchWalkerTest, givenMultiDispatchWhenWhitelistedRegisterForCoherencySwitchThenDontProgramLriInTaskStream) {
     typedef typename FamilyType::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
     WhitelistedRegisters registers = {0};
     registers.chicken0hdc_0xE5F0 = true;

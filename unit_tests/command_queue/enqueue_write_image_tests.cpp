@@ -95,7 +95,7 @@ HWTEST_F(EnqueueWriteImageTest, addsIndirectData) {
     EXPECT_NE(sshBefore, pSSH->getUsed());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, loadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueWriteImageTest, loadRegisterImmediateL3CNTLREG) {
     enqueueWriteImage<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -158,7 +158,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, interfaceDescriptorData) {
     EXPECT_NE(kernelStartPointer, interfaceDescriptorData.getBindingTablePointer());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, surfaceState) {
+HWTEST_F(EnqueueWriteImageTest, surfaceState) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
 
     enqueueWriteImage<FamilyType>();
@@ -179,7 +179,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, surfaceState) {
     EXPECT_EQ(reinterpret_cast<uint64_t>(dstImage->getCpuAddress()), surfaceState.getSurfaceBaseAddress());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteImageTest, pipelineSelect) {
+HWTEST_F(EnqueueWriteImageTest, pipelineSelect) {
     enqueueWriteImage<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

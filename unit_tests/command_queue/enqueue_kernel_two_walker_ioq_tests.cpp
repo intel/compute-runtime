@@ -13,13 +13,13 @@ using namespace OCLRT;
 
 typedef TwoWalkerTest<HelloWorldFixtureFactory> IOQWithTwoWalkers;
 
-HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveTwoWalkers) {
+HWTEST_F(IOQWithTwoWalkers, shouldHaveTwoWalkers) {
     enqueueTwoKernels<FamilyType>();
 
     EXPECT_NE(itorWalker1, itorWalker2);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveOnePS) {
+HWTEST_F(IOQWithTwoWalkers, shouldHaveOnePS) {
     enqueueTwoKernels<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -32,7 +32,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveOneVFEState) {
     EXPECT_EQ(1u, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
+HWTEST_F(IOQWithTwoWalkers, shouldHaveAPipecontrolBetweenWalkers2) {
     enqueueTwoKernels<FamilyType>();
     auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
 

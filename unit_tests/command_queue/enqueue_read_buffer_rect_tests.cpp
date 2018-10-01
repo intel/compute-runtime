@@ -91,7 +91,7 @@ HWTEST_F(EnqueueReadBufferRectTest, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
+HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -103,7 +103,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, alignsToCSR_Blocking) {
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, alignsToCSR_NonBlocking) {
+HWTEST_F(EnqueueReadBufferRectTest, alignsToCSR_NonBlocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -145,14 +145,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_GPGPUWalker) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_bumpsTaskLevel) {
+HWTEST_F(EnqueueReadBufferRectTest, 2D_bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueReadBufferRect2D<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_addsCommands) {
+HWTEST_F(EnqueueReadBufferRectTest, 2D_addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueReadBufferRect2D<FamilyType>();
@@ -195,7 +195,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_addsIndirectData) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueReadBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
     enqueueReadBufferRect2D<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -272,7 +272,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_InterfaceDescriptorDat
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferRectTest, 2D_PipelineSelect) {
+HWTEST_F(EnqueueReadBufferRectTest, 2D_PipelineSelect) {
     enqueueReadBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

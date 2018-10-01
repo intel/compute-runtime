@@ -17,13 +17,13 @@ TEST_F(MediaKernelTest, VmeKernelProperlyIdentifiesItself) {
     ASSERT_EQ(true, pVmeKernel->isVmeKernel());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, MediaKernelTest, EnqueueVmeKernelUsesSinglePipelineSelect) {
+HWTEST_F(MediaKernelTest, EnqueueVmeKernelUsesSinglePipelineSelect) {
     enqueueVmeKernel<FamilyType>();
     auto numCommands = getCommandsList<typename FamilyType::PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, MediaKernelTest, EnqueueRegularKernelUsesSinglePipelineSelect) {
+HWTEST_F(MediaKernelTest, EnqueueRegularKernelUsesSinglePipelineSelect) {
     enqueueRegularKernel<FamilyType>();
     auto numCommands = getCommandsList<typename FamilyType::PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);

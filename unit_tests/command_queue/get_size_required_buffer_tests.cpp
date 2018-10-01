@@ -61,8 +61,8 @@ struct GetSizeRequiredBufferTest : public CommandEnqueueFixture,
     GraphicsAllocation *patternAllocation = nullptr;
 };
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueFillBuffer) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueFillBuffer) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -113,8 +113,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueFillBuffer) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueCopyBuffer) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueCopyBuffer) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -164,8 +164,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueCopyBuffer) {
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferNonBlocking) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -216,8 +216,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferNonBlock
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueReadBufferBlocking) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -269,8 +269,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueReadBufferBlocking
     EXPECT_GE(expectedSizeSSH, usedAfterSSH - usedBeforeSSH);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueWriteBufferNonBlocking) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();
     auto &dsh = pCmdQ->getIndirectHeap(IndirectHeap::DYNAMIC_STATE, 0u);
@@ -407,8 +407,8 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     EXPECT_GE(expectedSizeSSH, sshAfter - sshBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
+    typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
     typedef SimpleArgKernelFixture KernelFixture;
     auto &commandStream = pCmdQ->getCS(1024);
     auto usedBeforeCS = commandStream.getUsed();

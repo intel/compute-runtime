@@ -44,11 +44,11 @@ HWTEST_F(CommandParse, getCommandLengthWithGarbage) {
     EXPECT_EQ(0u, PARSE::getCommandLength(&buffer));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, CommandParse, parseCommandBufferWithLength) {
+HWTEST_F(CommandParse, parseCommandBufferWithLength) {
     typedef typename FamilyType::PARSE PARSE;
-    typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+    typedef typename FamilyType::WALKER_TYPE WALKER_TYPE;
     GenCmdList cmds;
-    GPGPU_WALKER buffer = GPGPU_WALKER::sInit();
+    WALKER_TYPE buffer = FamilyType::cmdInitGpgpuWalker;
 
     EXPECT_TRUE(PARSE::parseCommandBuffer(cmds, &buffer, 0));
     EXPECT_FALSE(PARSE::parseCommandBuffer(cmds, &buffer, 1));

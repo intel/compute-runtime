@@ -345,8 +345,8 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     EXPECT_EQ(node2, mockTagAllocator->releaseReferenceNodes.at(3));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
-    using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenWriteWalkerStamp) {
+    using GPGPU_WALKER = typename FamilyType::WALKER_TYPE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);

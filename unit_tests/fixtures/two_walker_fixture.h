@@ -42,12 +42,12 @@ struct TwoWalkerTest
 
         parseCommands<FamilyType>(*pCmdQ);
 
-        itorWalker1 = find<typename FamilyType::GPGPU_WALKER *>(cmdList.begin(), cmdList.end());
+        itorWalker1 = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker1);
 
         itorWalker2 = itorWalker1;
         ++itorWalker2;
-        itorWalker2 = find<typename FamilyType::GPGPU_WALKER *>(itorWalker2, cmdList.end());
+        itorWalker2 = find<typename FamilyType::WALKER_TYPE *>(itorWalker2, cmdList.end());
         ASSERT_NE(cmdList.end(), itorWalker2);
     }
 

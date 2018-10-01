@@ -152,7 +152,7 @@ HWTEST_F(EnqueueCopyBufferTest, addsIndirectData) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueCopyBufferTest, LoadRegisterImmediateL3CNTLREG) {
     enqueueCopyBufferAndParse<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -207,7 +207,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, InterfaceDescriptorData) {
     EXPECT_NE(0u, cmdIDD->getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, PipelineSelect) {
+HWTEST_F(EnqueueCopyBufferTest, PipelineSelect) {
     enqueueCopyBufferAndParse<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);
@@ -218,7 +218,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, MediaVFEState) {
     validateMediaVFEState<FamilyType>(&pDevice->getHardwareInfo(), cmdMediaVfeState, cmdList, itorMediaVfeState);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
+HWTEST_F(EnqueueCopyBufferTest, argumentZeroShouldMatchSourceAddress) {
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used
@@ -245,7 +245,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentZeroShouldMatchSource
     EXPECT_EQ((void *)((uintptr_t)srcBuffer->getGraphicsAllocation()->getGpuAddress()), *pArgument);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueCopyBufferTest, argumentOneShouldMatchDestAddress) {
+HWTEST_F(EnqueueCopyBufferTest, argumentOneShouldMatchDestAddress) {
     enqueueCopyBufferAndParse<FamilyType>();
 
     // Extract the kernel used

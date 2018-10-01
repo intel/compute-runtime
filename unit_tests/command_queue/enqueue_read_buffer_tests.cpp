@@ -156,7 +156,7 @@ HWTEST_F(EnqueueReadBufferTypeTest, addsIndirectData) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueReadBufferTypeTest, LoadRegisterImmediateL3CNTLREG) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
@@ -237,7 +237,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, InterfaceDescriptorData) 
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueReadBufferTypeTest, PipelineSelect) {
+HWTEST_F(EnqueueReadBufferTypeTest, PipelineSelect) {
     srcBuffer->forceDisallowCPUCopy = true;
     enqueueReadBuffer<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();

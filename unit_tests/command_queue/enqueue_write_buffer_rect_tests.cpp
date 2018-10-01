@@ -66,7 +66,7 @@ HWTEST_F(EnqueueWriteBufferRectTest, returnSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, alignsToCSR_Blocking) {
+HWTEST_F(EnqueueWriteBufferRectTest, alignsToCSR_Blocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -78,7 +78,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, alignsToCSR_Blocking) {
     EXPECT_EQ(oldCsrTaskLevel, pCmdQ->taskLevel);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, alignsToCSR_NonBlocking) {
+HWTEST_F(EnqueueWriteBufferRectTest, alignsToCSR_NonBlocking) {
     //this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
@@ -120,14 +120,14 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_GPGPUWalker) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_bumpsTaskLevel) {
+HWTEST_F(EnqueueWriteBufferRectTest, 2D_bumpsTaskLevel) {
     auto taskLevelBefore = pCmdQ->taskLevel;
 
     enqueueWriteBufferRect2D<FamilyType>();
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_addsCommands) {
+HWTEST_F(EnqueueWriteBufferRectTest, 2D_addsCommands) {
     auto usedCmdBufferBefore = pCS->getUsed();
 
     enqueueWriteBufferRect2D<FamilyType>();
@@ -169,7 +169,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_addsIndirectData) {
     }
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
+HWTEST_F(EnqueueWriteBufferRectTest, 2D_LoadRegisterImmediateL3CNTLREG) {
     enqueueWriteBufferRect2D<FamilyType>();
     validateL3Programming<FamilyType>(cmdList, itorWalker);
 }
@@ -246,7 +246,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_InterfaceDescriptorDa
     EXPECT_NE(0u, IDD.getConstantIndirectUrbEntryReadLength());
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, EnqueueWriteBufferRectTest, 2D_PipelineSelect) {
+HWTEST_F(EnqueueWriteBufferRectTest, 2D_PipelineSelect) {
     enqueueWriteBufferRect2D<FamilyType>();
     int numCommands = getNumberOfPipelineSelectsThatEnablePipelineSelect<FamilyType>();
     EXPECT_EQ(1, numCommands);

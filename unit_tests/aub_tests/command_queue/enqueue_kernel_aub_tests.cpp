@@ -253,7 +253,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, simple) {
     EXPECT_EQ(0, memcmp(pISA, pExpectedISA, expectedSize));
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
+HWTEST_F(AUBSimpleArg, givenAubCommandStreamerReceiverWhenBatchBufferFlateningIsForcedThenDumpedAubIsStillValid) {
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};

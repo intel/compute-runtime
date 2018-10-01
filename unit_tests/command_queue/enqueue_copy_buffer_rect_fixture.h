@@ -77,7 +77,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
   protected:
     template <typename FamilyType>
     void enqueueCopyBufferRect2D() {
-        typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+        typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
         typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
         size_t srcOrigin[] = {0, 0, 0};
@@ -104,7 +104,7 @@ struct EnqueueCopyBufferRectTest : public CommandEnqueueFixture,
 
     template <typename FamilyType>
     void enqueueCopyBufferRect3D() {
-        typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
+        typedef typename FamilyType::WALKER_TYPE GPGPU_WALKER;
         typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
 
         size_t srcOrigin[] = {0, 0, 0};
