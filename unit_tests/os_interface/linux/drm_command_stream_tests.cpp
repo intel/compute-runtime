@@ -60,6 +60,7 @@ class DrmCommandStreamFixture {
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
         mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
+        mm->csr = csr;
         ::testing::Mock::VerifyAndClearExpectations(mock);
 
         //assert we have memory manager

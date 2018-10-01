@@ -178,6 +178,7 @@ TEST(MemObj, givenReadyGraphicsAllocationWhenMemObjDestroysAllocationAsyncThenAl
     MockContext context;
 
     context.setMemoryManager(&memoryManager);
+    memoryManager.csr = &context.getDevice(0)->getCommandStreamReceiver();
 
     auto allocation = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize);
     allocation->taskCount = 1;
@@ -230,6 +231,7 @@ TEST(MemObj, givenMemObjWhenItDoesntHaveGraphicsAllocationThenWaitForCsrCompleti
     MockContext context;
 
     context.setMemoryManager(&memoryManager);
+    memoryManager.csr = &context.getDevice(0)->getCommandStreamReceiver();
 
     MemObj memObj(&context, CL_MEM_OBJECT_BUFFER, CL_MEM_COPY_HOST_PTR,
                   MemoryConstants::pageSize, nullptr, nullptr, nullptr, true, false, false);

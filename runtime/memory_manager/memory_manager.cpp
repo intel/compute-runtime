@@ -175,11 +175,8 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
     uint32_t taskCount = gfxAllocation->taskCount;
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
-        if (csr) {
-            taskCount = csr->peekTaskCount();
-        } else {
-            taskCount = 0;
-        }
+        UNRECOVERABLE_IF(!csr);
+        taskCount = csr->peekTaskCount();
     }
 
     storeAllocation(std::move(gfxAllocation), allocationUsage, taskCount);
@@ -201,8 +198,9 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
+    UNRECOVERABLE_IF(!csr);
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, csr ? csr->getTagAddress() : nullptr, internalAllocation);
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, csr->getTagAddress(), internalAllocation);
     return allocation;
 }
 
@@ -322,32 +320,27 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
         checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
         if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
-            if (csr != nullptr) {
-                uint32_t taskCount = *csr->getTagAddress();
+            UNRECOVERABLE_IF(!csr);
+            uint32_t taskCount = *csr->getTagAddress();
+            cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+
+            // check overlapping again
+            checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
+
+            if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
+                // Wait for completion
+                while (*csr->getTagAddress() < csr->peekLatestSentTaskCount()) {
+                }
+
+                taskCount = *csr->getTagAddress();
                 cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
 
-                // check overlapping again
+                // check overlapping last time
                 checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-
                 if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-                    // Wait for completion
-                    while (*csr->getTagAddress() < csr->peekLatestSentTaskCount()) {
-                    }
-
-                    taskCount = *csr->getTagAddress();
-                    cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
-
-                    // check overlapping last time
-                    checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-                    if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
-                        status = RequirementsStatus::FATAL;
-                        break;
-                    }
+                    status = RequirementsStatus::FATAL;
+                    break;
                 }
-            } else {
-                // This path is tested in ULTs
-                status = RequirementsStatus::FATAL;
-                break;
             }
         }
     }

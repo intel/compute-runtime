@@ -1204,44 +1204,6 @@ TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryM
     EXPECT_EQ(1u, checkedFragments.count);
 }
 
-TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryManagerAndAllocationBiggerThanExisting) {
-    OsAgnosticMemoryManager memoryManager;
-    void *cpuPtr1 = (void *)0x100004;
-
-    auto graphicsAllocation1 = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize, cpuPtr1);
-    EXPECT_EQ(2u, memoryManager.hostPtrManager.getFragmentCount());
-
-    EXPECT_NE(nullptr, graphicsAllocation1);
-
-    auto fragment1 = memoryManager.hostPtrManager.getFragment(alignDown(cpuPtr1, MemoryConstants::pageSize));
-    EXPECT_NE(nullptr, fragment1);
-    auto fragment2 = memoryManager.hostPtrManager.getFragment(alignUp(cpuPtr1, MemoryConstants::pageSize));
-    EXPECT_NE(nullptr, fragment2);
-
-    AllocationRequirements requirements;
-    CheckedFragments checkedFragments;
-
-    requirements.requiredFragmentsCount = 1;
-    requirements.totalRequiredSize = MemoryConstants::pageSize * 10;
-
-    requirements.AllocationFragments[0].allocationPtr = alignDown(cpuPtr1, MemoryConstants::pageSize);
-    requirements.AllocationFragments[0].allocationSize = MemoryConstants::pageSize * 10;
-    requirements.AllocationFragments[0].fragmentPosition = FragmentPosition::NONE;
-
-    RequirementsStatus status = memoryManager.checkAllocationsForOverlapping(&requirements, &checkedFragments);
-
-    EXPECT_EQ(RequirementsStatus::FATAL, status);
-    EXPECT_EQ(1u, checkedFragments.count);
-    EXPECT_EQ(OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT, checkedFragments.status[0]);
-
-    for (uint32_t i = 1; i < max_fragments_count; i++) {
-        EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_CHECKED, checkedFragments.status[i]);
-        EXPECT_EQ(nullptr, checkedFragments.fragments[i]);
-    }
-
-    memoryManager.freeGraphicsMemory(graphicsAllocation1);
-}
-
 TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsCalledThenGraphicsAllocationIsReturned) {
     OsAgnosticMemoryManager memoryManager;
     auto ptr = (void *)0x100000;

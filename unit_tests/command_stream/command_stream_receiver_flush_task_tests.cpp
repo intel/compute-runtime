@@ -2598,6 +2598,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalRes
     mockCsr->initializeTagAllocation();
     mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
+    mockedMemoryManager->csr = mockCsr.get();
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

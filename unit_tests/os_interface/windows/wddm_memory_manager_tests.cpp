@@ -484,6 +484,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNo
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
     MockContext context;
     context.setMemoryManager(memoryManager.get());
+    memoryManager->csr = &context.getDevice(0)->getCommandStreamReceiver();
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;

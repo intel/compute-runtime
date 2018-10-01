@@ -1229,6 +1229,7 @@ TEST_F(DrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFr
 
     MockContext context;
     context.setMemoryManager(memoryManager);
+    memoryManager->csr = &context.getDevice(0)->getCommandStreamReceiver();
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
