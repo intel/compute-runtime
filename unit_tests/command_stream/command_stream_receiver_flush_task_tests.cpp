@@ -2582,7 +2582,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenSusbsequ
 }
 
 struct MockedMemoryManager : public OsAgnosticMemoryManager {
-    MockedMemoryManager() : OsAgnosticMemoryManager(false, false) {}
+    MockedMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {}
     bool isMemoryBudgetExhausted() const override { return budgetExhausted; }
     bool budgetExhausted = false;
 };
@@ -2590,15 +2590,15 @@ struct MockedMemoryManager : public OsAgnosticMemoryManager {
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrInBatchingModeWhenTotalResourceUsedExhaustsTheBudgetThenDoImplicitFlush) {
     CommandQueueHw<FamilyType> commandQueue(nullptr, pDevice, 0);
     auto &commandStream = commandQueue.getCS(4096u);
-
-    std::unique_ptr<MockedMemoryManager> mockedMemoryManager(new MockedMemoryManager());
-    std::unique_ptr<MockCsrHw2<FamilyType>> mockCsr(new MockCsrHw2<FamilyType>(*platformDevices[0], *pDevice->executionEnvironment));
-
-    mockCsr->setMemoryManager(mockedMemoryManager.get());
+    ExecutionEnvironment executionEnvironment;
+    auto mockedMemoryManager = new MockedMemoryManager(executionEnvironment);
+    executionEnvironment.memoryManager.reset(mockedMemoryManager);
+    auto mockCsr = new MockCsrHw2<FamilyType>(*platformDevices[0], executionEnvironment);
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
+    mockCsr->setMemoryManager(mockedMemoryManager);
     mockCsr->initializeTagAllocation();
     mockCsr->setPreemptionCsrAllocation(pDevice->getPreemptionAllocation());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
-    mockedMemoryManager->csr = mockCsr.get();
 
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     mockCsr->overrideSubmissionAggregator(mockedSubmissionsAggregator);

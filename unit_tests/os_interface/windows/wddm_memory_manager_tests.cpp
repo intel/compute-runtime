@@ -16,6 +16,7 @@
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/os_interface/windows/mock_wddm_allocation.h"
 #include "unit_tests/os_interface/windows/wddm_memory_manager_tests.h"
 
@@ -39,7 +40,7 @@ void WddmMemoryManagerFixture::SetUp() {
     osInterface = std::make_unique<OSInterface>();
     osInterface->get()->setWddm(wddm);
 
-    memoryManager = std::make_unique<MockWddmMemoryManager>(wddm);
+    memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, executionEnvironment);
 }
 
 TEST(WddmMemoryManager, NonCopyable) {
@@ -71,12 +72,13 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenRegisteringOsContextThen
 }
 
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
+    ExecutionEnvironment executionEnvironment;
     std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm()));
     uint64_t base = 0x56000;
     uint64_t size = 0x9000;
     wddm->setHeap32(base, size);
 
-    std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(false, false, wddm.get()));
+    std::unique_ptr<WddmMemoryManager> memoryManager = std::unique_ptr<WddmMemoryManager>(new WddmMemoryManager(false, false, wddm.get(), executionEnvironment));
 
     ASSERT_NE(nullptr, memoryManager->allocator32Bit.get());
 
@@ -84,10 +86,11 @@ TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase
 }
 
 TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabledAndWaitForDeletionsIsCalledThenDeleterInWddmIsSetToNullptr) {
+    ExecutionEnvironment executionEnvironment;
     auto wddm = std::make_unique<WddmMock>();
     bool actualDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(true);
-    MockWddmMemoryManager memoryManager(wddm.get());
+    MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
     memoryManager.waitForDeletions();
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
@@ -95,7 +98,7 @@ TEST(WddmMemoryManagerWithDeferredDeleterTest, givenWMMWhenAsyncDeleterIsEnabled
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto size = 4096u;
 
     auto allocation = memoryManager->allocateGraphicsMemory(size);
@@ -112,7 +115,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
     EXPECT_NE(nullptr, allocation);
@@ -122,7 +125,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = 4096u;
     auto allocation = memoryManager->allocateGraphicsMemory(size, ptr, false);
@@ -135,7 +138,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocateGraphicsMemory
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
@@ -149,7 +152,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenAllocate32BitGraphicsM
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
@@ -160,7 +163,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesDisabledWhenA
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
-    memoryManager.reset(new MockWddmMemoryManager(true, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(true, false, wddm, executionEnvironment));
     auto size = MemoryConstants::pageSize;
 
     auto svmAllocation = memoryManager->allocateGraphicsMemoryForSVM(size, false);
@@ -170,7 +173,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWith64KBPagesEnabledWhenAl
 }
 
 TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHandleIsCalledThenMemoryPoolIsSystemCpuInaccessible) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     auto osHandle = 1u;
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     std::unique_ptr<Gmm> gmm(new Gmm(nullptr, 0, false));
@@ -190,7 +193,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenMemoryManagerWhenCreateAllocationFromHa
 
 TEST_F(WddmMemoryManagerSimpleTest,
        givenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledWhenNotAlignedPtrIsPassedThenAlignedGraphicsAllocationIsCreated) {
-    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm));
+    memoryManager.reset(new MockWddmMemoryManager(false, false, wddm, executionEnvironment));
     void *hostPtr = reinterpret_cast<void *>(0x5001);
 
     auto allocation = memoryManager->allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
@@ -482,9 +485,10 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNo
 }
 
 TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
-    MockContext context;
+    executionEnvironment.incRefInternal(); // to prevent destrorying execution environment by destructor of device
+    std::unique_ptr<Device> device(MockDevice::createWithExecutionEnvironment<MockDevice>(*platformDevices, &executionEnvironment, 0u));
+    MockContext context(device.get());
     context.setMemoryManager(memoryManager.get());
-    memoryManager->csr = &context.getDevice(0)->getCommandStreamReceiver();
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;
@@ -1850,34 +1854,34 @@ TEST_F(WddmMemoryManagerTest2, givenMemoryManagerWhenMakeResidentFailsThenMemory
     EXPECT_TRUE(memoryManager->isMemoryBudgetExhausted());
 }
 
-TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
-    auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
-    MockDeferredDeleter *deleter = new MockDeferredDeleter;
-    MockWddmMemoryManager memoryManager(wddm.get());
-    memoryManager.setDeferredDeleter(deleter);
+struct WddmMemoryManagerWithAsyncDeleterTest : ::testing::Test {
+    void SetUp() {
+        wddm = std::make_unique<WddmMock>();
+        wddm->callBaseDestroyAllocations = false;
+        deleter = new MockDeferredDeleter;
+        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm.get(), executionEnvironment);
+        memoryManager->setDeferredDeleter(deleter);
+    }
+    MockDeferredDeleter *deleter = nullptr;
+    std::unique_ptr<MockWddmMemoryManager> memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<WddmMock> wddm;
+};
+
+TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsEnabledThenCanDeferDeletions) {
     EXPECT_EQ(0, deleter->deferDeletionCalled);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0);
+    memoryManager->tryDeferDeletions(nullptr, 0, 0);
     EXPECT_EQ(1, deleter->deferDeletionCalled);
     EXPECT_EQ(1u, wddm.get()->destroyAllocationResult.called);
 }
 
-TEST(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledThenCannotDeferDeletions) {
-    auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
-    MockWddmMemoryManager memoryManager(wddm.get());
-    memoryManager.setDeferredDeleter(nullptr);
-    memoryManager.tryDeferDeletions(nullptr, 0, 0);
+TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenWddmWhenAsyncDeleterIsDisabledThenCannotDeferDeletions) {
+    memoryManager->setDeferredDeleter(nullptr);
+    memoryManager->tryDeferDeletions(nullptr, 0, 0);
     EXPECT_EQ(1u, wddm->destroyAllocationResult.called);
 }
 
-TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {
-    auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
-    MockDeferredDeleter *deleter = new MockDeferredDeleter;
-    MockWddmMemoryManager memoryManager(wddm.get());
-    memoryManager.setDeferredDeleter(deleter);
-
+TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenDrainIsCalledAndCreateAllocationIsCalledTwice) {
     cl_image_desc imgDesc;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     ImageInfo imgInfo;
@@ -1886,18 +1890,12 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWh
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
     deleter->expectDrainBlockingValue(true);
-    memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
     EXPECT_EQ(1, deleter->drainCalled);
     EXPECT_EQ(2u, wddm->createAllocationResult.called);
 }
 
-TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCanAllocateMemoryForTiledImageThenDrainIsNotCalledAndCreateAllocationIsCalledOnce) {
-    auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
-    MockDeferredDeleter *deleter = new MockDeferredDeleter;
-    MockWddmMemoryManager memoryManager(wddm.get());
-    memoryManager.setDeferredDeleter(deleter);
-
+TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWhenCanAllocateMemoryForTiledImageThenDrainIsNotCalledAndCreateAllocationIsCalledOnce) {
     cl_image_desc imgDesc;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     ImageInfo imgInfo;
@@ -1908,41 +1906,39 @@ TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithAsyncDeleterWh
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
     EXPECT_EQ(0u, wddm->mapGpuVirtualAddressResult.called);
-    auto allocation = memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    auto allocation = memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
     EXPECT_EQ(0, deleter->drainCalled);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
     EXPECT_EQ(1u, wddm->mapGpuVirtualAddressResult.called);
-    memoryManager.freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenCreateAllocationIsCalledOnce) {
-    auto wddm = std::make_unique<WddmMock>();
-    wddm->callBaseDestroyAllocations = false;
-    MockWddmMemoryManager memoryManager(wddm.get());
-    memoryManager.setDeferredDeleter(nullptr);
-
+TEST_F(WddmMemoryManagerWithAsyncDeleterTest, givenMemoryManagerWithoutAsyncDeleterWhenCannotAllocateMemoryForTiledImageThenCreateAllocationIsCalledOnce) {
+    memoryManager->setDeferredDeleter(nullptr);
     cl_image_desc imgDesc;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE3D;
     ImageInfo imgInfo;
     imgInfo.imgDesc = &imgDesc;
     wddm->createAllocationStatus = STATUS_GRAPHICS_NO_VIDEO_MEMORY;
     EXPECT_EQ(0u, wddm->createAllocationResult.called);
-    memoryManager.allocateGraphicsMemoryForImage(imgInfo, nullptr);
+    memoryManager->allocateGraphicsMemoryForImage(imgInfo, nullptr);
     EXPECT_EQ(1u, wddm->createAllocationResult.called);
 }
 
 TEST(WddmMemoryManagerDefaults, givenDefaultWddmMemoryManagerWhenItIsQueriedForInternalHeapBaseThenHeap1BaseIsReturned) {
+    ExecutionEnvironment executionEnvironment;
     auto wddm = std::make_unique<WddmMock>();
     wddm->callBaseDestroyAllocations = false;
-    MockWddmMemoryManager memoryManager(wddm.get());
+    MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
     auto heapBase = wddm->getGfxPartition().Heap32[1].Base;
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenValidateAllocationFunctionWhenItIsCalledWithTripleAllocationThenSuccessIsReturned) {
+    ExecutionEnvironment executionEnvironment;
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
-    MockWddmMemoryManager memoryManager(wddm.get());
+    MockWddmMemoryManager memoryManager(wddm.get(), executionEnvironment);
 
     auto wddmAlloc = (WddmAllocation *)memoryManager.allocateGraphicsMemory(4096u, reinterpret_cast<void *>(0x1000));
 
@@ -1956,7 +1952,7 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabled64kbpagesWhenCreatingGraphicsMemor
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
     DebugManager.flags.Enable64kbpages.set(true);
-    WddmMemoryManager memoryManager64k(true, false, wddm.get());
+    WddmMemoryManager memoryManager64k(true, false, wddm.get(), executionEnvironment);
     EXPECT_EQ(0, wddm->createAllocationResult.called);
 
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, static_cast<size_t>(MemoryConstants::pageSize64k), GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
@@ -1974,7 +1970,7 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
     DebugManager.flags.Enable64kbpages.set(true);
-    WddmMemoryManager memoryManager(true, false, wddm.get());
+    WddmMemoryManager memoryManager(true, false, wddm.get(), executionEnvironment);
     auto graphicsAllocation = memoryManager.allocateGraphicsMemory64kb(1, MemoryConstants::pageSize64k, false, false);
 
     EXPECT_NE(nullptr, graphicsAllocation);
@@ -1987,11 +1983,12 @@ TEST_F(OsAgnosticMemoryManagerUsingWddmTest, givenEnabled64kbPagesWhenAllocation
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLockResultAndmapGpuVirtualAddressIsCalled) {
+    ExecutionEnvironment executionEnvironment;
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
-    MockWddmMemoryManager memoryManager64k(wddm.get());
+    MockWddmMemoryManager memoryManager64k(wddm.get(), executionEnvironment);
     uint32_t lockCount = wddm->lockResult.called;
     uint32_t mapGpuVirtualAddressResult = wddm->mapGpuVirtualAddressResult.called;
     GraphicsAllocation *galloc = memoryManager64k.allocateGraphicsMemory64kb(65536, 65536, true, false);
@@ -2003,14 +2000,14 @@ TEST_F(MockWddmMemoryManagerTest, givenWddmWhenallocateGraphicsMemory64kbThenLoc
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsTrue) {
     auto wddm = std::make_unique<WddmMock>();
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     EXPECT_TRUE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
 }
 
 TEST_F(MockWddmMemoryManagerTest, givenDefaultWddmMemoryManagerWhenItIsCreatedThenMemoryBudgetIsNotExhausted) {
     auto wddm = std::make_unique<WddmMock>();
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     EXPECT_FALSE(memoryManager.isMemoryBudgetExhausted());
 }
 
@@ -2018,7 +2015,7 @@ TEST_F(MockWddmMemoryManagerTest, givenEnabledAsyncDeleterFlagWhenMemoryManagerI
     bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(true);
     auto wddm = std::make_unique<WddmMock>();
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     EXPECT_TRUE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_NE(nullptr, memoryManager.getDeferredDeleter());
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
@@ -2028,7 +2025,7 @@ TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManager
     bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(false);
     auto wddm = std::make_unique<WddmMock>();
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
@@ -2037,7 +2034,7 @@ TEST_F(MockWddmMemoryManagerTest, givenDisabledAsyncDeleterFlagWhenMemoryManager
 TEST_F(MockWddmMemoryManagerTest, givenPageTableManagerWhenMapAuxGpuVaCalledThenUseWddmToMap) {
     auto myWddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(myWddm->init());
-    WddmMemoryManager memoryManager(false, false, myWddm.get());
+    WddmMemoryManager memoryManager(false, false, myWddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     myWddm->resetPageTableManager(mockMngr);
@@ -2097,7 +2094,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenMappedGpuVa
 TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingThenUnmapAuxVa) {
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 123;
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
@@ -2123,7 +2120,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedAllocationWhenReleaseingT
 TEST_F(MockWddmMemoryManagerTest, givenNonRenderCompressedAllocationWhenReleaseingThenDontUnmapAuxVa) {
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);
@@ -2167,7 +2164,7 @@ TEST_F(MockWddmMemoryManagerTest, givenRenderCompressedFlagSetWhenInternalIsUnse
     D3DGPU_VIRTUAL_ADDRESS gpuVa = 0;
     auto wddm = std::make_unique<WddmMock>();
     EXPECT_TRUE(wddm->init());
-    WddmMemoryManager memoryManager(false, false, wddm.get());
+    WddmMemoryManager memoryManager(false, false, wddm.get(), executionEnvironment);
 
     auto mockMngr = new NiceMock<MockGmmPageTableMngr>();
     wddm->resetPageTableManager(mockMngr);

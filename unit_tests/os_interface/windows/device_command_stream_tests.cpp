@@ -65,7 +65,7 @@ class WddmCommandStreamFixture {
 
         ASSERT_NE(nullptr, csr);
 
-        mockWddmMM = new MockWddmMemoryManager(wddm);
+        mockWddmMM = new MockWddmMemoryManager(wddm, *executionEnvironment);
         memManager.reset(mockWddmMM);
         csr->setMemoryManager(memManager.get());
 

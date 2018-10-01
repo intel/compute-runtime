@@ -28,9 +28,10 @@ TEST_F(SVMMemoryAllocatorTest, allocateSystem) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateNullFreeNull) {
-    OsAgnosticMemoryManager umm;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
-        SVMAllocsManager svmM(&umm);
+        SVMAllocsManager svmM(&memoryManager);
         char *Ptr1 = (char *)svmM.createSVMAlloc(0);
         EXPECT_EQ(Ptr1, nullptr);
         svmM.freeSVMAlloc(nullptr);
@@ -38,9 +39,10 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateNullFreeNull) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateFree) {
-    OsAgnosticMemoryManager umm;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
-        SVMAllocsManager svmM(&umm);
+        SVMAllocsManager svmM(&memoryManager);
         char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
         EXPECT_NE(Ptr1, nullptr);
 
@@ -52,9 +54,10 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocCreateFree) {
 
 TEST_F(SVMMemoryAllocatorTest, SVMAllocGetNoSVMAdrees) {
     char array[100];
-    OsAgnosticMemoryManager umm;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
-        SVMAllocsManager svmM(&umm);
+        SVMAllocsManager svmM(&memoryManager);
 
         char *Ptr1 = (char *)100;
         GraphicsAllocation *GA1 = svmM.getSVMAlloc(Ptr1);
@@ -66,9 +69,10 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocGetNoSVMAdrees) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, SVMAllocGetBeforeAndInside) {
-    OsAgnosticMemoryManager umm;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
-        SVMAllocsManager svmM(&umm);
+        SVMAllocsManager svmM(&memoryManager);
         char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
         EXPECT_NE(Ptr1, nullptr);
 
@@ -86,9 +90,10 @@ TEST_F(SVMMemoryAllocatorTest, SVMAllocGetBeforeAndInside) {
 }
 
 TEST_F(SVMMemoryAllocatorTest, SVMAllocgetAfterSVM) {
-    OsAgnosticMemoryManager umm;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     {
-        SVMAllocsManager svmM(&umm);
+        SVMAllocsManager svmM(&memoryManager);
         char *Ptr1 = (char *)svmM.createSVMAlloc(4096);
         EXPECT_NE(Ptr1, nullptr);
 
@@ -105,6 +110,7 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
         using OsAgnosticMemoryManager::allocateGraphicsMemory;
 
       public:
+        MockMemManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
         GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
             return nullptr;
         }
@@ -120,10 +126,10 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
             return SVMAllocs;
         }
     };
-
-    MockMemManager mm;
+    ExecutionEnvironment executionEnvironment;
+    MockMemManager memoryManager(executionEnvironment);
     {
-        MockSVMAllocsManager svmM{&mm};
+        MockSVMAllocsManager svmM{&memoryManager};
         void *svmPtr = svmM.createSVMAlloc(512);
         EXPECT_EQ(nullptr, svmPtr);
 
@@ -134,15 +140,15 @@ TEST_F(SVMMemoryAllocatorTest, WhenCouldNotAllocateInMemoryManagerThenReturnsNul
 TEST_F(SVMMemoryAllocatorTest, given64kbAllowedwhenAllocatingSvmMemoryThenDontPreferRenderCompression) {
     class MyMemoryManager : public OsAgnosticMemoryManager {
       public:
-        MyMemoryManager() { enable64kbpages = true; }
+        MyMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) { enable64kbpages = true; }
         GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override {
             preferRenderCompressedFlag = preferRenderCompressed;
             return nullptr;
         }
         bool preferRenderCompressedFlag = true;
     };
-
-    MyMemoryManager myMemoryManager;
+    ExecutionEnvironment executionEnvironment;
+    MyMemoryManager myMemoryManager(executionEnvironment);
     myMemoryManager.allocateGraphicsMemoryForSVM(1, false);
     EXPECT_FALSE(myMemoryManager.preferRenderCompressedFlag);
 }

@@ -8,7 +8,8 @@
 #include "unit_tests/memory_manager/memory_manager_allocate_in_device_pool_tests.inl"
 
 TEST(MemoryManagerTest, givenNotSetUseSystemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Error;
     AllocationData allocData;

@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/os_interface/linux/drm_memory_manager.h"
 #include "unit_tests/mocks/linux/mock_drm_memory_manager.h"
 #include "unit_tests/os_interface/linux/device_command_stream_fixture.h"
@@ -30,9 +31,9 @@ TEST(DrmMemoryManagerTest, givenDrmMemoryManagerWhenSharedAllocationIsCreatedFro
             return 0;
         }
     };
-
+    ExecutionEnvironment executionEnvironment;
     auto mock = make_unique<MockDrm>(0);
-    auto memoryManager = make_unique<TestedDrmMemoryManager>(mock.get());
+    auto memoryManager = make_unique<TestedDrmMemoryManager>(mock.get(), executionEnvironment);
 
     osHandle handle = 3;
     constexpr size_t maxThreads = 10;
@@ -92,8 +93,9 @@ TEST(DrmMemoryManagerTest, givenMultipleThreadsWhenSharedAllocationIsCreatedThen
         }
     };
 
+    ExecutionEnvironment executionEnvironment;
     auto mock = make_unique<MockDrm>(0);
-    auto memoryManager = make_unique<TestedDrmMemoryManager>(mock.get());
+    auto memoryManager = make_unique<TestedDrmMemoryManager>(mock.get(), executionEnvironment);
 
     osHandle handle = 3;
     constexpr size_t maxThreads = 10;

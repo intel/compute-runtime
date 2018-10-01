@@ -38,7 +38,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
     using DrmMemoryManager::setDomainCpu;
     using DrmMemoryManager::sharingBufferObjects;
 
-    TestedDrmMemoryManager(Drm *drm) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false) {
+    TestedDrmMemoryManager(Drm *drm, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;
@@ -48,7 +48,7 @@ class TestedDrmMemoryManager : public DrmMemoryManager {
         mmapMockCallCount = 0;
         munmapMockCallCount = 0;
     };
-    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory) {
+    TestedDrmMemoryManager(Drm *drm, bool allowForcePin, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment) : DrmMemoryManager(drm, gemCloseWorkerMode::gemCloseWorkerInactive, allowForcePin, validateHostPtrMemory, executionEnvironment) {
         this->lseekFunction = &lseekMock;
         this->mmapFunction = &mmapMock;
         this->munmapFunction = &munmapMock;

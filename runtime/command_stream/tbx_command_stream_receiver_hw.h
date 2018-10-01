@@ -17,7 +17,7 @@ namespace OCLRT {
 
 class TbxMemoryManager : public OsAgnosticMemoryManager {
   public:
-    TbxMemoryManager(bool enable64kbPages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory) {}
+    TbxMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {}
     uint64_t getSystemSharedMemory() override {
         return 1 * GB;
     }
@@ -65,7 +65,7 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     } engineInfoTable[EngineType::NUM_ENGINES];
 
     MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        memoryManager = new TbxMemoryManager(enable64kbPages, enableLocalMemory);
+        memoryManager = new TbxMemoryManager(enable64kbPages, enableLocalMemory, this->executionEnvironment);
         return memoryManager;
     }
     TbxMemoryManager *getMemoryManager() {

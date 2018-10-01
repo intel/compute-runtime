@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 
@@ -118,7 +119,6 @@ TEST_P(MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest, given64kbAllow
     MockMemoryManager::getAllocationData(allocData, flags, 0, nullptr, 10, allocType);
     bool bufferCompressedType = (allocType == GraphicsAllocation::AllocationType::BUFFER_COMPRESSED);
     EXPECT_TRUE(allocData.flags.allow64kbPages);
-
     MockMemoryManager mockMemoryManager(true);
     auto allocation = mockMemoryManager.allocateGraphicsMemory(allocData);
 
@@ -168,7 +168,8 @@ INSTANTIATE_TEST_CASE_P(Disallow32BitAnd64kbPagesTypes,
                         ::testing::ValuesIn(allocationTypesWith32BitAnd64KbPagesNotAllowed));
 
 TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedTypeIsAllocatedThen32BitAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
@@ -190,7 +191,8 @@ TEST(MemoryManagerTest, givenForced32BitSetWhenGraphicsMemoryFor32BitAllowedType
 }
 
 TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32BitFlagIsAllocatedThenNon32BitAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
@@ -207,7 +209,8 @@ TEST(MemoryManagerTest, givenForced32BitEnabledWhenGraphicsMemoryWihtoutAllow32B
 }
 
 TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagFor32BitAllowedTypeIsAllocatedThenNon32BitAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(false);
 
     AllocationData allocData;
@@ -223,7 +226,8 @@ TEST(MemoryManagerTest, givenForced32BitDisabledWhenGraphicsMemoryWith32BitFlagF
 }
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen64kbAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
     AllocationFlags flags(true);
 
@@ -272,7 +276,8 @@ TEST(MemoryManagerTest, givenDisabled64kbPagesWhenGraphicsMemoryMustBeHostMemory
 }
 
 TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMustBeHostMemoryAndIsAllocatedWithNullptrForBufferThen32BitAllocationOver64kbIsChosen) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
 
     AllocationData allocData;
@@ -292,7 +297,8 @@ TEST(MemoryManagerTest, givenForced32BitAndEnabled64kbPagesWhenGraphicsMemoryMus
 }
 
 TEST(MemoryManagerTest, givenEnabled64kbPagesWhenGraphicsMemoryIsAllocatedWithHostPtrForBufferThenExistingMemoryIsUsedForAllocation) {
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
     AllocationData allocData;
     AllocationFlags flags(false);
 

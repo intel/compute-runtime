@@ -581,11 +581,12 @@ TEST_F(MemoryAllocatorTest, getEventPerfCountAllocator) {
 }
 
 TEST_F(MemoryAllocatorTest, givenTimestampPacketAllocatorWhenAskingForTagThenReturnValidObject) {
+    ExecutionEnvironment executionEnvironment;
     class MyMockMemoryManager : public OsAgnosticMemoryManager {
       public:
         using OsAgnosticMemoryManager::timestampPacketAllocator;
-        MyMockMemoryManager() : OsAgnosticMemoryManager(false, false){};
-    } myMockMemoryManager;
+        MyMockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
+    } myMockMemoryManager(executionEnvironment);
 
     EXPECT_EQ(nullptr, myMockMemoryManager.timestampPacketAllocator.get());
 
@@ -790,25 +791,27 @@ TEST_F(MemoryAllocatorTest, given32BitDeviceWhenPrintfSurfaceIsCreatedThen32BitA
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenForce32BitAllocationsIsFalse) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     EXPECT_FALSE(memoryManager.peekForce32BitAllocations());
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenForce32bitallocationIsCalledWithTrueThenMemoryManagerForces32BitAlloactions) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
     EXPECT_TRUE(memoryManager.peekForce32BitAllocations());
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemoryForImageIsCalledThenGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     cl_image_desc imgDesc = {};
     imgDesc.image_width = 512;
     imgDesc.image_height = 1;
     imgDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, nullptr);
 
-    ExecutionEnvironment executionEnvironment;
     executionEnvironment.initGmm(*platformDevices);
     auto queryGmm = MockGmm::queryImgParams(imgInfo);
 
@@ -821,7 +824,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenAllocateGraphicsMemor
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
 
     auto gmm = new Gmm(nullptr, 123, false);
     auto allocation = memoryManager.allocateGraphicsMemory(123);
@@ -836,7 +840,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAlloc
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCalledThenMemoryPoolIsSystem4KBPages) {
-    OsAgnosticMemoryManager memoryManager(false, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto size = 4096u;
 
     auto allocation = memoryManager.allocateGraphicsMemory(size);
@@ -851,7 +856,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryIsCall
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemory64kbIsCalledThenMemoryPoolIsSystem64KBPages) {
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
     auto size = 4096u;
 
     auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
@@ -863,13 +869,14 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryFailsThenNullptrIsReturned) {
     class MockOsAgnosticManagerWithFailingAllocate : public OsAgnosticMemoryManager {
       public:
-        MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages) : OsAgnosticMemoryManager(enable64kbPages, false) {}
+        MockOsAgnosticManagerWithFailingAllocate(bool enable64kbPages, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, false, executionEnvironment) {}
 
         GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
             return nullptr;
         }
     };
-    MockOsAgnosticManagerWithFailingAllocate memoryManager(true);
+    ExecutionEnvironment executionEnvironment;
+    MockOsAgnosticManagerWithFailingAllocate memoryManager(true, executionEnvironment);
     auto size = 4096u;
 
     auto allocation = memoryManager.allocateGraphicsMemory64kb(size, MemoryConstants::preferredAlignment, false, false);
@@ -878,7 +885,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPages) {
-    OsAgnosticMemoryManager memoryManager(false, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
@@ -891,7 +899,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocateGraphicsMemoryWithPt
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    OsAgnosticMemoryManager memoryManager(false, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     void *ptr = reinterpret_cast<void *>(0x1001);
     auto size = MemoryConstants::pageSize;
 
@@ -904,7 +913,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryWithoutPtrIsCalledThenMemoryPoolIsSystem4KBPagesWith32BitGpuAddressing) {
-    OsAgnosticMemoryManager memoryManager(false, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     void *ptr = nullptr;
     auto size = MemoryConstants::pageSize;
 
@@ -916,7 +926,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenAllocate32BitGraphicsMemoryW
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThenMemoryPoolIsSystem64KBPages) {
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
     auto size = 4096u;
 
     auto svmAllocation = memoryManager.allocateGraphicsMemoryForSVM(size, false);
@@ -926,7 +937,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesDisabledWhenAllocateGraphicsMemoryForSVMIsCalledThen4KBGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(false, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto size = 4096u;
     auto isCoherent = true;
 
@@ -963,7 +975,8 @@ TEST(OsAgnosticMemoryManager, givenDeviceWith64kbPagesDisbledWhenCreatingMemoryM
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocateGraphicsMemoryForSVMIsCalledThen64KBGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
     auto size = 4096u;
     auto isCoherent = true;
 
@@ -980,7 +993,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWith64KBPagesEnabledWhenAllocate
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocationFromSharedObjectIsCalledThenGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     osHandle handle = 1;
     auto size = 4096u;
     auto sharedAllocation = memoryManager.createGraphicsAllocationFromSharedHandle(handle, false);
@@ -994,13 +1008,15 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenCreateGraphicsAllocat
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenCreateAllocationFromNtHandleIsCalledThenReturnNullptr) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto graphicsAllocation = memoryManager.createGraphicsAllocationFromNTHandle((void *)1);
     EXPECT_EQ(nullptr, graphicsAllocation);
 }
 
 TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenDoNothing) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto allocation = memoryManager.allocateGraphicsMemory(1);
     ASSERT_NE(nullptr, allocation);
 
@@ -1012,7 +1028,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenLockUnlockCalledThenDoNothin
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationContainsOffsetWhenAddressIsObtainedThenOffsetIsAdded) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
 
     auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
 
@@ -1031,7 +1048,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationCon
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationIsPaddedThenNewGraphicsAllocationIsCreated) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
 
     auto sizeWithPadding = 8192;
@@ -1049,7 +1067,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenGraphicsAllocationIsP
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenTwoGraphicsAllocationArePaddedThenOnlyOnePaddingBufferIsUsed) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto graphicsAllocation = memoryManager.allocateGraphicsMemory(4096u);
 
     auto sizeWithPadding = 8192;
@@ -1072,7 +1091,8 @@ TEST(OsAgnosticMemoryManager, pleaseDetectLeak) {
 }
 
 TEST(OsAgnosticMemoryManager, alignmentIsCorrect) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     const size_t alignment = 0;
     auto ga = memoryManager.allocateGraphicsMemory(MemoryConstants::pageSize >> 1, alignment, false, false);
     uintptr_t ptr = reinterpret_cast<uintptr_t>(ga->getUnderlyingBuffer());
@@ -1083,7 +1103,8 @@ TEST(OsAgnosticMemoryManager, alignmentIsCorrect) {
 }
 
 TEST(OsAgnosticMemoryManager, givenCommonMemoryManagerWhenIsAskedIfApplicationMemoryBudgetIsExhaustedThenFalseIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     EXPECT_FALSE(memoryManager.isMemoryBudgetExhausted());
 }
 
@@ -1092,7 +1113,6 @@ class MemoryManagerWithAsyncDeleterTest : public ::testing::Test {
     void SetUp() override {
         memoryManager.overrideAsyncDeleterFlag(true);
     }
-
     MockMemoryManager memoryManager;
 };
 
@@ -1147,7 +1167,8 @@ TEST(OsAgnosticMemoryManager, givenMemoryManagerWhenIsAsyncDeleterEnabledCalledT
 }
 
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncDeleterEnabledIsFalse) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
 }
@@ -1155,7 +1176,8 @@ TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerWhenItIsCreatedThenAsyncD
 TEST(OsAgnosticMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(true);
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
@@ -1164,7 +1186,8 @@ TEST(OsAgnosticMemoryManager, givenEnabledAsyncDeleterFlagWhenMemoryManagerIsCre
 TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCreatedThenAsyncDeleterEnabledIsFalseAndDeleterIsNullptr) {
     bool defaultEnableDeferredDeleterFlag = DebugManager.flags.EnableDeferredDeleter.get();
     DebugManager.flags.EnableDeferredDeleter.set(false);
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     EXPECT_FALSE(memoryManager.isAsyncDeleterEnabled());
     EXPECT_EQ(nullptr, memoryManager.getDeferredDeleter());
     DebugManager.flags.EnableDeferredDeleter.set(defaultEnableDeferredDeleterFlag);
@@ -1173,7 +1196,8 @@ TEST(OsAgnosticMemoryManager, givenDisabledAsyncDeleterFlagWhenMemoryManagerIsCr
 TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCreatedThenAlignedto64KbAllocationIsReturned) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.Enable64kbpages.set(true);
-    OsAgnosticMemoryManager memoryManager(true, false);
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(true, false, executionEnvironment);
 
     GraphicsAllocation *galloc = memoryManager.allocateGraphicsMemoryInPreferredPool(AllocationFlags(true), 0, nullptr, 64 * 1024, GraphicsAllocation::AllocationType::BUFFER_HOST_MEMORY);
     EXPECT_NE(nullptr, galloc);
@@ -1190,7 +1214,8 @@ TEST(OsAgnosticMemoryManager, GivenEnabled64kbPagesWhenHostMemoryAllocationIsCre
 }
 
 TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryManager) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
 
     AllocationRequirements requirements;
     CheckedFragments checkedFragments;
@@ -1205,7 +1230,8 @@ TEST(OsAgnosticMemoryManager, checkAllocationsForOverlappingWithNullCsrInMemoryM
 }
 
 TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsCalledThenGraphicsAllocationIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto ptr = (void *)0x100000;
     size_t allocationSize = 4096;
     auto graphicsAllocation = memoryManager.allocate32BitGraphicsMemory(allocationSize, ptr, AllocationOrigin::INTERNAL_ALLOCATION);
@@ -1214,13 +1240,15 @@ TEST(OsAgnosticMemoryManager, givenPointerAndSizeWhenCreateInternalAllocationIsC
     memoryManager.freeGraphicsMemory(graphicsAllocation);
 }
 TEST(OsAgnosticMemoryManager, givenDefaultOsAgnosticMemoryManagerWhenItIsQueriedForInternalHeapBaseThen32BitAllocatorBaseIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto heapBase = memoryManager.allocator32Bit->getBase();
     EXPECT_EQ(heapBase, memoryManager.getInternalHeapBaseAddress());
 }
 
 TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMemoryForNonSvmHostPtrIsCalledThenAllocationIsCreated) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto hostPtr = reinterpret_cast<void *>(0x5001);
     auto allocation = memoryManager.allocateGraphicsMemoryForNonSvmHostPtr(13, hostPtr);
     EXPECT_NE(nullptr, allocation);
@@ -1231,7 +1259,8 @@ TEST(OsAgnosticMemoryManager, givenOsAgnosticMemoryManagerWhenAllocateGraphicsMe
 }
 
 TEST(OsAgnosticMemoryManager, givenReducedGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithoutFragmentsIsCreated) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto hostPtr = reinterpret_cast<void *>(0x5001);
 
     auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, false);
@@ -1242,7 +1271,8 @@ TEST(OsAgnosticMemoryManager, givenReducedGpuAddressSpaceWhenAllocateGraphicsMem
 }
 
 TEST(OsAgnosticMemoryManager, givenFullGpuAddressSpaceWhenAllocateGraphicsMemoryForHostPtrIsCalledThenAllocationWithFragmentsIsCreated) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     auto hostPtr = reinterpret_cast<void *>(0x5001);
 
     auto allocation = memoryManager.allocateGraphicsMemoryForHostPtr(13, hostPtr, true);
@@ -1253,7 +1283,8 @@ TEST(OsAgnosticMemoryManager, givenFullGpuAddressSpaceWhenAllocateGraphicsMemory
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockMemoryManager memoryManager(false, false, false);
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, false, executionEnvironment);
     uint64_t heap32Base = 0x80000000000ul;
 
     if (is32bit) {
@@ -1263,7 +1294,8 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedWhenMemoryManagerIsCre
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockMemoryManager memoryManager(false, true, false);
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, false, executionEnvironment);
     uint64_t heap32Base = 0x80000000000ul;
 
     if (is32bit) {
@@ -1273,7 +1305,8 @@ TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndNotAubUsageWhenMemoryM
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockMemoryManager memoryManager(false, false, true);
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, false, true, executionEnvironment);
     uint64_t heap32Base = 0x80000000000ul;
 
     if (is32bit) {
@@ -1283,7 +1316,8 @@ TEST(OsAgnosticMemoryManager, givenLocalMemoryNotSupportedAndAubUsageWhenMemoryM
 }
 
 TEST(OsAgnosticMemoryManager, givenLocalMemorySupportedAndAubUsageWhenMemoryManagerIsCreatedThenAllocator32BitHasCorrectBaseAddress) {
-    MockMemoryManager memoryManager(false, true, true);
+    ExecutionEnvironment executionEnvironment;
+    MockMemoryManager memoryManager(false, true, true, executionEnvironment);
     uint64_t heap32Base = 0x80000000000ul;
 
     if (is32bit) {
@@ -1599,7 +1633,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasNotUsedWhencheckGpuUsageA
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsDestroyedInPlace) {
     auto usedAllocationButGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
-    auto tagAddress = memoryManager->csr->getTagAddress();
+    auto tagAddress = memoryManager->getCommandStreamReceiver(0)->getTagAddress();
     ASSERT_NE(0u, *tagAddress);
 
     usedAllocationButGpuCompleted->taskCount = *tagAddress - 1;
@@ -1611,7 +1645,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhenche
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
-    auto tagAddress = memoryManager->csr->getTagAddress();
+    auto tagAddress = memoryManager->getCommandStreamReceiver(0)->getTagAddress();
 
     usedAllocationAndNotGpuCompleted->taskCount = *tagAddress + 1;
 
@@ -1625,7 +1659,7 @@ TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhen
 
 class MockAlignMallocMemoryManager : public MockMemoryManager {
   public:
-    MockAlignMallocMemoryManager() : MockMemoryManager() {
+    MockAlignMallocMemoryManager() {
         testMallocRestrictions.minAddress = 0;
         alignMallocRestrictions = nullptr;
         alignMallocCount = 0;
@@ -1677,7 +1711,7 @@ class MockAlignMallocMemoryManagerTest : public MemoryAllocatorTest {
     void SetUp() override {
         MemoryAllocatorTest::SetUp();
 
-        alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager();
+        alignedMemoryManager = new (std::nothrow) MockAlignMallocMemoryManager;
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
@@ -1786,7 +1820,8 @@ TEST(GraphicsAllocation, givenGraphicsAllocationCreatedWithDefaultConstructorThe
 
 TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCountIncreases) {
     auto osContext = new OsContext(nullptr, 0u);
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.registerOsContext(osContext);
     EXPECT_EQ(1u, memoryManager.getOsContextCount());
     EXPECT_EQ(1, osContext->getRefInternalCount());
@@ -1795,7 +1830,8 @@ TEST(ResidencyDataTest, givenOsContextWhenItIsRegisteredToMemoryManagerThenRefCo
 TEST(ResidencyDataTest, givenTwoOsContextsWhenTheyAreRegistredFromHigherToLowerThenProperSizeIsReturned) {
     auto osContext2 = new OsContext(nullptr, 1u);
     auto osContext = new OsContext(nullptr, 0u);
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.registerOsContext(osContext2);
     memoryManager.registerOsContext(osContext);
     EXPECT_EQ(2u, memoryManager.getOsContextCount());

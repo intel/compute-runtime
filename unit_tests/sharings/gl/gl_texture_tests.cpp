@@ -22,6 +22,7 @@ class GlSharingTextureTests : public ::testing::Test {
     // temp solution - we need to query size from GMM:
     class TempMM : public MockMemoryManager {
       public:
+        using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             if (useForcedGmm) {
@@ -48,7 +49,7 @@ class GlSharingTextureTests : public ::testing::Test {
         glSharing = new MockGlSharing;
         clContext.setSharingFunctions(&glSharing->m_sharingFunctions);
         ASSERT_FALSE(overrideCommandStreamReceiverCreation);
-        tempMM = new TempMM;
+        tempMM = new TempMM(*clContext.getDevice(0)->getExecutionEnvironment());
         tempMM->forceGmm = MockGmm::queryImgParams(imgInfo);
         tempMM->forceAllocationSize = textureSize;
         MockDevice *device = static_cast<MockDevice *>(clContext.getDevice(0));

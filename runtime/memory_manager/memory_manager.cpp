@@ -58,8 +58,10 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     return nullptr;
 }
 
-MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
-                                                                             localMemorySupported(enableLocalMemory){};
+MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
+                             ExecutionEnvironment &executionEnvironment) : allocator32Bit(nullptr), enable64kbpages(enable64kbpages),
+                                                                           localMemorySupported(enableLocalMemory),
+                                                                           executionEnvironment(executionEnvironment){};
 
 MemoryManager::~MemoryManager() {
     freeAllocationsList(-1, graphicsAllocations);
@@ -175,8 +177,7 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
     uint32_t taskCount = gfxAllocation->taskCount;
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
-        UNRECOVERABLE_IF(!csr);
-        taskCount = csr->peekTaskCount();
+        taskCount = getCommandStreamReceiver(0)->peekTaskCount();
     }
 
     storeAllocation(std::move(gfxAllocation), allocationUsage, taskCount);
@@ -198,9 +199,8 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
-    UNRECOVERABLE_IF(!csr);
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, csr->getTagAddress(), internalAllocation);
+    auto allocation = allocationsForReuse.detachAllocation(requiredSize, getCommandStreamReceiver(0)->getTagAddress(), internalAllocation);
     return allocation;
 }
 
@@ -282,7 +282,7 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation) {
 //if not in use destroy in place
 //if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
-    if (gfxAllocation->taskCount == ObjectNotUsed || gfxAllocation->taskCount <= *csr->getTagAddress()) {
+    if (gfxAllocation->taskCount == ObjectNotUsed || gfxAllocation->taskCount <= *getCommandStreamReceiver(0)->getTagAddress()) {
         freeGraphicsMemory(gfxAllocation);
     } else {
         storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation), TEMPORARY_ALLOCATION);
@@ -320,19 +320,19 @@ RequirementsStatus MemoryManager::checkAllocationsForOverlapping(AllocationRequi
         checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
         if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
             // clean temporary allocations
-            UNRECOVERABLE_IF(!csr);
-            uint32_t taskCount = *csr->getTagAddress();
+
+            uint32_t taskCount = *getCommandStreamReceiver(0)->getTagAddress();
             cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
 
             // check overlapping again
             checkedFragments->fragments[i] = hostPtrManager.getFragmentAndCheckForOverlaps(requirements->AllocationFragments[i].allocationPtr, requirements->AllocationFragments[i].allocationSize, checkedFragments->status[i]);
-
             if (checkedFragments->status[i] == OverlapStatus::FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT) {
+
                 // Wait for completion
-                while (*csr->getTagAddress() < csr->peekLatestSentTaskCount()) {
+                while (*getCommandStreamReceiver(0)->getTagAddress() < getCommandStreamReceiver(0)->peekLatestSentTaskCount()) {
                 }
 
-                taskCount = *csr->getTagAddress();
+                taskCount = *getCommandStreamReceiver(0)->getTagAddress();
                 cleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
 
                 // check overlapping last time
@@ -455,6 +455,10 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
         return allocateGraphicsMemory64kb(allocationData.size, MemoryConstants::pageSize64k, allocationData.flags.forcePin, preferRenderCompressed);
     }
     return allocateGraphicsMemory(allocationData.size, MemoryConstants::pageSize, allocationData.flags.forcePin, allocationData.flags.uncacheable);
+}
+CommandStreamReceiver *MemoryManager::getCommandStreamReceiver(uint32_t contextId) {
+    UNRECOVERABLE_IF(executionEnvironment.commandStreamReceivers.size() < 1);
+    return executionEnvironment.commandStreamReceivers[contextId].get();
 }
 
 } // namespace OCLRT

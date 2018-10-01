@@ -20,11 +20,9 @@ class MemoryManagerWithCsrFixture {
     MemoryManager *memoryManager;
     GMockMemoryManager *gmockMemoryManager;
     ExecutionEnvironment executionEnvironment;
-    std::unique_ptr<MockCommandStreamReceiver> csr;
+    MockCommandStreamReceiver *csr;
     uint32_t taskCount = 0;
     uint32_t currentGpuTag = initialHardwareTag;
-
-    MemoryManagerWithCsrFixture() { csr = std::make_unique<MockCommandStreamReceiver>(this->executionEnvironment); }
 
     ~MemoryManagerWithCsrFixture() = default;
 

@@ -68,7 +68,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily> {
     }
 
     virtual MemoryManager *createMemoryManager(bool enable64kbPages, bool enableLocalMemory) override {
-        memoryManager = new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory);
+        memoryManager = new OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment);
         return memoryManager;
     }
 

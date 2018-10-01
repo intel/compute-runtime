@@ -22,7 +22,7 @@ class DrmMemoryManager : public MemoryManager {
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
-    DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory);
+    DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment);
     ~DrmMemoryManager() override;
 
     BufferObject *getPinBB() const;

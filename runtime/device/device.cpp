@@ -123,8 +123,6 @@ bool Device::createDeviceImpl(const HardwareInfo *pHwInfo, Device &outDevice) {
         return false;
     }
 
-    executionEnvironment->memoryManager->csr = outDevice.commandStreamReceiver;
-
     auto pDevice = &outDevice;
     if (!pDevice->osTime) {
         pDevice->osTime = OSTime::create(outDevice.commandStreamReceiver->getOSInterface());

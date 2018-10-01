@@ -155,7 +155,7 @@ WddmMemoryManager *WddmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
 
 template <typename GfxFamily>
 MemoryManager *WddmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool enable64kbPages, bool enableLocalMemory) {
-    return memoryManager = new WddmMemoryManager(enable64kbPages, enableLocalMemory, this->wddm);
+    return memoryManager = new WddmMemoryManager(enable64kbPages, enableLocalMemory, this->wddm, executionEnvironment);
 }
 
 template <typename GfxFamily>

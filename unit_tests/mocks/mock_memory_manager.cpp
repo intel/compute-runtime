@@ -33,10 +33,6 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
     return allocation;
 }
 
-void MockMemoryManager::setCommandStreamReceiver(CommandStreamReceiver *csr) {
-    this->csr = csr;
-}
-
 bool MockMemoryManager::isAllocationListEmpty() {
     return graphicsAllocations.peekIsEmpty();
 }

@@ -58,7 +58,7 @@ class MockWddmMemoryManagerFixture : public GmmEnvironmentFixture {
         osContext = new OsContext(osInterface.get(), 0u);
         osContext->incRefInternal();
 
-        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm);
+        memoryManager = std::make_unique<MockWddmMemoryManager>(wddm, executionEnvironment);
         memoryManager->registerOsContext(osContext);
     }
 
@@ -120,7 +120,7 @@ class WddmMemoryManagerFixtureWithGmockWddm : public GmmEnvironmentFixture {
         osContext = new OsContext(osInterface.get(), 0u);
         osContext->incRefInternal();
         wddm->init();
-        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm);
+        memoryManager = new (std::nothrow) MockWddmMemoryManager(wddm, executionEnvironment);
         //assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
 

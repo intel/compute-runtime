@@ -18,17 +18,18 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
   public:
     void SetUp() override {
         MemoryManagementFixture::SetUp();
-        memoryManager = new OsAgnosticMemoryManager(false, false);
-        memoryManager->csr = createCommandStream(*platformDevices, executionEnvironment);
+        executionEnvironment = std::make_unique<ExecutionEnvironment>();
+        executionEnvironment->initializeCommandStreamReceiver(*platformDevices, 0u);
+        memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
     }
 
     void TearDown() override {
-        delete memoryManager->csr;
-        delete memoryManager;
+        executionEnvironment.reset();
         MemoryManagementFixture::TearDown();
     }
 
   protected:
-    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     MemoryManager *memoryManager;
 };

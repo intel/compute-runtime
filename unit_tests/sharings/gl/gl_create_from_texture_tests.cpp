@@ -22,6 +22,9 @@ class CreateFromGlTexture : public ::testing::Test {
     // temp solution - we need to query size from GMM:
     class TempMM : public OsAgnosticMemoryManager {
       public:
+        TempMM() : OsAgnosticMemoryManager(false, false, *(new ExecutionEnvironment)) {
+            mockExecutionEnvironment.reset(&executionEnvironment);
+        }
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             if (handle == CreateFromGlTexture::mcsHandle) {
@@ -34,6 +37,7 @@ class CreateFromGlTexture : public ::testing::Test {
         size_t forceAllocationSize;
         Gmm *forceGmm = nullptr;
         Gmm *forceMcsGmm = nullptr;
+        std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
     };
 
     void SetUp() override {

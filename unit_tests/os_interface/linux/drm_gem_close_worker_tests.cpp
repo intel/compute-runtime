@@ -13,6 +13,7 @@
 #include <thread>
 
 #include "runtime/command_stream/device_command_stream.h"
+#include "runtime/execution_environment/execution_environment.h"
 #include "hw_cmds.h"
 #include "runtime/helpers/aligned_memory.h"
 #include "runtime/mem_obj/buffer.h"
@@ -64,7 +65,7 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_cnt = 0;
         this->drmMock->gem_close_expected = 0;
 
-        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerInactive, false, false);
+        this->mm = new DrmMemoryManager(this->drmMock, gemCloseWorkerMode::gemCloseWorkerInactive, false, false, executionEnvironment);
     }
 
     void TearDown() {
@@ -88,6 +89,7 @@ class DrmGemCloseWorkerFixture {
         DrmAllocationWrapper(BufferObject *bo) : DrmAllocation(bo, nullptr, 0, MemoryPool::MemoryNull) {
         }
     };
+    ExecutionEnvironment executionEnvironment;
 };
 
 typedef Test<DrmGemCloseWorkerFixture> DrmGemCloseWorkerTests;

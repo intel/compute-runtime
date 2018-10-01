@@ -288,15 +288,13 @@ void MemObj::releaseAllocatedMapPtr() {
 
 void MemObj::waitForCsrCompletion() {
     if (graphicsAllocation) {
-        UNRECOVERABLE_IF(!memoryManager->csr);
-        memoryManager->csr->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->taskCount);
+        memoryManager->getCommandStreamReceiver(0)->waitForCompletionWithTimeout(false, TimeoutControls::maxTimeout, graphicsAllocation->taskCount);
     }
 }
 
 void MemObj::destroyGraphicsAllocation(GraphicsAllocation *allocation, bool asyncDestroy) {
     if (asyncDestroy && allocation->taskCount != ObjectNotUsed) {
-        UNRECOVERABLE_IF(!memoryManager->csr);
-        auto currentTag = *memoryManager->csr->getTagAddress();
+        auto currentTag = *memoryManager->getCommandStreamReceiver(0)->getTagAddress();
         if (currentTag < allocation->taskCount) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
             return;

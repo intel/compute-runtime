@@ -55,12 +55,13 @@ class DrmCommandStreamFixture {
         csr = new DrmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], executionEnvironment,
                                                                      gemCloseWorkerMode::gemCloseWorkerActive);
         ASSERT_NE(nullptr, csr);
+        executionEnvironment.commandStreamReceivers.resize(1);
+        executionEnvironment.commandStreamReceivers[0].reset(csr);
 
         // Memory manager creates pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))
             .Times(1);
         mm = static_cast<DrmMemoryManager *>(csr->createMemoryManager(false, false));
-        mm->csr = csr;
         ::testing::Mock::VerifyAndClearExpectations(mock);
 
         //assert we have memory manager
@@ -70,7 +71,7 @@ class DrmCommandStreamFixture {
     void TearDown() {
         mm->waitForDeletions();
         mm->peekGemCloseWorker()->close(true);
-        delete csr;
+        executionEnvironment.commandStreamReceivers.clear();
         ::testing::Mock::VerifyAndClearExpectations(mock);
         // Memory manager closes pinBB with ioctl, expect one call
         EXPECT_CALL(*mock, ioctl(::testing::_, ::testing::_))

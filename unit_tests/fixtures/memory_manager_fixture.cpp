@@ -13,14 +13,15 @@ using namespace OCLRT;
 using ::testing::NiceMock;
 
 void MemoryManagerWithCsrFixture::SetUp() {
-    gmockMemoryManager = new NiceMock<GMockMemoryManager>;
+    csr = new MockCommandStreamReceiver(this->executionEnvironment);
+    gmockMemoryManager = new NiceMock<GMockMemoryManager>(executionEnvironment);
     memoryManager = gmockMemoryManager;
 
     ON_CALL(*gmockMemoryManager, cleanAllocationList(::testing::_, ::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerCleanAllocationList));
     ON_CALL(*gmockMemoryManager, populateOsHandles(::testing::_)).WillByDefault(::testing::Invoke(gmockMemoryManager, &GMockMemoryManager::MemoryManagerPopulateOsHandles));
 
     csr->tagAddress = &currentGpuTag;
-    memoryManager->csr = csr.get();
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
 }
 
 void MemoryManagerWithCsrFixture::TearDown() {

@@ -56,6 +56,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
 
     class MockMM : public OsAgnosticMemoryManager {
       public:
+        using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
         GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, bool requireSpecificBitness) override {
             auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, requireSpecificBitness);
             alloc->gmm = forceGmm;
@@ -88,7 +89,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         gmm = MockGmm::queryImgParams(imgInfo).release();
         mockGmmResInfo = reinterpret_cast<NiceMock<MockGmmResourceInfo> *>(gmm->gmmResourceInfo.get());
 
-        mockMM.forceGmm = gmm;
+        mockMM->forceGmm = gmm;
     }
 
     void SetUp() override {
@@ -96,10 +97,11 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         PlatformFixture::SetUp();
         context = new MockContext(pPlatform->getDevice(0));
         context->forcePreferD3dSharedResources(true);
+        mockMM = std::make_unique<MockMM>(false, false, *context->getDevice(0)->getExecutionEnvironment());
 
         mockSharingFcns = new NiceMock<MockD3DSharingFunctions<T>>();
         context->setSharingFunctions(mockSharingFcns);
-        context->setMemoryManager(&mockMM);
+        context->setMemoryManager(mockMM.get());
         cmdQ = new MockCommandQueue(context, context->getDevice(0), 0);
         DebugManager.injectFcn = &mockSharingFcns->mockGetDxgiDesc;
 
@@ -122,7 +124,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     void TearDown() override {
         delete cmdQ;
         delete context;
-        if (!mockMM.gmmOwnershipPassed) {
+        if (!mockMM->gmmOwnershipPassed) {
             delete gmm;
         }
         PlatformFixture::TearDown();
@@ -198,7 +200,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     NiceMock<MockGmmResourceInfo> *mockGmmResInfo = nullptr;
 
     DebugManagerStateRestore *dbgRestore;
-    MockMM mockMM;
+    std::unique_ptr<MockMM> mockMM;
 
     uint8_t d3dMode = 0;
 };
@@ -1328,7 +1330,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
 }
 
@@ -1340,11 +1342,11 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     mockGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_CALL(*this->mockSharingFcns, getTexture2dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture2dDesc));
 
-    mockMM.mapAuxGpuVaRetValue = false;
+    mockMM->mapAuxGpuVaRetValue = false;
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
@@ -1360,7 +1362,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithoutUnifiedAuxFlagsWhenCreati
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 4, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(0u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(0u, mockMM->mapAuxGpuVACalled);
     EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
@@ -1372,7 +1374,7 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     auto image = std::unique_ptr<Image>(D3DTexture<TypeParam>::create2d(this->context, (D3DTexture2d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
 }
 
@@ -1385,7 +1387,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
 }
 
@@ -1395,11 +1397,11 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     mockGmmResInfo->setUnifiedAuxTranslationCapable();
     EXPECT_CALL(*this->mockSharingFcns, getTexture3dDesc(_, _)).Times(1).WillOnce(SetArgPointee<0>(this->mockSharingFcns->mockTexture3dDesc));
 
-    mockMM.mapAuxGpuVaRetValue = false;
+    mockMM->mapAuxGpuVaRetValue = false;
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
@@ -1413,7 +1415,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithoutUnifiedAuxFlagsWhenCreati
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(0u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(0u, mockMM->mapAuxGpuVACalled);
     EXPECT_FALSE(gmm->isRenderCompressed);
 }
 
@@ -1425,7 +1427,7 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     std::unique_ptr<Image> image(D3DTexture<TypeParam>::create3d(this->context, (D3DTexture3d *)&this->dummyD3DTexture, CL_MEM_READ_WRITE, 1, nullptr));
     ASSERT_NE(nullptr, image.get());
 
-    EXPECT_EQ(1u, mockMM.mapAuxGpuVACalled);
+    EXPECT_EQ(1u, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isRenderCompressed);
 }
 

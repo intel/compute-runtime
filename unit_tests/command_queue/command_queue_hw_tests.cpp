@@ -1017,11 +1017,11 @@ HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnq
 }
 
 HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyAllowedIsCreatedThenCopyAllocationIsCreatedAndMemoryCopied) {
-    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
-    ASSERT_NE(nullptr, gmockMemoryManager);
-
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ASSERT_NE(nullptr, device.get());
+    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
+    ASSERT_NE(nullptr, gmockMemoryManager);
+
     device->injectMemoryManager(gmockMemoryManager);
     MockContext *mockContext = new MockContext(device.get());
     ASSERT_NE(nullptr, mockContext);
@@ -1058,11 +1058,11 @@ HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfac
 }
 
 HWTEST_F(CommandQueueHwTest, givenReadOnlyHostPointerWhenAllocationForHostSurfaceWithPtrCopyNotAllowedIsCreatedThenCopyAllocationIsNotCreated) {
-    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
-    ASSERT_NE(nullptr, gmockMemoryManager);
-
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     ASSERT_NE(nullptr, device.get());
+    ::testing::NiceMock<GMockMemoryManager> *gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
+    ASSERT_NE(nullptr, gmockMemoryManager);
+
     device->injectMemoryManager(gmockMemoryManager);
     MockContext *mockContext = new MockContext(device.get());
     ASSERT_NE(nullptr, mockContext);
@@ -1107,7 +1107,7 @@ struct ReducedAddrSpaceCommandQueueHwTest : public CommandQueueHwTest {
         hwInfoToModify.capabilityTable.gpuAddressSpace = MemoryConstants::max32BitAddress;
         device.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfoToModify));
         ASSERT_NE(nullptr, device.get());
-        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>;
+        gmockMemoryManager = new ::testing::NiceMock<GMockMemoryManager>(*device->getExecutionEnvironment());
         ASSERT_NE(nullptr, gmockMemoryManager);
         device->injectMemoryManager(gmockMemoryManager);
         mockContext = new MockContext(device.get());

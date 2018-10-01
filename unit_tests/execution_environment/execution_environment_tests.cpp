@@ -19,6 +19,7 @@
 
 #include "test.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
 
 using namespace OCLRT;
@@ -155,7 +156,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 6> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
-    struct MemoryMangerMock : public DestructorCounted<OsAgnosticMemoryManager, 5> {
+    struct MemoryMangerMock : public DestructorCounted<MockMemoryManager, 5> {
         MemoryMangerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 4> {

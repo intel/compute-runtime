@@ -292,7 +292,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispat
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenObtainNewStampAndPassToEvent) {
-    auto mockMemoryManager = new MockMemoryManager();
+    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
     device->injectMemoryManager(mockMemoryManager);
     context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager);
@@ -549,7 +549,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
 }
 
 TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBeforeReleasing) {
-    auto mockMemoryManager = new MockMemoryManager();
+    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
     device->injectMemoryManager(mockMemoryManager);
     context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
@@ -568,7 +568,7 @@ TEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenObtainingThenGetNewBefo
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedThenMakeItResident) {
-    auto mockMemoryManager = new MockMemoryManager();
+    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
     device->injectMemoryManager(mockMemoryManager);
     context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);
@@ -590,7 +590,7 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingNonBlockedT
 }
 
 HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingBlockedThenMakeItResident) {
-    auto mockMemoryManager = new MockMemoryManager();
+    auto mockMemoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
     device->injectMemoryManager(mockMemoryManager);
     context->setMemoryManager(mockMemoryManager);
     auto mockTagAllocator = new MockTagAllocator<>(mockMemoryManager, 1);

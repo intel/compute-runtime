@@ -19,6 +19,7 @@
 namespace OCLRT {
 class Device;
 class DeferredDeleter;
+class ExecutionEnvironment;
 class GraphicsAllocation;
 class CommandStreamReceiver;
 class TimestampPacket;
@@ -122,7 +123,7 @@ class MemoryManager {
         RetryInNonDevicePool
     };
 
-    MemoryManager(bool enable64kbpages, bool enableLocalMemory);
+    MemoryManager(bool enable64kbpages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment);
 
     virtual ~MemoryManager();
     MOCKABLE_VIRTUAL void *allocateSystemMemory(size_t size, size_t alignment);
@@ -220,15 +221,13 @@ class MemoryManager {
     TagAllocator<HwPerfCounter> *getEventPerfCountAllocator();
     TagAllocator<TimestampPacket> *getTimestampPacketAllocator();
 
-    std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
+    MOCKABLE_VIRTUAL std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
 
     //intrusive list of allocation
     AllocationsList graphicsAllocations;
 
     //intrusive list of allocation for re-use
     AllocationsList allocationsForReuse;
-
-    CommandStreamReceiver *csr = nullptr;
     HostPtrManager hostPtrManager;
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
@@ -266,6 +265,7 @@ class MemoryManager {
 
     virtual void registerOsContext(OsContext *contextToRegister);
     size_t getOsContextCount() { return registeredOsContexts.size(); }
+    CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
 
   protected:
     static bool getAllocationData(AllocationData &allocationData, const AllocationFlags &flags, const DevicesBitfield devicesBitfield,
@@ -284,6 +284,7 @@ class MemoryManager {
     bool asyncDeleterEnabled = false;
     bool enable64kbpages = false;
     bool localMemorySupported = false;
+    ExecutionEnvironment &executionEnvironment;
     std::vector<OsContext *> registeredOsContexts;
 };
 

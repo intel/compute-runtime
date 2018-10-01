@@ -152,7 +152,7 @@ DrmMemoryManager *DrmCommandStreamReceiver<GfxFamily>::getMemoryManager() {
 
 template <typename GfxFamily>
 MemoryManager *DrmCommandStreamReceiver<GfxFamily>::createMemoryManager(bool enable64kbPages, bool enableLocalMemory) {
-    memoryManager = new DrmMemoryManager(this->drm, this->gemCloseWorkerOperationMode, DebugManager.flags.EnableForcePin.get(), true);
+    memoryManager = new DrmMemoryManager(this->drm, this->gemCloseWorkerOperationMode, DebugManager.flags.EnableForcePin.get(), true, this->executionEnvironment);
     return memoryManager;
 }
 

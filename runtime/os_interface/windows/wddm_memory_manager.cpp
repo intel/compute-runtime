@@ -28,7 +28,7 @@ WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
 }
 
-WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm) : MemoryManager(enable64kbPages, enableLocalMemory), residencyLock(false) {
+WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment), residencyLock(false) {
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));
@@ -301,8 +301,8 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
 
     UNRECOVERABLE_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
                      gfxAllocation->taskCount != ObjectNotUsed &&
-                     this->csr && this->csr->getTagAddress() &&
-                     gfxAllocation->taskCount > *this->csr->getTagAddress());
+                     this->getCommandStreamReceiver(0) && this->getCommandStreamReceiver(0)->getTagAddress() &&
+                     gfxAllocation->taskCount > *this->getCommandStreamReceiver(0)->getTagAddress());
 
     if (input->gmm) {
         if (input->gmm->isRenderCompressed) {

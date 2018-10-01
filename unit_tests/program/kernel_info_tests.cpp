@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/program/kernel_info.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 #include "gtest/gtest.h"
@@ -105,7 +106,8 @@ TEST(KernelInfo, decodeImageKernelArgument) {
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKernelHeapToKernelAllocation) {
     KernelInfo kernelInfo;
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     const size_t heapSize = 0x40;
     char heap[heapSize];
@@ -127,12 +129,14 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
 
 class MyMemoryManager : public OsAgnosticMemoryManager {
   public:
+    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
     GraphicsAllocation *allocate32BitGraphicsMemory(size_t size, const void *ptr, AllocationOrigin allocationOrigin) override { return nullptr; }
 };
 
 TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationAndCannotAllocateMemoryThenReturnsFalse) {
     KernelInfo kernelInfo;
-    MyMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    MyMemoryManager memoryManager(false, false, executionEnvironment);
     SKernelBinaryHeaderCommon kernelHeader;
     kernelInfo.heapInfo.pKernelHeader = &kernelHeader;
     auto retVal = kernelInfo.createKernelAllocation(&memoryManager);

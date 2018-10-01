@@ -20,6 +20,7 @@ using namespace OCLRT;
 
 class TestedMemoryManager : public OsAgnosticMemoryManager {
   public:
+    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
     GraphicsAllocation *allocateGraphicsMemory(size_t size, size_t alignment, bool forcePin, bool uncacheable) override {
         EXPECT_NE(0u, expectedSize);
         if (expectedSize == size) {
@@ -47,7 +48,8 @@ class TestedMemoryManager : public OsAgnosticMemoryManager {
 };
 
 TEST(BufferTests, doPinIsSet) {
-    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager());
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(false, false, executionEnvironment));
     {
         MockContext context;
         auto size = MemoryConstants::pageSize * 32;
@@ -69,7 +71,8 @@ TEST(BufferTests, doPinIsSet) {
     }
 }
 TEST(BufferTests, doPinIsSetForHostPtr) {
-    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager());
+    ExecutionEnvironment executionEnvironment;
+    std::unique_ptr<TestedMemoryManager> mm(new TestedMemoryManager(false, false, executionEnvironment));
     {
         MockContext context;
         auto retVal = CL_INVALID_OPERATION;

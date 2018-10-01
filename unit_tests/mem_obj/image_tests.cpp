@@ -45,7 +45,7 @@ class CreateImageTest : public DeviceFixture,
   protected:
     void SetUp() override {
         DeviceFixture::SetUp();
-        memoryManager = new MockMemoryManager();
+        memoryManager = new MockMemoryManager(*pDevice->getExecutionEnvironment());
 
         pDevice->injectMemoryManager(memoryManager);
 
@@ -892,6 +892,7 @@ class ImageCompressionTests : public ::testing::Test {
   public:
     class MyMemoryManager : public MockMemoryManager {
       public:
+        using MockMemoryManager::MockMemoryManager;
         GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override {
             mockMethodCalled = true;
             capturedImgInfo = imgInfo;
@@ -902,8 +903,8 @@ class ImageCompressionTests : public ::testing::Test {
     };
 
     void SetUp() override {
-        myMemoryManager = new MyMemoryManager();
         mockDevice.reset(MockDevice::createWithNewExecutionEnvironment<MockDevice>(*platformDevices));
+        myMemoryManager = new MyMemoryManager(*mockDevice->getExecutionEnvironment());
         mockDevice->injectMemoryManager(myMemoryManager);
         mockContext.reset(new MockContext(mockDevice.get()));
     }
@@ -1195,8 +1196,8 @@ void MockImageHw<FamilyName>::setClearColorParams(typename FamilyName::RENDER_SU
 using HwImageTest = ::testing::Test;
 HWTEST_F(HwImageTest, givenImageHwWhenSettingCCSParamsThenSetClearColorParamsIsCalled) {
 
-    OsAgnosticMemoryManager memoryManager;
     MockContext context;
+    OsAgnosticMemoryManager memoryManager(false, false, *context.getDevice(0)->getExecutionEnvironment());
     context.setMemoryManager(&memoryManager);
 
     cl_image_desc imgDesc = {};

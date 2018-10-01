@@ -37,10 +37,9 @@ class OsAgnosticMemoryManager : public MemoryManager {
     using MemoryManager::allocateGraphicsMemory;
     using MemoryManager::createGraphicsAllocationFromSharedHandle;
 
-    OsAgnosticMemoryManager() : OsAgnosticMemoryManager(false, false){};
-    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, false){};
+    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, false, executionEnvironment){};
 
-    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage) : MemoryManager(enable64kbPages, enableLocalMemory) {
+    OsAgnosticMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
         allocator32Bit = std::unique_ptr<Allocator32bit>(create32BitAllocator(aubUsage));
     };
 

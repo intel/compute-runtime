@@ -6,6 +6,7 @@
  */
 
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
+#include "runtime/execution_environment/execution_environment.h"
 
 #include "gtest/gtest.h"
 #include "test.h"
@@ -13,7 +14,8 @@
 using namespace OCLRT;
 
 TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;
     allocData.allFlags = 0;
@@ -27,7 +29,8 @@ TEST(MemoryManagerTest, givenSetUseSytemMemoryWhenGraphicsAllocationInDevicePool
 }
 
 TEST(MemoryManagerTest, givenAllowed32BitAndFroce32BitWhenGraphicsAllocationInDevicePoolIsAllocatedThenNullptrIsReturned) {
-    OsAgnosticMemoryManager memoryManager;
+    ExecutionEnvironment executionEnvironment;
+    OsAgnosticMemoryManager memoryManager(false, false, executionEnvironment);
     memoryManager.setForce32BitAllocations(true);
 
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;

@@ -25,11 +25,11 @@
 
 namespace OCLRT {
 
-DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory) : MemoryManager(false, false),
-                                                                                                                          drm(drm),
-                                                                                                                          pinBB(nullptr),
-                                                                                                                          forcePinEnabled(forcePinAllowed),
-                                                                                                                          validateHostPtrMemory(validateHostPtrMemory) {
+DrmMemoryManager::DrmMemoryManager(Drm *drm, gemCloseWorkerMode mode, bool forcePinAllowed, bool validateHostPtrMemory, ExecutionEnvironment &executionEnvironment) : MemoryManager(false, false, executionEnvironment),
+                                                                                                                                                                      drm(drm),
+                                                                                                                                                                      pinBB(nullptr),
+                                                                                                                                                                      forcePinEnabled(forcePinAllowed),
+                                                                                                                                                                      validateHostPtrMemory(validateHostPtrMemory) {
     MemoryManager::virtualPaddingAvailable = true;
     if (mode != gemCloseWorkerMode::gemCloseWorkerInactive) {
         gemCloseWorker.reset(new DrmGemCloseWorker(*this));

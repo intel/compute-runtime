@@ -295,7 +295,7 @@ HWTEST_F(ReadWriteBufferCpuCopyTest, cpuCopyCriteriaNotMet) {
 
 TEST(ReadWriteBufferOnCpu, givenNoHostPtrAndAlignedSizeWhenMemoryAllocationIsInNonSystemMemoryPoolThenIsReadWriteOnCpuAllowedReturnsFalse) {
     std::unique_ptr<MockDevice> device(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    auto memoryManager = new MockMemoryManager;
+    auto memoryManager = new MockMemoryManager(*device->getExecutionEnvironment());
 
     device->injectMemoryManager(memoryManager);
     MockContext ctx(device.get());

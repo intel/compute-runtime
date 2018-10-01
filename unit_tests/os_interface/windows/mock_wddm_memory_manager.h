@@ -24,9 +24,9 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     using BaseClass::trimCandidatesCount;
     using BaseClass::trimResidency;
     using BaseClass::trimResidencyToBudget;
+    using BaseClass::WddmMemoryManager;
 
-    MockWddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm) : WddmMemoryManager(enable64kbPages, enableLocalMemory, wddm){};
-    MockWddmMemoryManager(Wddm *wddm) : WddmMemoryManager(false, false, wddm){};
+    MockWddmMemoryManager(Wddm *wddm, ExecutionEnvironment &executionEnvironment) : WddmMemoryManager(false, false, wddm, executionEnvironment){};
     void setDeferredDeleter(DeferredDeleter *deleter) {
         this->deferredDeleter.reset(deleter);
     }

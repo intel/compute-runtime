@@ -28,7 +28,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
         context.reset(new MockContext());
-        memoryManager = new MockMemoryManager;
+        memoryManager = new MockMemoryManager(*context->getDevice(0)->getExecutionEnvironment());
         device = static_cast<MockDevice *>(context->getDevice(0));
         device->injectMemoryManager(memoryManager);
         context->setMemoryManager(memoryManager);

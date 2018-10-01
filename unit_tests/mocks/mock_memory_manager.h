@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "runtime/execution_environment/execution_environment.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
 
 #include "gmock/gmock.h"
@@ -18,17 +19,19 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     using MemoryManager::allocateGraphicsMemoryInPreferredPool;
     using MemoryManager::getAllocationData;
     using MemoryManager::timestampPacketAllocator;
-
-    MockMemoryManager() : OsAgnosticMemoryManager(false, false){};
-    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false) {}
-    MockMemoryManager(bool enable64kbPages, bool enableLocalMemory, bool aubUsage) : OsAgnosticMemoryManager(enable64kbPages, enableLocalMemory, aubUsage) {}
-
+    using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
+    MockMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment){};
+    MockMemoryManager() : MockMemoryManager(*(new ExecutionEnvironment)) {
+        mockExecutionEnvironment.reset(&executionEnvironment);
+    };
+    MockMemoryManager(bool enable64pages) : OsAgnosticMemoryManager(enable64pages, false, *(new ExecutionEnvironment)) {
+        mockExecutionEnvironment.reset(&executionEnvironment);
+    }
     GraphicsAllocation *allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) override;
     void setDeferredDeleter(DeferredDeleter *deleter);
     void overrideAsyncDeleterFlag(bool newValue);
     GraphicsAllocation *allocateGraphicsMemoryForImage(ImageInfo &imgInfo, Gmm *gmm) override;
     int redundancyRatio = 1;
-    void setCommandStreamReceiver(CommandStreamReceiver *csr);
     bool isAllocationListEmpty();
     GraphicsAllocation *peekAllocationListHead();
 
@@ -42,10 +45,12 @@ class MockMemoryManager : public OsAgnosticMemoryManager {
     bool failInDevicePoolWithError = false;
     bool failInAllocateWithSizeAndAlignment = false;
     bool preferRenderCompressedFlagPassed = false;
+    std::unique_ptr<ExecutionEnvironment> mockExecutionEnvironment;
 };
 
 class GMockMemoryManager : public MockMemoryManager {
   public:
+    GMockMemoryManager(const ExecutionEnvironment &executionEnvironment) : MockMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
     MOCK_METHOD2(cleanAllocationList, bool(uint32_t waitTaskCount, uint32_t allocationUsage));
     // cleanAllocationList call defined in MemoryManager.
 
@@ -58,7 +63,7 @@ class GMockMemoryManager : public MockMemoryManager {
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
   public:
-    MockAllocSysMemAgnosticMemoryManager() : OsAgnosticMemoryManager(false, false) {
+    MockAllocSysMemAgnosticMemoryManager(ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(false, false, executionEnvironment) {
         ptrRestrictions = nullptr;
         testRestrictions.minAddress = 0;
     }
@@ -76,5 +81,4 @@ class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {
     AlignedMallocRestrictions testRestrictions;
     AlignedMallocRestrictions *ptrRestrictions;
 };
-
 } // namespace OCLRT
