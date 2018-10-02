@@ -367,13 +367,13 @@ bool Wddm::mapGpuVirtualAddressImpl(Gmm *gmm, D3DKMT_HANDLE handle, void *cpuPtr
         return false;
     }
 
-    if (gmm->isRenderCompressed) {
+    kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, adapter, device, handle, MapGPUVA.VirtualAddress, gdi->escape);
+
+    if (gmm->isRenderCompressed && pageTableManager.get()) {
         return updateAuxTable(gpuPtr, gmm, true);
     }
 
-    kmDafListener->notifyMapGpuVA(featureTable->ftrKmdDaf, adapter, device, handle, MapGPUVA.VirtualAddress, gdi->escape);
-
-    return status == STATUS_SUCCESS;
+    return true;
 }
 
 bool Wddm::freeGpuVirtualAddres(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size) {
@@ -834,15 +834,12 @@ void Wddm::releaseReservedAddress(void *reservedAddress) {
 }
 
 bool Wddm::updateAuxTable(D3DGPU_VIRTUAL_ADDRESS gpuVa, Gmm *gmm, bool map) {
-    if (pageTableManager.get()) {
-        GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
-        ddiUpdateAuxTable.BaseGpuVA = gpuVa;
-        ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
-        ddiUpdateAuxTable.DoNotWait = true;
-        ddiUpdateAuxTable.Map = map ? 1u : 0u;
-        return pageTableManager->updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
-    }
-    return false;
+    GMM_DDI_UPDATEAUXTABLE ddiUpdateAuxTable = {};
+    ddiUpdateAuxTable.BaseGpuVA = gpuVa;
+    ddiUpdateAuxTable.BaseResInfo = gmm->gmmResourceInfo->peekHandle();
+    ddiUpdateAuxTable.DoNotWait = true;
+    ddiUpdateAuxTable.Map = map ? 1u : 0u;
+    return pageTableManager->updateAuxTable(&ddiUpdateAuxTable) == GMM_STATUS::GMM_SUCCESS;
 }
 
 void Wddm::resetPageTableManager(GmmPageTableMngr *newPageTableManager) {

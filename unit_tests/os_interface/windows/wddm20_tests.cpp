@@ -68,15 +68,19 @@ TEST_F(Wddm20Tests, doubleCreation) {
     EXPECT_TRUE(wddm->isInitialized());
 }
 
-TEST_F(Wddm20Tests, givenNullPageTableManagerWhenUpdateAuxTableCalledThenReturnFalse) {
+TEST_F(Wddm20Tests, givenNullPageTableManagerAndRenderCompressedResourceWhenMappingGpuVaThenDontUpdateAuxTable) {
     wddm->resetPageTableManager(nullptr);
-    EXPECT_EQ(nullptr, wddm->getPageTableManager());
 
     auto gmm = std::unique_ptr<Gmm>(new Gmm(nullptr, 1, false));
     auto mockGmmRes = reinterpret_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
     mockGmmRes->setUnifiedAuxTranslationCapable();
 
-    EXPECT_FALSE(wddm->updateAuxTable(1234u, gmm.get(), true));
+    void *fakePtr = reinterpret_cast<void *>(0x100);
+    WddmAllocation allocation(fakePtr, 0x2100, fakePtr, 0x3000, nullptr, MemoryPool::MemoryNull);
+    allocation.gmm = gmm.get();
+    allocation.handle = ALLOCATION_HANDLE;
+
+    EXPECT_TRUE(wddm->mapGpuVirtualAddress(&allocation, allocation.getAlignedCpuPtr(), allocation.is32BitAllocation, false, false));
 }
 
 TEST(Wddm20EnumAdaptersTest, expectTrue) {

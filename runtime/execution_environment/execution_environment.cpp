@@ -12,6 +12,7 @@
 #include "runtime/source_level_debugger/source_level_debugger.h"
 #include "runtime/built_ins/sip.h"
 #include "runtime/gmm_helper/gmm_helper.h"
+#include "runtime/helpers/hw_helper.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/device_factory.h"
 #include "runtime/os_interface/os_interface.h"
@@ -44,7 +45,7 @@ bool ExecutionEnvironment::initializeCommandStreamReceiver(const HardwareInfo *p
     if (!commandStreamReceiver) {
         return false;
     }
-    if (pHwInfo->capabilityTable.ftrRenderCompressedBuffers || pHwInfo->capabilityTable.ftrRenderCompressedImages) {
+    if (HwHelper::get(pHwInfo->pPlatform->eRenderCoreFamily).isPageTableManagerSupported(*pHwInfo)) {
         commandStreamReceiver->createPageTableManager();
     }
     commandStreamReceiver->setDeviceIndex(deviceIndex);

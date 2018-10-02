@@ -19,4 +19,9 @@ bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_
     }
     return false;
 }
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isPageTableManagerSupported(const HardwareInfo &hwInfo) {
+    return false;
+}
 } // namespace OCLRT

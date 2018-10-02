@@ -8,6 +8,7 @@
 #include "runtime/helpers/options.h"
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/helpers/hw_helper_tests.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 
 void HwHelperTest::SetUp() {
     memcpy(&testPlatform, platformDevices[0]->pPlatform, sizeof(testPlatform));
@@ -23,7 +24,7 @@ void HwHelperTest::SetUp() {
 void HwHelperTest::TearDown() {
 }
 
-HWTEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
+TEST_F(HwHelperTest, getReturnsValidHwHelperHw) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 }
@@ -49,7 +50,7 @@ HWTEST_F(HwHelperTest, getBindingTableStateSizeReturnsCorrectSize) {
     EXPECT_EQ(sizeof(BINDING_TABLE_STATE), pointer);
 }
 
-HWTEST_F(HwHelperTest, getBindingTableStateAlignementReturnsCorrectSize) {
+TEST_F(HwHelperTest, getBindingTableStateAlignementReturnsCorrectSize) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(0u, helper.getBindingTableStateAlignement());
 }
@@ -61,7 +62,7 @@ HWTEST_F(HwHelperTest, getInterfaceDescriptorDataSizeReturnsCorrectSize) {
     EXPECT_EQ(sizeof(INTERFACE_DESCRIPTOR_DATA), helper.getInterfaceDescriptorDataSize());
 }
 
-HWTEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTypeIsReturned) {
+TEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTypeIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 
@@ -69,12 +70,17 @@ HWTEST_F(HwHelperTest, givenDebuggingInactiveWhenSipKernelTypeIsQueriedThenCsrTy
     EXPECT_EQ(SipKernelType::Csr, sipType);
 }
 
-HWTEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTraitsIsReturned) {
+TEST_F(HwHelperTest, givenEngineTypeRcsWhenCsTraitsAreQueiredThenCorrectNameInTraitsIsReturned) {
     auto &helper = HwHelper::get(renderCoreFamily);
     EXPECT_NE(nullptr, &helper);
 
     auto &csTraits = helper.getCsTraits(EngineType::ENGINE_RCS);
     EXPECT_STREQ("RCS", csTraits.name);
+}
+
+HWTEST_F(HwHelperTest, givenHwHelperWhenAskedForPageTableManagerSupportThenReturnCorrectValue) {
+    auto &helper = HwHelper::get(renderCoreFamily);
+    EXPECT_EQ(helper.isPageTableManagerSupported(hwInfo), UnitTestHelper<FamilyType>::isPageTableManagerSupported(hwInfo));
 }
 
 TEST(DwordBuilderTest, setNonMaskedBits) {

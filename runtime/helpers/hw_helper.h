@@ -33,10 +33,11 @@ class HwHelper {
     virtual SipKernelType getSipKernelType(bool debuggingActive) = 0;
     virtual uint32_t getConfigureAddressSpaceMode() = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) = 0;
+    virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
     virtual const AubMemDump::LrcaHelper &getCsTraits(EngineType engineType) const = 0;
 
   protected:
-    HwHelper(){};
+    HwHelper() = default;
 };
 
 template <typename GfxFamily>
@@ -89,8 +90,10 @@ class HwHelperHw : public HwHelper {
 
     bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) override;
 
-  private:
-    HwHelperHw(){};
+    bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
+
+  protected:
+    HwHelperHw() = default;
 };
 
 struct DwordBuilder {

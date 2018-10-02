@@ -21,6 +21,7 @@
 #include "unit_tests/mocks/mock_csr.h"
 #include "unit_tests/mocks/mock_memory_manager.h"
 #include "unit_tests/utilities/destructor_counted.h"
+#include "unit_tests/helpers/unit_test_helper.h"
 
 using namespace OCLRT;
 
@@ -202,23 +203,25 @@ TEST(ExecutionEnvironment, givenMultipleDevicesWhenTheyAreCreatedTheyAllReuseThe
 
 typedef ::testing::Test ExecutionEnvironmentHw;
 
-HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamReceiverIsInitializedForCompressedBuffersThenCreatePageTableManagerIsCalled) {
-    ExecutionEnvironment executionEnvironment;
+HWTEST_F(ExecutionEnvironmentHw, givenHwHelperInputWhenInitializingCsrThenCreatePageTableManagerIfAllowed) {
     HardwareInfo localHwInfo = *platformDevices[0];
-    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
-    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 0u);
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0u].get());
-    ASSERT_NE(nullptr, csr);
-    EXPECT_TRUE(csr->createPageTableManagerCalled);
-}
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
 
-HWTEST_F(ExecutionEnvironmentHw, givenExecutionEnvironmentWhenCommandStreamReceiverIsInitializedForCompressedImagesThenCreatePageTableManagerIsCalled) {
     ExecutionEnvironment executionEnvironment;
-    HardwareInfo localHwInfo = *platformDevices[0];
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 0);
+    auto csr0 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0].get());
+    EXPECT_FALSE(csr0->createPageTableManagerCalled);
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
+    localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 1);
+    auto csr1 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[1].get());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(localHwInfo), csr1->createPageTableManagerCalled);
+
+    localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = true;
-    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 0u);
-    EXPECT_NE(nullptr, executionEnvironment.commandStreamReceivers[0]);
-    auto csr = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[0u].get());
-    ASSERT_NE(nullptr, csr);
-    EXPECT_TRUE(csr->createPageTableManagerCalled);
+    executionEnvironment.initializeCommandStreamReceiver(&localHwInfo, 2);
+    auto csr2 = static_cast<UltCommandStreamReceiver<FamilyType> *>(executionEnvironment.commandStreamReceivers[2].get());
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isPageTableManagerSupported(localHwInfo), csr2->createPageTableManagerCalled);
 }

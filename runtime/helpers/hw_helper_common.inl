@@ -69,4 +69,9 @@ template <typename Family>
 const AubMemDump::LrcaHelper &HwHelperHw<Family>::getCsTraits(EngineType engineType) const {
     return *AUBFamilyMapper<Family>::csTraits[engineType];
 }
+
+template <typename Family>
+bool HwHelperHw<Family>::isPageTableManagerSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
 } // namespace OCLRT

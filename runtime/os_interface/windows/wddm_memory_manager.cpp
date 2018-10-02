@@ -305,7 +305,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
                      gfxAllocation->taskCount > *this->getCommandStreamReceiver(0)->getTagAddress());
 
     if (input->gmm) {
-        if (input->gmm->isRenderCompressed) {
+        if (input->gmm->isRenderCompressed && wddm->getPageTableManager()) {
             auto status = wddm->updateAuxTable(input->gpuPtr, input->gmm, false);
             DEBUG_BREAK_IF(!status);
         }
