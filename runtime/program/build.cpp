@@ -56,15 +56,7 @@ cl_int Program::build(
             buildStatus = CL_BUILD_IN_PROGRESS;
 
             options = (buildOptions) ? buildOptions : "";
-            std::string reraStr = "-cl-intel-gtpin-rera";
-            size_t pos = options.find(reraStr);
-            if (pos != std::string::npos) {
-                // build option "-cl-intel-gtpin-rera" is present, move it to internalOptions
-                size_t reraLen = reraStr.length();
-                options.erase(pos, reraLen);
-                internalOptions.append(reraStr);
-                internalOptions.append(" ");
-            }
+            extractInternalOptions(options);
 
             CompilerInterface *pCompilerInterface = this->executionEnvironment.getCompilerInterface();
             if (!pCompilerInterface) {
@@ -175,5 +167,16 @@ cl_int Program::build(
     processKernel(pKernelData, retVal);
 
     return retVal;
+}
+
+void Program::extractInternalOptions(std::string &options) {
+    for (auto &optionString : internalOptionsToExtract) {
+        size_t pos = options.find(optionString);
+        if (pos != std::string::npos) {
+            options.erase(pos, optionString.length());
+            internalOptions.append(optionString);
+            internalOptions.append(" ");
+        }
+    }
 }
 } // namespace OCLRT

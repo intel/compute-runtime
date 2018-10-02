@@ -2903,3 +2903,27 @@ TEST_F(ProgramTests, givenProgramWithSpirvWhenRebuildProgramIsCalledThenSpirvPat
     EXPECT_EQ(sizeof(spirv), spvSectionDataSize);
     EXPECT_EQ(0, memcmp(spirv, spvSectionData, spvSectionDataSize));
 }
+
+TEST_F(ProgramTests, givenProgramWhenInternalOptionsArePassedThenTheyAreRemovedFromBuildOptions) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram pProgram(executionEnvironment);
+    pProgram.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    const char *internalOption = "-cl-intel-gtpin-rera";
+    std::string buildOptions(internalOption);
+    pProgram.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(0u, buildOptions.length());
+    EXPECT_TRUE(pProgram.getInternalOptions() == std::string(internalOption) + " ");
+}
+
+TEST_F(ProgramTests, givenProgramWhenUnknownInternalOptionsArePassedThenTheyAreNotRemovedFromBuildOptions) {
+    ExecutionEnvironment executionEnvironment;
+    MockProgram pProgram(executionEnvironment);
+    pProgram.getInternalOptions().erase();
+    EXPECT_EQ(nullptr, pProgram.getDevicePtr());
+    const char *internalOption = "-unknown-internal-options-123";
+    std::string buildOptions(internalOption);
+    pProgram.extractInternalOptionsForward(buildOptions);
+    EXPECT_EQ(0u, pProgram.getInternalOptions().length());
+    EXPECT_TRUE(buildOptions == internalOption);
+}

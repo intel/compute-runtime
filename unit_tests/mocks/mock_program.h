@@ -125,6 +125,10 @@ class MockProgram : public Program {
 
     Device *getDevicePtr() { return this->pDevice; }
 
+    void extractInternalOptionsForward(std::string &buildOptions) {
+        extractInternalOptions(buildOptions);
+    }
+
     bool contextSet = false;
 };
 

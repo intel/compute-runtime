@@ -265,6 +265,8 @@ class Program : public BaseObject<_cl_program> {
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
 
+    void extractInternalOptions(std::string &options);
+
     static const std::string clOptNameClVer;
     static const std::string clOptNameUniformWgs;
     // clang-format off
@@ -302,6 +304,7 @@ class Program : public BaseObject<_cl_program> {
     std::string               sourceCode;
     std::string               options;
     std::string               internalOptions;
+    static const std::vector<std::string> internalOptionsToExtract;
     std::string               hashFileName;
     std::string               hashFilePath;
 

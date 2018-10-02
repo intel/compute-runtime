@@ -14,6 +14,7 @@ set(RUNTIME_SRCS_PROGRAM
   ${CMAKE_CURRENT_SOURCE_DIR}/create.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/get_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/heap_info.h
+  ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/internal_options.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_arg_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_info.h
