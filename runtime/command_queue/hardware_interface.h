@@ -42,8 +42,8 @@ class HardwareInterface {
         KernelOperation **blockedCommandsData,
         HwTimeStamps *hwTimeStamps,
         HwPerfCounter *hwPerfCounter,
-        TagNode<TimestampPacket> *previousTimestampPacketNode,
-        TimestampPacket *currentTimestampPacket,
+        TimestampPacketContainer *previousTimestampPacketNodes,
+        TimestampPacketContainer *currentTimestampPacketNodes,
         PreemptionMode preemptionMode,
         bool blockQueue,
         uint32_t commandType = 0);

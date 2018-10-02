@@ -25,7 +25,7 @@ class Image;
 class IndirectHeap;
 class Kernel;
 class MemObj;
-class TimestampPacket;
+class TimestampPacketContainer;
 struct CompletionStamp;
 
 enum class QueuePriority {
@@ -416,7 +416,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     MOCKABLE_VIRTUAL void dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, BuffersForAuxTranslation &buffersForAuxTranslation,
                                                  AuxTranslationDirection auxTranslationDirection);
 
-    void obtainNewTimestampPacketNode();
+    void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes);
 
     Context *context;
     Device *device;
@@ -438,7 +438,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool mapDcFlushRequired = false;
     bool isSpecialCommandQueue = false;
 
-    TagNode<TimestampPacket> *timestampPacketNode = nullptr;
+    std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
 
   private:
     void providePerformanceHint(TransferProperties &transferProperties);

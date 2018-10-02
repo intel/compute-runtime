@@ -21,8 +21,8 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     KernelOperation **blockedCommandsData,
     HwTimeStamps *hwTimeStamps,
     HwPerfCounter *hwPerfCounter,
-    TagNode<TimestampPacket> *previousTimestampPacketNode,
-    TimestampPacket *currentTimestampPacket,
+    TimestampPacketContainer *previousTimestampPacketNodes,
+    TimestampPacketContainer *currentTimestampPacketNodes,
     PreemptionMode preemptionMode,
     bool blockQueue,
     uint32_t commandType) {
@@ -84,8 +84,10 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     if (commandQueue.getDevice().getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(commandStream, commandQueue.getDevice(),
                                                                          numEventsInWaitList, eventWaitList);
-        if (previousTimestampPacketNode) {
-            TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *previousTimestampPacketNode->tag);
+        if (previousTimestampPacketNodes) {
+            for (auto &node : previousTimestampPacketNodes->peekNodes()) {
+                TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
+            }
         }
     }
 
@@ -181,18 +183,17 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, true);
 
-        bool setupTimestampPacket = currentTimestampPacket && (currentDispatchIndex == multiDispatchInfo.size() - 1);
-        if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, currentTimestampPacket,
-                                                               TimestampPacket::WriteOperationType::BeforeWalker);
+        if (currentTimestampPacketNodes) {
+            auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, nullptr, timestampPacket, TimestampPacket::WriteOperationType::BeforeWalker);
         }
 
         // Program the walker.  Invokes execution so all state should already be programmed
         auto walkerCmd = allocateWalkerSpace(*commandStream, kernel);
 
-        if (setupTimestampPacket) {
-            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, currentTimestampPacket,
-                                                               TimestampPacket::WriteOperationType::AfterWalker);
+        if (currentTimestampPacketNodes) {
+            auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex)->tag;
+            GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(commandStream, walkerCmd, timestampPacket, TimestampPacket::WriteOperationType::AfterWalker);
         }
 
         auto idd = obtainInterfaceDescriptorData(walkerCmd);

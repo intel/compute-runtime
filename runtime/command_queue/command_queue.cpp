@@ -77,6 +77,10 @@ CommandQueue::CommandQueue(Context *context,
 
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
+
+    if (device && device->getCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        timestampPacketContainer = std::make_unique<TimestampPacketContainer>(device->getMemoryManager());
+    }
 }
 
 CommandQueue::~CommandQueue() {
@@ -89,10 +93,6 @@ CommandQueue::~CommandQueue() {
     if (device) {
         auto memoryManager = device->getMemoryManager();
         DEBUG_BREAK_IF(nullptr == memoryManager);
-
-        if (timestampPacketNode) {
-            memoryManager->getTimestampPacketAllocator()->returnTag(timestampPacketNode);
-        }
 
         if (commandStream && commandStream->getGraphicsAllocation()) {
             memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(commandStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
@@ -574,13 +574,16 @@ void CommandQueue::dispatchAuxTranslation(MultiDispatchInfo &multiDispatchInfo, 
     builder.buildDispatchInfos(multiDispatchInfo, dispatchParams);
 }
 
-void CommandQueue::obtainNewTimestampPacketNode() {
+void CommandQueue::obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes) {
     auto allocator = device->getMemoryManager()->getTimestampPacketAllocator();
 
-    auto oldNode = timestampPacketNode;
-    timestampPacketNode = allocator->getTag();
-    if (oldNode) {
-        allocator->returnTag(oldNode);
+    previousNodes.swapNodes(*timestampPacketContainer);
+    previousNodes.resolveDependencies(isOOQEnabled());
+
+    DEBUG_BREAK_IF(timestampPacketContainer->peekNodes().size() > 0);
+
+    for (size_t i = 0; i < numberOfNodes; i++) {
+        timestampPacketContainer->add(allocator->getTag());
     }
 }
 } // namespace OCLRT

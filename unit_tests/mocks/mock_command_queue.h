@@ -16,8 +16,8 @@ namespace OCLRT {
 class MockCommandQueue : public CommandQueue {
   public:
     using CommandQueue::device;
-    using CommandQueue::obtainNewTimestampPacketNode;
-    using CommandQueue::timestampPacketNode;
+    using CommandQueue::obtainNewTimestampPacketNodes;
+    using CommandQueue::timestampPacketContainer;
 
     void setProfilingEnabled() {
         commandQueueProperties |= CL_QUEUE_PROFILING_ENABLE;
@@ -68,8 +68,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
   public:
     using BaseClass::commandStream;
     using BaseClass::createAllocationForHostSurface;
-    using BaseClass::obtainNewTimestampPacketNode;
-    using BaseClass::timestampPacketNode;
+    using BaseClass::obtainNewTimestampPacketNodes;
+    using BaseClass::timestampPacketContainer;
 
     MockCommandQueueHw(Context *context,
                        Device *device,

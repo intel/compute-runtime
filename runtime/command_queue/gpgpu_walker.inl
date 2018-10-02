@@ -385,7 +385,9 @@ inline void GpgpuWalkerHelper<GfxFamily>::dispatchOnDeviceWaitlistSemaphores(Lin
             continue;
         }
 
-        TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *event->getTimestampPacketNode()->tag);
+        for (auto &node : event->getTimestampPacketNodes()->peekNodes()) {
+            TimestmapPacketHelper::programSemaphoreWithImplicitDependency<GfxFamily>(*commandStream, *node->tag);
+        }
     }
 }
 

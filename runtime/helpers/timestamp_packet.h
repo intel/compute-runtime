@@ -7,11 +7,18 @@
 
 #pragma once
 
+#include "runtime/helpers/properties_helper.h"
+
 #include <cstdint>
 #include <array>
 #include <atomic>
+#include <vector>
 
 namespace OCLRT {
+class MemoryManager;
+template <typename TagType>
+struct TagNode;
+
 #pragma pack(1)
 class TimestampPacket {
   public:
@@ -71,5 +78,24 @@ struct TimestmapPacketHelper {
                                                          MI_ATOMIC::ATOMIC_OPCODES::ATOMIC_4B_DECREMENT,
                                                          MI_ATOMIC::DATA_SIZE::DATA_SIZE_DWORD);
     }
+};
+
+class TimestampPacketContainer : public NonCopyableOrMovableClass {
+  public:
+    using Node = TagNode<TimestampPacket>;
+    TimestampPacketContainer() = delete;
+    TimestampPacketContainer(MemoryManager *memoryManager);
+    ~TimestampPacketContainer();
+
+    const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }
+    void add(Node *timestampPacketNode);
+    void swapNodes(TimestampPacketContainer &timestampPacketContainer);
+    void assignAndIncrementNodesRefCounts(TimestampPacketContainer &timestampPacketContainer);
+    void resolveDependencies(bool clearAllDependencies);
+    void makeResident(CommandStreamReceiver &commandStreamReceiver);
+
+  protected:
+    std::vector<Node *> timestampPacketNodes;
+    MemoryManager *memoryManager = nullptr;
 };
 } // namespace OCLRT

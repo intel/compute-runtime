@@ -103,14 +103,6 @@ CommandComputeKernel::CommandComputeKernel(CommandQueue &commandQueue, std::uniq
 }
 
 CommandComputeKernel::~CommandComputeKernel() {
-    auto &commandStreamReceiver = commandQueue.getDevice().getCommandStreamReceiver();
-    auto allocator = commandStreamReceiver.getMemoryManager()->getTimestampPacketAllocator();
-    if (currentTimestampPacketNode) {
-        allocator->returnTag(currentTimestampPacketNode);
-    }
-    if (previousTimestampPacketNode) {
-        allocator->returnTag(previousTimestampPacketNode);
-    }
     for (auto surface : surfaces) {
         delete surface;
     }
@@ -161,11 +153,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (printfHandler) {
         printfHandler.get()->makeResident(commandStreamReceiver);
     }
-    if (currentTimestampPacketNode) {
-        commandStreamReceiver.makeResident(*currentTimestampPacketNode->getGraphicsAllocation());
+    if (currentTimestampPacketNodes) {
+        currentTimestampPacketNodes->makeResident(commandStreamReceiver);
     }
-    if (previousTimestampPacketNode) {
-        commandStreamReceiver.makeResident(*previousTimestampPacketNode->getGraphicsAllocation());
+    if (previousTimestampPacketNodes) {
+        previousTimestampPacketNodes->makeResident(commandStreamReceiver);
     }
 
     if (executionModelKernel) {
@@ -235,13 +227,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-void CommandComputeKernel::setTimestampPacketNode(TagNode<TimestampPacket> *current, TagNode<TimestampPacket> *previous) {
-    current->incRefCount();
-    currentTimestampPacketNode = current;
-    if (previous) {
-        previous->incRefCount();
-        previousTimestampPacketNode = previous;
-    }
+void CommandComputeKernel::setTimestampPacketNode(TimestampPacketContainer &current, TimestampPacketContainer &previous) {
+    currentTimestampPacketNodes = std::make_unique<TimestampPacketContainer>(commandQueue.getDevice().getMemoryManager());
+    currentTimestampPacketNodes->assignAndIncrementNodesRefCounts(current);
+
+    previousTimestampPacketNodes = std::make_unique<TimestampPacketContainer>(commandQueue.getDevice().getMemoryManager());
+    previousTimestampPacketNodes->assignAndIncrementNodesRefCounts(previous);
 }
 
 CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {

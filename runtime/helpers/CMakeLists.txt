@@ -73,6 +73,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/string_helpers.h
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/surface_formats.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/task_information.h

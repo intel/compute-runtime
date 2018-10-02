@@ -19,6 +19,7 @@
 #include "unit_tests/mocks/mock_command_queue.h"
 #include "unit_tests/mocks/mock_context.h"
 #include "unit_tests/mocks/mock_csr.h"
+#include "unit_tests/mocks/mock_device.h"
 #include "unit_tests/mocks/mock_event.h"
 #include "unit_tests/mocks/mock_kernel.h"
 #include "unit_tests/mocks/mock_mdi.h"
@@ -38,8 +39,9 @@ TEST(Event, NonAssignable) {
 }
 
 TEST(Event, dontUpdateExecutionStatusOnNotReadyEvent) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx;
-    MockCommandQueue cmdQ(&ctx, nullptr, 0);
+    MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0);
     Event event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 0);
 
     EXPECT_FALSE(event.peekIsBlocked());
@@ -49,8 +51,9 @@ TEST(Event, dontUpdateExecutionStatusOnNotReadyEvent) {
 }
 
 TEST(Event, givenEventThatStatusChangeWhenPeekIsCalledThenEventIsNotUpdated) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx;
-    MockCommandQueue cmdQ(&ctx, nullptr, 0);
+    MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0);
 
     struct mockEvent : public Event {
         using Event::Event;
@@ -100,8 +103,9 @@ TEST(Event_, testGetTaskCount) {
 }
 
 TEST(Event_, testGetEventInfoReturnsTheCQ) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto ctx = std::unique_ptr<Context>(new MockContext());
-    auto cmdQ = std::unique_ptr<CommandQueue>(new MockCommandQueue(ctx.get(), nullptr, 0));
+    auto cmdQ = std::unique_ptr<CommandQueue>(new MockCommandQueue(ctx.get(), mockDevice.get(), 0));
     Event *event = new Event(cmdQ.get(), CL_COMMAND_NDRANGE_KERNEL, 1, 5);
     cl_event clEvent = event;
     cl_command_queue cmdQResult = nullptr;
@@ -119,8 +123,9 @@ TEST(Event_, testGetEventInfoReturnsTheCQ) {
 }
 
 TEST(Event, givenCommandQueueWhenEventIsCreatedWithCommandQueueThenCommandQueueInternalRefCountIsIncremented) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext ctx;
-    MockCommandQueue cmdQ(&ctx, nullptr, 0);
+    MockCommandQueue cmdQ(&ctx, mockDevice.get(), 0);
     auto intitialRefCount = cmdQ.getRefInternalCount();
 
     Event *event = new Event(&cmdQ, CL_COMMAND_NDRANGE_KERNEL, 4, 10);

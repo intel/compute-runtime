@@ -201,8 +201,9 @@ TEST(CommandQueue, GivenOOQwhenUpdateFromCompletionStampWithTrueIsCalledThenTask
 }
 
 TEST(CommandQueue, givenCmdQueueBlockedByReadyVirtualEventWhenUnblockingThenUpdateFlushTaskFromEvent) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     auto context = new MockContext;
-    auto cmdQ = new CommandQueue(context, nullptr, 0);
+    auto cmdQ = new CommandQueue(context, mockDevice.get(), 0);
     auto userEvent = new Event(cmdQ, CL_COMMAND_NDRANGE_KERNEL, 0, 0);
     userEvent->setStatus(CL_COMPLETE);
     userEvent->flushStamp->setStamp(5);
@@ -774,8 +775,9 @@ TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageUsingSharingHandlerThen
 }
 
 TEST(CommandQueue, givenEnqueuesForSharedObjectsWithImageUsingSharingHandlerWithEventThenReturnSuccess) {
+    std::unique_ptr<MockDevice> mockDevice(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     MockContext context;
-    CommandQueue cmdQ(&context, nullptr, 0);
+    CommandQueue cmdQ(&context, mockDevice.get(), 0);
     MockSharingHandler *mockSharingHandler = new MockSharingHandler;
 
     auto image = std::unique_ptr<Image>(ImageHelper<Image2dDefaults>::create(&context));
