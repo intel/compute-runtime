@@ -37,7 +37,7 @@ struct clCreatePerfCountersCommandQueueINTELTests : public api_fixture,
 
 namespace ULT {
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, returnsSuccess) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectParamatersWhenCreatingPerfCountersCmdQThenCmdQIsCreatedAndPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 1;
@@ -56,7 +56,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, returnsSuccess) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeNoProfiling) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullPropertiesWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = 0;
     cl_uint configuration = 0;
@@ -67,7 +67,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeNoProfiling) {
     ASSERT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeProfilingDeviceQueue) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenClQueueOnDevicePropertyWhenCreatingPerfCountersCmdQThenInvalidQueuePropertiesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_ON_DEVICE;
     cl_uint configuration = 0;
@@ -83,7 +83,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeProfilingDeviceQueue)
     ASSERT_EQ(CL_INVALID_QUEUE_PROPERTIES, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeInvalidCtx) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenNullContextWhenCreatingPerfCountersCmdQThenInvalidContextErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
@@ -94,7 +94,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeInvalidCtx) {
     ASSERT_EQ(CL_INVALID_CONTEXT, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeInvalidConfig) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenMaximumGtdiConfigurationWhenCreatingPerfCountersCmdQThenOutOfResourcesErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = GTDI_CONFIGURATION_SET_MAX;
@@ -105,7 +105,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeInvalidConfig) {
     ASSERT_EQ(CL_OUT_OF_RESOURCES, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, returnsSuccessEvent) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenCorrectCmdQWhenEventIsCreatedThenPerfCountersAreEnabled) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 1;
@@ -124,7 +124,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, returnsSuccessEvent) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeNoInstrumentation) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInstrumentationEnabledIsFalseWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
     pInHwInfo->capabilityTable.instrumentationEnabled = false;
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
@@ -135,7 +135,7 @@ TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeNoInstrumentation) {
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
-TEST_F(clCreatePerfCountersCommandQueueINTELTests, negativeInvalidDevice) {
+TEST_F(clCreatePerfCountersCommandQueueINTELTests, GivenInvalidDeviceWhenCreatingPerfCountersCmdQThenInvalidDeviceErrorIsReturned) {
     cl_command_queue cmdQ = nullptr;
     cl_queue_properties properties = CL_QUEUE_PROFILING_ENABLE;
     cl_uint configuration = 0;
