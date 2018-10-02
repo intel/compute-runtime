@@ -62,7 +62,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL bool reopenFile(const std::string &fileName);
     MOCKABLE_VIRTUAL void initFile(const std::string &fileName);
     MOCKABLE_VIRTUAL void closeFile();
-    MOCKABLE_VIRTUAL bool isFileOpen();
+    MOCKABLE_VIRTUAL bool isFileOpen() const;
     MOCKABLE_VIRTUAL const std::string &getFileName();
 
     void initializeEngine(EngineType engineType);
@@ -95,7 +95,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     std::unique_ptr<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type> ppgtt;
     std::unique_ptr<PDPE> ggtt;
     // remap CPU VA -> GGTT VA
-    AddressMapper gttRemap;
+    AddressMapper *gttRemap;
 
     MOCKABLE_VIRTUAL bool addPatchInfoComments();
     void addGUCStartMessage(uint64_t batchBufferAddress, EngineType engineType);

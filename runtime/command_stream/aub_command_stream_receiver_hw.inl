@@ -46,6 +46,9 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator);
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator);
 
+    gttRemap = aubCenter->getAddressMapper();
+    UNRECOVERABLE_IF(nullptr == gttRemap);
+
     auto streamProvider = aubCenter->getStreamProvider();
     UNRECOVERABLE_IF(nullptr == streamProvider);
 
@@ -143,7 +146,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::closeFile() {
 }
 
 template <typename GfxFamily>
-bool AUBCommandStreamReceiverHw<GfxFamily>::isFileOpen() {
+bool AUBCommandStreamReceiverHw<GfxFamily>::isFileOpen() const {
     return stream->isOpen();
 }
 
@@ -165,7 +168,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
         const size_t sizeHWSP = 0x1000;
         const size_t alignHWSP = 0x1000;
         engineInfo.pGlobalHWStatusPage = alignedMalloc(sizeHWSP, alignHWSP);
-        engineInfo.ggttHWSP = gttRemap.map(engineInfo.pGlobalHWStatusPage, sizeHWSP);
+        engineInfo.ggttHWSP = gttRemap->map(engineInfo.pGlobalHWStatusPage, sizeHWSP);
 
         auto physHWSP = ggtt->map(engineInfo.ggttHWSP, sizeHWSP, this->getGTTBits(), getMemoryBankForGtt());
 
@@ -197,7 +200,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
     {
         const size_t alignRingBuffer = 0x1000;
         engineInfo.pRingBuffer = alignedMalloc(engineInfo.sizeRingBuffer, alignRingBuffer);
-        engineInfo.ggttRingBuffer = gttRemap.map(engineInfo.pRingBuffer, engineInfo.sizeRingBuffer);
+        engineInfo.ggttRingBuffer = gttRemap->map(engineInfo.pRingBuffer, engineInfo.sizeRingBuffer);
         auto physRingBuffer = ggtt->map(engineInfo.ggttRingBuffer, engineInfo.sizeRingBuffer, this->getGTTBits(), getMemoryBankForGtt());
 
         {
@@ -225,7 +228,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::initializeEngine(EngineType engineTy
 
     // Write our LRCA
     {
-        engineInfo.ggttLRCA = gttRemap.map(engineInfo.pLRCA, sizeLRCA);
+        engineInfo.ggttLRCA = gttRemap->map(engineInfo.pLRCA, sizeLRCA);
         auto lrcAddressPhys = ggtt->map(engineInfo.ggttLRCA, sizeLRCA, this->getGTTBits(), getMemoryBankForGtt());
 
         {
@@ -254,15 +257,15 @@ template <typename GfxFamily>
 void AUBCommandStreamReceiverHw<GfxFamily>::freeEngineInfoTable() {
     for (auto &engineInfo : engineInfoTable) {
         alignedFree(engineInfo.pLRCA);
-        gttRemap.unmap(engineInfo.pLRCA);
+        gttRemap->unmap(engineInfo.pLRCA);
         engineInfo.pLRCA = nullptr;
 
         alignedFree(engineInfo.pGlobalHWStatusPage);
-        gttRemap.unmap(engineInfo.pGlobalHWStatusPage);
+        gttRemap->unmap(engineInfo.pGlobalHWStatusPage);
         engineInfo.pGlobalHWStatusPage = nullptr;
 
         alignedFree(engineInfo.pRingBuffer);
-        gttRemap.unmap(engineInfo.pRingBuffer);
+        gttRemap->unmap(engineInfo.pRingBuffer);
         engineInfo.pRingBuffer = nullptr;
     }
 }

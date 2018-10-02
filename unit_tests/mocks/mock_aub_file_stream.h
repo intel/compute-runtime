@@ -8,6 +8,12 @@
 #pragma once
 
 #include "runtime/command_stream/aub_command_stream_receiver.h"
+#include "gmock/gmock.h"
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Winconsistent-missing-override"
+#endif
 
 namespace OCLRT {
 
@@ -37,4 +43,12 @@ struct MockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
     size_t sizeCapturedFromExpectMemory = 0;
     uint32_t addressSpaceCapturedFromExpectMemory = 0;
 };
+
+struct GmockAubFileStream : public AUBCommandStreamReceiver::AubFileStream {
+    MOCK_METHOD1(addComment, bool(const char *message));
+};
 } // namespace OCLRT
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
