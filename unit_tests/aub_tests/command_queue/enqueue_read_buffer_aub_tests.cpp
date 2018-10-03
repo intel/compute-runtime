@@ -14,6 +14,8 @@
 #include "unit_tests/aub_tests/aub_tests_configuration.h"
 #include "test.h"
 
+#include <memory>
+
 using namespace OCLRT;
 
 struct ReadBufferHw
@@ -38,18 +40,18 @@ HWTEST_P(AUBReadBuffer, simple) {
     cl_float srcMemory[] = {1.0f, 2.0f, 3.0f, 4.0f};
     cl_float destMemory[] = {0.0f, 0.0f, 0.0f, 0.0f};
     auto retVal = CL_INVALID_VALUE;
-    auto srcBuffer = Buffer::create(
+    auto srcBuffer = std::unique_ptr<Buffer>(Buffer::create(
         &context,
         CL_MEM_USE_HOST_PTR,
         sizeof(srcMemory),
         srcMemory,
-        retVal);
-    ASSERT_NE(nullptr, srcBuffer);
+        retVal));
+    ASSERT_NE(nullptr, srcBuffer.get());
 
     auto pSrcMemory = &srcMemory[0];
     auto pDestMemory = &destMemory[0];
 
-    cl_bool blockingRead = CL_TRUE;
+    cl_bool blockingRead = CL_FALSE;
     size_t offset = GetParam();
     size_t sizeWritten = sizeof(cl_float);
     cl_uint numEventsInWaitList = 0;
@@ -60,7 +62,7 @@ HWTEST_P(AUBReadBuffer, simple) {
 
     srcBuffer->forceDisallowCPUCopy = true;
     retVal = pCmdQ->enqueueReadBuffer(
-        srcBuffer,
+        srcBuffer.get(),
         blockingRead,
         offset,
         sizeWritten,
@@ -69,8 +71,13 @@ HWTEST_P(AUBReadBuffer, simple) {
         eventWaitList,
         event);
 
-    delete srcBuffer;
+    EXPECT_EQ(CL_SUCCESS, retVal);
 
+    allocation = pCommandStreamReceiver->getMemoryManager()->graphicsAllocations.peekHead();
+    while (allocation && allocation->getUnderlyingBuffer() != pDestMemory) {
+        allocation = allocation->next;
+    }
+    retVal = pCmdQ->flush();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     pSrcMemory = ptrOffset(pSrcMemory, offset);

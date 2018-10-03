@@ -50,9 +50,6 @@ struct AUBHelloWorld
     void SetUp() override {
         HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
         HardwareParse::SetUp();
-        auto &commandStreamReceiver = pDevice->getCommandStreamReceiver();
-        commandStreamReceiver.createAllocationAndHandleResidency(pDestMemory, sizeUserMemory);
-        commandStreamReceiver.createAllocationAndHandleResidency(pSrcMemory, sizeUserMemory);
     }
 
     void TearDown() override {
