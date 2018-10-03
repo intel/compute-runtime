@@ -7,7 +7,7 @@
 
 #include "GmmLib.h"
 
-GMM_CLIENT_CONTEXT *GMM_STDCALL createClientContext(GMM_CLIENT ClientType) {
+GMM_CLIENT_CONTEXT *GMM_STDCALL createClientContext(GMM_CLIENT clientType) {
     return reinterpret_cast<GMM_CLIENT_CONTEXT *>(0x1);
 }
 void GMM_STDCALL deleteClientContext(GMM_CLIENT_CONTEXT *pGmmClientContext) {
@@ -22,7 +22,7 @@ GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM Platform,
     return GMM_SUCCESS;
 }
 #else
-GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM Platform,
+GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM platform,
                                               const void *pSkuTable,
                                               const void *pWaTable,
                                               const void *pGtSysInfo) {
@@ -32,11 +32,11 @@ GMM_STATUS GMM_STDCALL createSingletonContext(const PLATFORM Platform,
 #ifdef __cplusplus
 extern "C" {
 #endif
-GMM_STATUS GMM_STDCALL openMockGmm(GmmExportEntries *pm_GmmFuncs) {
-    pm_GmmFuncs->pfnCreateClientContext = &createClientContext;
-    pm_GmmFuncs->pfnCreateSingletonContext = &createSingletonContext;
-    pm_GmmFuncs->pfnDeleteClientContext = &deleteClientContext;
-    pm_GmmFuncs->pfnDestroySingletonContext = &destroySingletonContext;
+GMM_STATUS GMM_STDCALL openMockGmm(GmmExportEntries *pGmmFuncs) {
+    pGmmFuncs->pfnCreateClientContext = &createClientContext;
+    pGmmFuncs->pfnCreateSingletonContext = &createSingletonContext;
+    pGmmFuncs->pfnDeleteClientContext = &deleteClientContext;
+    pGmmFuncs->pfnDestroySingletonContext = &destroySingletonContext;
     return GMM_SUCCESS;
 }
 #ifdef __cplusplus
