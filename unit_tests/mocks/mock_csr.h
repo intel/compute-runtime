@@ -72,7 +72,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         return this->GSBAFor32BitProgrammed;
     }
 
-    void processEviction() override {
+    void processEviction(OsContext &osContext) override {
         processEvictionCalled = true;
     }
 

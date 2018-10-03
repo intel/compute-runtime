@@ -494,7 +494,7 @@ TEST_F(KernelPrivateSurfaceTest, testPrivateSurface) {
     pKernel->makeResident(*csr.get());
     EXPECT_EQ(1u, csr->residency.size());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *pDevice->getOsContext());
     EXPECT_EQ(0u, csr->residency.size());
 
     delete pKernel;

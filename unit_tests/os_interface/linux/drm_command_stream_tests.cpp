@@ -1263,7 +1263,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
+    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations(), *osContext);
 
     //check that each packet is not resident
     EXPECT_FALSE(graphicsAllocation->fragmentsStorage.fragmentStorageData[0].residency->resident);
@@ -1285,7 +1285,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenFragmentedAllocationsWithResuedFragmentsW
 
     EXPECT_EQ(3u, residency->size());
 
-    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations());
+    tCsr->makeSurfacePackNonResident(tCsr->getResidencyAllocations(), *osContext);
 
     EXPECT_EQ(0u, residency->size());
 
@@ -1544,7 +1544,7 @@ TEST_F(DrmCommandStreamLeaksTest, FlushMultipleTimes) {
     csr->alignToCacheLine(cs);
     BatchBuffer batchBuffer3{cs.getGraphicsAllocation(), 16, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     csr->flush(batchBuffer3, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *osContext);
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
     mm->freeGraphicsMemory(allocation);
     mm->freeGraphicsMemory(allocation2);
 
@@ -1630,7 +1630,7 @@ TEST_F(DrmCommandStreamLeaksTest, MakeResidentClearResidencyAllocationsInCommand
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
 
     mm->freeGraphicsMemory(allocation1);
@@ -1648,7 +1648,7 @@ TEST_F(DrmCommandStreamLeaksTest, givenMultipleMakeResidentWhenMakeNonResidentIs
     EXPECT_NE(0u, csr->getResidencyAllocations().size());
 
     csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *osContext);
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_FALSE(allocation1->isResident(0u));

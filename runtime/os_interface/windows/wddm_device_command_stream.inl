@@ -143,8 +143,8 @@ void WddmCommandStreamReceiver<GfxFamily>::processResidency(ResidencyContainer &
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processEviction() {
-    getMemoryManager()->makeNonResidentEvictionAllocations(this->getEvictionAllocations());
+void WddmCommandStreamReceiver<GfxFamily>::processEviction(OsContext &osContext) {
+    getMemoryManager()->makeNonResidentEvictionAllocations(this->getEvictionAllocations(), osContext);
     this->getEvictionAllocations().clear();
 }
 

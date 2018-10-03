@@ -552,7 +552,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 
     EXPECT_EQ(2u, csr->getEvictionAllocations().size());
 
-    csr->processEviction();
+    csr->processEviction(*device->getOsContext());
 
     EXPECT_EQ(2u, mockWddmMM->trimCandidateList.size());
 
@@ -570,7 +570,7 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
 
     EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
-    csr->processEviction();
+    csr->processEviction(*device->getOsContext());
 
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
@@ -700,7 +700,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
 
-    csr->makeSurfacePackNonResident(csr->getResidencyAllocations());
+    csr->makeSurfacePackNonResident(csr->getResidencyAllocations(), *device->getOsContext());
 
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
