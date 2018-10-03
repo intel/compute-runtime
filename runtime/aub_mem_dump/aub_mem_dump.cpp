@@ -148,8 +148,8 @@ void LrcaHelper::initialize(void *pLRCIn) const {
     numRegs = numRegsLRI1;
     *pLRI++ = 0x11001000 | (2 * numRegs - 1);
     while (numRegs-- > 0) {
-        *pLRI++ = mmioBase + 0x2094; // NOP ID
-        *pLRI++ = 0x00000000;
+        *pLRI++ = mmioBase + 0x20d8; // DEBUG
+        *pLRI++ = 0x00200020;
     }
 
     DEBUG_BREAK_IF(offsetLRI2 != 0x41 * sizeof(uint32_t));
