@@ -239,6 +239,7 @@ TEST_F(KernelDataTest, ThreadPayload) {
     threadPayload.LocalIDYPresent = true;
     threadPayload.LocalIDZPresent = true;
     threadPayload.OffsetToSkipPerThreadDataLoad = true;
+    threadPayload.PassInlineData = true;
 
     pPatchList = &threadPayload;
     patchListSize = threadPayload.Size;

@@ -34,6 +34,7 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
   ${CMAKE_CURRENT_SOURCE_DIR}/flush.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.h
   ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/gpgpu_walker_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.h
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/hardware_interface_base.inl
@@ -46,3 +47,4 @@ set(RUNTIME_SRCS_COMMAND_QUEUE
 )
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_COMMAND_QUEUE})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_COMMAND_QUEUE ${RUNTIME_SRCS_COMMAND_QUEUE})
+add_subdirectories()

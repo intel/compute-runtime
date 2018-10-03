@@ -198,7 +198,9 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
         auto idd = obtainInterfaceDescriptorData(walkerCmd);
 
-        bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
+        bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(dim, globalWorkSizes, localWorkSizes);
+        bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
+        bool kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
         KernelCommandsHelper<GfxFamily>::sendIndirectState(
             *commandStream,
             *dsh,
@@ -212,13 +214,16 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
             preemptionMode,
             walkerCmd,
             idd,
-            localIdsGeneration);
+            localIdsGenerationByRuntime,
+            kernelUsesLocalIds,
+            inlineDataProgrammingRequired);
 
         size_t globalOffsets[3] = {offset.x, offset.y, offset.z};
         size_t startWorkGroups[3] = {swgs.x, swgs.y, swgs.z};
         size_t numWorkGroups[3] = {nwgs.x, nwgs.y, nwgs.z};
         GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(walkerCmd, globalOffsets, startWorkGroups,
-                                                               numWorkGroups, localWorkSizes, simd, dim, localIdsGeneration);
+                                                               numWorkGroups, localWorkSizes, simd, dim,
+                                                               localIdsGenerationByRuntime, kernelUsesLocalIds, inlineDataProgrammingRequired);
 
         dispatchWorkarounds(commandStream, commandQueue, kernel, false);
         currentDispatchIndex++;

@@ -85,7 +85,7 @@ struct WorkGroupSizeBase {
             (workItems[1] + workGroupSize[1] - 1) / workGroupSize[1],
             (workItems[2] + workGroupSize[2] - 1) / workGroupSize[2]};
         GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, globalOffsets, workGroupsStart, workGroupsNum,
-                                                                workGroupSize, simdSize, dims, true);
+                                                                workGroupSize, simdSize, dims, true, false, false);
 
         //And check if it is programmed correctly
         auto numWorkItems = computeWalkerWorkItems<FamilyType>(pCmd);

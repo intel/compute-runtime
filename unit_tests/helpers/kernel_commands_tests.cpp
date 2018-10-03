@@ -323,7 +323,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, sendIndirectStateResourceUsage) 
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     // It's okay these are EXPECT_GE as they're only going to be used for
     // estimation purposes to avoid OOM.
@@ -375,7 +377,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWithFourBindingTableE
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -420,7 +424,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelThatIsSchedulerWhenIn
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     EXPECT_EQ(0u, interfaceDescriptor->getBindingTableEntryCount());
@@ -459,7 +465,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, givenKernelWith100BindingTableEn
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     auto interfaceDescriptor = reinterpret_cast<INTERFACE_DESCRIPTOR_DATA *>(dsh.getCpuBase());
     if (KernelCommandsHelper<FamilyType>::doBindingTablePrefetch()) {
@@ -531,7 +539,10 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, whenSendingIndirectStateThenKern
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
+
     size_t numThreads = localWorkSizeX * localWorkSizeY * localWorkSizeZ;
     numThreads = (numThreads + modifiedKernelInfo.getMaxSimdSize() - 1) / modifiedKernelInfo.getMaxSimdSize();
     size_t expectedIohSize = ((modifiedKernelInfo.getMaxSimdSize() == 32) ? 32 : 16) * 3 * numThreads * sizeof(uint16_t);
@@ -609,7 +620,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointer) {
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     EXPECT_EQ(0x00000000u, *(&bindingTableStatesPointers[0]));
     EXPECT_EQ(0x00000040u, *(&bindingTableStatesPointers[1]));
@@ -769,7 +782,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
             pDevice->getPreemptionMode(),
             pWalkerCmd,
             nullptr,
-            true);
+            true,
+            true,
+            false);
 
         bti = reinterpret_cast<typename FamilyType::BINDING_TABLE_STATE *>(reinterpret_cast<unsigned char *>(ssh.getCpuBase()) + localSshOffset + btiOffset);
         for (uint32_t i = 0; i < numSurfaces; ++i) {
@@ -1009,7 +1024,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, GivenKernelWithSamplersWhenIndir
         pDevice->getPreemptionMode(),
         pWalkerCmd,
         nullptr,
-        true);
+        true,
+        true,
+        false);
 
     bool isMemorySame = memcmp(borderColorPointer, mockDsh, borderColorSize) == 0;
     EXPECT_TRUE(isMemorySame);
@@ -1166,3 +1183,78 @@ INSTANTIATE_TEST_CASE_P(ParentKernelCommandsFromBinaryTest,
                         ::testing::Combine(
                             ::testing::Values(binaryFile),
                             ::testing::ValuesIn(KernelNames)));
+
+HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineAndCrossThreadSizeLesserEqualThanGrfThenReturnTrue) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(true);
+
+    uint32_t crossThreadData[8];
+
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
+    mockKernelWithInternal.mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+
+    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelDisallowsInlineAndCrossThreadSizeLesserEqualThanGrfThenReturnFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(true);
+
+    uint32_t crossThreadData[8];
+
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->PassInlineData = 0;
+    mockKernelWithInternal.mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+
+    EXPECT_FALSE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, givenEnabledPassInlineDataWhenKernelAllowsInlineAndCrossThreadSizeGreaterThanGrfThenReturnFalse) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnablePassInlineData.set(true);
+
+    uint32_t crossThreadData[16];
+
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->PassInlineData = 1;
+    mockKernelWithInternal.mockKernel->setCrossThreadData(crossThreadData, sizeof(crossThreadData));
+
+    EXPECT_FALSE(KernelCommandsHelper<FamilyType>::inlineDataProgrammingRequired(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, whenLocalIdxInXDimPresentThenExpectLocalIdsInUseIsTrue) {
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 1;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
+
+    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, whenLocalIdxInYDimPresentThenExpectLocalIdsInUseIsTrue) {
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 1;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
+
+    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, whenLocalIdxInZDimPresentThenExpectLocalIdsInUseIsTrue) {
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 1;
+
+    EXPECT_TRUE(KernelCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal.mockKernel));
+}
+
+HWTEST_F(KernelCommandsTest, whenLocalIdxAreNotPresentThenExpectLocalIdsInUseIsFalse) {
+    MockKernelWithInternals mockKernelWithInternal(*pDevice);
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDXPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDYPresent = 0;
+    const_cast<SPatchThreadPayload *>(mockKernelWithInternal.kernelInfo.patchInfo.threadPayload)->LocalIDZPresent = 0;
+
+    EXPECT_FALSE(KernelCommandsHelper<FamilyType>::kernelUsesLocalIds(*mockKernelWithInternal.mockKernel));
+}

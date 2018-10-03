@@ -296,7 +296,9 @@ size_t KernelCommandsHelper<GfxFamily>::sendIndirectState(
     PreemptionMode preemptionMode,
     WALKER_TYPE<GfxFamily> *walkerCmd,
     INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-    bool localIdsGeneration) {
+    bool localIdsGenerationByRuntime,
+    bool kernelUsesLocalIds,
+    bool inlineDataProgrammingRequired) {
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
 
     DEBUG_BREAK_IF(simd != 8 && simd != 16 && simd != 32);
@@ -460,4 +462,21 @@ template <typename GfxFamily>
 bool KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws) {
     return true;
 }
+
+template <typename GfxFamily>
+bool KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kernel &kernel) {
+    if (DebugManager.flags.EnablePassInlineData.get()) {
+        return kernel.getKernelInfo().patchInfo.threadPayload->PassInlineData &&
+               kernel.getCrossThreadDataSize() <= sizeof(GRF);
+    }
+    return false;
+}
+
+template <typename GfxFamily>
+bool KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
+    return (kernel.getKernelInfo().patchInfo.threadPayload->LocalIDXPresent ||
+            kernel.getKernelInfo().patchInfo.threadPayload->LocalIDYPresent ||
+            kernel.getKernelInfo().patchInfo.threadPayload->LocalIDZPresent);
+}
+
 } // namespace OCLRT

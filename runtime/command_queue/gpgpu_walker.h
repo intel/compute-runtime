@@ -134,7 +134,9 @@ class GpgpuWalkerHelper {
         const size_t localWorkSizesIn[3],
         uint32_t simd,
         uint32_t workDim,
-        bool localIdsGeneration);
+        bool localIdsGenerationByRuntime,
+        bool kernelUsesLocalIds,
+        bool inlineDataProgrammingRequired);
 
     static void dispatchProfilingCommandsStart(
         HwTimeStamps &hwTimeStamps,

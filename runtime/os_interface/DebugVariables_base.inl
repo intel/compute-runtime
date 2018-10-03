@@ -12,9 +12,9 @@ DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "
 DECLARE_DEBUG_VARIABLE(std::string, ForceCompilerUsePlatform, std::string("unk"), "Specify product for use in compiler interface")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpCaptureFileName, std::string("unk"), "Name of file to save AUB capture into")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpFilterKernelName, std::string("unk"), "Name of kernel to AUB capture")
+DECLARE_DEBUG_VARIABLE(std::string, AUBDumpToggleFileName, std::string("unk"), "Name of file to save AUB in toggle mode")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelStartIdx, 0, "Start index of named kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterNamedKernelEndIdx, -1, "End index of named kernel to AUB capture")
-DECLARE_DEBUG_VARIABLE(std::string, AUBDumpToggleFileName, std::string("unk"), "Name of file to save AUB in toggle mode")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpSubCaptureMode, 0, "AUB dump subcapture mode (off, toggle, filter)")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelStartIdx, 0, "Start index of kernel to AUB capture")
 DECLARE_DEBUG_VARIABLE(int32_t, AUBDumpFilterKernelEndIdx, -1, "End index of kernel to AUB capture")
@@ -81,6 +81,8 @@ DECLARE_DEBUG_VARIABLE(bool, EnableForcePin, true, "Enables early pinning for me
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeND, true, "Enables diffrent algorithm to compute local work size")
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algorithm to compute the most squared work group as possible")
 DECLARE_DEBUG_VARIABLE(bool, EnableVaLibCalls, true, "Enable cl-va sharing lib calls")
+DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
+DECLARE_DEBUG_VARIABLE(bool, EnablePassInlineData, false, "Enable passing of inline data")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableStatelessToStatefulBufferOffsetOpt, -1, "-1: dont override, 0: disable, 1: enable, Enables buffer-offset improvement of the stateless to stateful optimization")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateMultipleDevices, 0, "0: default - disable, 1+: Driver will create multiple (N) devices during initialization.")
 DECLARE_DEBUG_VARIABLE(int32_t, Enable64kbpages, -1, "-1: default behaviour, 0 Disables, 1 Enables support for 64KB pages for driver allocated fine grain svm buffers")
@@ -92,7 +94,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideEnableQuickKmdSleepForSporadicWaits, -1,
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds, -1, "-1: dont override, >0: timeout in microseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, CsrDispatchMode, 0, "Chooses DispatchMode for Csr")
 DECLARE_DEBUG_VARIABLE(int32_t, OverrideDefaultFP64Settings, -1, "-1: dont override, 0: disable, 1: enable.")
-DECLARE_DEBUG_VARIABLE(bool, AddClGlSharing, false, "Add cl-gl extension")
+
 /*DRIVER TOGGLES*/
 DECLARE_DEBUG_VARIABLE(int32_t, ForceOCLVersion, 0, "Force specific OpenCL API version")
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreemptionMode, -1, "Keep this variable in sync with PreemptionMode enum. -1 - devices default mode, 1 - disable, 2 - midBatch, 3 " "- threadGroup, 4 - midThread")

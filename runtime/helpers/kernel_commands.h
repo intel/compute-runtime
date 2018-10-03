@@ -95,7 +95,9 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         PreemptionMode preemptionMode,
         WALKER_TYPE<GfxFamily> *walkerCmd,
         INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor,
-        bool localIdsGeneration);
+        bool localIdsGenerationByRuntime,
+        bool kernelUsesLocalIds,
+        bool inlineDataProgrammingRequired);
 
     static size_t getSizeRequiredCS();
     static bool isPipeControlWArequired();
@@ -160,5 +162,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
     static bool doBindingTablePrefetch();
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t workDim, size_t *gws, size_t *lws);
+    static bool inlineDataProgrammingRequired(const Kernel &kernel);
+    static bool kernelUsesLocalIds(const Kernel &kernel);
 };
 } // namespace OCLRT

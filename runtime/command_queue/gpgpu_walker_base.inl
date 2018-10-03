@@ -19,7 +19,9 @@ inline size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     const size_t localWorkSizesIn[3],
     uint32_t simd,
     uint32_t workDim,
-    bool localIdsGeneration) {
+    bool localIdsGenerationByRuntime,
+    bool kernelUsesLocalIds,
+    bool inlineDataProgrammingRequired) {
     auto localWorkSize = localWorkSizesIn[0] * localWorkSizesIn[1] * localWorkSizesIn[2];
 
     auto threadsPerWorkGroup = getThreadsPerWG(simd, localWorkSize);
@@ -127,7 +129,9 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
     auto pGpGpuWalkerCmd = (GPGPU_WALKER *)commandStream->getSpace(sizeof(GPGPU_WALKER));
     *pGpGpuWalkerCmd = GfxFamily::cmdInitGpgpuWalker;
 
-    bool localIdsGeneration = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
+    bool localIdsGenerationByRuntime = KernelCommandsHelper<GfxFamily>::isRuntimeLocalIdsGenerationRequired(1, globalWorkSizes, localWorkSizes);
+    bool inlineDataProgrammingRequired = KernelCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(scheduler);
+    bool kernelUsesLocalIds = KernelCommandsHelper<GfxFamily>::kernelUsesLocalIds(scheduler);
     KernelCommandsHelper<GfxFamily>::sendIndirectState(
         *commandStream,
         *dsh,
@@ -141,14 +145,17 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchScheduler(
         preemptionMode,
         pGpGpuWalkerCmd,
         nullptr,
-        localIdsGeneration);
+        localIdsGenerationByRuntime,
+        kernelUsesLocalIds,
+        inlineDataProgrammingRequired);
 
     // Implement enabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, true);
 
     size_t globalOffsets[3] = {0, 0, 0};
     size_t workGroups[3] = {(scheduler.getGws() / scheduler.getLws()), 1, 1};
-    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes, simd, 1, localIdsGeneration);
+    GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(pGpGpuWalkerCmd, globalOffsets, globalOffsets, workGroups, localWorkSizes,
+                                                           simd, 1, localIdsGenerationByRuntime, kernelUsesLocalIds, inlineDataProgrammingRequired);
 
     // Implement disabling special WA DisableLSQCROPERFforOCL if needed
     GpgpuWalkerHelper<GfxFamily>::applyWADisableLSQCROPERFforOCL(commandStream, scheduler, false);

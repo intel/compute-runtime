@@ -392,7 +392,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelHelloWorld) {
     auto iohAfter = pIOH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, KernelFixture::pKernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, workSize[0]);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
@@ -431,7 +431,7 @@ HWTEST_F(GetSizeRequiredBufferTest, enqueueKernelSimpleArg) {
     auto iohAfter = pIOH->getUsed();
     auto sshAfter = pSSH->getUsed();
 
-    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, nullptr);
+    auto expectedSizeCS = EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, false, false, *pCmdQ, KernelFixture::pKernel);
     auto expectedSizeDSH = KernelCommandsHelper<FamilyType>::getSizeRequiredDSH(*KernelFixture::pKernel);
     auto expectedSizeIOH = KernelCommandsHelper<FamilyType>::getSizeRequiredIOH(*KernelFixture::pKernel, workSize[0]);
     auto expectedSizeSSH = KernelCommandsHelper<FamilyType>::getSizeRequiredSSH(*KernelFixture::pKernel);
