@@ -67,6 +67,7 @@ class WddmCommandStreamFixture {
 
         mockWddmMM = new MockWddmMemoryManager(wddm, *executionEnvironment);
         memManager.reset(mockWddmMM);
+        memManager->registerOsContext(new OsContext(executionEnvironment->osInterface.get(), 0u));
         csr->setMemoryManager(memManager.get());
 
         ASSERT_NE(nullptr, memManager);
@@ -266,6 +267,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOf
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     OsContext *osContext = new OsContext(executionEnvironment.osInterface.get(), 0u);
     osContext->incRefInternal();
+    executionEnvironment.memoryManager->registerOsContext(osContext);
     executionEnvironment.commandStreamReceivers[0u]->flush(batchBuffer, EngineType::ENGINE_RCS, executionEnvironment.commandStreamReceivers[0u]->getResidencyAllocations(), *osContext);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);
@@ -293,6 +295,7 @@ TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOn
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     OsContext *osContext = new OsContext(executionEnvironment.osInterface.get(), 0u);
     osContext->incRefInternal();
+    executionEnvironment.memoryManager->registerOsContext(osContext);
     executionEnvironment.commandStreamReceivers[0u]->flush(batchBuffer, EngineType::ENGINE_RCS, executionEnvironment.commandStreamReceivers[0u]->getResidencyAllocations(), *osContext);
     auto commandHeader = wddm->submitResult.commandHeaderSubmitted;
     COMMAND_BUFFER_HEADER *pHeader = reinterpret_cast<COMMAND_BUFFER_HEADER *>(commandHeader);

@@ -19,6 +19,7 @@
 namespace OCLRT {
 class Gmm;
 class Wddm;
+class WddmResidencyController;
 
 using OsContextWin = OsContext::OsContextImpl;
 
@@ -56,6 +57,7 @@ class WddmMemoryManager : public MemoryManager {
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
     void registerOsContext(OsContext *contextToRegister) override;
+    OsContext *getRegisteredOsContext(uint32_t osContextId) { return registeredOsContexts[osContextId]; }
 
     void obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
 
@@ -69,16 +71,6 @@ class WddmMemoryManager : public MemoryManager {
     uint64_t getInternalHeapBaseAddress() override;
 
     static void APIENTRY trimCallback(_Inout_ D3DKMT_TRIMNOTIFICATION *trimNotification);
-
-    void acquireResidencyLock() {
-        bool previousLockValue = false;
-        while (!residencyLock.compare_exchange_weak(previousLockValue, true))
-            previousLockValue = false;
-    }
-
-    void releaseResidencyLock() {
-        residencyLock = false;
-    }
 
     bool tryDeferDeletions(D3DKMT_HANDLE *handles, uint32_t allocationCount, D3DKMT_HANDLE resourceHandle);
 
@@ -113,9 +105,8 @@ class WddmMemoryManager : public MemoryManager {
     bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);
     ResidencyContainer trimCandidateList;
     std::mutex trimCandidateListMutex;
-    std::atomic<bool> residencyLock;
-    std::vector<uint64_t> lastPeriodicTrimFenceValues;
     uint32_t trimCandidatesCount = 0;
+    std::vector<std::unique_ptr<WddmResidencyController>> residencyControllers;
     bool memoryBudgetExhausted = false;
     AlignedMallocRestrictions mallocRestrictions;
 

@@ -18,8 +18,8 @@ class MockWddmMemoryManager : public WddmMemoryManager {
     using BaseClass::checkTrimCandidateListCompaction;
     using BaseClass::compactTrimCandidateList;
     using BaseClass::createWddmAllocation;
-    using BaseClass::lastPeriodicTrimFenceValues;
     using BaseClass::removeFromTrimCandidateList;
+    using BaseClass::residencyControllers;
     using BaseClass::trimCandidateList;
     using BaseClass::trimCandidatesCount;
     using BaseClass::trimResidency;

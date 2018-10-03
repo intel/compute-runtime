@@ -18,6 +18,7 @@
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/os_interface/windows/wddm/wddm.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
+#include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/platform/platform.h"
 #include <algorithm>
@@ -28,7 +29,7 @@ WddmMemoryManager::~WddmMemoryManager() {
     applyCommonCleanup();
 }
 
-WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment), residencyLock(false) {
+WddmMemoryManager::WddmMemoryManager(bool enable64kbPages, bool enableLocalMemory, Wddm *wddm, ExecutionEnvironment &executionEnvironment) : MemoryManager(enable64kbPages, enableLocalMemory, executionEnvironment) {
     DEBUG_BREAK_IF(wddm == nullptr);
     this->wddm = wddm;
     allocator32Bit = std::unique_ptr<Allocator32bit>(new Allocator32bit(wddm->getHeap32Base(), wddm->getHeap32Size()));
@@ -292,12 +293,22 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     if (gfxAllocation == nullptr) {
         return;
     }
-    acquireResidencyLock();
+
+    for (const auto &residencyController : this->residencyControllers) {
+        if (residencyController) {
+            residencyController->acquireLock();
+        }
+    }
+
     if (input->getTrimCandidateListPosition() != trimListUnusedPosition) {
         removeFromTrimCandidateList(gfxAllocation, true);
     }
 
-    releaseResidencyLock();
+    for (const auto &residencyController : this->residencyControllers) {
+        if (residencyController) {
+            residencyController->releaseLock();
+        }
+    }
 
     UNRECOVERABLE_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
                      gfxAllocation->taskCount != ObjectNotUsed && this->executionEnvironment.commandStreamReceivers.size() > 0 &&
@@ -418,7 +429,8 @@ void WddmMemoryManager::cleanOsHandles(OsHandleStorage &handleStorage) {
 
 void WddmMemoryManager::registerOsContext(OsContext *contextToRegister) {
     MemoryManager::registerOsContext(contextToRegister);
-    this->lastPeriodicTrimFenceValues.resize(this->registeredOsContexts.size());
+    this->residencyControllers.resize(this->getOsContextCount());
+    this->residencyControllers[contextToRegister->getContextId()] = std::make_unique<WddmResidencyController>();
 }
 
 void WddmMemoryManager::obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage) {
@@ -463,7 +475,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
 
     uint32_t totalHandlesCount = 0;
 
-    acquireResidencyLock();
+    this->residencyControllers[osContext.getContextId()]->acquireLock();
 
     DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "currentFenceValue =", osContext.get()->getMonitoredFence().currentFenceValue);
 
@@ -533,14 +545,14 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
         }
     }
 
-    releaseResidencyLock();
+    this->residencyControllers[osContext.getContextId()]->releaseLock();
 
     return result;
 }
 
 void WddmMemoryManager::makeNonResidentEvictionAllocations(ResidencyContainer &evictionAllocations, OsContext &osContext) {
 
-    acquireResidencyLock();
+    this->residencyControllers[osContext.getContextId()]->acquireLock();
 
     size_t residencyCount = evictionAllocations.size();
 
@@ -550,7 +562,7 @@ void WddmMemoryManager::makeNonResidentEvictionAllocations(ResidencyContainer &e
         addToTrimCandidateList(allocation);
     }
 
-    releaseResidencyLock();
+    this->residencyControllers[osContext.getContextId()]->releaseLock();
 }
 
 void WddmMemoryManager::removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList) {
@@ -646,21 +658,21 @@ void WddmMemoryManager::compactTrimCandidateList() {
 }
 
 void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes) {
-    OsContext *osContext = nullptr;
+    OsContext &osContext = *getRegisteredOsContext(0);
     if (flags.PeriodicTrim) {
         bool periodicTrimDone = false;
         D3DKMT_HANDLE fragmentEvictHandles[3] = {0};
         uint64_t sizeToTrim = 0;
 
-        acquireResidencyLock();
+        this->residencyControllers[osContext.getContextId()]->acquireLock();
 
         WddmAllocation *wddmAllocation = nullptr;
         while ((wddmAllocation = getTrimCandidateHead()) != nullptr) {
 
-            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", lastPeriodicTrimFenceValues[0]);
+            DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "lastPeriodicTrimFenceValue = ", this->residencyControllers[osContext.getContextId()]->getLastTrimFenceValue());
 
             // allocation was not used from last periodic trim
-            if (wddmAllocation->getResidencyData().getFenceValueForContextId(0) <= lastPeriodicTrimFenceValues[0]) {
+            if (wddmAllocation->getResidencyData().getFenceValueForContextId(0) <= this->residencyControllers[osContext.getContextId()]->getLastTrimFenceValue()) {
 
                 DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation: handle =", wddmAllocation->handle, "lastFence =", (wddmAllocation)->getResidencyData().getFenceValueForContextId(0));
 
@@ -672,7 +684,7 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
                 }
 
                 for (uint32_t allocationId = 0; allocationId < wddmAllocation->fragmentsStorage.fragmentCount; allocationId++) {
-                    if (wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(0) <= lastPeriodicTrimFenceValues[0]) {
+                    if (wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(0) <= this->residencyControllers[osContext.getContextId()]->getLastTrimFenceValue()) {
 
                         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "Evict fragment: handle =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].osHandleStorage->handle, "lastFence =", wddmAllocation->fragmentsStorage.fragmentStorageData[allocationId].residency->getFenceValueForContextId(0));
 
@@ -686,7 +698,6 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
                 }
 
                 wddmAllocation->getResidencyData().resident = false;
-                osContext = wddmAllocation->getResidencyData().getOsContextFromId(0);
                 removeFromTrimCandidateList(wddmAllocation);
             } else {
                 periodicTrimDone = true;
@@ -698,24 +709,22 @@ void WddmMemoryManager::trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint6
             compactTrimCandidateList();
         }
 
-        releaseResidencyLock();
+        this->residencyControllers[osContext.getContextId()]->releaseLock();
     }
 
     if (flags.TrimToBudget) {
 
-        acquireResidencyLock();
+        this->residencyControllers[osContext.getContextId()]->acquireLock();
 
         trimResidencyToBudget(bytes);
 
-        releaseResidencyLock();
+        this->residencyControllers[osContext.getContextId()]->releaseLock();
     }
 
     if (flags.PeriodicTrim || flags.RestartPeriodicTrim) {
-        if (!osContext) {
-            osContext = platform()->getDevice(0)->getOsContext();
-        }
-        lastPeriodicTrimFenceValues[0] = *osContext->get()->getMonitoredFence().cpuAddress;
-        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", lastPeriodicTrimFenceValues[0]);
+        const auto newPeriodicTrimFenceValue = *osContext.get()->getMonitoredFence().cpuAddress;
+        this->residencyControllers[osContext.getContextId()]->setLastTrimFenceValue(newPeriodicTrimFenceValue);
+        DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "updated lastPeriodicTrimFenceValue =", newPeriodicTrimFenceValue);
     }
 }
 

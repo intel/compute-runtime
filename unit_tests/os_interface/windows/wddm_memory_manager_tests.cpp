@@ -12,6 +12,7 @@
 #include "runtime/mem_obj/image.h"
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/os_context_win.h"
+#include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/platform/platform.h"
 #include "runtime/utilities/tag_allocator.h"
 
@@ -54,22 +55,22 @@ TEST(WddmMemoryManager, NonAssignable) {
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenRegisteringOsContextThenLastPeriodicTrimFenceValuesIsResizedAccordinglyToContextId) {
+TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenRegisteringOsContextThenResidencyControllersIsResizedAccordinglyToContextId) {
     memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
-    EXPECT_EQ(1, memoryManager->lastPeriodicTrimFenceValues.size());
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
+    EXPECT_EQ(1u, memoryManager->residencyControllers.size());
+    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
 
     memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
-    EXPECT_EQ(3, memoryManager->lastPeriodicTrimFenceValues.size());
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[1]);
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[2]);
+    EXPECT_EQ(3u, memoryManager->residencyControllers.size());
+    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
+    EXPECT_EQ(nullptr, memoryManager->residencyControllers[1]);
+    EXPECT_EQ(0u, memoryManager->residencyControllers[2]->getLastTrimFenceValue());
 
     memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
-    EXPECT_EQ(3, memoryManager->lastPeriodicTrimFenceValues.size());
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[0]);
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[1]);
-    EXPECT_EQ(0, memoryManager->lastPeriodicTrimFenceValues[2]);
+    EXPECT_EQ(3u, memoryManager->residencyControllers.size());
+    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
+    EXPECT_EQ(0u, memoryManager->residencyControllers[1]->getLastTrimFenceValue());
+    EXPECT_EQ(0u, memoryManager->residencyControllers[2]->getLastTrimFenceValue());
 }
 
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
@@ -1137,7 +1138,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriod
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
+    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1173,7 +1174,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
+    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1219,7 +1220,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFra
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
+    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
@@ -1248,14 +1249,14 @@ TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledTh
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
+    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimCandidateList.resize(0);
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValues[0]);
+    EXPECT_EQ(20u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -1266,14 +1267,14 @@ TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackC
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->lastPeriodicTrimFenceValues[0] = 10;
+    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimCandidateList.resize(0);
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->lastPeriodicTrimFenceValues[0]);
+    EXPECT_EQ(20u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
