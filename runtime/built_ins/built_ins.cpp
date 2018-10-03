@@ -74,6 +74,8 @@ SchedulerKernel &BuiltIns::getSchedulerKernel(Context &context) {
             *kernelInfo,
             &retVal);
 
+        UNRECOVERABLE_IF(schedulerBuiltIn.pKernel->getScratchSize() != 0);
+
         DEBUG_BREAK_IF(retVal != CL_SUCCESS);
     };
     std::call_once(schedulerBuiltIn.programIsInitialized, initializeSchedulerProgramAndKernel);
