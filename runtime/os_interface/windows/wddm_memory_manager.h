@@ -82,30 +82,10 @@ class WddmMemoryManager : public MemoryManager {
 
   protected:
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
-    WddmAllocation *getTrimCandidateHead() {
-        uint32_t i = 0;
-        size_t size = trimCandidateList.size();
-
-        if (size == 0) {
-            return nullptr;
-        }
-        while ((trimCandidateList[i] == nullptr) && (i < size))
-            i++;
-
-        return (WddmAllocation *)trimCandidateList[i];
-    }
-    void removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList = false);
-    void addToTrimCandidateList(GraphicsAllocation *allocation);
-    void compactTrimCandidateList();
     void trimResidency(D3DDDI_TRIMRESIDENCYSET_FLAGS flags, uint64_t bytes);
     bool trimResidencyToBudget(uint64_t bytes);
     static bool validateAllocation(WddmAllocation *alloc);
-    bool checkTrimCandidateListCompaction();
-    void checkTrimCandidateCount();
     bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);
-    ResidencyContainer trimCandidateList;
-    std::mutex trimCandidateListMutex;
-    uint32_t trimCandidatesCount = 0;
     std::vector<std::unique_ptr<WddmResidencyController>> residencyControllers;
     bool memoryBudgetExhausted = false;
     AlignedMallocRestrictions mallocRestrictions;

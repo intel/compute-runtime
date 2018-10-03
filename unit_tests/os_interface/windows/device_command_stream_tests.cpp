@@ -21,6 +21,7 @@
 #include "runtime/os_interface/windows/os_interface.h"
 #include "runtime/os_interface/windows/wddm_device_command_stream.h"
 #include "runtime/os_interface/windows/wddm_memory_manager.h"
+#include "runtime/os_interface/windows/wddm_residency_controller.h"
 
 #include "unit_tests/fixtures/device_fixture.h"
 #include "unit_tests/fixtures/gmm_environment_fixture.h"
@@ -557,7 +558,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 
     csr->processEviction(*device->getOsContext());
 
-    EXPECT_EQ(2u, mockWddmMM->trimCandidateList.size());
+    EXPECT_EQ(2u, mockWddmMM->residencyControllers[0]->peekTrimCandidateList().size());
 
     memManager->freeGraphicsMemory(allocation);
     memManager->freeGraphicsMemory(allocation2);

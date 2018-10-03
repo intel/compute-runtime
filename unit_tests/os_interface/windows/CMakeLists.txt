@@ -36,6 +36,7 @@ set(IGDRCL_SRCS_tests_os_interface_windows
   ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/wddm_memory_manager_allocate_in_device_pool_tests.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_allocate_in_device_pool_tests.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/wddm_preemption_tests.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
 )
 if(WIN32)
   file(GLOB IGDRCL_SRC_tests_wddm_interface "${CMAKE_CURRENT_SOURCE_DIR}/wddm2[0-9]_tests\.cpp")
