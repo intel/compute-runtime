@@ -76,11 +76,17 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         processEvictionCalled = true;
     }
 
+    void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) override {
+        waitForTaskCountRequiredTaskCount = requiredTaskCount;
+        BaseUltCsrClass::waitForTaskCountAndCleanAllocationList(requiredTaskCount, allocationType);
+    }
+
     ResidencyContainer madeResidentGfxAllocations;
     ResidencyContainer madeNonResidentGfxAllocations;
     int32_t *executionStamp;
     int32_t flushTaskStamp;
     bool processEvictionCalled = false;
+    uint32_t waitForTaskCountRequiredTaskCount = 0;
 };
 
 template <typename GfxFamily>

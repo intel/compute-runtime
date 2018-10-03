@@ -448,7 +448,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             if (printfHandler) {
                 printfHandler->printEnqueueOutput();
             }
-            commandStreamReceiver.waitForTaskCountAndCleanAllocationList(taskCount, TEMPORARY_ALLOCATION);
+            commandStreamReceiver.waitForTaskCountAndCleanAllocationList(completionStamp.taskCount, TEMPORARY_ALLOCATION);
         }
     }
 }

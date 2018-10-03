@@ -127,6 +127,8 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     bool blockingWriteBuffer = false;
     bool notifyEnqueueReadBufferCalled = false;
     bool notifyEnqueueReadImageCalled = false;
+    uint32_t completionStampTaskCount = 0;
+    uint32_t deltaTaskCount = 0;
 
     LinearStream *peekCommandStream() {
         return this->commandStream;
@@ -140,6 +142,14 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
             return false;
         }
         return BaseClass::createAllocationForHostSurface(surface);
+    }
+
+    void updateFromCompletionStamp(const CompletionStamp &completionStamp) override {
+        BaseClass::updateFromCompletionStamp(completionStamp);
+        const uint32_t &referenceToCompletionStampTaskCount = completionStamp.taskCount;
+        uint32_t &nonConstReferenceToCompletionStampTaskCount = const_cast<uint32_t &>(referenceToCompletionStampTaskCount);
+        nonConstReferenceToCompletionStampTaskCount += deltaTaskCount;
+        completionStampTaskCount = referenceToCompletionStampTaskCount;
     }
 };
 } // namespace OCLRT

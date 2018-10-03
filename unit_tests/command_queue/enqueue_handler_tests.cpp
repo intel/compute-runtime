@@ -334,3 +334,26 @@ HWTEST_F(EnqueueHandlerTest, givenEnqueueHandlerWhenSubCaptureIsOnThenActivateSu
 
     mockCmdQ->release();
 }
+using EnqueueHandlerTestBasic = ::testing::Test;
+HWTEST_F(EnqueueHandlerTestBasic, givenEnqueueHandlerWhenCommandIsBlokingThenCompletionStampTaskCountIsPassedToWaitForTaskCountAndCleanAllocationListAsRequiredTaskCount) {
+    int32_t tag;
+    auto executionEnvironment = new ExecutionEnvironment;
+    auto mockCsr = new MockCsrBase<FamilyType>(tag, *executionEnvironment);
+    executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(mockCsr));
+    std::unique_ptr<MockDevice> pDevice(MockDevice::createWithExecutionEnvironment<MockDevice>(nullptr, executionEnvironment, 0u));
+    auto context = std::make_unique<MockContext>(pDevice.get());
+    MockKernelWithInternals kernelInternals(*pDevice, context.get());
+    Kernel *kernel = kernelInternals.mockKernel;
+    MockMultiDispatchInfo multiDispatchInfo(kernel);
+    auto mockCmdQ = new MockCommandQueueHw<FamilyType>(context.get(), pDevice.get(), 0);
+    mockCmdQ->deltaTaskCount = 100;
+    mockCmdQ->template enqueueHandler<CL_COMMAND_WRITE_BUFFER>(nullptr,
+                                                               0,
+                                                               true,
+                                                               multiDispatchInfo,
+                                                               0,
+                                                               nullptr,
+                                                               nullptr);
+    EXPECT_EQ(mockCsr->waitForTaskCountRequiredTaskCount, mockCmdQ->completionStampTaskCount);
+    mockCmdQ->release();
+}

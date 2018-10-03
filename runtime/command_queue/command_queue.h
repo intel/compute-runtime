@@ -289,7 +289,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     virtual cl_int flush() { return CL_SUCCESS; }
 
-    void updateFromCompletionStamp(const CompletionStamp &completionStamp);
+    MOCKABLE_VIRTUAL void updateFromCompletionStamp(const CompletionStamp &completionStamp);
 
     cl_int getCommandQueueInfo(cl_command_queue_info paramName,
                                size_t paramValueSize, void *paramValue,
