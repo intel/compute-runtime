@@ -444,12 +444,9 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(bool reserveProfiling
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCS(uint32_t cmdType, bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel) {
-    switch (cmdType) {
-    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-    case CL_COMMAND_MARKER:
+    if (isCommandWithoutKernel(cmdType)) {
         return EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue);
-    case CL_COMMAND_NDRANGE_KERNEL:
-    default:
+    } else {
         return EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(reserveProfilingCmdsSpace, reservePerfCounters, commandQueue, pKernel);
     }
 }

@@ -6,6 +6,7 @@
  */
 
 #include "runtime/command_stream/command_stream_receiver.h"
+#include "runtime/command_queue/gpgpu_walker.h"
 #include "runtime/event/event.h"
 #include "unit_tests/command_queue/command_enqueue_fixture.h"
 #include "gen_cmd_parse.h"
@@ -264,7 +265,8 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Consume all memory except what is needed for this enqueue
-    commandStream.getSpace(commandStream.getMaxAvailableSpace() - CSRequirements::minCommandQueueCommandStreamSize);
+    size_t barrierCmdStreamSize = OCLRT::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr);
+    commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
     //now trigger event
     event2.setStatus(CL_COMPLETE);

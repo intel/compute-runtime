@@ -34,6 +34,22 @@ enum class QueuePriority {
     HIGH
 };
 
+inline bool shouldFlushDC(uint32_t commandType, PrintfHandler *printfHandler) {
+    return (commandType == CL_COMMAND_READ_BUFFER ||
+            commandType == CL_COMMAND_READ_BUFFER_RECT ||
+            commandType == CL_COMMAND_READ_IMAGE ||
+            commandType == CL_COMMAND_SVM_MAP ||
+            printfHandler);
+}
+
+inline bool isCommandWithoutKernel(uint32_t commandType) {
+    return ((commandType == CL_COMMAND_BARRIER) || (commandType == CL_COMMAND_MARKER) ||
+            (commandType == CL_COMMAND_MIGRATE_MEM_OBJECTS) ||
+            (commandType == CL_COMMAND_SVM_MAP) ||
+            (commandType == CL_COMMAND_SVM_UNMAP) ||
+            (commandType == CL_COMMAND_SVM_FREE));
+}
+
 template <>
 struct OpenCLObjectMapper<_cl_command_queue> {
     typedef class CommandQueue DerivedType;
