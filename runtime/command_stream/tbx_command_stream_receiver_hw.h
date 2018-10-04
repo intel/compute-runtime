@@ -88,8 +88,5 @@ class TbxCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     CommandStreamReceiverType getType() override {
         return CommandStreamReceiverType::CSR_TBX;
     }
-
-  protected:
-    void createPhysicalAddressAllocator();
 };
 } // namespace OCLRT

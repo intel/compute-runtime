@@ -21,7 +21,6 @@
 #include "runtime/memory_manager/graphics_allocation.h"
 #include "runtime/memory_manager/memory_banks.h"
 #include "runtime/memory_manager/os_agnostic_memory_manager.h"
-#include "runtime/memory_manager/physical_address_allocator.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include <cstring>
 
@@ -38,7 +37,7 @@ AUBCommandStreamReceiverHw<GfxFamily>::AUBCommandStreamReceiverHw(const Hardware
     UNRECOVERABLE_IF(nullptr == aubCenter);
 
     if (!aubCenter->getPhysicalAddressAllocator()) {
-        aubCenter->initPhysicalAddressAllocator(createPhysicalAddressAllocator());
+        aubCenter->initPhysicalAddressAllocator(this->createPhysicalAddressAllocator());
     }
     auto physicalAddressAllocator = aubCenter->getPhysicalAddressAllocator();
     UNRECOVERABLE_IF(nullptr == physicalAddressAllocator);
@@ -781,8 +780,7 @@ uint32_t AUBCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
 }
 
 template <typename GfxFamily>
-PhysicalAddressAllocator *AUBCommandStreamReceiverHw<GfxFamily>::createPhysicalAddressAllocator() {
+PhysicalAddressAllocator *CommandStreamReceiverSimulatedCommonHw<GfxFamily>::createPhysicalAddressAllocator() {
     return new PhysicalAddressAllocator();
 }
-
 } // namespace OCLRT

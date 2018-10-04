@@ -26,7 +26,7 @@ TbxCommandStreamReceiverHw<GfxFamily>::TbxCommandStreamReceiverHw(const Hardware
                                                                   ExecutionEnvironment &executionEnvironment)
     : BaseClass(hwInfoIn, executionEnvironment) {
 
-    createPhysicalAddressAllocator();
+    physicalAddressAllocator.reset(this->createPhysicalAddressAllocator());
 
     ppgtt = std::make_unique<TypeSelector<PML4, PDPE, sizeof(void *) == 8>::type>(physicalAddressAllocator.get());
     ggtt = std::make_unique<PDPE>(physicalAddressAllocator.get());
@@ -418,10 +418,4 @@ template <typename GfxFamily>
 uint32_t TbxCommandStreamReceiverHw<GfxFamily>::getMemoryBankForGtt() const {
     return MemoryBanks::getBank(this->deviceIndex);
 }
-
-template <typename GfxFamily>
-void TbxCommandStreamReceiverHw<GfxFamily>::createPhysicalAddressAllocator() {
-    physicalAddressAllocator = std::make_unique<PhysicalAddressAllocator>();
-}
-
 } // namespace OCLRT

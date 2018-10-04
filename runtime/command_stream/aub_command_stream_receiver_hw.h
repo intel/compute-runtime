@@ -111,8 +111,6 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     int getAddressSpaceFromPTEBits(uint64_t entryBits) const;
 
   protected:
-    PhysicalAddressAllocator *createPhysicalAddressAllocator();
-
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 };

@@ -23,4 +23,5 @@ void populateFactoryTable<AUBCommandStreamReceiverHw<Family>>() {
 }
 
 template class AUBCommandStreamReceiverHw<Family>;
+template class CommandStreamReceiverSimulatedCommonHw<Family>;
 } // namespace OCLRT

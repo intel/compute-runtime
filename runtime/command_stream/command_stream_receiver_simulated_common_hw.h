@@ -8,6 +8,7 @@
 #pragma once
 #include "runtime/command_stream/command_stream_receiver_hw.h"
 #include "runtime/memory_manager/memory_banks.h"
+#include "runtime/memory_manager/physical_address_allocator.h"
 
 namespace OCLRT {
 class GraphicsAllocation;
@@ -19,5 +20,8 @@ class CommandStreamReceiverSimulatedCommonHw : public CommandStreamReceiverHw<Gf
     uint64_t getGTTBits() const {
         return 0u;
     }
+
+  protected:
+    PhysicalAddressAllocator *createPhysicalAddressAllocator();
 };
 } // namespace OCLRT
