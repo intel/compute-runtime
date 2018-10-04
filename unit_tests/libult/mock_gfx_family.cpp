@@ -14,6 +14,7 @@
 #include "runtime/gen_common/aub_mapper.h"
 #include "runtime/helpers/hw_helper_common.inl"
 #include "runtime/helpers/kernel_commands.inl"
+#include "runtime/helpers/kernel_commands_base.inl"
 #include "runtime/helpers/preamble.inl"
 
 namespace OCLRT {

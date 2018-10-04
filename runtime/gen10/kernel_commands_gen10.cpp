@@ -8,6 +8,7 @@
 #include "runtime/helpers/kernel_commands.h"
 #include "hw_cmds.h"
 #include "runtime/helpers/kernel_commands.inl"
+#include "runtime/helpers/kernel_commands_base.inl"
 
 namespace OCLRT {
 template struct KernelCommandsHelper<CNLFamily>;

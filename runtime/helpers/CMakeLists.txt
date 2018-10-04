@@ -48,6 +48,7 @@ set(RUNTIME_SRCS_HELPERS_BASE
   ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands.inl
+  ${CMAKE_CURRENT_SOURCE_DIR}/kernel_commands_base.inl
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.h
   ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
   ${CMAKE_CURRENT_SOURCE_DIR}/mipmap.cpp
@@ -99,3 +100,5 @@ else()
 endif()
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_HELPERS_LINUX ${RUNTIME_SRCS_HELPERS_LINUX})
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_HELPERS_BASE ${RUNTIME_SRCS_HELPERS_BASE})
+
+add_subdirectories()

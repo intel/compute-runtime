@@ -36,6 +36,18 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static uint32_t computeSlmValues(uint32_t valueIn);
 
+    static INTERFACE_DESCRIPTOR_DATA *getInterfaceDescriptor(
+        const IndirectHeap &indirectHeap,
+        uint64_t offsetInterfaceDescriptor,
+        INTERFACE_DESCRIPTOR_DATA *inlineInterfaceDescriptor);
+
+    static void setAdditionalInfo(
+        INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor,
+        const size_t &sizeCrossThreadData,
+        const size_t &sizePerThreadData);
+
+    inline static uint32_t additionalSizeRequiredDsh();
+
     static size_t sendInterfaceDescriptorData(
         const IndirectHeap &indirectHeap,
         uint64_t offsetInterfaceDescriptor,
@@ -99,6 +111,34 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         bool kernelUsesLocalIds,
         bool inlineDataProgrammingRequired);
 
+    static void programPerThreadData(
+        size_t &sizePerThreadData,
+        const bool &localIdsGenerationByRuntime,
+        LinearStream &ioh,
+        uint32_t &simd,
+        uint32_t &numChannels,
+        const size_t localWorkSize[3],
+        Kernel &kernel,
+        size_t &sizePerThreadDataTotal,
+        size_t &localWorkItems);
+
+    static void updatePerThreadDataTotal(
+        size_t &sizePerThreadData,
+        uint32_t &simd,
+        uint32_t &numChannels,
+        size_t &sizePerThreadDataTotal,
+        size_t &localWorkItems);
+
+    inline static bool resetBindingTablePrefetch(Kernel &kernel);
+
+    static void setKernelStartOffset(
+        uint64_t &kernelStartOffset,
+        bool kernelAllocation,
+        const KernelInfo &kernelInfo,
+        const bool &localIdsGenerationByRuntime,
+        const bool &kernelUsesLocalIds,
+        Kernel &kernel);
+
     static size_t getSizeRequiredCS();
     static bool isPipeControlWArequired();
     static size_t getSizeRequiredDSH(
@@ -152,6 +192,22 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
         }
         return totalSize;
     }
+
+    static void setInterfaceDescriptorOffset(
+        WALKER_TYPE<GfxFamily> *walkerCmd,
+        uint32_t &interfaceDescriptorIndex);
+
+    static void getCrossThreadData(
+        uint32_t &sizeCrossThreadData,
+        size_t &offsetCrossThreadData,
+        Kernel &kernel,
+        const bool &inlineDataProgrammingRequired,
+        IndirectHeap &ioh,
+        WALKER_TYPE<GfxFamily> *walkerCmd);
+
+    inline static size_t getCrossThreadDataSize(
+        uint32_t &sizeCrossThreadData,
+        Kernel &kernel);
 
     static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
