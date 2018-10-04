@@ -121,5 +121,19 @@ void BXT_1x3x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
 };
 
 const HardwareInfo BXT::hwInfo = BXT_1x3x6::hwInfo;
-void (*BXT::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = BXT_1x3x6::setupHardwareInfo;
+
+void setupBXTHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+    if (hwInfoConfig == "1x2x6") {
+        BXT_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x6") {
+        BXT_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "default") {
+        // Default config
+        BXT_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+void (*BXT::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupBXTHardwareInfoImpl;
 } // namespace OCLRT

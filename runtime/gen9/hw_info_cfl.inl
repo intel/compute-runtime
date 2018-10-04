@@ -203,5 +203,25 @@ void CFL_3x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
 };
 
 const HardwareInfo CFL::hwInfo = CFL_1x3x6::hwInfo;
-void (*CFL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = CFL_1x3x6::setupHardwareInfo;
+
+void setupCFLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+    if (hwInfoConfig == "1x3x8") {
+        CFL_1x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "2x3x8") {
+        CFL_2x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "3x3x8") {
+        CFL_3x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x2x6") {
+        CFL_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x6") {
+        CFL_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "default") {
+        // Default config
+        CFL_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+void (*CFL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupCFLHardwareInfoImpl;
 } // namespace OCLRT

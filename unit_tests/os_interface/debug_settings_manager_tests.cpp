@@ -921,3 +921,22 @@ TEST(DebugSettingsManager, whenOnlyRegKeysAreEnabledThenAllOtherDebugFunctionali
     static_assert(false == debugManager.kernelArgDumpingAvailable(), "");
     static_assert(debugManager.registryReadAvailable(), "");
 }
+
+TEST(DebugSettingsManager, givenTwoPossibleVariantsOfHardwareInfoOverrideStringThenOutputStringIsTheSame) {
+    FullyEnabledTestDebugManager debugManager;
+    std::string hwInfoConfig;
+
+    // Set HardwareInfoOverride as regular string (i.e. as in Windows Registry)
+    std::string str1 = "1x4x8";
+    debugManager.flags.HardwareInfoOverride.set(str1);
+    debugManager.getHardwareInfoOverride(hwInfoConfig);
+    EXPECT_EQ(str1, hwInfoConfig);
+
+    // Set HardwareInfoOverride as quoted string (i.e. as in igdrcl.config file)
+    std::string str2 = "\"1x4x8\"";
+    debugManager.flags.HardwareInfoOverride.set(str2);
+    hwInfoConfig = debugManager.flags.HardwareInfoOverride.get();
+    EXPECT_EQ(str2, hwInfoConfig);
+    debugManager.getHardwareInfoOverride(hwInfoConfig);
+    EXPECT_EQ(str1, hwInfoConfig);
+}

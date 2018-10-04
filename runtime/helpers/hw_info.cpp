@@ -16,7 +16,7 @@ HardwareInfo::HardwareInfo(const PLATFORM *platform, const FeatureTable *skuTabl
 }
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *, FeatureTable *, bool) = {
+void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = {
     nullptr,
 };
 

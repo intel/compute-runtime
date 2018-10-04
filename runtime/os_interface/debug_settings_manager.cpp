@@ -60,6 +60,17 @@ DebugSettingsManager<DebugLevel>::~DebugSettingsManager() {
 }
 
 template <DebugFunctionalityLevel DebugLevel>
+void DebugSettingsManager<DebugLevel>::getHardwareInfoOverride(std::string &hwInfoConfig) {
+    std::string str = flags.HardwareInfoOverride.get();
+    if (str[0] == '\"') {
+        str.pop_back();
+        hwInfoConfig = str.substr(1, std::string::npos);
+    } else {
+        hwInfoConfig = str;
+    }
+}
+
+template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::dumpKernel(const std::string &name, const std::string &src) {
     if (false == debugKernelDumpingAvailable()) {
         return;

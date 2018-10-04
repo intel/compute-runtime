@@ -182,5 +182,23 @@ void BDW_2x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
 };
 
 const HardwareInfo BDW::hwInfo = BDW_1x3x8::hwInfo;
-void (*BDW::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = BDW_1x3x8::setupHardwareInfo;
+
+void setupBDWHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+    if (hwInfoConfig == "2x3x8") {
+        BDW_2x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x8") {
+        BDW_1x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x6") {
+        BDW_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x2x6") {
+        BDW_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "default") {
+        // Default config
+        BDW_1x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+void (*BDW::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupBDWHardwareInfoImpl;
 } // namespace OCLRT

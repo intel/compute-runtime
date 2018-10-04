@@ -211,5 +211,25 @@ void SKL_3x3x8::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
 };
 
 const HardwareInfo SKL::hwInfo = SKL_1x3x8::hwInfo;
-void (*SKL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = SKL_1x3x8::setupHardwareInfo;
+
+void setupSKLHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+    if (hwInfoConfig == "1x3x8") {
+        SKL_1x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "2x3x8") {
+        SKL_2x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "3x3x8") {
+        SKL_3x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x2x6") {
+        SKL_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x6") {
+        SKL_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "default") {
+        // Default config
+        SKL_1x3x8::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+void (*SKL::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupSKLHardwareInfoImpl;
 } // namespace OCLRT

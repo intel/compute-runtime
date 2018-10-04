@@ -116,5 +116,19 @@ void GLK_1x2x6::setupHardwareInfo(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featu
 };
 
 const HardwareInfo GLK::hwInfo = GLK_1x3x6::hwInfo;
-void (*GLK::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool) = GLK_1x3x6::setupHardwareInfo;
+
+void setupGLKHardwareInfoImpl(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig) {
+    if (hwInfoConfig == "1x2x6") {
+        GLK_1x2x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "1x3x6") {
+        GLK_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else if (hwInfoConfig == "default") {
+        // Default config
+        GLK_1x3x6::setupHardwareInfo(gtSysInfo, featureTable, setupFeatureTable);
+    } else {
+        UNRECOVERABLE_IF(true);
+    }
+}
+
+void (*GLK::setupHardwareInfo)(GT_SYSTEM_INFO *, FeatureTable *, bool, const std::string &) = setupGLKHardwareInfoImpl;
 } // namespace OCLRT

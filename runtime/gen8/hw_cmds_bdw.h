@@ -7,6 +7,7 @@
 
 #pragma once
 #include "runtime/gen8/hw_cmds_base.h"
+#include <string>
 
 namespace OCLRT {
 
@@ -18,7 +19,7 @@ struct BDW : public BDWFamily {
     static const uint32_t maxSlicesSupported = 2;
     static const uint32_t maxSubslicesSupported = 6;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 };
 class BDW_1x2x6 : public BDW {
   public:

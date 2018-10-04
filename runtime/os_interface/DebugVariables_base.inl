@@ -9,6 +9,7 @@
 /*SIMULATION FLAGS*/
 DECLARE_DEBUG_VARIABLE(std::string, TbxServer, std::string("127.0.0.1"), "TCP-IP address of TBX server")
 DECLARE_DEBUG_VARIABLE(std::string, ProductFamilyOverride, std::string("unk"), "Specify product for use in AUB/TBX")
+DECLARE_DEBUG_VARIABLE(std::string, HardwareInfoOverride, std::string("default"), "Specify hardware info config, i.e 1x4x8, for use in AUB/TBX")
 DECLARE_DEBUG_VARIABLE(std::string, ForceCompilerUsePlatform, std::string("unk"), "Specify product for use in compiler interface")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpCaptureFileName, std::string("unk"), "Name of file to save AUB capture into")
 DECLARE_DEBUG_VARIABLE(std::string, AUBDumpFilterKernelName, std::string("unk"), "Name of kernel to AUB capture")

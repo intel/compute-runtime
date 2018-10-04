@@ -46,7 +46,7 @@ struct CNL : public CNLFamily {
     static const uint32_t maxSlicesSupported = 4;
     static const uint32_t maxSubslicesSupported = 9;
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 };
 class CNL_2x5x8 : public CNL {
   public:

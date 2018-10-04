@@ -20,7 +20,7 @@ struct GLK : public SKLFamily {
     static const uint32_t maxSubslicesSupported = 3;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 };
 
 class GLK_1x3x6 : public GLK {

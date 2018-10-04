@@ -13,6 +13,7 @@
 #include "runtime/helpers/engine_node.h"
 #include "runtime/helpers/kmd_notify_properties.h"
 #include <cstddef>
+#include <string>
 
 namespace OCLRT {
 
@@ -101,7 +102,7 @@ extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *familyName[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *gtSystemInfo, FeatureTable *featureTable, bool setupFeatureTable);
+extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(GT_SYSTEM_INFO *gtSystemInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {

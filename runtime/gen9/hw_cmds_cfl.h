@@ -20,7 +20,7 @@ struct CFL : public SKLFamily {
     static const uint32_t maxSubslicesSupported = 9;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 };
 
 class CFL_1x2x6 : public CFL {

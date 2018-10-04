@@ -19,6 +19,7 @@ if(TESTS_GEN10)
     ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_source_tests_gen10.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_gen10.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_device_queue_hw_gen10.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_cnl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_gen10.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_gen10.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_gen10.cpp

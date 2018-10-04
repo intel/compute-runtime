@@ -287,7 +287,8 @@ int main(int argc, char **argv) {
     platform.usRevId = (uint16_t)revisionId;
 
     // set Gt and FeatureTable to initial state
-    hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable);
+    std::string hwInfoConfig = "default";
+    hardwareInfoSetup[productFamily](&gtSystemInfo, &featureTable, setupFeatureTable, hwInfoConfig);
     // and adjust dynamic values if not secified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
     subSliceCount = subSliceCount > 0 ? subSliceCount : gtSystemInfo.SubSliceCount;

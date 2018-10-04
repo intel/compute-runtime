@@ -20,7 +20,7 @@ struct BXT : public SKLFamily {
     static const uint32_t maxSubslicesSupported = 3;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable);
+    static void (*setupHardwareInfo)(GT_SYSTEM_INFO *gtSysInfo, FeatureTable *featureTable, bool setupFeatureTable, const std::string &hwInfoConfig);
 };
 
 class BXT_1x2x6 : public BXT {

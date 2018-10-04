@@ -102,6 +102,7 @@ class DebugSettingsManager {
         return DebugLevel == DebugFunctionalityLevel::None;
     }
 
+    void getHardwareInfoOverride(std::string &hwInfoConfig);
     void dumpKernel(const std::string &name, const std::string &src);
     void logApiCall(const char *function, bool enter, int32_t errorCode);
     size_t getInput(const size_t *input, int32_t index);
