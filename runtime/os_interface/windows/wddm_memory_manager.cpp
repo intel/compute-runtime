@@ -300,7 +300,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
     releaseResidencyLock();
 
     UNRECOVERABLE_IF(DebugManager.flags.CreateMultipleDevices.get() == 0 &&
-                     gfxAllocation->taskCount != ObjectNotUsed &&
+                     gfxAllocation->taskCount != ObjectNotUsed && this->executionEnvironment.commandStreamReceivers.size() > 0 &&
                      this->getCommandStreamReceiver(0) && this->getCommandStreamReceiver(0)->getTagAddress() &&
                      gfxAllocation->taskCount > *this->getCommandStreamReceiver(0)->getTagAddress());
 

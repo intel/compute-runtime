@@ -13,6 +13,7 @@
 #include "runtime/os_interface/os_library.h"
 #include "runtime/os_interface/windows/os_context_win.h"
 #include "runtime/platform/platform.h"
+#include "runtime/utilities/tag_allocator.h"
 
 #include "unit_tests/helpers/debug_manager_state_restore.h"
 #include "unit_tests/mocks/mock_deferred_deleter.h"
@@ -2222,4 +2223,19 @@ TEST_F(WddmMemoryManagerTest2, givenReadOnlyMemoryPassedToPopulateOsHandlesWhenC
 
     handleStorage.fragmentStorageData[1].freeTheFragment = true;
     memoryManager->cleanOsHandles(handleStorage);
+}
+
+TEST(WddmMemoryManagerCleanupTest, givenUsedTagAllocationInWddmMemoryManagerWhenCleanupMemoryManagerThenDontAccessCsr) {
+    auto wddm = std::make_unique<WddmMock>();
+    EXPECT_TRUE(wddm->init());
+    ExecutionEnvironment executionEnvironment;
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(createCommandStream(*platformDevices, executionEnvironment)));
+    executionEnvironment.memoryManager = std::make_unique<WddmMemoryManager>(false, false, wddm.get(), executionEnvironment);
+    EXPECT_EQ(executionEnvironment.commandStreamReceivers[0].get(), executionEnvironment.memoryManager->getCommandStreamReceiver(0));
+    auto tagAllocator = executionEnvironment.memoryManager->getEventPerfCountAllocator();
+    auto allocation = tagAllocator->getTag()->getGraphicsAllocation();
+    allocation->taskCount = 1;
+    executionEnvironment.commandStreamReceivers.clear();
+    EXPECT_THROW(executionEnvironment.memoryManager->getCommandStreamReceiver(0), std::exception);
+    EXPECT_NO_THROW(executionEnvironment.memoryManager.reset());
 }
