@@ -314,6 +314,8 @@ FlushStamp AUBCommandStreamReceiverHw<GfxFamily>::flush(BatchBuffer &batchBuffer
         flatBatchBuffer.reset(this->flatBatchBufferHelper->flattenBatchBuffer(batchBuffer, sizeBatchBuffer, this->dispatchMode));
         if (flatBatchBuffer.get() != nullptr) {
             pBatchBuffer = flatBatchBuffer->getUnderlyingBuffer();
+            batchBufferGpuAddress = flatBatchBuffer->getGpuAddress();
+            batchBuffer.commandBufferAllocation = flatBatchBuffer.get();
         }
     }
 

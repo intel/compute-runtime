@@ -1231,8 +1231,11 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenForcedF
         aubExecutionEnvironment->executionEnvironment->memoryManager->allocateGraphicsMemory(4096, 4096, false, false),
         [&](GraphicsAllocation *ptr) { aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(ptr); });
 
+    auto expectedAllocation = ptr.get();
     EXPECT_CALL(*mockHelper, flattenBatchBuffer(::testing::_, ::testing::_, ::testing::_)).WillOnce(::testing::Return(ptr.release()));
     aubCsr->flush(batchBuffer, engineType, allocationsForResidency, *pDevice->getOsContext());
+
+    EXPECT_EQ(batchBuffer.commandBufferAllocation, expectedAllocation);
 
     aubExecutionEnvironment->executionEnvironment->memoryManager->freeGraphicsMemory(chainedBatchBuffer);
 }
