@@ -63,3 +63,29 @@ HWTEST_F(TimestampPacketAubTests, givenTwoBatchedEnqueuesWhenDependencyIsResolve
     clReleaseEvent(outEvent1);
     clReleaseEvent(outEvent2);
 }
+
+HWTEST_F(TimestampPacketAubTests, givenMultipleWalkersWhenEnqueueingThenWriteAllTimestamps) {
+    MockContext context(&pCmdQ->getDevice());
+    const size_t bufferSize = 70;
+    const size_t writeSize = bufferSize - 2;
+    uint8_t writeData[writeSize] = {};
+    cl_int retVal = CL_SUCCESS;
+    cl_event outEvent;
+
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_READ_WRITE, bufferSize, nullptr, retVal));
+    buffer->forceDisallowCPUCopy = true;
+
+    pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 1, writeSize, writeData, 0, nullptr, &outEvent);
+
+    auto &timestmapNodes = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes();
+
+    EXPECT_EQ(2u, timestmapNodes.size());
+
+    uint32_t expectedEndTimestamp[2] = {0, 0};
+    auto endTimestampAddress1 = reinterpret_cast<void *>(timestmapNodes.at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
+    auto endTimestampAddress2 = reinterpret_cast<void *>(timestmapNodes.at(1)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd));
+    expectMemory<FamilyType>(endTimestampAddress1, expectedEndTimestamp, 2 * sizeof(uint32_t));
+    expectMemory<FamilyType>(endTimestampAddress2, expectedEndTimestamp, 2 * sizeof(uint32_t));
+
+    clReleaseEvent(outEvent);
+}
