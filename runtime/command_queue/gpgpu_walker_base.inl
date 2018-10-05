@@ -183,13 +183,8 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 
     if (TimestampPacket::WriteOperationType::AfterWalker == writeOperationType) {
         uint64_t address = timestampPacket->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
-        auto pipeControlCmd = cmdStream->getSpaceForCmd<PIPE_CONTROL>();
-        *pipeControlCmd = PIPE_CONTROL::sInit();
-        pipeControlCmd->setCommandStreamerStallEnable(true);
-        pipeControlCmd->setPostSyncOperation(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA);
-        pipeControlCmd->setAddress(static_cast<uint32_t>(address & 0x0000FFFFFFFFULL));
-        pipeControlCmd->setAddressHigh(static_cast<uint32_t>(address >> 32));
-        pipeControlCmd->setImmediateData(0);
+
+        KernelCommandsHelper<GfxFamily>::programPipeControlDataWriteWithCsStall(*cmdStream, address, 0);
     }
 }
 

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/properties_helper.h"
 
 #include <cstdint>
@@ -15,6 +16,8 @@
 #include <vector>
 
 namespace OCLRT {
+class CommandStreamReceiver;
+class LinearStream;
 class MemoryManager;
 template <typename TagType>
 struct TagNode;
@@ -90,7 +93,7 @@ class TimestampPacketContainer : public NonCopyableOrMovableClass {
     const std::vector<Node *> &peekNodes() const { return timestampPacketNodes; }
     void add(Node *timestampPacketNode);
     void swapNodes(TimestampPacketContainer &timestampPacketContainer);
-    void assignAndIncrementNodesRefCounts(TimestampPacketContainer &timestampPacketContainer);
+    void assignAndIncrementNodesRefCounts(TimestampPacketContainer &inputTimestampPacketContainer);
     void resolveDependencies(bool clearAllDependencies);
     void makeResident(CommandStreamReceiver &commandStreamReceiver);
 

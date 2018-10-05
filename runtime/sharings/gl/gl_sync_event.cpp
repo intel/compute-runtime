@@ -15,6 +15,7 @@
 #include "runtime/event/event_builder.h"
 #include "runtime/gmm_helper/gmm_helper.h"
 #include "runtime/helpers/get_info.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/platform/platform.h"
 
 #include "public/cl_gl_private_intel.h"

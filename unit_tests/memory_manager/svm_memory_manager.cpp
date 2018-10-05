@@ -6,7 +6,6 @@
  */
 
 #include "runtime/memory_manager/svm_memory_manager.h"
-#include "runtime/event/event.h"
 #include "runtime/utilities/tag_allocator.h"
 #include "test.h"
 #include "unit_tests/fixtures/memory_allocator_fixture.h"

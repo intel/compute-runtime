@@ -7,6 +7,7 @@
 
 #include "runtime/program/program.h"
 #include "runtime/context/context.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 namespace OCLRT {
 

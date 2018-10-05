@@ -11,6 +11,7 @@
 #include "runtime/sharings/gl/gl_sharing.h"
 #include "runtime/sharings/sharing_factory.h"
 #include "runtime/sharings/sharing_factory.inl"
+#include "runtime/os_interface/debug_settings_manager.h"
 
 #include <memory>
 

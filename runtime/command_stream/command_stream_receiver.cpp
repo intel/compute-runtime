@@ -10,11 +10,10 @@
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/device/device.h"
-#include "runtime/event/event.h"
-#include "runtime/event/event_builder.h"
 #include "runtime/gtpin/gtpin_notify.h"
 #include "runtime/helpers/array_count.h"
 #include "runtime/helpers/cache_policy.h"
+#include "runtime/helpers/flush_stamp.h"
 #include "runtime/memory_manager/memory_manager.h"
 #include "runtime/os_interface/os_interface.h"
 

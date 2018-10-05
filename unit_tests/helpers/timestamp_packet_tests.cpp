@@ -416,13 +416,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     UserEvent event2;
     event2.setStatus(CL_COMPLETE);
     Event event3(cmdQ1.get(), 0, 0, 0);
-    event3.setTimestampPacketNodes(timestamp3);
+    event3.addTimestampPacketNodes(timestamp3);
     Event event4(cmdQ2.get(), 0, 0, 0);
-    event4.setTimestampPacketNodes(timestamp4);
+    event4.addTimestampPacketNodes(timestamp4);
     Event event5(cmdQ1.get(), 0, 0, 0);
-    event5.setTimestampPacketNodes(timestamp5);
+    event5.addTimestampPacketNodes(timestamp5);
     Event event6(cmdQ2.get(), 0, 0, 0);
-    event6.setTimestampPacketNodes(timestamp6);
+    event6.addTimestampPacketNodes(timestamp6);
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
@@ -464,9 +464,9 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
 
     UserEvent userEvent;
     Event event0(cmdQ1.get(), 0, 0, 0);
-    event0.setTimestampPacketNodes(timestamp0);
+    event0.addTimestampPacketNodes(timestamp0);
     Event event1(cmdQ2.get(), 0, 0, 0);
-    event1.setTimestampPacketNodes(timestamp1);
+    event1.addTimestampPacketNodes(timestamp1);
 
     cl_event waitlist[] = {&userEvent, &event0, &event1};
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 3, waitlist, nullptr);
@@ -511,13 +511,13 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenDispatchingTh
     UserEvent event1;
     UserEvent event2;
     Event event3(mockCmdQ.get(), 0, 0, 0);
-    event3.setTimestampPacketNodes(timestamp3);
+    event3.addTimestampPacketNodes(timestamp3);
     Event event4(&mockCmdQ2, 0, 0, 0);
-    event4.setTimestampPacketNodes(timestamp4);
+    event4.addTimestampPacketNodes(timestamp4);
     Event event5(mockCmdQ.get(), 0, 0, 0);
-    event5.setTimestampPacketNodes(timestamp5);
+    event5.addTimestampPacketNodes(timestamp5);
     Event event6(&mockCmdQ2, 0, 0, 0);
-    event6.setTimestampPacketNodes(timestamp6);
+    event6.addTimestampPacketNodes(timestamp6);
 
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
@@ -735,9 +735,9 @@ HWTEST_F(TimestampPacketTests, givenEventsWaitlistFromDifferentDevicesWhenEnqueu
     node2.add(tagNode2);
 
     Event event0(cmdQ1.get(), 0, 0, 0);
-    event0.setTimestampPacketNodes(node1);
+    event0.addTimestampPacketNodes(node1);
     Event event1(cmdQ2.get(), 0, 0, 0);
-    event1.setTimestampPacketNodes(node2);
+    event1.addTimestampPacketNodes(node2);
 
     cl_event waitlist[] = {&event0, &event1};
 
@@ -790,4 +790,167 @@ TEST_F(TimestampPacketTests, givenDispatchSizeWhenAskingForNewTimestampsThenObta
     TimestampPacketContainer previousNodes(device->getMemoryManager());
     mockCmdQ->obtainNewTimestampPacketNodes(dispatchSize, previousNodes);
     EXPECT_EQ(dispatchSize, mockCmdQ->timestampPacketContainer->peekNodes().size());
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingWithoutKernelThenInheritTimestampPacketsWithoutSubmitting) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    MockKernelWithInternals mockKernel(*device, context.get());
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
+
+    TimestampPacketContainer cmdQNodes(device->getMemoryManager());
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    MockTimestampPacketContainer node1(device->getMemoryManager(), 1);
+    MockTimestampPacketContainer node2(device->getMemoryManager(), 1);
+
+    Event event0(&cmdQ, 0, 0, 0);
+    event0.addTimestampPacketNodes(node1);
+    Event event1(&cmdQ, 0, 0, 0);
+    event1.addTimestampPacketNodes(node2);
+
+    cl_event waitlist[] = {&event0, &event1};
+
+    cl_event clOutEvent;
+    cmdQ.enqueueMarkerWithWaitList(2, waitlist, &clOutEvent);
+
+    auto outEvent = castToObject<Event>(clOutEvent);
+
+    EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // no new nodes obtained
+    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
+
+    auto &eventsNodes = outEvent->getTimestampPacketNodes()->peekNodes();
+    EXPECT_EQ(3u, eventsNodes.size());
+    EXPECT_EQ(cmdQNodes.peekNodes().at(0), eventsNodes.at(0));
+    EXPECT_EQ(event0.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(1));
+    EXPECT_EQ(event1.getTimestampPacketNodes()->peekNodes().at(0), eventsNodes.at(2));
+
+    clReleaseEvent(clOutEvent);
+}
+
+HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndOutputEventWhenEnqueueingMarkerThenObtainNewPacketAndEmitPipeControlWithWrite) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    MockKernelWithInternals mockKernel(*device, context.get());
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
+
+    TimestampPacketContainer cmdQNodes(device->getMemoryManager());
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    cl_event clOutEvent;
+    cmdQ.enqueueMarkerWithWaitList(0, nullptr, &clOutEvent);
+
+    EXPECT_NE(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new node obtained
+    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
+
+    bool pipeControlFound = false;
+    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
+    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl &&
+            pipeControl->getAddress() == expectedAddressLow &&
+            pipeControl->getAddressHigh() == expectedAddressHigh &&
+            pipeControl->getImmediateData() == 0) {
+            pipeControlFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(pipeControlFound);
+
+    clReleaseEvent(clOutEvent);
+}
+
+HWTEST_F(TimestampPacketTests, givenEmptyWaitlistAndNoOutputEventWhenEnqueueingMarkerThenDoNothing) {
+    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    cmdQ.enqueueMarkerWithWaitList(0, nullptr, nullptr);
+    EXPECT_EQ(0u, cmdQ.timestampPacketContainer->peekNodes().size());
+}
+
+HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenObtainNewPacketAndEmitPipeControlWithDataWrite) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.storeMakeResidentAllocations = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    MockKernelWithInternals mockKernel(*device, context.get());
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestmapPacket
+
+    TimestampPacketContainer cmdQNodes(device->getMemoryManager());
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
+
+    EXPECT_NE(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // new node obtained
+    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
+
+    EXPECT_TRUE(csr.isMadeResident(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGraphicsAllocation()));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(csr.commandStream, 0);
+
+    bool pipeControlFound = false;
+    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
+    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl &&
+            pipeControl->getAddress() == expectedAddressLow &&
+            pipeControl->getAddressHigh() == expectedAddressHigh &&
+            pipeControl->getImmediateData() == 0) {
+            pipeControlFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(pipeControlFound);
+}
+
+HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenObtainNewPacketAndEmitPipeControlWithWrite) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+    csr.storeMakeResidentAllocations = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context.get(), device.get(), nullptr);
+
+    UserEvent userEvent;
+    cl_event waitlist[] = {&userEvent};
+    cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
+
+    userEvent.setStatus(CL_COMPLETE);
+    EXPECT_TRUE(csr.isMadeResident(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGraphicsAllocation()));
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(device->getUltCommandStreamReceiver<FamilyType>().commandStream, 0);
+
+    bool pipeControlFound = false;
+    uint64_t expectedAddress = cmdQ.timestampPacketContainer->peekNodes().at(0)->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+    uint32_t expectedAddressLow = static_cast<uint32_t>(expectedAddress & 0x0000FFFFFFFFULL);
+    uint32_t expectedAddressHigh = static_cast<uint32_t>(expectedAddress >> 32);
+    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
+        auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
+        if (pipeControl &&
+            pipeControl->getAddress() == expectedAddressLow &&
+            pipeControl->getAddressHigh() == expectedAddressHigh &&
+            pipeControl->getImmediateData() == 0) {
+            pipeControlFound = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(pipeControlFound);
 }

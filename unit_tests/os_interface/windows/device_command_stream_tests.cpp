@@ -14,6 +14,7 @@
 #include "runtime/gen_common/hw_cmds.h"
 #include "runtime/helpers/built_ins_helper.h"
 #include "runtime/helpers/gmm_callbacks.h"
+#include "runtime/helpers/flush_stamp.h"
 #include "runtime/helpers/options.h"
 #include "runtime/mem_obj/buffer.h"
 #include "runtime/memory_manager/memory_manager.h"

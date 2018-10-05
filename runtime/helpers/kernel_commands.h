@@ -155,6 +155,7 @@ struct KernelCommandsHelper : public PerThreadDataHelper {
 
     static void programMiSemaphoreWait(LinearStream &commandStream, uint64_t compareAddress, uint32_t compareData);
     static MI_ATOMIC *programMiAtomic(LinearStream &commandStream, uint64_t writeAddress, typename MI_ATOMIC::ATOMIC_OPCODES opcode, typename MI_ATOMIC::DATA_SIZE dataSize);
+    static void programPipeControlDataWriteWithCsStall(LinearStream &commandStream, uint64_t writeAddress, uint64_t data);
 
     static const size_t alignInterfaceDescriptorData = 64 * sizeof(uint8_t);
     static const uint32_t alignIndirectStatePointer = 64 * sizeof(uint8_t);

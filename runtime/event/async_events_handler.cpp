@@ -7,6 +7,7 @@
 
 #include "runtime/event/async_events_handler.h"
 #include "runtime/event/event.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/os_interface/os_thread.h"
 #include <iterator>
 

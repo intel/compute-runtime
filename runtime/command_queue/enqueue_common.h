@@ -197,6 +197,8 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     TimestampPacketContainer previousTimestampPacketNodes(device->getMemoryManager());
+    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
+    bool emitPipeControlWithTimestampWrite = allowTimestampPacketPipeControlWrite(commandType, eventsRequest);
 
     if (multiDispatchInfo.empty() == false) {
         HwPerfCounter *hwPerfCounter = nullptr;
@@ -219,7 +221,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         if (eventBuilder.getEvent()) {
             if (timestampPacketContainer.get()) {
-                eventBuilder.getEvent()->setTimestampPacketNodes(*timestampPacketContainer);
+                eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
             }
             if (this->isProfilingEnabled()) {
                 // Get allocation for timestamps
@@ -268,9 +270,21 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         commandStreamReceiver.setRequiredScratchSize(multiDispatchInfo.getRequiredScratchSize());
 
         slmUsed = multiDispatchInfo.usesSlm();
+    } else if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
+        if (emitPipeControlWithTimestampWrite) {
+            obtainNewTimestampPacketNodes(1, previousTimestampPacketNodes);
+        }
+
+        if (eventBuilder.getEvent()) {
+            // Event from non-kernel enqueue inherits TimestampPackets from waitlist and command queue
+            eventBuilder.getEvent()->addTimestampPacketNodes(*timestampPacketContainer);
+            for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
+                auto waitlistEvent = castToObjectOrAbort<Event>(eventsRequest.eventWaitList[i]);
+                eventBuilder.getEvent()->addTimestampPacketNodes(*waitlistEvent->getTimestampPacketNodes());
+            }
+        }
     }
 
-    EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     CompletionStamp completionStamp;
     if (!blockQueue) {
         if (parentKernel) {
@@ -316,7 +330,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
             }
         }
 
-        auto submissionRequired = isCommandWithoutKernel(commandType) ? false : true;
+        auto submissionRequired = !isCommandWithoutKernel(commandType) || emitPipeControlWithTimestampWrite;
 
         if (submissionRequired) {
             completionStamp = enqueueNonBlocked<commandType>(
@@ -488,7 +502,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     bool slmUsed,
     PrintfHandler *printfHandler) {
 
-    UNRECOVERABLE_IF(multiDispatchInfo.empty());
+    UNRECOVERABLE_IF(multiDispatchInfo.empty() && !timestampPacketContainer);
 
     auto &commandStreamReceiver = device->getCommandStreamReceiver();
     auto implicitFlush = false;
@@ -553,7 +567,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         ioh = &getIndirectHeap(IndirectHeap::INDIRECT_OBJECT, 0u);
     }
 
-    commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.peekMainKernel()->getThreadArbitrationPolicy<GfxFamily>());
+    if (multiDispatchInfo.peekMainKernel()) {
+        commandStreamReceiver.requestThreadArbitrationPolicy(multiDispatchInfo.peekMainKernel()->getThreadArbitrationPolicy<GfxFamily>());
+    }
 
     DispatchFlags dispatchFlags;
     dispatchFlags.blocking = blocking;
@@ -570,6 +586,9 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.outOfOrderExecutionAllowed = !eventBuilder.getEvent() || commandStreamReceiver.isNTo1SubmissionModelEnabled();
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         dispatchFlags.outOfDeviceDependencies = &eventsRequest;
+        if (multiDispatchInfo.empty()) {
+            dispatchFlags.timestampPacketForPipeControlWrite = timestampPacketContainer->peekNodes().at(0);
+        }
     }
     dispatchFlags.numGrfRequired = numGrfRequired;
     DEBUG_BREAK_IF(taskLevel >= Event::eventNotReady);
@@ -639,8 +658,13 @@ void CommandQueueHw<GfxFamily>::enqueueBlocked(
                                                                                             isPerfCountersEnabled(),
                                                                                             *this,
                                                                                             nullptr));
-        auto cmd = std::unique_ptr<Command>(new CommandMarker(
-            *this, commandStreamReceiver, commandType, cmdSize));
+
+        auto cmd = std::make_unique<CommandMarker>(*this, commandStreamReceiver, commandType, cmdSize);
+
+        if (allowTimestampPacketPipeControlWrite(commandType, eventsRequest)) {
+            cmd->setTimestampPacketsForPipeControlWrite(*timestampPacketContainer);
+        }
+
         eventBuilder->getEvent()->setCommand(std::move(cmd));
     } else {
         //store task data in event

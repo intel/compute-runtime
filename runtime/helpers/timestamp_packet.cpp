@@ -7,6 +7,7 @@
 
 #include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/command_stream/linear_stream.h"
+#include "runtime/event/event.h"
 #include "runtime/helpers/kernel_commands.h"
 #include "runtime/helpers/timestamp_packet.h"
 #include "runtime/memory_manager/memory_manager.h"
@@ -44,9 +45,11 @@ void TimestampPacketContainer::resolveDependencies(bool clearAllDependencies) {
     std::swap(timestampPacketNodes, pendingNodes);
 }
 
-void TimestampPacketContainer::assignAndIncrementNodesRefCounts(TimestampPacketContainer &timestampPacketContainer) {
-    timestampPacketNodes = timestampPacketContainer.timestampPacketNodes;
-    for (auto &node : timestampPacketNodes) {
+void TimestampPacketContainer::assignAndIncrementNodesRefCounts(TimestampPacketContainer &inputTimestampPacketContainer) {
+    auto &inputNodes = inputTimestampPacketContainer.peekNodes();
+    std::copy(inputNodes.begin(), inputNodes.end(), std::back_inserter(timestampPacketNodes));
+
+    for (auto &node : inputNodes) {
         node->incRefCount();
     }
 }

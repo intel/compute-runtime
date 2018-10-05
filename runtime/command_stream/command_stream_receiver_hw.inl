@@ -254,6 +254,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dispatchFlags.outOfDeviceDependencies) {
         handleEventsTimestampPacketTags(commandStreamCSR, dispatchFlags, device);
     }
+    if (dispatchFlags.timestampPacketForPipeControlWrite) {
+        uint64_t address = dispatchFlags.timestampPacketForPipeControlWrite->tag->pickAddressForDataWrite(TimestampPacket::DataIndex::ContextEnd);
+        KernelCommandsHelper<GfxFamily>::programPipeControlDataWriteWithCsStall(commandStreamCSR, address, 0);
+        makeResident(*dispatchFlags.timestampPacketForPipeControlWrite->getGraphicsAllocation());
+    }
     initPageTableManagerRegisters(commandStreamCSR);
     programPreemption(commandStreamCSR, device, dispatchFlags);
     programComputeMode(commandStreamCSR, dispatchFlags);

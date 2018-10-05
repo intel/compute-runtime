@@ -12,6 +12,7 @@
 #include "runtime/helpers/ptr_math.h"
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/string.h"
+#include "runtime/helpers/timestamp_packet.h"
 #include "runtime/utilities/debug_settings_reader.h"
 
 #include "CL/cl.h"

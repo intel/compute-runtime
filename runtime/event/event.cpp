@@ -713,7 +713,7 @@ void Event::copyPerfCounters(InstrPmRegsCfg *config) {
     memcpy_s(perfConfigurationData, sizeof(InstrPmRegsCfg), config, sizeof(InstrPmRegsCfg));
 }
 
-void Event::setTimestampPacketNodes(TimestampPacketContainer &inputTimestampPacketContainer) {
+void Event::addTimestampPacketNodes(TimestampPacketContainer &inputTimestampPacketContainer) {
     timestampPacketContainer->assignAndIncrementNodesRefCounts(inputTimestampPacketContainer);
 }
 

@@ -7,12 +7,14 @@
 
 #pragma once
 #include "runtime/device/device_vector.h"
-#include "runtime/event/event.h"
 #include "runtime/context/driver_diagnostics.h"
+#include "runtime/helpers/base_object.h"
+#include "runtime/os_interface/debug_settings_manager.h"
 #include <vector>
 
 namespace OCLRT {
 
+class CommandQueue;
 class Device;
 class DeviceQueue;
 class MemoryManager;
