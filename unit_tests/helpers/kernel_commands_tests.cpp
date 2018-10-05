@@ -635,7 +635,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, KernelCommandsTest, usedBindingTableStatePointersFor
     // define kernel info
     auto pKernelInfo = std::make_unique<KernelInfo>();
 
-    SPatchExecutionEnvironment tokenEE;
+    SPatchExecutionEnvironment tokenEE = {};
     tokenEE.CompiledSIMD8 = false;
     tokenEE.CompiledSIMD16 = false;
     tokenEE.CompiledSIMD32 = true;

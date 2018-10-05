@@ -32,7 +32,7 @@ class MockSchedulerKernel : public SchedulerKernel {
         dataParametrStream.DataParameterStreamSize = 8;
         dataParametrStream.Size = 8;
 
-        SPatchExecutionEnvironment executionEnvironment;
+        SPatchExecutionEnvironment executionEnvironment = {};
         executionEnvironment.CompiledSIMD8 = 1;
         executionEnvironment.HasDeviceEnqueue = 0;
 

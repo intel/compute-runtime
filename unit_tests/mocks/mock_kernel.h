@@ -288,8 +288,8 @@ class MockKernelWithInternals {
     SKernelBinaryHeaderCommon kernelHeader;
     SPatchThreadPayload threadPayload;
     SPatchDataParameterStream dataParameterStream;
-    SPatchExecutionEnvironment executionEnvironment;
-    SPatchExecutionEnvironment executionEnvironmentBlock;
+    SPatchExecutionEnvironment executionEnvironment = {};
+    SPatchExecutionEnvironment executionEnvironmentBlock = {};
     uint32_t kernelIsa[32];
     char crossThreadData[256];
     char sshLocal[128];
@@ -456,6 +456,7 @@ class MockParentKernel : public Kernel {
 
         SPatchExecutionEnvironment *executionEnvironmentBlock = new SPatchExecutionEnvironment;
         executionEnvironmentBlock->HasDeviceEnqueue = 1;
+        executionEnvironmentBlock->NumGRFRequired = GrfConfig::DefaultGrfNumber;
         infoBlock->patchInfo.executionEnvironment = executionEnvironmentBlock;
 
         SPatchDataParameterStream *streamBlock = new SPatchDataParameterStream;

@@ -39,6 +39,7 @@ class DispatchInfoBuilderFixture : public ContextFixture, public DeviceFixture {
         pExecutionEnvironment = new SPatchExecutionEnvironment();
         pExecutionEnvironment->CompiledSIMD32 = 1;
         pExecutionEnvironment->LargestCompiledSIMDSize = 32;
+        pExecutionEnvironment->NumGRFRequired = GrfConfig::DefaultGrfNumber;
 
         pPrintfSurface = new SPatchAllocateStatelessPrintfSurface();
 

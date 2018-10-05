@@ -250,7 +250,7 @@ TEST_F(KernelDataTest, ThreadPayload) {
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironmentNoReqdWorkGroupSize) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment;
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
     executionEnvironment.RequiredWorkGroupSizeX = 0;
@@ -285,7 +285,7 @@ TEST_F(KernelDataTest, ExecutionEnvironmentNoReqdWorkGroupSize) {
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironment) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment;
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
     executionEnvironment.RequiredWorkGroupSizeX = 32;
@@ -321,7 +321,7 @@ TEST_F(KernelDataTest, ExecutionEnvironment) {
 }
 
 TEST_F(KernelDataTest, ExecutionEnvironmentCompiledForGreaterThan4GBBuffers) {
-    iOpenCL::SPatchExecutionEnvironment executionEnvironment;
+    iOpenCL::SPatchExecutionEnvironment executionEnvironment = {};
     executionEnvironment.Token = PATCH_TOKEN_EXECUTION_ENVIRONMENT;
     executionEnvironment.Size = sizeof(SPatchExecutionEnvironment);
     executionEnvironment.RequiredWorkGroupSizeX = 32;

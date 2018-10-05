@@ -65,7 +65,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
 
     SKernelBinaryHeaderCommon kernelHeader;
     SPatchDataParameterStream dataParameterStream;
-    SPatchExecutionEnvironment executionEnvironment;
+    SPatchExecutionEnvironment executionEnvironment = {};
     SPatchThreadPayload threadPayload;
     KernelInfo kernelInfo;
 

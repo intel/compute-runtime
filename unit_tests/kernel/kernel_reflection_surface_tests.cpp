@@ -646,7 +646,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithoutKern
     cl_queue_properties properties[1] = {0};
     DeviceQueue devQueue(&context, device.get(), properties[0]);
 
-    SPatchExecutionEnvironment environment;
+    SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
 
@@ -701,7 +701,7 @@ TEST(KernelReflectionSurfaceTestSingle, ObtainKernelReflectionSurfaceWithDeviceQ
     uint32_t devQueueCurbeOffset = 16;
     uint32_t devQueueCurbeSize = 4;
 
-    SPatchExecutionEnvironment environment;
+    SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
     info.patchInfo.executionEnvironment = &environment;
 
@@ -1251,6 +1251,7 @@ class ReflectionSurfaceHelperSetKernelDataTest : public testing::TestWithParam<s
 
         info.patchInfo.dataParameterStream = &dataParameterStream;
 
+        executionEnvironment = {};
         executionEnvironment.LargestCompiledSIMDSize = 16;
         executionEnvironment.HasBarriers = 1;
 

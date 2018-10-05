@@ -39,7 +39,7 @@ TEST(ParentKernelTest, GetObjectCounts) {
     MockDevice *device = new MockDevice(*platformDevices[0]);
     MockProgram program(*device->getExecutionEnvironment());
 
-    SPatchExecutionEnvironment environment;
+    SPatchExecutionEnvironment environment = {};
     environment.HasDeviceEnqueue = 1;
 
     info.patchInfo.executionEnvironment = &environment;
@@ -164,6 +164,7 @@ TEST(ParentKernelTest, initializeOnParentKernelAllocatesPrivateMemoryForBlocks) 
     infoBlock->patchInfo.threadPayload = threadPayloadBlock;
 
     SPatchExecutionEnvironment *executionEnvironmentBlock = new SPatchExecutionEnvironment;
+    *executionEnvironmentBlock = {};
     executionEnvironmentBlock->HasDeviceEnqueue = 1;
     infoBlock->patchInfo.executionEnvironment = executionEnvironmentBlock;
 
