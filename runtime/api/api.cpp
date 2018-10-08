@@ -6,6 +6,7 @@
  */
 
 #include "config.h"
+#include <algorithm>
 #include "api.h"
 #include "CL/cl.h"
 #include "runtime/accelerators/intel_motion_estimation.h"
@@ -197,6 +198,10 @@ cl_int CL_API_CALL clGetDeviceIDs(cl_platform_id platform,
                     break;
                 }
             }
+        }
+
+        if (DebugManager.flags.LimitAmountOfReturnedDevices.get()) {
+            retNum = std::min(static_cast<uint32_t>(DebugManager.flags.LimitAmountOfReturnedDevices.get()), retNum);
         }
 
         if (numDevices) {
