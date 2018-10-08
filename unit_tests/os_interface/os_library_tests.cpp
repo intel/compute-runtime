@@ -91,39 +91,3 @@ TEST_F(OSLibraryTest, testFailNew) {
     };
     injectFailures(method);
 }
-
-TEST(OsLibrary, whenCallingIndexOperatorThenObjectConvertibleToFunctionOrVoidPointerIsReturned) {
-    struct MockOsLibrary : OsLibrary {
-        void *getProcAddress(const std::string &procName) override {
-            lastRequestedProcName = procName;
-            return ptrToReturn;
-        }
-        bool isLoaded() override { return true; }
-
-        void *ptrToReturn = nullptr;
-        std::string lastRequestedProcName;
-    };
-
-    MockOsLibrary lib;
-
-    int varA, varB, varC;
-    int *addrA = &varA, *addrB = &varB, *addrC = &varC;
-
-    using FunctionTypeA = void (*)(int *, float);
-    using FunctionTypeB = int (*)();
-
-    lib.ptrToReturn = addrA;
-    FunctionTypeA functionA = lib["funcA"];
-    EXPECT_STREQ("funcA", lib.lastRequestedProcName.c_str());
-    EXPECT_EQ(reinterpret_cast<void *>(addrA), reinterpret_cast<void *>(functionA));
-
-    lib.ptrToReturn = addrB;
-    FunctionTypeB functionB = lib["funcB"];
-    EXPECT_STREQ("funcB", lib.lastRequestedProcName.c_str());
-    EXPECT_EQ(reinterpret_cast<void *>(addrB), reinterpret_cast<void *>(functionB));
-
-    lib.ptrToReturn = addrC;
-    void *rawPtr = lib["funcC"];
-    EXPECT_STREQ("funcC", lib.lastRequestedProcName.c_str());
-    EXPECT_EQ(reinterpret_cast<void *>(addrC), rawPtr);
-}

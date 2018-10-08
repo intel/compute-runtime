@@ -32,10 +32,6 @@
 #include "test.h"
 #include "gl/gl_sharing_os.h"
 
-namespace Os {
-extern const char *openglDllName;
-}
-
 using namespace OCLRT;
 bool MockGLSharingFunctions::SharingEnabled = false;
 const char *MockGLSharingFunctions::arrayStringi[2] = {"GL_OES_framebuffer_object", "GL_EXT_framebuffer_object"};
@@ -654,6 +650,12 @@ TEST(glSharingBasicTest, GivenSharingFunctionsWhenItIsConstructedThenOglContextF
     EXPECT_EQ(1, GLSetSharedOCLContextStateCalled);
 }
 
+TEST(glSharingBasicTest, givenInvalidFunctionNameWhenLoadGLFunctionThenReturnNullptr) {
+    MockGLSharingFunctions glSharingFunctions;
+    auto fPointer = glSharingFunctions.loadGlFunction("BadFunctionName", 0);
+    EXPECT_EQ(nullptr, fPointer);
+}
+
 TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedThenReturnFalse) {
     GLSharingFunctions glSharingFunctions;
     bool RetVal = glSharingFunctions.isOpenGlExtensionSupported("InvalidExtensionName");
@@ -662,7 +664,7 @@ TEST(glSharingBasicTest, givenInvalidExtensionNameWhenCheckGLExtensionSupportedT
 
 TEST(glSharingBasicTest, givenglGetIntegervIsNullWhenCheckGLExtensionSupportedThenReturnFalse) {
     MockGLSharingFunctions glSharingFunctions;
-    glSharingFunctions.glGetIntegerv = nullptr;
+    glSharingFunctions.setglGetIntegervToNull();
     bool RetVal = glSharingFunctions.isOpenGlExtensionSupported("InvalidExtensionName");
     EXPECT_FALSE(RetVal);
 }
@@ -685,7 +687,7 @@ TEST(glSharingBasicTest, givenVendorisNullWhenCheckGLSharingSupportedThenReturnF
     };
 
     MockGLSharingFunctions glSharingFunctions;
-    glSharingFunctions.glGetString = invalidGetStringFcn;
+    glSharingFunctions.setGetStringFcn(invalidGetStringFcn);
 
     bool RetVal = glSharingFunctions.isOpenGlSharingSupported();
     EXPECT_FALSE(RetVal);
