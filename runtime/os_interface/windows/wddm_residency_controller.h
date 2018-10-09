@@ -18,7 +18,7 @@ class WddmAllocation;
 
 class WddmResidencyController {
   public:
-    WddmResidencyController();
+    WddmResidencyController(uint32_t osContextId);
 
     void acquireLock();
     void releaseLock();
@@ -29,6 +29,7 @@ class WddmResidencyController {
     WddmAllocation *getTrimCandidateHead();
     void addToTrimCandidateList(GraphicsAllocation *allocation);
     void removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList);
+    void removeFromTrimCandidateListIfUsed(WddmAllocation *allocation, bool compactList);
     void checkTrimCandidateCount();
 
     bool checkTrimCandidateListCompaction();
@@ -40,9 +41,10 @@ class WddmResidencyController {
     uint32_t peekTrimCandidatesCount() const { return trimCandidatesCount; }
 
   protected:
-    std::atomic<bool> lock;
+    uint32_t osContextId;
+    std::atomic<bool> lock = false;
     std::atomic_flag trimCallbackLock = ATOMIC_FLAG_INIT;
-    uint64_t lastTrimFenceValue;
+    uint64_t lastTrimFenceValue = 0u;
     ResidencyContainer trimCandidateList;
     uint32_t trimCandidatesCount = 0;
 };

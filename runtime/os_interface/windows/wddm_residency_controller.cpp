@@ -5,14 +5,14 @@
  *
  */
 
-#include "wddm_residency_controller.h"
+#include "runtime/os_interface/windows/wddm_residency_controller.h"
 #include "runtime/os_interface/windows/wddm_allocation.h"
 #include "runtime/os_interface/debug_settings_manager.h"
 #include "runtime/utilities/spinlock.h"
 
 namespace OCLRT {
 
-WddmResidencyController::WddmResidencyController() : lock(false), lastTrimFenceValue(0u) {}
+WddmResidencyController::WddmResidencyController(uint32_t osContextId) : osContextId(osContextId) {}
 
 void WddmResidencyController::acquireLock() {
     bool previousLockValue = false;
@@ -53,10 +53,10 @@ void WddmResidencyController::addToTrimCandidateList(GraphicsAllocation *allocat
 
     DEBUG_BREAK_IF(trimCandidatesCount > trimCandidateList.size());
 
-    if (wddmAllocation->getTrimCandidateListPosition() == trimListUnusedPosition) {
+    if (wddmAllocation->getTrimCandidateListPosition(this->osContextId) == trimListUnusedPosition) {
         trimCandidatesCount++;
         trimCandidateList.push_back(allocation);
-        wddmAllocation->setTrimCandidateListPosition(position);
+        wddmAllocation->setTrimCandidateListPosition(this->osContextId, position);
     }
 
     checkTrimCandidateCount();
@@ -64,7 +64,7 @@ void WddmResidencyController::addToTrimCandidateList(GraphicsAllocation *allocat
 
 void WddmResidencyController::removeFromTrimCandidateList(GraphicsAllocation *allocation, bool compactList) {
     WddmAllocation *wddmAllocation = (WddmAllocation *)allocation;
-    size_t position = wddmAllocation->getTrimCandidateListPosition();
+    size_t position = wddmAllocation->getTrimCandidateListPosition(this->osContextId);
 
     DEBUG_BREAK_IF(!(trimCandidatesCount > (trimCandidatesCount - 1)));
     DEBUG_BREAK_IF(trimCandidatesCount > trimCandidateList.size());
@@ -93,13 +93,19 @@ void WddmResidencyController::removeFromTrimCandidateList(GraphicsAllocation *al
             trimCandidateList.resize(sizeRemaining);
         }
     }
-    wddmAllocation->setTrimCandidateListPosition(trimListUnusedPosition);
+    wddmAllocation->setTrimCandidateListPosition(this->osContextId, trimListUnusedPosition);
 
     if (compactList && checkTrimCandidateListCompaction()) {
         compactTrimCandidateList();
     }
 
     checkTrimCandidateCount();
+}
+
+void WddmResidencyController::removeFromTrimCandidateListIfUsed(WddmAllocation *allocation, bool compactList) {
+    if (allocation->getTrimCandidateListPosition(this->osContextId) != trimListUnusedPosition) {
+        this->removeFromTrimCandidateList(allocation, true);
+    }
 }
 
 void WddmResidencyController::checkTrimCandidateCount() {
@@ -142,7 +148,7 @@ void WddmResidencyController::compactTrimCandidateList() {
         if (trimCandidateList[i] != nullptr && freePosition < i) {
             trimCandidateList[freePosition] = trimCandidateList[i];
             trimCandidateList[i] = nullptr;
-            ((WddmAllocation *)trimCandidateList[freePosition])->setTrimCandidateListPosition(freePosition);
+            static_cast<WddmAllocation *>(trimCandidateList[freePosition])->setTrimCandidateListPosition(this->osContextId, freePosition);
             freePosition++;
 
             // Last element was moved, erase elements from freePosition

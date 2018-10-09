@@ -19,7 +19,7 @@ using OsContextWin = OsContext::OsContextImpl;
 class OsContext::OsContextImpl {
   public:
     OsContextImpl() = delete;
-    OsContextImpl(Wddm &wddm);
+    OsContextImpl(Wddm &wddm, uint32_t osContextId);
     ~OsContextImpl();
     D3DKMT_HANDLE getContext() const {
         return context;

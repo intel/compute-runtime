@@ -694,7 +694,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
 
     csr->processResidency(csr->getResidencyAllocations(), *device->getOsContext());
 
@@ -703,7 +703,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
     EXPECT_EQ(0u, csr->getResidencyAllocations().size());
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
+    EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
 
     memoryManager->freeGraphicsMemory(commandBuffer);
 }
@@ -777,12 +777,12 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
         EXPECT_TRUE(found);
     }
 
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition());
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition());
-    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition());
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition());
-    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition());
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)tagAllocation)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)dshAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, ((WddmAllocation *)iohAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition(device->getOsContext()->getContextId()));
 
     memoryManager->freeGraphicsMemory(dshAlloc);
     memoryManager->freeGraphicsMemory(iohAlloc);

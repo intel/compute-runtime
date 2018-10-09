@@ -55,6 +55,21 @@ TEST(WddmMemoryManager, NonAssignable) {
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
 }
 
+TEST(WddmAllocationTest, givenAllocationIsTrimCandidateInOneOsContextWhenGettingTrimCandidatePositionThenReturnItsPositionAndUnusedPositionInOtherContexts) {
+    WddmAllocation allocation{nullptr, 0, nullptr, 0, nullptr, MemoryPool::MemoryNull, 3u};
+    OsContext osContext{nullptr, 1u};
+    allocation.setTrimCandidateListPosition(osContext.getContextId(), 700u);
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(0u));
+    EXPECT_EQ(700u, allocation.getTrimCandidateListPosition(1u));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(2u));
+}
+
+TEST(WddmAllocationTest, givenRequestedContextIdTooLargeWhenGettingTrimCandidateListPositionThenReturnUnusedPosition) {
+    WddmAllocation allocation{nullptr, 0, nullptr, 0, nullptr, MemoryPool::MemoryNull, 1u};
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1u));
+    EXPECT_EQ(trimListUnusedPosition, allocation.getTrimCandidateListPosition(1000u));
+}
+
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm()));
@@ -1005,7 +1020,7 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
     // 1 allocation evicted
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
     // removed from trim candidate list
-    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContext->getContextId()));
 
     //marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident);
@@ -1126,9 +1141,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
     osContext->get()->getResidencyController().compactTrimCandidateList();
     EXPECT_EQ(1u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
 
-    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
-    EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
-    EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition(osContext->getContextId()));
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTrimIsNotZero) {
@@ -1184,9 +1199,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesToTr
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
     EXPECT_EQ(1u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
 
-    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
-    EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
-    EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition());
+    EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition(osContext->getContextId()));
+    EXPECT_NE(trimListUnusedPosition, allocation3.getTrimCandidateListPosition(osContext->getContextId()));
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResident) {

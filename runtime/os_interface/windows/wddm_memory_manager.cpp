@@ -313,9 +313,7 @@ void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation
         if (osContext) {
             auto &residencyController = osContext->get()->getResidencyController();
             residencyController.acquireLock();
-            if (input->getTrimCandidateListPosition() != trimListUnusedPosition) {
-                residencyController.removeFromTrimCandidateList(gfxAllocation, true);
-            }
+            residencyController.removeFromTrimCandidateListIfUsed(input, true);
             residencyController.releaseLock();
         }
     }
@@ -492,7 +490,7 @@ bool WddmMemoryManager::makeResidentResidencyAllocations(ResidencyContainer &all
 
         DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, mainResidency ? "resident" : "not resident");
 
-        if (allocation->getTrimCandidateListPosition() != trimListUnusedPosition) {
+        if (allocation->getTrimCandidateListPosition(osContext.getContextId()) != trimListUnusedPosition) {
 
             DBG_LOG(ResidencyDebugEnable, "Residency:", __FUNCTION__, "allocation =", allocation, "on trimCandidateList");
             osContext.get()->getResidencyController().removeFromTrimCandidateList(allocation, false);

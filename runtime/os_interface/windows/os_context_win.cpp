@@ -12,7 +12,7 @@
 
 namespace OCLRT {
 
-OsContextWin::OsContextImpl(Wddm &wddm) : wddm(wddm) {
+OsContextWin::OsContextImpl(Wddm &wddm, uint32_t osContextId) : wddm(wddm), residencyController(osContextId) {
     UNRECOVERABLE_IF(!wddm.isInitialized());
     auto wddmInterface = wddm.getWddmInterface();
     if (!wddm.createContext(context)) {
@@ -40,7 +40,7 @@ void OsContextWin::resetMonitoredFenceParams(D3DKMT_HANDLE &handle, uint64_t *cp
 
 OsContext::OsContext(OSInterface *osInterface, uint32_t contextId) : contextId(contextId) {
     if (osInterface) {
-        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm());
+        osContextImpl = std::make_unique<OsContextWin>(*osInterface->get()->getWddm(), contextId);
     }
 }
 OsContext::~OsContext() = default;
