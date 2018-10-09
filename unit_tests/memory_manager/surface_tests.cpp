@@ -58,8 +58,8 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
 
     ExecutionEnvironment executionEnvironment;
     MockCsr<FamilyType> *csr = new MockCsr<FamilyType>(execStamp, executionEnvironment);
-
-    auto memManager = csr->createMemoryManager(false, false);
+    executionEnvironment.commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
+    executionEnvironment.memoryManager.reset(csr->createMemoryManager(false, false));
 
     Surface *surface = createSurface::Create<TypeParam>(this->data,
                                                         &this->buffer,
@@ -79,8 +79,6 @@ HWTEST_TYPED_TEST(SurfaceTest, GivenSurfaceWhenInterfaceIsUsedThenSurfaceBehaves
 
     delete duplicatedSurface;
     delete surface;
-    delete csr;
-    delete memManager;
 }
 
 class CoherentMemObjSurface : public SurfaceTest<MemObjSurface> {

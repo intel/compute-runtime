@@ -64,8 +64,6 @@ MemoryManager::MemoryManager(bool enable64kbpages, bool enableLocalMemory,
                                                                            executionEnvironment(executionEnvironment){};
 
 MemoryManager::~MemoryManager() {
-    freeAllocationsList(-1, graphicsAllocations);
-    freeAllocationsList(-1, allocationsForReuse);
     for (auto osContext : registeredOsContexts) {
         osContext->decRefInternal();
     }
@@ -192,15 +190,15 @@ void MemoryManager::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAlloc
             return;
         }
     }
-
-    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse;
+    auto csr = getCommandStreamReceiver(0);
+    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? csr->getTemporaryAllocations() : csr->getAllocationsForReuse();
     gfxAllocation->taskCount = taskCount;
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
 std::unique_ptr<GraphicsAllocation> MemoryManager::obtainReusableAllocation(size_t requiredSize, bool internalAllocation) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, getCommandStreamReceiver(0)->getTagAddress(), internalAllocation);
+    auto allocation = getCommandStreamReceiver(0)->getAllocationsForReuse().detachAllocation(requiredSize, getCommandStreamReceiver(0)->getTagAddress(), internalAllocation);
     return allocation;
 }
 
@@ -225,14 +223,12 @@ void MemoryManager::applyCommonCleanup() {
     if (timestampPacketAllocator) {
         timestampPacketAllocator->cleanUpResources();
     }
-
-    cleanAllocationList(-1, TEMPORARY_ALLOCATION);
-    cleanAllocationList(-1, REUSABLE_ALLOCATION);
 }
 
 bool MemoryManager::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
     std::lock_guard<decltype(mtx)> lock(mtx);
-    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? graphicsAllocations : allocationsForReuse);
+    auto csr = getCommandStreamReceiver(0);
+    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? csr->getTemporaryAllocations() : csr->getAllocationsForReuse());
     return false;
 }
 

@@ -22,6 +22,8 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
         executionEnvironment->initializeCommandStreamReceiver(*platformDevices, 0u);
         memoryManager = new OsAgnosticMemoryManager(false, false, *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
+        csr = memoryManager->getCommandStreamReceiver(0);
+        csr->setMemoryManager(memoryManager);
     }
 
     void TearDown() override {
@@ -32,4 +34,5 @@ class MemoryAllocatorFixture : public MemoryManagementFixture {
   protected:
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
     MemoryManager *memoryManager;
+    CommandStreamReceiver *csr;
 };

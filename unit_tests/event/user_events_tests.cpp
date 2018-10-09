@@ -892,15 +892,14 @@ TEST_F(EventTests, enqueueReadImageBlockedOnUserEvent) {
 TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
     auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
 
-    MemoryManager *memoryManager = csr.getMemoryManager();
     //kill some temporary objects that fixture creates.
     csr.waitForTaskCountAndCleanAllocationList(-1, TEMPORARY_ALLOCATION);
 
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     GraphicsAllocation *temporaryAllocation = csr.createAllocationAndHandleResidency((void *)0x1234, 200);
 
-    EXPECT_EQ(temporaryAllocation, memoryManager->graphicsAllocations.peekHead());
+    EXPECT_EQ(temporaryAllocation, csr.getTemporaryAllocations().peekHead());
 
     temporaryAllocation->taskCount = 10;
 
@@ -910,7 +909,7 @@ TEST_F(EventTests, waitForEventsDestroysTemporaryAllocations) {
 
     event.waitForEvents(1, eventWaitList);
 
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(EventTest, UserEvent_Wait_NonBlocking) {

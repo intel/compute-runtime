@@ -175,16 +175,16 @@ TEST_F(ProgramDataTest, givenConstantAllocationThatIsInUseByGpuWhenProgramIsBein
 
     buildAndDecodeProgramPatchList();
 
-    auto tagAddress = pProgram->getDevice(0).getTagAddress();
+    auto &csr = pPlatform->getDevice(0)->getCommandStreamReceiver();
+    auto tagAddress = csr.getTagAddress();
     auto constantSurface = pProgram->getConstantSurface();
     constantSurface->taskCount = *tagAddress + 1;
 
-    auto memoryManager = pProgram->getDevice(0).getMemoryManager();
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     delete pProgram;
     pProgram = nullptr;
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
-    EXPECT_EQ(constantSurface, memoryManager->graphicsAllocations.peekHead());
+    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(constantSurface, csr.getTemporaryAllocations().peekHead());
 }
 
 TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingDestroyedThenItIsAddedToTemporaryAllocationList) {
@@ -192,16 +192,16 @@ TEST_F(ProgramDataTest, givenGlobalAllocationThatIsInUseByGpuWhenProgramIsBeingD
 
     buildAndDecodeProgramPatchList();
 
-    auto tagAddress = pProgram->getDevice(0).getTagAddress();
+    auto &csr = pPlatform->getDevice(0)->getCommandStreamReceiver();
+    auto tagAddress = csr.getTagAddress();
     auto globalSurface = pProgram->getGlobalSurface();
     globalSurface->taskCount = *tagAddress + 1;
 
-    auto memoryManager = pProgram->getDevice(0).getMemoryManager();
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     delete pProgram;
     pProgram = nullptr;
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
-    EXPECT_EQ(globalSurface, memoryManager->graphicsAllocations.peekHead());
+    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(globalSurface, csr.getTemporaryAllocations().peekHead());
 }
 
 TEST_F(ProgramDataTest, GivenDeviceForcing32BitMessagesWhenConstAllocationIsPresentInProgramBinariesThen32BitStorageIsAllocated) {

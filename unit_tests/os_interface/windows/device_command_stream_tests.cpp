@@ -47,10 +47,9 @@ using namespace ::testing;
 
 class WddmCommandStreamFixture {
   public:
-    std::unique_ptr<MockDevice> device;
-    std::unique_ptr<MemoryManager> memManager;
-    std::unique_ptr<DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>> csr;
-    MockWddmMemoryManager *mockWddmMM = nullptr;
+    std::unique_ptr<Device> device;
+    DeviceCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME> *csr;
+    MockWddmMemoryManager *memoryManager = nullptr;
     WddmMock *wddm = nullptr;
     DebugManagerStateRestore stateRestore;
 
@@ -63,23 +62,17 @@ class WddmCommandStreamFixture {
 
         executionEnvironment->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->osInterface->get()->setWddm(wddm);
-        csr = std::make_unique<WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>>(*platformDevices[0], *executionEnvironment);
+        csr = new WddmCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>(*platformDevices[0], *executionEnvironment);
+        executionEnvironment->commandStreamReceivers.push_back(std::unique_ptr<CommandStreamReceiver>(csr));
 
-        ASSERT_NE(nullptr, csr);
+        memoryManager = new MockWddmMemoryManager(wddm, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(memoryManager);
 
-        mockWddmMM = new MockWddmMemoryManager(wddm, *executionEnvironment);
-        memManager.reset(mockWddmMM);
-        memManager->registerOsContext(new OsContext(executionEnvironment->osInterface.get(), 0u));
-        csr->setMemoryManager(memManager.get());
-
-        ASSERT_NE(nullptr, memManager);
-        device.reset(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
+        device.reset(Device::create<Device>(platformDevices[0], executionEnvironment, 0u));
         ASSERT_NE(nullptr, device);
     }
 
     virtual void TearDown() {
-        mockWddmMM = nullptr;
-        delete csr->getTagAddress();
     }
 };
 
@@ -117,7 +110,7 @@ struct MockWddmCsr : public WddmCommandStreamReceiver<GfxFamily> {
 class WddmCommandStreamWithMockGdiFixture {
   public:
     MockWddmCsr<DEFAULT_TEST_FAMILY_NAME> *csr = nullptr;
-    MemoryManager *memManager = nullptr;
+    MemoryManager *memoryManager = nullptr;
     MockDevice *device = nullptr;
     WddmMock *wddm = nullptr;
     MockGdi *gdi = nullptr;
@@ -137,20 +130,20 @@ class WddmCommandStreamWithMockGdiFixture {
         executionEnvironment->commandStreamReceivers.push_back(std::make_unique<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME>>(*platformDevices[0],
                                                                                                                        *executionEnvironment));
         this->csr = static_cast<MockWddmCsr<DEFAULT_TEST_FAMILY_NAME> *>(executionEnvironment->commandStreamReceivers[0].get());
-        memManager = csr->createMemoryManager(false, false);
-        ASSERT_NE(nullptr, memManager);
-        executionEnvironment->memoryManager.reset(memManager);
+        memoryManager = csr->createMemoryManager(false, false);
+        ASSERT_NE(nullptr, memoryManager);
+        executionEnvironment->memoryManager.reset(memoryManager);
         device = Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u);
         ASSERT_NE(nullptr, device);
         this->csr->overrideRecorededCommandBuffer(*device);
         if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-            preemptionAllocation = memManager->allocateGraphicsMemory(1024);
+            preemptionAllocation = memoryManager->allocateGraphicsMemory(1024);
         }
     }
 
     virtual void TearDown() {
         if (preemptionAllocation) {
-            memManager->freeGraphicsMemory(preemptionAllocation);
+            memoryManager->freeGraphicsMemory(preemptionAllocation);
         }
         wddm = nullptr;
         delete device;
@@ -193,7 +186,7 @@ TEST_F(WddmCommandStreamTest, givenFlushStampWhenWaitCalledThenWaitForSpecifiedM
 }
 
 TEST_F(WddmCommandStreamTest, Flush) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -203,11 +196,11 @@ TEST_F(WddmCommandStreamTest, Flush) {
     EXPECT_TRUE(wddm->submitResult.success);
     EXPECT_EQ(flushStamp, device->getOsContext()->get()->getMonitoredFence().lastSubmittedFence);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThenCpuAddressWhenSubmitIsCalledThenGpuAddressIsUsed) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
 
     auto cpuAddress = commandBuffer->getUnderlyingBuffer();
     uint64_t mockGpuAddres = 1337;
@@ -217,11 +210,11 @@ TEST_F(WddmCommandStreamTest, givenGraphicsAllocationWithDifferentGpuAddressThen
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
     auto flushStamp = csr->flush(batchBuffer, EngineType::ENGINE_RCS, csr->getResidencyAllocations(), *device->getOsContext());
     EXPECT_EQ(mockGpuAddres, wddm->submitResult.commandBufferSubmitted);
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     auto offset = 128u;
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -231,11 +224,11 @@ TEST_F(WddmCommandStreamTest, FlushWithOffset) {
     EXPECT_TRUE(wddm->submitResult.success);
     EXPECT_EQ(wddm->submitResult.commandBufferSubmitted, commandBuffer->getGpuAddress() + offset);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFlagIsSetToFalse) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -247,7 +240,7 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledThenCoherencyRequiredFl
 
     EXPECT_FALSE(pHeader->RequiresCoherency);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST(WddmPreemptionHeaderTests, givenWddmCommandStreamReceiverWhenPreemptionIsOffWhenWorkloadIsSubmittedThenHeaderDoesntHavePreemptionFieldSet) {
@@ -334,7 +327,7 @@ TEST(WddmPreemptionHeaderTests, givenDevicenotSupportingPreemptionWhenCommandStr
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -348,11 +341,11 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToLowThenS
     EXPECT_EQ(1, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -366,11 +359,11 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToMediumTh
     EXPECT_EQ(0, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThenSetHeaderFieldsProperly) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -384,16 +377,16 @@ TEST_F(WddmCommandStreamTest, givenWdmmWhenSubmitIsCalledAndThrottleIsToHighThen
     EXPECT_EQ((wddm->getGtSysInfo()->SubSliceCount <= maxRequestedSubsliceCount) ? wddm->getGtSysInfo()->SubSliceCount : 0, pHeader->UmdRequestedSubsliceCount);
     EXPECT_EQ(wddm->getGtSysInfo()->EUCount / wddm->getGtSysInfo()->SubSliceCount, pHeader->UmdRequestedEUCount);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAllocationsForResidencyThenNoneAllocationShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -404,12 +397,12 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafDisabledWhenFlushIsCalledWithAll
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
 
-    memManager->freeGraphicsMemory(commandBuffer);
-    memManager->freeGraphicsMemory(linearStreamAllocation);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(linearStreamAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutAllocationsForResidencyThenNoneAllocationShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
@@ -420,16 +413,16 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithoutA
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResidencyAllocationsInMemoryManagerThenLinearStreamAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
 
@@ -444,17 +437,17 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithResi
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
     EXPECT_EQ(linearStreamAllocation, wddm->kmDafLockResult.lockedAllocations[0]);
 
-    memManager->freeGraphicsMemory(commandBuffer);
-    memManager->freeGraphicsMemory(linearStreamAllocation);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(linearStreamAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenLinearStreamAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto linearStreamAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto linearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, linearStreamAllocation);
     linearStreamAllocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
     ResidencyContainer allocationsForResidency = {linearStreamAllocation};
@@ -466,17 +459,17 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
     EXPECT_EQ(linearStreamAllocation, wddm->kmDafLockResult.lockedAllocations[0]);
 
-    memManager->freeGraphicsMemory(commandBuffer);
-    memManager->freeGraphicsMemory(linearStreamAllocation);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(linearStreamAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenFillPatternAllocationsShouldBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto fillPatternAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto fillPatternAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, fillPatternAllocation);
     fillPatternAllocation->setAllocationType(GraphicsAllocation::AllocationType::FILL_PATTERN);
     ResidencyContainer allocationsForResidency = {fillPatternAllocation};
@@ -488,17 +481,17 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     EXPECT_EQ(1u, wddm->kmDafLockResult.lockedAllocations.size());
     EXPECT_EQ(fillPatternAllocation, wddm->kmDafLockResult.lockedAllocations[0]);
 
-    memManager->freeGraphicsMemory(commandBuffer);
-    memManager->freeGraphicsMemory(fillPatternAllocation);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(fillPatternAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllocationsForResidencyThenNonLinearStreamAllocationShouldNotBeKmDafLocked) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
     BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, cs.getUsed(), &cs};
 
-    auto nonLinearStreamAllocation = memManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
+    auto nonLinearStreamAllocation = memoryManager->allocateGraphicsMemory(sizeof(uint32_t), sizeof(uint32_t), false, false);
     ASSERT_NE(nullptr, nonLinearStreamAllocation);
     ResidencyContainer allocationsForResidency = {nonLinearStreamAllocation};
 
@@ -508,14 +501,14 @@ TEST_F(WddmCommandStreamTest, givenWddmWithKmDafEnabledWhenFlushIsCalledWithAllo
     EXPECT_EQ(0u, wddm->kmDafLockResult.called);
     EXPECT_EQ(0u, wddm->kmDafLockResult.lockedAllocations.size());
 
-    memManager->freeGraphicsMemory(commandBuffer);
-    memManager->freeGraphicsMemory(nonLinearStreamAllocation);
+    memoryManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(nonLinearStreamAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, makeResident) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -525,13 +518,13 @@ TEST_F(WddmCommandStreamTest, makeResident) {
     EXPECT_EQ(1u, csr->getResidencyAllocations().size());
     EXPECT_EQ(commandBuffer, csr->getResidencyAllocations()[0]);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -541,14 +534,14 @@ TEST_F(WddmCommandStreamTest, makeNonResidentPutsAllocationInEvictionAllocations
 
     EXPECT_EQ(1u, csr->getEvictionAllocations().size());
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidateList) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *allocation = memManager->allocateGraphicsMemory(4096);
-    GraphicsAllocation *allocation2 = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *allocation2 = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, allocation);
     ASSERT_NE(nullptr, allocation2);
 
@@ -559,16 +552,16 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 
     csr->processEviction(*device->getOsContext());
 
-    EXPECT_EQ(2u, mockWddmMM->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(2u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
 
-    memManager->freeGraphicsMemory(allocation);
-    memManager->freeGraphicsMemory(allocation2);
+    memoryManager->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation2);
 }
 
 TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
-    GraphicsAllocation *allocation = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *allocation = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, allocation);
 
     csr->getEvictionAllocations().push_back(allocation);
@@ -579,13 +572,13 @@ TEST_F(WddmCommandStreamTest, processEvictionClearsEvictionAllocations) {
 
     EXPECT_EQ(0u, csr->getEvictionAllocations().size());
 
-    memManager->freeGraphicsMemory(allocation);
+    memoryManager->freeGraphicsMemory(allocation);
 }
 
 TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
-    GraphicsAllocation *gfxAllocation = memManager->allocateGraphicsMemory(256);
+    GraphicsAllocation *gfxAllocation = memoryManager->allocateGraphicsMemory(256);
     Buffer *buffer = new AlignedBuffer(gfxAllocation);
-    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memManager.get());
+    WddmMemoryManager *wddmMM = reinterpret_cast<WddmMemoryManager *>(memoryManager);
 
     csr->makeResident(*buffer->getGraphicsAllocation());
     EXPECT_EQ(0u, wddm->makeResidentResult.called);
@@ -596,7 +589,7 @@ TEST_F(WddmCommandStreamTest, makeResidentNonResidentMemObj) {
     EXPECT_EQ(gfxAllocation, csr->getEvictionAllocations()[0]);
 
     delete buffer;
-    memManager->freeGraphicsMemory(gfxAllocation);
+    memoryManager->freeGraphicsMemory(gfxAllocation);
 }
 
 TEST_F(WddmCommandStreamTest, createAllocationAndMakeResident) {
@@ -613,7 +606,7 @@ TEST_F(WddmCommandStreamTest, createAllocationAndMakeResident) {
 }
 
 TEST_F(WddmCommandStreamTest, givenHostPtrWhenPtrBelowRestrictionThenCreateAllocationAndMakeResident) {
-    void *hostPtr = reinterpret_cast<void *>(memManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
+    void *hostPtr = reinterpret_cast<void *>(memoryManager->getAlignedMallocRestrictions()->minAddress - 0x1000);
     auto size = 0x2000u;
 
     WddmAllocation *gfxAllocation = static_cast<WddmAllocation *>(csr->createAllocationAndHandleResidency(hostPtr, size));
@@ -673,7 +666,7 @@ TEST_F(WddmCommandStreamTest, killCompletedAllocations) {
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAllocations) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -688,11 +681,11 @@ TEST_F(WddmCommandStreamMockGdiTest, FlushCallsWddmMakeResidentForResidencyAlloc
 
     EXPECT_NE(0u, gdi->getMakeResidentArg().NumAllocations);
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
-    GraphicsAllocation *commandBuffer = memManager->allocateGraphicsMemory(4096);
+    GraphicsAllocation *commandBuffer = memoryManager->allocateGraphicsMemory(4096);
     ASSERT_NE(nullptr, commandBuffer);
     LinearStream cs(commandBuffer);
 
@@ -712,7 +705,7 @@ TEST_F(WddmCommandStreamMockGdiTest, makeResidentClearsResidencyAllocations) {
 
     EXPECT_EQ(0u, ((WddmAllocation *)commandBuffer)->getTrimCandidateListPosition());
 
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(commandBuffer);
 }
 
 HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmittedThenFlushTaskIsProperlyCalled) {
@@ -722,7 +715,7 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
         csrSurfaceCount = 2;
         tmpAllocation = GlobalMockSipProgram::sipProgram->getAllocation();
-        GlobalMockSipProgram::sipProgram->resetAllocation(memManager->allocateGraphicsMemory(1024));
+        GlobalMockSipProgram::sipProgram->resetAllocation(memoryManager->allocateGraphicsMemory(1024));
     }
 
     csr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -730,10 +723,10 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     auto mockedSubmissionsAggregator = new mockSubmissionsAggregator();
     csr->overrideSubmissionAggregator(mockedSubmissionsAggregator);
 
-    auto commandBuffer = memManager->allocateGraphicsMemory(1024);
-    auto dshAlloc = memManager->allocateGraphicsMemory(1024);
-    auto iohAlloc = memManager->allocateGraphicsMemory(1024);
-    auto sshAlloc = memManager->allocateGraphicsMemory(1024);
+    auto commandBuffer = memoryManager->allocateGraphicsMemory(1024);
+    auto dshAlloc = memoryManager->allocateGraphicsMemory(1024);
+    auto iohAlloc = memoryManager->allocateGraphicsMemory(1024);
+    auto sshAlloc = memoryManager->allocateGraphicsMemory(1024);
 
     auto tagAllocation = csr->getTagAllocation();
     csr->setPreemptionCsrAllocation(preemptionAllocation);
@@ -791,12 +784,12 @@ HWTEST_F(WddmCommandStreamMockGdiTest, givenRecordedCommandBufferWhenItIsSubmitt
     EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)sshAlloc)->getTrimCandidateListPosition());
     EXPECT_NE(trimListUnusedPosition, ((WddmAllocation *)csrCommandStream)->getTrimCandidateListPosition());
 
-    memManager->freeGraphicsMemory(dshAlloc);
-    memManager->freeGraphicsMemory(iohAlloc);
-    memManager->freeGraphicsMemory(sshAlloc);
-    memManager->freeGraphicsMemory(commandBuffer);
+    memoryManager->freeGraphicsMemory(dshAlloc);
+    memoryManager->freeGraphicsMemory(iohAlloc);
+    memoryManager->freeGraphicsMemory(sshAlloc);
+    memoryManager->freeGraphicsMemory(commandBuffer);
     if (device->getPreemptionMode() == PreemptionMode::MidThread) {
-        memManager->freeGraphicsMemory(GlobalMockSipProgram::sipProgram->getAllocation());
+        memoryManager->freeGraphicsMemory(GlobalMockSipProgram::sipProgram->getAllocation());
         GlobalMockSipProgram::sipProgram->resetAllocation(tmpAllocation);
     }
 }
@@ -929,11 +922,11 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
         auto mockMngr = reinterpret_cast<MockGmmPageTableMngr *>(myMockWddm->getPageTableManager());
         std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
 
-        auto memManager = executionEnvironment->memoryManager.get();
+        auto memoryManager = executionEnvironment->memoryManager.get();
 
         auto &csrCS = mockWddmCsr->getCS();
 
-        auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
+        auto graphicsAllocation = memoryManager->allocateGraphicsMemory(1024);
         IndirectHeap cs(graphicsAllocation);
 
         EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
@@ -954,7 +947,7 @@ HWTEST_F(WddmCsrCompressionTests, givenEnabledCompressionWhenFlushingThenInitTra
         mockWddmCsr->flushTask(cs, 0u, cs, cs, cs, 0u, dispatchFlags, *device);
 
         mockWddmCsr->flushBatchedSubmissions();
-        memManager->freeGraphicsMemory(graphicsAllocation);
+        memoryManager->freeGraphicsMemory(graphicsAllocation);
     }
 }
 
@@ -970,11 +963,11 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
 
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(platformDevices[0], executionEnvironment, 0u));
 
-    auto memManager = executionEnvironment->memoryManager.get();
+    auto memoryManager = executionEnvironment->memoryManager.get();
 
     EXPECT_EQ(nullptr, myMockWddm->getPageTableManager());
 
-    auto graphicsAllocation = memManager->allocateGraphicsMemory(1024);
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemory(1024);
     IndirectHeap cs(graphicsAllocation);
 
     EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
@@ -985,5 +978,5 @@ HWTEST_F(WddmCsrCompressionTests, givenDisabledCompressionWhenFlushingThenDontIn
     EXPECT_FALSE(mockWddmCsr->pageTableManagerInitialized);
 
     mockWddmCsr->flushBatchedSubmissions();
-    memManager->freeGraphicsMemory(graphicsAllocation);
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

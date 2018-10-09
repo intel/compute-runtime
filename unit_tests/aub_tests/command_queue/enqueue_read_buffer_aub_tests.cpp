@@ -73,7 +73,7 @@ HWTEST_P(AUBReadBuffer, simple) {
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    allocation = pCommandStreamReceiver->getMemoryManager()->graphicsAllocations.peekHead();
+    allocation = pCommandStreamReceiver->getTemporaryAllocations().peekHead();
     while (allocation && allocation->getUnderlyingBuffer() != pDestMemory) {
         allocation = allocation->next;
     }

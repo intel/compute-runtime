@@ -17,7 +17,6 @@
 namespace OCLRT {
 class OSTime;
 class MemoryManager;
-class MockMemoryManager;
 
 extern CommandStreamReceiver *createCommandStream(const HardwareInfo *pHwInfo, ExecutionEnvironment &executionEnvironment);
 
@@ -66,7 +65,7 @@ class MockDevice : public Device {
         }
     }
 
-    void injectMemoryManager(MockMemoryManager *);
+    void injectMemoryManager(MemoryManager *);
 
     void setPerfCounters(PerformanceCounters *perfCounters) {
         performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);

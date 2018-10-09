@@ -15,8 +15,9 @@
 #include "runtime/helpers/completion_stamp.h"
 #include "runtime/helpers/flat_batch_buffer_helper.h"
 #include "runtime/helpers/options.h"
-#include "runtime/kernel/grf_config.h"
 #include "runtime/indirect_heap/indirect_heap.h"
+#include "runtime/kernel/grf_config.h"
+#include "runtime/memory_manager/allocations_list.h"
 #include <cstddef>
 #include <cstdint>
 
@@ -149,6 +150,8 @@ class CommandStreamReceiver {
     size_t defaultSshSize;
 
     void setDeviceIndex(uint32_t deviceIndex) { this->deviceIndex = deviceIndex; }
+    AllocationsList &getTemporaryAllocations() { return temporaryAllocations; }
+    AllocationsList &getAllocationsForReuse() { return allocationsForReuse; }
 
   protected:
     void setDisableL3Cache(bool val) {
@@ -211,6 +214,9 @@ class CommandStreamReceiver {
     std::unique_ptr<KmdNotifyHelper> kmdNotifyHelper;
     ExecutionEnvironment &executionEnvironment;
     uint32_t deviceIndex = 0u;
+
+    AllocationsList temporaryAllocations;
+    AllocationsList allocationsForReuse;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(const HardwareInfo &hwInfoIn, bool withAubDump, ExecutionEnvironment &executionEnvironment);

@@ -365,11 +365,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, argumentTwoShouldMatchPatternPtr) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->graphicsAllocations.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    ASSERT_FALSE(mmgr->graphicsAllocations.peekIsEmpty());
-    GraphicsAllocation *allocation = mmgr->graphicsAllocations.peekHead();
+    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
 
     while (allocation != nullptr) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
@@ -386,11 +386,11 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeCopied) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->graphicsAllocations.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     EnqueueFillBufferHelper<>::enqueueFillBuffer(pCmdQ, buffer);
-    ASSERT_FALSE(mmgr->graphicsAllocations.peekIsEmpty());
-    GraphicsAllocation *allocation = mmgr->graphicsAllocations.peekHead();
+    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
 
     while (allocation != nullptr) {
         if ((allocation->getUnderlyingBufferSize() >= sizeof(float)) &&
@@ -408,9 +408,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternShouldBeAligned) {
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeOneByteShouldGetPreparedForMiddleKernel) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
-    ASSERT_TRUE(mmgr->graphicsAllocations.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     const uint8_t pattern[1] = {0x55};
@@ -431,19 +431,19 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeOneByteShouldGetPreparedForMidd
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
-    ASSERT_FALSE(mmgr->graphicsAllocations.peekIsEmpty());
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = mmgr->graphicsAllocations.peekHead();
+    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeTwoBytesShouldGetPreparedForMiddleKernel) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
-    ASSERT_TRUE(mmgr->graphicsAllocations.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     const uint8_t pattern[2] = {0x55, 0xAA};
@@ -464,18 +464,18 @@ HWTEST_F(EnqueueFillBufferCmdTests, patternOfSizeTwoBytesShouldGetPreparedForMid
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
-    ASSERT_FALSE(mmgr->graphicsAllocations.peekIsEmpty());
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
+    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *allocation = mmgr->graphicsAllocations.peekHead();
+    GraphicsAllocation *allocation = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, allocation);
 
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), output, size));
 }
 
 HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->graphicsAllocations.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
 
     auto dstBuffer = std::unique_ptr<Buffer>(BufferHelper<>::create());
     const uint8_t pattern[1] = {0x55};
@@ -495,9 +495,9 @@ HWTEST_F(EnqueueFillBufferCmdTests, givenEnqueueFillBufferWhenPatternAllocationI
         nullptr);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_FALSE(mmgr->graphicsAllocations.peekIsEmpty());
+    ASSERT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = mmgr->graphicsAllocations.peekHead();
+    GraphicsAllocation *patternAllocation = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());

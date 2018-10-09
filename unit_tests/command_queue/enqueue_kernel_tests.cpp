@@ -497,7 +497,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
 
     csr.getMemoryManager()->setForce32BitAllocations(false);
 
-    EXPECT_TRUE(csr.getMemoryManager()->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
     SPatchMediaVFEState mediaVFEstate;
     auto scratchSize = GetParam().ScratchSize;
@@ -621,7 +621,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, EnqueueScratchSpaceTests, GivenKernelRequiringScratc
         EXPECT_EQ((uintptr_t)graphicsAllocation2->getUnderlyingBuffer(), GSBaddress + PreambleHelper<FamilyType>::getScratchSpaceOffsetFor64bit());
     }
 
-    EXPECT_TRUE(csr.getMemoryManager()->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 }
 
 INSTANTIATE_TEST_CASE_P(EnqueueKernel,

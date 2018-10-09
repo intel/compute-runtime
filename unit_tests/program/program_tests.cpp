@@ -659,15 +659,15 @@ TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanKernelInfoIsCalledThenKernelA
 
 TEST_P(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDefferedFreeList) {
     cl_device_id device = pDevice;
-    auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    auto &csr = pDevice->getCommandStreamReceiver();
+    EXPECT_TRUE(csr.getTemporaryAllocations().peekIsEmpty());
     pProgram->build(1, &device, nullptr, nullptr, nullptr, true);
     auto kernelAllocation = pProgram->getKernelInfo(size_t(0))->getGraphicsAllocation();
     kernelAllocation->taskCount = 100;
     *pDevice->getTagAddress() = 0;
     pProgram->cleanCurrentKernelInfo();
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
-    EXPECT_EQ(memoryManager->graphicsAllocations.peekHead(), kernelAllocation);
+    EXPECT_FALSE(csr.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(csr.getTemporaryAllocations().peekHead(), kernelAllocation);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

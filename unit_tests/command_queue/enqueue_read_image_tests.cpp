@@ -226,9 +226,9 @@ HWTEST_F(EnqueueReadImageTest, GivenImage1DarrayWhenReadImageIsCalledThenHostPtr
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_FALSE, origin, region);
 
-    auto memoryManager = pCmdQ->getDevice().getMemoryManager();
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
 
-    auto temporaryAllocation = memoryManager->graphicsAllocations.peekHead();
+    auto temporaryAllocation = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, temporaryAllocation);
 
     EXPECT_EQ(temporaryAllocation->getUnderlyingBufferSize(), imageSize);
@@ -245,9 +245,9 @@ HWTEST_F(EnqueueReadImageTest, GivenImage2DarrayWhenReadImageIsCalledThenHostPtr
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ, srcImage, CL_FALSE, origin, region);
 
-    auto memoryManager = pCmdQ->getDevice().getMemoryManager();
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
 
-    auto temporaryAllocation = memoryManager->graphicsAllocations.peekHead();
+    auto temporaryAllocation = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, temporaryAllocation);
 
     EXPECT_EQ(temporaryAllocation->getUnderlyingBufferSize(), imageSize);

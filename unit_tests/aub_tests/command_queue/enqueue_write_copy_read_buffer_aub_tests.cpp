@@ -113,7 +113,7 @@ void AubWriteCopyReadBuffer::runTest() {
 
     pCmdQ->flush();
 
-    GraphicsAllocation *allocation = csr->getMemoryManager()->graphicsAllocations.peekHead();
+    GraphicsAllocation *allocation = csr->getTemporaryAllocations().peekHead();
     while (allocation && allocation->getUnderlyingBuffer() != hostPtrMemory) {
         allocation = allocation->next;
     }

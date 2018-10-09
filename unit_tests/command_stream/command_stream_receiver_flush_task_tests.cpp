@@ -1697,7 +1697,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, InForced32BitAllocationsModeStore3
         auto newScratchAllocation = commandStreamReceiver->getScratchAllocation();
         EXPECT_NE(scratchAllocation, newScratchAllocation); // Allocation changed
 
-        std::unique_ptr<GraphicsAllocation> allocationTemporary = pDevice->getMemoryManager()->graphicsAllocations.detachAllocation(0, nullptr, true);
+        std::unique_ptr<GraphicsAllocation> allocationTemporary = commandStreamReceiver->getTemporaryAllocations().detachAllocation(0, nullptr, true);
 
         EXPECT_EQ(scratchAllocation, allocationTemporary.get());
         pDevice->getMemoryManager()->freeGraphicsMemory(allocationTemporary.release());
@@ -3135,16 +3135,16 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenTemporaryAndReusableAl
     commandStreamReceiver.latestFlushedTaskCount = 9;
     commandStreamReceiver.cleanupResources();
 
-    EXPECT_EQ(reusableToHold, memoryManager->allocationsForReuse.peekHead());
-    EXPECT_EQ(reusableToHold, memoryManager->allocationsForReuse.peekTail());
+    EXPECT_EQ(reusableToHold, commandStreamReceiver.getAllocationsForReuse().peekHead());
+    EXPECT_EQ(reusableToHold, commandStreamReceiver.getAllocationsForReuse().peekTail());
 
-    EXPECT_EQ(temporaryToHold, memoryManager->graphicsAllocations.peekHead());
-    EXPECT_EQ(temporaryToHold, memoryManager->graphicsAllocations.peekTail());
+    EXPECT_EQ(temporaryToHold, commandStreamReceiver.getTemporaryAllocations().peekHead());
+    EXPECT_EQ(temporaryToHold, commandStreamReceiver.getTemporaryAllocations().peekTail());
 
     commandStreamReceiver.latestFlushedTaskCount = 11;
     commandStreamReceiver.cleanupResources();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenDispatchFlagsWithThrottleSetToLowWhenFlushTaskIsCalledThenThrottleIsSetInBatchBuffer) {

@@ -199,9 +199,9 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage1DarrayWhenReadWriteImageIsCalledThenH
 
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage2, CL_FALSE, origin, region);
 
-    auto memoryManager = pCmdQ->getDevice().getMemoryManager();
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
 
-    auto temporaryAllocation1 = memoryManager->graphicsAllocations.peekHead();
+    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, temporaryAllocation1);
 
     EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);
@@ -223,9 +223,9 @@ HWTEST_F(EnqueueWriteImageTest, GivenImage2DarrayWhenReadWriteImageIsCalledThenH
 
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ, dstImage2, CL_FALSE, origin, region);
 
-    auto memoryManager = pCmdQ->getDevice().getMemoryManager();
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
 
-    auto temporaryAllocation1 = memoryManager->graphicsAllocations.peekHead();
+    auto temporaryAllocation1 = csr.getTemporaryAllocations().peekHead();
     ASSERT_NE(nullptr, temporaryAllocation1);
 
     EXPECT_EQ(temporaryAllocation1->getUnderlyingBufferSize(), imageSize);

@@ -424,8 +424,8 @@ TEST_F(EnqueueSvmTest, enqueueSVMMemFillDoubleToReuseAllocation_Success) {
 }
 
 TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThenItsTypeShouldBeSetToFillPattern) {
-    MemoryManager *mmgr = pCmdQ->getDevice().getMemoryManager();
-    ASSERT_TRUE(mmgr->allocationsForReuse.peekIsEmpty());
+    auto &csr = pCmdQ->getDevice().getCommandStreamReceiver();
+    ASSERT_TRUE(csr.getAllocationsForReuse().peekIsEmpty());
 
     const float pattern[1] = {1.2345f};
     const size_t patternSize = sizeof(pattern);
@@ -440,9 +440,9 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_FALSE(mmgr->allocationsForReuse.peekIsEmpty());
+    ASSERT_FALSE(csr.getAllocationsForReuse().peekIsEmpty());
 
-    GraphicsAllocation *patternAllocation = mmgr->allocationsForReuse.peekHead();
+    GraphicsAllocation *patternAllocation = csr.getAllocationsForReuse().peekHead();
     ASSERT_NE(nullptr, patternAllocation);
 
     EXPECT_EQ(GraphicsAllocation::AllocationType::FILL_PATTERN, patternAllocation->getAllocationType());

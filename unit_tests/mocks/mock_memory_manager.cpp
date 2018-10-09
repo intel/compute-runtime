@@ -5,6 +5,7 @@
  *
  */
 
+#include "runtime/command_stream/command_stream_receiver.h"
 #include "runtime/memory_manager/deferred_deleter.h"
 #include "runtime/gmm_helper/gmm.h"
 #include "runtime/helpers/surface_formats.h"
@@ -34,11 +35,11 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryForImage(ImageInfo 
 }
 
 bool MockMemoryManager::isAllocationListEmpty() {
-    return graphicsAllocations.peekIsEmpty();
+    return getCommandStreamReceiver(0)->getTemporaryAllocations().peekIsEmpty();
 }
 
 GraphicsAllocation *MockMemoryManager::peekAllocationListHead() {
-    return graphicsAllocations.peekHead();
+    return getCommandStreamReceiver(0)->getTemporaryAllocations().peekHead();
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemory64kb(size_t size, size_t alignment, bool forcePin, bool preferRenderCompressed) {

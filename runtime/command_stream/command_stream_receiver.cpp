@@ -49,6 +49,13 @@ CommandStreamReceiver::~CommandStreamReceiver() {
         }
     }
     cleanupResources();
+
+    if (!allocationsForReuse.peekIsEmpty()) {
+        getMemoryManager()->freeAllocationsList(-1, allocationsForReuse);
+    }
+    if (!temporaryAllocations.peekIsEmpty()) {
+        getMemoryManager()->freeAllocationsList(-1, temporaryAllocations);
+    }
 }
 
 void CommandStreamReceiver::makeResident(GraphicsAllocation &gfxAllocation) {
@@ -111,14 +118,17 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
 }
 
 void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationType) {
-
     auto address = getTagAddress();
     if (address && requiredTaskCount != (unsigned int)-1) {
         while (*address < requiredTaskCount)
             ;
     }
 
-    getMemoryManager()->cleanAllocationList(requiredTaskCount, allocationType);
+    auto &allocationList = (allocationType == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse;
+    if (allocationList.peekIsEmpty()) {
+        return;
+    }
+    getMemoryManager()->freeAllocationsList(requiredTaskCount, allocationList);
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() {

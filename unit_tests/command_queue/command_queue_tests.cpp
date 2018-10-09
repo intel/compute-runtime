@@ -329,26 +329,26 @@ TEST_F(CommandQueueCommandStreamTest, MemoryManagerWithReusableAllocationsWhenAs
     auto allocation = memoryManager->allocateGraphicsMemory(requiredSize);
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation));
+    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*allocation));
 
     const auto &indirectHeap = cmdQ.getCS(100);
 
     EXPECT_EQ(indirectHeap.getGraphicsAllocation(), allocation);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 }
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenItIsDestroyedThenCommandStreamIsPutOnTheReusabeList) {
     auto cmdQ = new CommandQueue(context.get(), pDevice, 0);
     auto memoryManager = pDevice->getMemoryManager();
     const auto &commandStream = cmdQ->getCS(100);
     auto graphicsAllocation = commandStream.getGraphicsAllocation();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     //now destroy command queue, heap should go to reusable list
     delete cmdQ;
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*graphicsAllocation));
+    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*graphicsAllocation));
 }
 
 TEST_F(CommandQueueCommandStreamTest, CommandQueueWhenAskedForNewCommandStreamStoresOldHeapForReuse) {
@@ -357,19 +357,19 @@ TEST_F(CommandQueueCommandStreamTest, CommandQueueWhenAskedForNewCommandStreamSt
 
     auto memoryManager = pDevice->getMemoryManager();
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     const auto &indirectHeap = cmdQ.getCS(100);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     auto graphicsAllocation = indirectHeap.getGraphicsAllocation();
 
     cmdQ.getCS(10000);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*graphicsAllocation));
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*graphicsAllocation));
 }
 
 TEST_F(CommandQueueCommandStreamTest, givenCommandQueueWhenGetCSIsCalledThenCommandStreamAllocationTypeShouldBeSetToLinearStream) {
@@ -495,8 +495,8 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation));
+    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*allocation));
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
 
@@ -511,7 +511,7 @@ TEST_P(CommandQueueIndirectHeapTest, MemoryManagerWithReusableAllocationsWhenAsk
         EXPECT_EQ(allocationSize, indirectHeap.getMaxAvailableSpace());
     }
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 }
 
 TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHeapForReuse) {
@@ -519,7 +519,7 @@ TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHea
     CommandQueue cmdQ(context.get(), pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
     auto heapSize = indirectHeap.getAvailableSpace();
@@ -529,9 +529,9 @@ TEST_P(CommandQueueIndirectHeapTest, CommandQueueWhenAskedForNewHeapStoresOldHea
     // Request a larger heap than the first.
     cmdQ.getIndirectHeap(this->GetParam(), heapSize + 6000);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*graphicsAllocation));
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekContains(*graphicsAllocation));
 }
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenAskedForNewHeapReturnsAcquiresNewAllocationWithoutStoring) {
@@ -540,7 +540,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithoutHeapAllocationWhenA
 
     auto memoryManager = pDevice->getMemoryManager();
     auto &csr = pDevice->getUltCommandStreamReceiver<DEFAULT_TEST_FAMILY_NAME>();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
     auto heapSize = indirectHeap.getAvailableSpace();
@@ -561,11 +561,11 @@ TEST_P(CommandQueueIndirectHeapTest, givenCommandQueueWithResourceCachingActiveW
     auto cmdQ = new CommandQueue(context.get(), pDevice, 0);
     auto memoryManager = pDevice->getMemoryManager();
     cmdQ->getIndirectHeap(this->GetParam(), 100);
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     //now destroy command queue, heap should go to reusable list
     delete cmdQ;
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 }
 
 TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndirectHeapIsReleasedThenHeapAllocationAndHeapBufferIsSetToNullptr) {
@@ -573,7 +573,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapAllocatedWhenIndir
     MockCommandQueue cmdQ(context.get(), pDevice, props);
 
     auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     const auto &indirectHeap = cmdQ.getIndirectHeap(this->GetParam(), 100);
     auto heapSize = indirectHeap.getMaxAvailableSpace();
@@ -617,7 +617,7 @@ TEST_P(CommandQueueIndirectHeapTest, GivenCommandQueueWithHeapWhenGraphicAllocat
     cmdQ.releaseIndirectHeap(this->GetParam());
 
     auto memoryManager = pDevice->getMemoryManager();
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(memoryManager->getCommandStreamReceiver(0)->getAllocationsForReuse().peekIsEmpty());
 
     memoryManager->freeGraphicsMemory(allocation);
 }

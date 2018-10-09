@@ -36,13 +36,13 @@ ExperimentalCommandBuffer::~ExperimentalCommandBuffer() {
         printDebugString(defaultPrint, stdout, "#%u: delta %llu start %llu stop %llu\n", i, delta, start, stop);
         timestamp += 2;
     }
-    MemoryManager *memManager = commandStreamReceiver->getMemoryManager();
-    if (memManager) {
-        memManager->freeGraphicsMemory(timestamps);
-        memManager->freeGraphicsMemory(experimentalAllocation);
+    MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();
+    if (memoryManager) {
+        memoryManager->freeGraphicsMemory(timestamps);
+        memoryManager->freeGraphicsMemory(experimentalAllocation);
 
         if (currentStream.get()) {
-            memManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(currentStream->getGraphicsAllocation()), REUSABLE_ALLOCATION);
+            memoryManager->freeGraphicsMemory(currentStream->getGraphicsAllocation());
             currentStream->replaceGraphicsAllocation(nullptr);
         }
     }
@@ -54,21 +54,21 @@ void ExperimentalCommandBuffer::getCS(size_t minRequiredSize) {
     }
     minRequiredSize += CSRequirements::minCommandQueueCommandStreamSize;
     if (currentStream->getAvailableSpace() < minRequiredSize) {
-        MemoryManager *memManager = commandStreamReceiver->getMemoryManager();
+        MemoryManager *memoryManager = commandStreamReceiver->getMemoryManager();
         // If not, allocate a new block. allocate full pages
         minRequiredSize = alignUp(minRequiredSize, MemoryConstants::pageSize);
 
         auto requiredSize = minRequiredSize + CSRequirements::csOverfetchSize;
 
-        GraphicsAllocation *allocation = memManager->obtainReusableAllocation(requiredSize, false).release();
+        GraphicsAllocation *allocation = memoryManager->obtainReusableAllocation(requiredSize, false).release();
         if (!allocation) {
-            allocation = memManager->allocateGraphicsMemory(requiredSize);
+            allocation = memoryManager->allocateGraphicsMemory(requiredSize);
         }
         allocation->setAllocationType(GraphicsAllocation::AllocationType::LINEAR_STREAM);
         // Deallocate the old block, if not null
         auto oldAllocation = currentStream->getGraphicsAllocation();
         if (oldAllocation) {
-            memManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
+            memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(oldAllocation), REUSABLE_ALLOCATION);
         }
         currentStream->replaceBuffer(allocation->getUnderlyingBuffer(), minRequiredSize - CSRequirements::minCommandQueueCommandStreamSize);
         currentStream->replaceGraphicsAllocation(allocation);

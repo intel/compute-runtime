@@ -54,7 +54,7 @@ bool MockDevice::hasDriverInfo() {
     return driverInfo.get() != nullptr;
 };
 
-void MockDevice::injectMemoryManager(MockMemoryManager *memoryManager) {
+void MockDevice::injectMemoryManager(MemoryManager *memoryManager) {
     executionEnvironment->commandStreamReceivers[getDeviceIndex()]->setMemoryManager(memoryManager);
     setMemoryManager(memoryManager);
 }

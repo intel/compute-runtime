@@ -233,7 +233,31 @@ TEST_F(MemoryAllocatorTest, storeTemporaryAllocation) {
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
     allocation->taskCount = 1;
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty() == false);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty() == false);
+}
+
+TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenStoreOrCleanTempoaryAllocationsThenUseFirstCommandStreamReceiver) {
+    void *host_ptr = (void *)0x1234;
+    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    allocation->taskCount = 1;
+    auto csr = memoryManager->getCommandStreamReceiver(0);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
+    memoryManager->cleanAllocationList(1, TEMPORARY_ALLOCATION);
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
+}
+
+TEST_F(MemoryAllocatorTest, givenMemoryManagerWhenStoreOrCleanReusableAllocationsThenUseFirstCommandStreamReceiver) {
+    void *host_ptr = (void *)0x1234;
+    auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
+    allocation->taskCount = 1;
+    auto csr = memoryManager->getCommandStreamReceiver(0);
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
+    memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
+    memoryManager->cleanAllocationList(1, REUSABLE_ALLOCATION);
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 }
 
 TEST_F(MemoryAllocatorTest, selectiveDestroy) {
@@ -251,11 +275,11 @@ TEST_F(MemoryAllocatorTest, selectiveDestroy) {
     //check the same task count first, nothign should be killed
     memoryManager->cleanAllocationList(11, TEMPORARY_ALLOCATION);
 
-    EXPECT_EQ(allocation2, memoryManager->graphicsAllocations.peekHead());
+    EXPECT_EQ(allocation2, csr->getTemporaryAllocations().peekHead());
 
     memoryManager->cleanAllocationList(16, TEMPORARY_ALLOCATION);
 
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(MemoryAllocatorTest, intrusiveListsInjectionsAndRemoval) {
@@ -276,27 +300,27 @@ TEST_F(MemoryAllocatorTest, intrusiveListsInjectionsAndRemoval) {
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), TEMPORARY_ALLOCATION);
 
     //head point to alloc 2, tail points to alloc3
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation));
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation2));
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(memoryManager->graphicsAllocations.peekHead(), allocation, allocation2, allocation3));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation2));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
+    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation2, allocation3));
 
     //now remove element form the middle
     memoryManager->cleanAllocationList(6, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation));
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekContains(*allocation2));
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation3));
-    EXPECT_EQ(-1, verifyDListOrder(memoryManager->graphicsAllocations.peekHead(), allocation, allocation3));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
+    EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation3));
 
     //now remove head
     memoryManager->cleanAllocationList(11, TEMPORARY_ALLOCATION);
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekContains(*allocation));
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekContains(*allocation2));
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekContains(*allocation3));
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation));
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
 
     //now remove tail
     memoryManager->cleanAllocationList(16, TEMPORARY_ALLOCATION);
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(MemoryAllocatorTest, addAllocationToReuseList) {
@@ -305,7 +329,7 @@ TEST_F(MemoryAllocatorTest, addAllocationToReuseList) {
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_EQ(allocation, memoryManager->allocationsForReuse.peekHead());
+    EXPECT_EQ(allocation, csr->getAllocationsForReuse().peekHead());
 }
 
 TEST_F(MemoryAllocatorTest, givenDebugFlagThatDisablesAllocationReuseWhenApiIsCalledThenAllocationIsReleased) {
@@ -315,8 +339,8 @@ TEST_F(MemoryAllocatorTest, givenDebugFlagThatDisablesAllocationReuseWhenApiIsCa
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
-    EXPECT_NE(allocation, memoryManager->allocationsForReuse.peekHead());
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_NE(allocation, csr->getAllocationsForReuse().peekHead());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
     DebugManager.flags.DisableResourceRecycling.set(false);
 }
 
@@ -327,8 +351,8 @@ TEST_F(MemoryAllocatorTest, givenDebugFlagThatDisablesAllocationReuseWhenStoreIs
     auto allocation = memoryManager->allocateGraphicsMemory(1, host_ptr);
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), TEMPORARY_ALLOCATION);
-    EXPECT_EQ(allocation, memoryManager->graphicsAllocations.peekHead());
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_EQ(allocation, csr->getTemporaryAllocations().peekHead());
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
     allocation->setGpuAddress(allocation->getGpuAddress());
 
     DebugManager.flags.DisableResourceRecycling.set(false);
@@ -354,86 +378,86 @@ TEST_F(MemoryAllocatorTest, obtainAllocationFromReusableList) {
     auto allocation2 = memoryManager->obtainReusableAllocation(1, false);
     EXPECT_EQ(allocation, allocation2.get());
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     memoryManager->freeGraphicsMemory(allocation2.release());
 }
 
 TEST_F(MemoryAllocatorTest, obtainAllocationFromMidlleOfReusableList) {
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto allocation = memoryManager->allocateGraphicsMemory(1);
     auto allocation2 = memoryManager->allocateGraphicsMemory(10000);
     auto allocation3 = memoryManager->allocateGraphicsMemory(1);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation));
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekContains(*allocation2));
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekContains(*allocation3));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekContains(*allocation2));
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekContains(*allocation3));
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), REUSABLE_ALLOCATION);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation2));
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekContains(*allocation3));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation2));
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekContains(*allocation3));
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), REUSABLE_ALLOCATION);
 
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation2));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation3));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation2));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation3));
 
     auto reusableAllocation = memoryManager->obtainReusableAllocation(10000, false);
 
     EXPECT_EQ(nullptr, reusableAllocation->next);
     EXPECT_EQ(nullptr, reusableAllocation->prev);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekContains(*reusableAllocation));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation) || (allocation == reusableAllocation.get()));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation2) || (allocation2 == reusableAllocation.get()));
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekContains(*allocation3) || (allocation3 == reusableAllocation.get()));
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekContains(*reusableAllocation));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation) || (allocation == reusableAllocation.get()));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation2) || (allocation2 == reusableAllocation.get()));
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekContains(*allocation3) || (allocation3 == reusableAllocation.get()));
 
     memoryManager->freeGraphicsMemory(reusableAllocation.release());
 }
 
 TEST_F(MemoryAllocatorTest, givenNonInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenNullIsReturned) {
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto allocation = memoryManager->allocateGraphicsMemory(4096);
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto internalAllocation = memoryManager->obtainReusableAllocation(1, true);
     EXPECT_EQ(nullptr, internalAllocation);
 }
 
 TEST_F(MemoryAllocatorTest, givenInternalAllocationWhenItIsPutOnReusableListWhenNonInternalAllocationIsRequestedThenNullIsReturned) {
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto allocation = memoryManager->allocateGraphicsMemory(4096);
     allocation->is32BitAllocation = true;
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto internalAllocation = memoryManager->obtainReusableAllocation(1, false);
     EXPECT_EQ(nullptr, internalAllocation);
 }
 
 TEST_F(MemoryAllocatorTest, givenInternalAllocationWhenItIsPutOnReusableListWhenInternalAllocationIsRequestedThenItIsReturned) {
-    EXPECT_TRUE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_TRUE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto allocation = memoryManager->allocateGraphicsMemory(4096);
     allocation->is32BitAllocation = true;
 
     memoryManager->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
 
-    EXPECT_FALSE(memoryManager->allocationsForReuse.peekIsEmpty());
+    EXPECT_FALSE(csr->getAllocationsForReuse().peekIsEmpty());
 
     auto internalAllocation = memoryManager->obtainReusableAllocation(1, true);
     EXPECT_EQ(allocation, internalAllocation.get());
@@ -1627,31 +1651,31 @@ TEST_F(MemoryManagerWithCsrTest, checkAllocationsForOverlappingWithBiggerOverlap
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasNotUsedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsDestroyedInPlace) {
     auto notUsedAllocation = memoryManager->allocateGraphicsMemory(4096);
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(notUsedAllocation);
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsDestroyedInPlace) {
     auto usedAllocationButGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
-    auto tagAddress = memoryManager->getCommandStreamReceiver(0)->getTagAddress();
+    auto tagAddress = csr->getTagAddress();
     ASSERT_NE(0u, *tagAddress);
 
     usedAllocationButGpuCompleted->taskCount = *tagAddress - 1;
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationButGpuCompleted);
-    EXPECT_TRUE(memoryManager->graphicsAllocations.peekIsEmpty());
+    EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
 
 TEST_F(MemoryManagerWithCsrTest, givenAllocationThatWasUsedAndIsNotCompletedWhencheckGpuUsageAndDestroyGraphicsAllocationsIsCalledThenItIsAddedToTemporaryAllocationList) {
     auto usedAllocationAndNotGpuCompleted = memoryManager->allocateGraphicsMemory(4096);
 
-    auto tagAddress = memoryManager->getCommandStreamReceiver(0)->getTagAddress();
+    auto tagAddress = csr->getTagAddress();
 
     usedAllocationAndNotGpuCompleted->taskCount = *tagAddress + 1;
 
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(usedAllocationAndNotGpuCompleted);
-    EXPECT_FALSE(memoryManager->graphicsAllocations.peekIsEmpty());
-    EXPECT_EQ(memoryManager->graphicsAllocations.peekHead(), usedAllocationAndNotGpuCompleted);
+    EXPECT_FALSE(csr->getTemporaryAllocations().peekIsEmpty());
+    EXPECT_EQ(csr->getTemporaryAllocations().peekHead(), usedAllocationAndNotGpuCompleted);
 
     //change task count so cleanup will not clear alloc in use
     usedAllocationAndNotGpuCompleted->taskCount = ObjectNotUsed;

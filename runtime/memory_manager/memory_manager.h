@@ -17,6 +17,7 @@
 #include <vector>
 
 namespace OCLRT {
+class AllocationsList;
 class Device;
 class DeferredDeleter;
 class ExecutionEnvironment;
@@ -102,14 +103,6 @@ struct AlignedMallocRestrictions {
 };
 
 constexpr size_t paddingBufferSize = 2 * MemoryConstants::megaByte;
-
-class AllocationsList : public IDList<GraphicsAllocation, true, true> {
-  public:
-    std::unique_ptr<GraphicsAllocation> detachAllocation(size_t requiredMinimalSize, volatile uint32_t *csrTagAddress, bool internalAllocationRequired);
-
-  private:
-    GraphicsAllocation *detachAllocationImpl(GraphicsAllocation *, void *);
-};
 
 class Gmm;
 struct ImageInfo;
@@ -223,11 +216,6 @@ class MemoryManager {
 
     MOCKABLE_VIRTUAL std::unique_ptr<GraphicsAllocation> obtainReusableAllocation(size_t requiredSize, bool isInternalAllocationRequired);
 
-    //intrusive list of allocation
-    AllocationsList graphicsAllocations;
-
-    //intrusive list of allocation for re-use
-    AllocationsList allocationsForReuse;
     HostPtrManager hostPtrManager;
 
     virtual GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, size_t hostPtrSize, const void *hostPtr) = 0;
