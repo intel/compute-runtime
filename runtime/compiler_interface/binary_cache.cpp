@@ -14,6 +14,8 @@
 #include <runtime/helpers/hw_info.h>
 #include <runtime/os_interface/os_inc_base.h>
 #include <runtime/program/program.h>
+#include <runtime/utilities/debug_settings_reader.h>
+#include "os_inc.h"
 
 #include <cstring>
 #include <string>
@@ -23,7 +25,6 @@
 
 namespace OCLRT {
 std::mutex BinaryCache::cacheAccessMtx;
-
 const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
                                                  const ArrayRef<const char> options, const ArrayRef<const char> internalOptions) {
     Hash hash;
@@ -51,18 +52,22 @@ const std::string BinaryCache::getCachedFileName(const HardwareInfo &hwInfo, con
     return stream.str();
 }
 
+BinaryCache::BinaryCache() {
+    std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(CL_CACHE_LOCATION));
+    clCacheLocation = settingsReader->getSetting(settingsReader->appSpecificLocation("cl_cache_dir"), static_cast<std::string>(CL_CACHE_LOCATION));
+};
+
+BinaryCache::~BinaryCache(){};
+
 bool BinaryCache::cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) {
     if (pBinary == nullptr || binarySize == 0) {
         return false;
     }
-
-    std::string hashFilePath = CL_CACHE_LOCATION;
-    hashFilePath.append(Os::fileSeparator);
-    hashFilePath.append(kernelFileHash + ".cl_cache");
+    std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
 
     std::lock_guard<std::mutex> lock(cacheAccessMtx);
     if (writeDataToFile(
-            hashFilePath.c_str(),
+            filePath.c_str(),
             pBinary,
             binarySize) == 0) {
         return false;
@@ -75,13 +80,11 @@ bool BinaryCache::loadCachedBinary(const std::string kernelFileHash, Program &pr
     void *pBinary = nullptr;
     size_t binarySize = 0;
 
-    std::string hashFilePath = CL_CACHE_LOCATION;
-    hashFilePath.append(Os::fileSeparator);
-    hashFilePath.append(kernelFileHash + ".cl_cache");
+    std::string filePath = clCacheLocation + PATH_SEPARATOR + kernelFileHash + ".cl_cache";
 
     {
         std::lock_guard<std::mutex> lock(cacheAccessMtx);
-        binarySize = loadDataFromFile(hashFilePath.c_str(), pBinary);
+        binarySize = loadDataFromFile(filePath.c_str(), pBinary);
     }
 
     if ((pBinary == nullptr) || (binarySize == 0)) {

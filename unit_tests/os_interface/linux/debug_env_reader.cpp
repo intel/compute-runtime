@@ -6,6 +6,7 @@
  */
 
 #include "test.h"
+#include <memory>
 #include "runtime/utilities/linux/debug_env_reader.h"
 
 namespace OCLRT {
@@ -67,5 +68,16 @@ TEST_F(DebugEnvReaderTests, CheckBoolEnvVariable) {
     unsetenv("TestingVariable");
     ret = evr->getSetting("TestingVariable", defaultValue);
     EXPECT_EQ(defaultValue, ret);
+}
+
+TEST_F(DebugEnvReaderTests, appSpecificLacationReturnClCacheLocation) {
+    std::string appSpecific;
+    appSpecific = "cl_cache_dir";
+    EXPECT_EQ(appSpecific, evr->appSpecificLocation(appSpecific));
+}
+
+TEST_F(DebugEnvReaderTests, givenEnvironmentVariableReaderWhenCreateOsReaderWithStringThenNotNullPointer) {
+    std::unique_ptr<SettingsReader> evr(SettingsReader::createOsReader(""));
+    EXPECT_NE(nullptr, evr);
 }
 } // namespace OCLRT

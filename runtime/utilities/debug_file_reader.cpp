@@ -82,4 +82,8 @@ std::string SettingsFileReader::getSetting(const char *settingName, const std::s
 
     return returnValue;
 }
+
+const char *SettingsFileReader::appSpecificLocation(const std::string &name) {
+    return name.c_str();
+}
 }; // namespace OCLRT

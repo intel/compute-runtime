@@ -41,7 +41,7 @@ DebugSettingsManager<DebugLevel>::DebugSettingsManager() {
     }
 
     std::remove(logFileName.c_str());
-}
+} // namespace OCLRT
 
 template <DebugFunctionalityLevel DebugLevel>
 void DebugSettingsManager<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {

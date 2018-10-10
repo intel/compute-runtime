@@ -49,7 +49,11 @@ class RegistryReaderMock : public SettingsReader {
     bool getSetting(const char *settingName, bool defaultValue) override {
         return true;
     }
+
     std::string getSetting(const char *settingName, const std::string &value) override {
         return "";
+    }
+    const char *appSpecificLocation(const std::string &name) override {
+        return name.c_str();
     }
 };

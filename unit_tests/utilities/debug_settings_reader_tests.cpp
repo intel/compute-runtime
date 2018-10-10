@@ -43,6 +43,12 @@ TEST(SettingsReader, CreateOsReader) {
     delete reader;
 }
 
+TEST(SettingsReader, CreateOsReaderWithRegKey) {
+    std::string regKey = "Software\\Intel\\OpenCL";
+    unique_ptr<SettingsReader> reader(SettingsReader::createOsReader(regKey));
+    EXPECT_NE(nullptr, reader);
+}
+
 TEST(SettingsReader, givenPrintDebugStringWhenCalledWithTrueItPrintsToOutput) {
     int i = 4;
     testing::internal::CaptureStdout();

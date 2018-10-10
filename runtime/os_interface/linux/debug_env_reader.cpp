@@ -13,6 +13,13 @@ SettingsReader *SettingsReader::createOsReader(bool userScope) {
     return new EnvironmentVariableReader;
 }
 
+SettingsReader *SettingsReader::createOsReader(const std::string &regKey) {
+    return new EnvironmentVariableReader;
+}
+const char *EnvironmentVariableReader::appSpecificLocation(const std::string &name) {
+    return name.c_str();
+}
+
 bool EnvironmentVariableReader::getSetting(const char *settingName, bool defaultValue) {
     return getSetting(settingName, static_cast<int32_t>(defaultValue)) ? true : false;
 }

@@ -69,7 +69,6 @@ class RegistryReaderMock : public SettingsReader {
   public:
     std::string nameString;
     std::string versionString;
-
     std::string getSetting(const char *settingName, const std::string &value) {
         std::string key(settingName);
         if (key == "HardwareInformation.AdapterString") {
@@ -82,6 +81,7 @@ class RegistryReaderMock : public SettingsReader {
 
     bool getSetting(const char *settingName, bool defaultValue) { return defaultValue; };
     int32_t getSetting(const char *settingName, int32_t defaultValue) { return defaultValue; };
+    const char *appSpecificLocation(const std::string &name) { return name.c_str(); };
 
     bool properNameKey = false;
     bool properVersionKey = false;

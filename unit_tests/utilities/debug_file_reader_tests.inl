@@ -116,3 +116,9 @@ TEST(SettingsFileReader, GetSettingWhenNotInFile) {
 
     EXPECT_EQ(defaultStringValue, returnedStringValue);
 }
+
+TEST(SettingsFileReader, appSpecificLocation) {
+    std::unique_ptr<TestSettingsFileReader> reader(new TestSettingsFileReader(TestSettingsFileReader::testPath));
+    std::string appSpecific = "cl_cache_dir";
+    EXPECT_EQ(appSpecific, reader->appSpecificLocation(appSpecific));
+}
