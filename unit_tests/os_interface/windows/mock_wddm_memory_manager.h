@@ -15,7 +15,6 @@ class MockWddmMemoryManager : public WddmMemoryManager {
 
   public:
     using BaseClass::createWddmAllocation;
-    using BaseClass::residencyControllers;
     using BaseClass::trimResidency;
     using BaseClass::trimResidencyToBudget;
     using BaseClass::WddmMemoryManager;

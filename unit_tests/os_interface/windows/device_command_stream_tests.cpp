@@ -552,7 +552,7 @@ TEST_F(WddmCommandStreamTest, processEvictionPlacesAllAllocationsOnTrimCandidate
 
     csr->processEviction(*device->getOsContext());
 
-    EXPECT_EQ(2u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(2u, device->getOsContext()->get()->getResidencyController().peekTrimCandidateList().size());
 
     memoryManager->freeGraphicsMemory(allocation);
     memoryManager->freeGraphicsMemory(allocation2);

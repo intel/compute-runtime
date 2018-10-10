@@ -19,7 +19,6 @@
 namespace OCLRT {
 class Gmm;
 class Wddm;
-class WddmResidencyController;
 
 using OsContextWin = OsContext::OsContextImpl;
 
@@ -56,7 +55,6 @@ class WddmMemoryManager : public MemoryManager {
     AllocationStatus populateOsHandles(OsHandleStorage &handleStorage) override;
     void cleanOsHandles(OsHandleStorage &handleStorage) override;
 
-    void registerOsContext(OsContext *contextToRegister) override;
     OsContext *getRegisteredOsContext(uint32_t osContextId) { return registeredOsContexts[osContextId]; }
 
     void obtainGpuAddresFromFragments(WddmAllocation *allocation, OsHandleStorage &handleStorage);
@@ -87,7 +85,6 @@ class WddmMemoryManager : public MemoryManager {
     GraphicsAllocation *createAllocationFromHandle(osHandle handle, bool requireSpecificBitness, bool ntHandle);
     static bool validateAllocation(WddmAllocation *alloc);
     bool createWddmAllocation(WddmAllocation *allocation, AllocationOrigin origin);
-    std::vector<std::unique_ptr<WddmResidencyController>> residencyControllers;
     bool memoryBudgetExhausted = false;
     AlignedMallocRestrictions mallocRestrictions;
 

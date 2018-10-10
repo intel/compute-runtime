@@ -55,24 +55,6 @@ TEST(WddmMemoryManager, NonAssignable) {
     EXPECT_FALSE(std::is_copy_assignable<WddmMemoryManager>::value);
 }
 
-TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenRegisteringOsContextThenResidencyControllersIsResizedAccordinglyToContextId) {
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 0u));
-    EXPECT_EQ(1u, memoryManager->residencyControllers.size());
-    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
-
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 2u));
-    EXPECT_EQ(3u, memoryManager->residencyControllers.size());
-    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
-    EXPECT_EQ(nullptr, memoryManager->residencyControllers[1]);
-    EXPECT_EQ(0u, memoryManager->residencyControllers[2]->getLastTrimFenceValue());
-
-    memoryManager->registerOsContext(new OsContext(osInterface.get(), 1u));
-    EXPECT_EQ(3u, memoryManager->residencyControllers.size());
-    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
-    EXPECT_EQ(0u, memoryManager->residencyControllers[1]->getLastTrimFenceValue());
-    EXPECT_EQ(0u, memoryManager->residencyControllers[2]->getLastTrimFenceValue());
-}
-
 TEST(WddmMemoryManagerAllocator32BitTest, allocator32BitIsCreatedWithCorrectBase) {
     ExecutionEnvironment executionEnvironment;
     std::unique_ptr<WddmMock> wddm(static_cast<WddmMock *>(Wddm::createWddm()));
@@ -974,21 +956,22 @@ TEST_F(WddmMemoryManagerResidencyTest, givenNotUsedAllocationsFromPreviousPeriod
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
     // 2 allocations evicted
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
     // removed from trim candidate list
-    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(0u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
     // marked nonresident
     EXPECT_FALSE(allocation1.getResidencyData().resident);
     EXPECT_FALSE(allocation2.getResidencyData().resident);
@@ -1008,14 +991,14 @@ TEST_F(WddmMemoryManagerResidencyTest, givenOneUsedAllocationFromPreviousPeriodi
     allocation2.getResidencyData().resident = true;
 
     // Set last periodic fence value
-    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
@@ -1052,13 +1035,13 @@ TEST_F(WddmMemoryManagerResidencyTest, givenTripleAllocationWithUsedAndUnusedFra
     allocationTriple->fragmentsStorage.fragmentStorageData[2].residency->resident = true;
 
     // Set last periodic fence value
-    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
     osContext->get()->getMonitoredFence().currentFenceValue = 20;
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(allocationTriple);
+    osContext->get()->getResidencyController().addToTrimCandidateList(allocationTriple);
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
@@ -1079,13 +1062,13 @@ TEST_F(WddmMemoryManagerResidencyTest, givenPeriodicTrimWhenTrimCallbackCalledTh
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
+    EXPECT_EQ(20u, osContext->get()->getResidencyController().getLastTrimFenceValue());
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackCalledThenLastPeriodicTrimFenceIsSetToCurrentFenceValue) {
@@ -1096,13 +1079,13 @@ TEST_F(WddmMemoryManagerResidencyTest, givenRestartPeriodicTrimWhenTrimCallbackC
     trimNotification.NumBytesToTrim = 0;
 
     // Set last periodic fence value
-    memoryManager->residencyControllers[0]->setLastTrimFenceValue(10);
+    osContext->get()->getResidencyController().setLastTrimFenceValue(10);
     // Set current fence value to greater value
     *osContext->get()->getMonitoredFence().cpuAddress = 20;
 
     memoryManager->trimResidency(trimNotification.Flags, trimNotification.NumBytesToTrim);
 
-    EXPECT_EQ(20u, memoryManager->residencyControllers[0]->getLastTrimFenceValue());
+    EXPECT_EQ(20u, osContext->get()->getResidencyController().getLastTrimFenceValue());
 }
 
 TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWithZeroSizeReturnsTrue) {
@@ -1131,17 +1114,17 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetAllDoneAllocations) {
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation3);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation3);
 
     memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
 
-    EXPECT_EQ(1u, memoryManager->residencyControllers[0]->peekTrimCandidatesCount());
-    memoryManager->residencyControllers[0]->compactTrimCandidateList();
-    EXPECT_EQ(1u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(1u, osContext->get()->getResidencyController().peekTrimCandidatesCount());
+    osContext->get()->getResidencyController().compactTrimCandidateList();
+    EXPECT_EQ(1u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
     EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
@@ -1161,12 +1144,12 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetReturnsFalseWhenNumBytesToTri
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_EQ(1u, wddm->makeNonResidentResult.called);
-    EXPECT_EQ(0u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(0u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
 
     EXPECT_FALSE(status);
 }
@@ -1191,15 +1174,15 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetStopsEvictingWhenNumBytesToTr
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation3);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation3);
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
     EXPECT_TRUE(status);
     EXPECT_EQ(2u, wddm->makeNonResidentResult.called);
-    EXPECT_EQ(1u, memoryManager->residencyControllers[0]->peekTrimCandidateList().size());
+    EXPECT_EQ(1u, osContext->get()->getResidencyController().peekTrimCandidateList().size());
 
     EXPECT_EQ(trimListUnusedPosition, allocation1.getTrimCandidateListPosition());
     EXPECT_EQ(trimListUnusedPosition, allocation2.getTrimCandidateListPosition());
@@ -1226,9 +1209,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetMarksEvictedAllocationNonResi
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation3);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation3);
 
     bool status = memoryManager->trimResidencyToBudget(3 * 4096);
 
@@ -1252,7 +1235,7 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetWaitsFromCpuWhenLastFenceIsGr
     wddm->makeNonResidentResult.called = 0;
     wddm->waitFromCpuResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
 
     gdi->getWaitFromCpuArg().hDevice = (D3DKMT_HANDLE)0;
 
@@ -1292,9 +1275,9 @@ TEST_F(WddmMemoryManagerResidencyTest, trimToBudgetEvictsDoneFragmentsOnly) {
     // This should not be evicted
     allocationTriple->fragmentsStorage.fragmentStorageData[1].residency->updateCompletionData(2, osContext);
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(allocationTriple);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(allocationTriple);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
 
     *osContext->get()->getMonitoredFence().cpuAddress = 1;
     osContext->get()->getMonitoredFence().lastSubmittedFence = 1;
@@ -1345,9 +1328,9 @@ TEST_F(WddmMemoryManagerResidencyTest, givenThreeAllocationsAlignedSizeBiggerTha
 
     wddm->makeNonResidentResult.called = 0;
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation1);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation2);
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocation3);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation1);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation2);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocation3);
 
     bool status = memoryManager->trimResidencyToBudget(budget);
     EXPECT_TRUE(status);
@@ -1625,7 +1608,7 @@ TEST_F(WddmMemoryManagerTest2, makeResidentResidencyAllocationsSucceedsWhenMakeR
 
     EXPECT_CALL(*wddm, makeResident(::testing::_, ::testing::_, ::testing::_, ::testing::_)).Times(2).WillOnce(::testing::Invoke(makeResidentWithOutBytesToTrim)).WillOnce(::testing::Return(true));
 
-    memoryManager->residencyControllers[0]->addToTrimCandidateList(&allocationToTrim);
+    osContext->get()->getResidencyController().addToTrimCandidateList(&allocationToTrim);
 
     ResidencyContainer residencyPack{&allocation1};
     bool result = memoryManager->makeResidentResidencyAllocations(residencyPack, *osContext);

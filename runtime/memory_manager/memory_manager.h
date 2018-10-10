@@ -251,7 +251,7 @@ class MemoryManager {
         ::alignedFree(ptr);
     }
 
-    virtual void registerOsContext(OsContext *contextToRegister);
+    void registerOsContext(OsContext *contextToRegister);
     size_t getOsContextCount() { return registeredOsContexts.size(); }
     CommandStreamReceiver *getCommandStreamReceiver(uint32_t contextId);
 
