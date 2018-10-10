@@ -102,3 +102,13 @@ TEST_F(clCreateKernelsInProgramTests, GivenNullProgramWhenCreatingKernelObjectsT
     EXPECT_EQ(CL_INVALID_PROGRAM, retVal);
     EXPECT_EQ(nullptr, kernel);
 }
+
+TEST_F(clCreateKernelsInProgramTests, GivenTooSmallOutputBufferWhenCreatingKernelObjectsThenInvalidValueErrorIsReturned) {
+    retVal = clCreateKernelsInProgram(
+        program,
+        0,
+        &kernel,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_VALUE, retVal);
+    EXPECT_EQ(nullptr, kernel);
+}

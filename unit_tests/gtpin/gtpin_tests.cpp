@@ -1993,7 +1993,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
             if (nonfailingAllocation != failureIndex) {
                 memoryManager->failAllAllocationsInPreferredPool = true;
             }
-            retVal = clCreateKernelsInProgram(pProgram, 0, &kernels[0], &numCreatedKernels);
+            retVal = clCreateKernelsInProgram(pProgram, 2, kernels, &numCreatedKernels);
 
             if (nonfailingAllocation != failureIndex) {
                 if (retVal != CL_SUCCESS) {

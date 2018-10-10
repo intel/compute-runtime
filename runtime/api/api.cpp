@@ -1481,13 +1481,18 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                    "numKernelsRet", numKernelsRet);
     auto program = castToObject<Program>(clProgram);
     if (program) {
-        auto numKernels = program->getNumKernels();
-        for (unsigned int ordinal = 0; ordinal < numKernels; ++ordinal) {
-            const auto kernelInfo = program->getKernelInfo(ordinal);
-            DEBUG_BREAK_IF(kernelInfo == nullptr);
-            DEBUG_BREAK_IF(!kernelInfo->isValid);
+        auto numKernelsInProgram = program->getNumKernels();
 
-            if (kernels) {
+        if (kernels) {
+            if (numKernels < numKernelsInProgram) {
+                retVal = CL_INVALID_VALUE;
+                return retVal;
+            }
+
+            for (unsigned int ordinal = 0; ordinal < numKernelsInProgram; ++ordinal) {
+                const auto kernelInfo = program->getKernelInfo(ordinal);
+                DEBUG_BREAK_IF(kernelInfo == nullptr);
+                DEBUG_BREAK_IF(!kernelInfo->isValid);
                 kernels[ordinal] = Kernel::create(
                     program,
                     *kernelInfo,
@@ -1499,7 +1504,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
         }
 
         if (numKernelsRet) {
-            *numKernelsRet = static_cast<cl_uint>(numKernels);
+            *numKernelsRet = static_cast<cl_uint>(numKernelsInProgram);
         }
         return retVal;
     }
