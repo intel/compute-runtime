@@ -5,7 +5,7 @@
  *
  */
 
-#include "lib_names.h"
+#include "igc.opencl.h"
 #include "External/Common/GmmLibDllName.h"
 
 namespace Os {

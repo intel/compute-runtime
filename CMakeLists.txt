@@ -306,8 +306,6 @@ else()
   endif()
 endif()
 
-set(GMM_LIBRARY_NAME "igdgmm${NEO_BITS}")
-
 macro(copy_gmm_dll_for target)
   if(NOT IGDRCL__GMM_FOUND)
     add_dependencies(${target} ${GMMUMD_LIB_NAME})
