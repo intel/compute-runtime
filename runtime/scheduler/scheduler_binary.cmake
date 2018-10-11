@@ -9,12 +9,12 @@ set(SCHEDULER_OUTDIR_WITH_ARCH "${TargetDir}/scheduler/${NEO_ARCH}")
 set_target_properties(scheduler PROPERTIES FOLDER "scheduler")
 
 set (SCHEDULER_KERNEL scheduler.cl)
-set (SCHEDULER_INCLUDE_OPTIONS "-I$<JOIN:${IGDRCL__IGC_INCLUDE_DIR}, -I>")
+if(DEFINED IGDRCL__IGC_INCLUDE_DIR)
+  list(APPEND __cloc__options__ "-I$<JOIN:${IGDRCL__IGC_INCLUDE_DIR}, -I>")
+endif()
 
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-  set(SCHEDULER_DEBUG_OPTION "-D DEBUG")
-else()
-  set(SCHEDULER_DEBUG_OPTION "")
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+  list(APPEND __cloc__options__ "-D DEBUG")
 endif()
 
 set(SCHEDULER_INCLUDE_DIR ${TargetDir})
@@ -24,7 +24,7 @@ function(compile_kernel target gen_type platform_type kernel)
   string(TOLOWER ${gen_type} gen_type_lower)
   # get filename
   set(OUTPUTDIR "${SCHEDULER_OUTDIR_WITH_ARCH}/${gen_type_lower}")
-  set(SCHEDULER_INCLUDE_OPTIONS "${SCHEDULER_INCLUDE_OPTIONS} -I ../${gen_type_lower}")
+  list(APPEND __cloc__options__ "-I ../${gen_type_lower}")
 
   get_filename_component(BASENAME ${kernel} NAME_WE)
 
@@ -40,9 +40,11 @@ function(compile_kernel target gen_type platform_type kernel)
       set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
     endif()
   endif()
+  list(APPEND __cloc__options__ "-cl-kernel-arg-info")
+  list(APPEND __cloc__options__ "-cl-std=CL2.0")
   add_custom_command(
     OUTPUT ${OUTPUTPATH}
-    COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "-cl-kernel-arg-info ${SCHEDULER_INCLUDE_OPTIONS} ${SCHEDULER_DEBUG_OPTION} -cl-std=CL2.0"
+    COMMAND ${cloc_cmd_prefix} -q -file ${kernel} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} -cl-intel-greater-than-4GB-buffer-required -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >"
     WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${kernel} cloc copy_compiler_files
   )

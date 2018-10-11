@@ -16,9 +16,7 @@ else()
 endif()
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" )
-  set(BUILTIN_DEBUG_OPTION "-D DEBUG")
-else()
-  set(BUILTIN_DEBUG_OPTION "")
+  list(APPEND __cloc__options__ "-D DEBUG")
 endif()
 
 set(BUILTINS_INCLUDE_DIR ${TargetDir} PARENT_SCOPE)
@@ -61,9 +59,10 @@ function(compile_builtin gen_type platform_type builtin)
       set(cloc_cmd_prefix LD_LIBRARY_PATH=$<TARGET_FILE_DIR:cloc> $<TARGET_FILE:cloc>)
     endif()
   endif()
+  list(APPEND __cloc__options__ "-cl-kernel-arg-info")
   add_custom_command(
     OUTPUT ${OUTPUT_FILES}
-    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR}  -cpp_file -options "-cl-kernel-arg-info ${BUILTIN_DEBUG_OPTION}"
+    COMMAND ${cloc_cmd_prefix} -q -file ${FILENAME} -device ${DEFAULT_SUPPORTED_${gen_type}_${platform_type}_PLATFORM} ${BUILTIN_OPTIONS} -${NEO_BITS} -out_dir ${OUTPUTDIR} -cpp_file -options "$<JOIN:${__cloc__options__}, >"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     DEPENDS ${builtin} cloc copy_compiler_files
   )
